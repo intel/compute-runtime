@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -260,7 +260,7 @@ class Program : public BaseObject<_cl_program> {
     bool isDeviceAssociated(const ClDevice &clDevice) const;
 
     static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
-    MOCKABLE_VIRTUAL void initInternalOptions(std::string &internalOptions) const;
+    MOCKABLE_VIRTUAL std::string getInternalOptions() const;
     uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
     void retainForKernel() {
         std::unique_lock<std::mutex> lock{lockMutex};

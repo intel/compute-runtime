@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,10 +65,10 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     buildInfos.resize(maxRootDeviceIndex + 1);
     kernelDebugEnabled = clDevices[0]->isDebuggerActive();
 }
-void Program::initInternalOptions(std::string &internalOptions) const {
+std::string Program::getInternalOptions() const {
     auto pClDevice = clDevices[0];
     auto force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
-    internalOptions = getOclVersionCompilerInternalOption(pClDevice->getEnabledClVersion());
+    auto internalOptions = getOclVersionCompilerInternalOption(pClDevice->getEnabledClVersion());
 
     if (force32BitAddressess && !isBuiltIn) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
@@ -103,6 +103,8 @@ void Program::initInternalOptions(std::string &internalOptions) const {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
+
+    return internalOptions;
 }
 
 Program::~Program() {

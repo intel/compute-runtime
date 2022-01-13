@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,7 @@ cl_int Program::link(
     auto &defaultDevice = defaultClDevice->getDevice();
     std::unordered_map<uint32_t, bool> kernelDebugDataNotified;
     std::unordered_map<uint32_t, bool> debugOptionsAppended;
-    std::string internalOptions;
-    initInternalOptions(internalOptions);
+    auto internalOptions = getInternalOptions();
     cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     do {
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {

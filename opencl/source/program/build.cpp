@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,7 @@ cl_int Program::build(
     const char *buildOptions,
     bool enableCaching) {
     cl_int retVal = CL_SUCCESS;
-    std::string internalOptions;
-    initInternalOptions(internalOptions);
+    auto internalOptions = getInternalOptions();
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();

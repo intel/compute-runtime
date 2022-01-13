@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,11 +70,6 @@ class MockProgram : public Program {
     void setBuildOptions(const char *buildOptions) {
         options = buildOptions != nullptr ? buildOptions : "";
     }
-    std::string getInitInternalOptions() const {
-        std::string internalOptions;
-        initInternalOptions(internalOptions);
-        return internalOptions;
-    };
     void setConstantSurface(GraphicsAllocation *gfxAllocation) {
         if (gfxAllocation) {
             buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface = gfxAllocation;
@@ -175,9 +170,9 @@ class MockProgram : public Program {
         return Program::processGenBinary(clDevice);
     }
 
-    void initInternalOptions(std::string &internalOptions) const override {
-        initInternalOptionsCalled++;
-        Program::initInternalOptions(internalOptions);
+    std::string getInternalOptions() const override {
+        getInternalOptionsCalled++;
+        return Program::getInternalOptions();
     };
 
     const KernelInfo &getKernelInfoForKernel(const char *kernelName) const {
@@ -195,7 +190,7 @@ class MockProgram : public Program {
 
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
-    static int initInternalOptionsCalled;
+    static int getInternalOptionsCalled;
     bool contextSet = false;
     int isFlagOptionOverride = -1;
     int isOptionValueValidOverride = -1;

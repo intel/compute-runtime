@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,7 @@ cl_int Program::compile(
     auto defaultClDevice = deviceVector[0];
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
-    std::string internalOptions;
-    initInternalOptions(internalOptions);
+    auto internalOptions = getInternalOptions();
     std::unordered_map<uint32_t, bool> sourceLevelDebuggerNotified;
     do {
         if (numInputHeaders == 0) {
