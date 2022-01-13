@@ -774,7 +774,12 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
 
-    this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
+    schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
+
+    if (kernelImmData->getKernelInfo()->requiresSubgroupIndependentForwardProgress() && (schedulingHintExpFlag < NEO::ThreadArbitrationPolicy::RoundRobin)) {
+        schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::RoundRobin;
+    }
+
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {

@@ -2750,7 +2750,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     device->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.getGraphicsAllocation());
 }
 
-TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
+TEST(KernelTest, givenIfpWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetToRoundRobinOrAbove) {
     UltClDeviceFactory deviceFactory{1, 0};
 
     SPatchExecutionEnvironment sPatchExecEnv = {};
@@ -2759,6 +2759,24 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
     auto &hwHelper = HwHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
+
+    if (hwHelper.getDefaultThreadArbitrationPolicy() >= ThreadArbitrationPolicy::RoundRobin) {
+        EXPECT_EQ(hwHelper.getDefaultThreadArbitrationPolicy(), mockKernel.threadArbitrationPolicy);
+    } else {
+        EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobin), mockKernel.threadArbitrationPolicy);
+    }
+}
+
+TEST(KernelTest, givenNoIfpWhenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    SPatchExecutionEnvironment sPatchExecEnv = {};
+    sPatchExecEnv.SubgroupIndependentForwardProgressRequired = false;
+    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecEnv};
+
+    auto &mockKernel = *mockKernelWithInternals.mockKernel;
+    auto &hwHelper = HwHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
+
     EXPECT_EQ(hwHelper.getDefaultThreadArbitrationPolicy(), mockKernel.threadArbitrationPolicy);
 }
 
