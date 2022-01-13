@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -379,8 +379,9 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
                  pSourceInformationParams->InfoUnits);
         properties.tierNumber = 1;
         properties.metricType = getMetricType(pSourceInformationParams->InfoType);
-        // MetricsDiscovery information are always UINT64
-        properties.resultType = ZET_VALUE_TYPE_UINT64;
+        properties.resultType = properties.metricType == ZET_METRIC_TYPE_FLAG
+                                    ? ZET_VALUE_TYPE_BOOL8
+                                    : ZET_VALUE_TYPE_UINT64;
 
         auto pMetric = Metric::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);

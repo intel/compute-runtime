@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDat
                 return result;
             }
             pRawDataSizesUnpacked[i] = static_cast<uint32_t>(readSize);
-            pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i] : 0;
+            pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i - 1] : 0;
             *pRawDataSize += readSize;
         }
     } else {

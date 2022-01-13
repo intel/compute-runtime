@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -728,7 +728,7 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
                     return tmpResult;
                 }
                 pRawDataSizesUnpacked[i] = static_cast<uint32_t>(getDataSize);
-                pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i] : 0;
+                pRawDataOffsetsUnpacked[i] = (i != 0) ? pRawDataOffsetsUnpacked[i - 1] + pRawDataSizesUnpacked[i - 1] : 0;
                 *pRawDataSize += getDataSize;
             }
         }

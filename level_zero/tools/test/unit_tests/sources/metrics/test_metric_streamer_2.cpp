@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -621,7 +621,8 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
 
     EXPECT_CALL(metricsConcurrentGroup, ReadIoStream(_, _, _))
         .Times(subDeviceCount)
-        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(10), Return(TCompletionCode::CC_OK)))
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(20), Return(TCompletionCode::CC_OK)));
 
     EXPECT_CALL(metricsConcurrentGroup, CloseIoStream())
         .Times(subDeviceCount)
@@ -648,9 +649,24 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
 
     std::vector<uint8_t> rawData;
     rawData.resize(rawSize);
-    size_t rawRequestSize = rawSize;
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, reportCount, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(rawSize, rawRequestSize);
+    EXPECT_EQ(rawSize, (metricsSetParams.RawReportSize * 30) + sizeof(MetricGroupCalculateHeader) + (2 * sizeof(uint32_t) * subDeviceCount));
+
+    MetricGroupCalculateHeader *rawDataHeader = reinterpret_cast<MetricGroupCalculateHeader *>(rawData.data());
+    EXPECT_NE(rawDataHeader, nullptr);
+    for (uint32_t i = 0; i < subDeviceCount; ++i) {
+        uint32_t rawDataOffset = (reinterpret_cast<uint32_t *>(rawData.data() + rawDataHeader->rawDataOffsets))[i];
+        uint32_t rawDataSize = (reinterpret_cast<uint32_t *>(rawData.data() + rawDataHeader->rawDataSizes))[i];
+
+        if (i == 0) {
+            EXPECT_EQ(rawDataOffset, 0u);
+            EXPECT_EQ(rawDataSize, metricsSetParams.RawReportSize * 10);
+        } else if (i == 1) {
+            EXPECT_EQ(rawDataOffset, metricsSetParams.RawReportSize * 10);
+            EXPECT_EQ(rawDataSize, metricsSetParams.RawReportSize * 20);
+        }
+    }
+
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
