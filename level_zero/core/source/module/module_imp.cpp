@@ -484,6 +484,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             std::vector<const char *> inputSpirVs;
             std::vector<uint32_t> inputModuleSizes;
             std::vector<const ze_module_constants_t *> specConstants;
+            const ze_module_constants_t *firstSpecConstants = nullptr;
 
             this->createBuildOptions(nullptr, buildOptions, internalBuildOptions);
 
@@ -496,6 +497,9 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
                 inputModuleSizes.push_back(inputSize);
                 if (programExpDesc->pConstants) {
                     specConstants.push_back(programExpDesc->pConstants[i]);
+                    if (i == 0) {
+                        firstSpecConstants = specConstants[0];
+                    }
                 }
                 if (programExpDesc->pBuildFlags) {
                     this->createBuildOptions(programExpDesc->pBuildFlags[i], tmpBuildOptions, tmpInternalBuildOptions);
@@ -503,12 +507,20 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
                     internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
                 }
             }
-
-            success = this->translationUnit->staticLinkSpirV(inputSpirVs,
-                                                             inputModuleSizes,
-                                                             buildOptions.c_str(),
-                                                             internalBuildOptions.c_str(),
-                                                             specConstants);
+            //If the user passed in only 1 SPIRV, then fallback to standard build
+            if (inputSpirVs.size() > 1) {
+                success = this->translationUnit->staticLinkSpirV(inputSpirVs,
+                                                                 inputModuleSizes,
+                                                                 buildOptions.c_str(),
+                                                                 internalBuildOptions.c_str(),
+                                                                 specConstants);
+            } else {
+                success = this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(programExpDesc->pInputModules[0]),
+                                                                inputModuleSizes[0],
+                                                                buildOptions.c_str(),
+                                                                internalBuildOptions.c_str(),
+                                                                firstSpecConstants);
+            }
         } else {
             return false;
         }

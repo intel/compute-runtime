@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -777,29 +777,35 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         DeviceFixture::TearDown();
     }
 
-    void loadMultipleModules() {
+    void loadModules(bool multiple) {
         std::string testFile;
         retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
 
         srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
-        srcModule2 = loadDataFromFile(testFile.c_str(), sizeModule2);
+        if (multiple) {
+            srcModule2 = loadDataFromFile(testFile.c_str(), sizeModule2);
+        }
 
         ASSERT_NE(0u, sizeModule1);
-        ASSERT_NE(0u, sizeModule2);
         ASSERT_NE(nullptr, srcModule1);
-        ASSERT_NE(nullptr, srcModule2);
+        if (multiple) {
+            ASSERT_NE(0u, sizeModule2);
+            ASSERT_NE(nullptr, srcModule2);
+        }
     }
 
-    void setupExpProgramDesc(ze_module_format_t format) {
+    void setupExpProgramDesc(ze_module_format_t format, bool multiple) {
         combinedModuleDesc.format = format;
         combinedModuleDesc.pNext = &staticLinkModuleDesc;
 
         inputSizes.push_back(sizeModule1);
         inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule1.get()));
-        inputSizes.push_back(sizeModule2);
-        inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule2.get()));
-
-        staticLinkModuleDesc.count = 2;
+        staticLinkModuleDesc.count = 1;
+        if (multiple) {
+            inputSizes.push_back(sizeModule2);
+            inputSpirVs.push_back(reinterpret_cast<const uint8_t *>(srcModule2.get()));
+            staticLinkModuleDesc.count = 2;
+        }
         staticLinkModuleDesc.inputSizes = inputSizes.data();
         staticLinkModuleDesc.pInputModules = inputSpirVs.data();
     }
@@ -811,9 +817,9 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
         mockTranslationUnit = new MockModuleTranslationUnit(device);
 
-        loadMultipleModules();
+        loadModules(testMultiple);
 
-        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV);
+        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
 
         auto module = new Module(device, nullptr, ModuleType::User);
         module->translationUnit.reset(mockTranslationUnit);
@@ -829,9 +835,9 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
         mockTranslationUnit = new MockModuleTranslationUnit(device);
 
-        loadMultipleModules();
+        loadModules(testMultiple);
 
-        setupExpProgramDesc(ZE_MODULE_FORMAT_NATIVE);
+        setupExpProgramDesc(ZE_MODULE_FORMAT_NATIVE, testMultiple);
 
         auto module = new Module(device, nullptr, ModuleType::User);
         module->translationUnit.reset(mockTranslationUnit);
@@ -865,15 +871,39 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
         rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
         mockTranslationUnit = new MockModuleTranslationUnit(device);
 
-        loadMultipleModules();
+        loadModules(testMultiple);
 
-        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV);
+        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testMultiple);
 
         std::vector<char *> buildFlags;
         std::string module1BuildFlags("-ze-opt-disable");
         std::string module2BuildFlags("-ze-opt-greater-than-4GB-buffer-required");
         buildFlags.push_back(const_cast<char *>(module1BuildFlags.c_str()));
         buildFlags.push_back(const_cast<char *>(module2BuildFlags.c_str()));
+
+        staticLinkModuleDesc.pBuildFlags = const_cast<const char **>(buildFlags.data());
+
+        auto module = new Module(device, nullptr, ModuleType::User);
+        module->translationUnit.reset(mockTranslationUnit);
+
+        bool success = module->initialize(&combinedModuleDesc, neoDevice);
+        EXPECT_TRUE(success);
+        module->destroy();
+    }
+    void runSprivLinkBuildWithOneModule() {
+        MockCompilerInterface *mockCompiler;
+        mockCompiler = new MockCompilerInterface();
+        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+        rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+        mockTranslationUnit = new MockModuleTranslationUnit(device);
+
+        loadModules(testSingle);
+
+        setupExpProgramDesc(ZE_MODULE_FORMAT_IL_SPIRV, testSingle);
+
+        std::vector<char *> buildFlags;
+        std::string module1BuildFlags("-ze-opt-disable");
+        buildFlags.push_back(const_cast<char *>(module1BuildFlags.c_str()));
 
         staticLinkModuleDesc.pBuildFlags = const_cast<const char **>(buildFlags.data());
 
@@ -894,6 +924,8 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
     std::vector<size_t> inputSizes;
     ze_module_desc_t combinedModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_program_exp_desc_t staticLinkModuleDesc = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC};
+    bool testMultiple = true;
+    bool testSingle = false;
 };
 
 using ModuleStaticLinkTests = Test<ModuleStaticLinkFixture>;
@@ -912,6 +944,10 @@ TEST_F(ModuleStaticLinkTests, givenInvalidExpDescForModuleCreateThenFailureisRet
 
 TEST_F(ModuleStaticLinkTests, givenMultipleModulesProvidedForSpirVStaticLinkAndBuildFlagsRequestedThenSuccessisReturned) {
     runSprivLinkBuildFlags();
+}
+
+TEST_F(ModuleStaticLinkTests, givenSingleModuleProvidedForSpirVStaticLinkAndBuildFlagsRequestedThenSuccessisReturned) {
+    runSprivLinkBuildWithOneModule();
 }
 
 using ModuleLinkingTest = Test<DeviceFixture>;
