@@ -286,44 +286,6 @@ class KernelImmutableDataFixture : public ModuleImmutableDataFixture {
 
 using KernelImmutableDataTests = Test<KernelImmutableDataFixture>;
 
-HWTEST_F(KernelImmutableDataTests, givenIfpRequiredWhenInitializingKernelThenSetRoundRobinArbitrationMode) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0);
-
-    mockKernelImmData->kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = true;
-
-    createModuleFromBinary(0, false, mockKernelImmData.get());
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    auto defaultPolicy = HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy();
-
-    if (defaultPolicy >= ThreadArbitrationPolicy::RoundRobin) {
-        EXPECT_EQ(defaultPolicy, kernel->getSchedulingHintExp());
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobin), kernel->getSchedulingHintExp());
-    }
-}
-
-HWTEST_F(KernelImmutableDataTests, givenIfpNotRequiredWhenInitializingKernelThenSetDefaultArbitrationMode) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0);
-
-    mockKernelImmData->kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = false;
-
-    createModuleFromBinary(0, false, mockKernelImmData.get());
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    createKernel(kernel.get());
-
-    auto defaultPolicy = HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy();
-
-    EXPECT_EQ(defaultPolicy, kernel->getSchedulingHintExp());
-}
-
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithNoPrivateMemoryThenPrivateMemoryIsNull) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 0u;
     bool isInternal = false;

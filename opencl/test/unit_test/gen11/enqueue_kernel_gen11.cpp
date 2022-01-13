@@ -52,7 +52,7 @@ GEN11TEST_F(Gen11EnqueueTest, givenKernelNotRequiringIndependentForwardProgressW
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()], cmd->getDataDword());
+    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::AgeBased], cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address));
 }
 } // namespace NEO

@@ -246,9 +246,8 @@ cl_int Kernel::initialize() {
     }
 
     setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
-
-    if (kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress && (this->threadArbitrationPolicy < ThreadArbitrationPolicy::RoundRobin)) {
-        setThreadArbitrationPolicy(ThreadArbitrationPolicy::RoundRobin);
+    if (false == kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
+        setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);
     }
     patchBlocksSimdSize();
 

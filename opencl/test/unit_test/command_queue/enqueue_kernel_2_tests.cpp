@@ -752,14 +752,8 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-
-    auto defaultPolicy = HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy();
-
-    if (defaultPolicy >= ThreadArbitrationPolicy::RoundRobin) {
-        EXPECT_EQ(defaultPolicy, static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobin), static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
-    }
+    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 
     pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpNotRequired.mockKernel,
@@ -771,7 +765,8 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-    EXPECT_EQ(defaultPolicy, static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased,
+              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 
     pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpRequired.mockKernel,
@@ -783,12 +778,8 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr,
         nullptr);
     pCommandQueue->flush();
-
-    if (defaultPolicy >= ThreadArbitrationPolicy::RoundRobin) {
-        EXPECT_EQ(defaultPolicy, static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(ThreadArbitrationPolicy::RoundRobin), static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
-    }
+    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
+              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
 }
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
