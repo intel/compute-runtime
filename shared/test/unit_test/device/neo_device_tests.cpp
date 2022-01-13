@@ -102,6 +102,34 @@ TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledTh
     EXPECT_EQ(1u, pDevice->getDeviceInfo().maxParameterSize);
 }
 
+TEST_F(DeviceGetCapsTest,
+       givenImplicitScalingWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
+    DebugManagerStateRestore dbgRestorer;
+
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    pDevice->deviceBitfield = 15;
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    pDevice->initializeCaps();
+    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    pDevice->initializeCaps();
+    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
+
+    DebugManager.flags.EnableWalkerPartition.set(1);
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    pDevice->initializeCaps();
+    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
+
+    DebugManager.flags.EnableWalkerPartition.set(0);
+    DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    pDevice->initializeCaps();
+    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
+}
+
 TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
     DebugManagerStateRestore dbgRestorer;
     {

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"
@@ -76,6 +77,14 @@ void Device::initializeCaps() {
 
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
+
+    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+
+    if (((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
+            getDeviceBitfield(), true))) &&
+        (!isSubDevice()) && (subDeviceCount > 1)) {
+        deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
+    }
 
     if (!areSharedSystemAllocationsAllowed()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
