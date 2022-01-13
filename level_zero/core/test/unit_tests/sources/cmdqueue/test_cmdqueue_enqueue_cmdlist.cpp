@@ -71,10 +71,12 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
         commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->partitionCount);
 
         commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->partitionCount);
     }
 
     void TearDown() override {

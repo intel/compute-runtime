@@ -59,7 +59,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(args.device, threadStartVec, threadDimsVec,
-                                                                        args.isInternal, args.isCooperative, args.isIndirect, args.dispatchInterface);
+                                                                        args.isInternal, args.isCooperative, args.isIndirect, args.dispatchInterface,
+                                                                        args.partitionCount > 1);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -199,7 +200,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     bool requiresGlobalAtomicsUpdate = false;
-    if (ImplicitScalingHelper::isImplicitScalingEnabled(container.getDevice()->getDeviceBitfield(), true)) {
+    if (args.partitionCount > 1) {
         requiresGlobalAtomicsUpdate = container.lastSentUseGlobalAtomics != args.useGlobalAtomics;
         container.lastSentUseGlobalAtomics = args.useGlobalAtomics;
     }
@@ -269,7 +270,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
-    if (ImplicitScalingHelper::isImplicitScalingEnabled(args.device->getDeviceBitfield(), !args.isCooperative) &&
+    if ((args.partitionCount > 1 && !args.isCooperative) &&
         !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
         if (args.eventAddress != 0) {
@@ -440,7 +441,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
                                                                           const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface) {
+                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface,
+                                                                          bool isPartitioned) {
     size_t totalSize = sizeof(WALKER_TYPE);
     totalSize += PreemptionHelper::getPreemptionWaCsSize<Family>(*device);
     totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
@@ -457,7 +459,7 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
         }
     }
 
-    if (ImplicitScalingHelper::isImplicitScalingEnabled(device->getDeviceBitfield(), !isCooperative) &&
+    if ((isPartitioned && !isCooperative) &&
         !isInternal) {
         const bool staticPartitioning = device->getDefaultEngine().commandStreamReceiver->isStaticWorkPartitioningEnabled();
         totalSize += ImplicitScalingDispatch<Family>::getSize(true, staticPartitioning, device->getDeviceBitfield(), groupStart, groupCount);

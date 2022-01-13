@@ -226,7 +226,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         kernel,                                                   //dispatchInterface
         reinterpret_cast<const void *>(pThreadGroupDimensions),   //pThreadGroupDimensions
         commandListPreemptionMode,                                //preemptionMode
-        0,                                                        //partitionCount
+        this->partitionCount,                                     //partitionCount
         isIndirect,                                               //isIndirect
         isPredicate,                                              //isPredicate
         isTimestampEvent,                                         //isTimestampEvent
@@ -238,7 +238,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
-    this->partitionCount = std::max(dispatchKernelArgs.partitionCount, this->partitionCount);
+
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         if (partitionCount > 1) {

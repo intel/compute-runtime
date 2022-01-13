@@ -50,7 +50,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(args.device, threadStartVec, threadDimsVec,
                                                                         args.isInternal, args.isCooperative, args.isIndirect,
-                                                                        args.dispatchInterface);
+                                                                        args.dispatchInterface, false);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
         auto bbEnd = listCmdBufferStream->getSpaceForCmd<MI_BATCH_BUFFER_END>();
         *bbEnd = Family::cmdInitBatchBufferEnd;
@@ -333,7 +333,8 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart,
                                                                           const Vec3<size_t> &groupCount, bool isInternal,
-                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface) {
+                                                                          bool isCooperative, bool isIndirect, DispatchKernelEncoderI *dispatchInterface,
+                                                                          bool isPartitioned) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;

@@ -107,7 +107,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
 
     Vec3<size_t> groupCount{1, 1, 1};
     auto requiredSizeEstimate = EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), {0, 0, 0}, groupCount, false, false, false, kernel.get());
+        device->getNEODevice(), {0, 0, 0}, groupCount, false, false, false, kernel.get(), false);
     auto available = stream->getAvailableSpace();
     stream->getSpace(available - requiredSizeEstimate + 1);
     auto bbEndPosition = stream->getSpace(0);
@@ -251,7 +251,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
     auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get());
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get(), false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
 
@@ -262,7 +262,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
     estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get());
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, false, kernel.get(), false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
@@ -698,7 +698,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
     auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel);
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel, false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
 
@@ -878,7 +878,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
     auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel);
+        device->getNEODevice(), Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), false, false, true, &kernel, false);
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
 

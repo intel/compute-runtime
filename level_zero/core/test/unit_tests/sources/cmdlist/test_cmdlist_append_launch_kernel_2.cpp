@@ -1208,9 +1208,9 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     ze_group_count_t groupCount{1, 1, 1};
 
     auto estimateWithNonCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, false, false, kernel.get());
+        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, false, false, kernel.get(), true);
     auto estimateWithCooperativeKernel = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(
-        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, true, false, kernel.get());
+        device->getNEODevice(), Vec3<size_t>{0, 0, 0}, Vec3<size_t>{1, 1, 1}, false, true, false, kernel.get(), true);
     EXPECT_GT(estimateWithNonCooperativeKernel, estimateWithCooperativeKernel);
 
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
