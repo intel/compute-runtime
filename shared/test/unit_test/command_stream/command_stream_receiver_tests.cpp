@@ -1227,14 +1227,14 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment.incRefInternal();
-        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(executionEnvironment);
-        executionEnvironment.memoryManager.reset(gmockMemoryManager);
+        mockMemoryManager = new MockMemoryManager(executionEnvironment);
+        executionEnvironment.memoryManager.reset(mockMemoryManager);
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, &executionEnvironment, 0u));
         commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
     }
     MockExecutionEnvironment executionEnvironment;
     HardwareInfo hwInfo = *defaultHwInfo;
-    GMockMemoryManager *gmockMemoryManager = nullptr;
+    MockMemoryManager *mockMemoryManager = nullptr;
     std::unique_ptr<MockDevice> device;
     CommandStreamReceiver *commandStreamReceiver = nullptr;
 };
@@ -1276,15 +1276,16 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
+    mockMemoryManager->callBasePopulateOsHandles = false;
+    mockMemoryManager->callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
+    bool runPopulateOsHandlesExpects = false;
+    bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
-            .Times(1)
-            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
+        runPopulateOsHandlesExpects = true;
+        mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(nullptr));
+        runAllocateGraphicsMemoryForNonSvmHostPtrExpects = true;
     }
 
     bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
@@ -1297,21 +1298,30 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
 
     allocation->updateTaskCount(commandStreamReceiver->peekLatestFlushedTaskCount(), commandStreamReceiver->getOsContext().getContextId());
+
+    if (runPopulateOsHandlesExpects) {
+        EXPECT_EQ(1u, mockMemoryManager->populateOsHandlesCalled);
+        EXPECT_EQ(device->getRootDeviceIndex(), mockMemoryManager->populateOsHandlesParamsPassed[0].rootDeviceIndex);
+    }
+    if (runAllocateGraphicsMemoryForNonSvmHostPtrExpects) {
+        EXPECT_EQ(1u, mockMemoryManager->allocateGraphicsMemoryForNonSvmHostPtrCalled);
+    }
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {
     const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
+    mockMemoryManager->callBasePopulateOsHandles = false;
+    mockMemoryManager->callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
+    bool runPopulateOsHandlesExpects = false;
+    bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!gmockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_, device->getRootDeviceIndex()))
-            .Times(1)
-            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
+        runPopulateOsHandlesExpects = true;
+        mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(nullptr));
+        runAllocateGraphicsMemoryForNonSvmHostPtrExpects = true;
     }
 
     bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
@@ -1319,6 +1329,14 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
 
     auto allocation = surface.getAllocation();
     EXPECT_EQ(nullptr, allocation);
+
+    if (runPopulateOsHandlesExpects) {
+        EXPECT_EQ(1u, mockMemoryManager->populateOsHandlesCalled);
+        EXPECT_EQ(device->getRootDeviceIndex(), mockMemoryManager->populateOsHandlesParamsPassed[0].rootDeviceIndex);
+    }
+    if (runAllocateGraphicsMemoryForNonSvmHostPtrExpects) {
+        EXPECT_EQ(1u, mockMemoryManager->allocateGraphicsMemoryForNonSvmHostPtrCalled);
+    }
 }
 
 struct ReducedAddrSpaceCommandStreamReceiverTest : public CreateAllocationForHostSurfaceTest {
@@ -1333,16 +1351,14 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
     if (is32bit) {
         GTEST_SKIP();
     }
+    mockMemoryManager->callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
+    mockMemoryManager->callBasePopulateOsHandles = false;
 
     char memory[8] = {};
     HostPtrSurface surface(memory, sizeof(memory), false);
-
-    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(nullptr));
-
     bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
     EXPECT_FALSE(result);
+    EXPECT_EQ(1u, mockMemoryManager->allocateGraphicsMemoryForNonSvmHostPtrCalled);
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallingEnsureCommandBufferAllocationThenDoNotReallocate) {

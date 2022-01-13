@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
@@ -348,7 +349,7 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     TestCmdQueueCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
-    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, bool, false, (bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {
@@ -368,17 +369,12 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
-                                                   ::testing::_,
-                                                   ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(false));
-
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
     returnValue = commandQueue->synchronize(timeout);
     EXPECT_EQ(returnValue, ZE_RESULT_NOT_READY);
 
     commandQueue->destroy();
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
 }
 using CommandQueuePowerHintTest = Test<ContextFixture>;
 

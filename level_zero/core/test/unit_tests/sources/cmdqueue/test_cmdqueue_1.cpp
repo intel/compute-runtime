@@ -386,7 +386,21 @@ using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>
 
 struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {
     MockMemoryManagerCommandQueueSBA(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
-    MOCK_METHOD2(getInternalHeapBaseAddress, uint64_t(uint32_t rootDeviceIndex, bool useLocalMemory));
+
+    uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) override {
+        getInternalHeapBaseAddressCalled++;
+        getInternalHeapBaseAddressParamsPassed.push_back({rootDeviceIndex, useLocalMemory});
+        return getInternalHeapBaseAddressResult;
+    }
+
+    struct GetInternalHeapBaseAddressParams {
+        uint32_t rootDeviceIndex{};
+        bool useLocalMemory{};
+    };
+
+    uint32_t getInternalHeapBaseAddressCalled = 0u;
+    uint64_t getInternalHeapBaseAddressResult = 0u;
+    StackVec<GetInternalHeapBaseAddressParams, 4> getInternalHeapBaseAddressParamsPassed{};
 };
 
 struct CommandQueueProgramSBATest : public ::testing::Test {
@@ -397,7 +411,7 @@ struct CommandQueueProgramSBATest : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
         }
 
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerCommandQueueSBA>(*executionEnvironment);
+        memoryManager = new MockMemoryManagerCommandQueueSBA(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, rootDeviceIndex);
@@ -432,39 +446,35 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
     auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    bool isaInLocalMemory = !hwHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
-
-    if (isaInLocalMemory) {
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
-            .Times(2);
-
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
-            .Times(0);
-    } else {
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
-            .Times(1); // IOH
-
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
-            .Times(1); // instruction heap
-    }
+    const bool isaInLocalMemory = !hwHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
 
     commandQueue->programStateBaseAddress(0u, true, child, true);
 
+    EXPECT_EQ(2u, memoryManager->getInternalHeapBaseAddressCalled);
+    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[0].rootDeviceIndex);
+    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[1].rootDeviceIndex);
+
     if (isaInLocalMemory) {
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
-            .Times(1); // IOH
-
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
-            .Times(1); // instruction heap
+        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[0].useLocalMemory);
+        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
     } else {
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
-            .Times(0);
-
-        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
-            .Times(2);
+        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[0].useLocalMemory);
+        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
     }
 
     commandQueue->programStateBaseAddress(0u, false, child, true);
+
+    EXPECT_EQ(4u, memoryManager->getInternalHeapBaseAddressCalled);
+    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[2].rootDeviceIndex);
+    EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[3].rootDeviceIndex);
+
+    if (isaInLocalMemory) {
+        EXPECT_TRUE(memoryManager->getInternalHeapBaseAddressParamsPassed[2].useLocalMemory);
+        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[3].useLocalMemory);
+    } else {
+        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[2].useLocalMemory);
+        EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[3].useLocalMemory);
+    }
 
     commandQueue->destroy();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,7 +198,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     uint32_t destructorId = 0u;
 
     struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 8> {
-        MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+        MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {
+            callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
+            callBasePopulateOsHandles = false;
+        }
     };
     struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 7> {
         DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}

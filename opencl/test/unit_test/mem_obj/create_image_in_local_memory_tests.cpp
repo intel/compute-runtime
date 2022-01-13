@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,11 +36,10 @@ class ImageInLocalMemoryTest : public testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&inputPlatformDevice);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(true, *executionEnvironment);
-        executionEnvironment->memoryManager.reset(gmockMemoryManager);
+        mockMemoryManager = new MockMemoryManagerFailFirstAllocation(true, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(mockMemoryManager);
 
-        ON_CALL(*gmockMemoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-            .WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
+        mockMemoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
 
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
         context = std::make_unique<MockContext>(device.get());
@@ -56,7 +55,7 @@ class ImageInLocalMemoryTest : public testing::Test {
 
     void TearDown() override {}
 
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *gmockMemoryManager = nullptr;
+    MockMemoryManagerFailFirstAllocation *mockMemoryManager = nullptr;
     cl_image_desc imageDesc{};
     cl_image_format imageFormat = {};
     std::unique_ptr<MockClDevice> device;
@@ -71,9 +70,6 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
-        .WillRepeatedly(::testing::Invoke(gmockMemoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
-
     std::unique_ptr<Image> image(Image::create(
         context.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, memory, retVal));
@@ -85,7 +81,7 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
     EXPECT_LE(imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes, imgGfxAlloc->getUnderlyingBufferSize());
     EXPECT_EQ(GraphicsAllocation::AllocationType::IMAGE, imgGfxAlloc->getAllocationType());
     EXPECT_FALSE(imgGfxAlloc->getDefaultGmm()->useSystemMemoryPool);
-    EXPECT_LT(GmmHelper::canonize(gmockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(gmockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());
+    EXPECT_LT(GmmHelper::canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());
     EXPECT_EQ(0llu, imgGfxAlloc->getGpuBaseAddress());
 }

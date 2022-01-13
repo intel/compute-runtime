@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,11 +135,6 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t root
     getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
     bool useLocalMemory = !allocationData.flags.useSystemMemory && this->localMemorySupported[rootDeviceIndex];
     return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
-}
-
-GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
-    allocateGraphicsMemoryForNonSvmHostPtrCalled = true;
-    return OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 }
 
 GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {

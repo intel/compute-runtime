@@ -351,13 +351,12 @@ TEST_F(ContextMakeMemoryResidentTests,
                                               &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -381,16 +380,14 @@ TEST_F(ContextMakeMemoryResidentTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize + 1, currentSize);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -415,16 +412,14 @@ TEST_F(ContextMakeMemoryResidentTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
     EXPECT_EQ(previousSize, currentSize);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -448,8 +443,8 @@ TEST_F(ContextMakeMemoryResidentTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::FAILED));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::FAILED;
+
     res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 
@@ -509,8 +504,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -546,8 +541,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
     EXPECT_EQ(mockPageFaultManager->migratedAddress, ptr);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -560,8 +554,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -597,8 +591,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
     EXPECT_EQ(mockPageFaultManager->migratedAddress, nullptr);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -611,8 +604,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -651,8 +644,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
     EXPECT_EQ(mockPageFaultManager->migratedAddress, ptr);
 
-    EXPECT_CALL(*mockMemoryInterface, evict)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
     res = context->evictMemory(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -665,8 +657,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
     size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident)
-        .WillRepeatedly(testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
     ze_result_t res = context->makeMemoryResident(device, ptr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

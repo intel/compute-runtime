@@ -147,7 +147,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
         executionEnvironment = pDevice->getExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-        gmmMem = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
+        gmmMem = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
@@ -157,7 +157,7 @@ struct WddmInstrumentationGmmFixture : DeviceFixture {
     }
 
     WddmMock *wddm;
-    GmockGmmMemory *gmmMem = nullptr;
+    MockGmmMemoryBase *gmmMem = nullptr;
     ExecutionEnvironment *executionEnvironment;
 };
 

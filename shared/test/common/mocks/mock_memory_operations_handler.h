@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "gmock/gmock.h"
 
@@ -28,16 +29,11 @@ class MockMemoryOperationsHandler : public MemoryOperationsHandler {
 class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandlerTests() {}
-    MOCK_METHOD(MemoryOperationsStatus, makeResident,
-                (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations), (override));
-    MOCK_METHOD(MemoryOperationsStatus, evict,
-                (Device * device, GraphicsAllocation &gfxAllocation), (override));
-    MOCK_METHOD(MemoryOperationsStatus, isResident,
-                (Device * device, GraphicsAllocation &gfxAllocation), (override));
-    MOCK_METHOD(MemoryOperationsStatus, makeResidentWithinOsContext,
-                (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable), (override));
-    MOCK_METHOD(MemoryOperationsStatus, evictWithinOsContext,
-                (OsContext * osContext, GraphicsAllocation &gfxAllocation), (override));
+    ADDMETHOD_NOBASE(makeResident, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations));
+    ADDMETHOD_NOBASE(evict, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, GraphicsAllocation &gfxAllocation));
+    ADDMETHOD_NOBASE(isResident, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (Device * device, GraphicsAllocation &gfxAllocation));
+    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
+    ADDMETHOD_NOBASE(evictWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::UNSUPPORTED, (OsContext * osContext, GraphicsAllocation &gfxAllocation));
 };
 
 class MockMemoryOperations : public MemoryOperationsHandler {

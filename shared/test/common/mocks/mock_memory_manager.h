@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "gmock/gmock.h"
 
@@ -134,7 +135,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
-    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
 
     bool isLimitedGPU(uint32_t rootDeviceIndex) override {
         return limitedGPU;
@@ -160,7 +160,33 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     StackVec<CopyMemoryToAllocationBanksParams, 2> copyMemoryToAllocationBanksParamsPassed{};
     bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override;
 
+    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {
+        populateOsHandlesCalled++;
+        populateOsHandlesParamsPassed.push_back({handleStorage, rootDeviceIndex});
+        if (callBasePopulateOsHandles) {
+            populateOsHandlesResult = OsAgnosticMemoryManager::populateOsHandles(handleStorage, rootDeviceIndex);
+        }
+        return populateOsHandlesResult;
+    }
+
+    struct PopulateOsHandlesParams {
+        OsHandleStorage handleStorage{};
+        uint32_t rootDeviceIndex{};
+    };
+
+    StackVec<PopulateOsHandlesParams, 1> populateOsHandlesParamsPassed{};
+
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override {
+        allocateGraphicsMemoryForNonSvmHostPtrCalled++;
+        if (callBaseAllocateGraphicsMemoryForNonSvmHostPtr) {
+            allocateGraphicsMemoryForNonSvmHostPtrResult = OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+        }
+        return allocateGraphicsMemoryForNonSvmHostPtrResult;
+    }
+
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
+    uint32_t populateOsHandlesCalled = 0u;
+    uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
@@ -182,7 +208,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool preferCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
     bool allocate32BitGraphicsMemoryImplCalled = false;
-    bool allocateGraphicsMemoryForNonSvmHostPtrCalled = false;
     bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
@@ -196,19 +221,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool isMockEventPoolCreateMemoryManager = false;
     bool limitedGPU = false;
     bool returnFakeAllocation = false;
+    bool callBasePopulateOsHandles = true;
+    bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
     MemAdviseFlags memAdviseFlags{};
-};
-
-class GMockMemoryManager : public MockMemoryManager {
-  public:
-    GMockMemoryManager(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    MOCK_METHOD2(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex));
-    MOCK_METHOD1(allocateGraphicsMemoryForNonSvmHostPtr, GraphicsAllocation *(const AllocationData &));
-
-    MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage, rootDeviceIndex); }
+    MemoryManager::AllocationStatus populateOsHandlesResult = MemoryManager::AllocationStatus::Success;
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtrResult = nullptr;
 };
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
@@ -290,12 +310,33 @@ class FailMemoryManager : public MockMemoryManager {
     int32_t failedAllocationsCount = 0;
 };
 
-class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
+class MockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
-    GMockMemoryManagerFailFirstAllocation(bool enableLocalMemory, const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(enableLocalMemory, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    GMockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : GMockMemoryManagerFailFirstAllocation(false, executionEnvironment){};
+    MockMemoryManagerFailFirstAllocation(bool enableLocalMemory, const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(enableLocalMemory, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
+    MockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : MockMemoryManagerFailFirstAllocation(false, executionEnvironment){};
 
-    MOCK_METHOD2(allocateGraphicsMemoryInDevicePool, GraphicsAllocation *(const AllocationData &, AllocationStatus &));
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
+        allocateGraphicsMemoryInDevicePoolCalled++;
+        if (returnNullptr) {
+            returnNullptr = false;
+            return nullptr;
+        }
+        if (returnAllocateNonSystemGraphicsMemoryInDevicePool) {
+            returnAllocateNonSystemGraphicsMemoryInDevicePool = false;
+            return allocateNonSystemGraphicsMemoryInDevicePool(allocationData, status);
+        }
+        if (returnBaseAllocateGraphicsMemoryInDevicePool) {
+            return baseAllocateGraphicsMemoryInDevicePool(allocationData, status);
+        }
+        return allocateGraphicsMemoryInDevicePoolResult;
+    }
+
+    uint32_t allocateGraphicsMemoryInDevicePoolCalled = 0u;
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePoolResult = nullptr;
+    bool returnNullptr = false;
+    bool returnBaseAllocateGraphicsMemoryInDevicePool = false;
+    bool returnAllocateNonSystemGraphicsMemoryInDevicePool = false;
+
     GraphicsAllocation *baseAllocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
         return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }

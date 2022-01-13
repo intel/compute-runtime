@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,13 +73,41 @@ struct KmdNotifyTests : public ::testing::Test {
       public:
         MockKmdNotifyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
-        MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+
+        bool waitForFlushStamp(FlushStamp &flushStampToWait) override {
+            waitForFlushStampCalled++;
+            waitForFlushStampParamsPassed.push_back({flushStampToWait});
+            return waitForFlushStampResult;
+        }
+
+        struct WaitForFlushStampParams {
+            FlushStamp flushStampToWait{};
+        };
+
+        uint32_t waitForFlushStampCalled = 0u;
+        bool waitForFlushStampResult = true;
+        StackVec<WaitForFlushStampParams, 1> waitForFlushStampParamsPassed{};
+
+        bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+            waitForCompletionWithTimeoutCalled++;
+            waitForCompletionWithTimeoutParamsPassed.push_back({enableTimeout, timeoutMs, taskCountToWait});
+            return waitForCompletionWithTimeoutResult;
+        }
+
+        struct WaitForCompletionWithTimeoutParams {
+            bool enableTimeout{};
+            int64_t timeoutMs{};
+            uint32_t taskCountToWait{};
+        };
+
+        uint32_t waitForCompletionWithTimeoutCalled = 0u;
+        bool waitForCompletionWithTimeoutResult = true;
+        StackVec<WaitForCompletionWithTimeoutParams, 2> waitForCompletionWithTimeoutParamsPassed{};
     };
 
     template <typename Family>
     MockKmdNotifyCsr<Family> *createMockCsr() {
-        auto csr = new ::testing::NiceMock<MockKmdNotifyCsr<Family>>(*device->executionEnvironment, device->getDeviceBitfield());
+        auto csr = new MockKmdNotifyCsr<Family>(*device->executionEnvironment, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(csr);
 
         mockKmdNotifyHelper = new MockKmdNotifyHelper(&device->getHardwareInfo().capabilityTable.kmdNotifyProperties);
@@ -100,19 +128,23 @@ struct KmdNotifyTests : public ::testing::Test {
 HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTryCpuPolling) {
     auto csr = createMockCsr<FamilyType>();
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(2, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
     overrideKmdNotifyParams(false, 0, false, 0, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-    EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
+    EXPECT_EQ(0u, csr->waitForFlushStampCalled);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(0, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndKmdWait) {
@@ -120,40 +152,57 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     *csr->getTagAddress() = taskCountToWait - 1;
 
     ::testing::InSequence is;
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
-    EXPECT_CALL(*csr, waitForFlushStamp(flushStampToWait)).Times(1).WillOnce(::testing::Return(true));
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
+    csr->waitForCompletionWithTimeoutResult = false;
 
     //we have unrecoverable for this case, this will throw.
     EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false), std::exception);
+    EXPECT_EQ(1u, csr->waitForFlushStampCalled);
+    EXPECT_EQ(flushStampToWait, csr->waitForFlushStampParamsPassed[0].flushStampToWait);
+
+    EXPECT_EQ(2u, csr->waitForCompletionWithTimeoutCalled);
+
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(2, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
+
+    EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[1].enableTimeout);
+    EXPECT_EQ(0, csr->waitForCompletionWithTimeoutParamsPassed[1].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[1].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndDontCallKmdWait) {
     auto csr = createMockCsr<FamilyType>();
 
     ::testing::InSequence is;
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-    EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
+    EXPECT_EQ(0u, csr->waitForFlushStampCalled);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(2, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenDefaultArgumentWhenWaitUntilCompleteIsCalledThenDisableQuickKmdSleep) {
     auto csr = createMockCsr<FamilyType>();
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenEnabledQuickSleepWhenWaitUntilCompleteIsCalledThenChangeDelayValue) {
     auto csr = createMockCsr<FamilyType>();
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, true);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSleepRequestIsCalledThenUseBaseDelayValue) {
@@ -161,9 +210,11 @@ HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSl
     auto csr = createMockCsr<FamilyType>();
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, true);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
@@ -176,10 +227,12 @@ HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) 
     auto csr = createMockCsr<FamilyType>();
 
     EXPECT_TRUE(device->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, ::testing::_, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
-    EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0, false, false);
+    EXPECT_EQ(0u, csr->waitForFlushStampCalled);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(taskCountToWait, csr->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrideQuickSleepRequest) {
@@ -187,12 +240,13 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrid
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_, expectedDelay, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
     int64_t timeSinceLastWait = mockKmdNotifyHelper->properties->delayQuickKmdSleepForSporadicWaitsMicroseconds + 1;
 
     mockKmdNotifyHelper->lastWaitForCompletionTimestampUs = mockKmdNotifyHelper->getMicrosecondsSinceEpoch() - timeSinceLastWait;
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOverrideQuickSleepRequest) {
@@ -200,33 +254,41 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOver
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_, expectedDelay, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenPowerSavingModeIsRequestedThenTimeoutIsEnabled) {
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, true);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(1, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCallWaitThenTimeoutIsEnabled) {
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
+
     cmdQ->throttle = QueueThrottle::LOW;
     cmdQ->waitUntilComplete(1, {}, 1, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(1, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButThereIsNoFlushStampeAndCallWaitThenTimeoutIsDisabled) {
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
     cmdQ->throttle = QueueThrottle::LOW;
     cmdQ->waitUntilComplete(1, {}, 0, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(0, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIsDisabledThenDontOverrideQuickSleepRequest) {
@@ -234,9 +296,10 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_, expectedDelay, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultiplyTimeout) {
@@ -245,9 +308,10 @@ HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultipl
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
-
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountLowerThanHwTagWhenWaitCalledThenDontMultiplyTimeout) {
@@ -256,9 +320,10 @@ HWTEST_F(KmdNotifyTests, givenTaskCountLowerThanHwTagWhenWaitCalledThenDontMulti
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
-
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
+    EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
 
 HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpdateWaitTimestamp) {

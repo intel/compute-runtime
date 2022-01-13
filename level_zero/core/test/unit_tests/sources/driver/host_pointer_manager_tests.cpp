@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -390,12 +390,8 @@ TEST_F(HostPointerManagerTest, givenNoPointerRegisteredWhenAllocationCreationFai
 TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddressThenAllocationMadeResident) {
     void *testPtr = heapPointer;
 
-    EXPECT_CALL(*mockMemoryInterface, makeResident(_, _))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
-    EXPECT_CALL(*mockMemoryInterface, evict(_, _))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(NEO::MemoryOperationsStatus::SUCCESS));
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
 
     auto result = context->makeMemoryResident(device, testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
@@ -414,6 +410,9 @@ TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddr
 
     result = context->evictMemory(device, testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(1u, mockMemoryInterface->makeResidentCalled);
+    EXPECT_EQ(1u, mockMemoryInterface->evictCalled);
 }
 
 TEST_F(HostPointerManagerTest, givenMisalignedPointerRegisteredWhenGettingRelativeOffsetAddressThenRetrieveMisalignedPointerAsBaseAddress) {

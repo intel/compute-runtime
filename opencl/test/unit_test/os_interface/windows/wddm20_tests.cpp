@@ -571,45 +571,42 @@ HWTEST_F(Wddm20InstrumentationTest, WhenConfiguringDeviceAddressSpaceThenTrueIsR
     uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                             ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
                             : 0;
-    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(adapterHandle,
-                                                     deviceHandle,
-                                                     wddm->getGdi()->escape.mFunc,
-                                                     maxAddr,
-                                                     FtrL3IACoherency))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(true));
+
     wddm->init();
+    EXPECT_EQ(1u, gmmMem->configureDeviceAddressSpaceCalled);
+    EXPECT_EQ(adapterHandle, gmmMem->configureDeviceAddressSpaceParamsPassed[0].hAdapter);
+    EXPECT_EQ(deviceHandle, gmmMem->configureDeviceAddressSpaceParamsPassed[0].hDevice);
+    EXPECT_EQ(wddm->getGdi()->escape.mFunc, gmmMem->configureDeviceAddressSpaceParamsPassed[0].pfnEscape);
+    EXPECT_EQ(maxAddr, gmmMem->configureDeviceAddressSpaceParamsPassed[0].svmSize);
+    EXPECT_EQ(FtrL3IACoherency, gmmMem->configureDeviceAddressSpaceParamsPassed[0].bdwL3Coherency);
 }
 
 TEST_F(Wddm20InstrumentationTest, GivenNoAdapterWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
     auto gdi = std::make_unique<Gdi>();
     wddm->resetGdi(gdi.release());
-    EXPECT_CALL(*gmmMem,
-                configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-        .Times(0);
+
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);
+    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
 }
 
 TEST_F(Wddm20InstrumentationTest, GivenNoDeviceWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
     wddm->device = static_cast<D3DKMT_HANDLE>(0);
-    EXPECT_CALL(*gmmMem,
-                configureDeviceAddressSpace(::testing::_, static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_))
-        .Times(0);
+
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);
+    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
 }
 
 TEST_F(Wddm20InstrumentationTest, GivenNoEscFuncWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
     wddm->getGdi()->escape = static_cast<PFND3DKMT_ESCAPE>(nullptr);
-    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_, ::testing::_, static_cast<PFND3DKMT_ESCAPE>(nullptr), ::testing::_,
-                                                     ::testing::_))
-        .Times(0);
+
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);
+    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
 }
 
 TEST_F(Wddm20Tests, WhenGettingMaxApplicationAddressThen32Or64BitIsCorrectlyReturned) {
@@ -1337,41 +1334,26 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
 
-    auto gmockGmmMemory = new ::testing::NiceMock<GmockGmmMemory>(getGmmClientContext());
-    ON_CALL(*gmockGmmMemory, setDeviceInfo(::testing::_))
-        .WillByDefault(::testing::Return(false));
-    EXPECT_CALL(*gmockGmmMemory, configureDeviceAddressSpace(::testing::_,
-                                                             ::testing::_,
-                                                             ::testing::_,
-                                                             ::testing::_,
-                                                             ::testing::_))
-        .Times(0);
+    auto mockGmmMemory = new MockGmmMemoryBase(getGmmClientContext());
+    mockGmmMemory->setDeviceInfoResult = false;
 
-    wddm->gmmMemory.reset(gmockGmmMemory);
+    wddm->gmmMemory.reset(mockGmmMemory);
 
     wddm->init();
+    EXPECT_EQ(0u, mockGmmMemory->configureDeviceAddressSpaceCalled);
 }
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAddressSpaceThenDontObtainMinAddress) {
     if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
-    auto gmmMemory = new ::testing::NiceMock<GmockGmmMemory>(getGmmClientContext());
+    auto gmmMemory = new MockGmmMemoryBase(getGmmClientContext());
     wddm->gmmMemory.reset(gmmMemory);
-    ON_CALL(*gmmMemory, configureDeviceAddressSpace(::testing::_,
-                                                    ::testing::_,
-                                                    ::testing::_,
-                                                    ::testing::_,
-                                                    ::testing::_))
-        .WillByDefault(::testing::Return(true));
-
-    EXPECT_CALL(*gmmMemory,
-                getInternalGpuVaRangeLimit())
-        .Times(0);
 
     wddm->init();
 
     EXPECT_EQ(NEO::windowsMinAddress, wddm->getWddmMinAddress());
+    EXPECT_EQ(0u, gmmMemory->getInternalGpuVaRangeLimitCalled);
 }
 
 struct GdiWithMockedCloseFunc : public MockGdi {
