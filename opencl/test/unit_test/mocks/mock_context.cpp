@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,48 +130,6 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
     }
 
     setupContextType();
-}
-
-SchedulerKernel &MockContext::getSchedulerKernel() {
-    if (schedulerBuiltIn->pKernel) {
-        return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-    }
-
-    auto initializeSchedulerProgramAndKernel = [&] {
-        cl_int retVal = CL_SUCCESS;
-        auto clDevice = getDevice(0);
-        auto src = SchedulerKernel::loadSchedulerKernel(&clDevice->getDevice());
-
-        auto program = Program::createBuiltInFromGenBinary(this,
-                                                           devices,
-                                                           src.resource.data(),
-                                                           src.resource.size(),
-                                                           &retVal);
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-        DEBUG_BREAK_IF(!program);
-
-        retVal = program->processGenBinary(*clDevice);
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-
-        schedulerBuiltIn->pProgram = program;
-
-        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, clDevice->getRootDeviceIndex());
-        DEBUG_BREAK_IF(!kernelInfo);
-
-        schedulerBuiltIn->pKernel = Kernel::create<MockSchedulerKernel>(
-            schedulerBuiltIn->pProgram,
-            *kernelInfo,
-            *clDevice,
-            &retVal);
-
-        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
-
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-    };
-    std::call_once(schedulerBuiltIn->programIsInitialized, initializeSchedulerProgramAndKernel);
-
-    UNRECOVERABLE_IF(schedulerBuiltIn->pKernel == nullptr);
-    return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
 MockDefaultContext::MockDefaultContext() : MockDefaultContext(false) {}

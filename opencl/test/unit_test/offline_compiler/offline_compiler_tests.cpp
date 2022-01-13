@@ -816,6 +816,7 @@ TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
 
     delete pOfflineCompiler;
 }
+
 TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",

@@ -1029,29 +1029,6 @@ TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThr
     EXPECT_TRUE(caughtException);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGettingSchedulerKernelThenCorrectKernelReturned) {
-    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
-    SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
-    std::string name = SchedulerKernel::schedulerName;
-    EXPECT_EQ(name, schedulerKernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGetttingSchedulerKernelForSecondTimeThenReuseKernel) {
-    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
-
-    SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
-
-    Program *program = schedulerKernel.getProgram();
-    EXPECT_NE(nullptr, program);
-
-    SchedulerKernel &schedulerKernelSecond = pContext->getSchedulerKernel();
-
-    Program *program2 = schedulerKernelSecond.getProgram();
-
-    EXPECT_EQ(&schedulerKernel, &schedulerKernelSecond);
-    EXPECT_EQ(program, program2);
-}
-
 TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {
     auto &builtIns = *pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder dispatchInfoBuilder{builtIns, *pClDevice};

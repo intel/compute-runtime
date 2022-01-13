@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ class MemObj;
 class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
-class SchedulerKernel;
 class Program;
 class Platform;
 
@@ -167,8 +166,6 @@ class Context : public BaseObject<_cl_context> {
 
     ContextType peekContextType() const { return contextType; }
 
-    MOCKABLE_VIRTUAL SchedulerKernel &getSchedulerKernel();
-
     bool isDeviceAssociated(const ClDevice &clDevice) const;
     ClDevice *getSubDeviceByIndex(uint32_t subDeviceIndex) const;
 
@@ -212,7 +209,6 @@ class Context : public BaseObject<_cl_context> {
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
     ClDeviceVector devices;
     ContextDestructorCallbacks destructorCallbacks;
-    std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
 
     const cl_context_properties *properties = nullptr;
     size_t numProperties = 0u;

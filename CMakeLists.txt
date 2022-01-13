@@ -747,7 +747,6 @@ set(BUILTINS_BINARIES_BINDFUL_LIB_NAME "builtins_binaries_bindful")
 set(BUILTINS_BINARIES_BINDLESS_LIB_NAME "builtins_binaries_bindless")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 set(BUILTINS_VME_LIB_NAME "builtins_vme")
-set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
 if(WIN32)
   set(NEO_EXTRA_LIBS Ws2_32)

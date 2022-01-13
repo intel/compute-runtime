@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,30 +170,6 @@ IndirectHeap *DeviceQueueHw<GfxFamily>::getIndirectHeap(IndirectHeap::Type type)
         heaps[type]->getSpace(colorCalcStateSize);
     }
     return heaps[type];
-}
-
-template <typename GfxFamily>
-size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &scheduler) {
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    size_t offset = dshBuffer->getUnderlyingBufferSize() - scheduler.getCurbeSize() - 4096; // Page size padding
-
-    auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());
-    igilCmdQueue->m_controls.m_SchedulerDSHOffset = (uint32_t)offset;
-    igilCmdQueue->m_controls.m_SchedulerConstantBufferSize = (uint32_t)scheduler.getCurbeSize();
-
-    return offset;
-}
-
-template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh, bool isCcsUsed) {
-    GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(commandStream,
-                                                    *this,
-                                                    preemptionMode,
-                                                    scheduler,
-                                                    ssh,
-                                                    dsh,
-                                                    isCcsUsed);
-    return;
 }
 
 template <typename GfxFamily>

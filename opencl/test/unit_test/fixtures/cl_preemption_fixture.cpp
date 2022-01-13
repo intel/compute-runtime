@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
 #include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

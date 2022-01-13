@@ -19,7 +19,6 @@
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/block_kernel_manager.h"
-#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -546,11 +545,6 @@ class MockParentKernel : public Kernel {
 
     MockProgram *mockProgram;
     KernelInfo *mockKernelInfo = nullptr;
-};
-
-class MockSchedulerKernel : public SchedulerKernel {
-  public:
-    MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg) : SchedulerKernel(programArg, kernelInfoArg, clDeviceArg){};
 };
 
 class MockDebugKernel : public MockKernel {

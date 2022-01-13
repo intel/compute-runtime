@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,17 +17,11 @@ set(MSVC_DEF_ADDITIONAL_EXPORTS "")
 set(OPENCL_RUNTIME_PROJECTS_FOLDER "opencl runtime")
 set(OPENCL_BUILTINS_PROJECTS_FOLDER "built_ins")
 
-if(NOT TARGET ${BIKSIM_LIB_NAME})
-  add_subdirectory(builtin_kernels_simulation)
-endif()
-
-hide_subdir(builtin_kernels_simulation)
 hide_subdir(dll)
 
 add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
             ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
             ${CMAKE_CURRENT_SOURCE_DIR}/enable_cores.cmake
-            $<TARGET_OBJECTS:${BIKSIM_LIB_NAME}>
 )
 
 add_subdirectories()
@@ -117,11 +111,6 @@ if(${GENERATE_EXECUTABLE})
        $<TARGET_OBJECTS:${BUILTINS_VME_LIB_NAME}>
        $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
   )
-  if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
-    list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS
-         $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
-    )
-  endif()
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)
     list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)
@@ -211,9 +200,7 @@ endif()
 create_project_source_tree(${NEO_STATIC_LIB_NAME})
 
 if(UNIX AND NOT (TARGET clang-tidy))
-  add_custom_target(clang-tidy
-                    DEPENDS scheduler
-  )
+  add_custom_target(clang-tidy)
   add_custom_command(
                      TARGET clang-tidy
                      POST_BUILD
@@ -222,4 +209,3 @@ if(UNIX AND NOT (TARGET clang-tidy))
                      WORKING_DIRECTORY ${NEO_SOURCE_DIR}
   )
 endif()
-

@@ -22,7 +22,6 @@ class Device;
 class Kernel;
 class Event;
 struct MultiDispatchInfo;
-class SchedulerKernel;
 class HwTimeStamps;
 class TagNodeBase;
 

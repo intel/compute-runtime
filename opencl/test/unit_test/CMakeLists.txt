@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,7 +22,6 @@ ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
 add_custom_target(prepare_test_kernels_for_ocl)
-add_dependencies(prepare_test_kernels_for_ocl ${SCHEDULER_BINARY_LIB_NAME})
 add_dependencies(prepare_test_kernels_for_ocl ${BUILTINS_BINARIES_BINDFUL_LIB_NAME})
 add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
@@ -63,11 +62,6 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:neo_shared_mocks>
     $<TARGET_OBJECTS:neo_unit_tests_config>
 )
-if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
-  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
-       $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
-  )
-endif()
 
 add_executable(igdrcl_tests
                ${NEO_IGDRCL_TESTS__TARGET_OBJECTS}

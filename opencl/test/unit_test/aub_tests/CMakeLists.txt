@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,11 +20,6 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
      $<TARGET_OBJECTS:neo_shared_mocks>
      $<TARGET_OBJECTS:neo_aub_tests_config>
 )
-if(TARGET ${SCHEDULER_BINARY_LIB_NAME})
-  list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
-       $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
-  )
-endif()
 
 if(DEFINED AUB_STREAM_PROJECT_NAME)
   list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)

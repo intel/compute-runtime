@@ -23,7 +23,6 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/block_kernel_manager.h"
-#include "opencl/source/scheduler/scheduler_kernel.h"
 
 #include <cstring>
 
@@ -126,10 +125,6 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
 
         maxBindingTableCount = std::max(maxBindingTableCount, static_cast<uint32_t>(pBlockInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries));
     }
-
-    SchedulerKernel &scheduler = kernel.getContext().getSchedulerKernel();
-
-    totalSize += getSizeRequiredSSH(scheduler);
 
     totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
     totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);

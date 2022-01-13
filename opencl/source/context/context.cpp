@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/source/scheduler/scheduler_kernel.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -44,7 +43,6 @@ Context::Context(
     contextCallback = funcNotify;
     userData = data;
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
-    schedulerBuiltIn = std::make_unique<BuiltInKernel>();
 }
 
 Context::~Context() {
@@ -69,10 +67,6 @@ Context::~Context() {
     for (auto &device : devices) {
         device->decRefInternal();
     }
-    delete static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-    delete schedulerBuiltIn->pProgram;
-    schedulerBuiltIn->pKernel = nullptr;
-    schedulerBuiltIn->pProgram = nullptr;
 }
 
 cl_int Context::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
@@ -412,48 +406,6 @@ cl_int Context::getSupportedImageFormats(
         *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
     }
     return CL_SUCCESS;
-}
-
-SchedulerKernel &Context::getSchedulerKernel() {
-    if (schedulerBuiltIn->pKernel) {
-        return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
-    }
-
-    auto initializeSchedulerProgramAndKernel = [&] {
-        cl_int retVal = CL_SUCCESS;
-        auto clDevice = getDevice(0);
-        auto src = SchedulerKernel::loadSchedulerKernel(&clDevice->getDevice());
-
-        auto program = Program::createBuiltInFromGenBinary(this,
-                                                           devices,
-                                                           src.resource.data(),
-                                                           src.resource.size(),
-                                                           &retVal);
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-        DEBUG_BREAK_IF(!program);
-
-        retVal = program->processGenBinary(*clDevice);
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-
-        schedulerBuiltIn->pProgram = program;
-
-        auto kernelInfo = schedulerBuiltIn->pProgram->getKernelInfo(SchedulerKernel::schedulerName, clDevice->getRootDeviceIndex());
-        DEBUG_BREAK_IF(!kernelInfo);
-
-        schedulerBuiltIn->pKernel = Kernel::create<SchedulerKernel>(
-            schedulerBuiltIn->pProgram,
-            *kernelInfo,
-            *clDevice,
-            &retVal);
-
-        UNRECOVERABLE_IF(schedulerBuiltIn->pKernel->getScratchSize() != 0);
-
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-    };
-    std::call_once(schedulerBuiltIn->programIsInitialized, initializeSchedulerProgramAndKernel);
-
-    UNRECOVERABLE_IF(schedulerBuiltIn->pKernel == nullptr);
-    return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
 bool Context::isDeviceAssociated(const ClDevice &clDevice) const {
