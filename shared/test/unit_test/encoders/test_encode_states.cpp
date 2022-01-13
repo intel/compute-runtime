@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -288,7 +288,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
 
     STATE_BASE_ADDRESS sba;
-    EncodeStateBaseAddress<FamilyType>::encode(*cmdContainer.get(), sba);
+    EncodeStateBaseAddress<FamilyType>::encode(*cmdContainer.get(), sba, false);
 
     auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
@@ -318,7 +318,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
     cmdContainer->dirtyHeaps = 0;
 
     STATE_BASE_ADDRESS sba;
-    EncodeStateBaseAddress<FamilyType>::encode(*cmdContainer.get(), sba);
+    EncodeStateBaseAddress<FamilyType>::encode(*cmdContainer.get(), sba, false);
 
     auto dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);

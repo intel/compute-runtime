@@ -213,7 +213,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         auto gmmHelper = container.getDevice()->getGmmHelper();
         uint32_t statelessMocsIndex =
             args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-        EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, args.useGlobalAtomics);
+        EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, args.useGlobalAtomics, args.partitionCount > 1);
         container.setDirtyStateForAllHeaps(false);
         args.requiresUncachedMocs = false;
     }
@@ -473,17 +473,15 @@ void EncodeStateBaseAddress<Family>::setIohAddressForDebugger(NEO::Debugger::Sba
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd) {
+void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, bool multiOsContextCapable) {
     auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, false);
+    EncodeStateBaseAddress<Family>::encode(container, sbaCmd, statelessMocsIndex, false, multiOsContextCapable);
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics) {
+void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics, bool multiOsContextCapable) {
     auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    bool multiOsContextCapable =
-        ImplicitScalingHelper::isImplicitScalingEnabled(container.getDevice()->getDeviceBitfield(), true);
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(
         &sbaCmd,

@@ -101,6 +101,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     clearCommandsToPatch();
     commandListSLMEnabled = false;
 
+    if (device->isImplicitScalingCapable() && !this->internalUsage) {
+        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+    } else {
+        this->partitionCount = 1;
+    }
+
     if (!isCopyOnly()) {
         if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
             programStateBaseAddress(commandContainer, false);
@@ -113,11 +119,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
     }
     this->ownedPrivateAllocations.clear();
-    if (device->isImplicitScalingCapable() && !this->internalUsage) {
-        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
-    } else {
-        this->partitionCount = 1;
-    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -129,6 +130,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->engineGroupType = engineGroupType;
     this->flags = flags;
+
+    if (device->isImplicitScalingCapable() && !this->internalUsage) {
+        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+    }
 
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
         this->isFlushTaskSubmissionEnabled = NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
@@ -149,10 +154,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
             commandContainer.setDirtyStateForAllHeaps(false);
             programThreadArbitrationPolicy(device);
         }
-    }
-
-    if (device->isImplicitScalingCapable() && !this->internalUsage) {
-        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
     }
 
     return returnType;
@@ -2321,7 +2322,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
     STATE_BASE_ADDRESS sba;
-    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba);
+    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba, this->partitionCount > 1);
     if (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger()) {
         NEO::Debugger::SbaAddresses sbaAddresses = {};
         sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();

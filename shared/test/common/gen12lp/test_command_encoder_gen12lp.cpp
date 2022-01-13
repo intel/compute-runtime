@@ -80,7 +80,7 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
 
     {
         STATE_BASE_ADDRESS sba;
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba);
+        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -94,7 +94,7 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
         static_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->engineType = aub_stream::ENGINE_CCS;
 
         STATE_BASE_ADDRESS sba;
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba);
+        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba, false);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
