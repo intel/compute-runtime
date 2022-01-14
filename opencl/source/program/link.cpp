@@ -170,7 +170,7 @@ cl_int Program::link(
                     if (kernelDebugDataNotified[rootDeviceIndex]) {
                         continue;
                     }
-                    processDebugData(rootDeviceIndex);
+                    createDebugData(rootDeviceIndex);
                     for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
                         device->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
                                                                                 kernelInfo->kernelDescriptor.kernelMetadata.kernelName,

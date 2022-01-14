@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
@@ -173,7 +174,7 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int getSource(std::string &binary) const;
 
-    void processDebugData(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void processDebugData(uint32_t rootDeviceIndex);
 
     void updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString, const size_t errorStringSize);
 
@@ -282,6 +283,10 @@ class Program : public BaseObject<_cl_program> {
         this->context = pContext;
     }
 
+    void createDebugData(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
+    Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
+
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
@@ -350,6 +355,7 @@ class Program : public BaseObject<_cl_program> {
 
         std::unique_ptr<char[]> packedDeviceBinary;
         size_t packedDeviceBinarySize = 0U;
+        ProgramInfo::GlobalSurfaceInfo constStringSectionData;
     };
 
     std::vector<BuildInfo> buildInfos;

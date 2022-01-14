@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include <vector>
 
 namespace NEO {
+class GraphicsAllocation;
 namespace Debug {
 struct Segments {
     struct Segment {
@@ -23,12 +24,15 @@ struct Segments {
     };
     using CPUSegment = Segment;
     using GPUSegment = Segment;
+    using KernelNameIsaPairT = std::pair<std::string_view, GraphicsAllocation *>;
     using KernelNameToSegmentMap = std::unordered_map<std::string, GPUSegment>;
 
     GPUSegment varData;
     GPUSegment constData;
     CPUSegment stringData;
     KernelNameToSegmentMap nameToSegMap;
+    Segments();
+    Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaPairT> &kernels);
 };
 
 class DebugZebinCreator {

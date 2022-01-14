@@ -440,31 +440,12 @@ ModuleImp::~ModuleImp() {
 }
 
 NEO::Debug::Segments ModuleImp::getZebinSegments() {
-    NEO::Debug::Segments segments;
-
-    auto varBuffer = translationUnit->globalVarBuffer;
-    if (varBuffer) {
-        segments.varData = {varBuffer->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(varBuffer->getUnderlyingBuffer()), varBuffer->getUnderlyingBufferSize()}};
-    }
-
-    auto constBuffer = translationUnit->globalConstBuffer;
-    if (constBuffer) {
-        segments.constData = {constBuffer->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(constBuffer->getUnderlyingBuffer()), constBuffer->getUnderlyingBufferSize()}};
-    }
-
-    auto stringBuffer = translationUnit->programInfo.globalStrings;
-    if (stringBuffer.initData) {
-        segments.stringData = {reinterpret_cast<uintptr_t>(stringBuffer.initData),
-                               {reinterpret_cast<const uint8_t *>(stringBuffer.initData), stringBuffer.size}};
-    }
-
-    for (auto &kernImmData : this->kernelImmDatas) {
-        const auto &isa = kernImmData->getIsaGraphicsAllocation();
-        NEO::Debug::Segments::Segment kernelSegment = {isa->getGpuAddressToPatch(), {reinterpret_cast<uint8_t *>(isa->getUnderlyingBuffer()), isa->getUnderlyingBufferSize()}};
-        segments.nameToSegMap.insert(std::pair(kernImmData->getDescriptor().kernelMetadata.kernelName, kernelSegment));
-    }
-
-    return segments;
+    std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
+    for (const auto &kernelImmData : kernelImmDatas)
+        kernels.push_back({kernelImmData->getDescriptor().kernelMetadata.kernelName, kernelImmData->getIsaGraphicsAllocation()});
+    ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
+                                       translationUnit->programInfo.globalStrings.size};
+    return NEO::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);
 }
 
 bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {

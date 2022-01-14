@@ -186,7 +186,7 @@ cl_int Program::build(
                 if (BuildPhase::DebugDataNotification == phaseReached[rootDeviceIndex]) {
                     continue;
                 }
-                processDebugData(rootDeviceIndex);
+                createDebugData(clDevice->getRootDeviceIndex());
                 if (clDevice->getSourceLevelDebugger()) {
                     for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
                         clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,

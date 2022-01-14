@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     }
     auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
+    buildInfos[rootDeviceIndex].constStringSectionData = stringsInfo;
     Linker linker(*linkerInput);
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
@@ -276,4 +277,36 @@ void Program::processDebugData(uint32_t rootDeviceIndex) {
     }
 }
 
+Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
+    ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].constStringSectionData.initData),
+                                       buildInfos[rootDeviceIndex].constStringSectionData.size};
+    std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
+    for (const auto &kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray)
+        kernels.push_back({kernelInfo->kernelDescriptor.kernelMetadata.kernelName, kernelInfo->getGraphicsAllocation()});
+
+    return Debug::Segments(getGlobalSurface(rootDeviceIndex), getConstantSurface(rootDeviceIndex), strings, kernels);
+}
+
+void Program::createDebugZebin(uint32_t rootDeviceIndex) {
+    if (debugDataSize != 0) {
+        return;
+    }
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    auto segments = getZebinSegments(rootDeviceIndex);
+    auto debugZebin = Debug::createDebugZebin(refBin, segments);
+
+    debugDataSize = debugZebin.size();
+    debugData.reset(new char[debugDataSize]);
+    memcpy_s(debugData.get(), debugDataSize,
+             debugZebin.data(), debugZebin.size());
+}
+
+void Program::createDebugData(uint32_t rootDeviceIndex) {
+    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(refBin)) {
+        createDebugZebin(rootDeviceIndex);
+    } else {
+        processDebugData(rootDeviceIndex);
+    }
+}
 } // namespace NEO

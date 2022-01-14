@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,6 +25,9 @@ set(IGDRCL_SRCS_tests_program
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_block_kernels_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_kernel_debug_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/program_with_source.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/program_with_zebin_tests.cpp
 )
 
 get_property(NEO_CORE_SRCS_tests_program GLOBAL PROPERTY NEO_CORE_SRCS_tests_program)

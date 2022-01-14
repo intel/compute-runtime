@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,29 @@
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 namespace Debug {
 using namespace Elf;
+
+Segments::Segments() {}
+
+Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaPairT> &kernels) {
+    if (globalVarAlloc) {
+        varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(globalVarAlloc->getUnderlyingBuffer()), globalVarAlloc->getUnderlyingBufferSize()}};
+    }
+    if (globalConstAlloc) {
+        constData = {static_cast<uintptr_t>(globalConstAlloc->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(globalConstAlloc->getUnderlyingBuffer()), globalConstAlloc->getUnderlyingBufferSize()}};
+    }
+    if (false == globalStrings.empty()) {
+        stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings};
+    }
+    for (auto &[kernelName, isa] : kernels) {
+        Debug::Segments::Segment kernelSegment = {static_cast<uintptr_t>(isa->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(isa->getUnderlyingBuffer()), isa->getUnderlyingBufferSize()}};
+        nameToSegMap.insert(std::pair(kernelName, kernelSegment));
+    }
+}
 
 void DebugZebinCreator::createDebugZebin() {
     ElfEncoder<EI_CLASS_64> elfEncoder(false, false);
