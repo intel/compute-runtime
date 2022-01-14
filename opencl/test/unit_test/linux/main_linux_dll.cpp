@@ -833,8 +833,8 @@ TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsFalse) {
     EXPECT_FALSE(CommandQueue::isAssignEngineRoundRobinEnabled());
 }
 
-TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
-    EXPECT_TRUE(CommandQueue::isTimestampWaitEnabled());
+TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsFalse) {
+    EXPECT_FALSE(CommandQueue::isTimestampWaitEnabled());
 }
 
 TEST(CommandQueueTest, givenEnableCmdQRoundRobindEngineAssignSetWhenCheckEngineRoundRobinAssignThenReturnsTrue) {
