@@ -99,6 +99,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/source_level_debugger_ult.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
@@ -139,6 +140,7 @@ set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_common_SRCS_LIB_ULT_WIN})
 
@@ -147,6 +149,7 @@ set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/device_command_stream_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_buffer_object_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 

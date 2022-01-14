@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/unit_test/base_ult_config_listener.h"
@@ -64,7 +65,6 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 extern bool useMockGmm;
 extern TestMode testMode;
 extern const char *executionDirectorySuffix;
-extern const unsigned int ultIterationMaxTime;
 
 namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
@@ -140,13 +140,6 @@ void applyWorkarounds() {
         NEO::FileLoggerInstance();
     }
 }
-
-#ifdef __linux__
-void handle_SIGALRM(int signal) {
-    std::cout << "Tests timeout on: " << lastTest << std::endl;
-    abort();
-}
-#endif
 
 bool checkAubTestsExecutionPathValidity() {
     bool valid = true;
@@ -390,31 +383,9 @@ int main(int argc, char **argv) {
 
     environment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
-#if defined(__linux__)
-    std::cout << "enable SIGALRM handler: " << enableAlarm << std::endl;
-
-    //ULTs timeout
-    if (enableAlarm) {
-        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
-        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
-        if (ultIterationMaxTimeEnv != nullptr) {
-            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
-        }
-        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
-
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGALRM;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGALRM, &sa, NULL) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGALRM\n");
-            return -2;
-        }
-        alarm(alarmTime);
-        std::cout << "set timeout to: " << alarmTime << std::endl;
-    }
-
-#endif
+    int sigOut = setAlarm(enableAlarm);
+    if (sigOut != 0)
+        return sigOut;
 
     auto retVal = RUN_ALL_TESTS();
 

@@ -19,6 +19,7 @@
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/test.h"
@@ -781,6 +782,7 @@ TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
 
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
+    bool enableAlarm = true;
 
     ::testing::InitGoogleTest(&argc, argv);
 
@@ -790,6 +792,8 @@ int main(int argc, char **argv) {
             useDefaultListener = false;
         } else if (!strcmp("--enable_default_listener", argv[i])) {
             useDefaultListener = true;
+        } else if (!strcmp("--disable_alarm", argv[i])) {
+            enableAlarm = false;
         }
     }
 
@@ -808,6 +812,11 @@ int main(int argc, char **argv) {
     initializeTestedDevice();
 
     Os::dxcoreDllName = "";
+
+    int sigOut = setAlarm(enableAlarm);
+    if (sigOut != 0)
+        return sigOut;
+
     auto retVal = RUN_ALL_TESTS();
 
     return retVal;

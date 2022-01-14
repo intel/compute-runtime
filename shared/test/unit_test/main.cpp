@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -48,7 +49,6 @@ namespace NEO {
 extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
-extern const unsigned int ultIterationMaxTime;
 extern bool useMockGmm;
 extern TestMode testMode;
 extern const char *executionDirectorySuffix;
@@ -68,8 +68,6 @@ using namespace NEO;
 
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
-
-extern std::string lastTest;
 bool generateRandomInput = false;
 
 void applyWorkarounds() {
@@ -118,10 +116,6 @@ void applyWorkarounds() {
     }
 }
 #ifdef __linux__
-void handle_SIGALRM(int signal) {
-    std::cout << "Tests timeout on: " << lastTest << std::endl;
-    abort();
-}
 void handle_SIGSEGV(int signal) {
     std::cout << "SIGSEGV on: " << lastTest << std::endl;
     abort();
@@ -179,7 +173,7 @@ std::string getRunPath(char *argv0) {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
-    bool enable_alarm = true;
+    bool enableAlarm = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
     applyWorkarounds();
@@ -220,7 +214,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--enable_default_listener", argv[i])) {
             useDefaultListener = true;
         } else if (!strcmp("--disable_alarm", argv[i])) {
-            enable_alarm = false;
+            enableAlarm = false;
         } else if (!strcmp("--show_test_stats", argv[i])) {
             showTestStats = true;
         } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
@@ -403,28 +397,11 @@ int main(int argc, char **argv) {
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
+    int sigOut = setAlarm(enableAlarm);
+    if (sigOut != 0)
+        return sigOut;
+
 #if defined(__linux__)
-    //ULTs timeout
-    if (enable_alarm) {
-        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
-        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
-        if (ultIterationMaxTimeEnv != nullptr) {
-            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
-        }
-        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
-
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGALRM;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGALRM, &sa, NULL) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGALRM\n");
-            return -2;
-        }
-        alarm(alarmTime);
-        std::cout << "set timeout to: " << alarmTime << std::endl;
-    }
-
     if (enable_segv) {
         struct sigaction sa;
         sa.sa_handler = &handle_SIGSEGV;

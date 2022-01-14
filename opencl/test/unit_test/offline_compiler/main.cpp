@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/unit_test/test_stats.h"
 
 #include "environment.h"
@@ -39,6 +40,7 @@ std::string getRunPath() {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
+    bool enableAlarm = true;
     bool showTestStats = false;
 
     std::string devicePrefix("skl");
@@ -71,6 +73,8 @@ int main(int argc, char **argv) {
         for (int i = 0; i < argc; i++) {
             if (strcmp("--use_default_listener", argv[i]) == 0) {
                 useDefaultListener = true;
+            } else if (!strcmp("--disable_alarm", argv[i])) {
+                enableAlarm = false;
             } else if (strcmp("--device", argv[i]) == 0) {
                 ++i;
                 devicePrefix = argv[i];
@@ -137,6 +141,10 @@ int main(int argc, char **argv) {
     }
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, familyNameWithType)));
+
+    int sigOut = setAlarm(enableAlarm);
+    if (sigOut != 0)
+        return sigOut;
 
     retVal = RUN_ALL_TESTS();
 

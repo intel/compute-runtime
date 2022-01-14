@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-std::string lastTest("");
+extern std::string lastTest;
 namespace NEO {
 extern const char *executionName;
 }

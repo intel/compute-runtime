@@ -70,6 +70,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}
@@ -81,11 +82,13 @@ set(IGDRCL_SRCS_offline_compiler_tests
 if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_thread_win.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
   )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
   )
 endif()
