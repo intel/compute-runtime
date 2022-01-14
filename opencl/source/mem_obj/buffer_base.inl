@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -52,6 +53,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     args.gmmHelper = device.getGmmHelper();
     args.useGlobalAtomics = useGlobalAtomics;
     args.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
+    args.implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true);
     appendSurfaceStateArgs(args);
     EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
 }

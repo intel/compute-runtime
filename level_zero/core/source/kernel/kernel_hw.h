@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,12 +63,14 @@ struct KernelHw : public KernelImp {
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         bool l3Enabled = true;
-
         // Allocation MUST be cacheline (64 byte) aligned in order to enable L3 caching otherwise Heap corruption will occur coming from the KMD.
         // Most commonly this issue will occur with Host Point Allocations from customers.
         l3Enabled = isL3Capable(*alloc);
 
-        auto allocData = this->module->getDevice()->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        Device *device = module->getDevice();
+        NEO::Device *neoDevice = device->getNEODevice();
+
+        auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
         if (allocData && allocData->allocationFlagsProperty.flags.locallyUncachedResource) {
             l3Enabled = false;
         }
@@ -77,18 +79,17 @@ struct KernelHw : public KernelImp {
             this->kernelRequiresQueueUncachedMocsCount++;
         }
 
-        NEO::Device *neoDevice = module->getDevice()->getNEODevice();
-
         NEO::EncodeSurfaceStateArgs args;
         args.outMemory = &surfaceState;
         args.graphicsAddress = bufferAddressForSsh;
         args.size = bufferSizeForSsh;
-        args.mocs = this->module->getDevice()->getMOCS(l3Enabled, false);
+        args.mocs = device->getMOCS(l3Enabled, false);
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = alloc;
         args.gmmHelper = neoDevice->getGmmHelper();
         args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
+        args.implicitScaling = device->isImplicitScalingCapable();
 
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateAddress) = surfaceState;

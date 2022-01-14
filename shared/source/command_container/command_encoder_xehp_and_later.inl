@@ -639,9 +639,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
-    DeviceBitfield deviceBitfield{static_cast<uint32_t>(maxNBitValue(args.numAvailableDevices))};
-    bool implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, true);
-    bool enablePartialWrites = implicitScaling;
+    bool enablePartialWrites = args.implicitScaling;
     bool enableMultiGpuAtomics = enablePartialWrites;
 
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {

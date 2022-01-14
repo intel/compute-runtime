@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,4 +94,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArg
     auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
     ASSERT_NE(nullptr, storeDataImm);
     EXPECT_TRUE(storeDataImm->getWorkloadPartitionIdOffsetEnable());
+}
+
+HWTEST2_F(XeHPAndLaterCommandEncoderTest,
+          GivenImplicitAndAtomicsFlagsTrueWhenProgrammingSurfaceStateThenExpectMultiTileCorrectlySet, IsXEHP) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
+    size_t allocationSize = MemoryConstants::pageSize;
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    auto outSurfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    NEO::EncodeSurfaceStateArgs args;
+    args.outMemory = &outSurfaceState;
+    args.graphicsAddress = allocation->getGpuAddress();
+    args.size = allocation->getUnderlyingBufferSize();
+    args.mocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    args.numAvailableDevices = pDevice->getNumGenericSubDevices();
+    args.allocation = allocation;
+    args.gmmHelper = pDevice->getGmmHelper();
+    args.areMultipleSubDevicesInContext = true;
+    args.implicitScaling = true;
+    args.useGlobalAtomics = true;
+
+    EncodeSurfaceState<FamilyType>::encodeBuffer(args);
+
+    EXPECT_FALSE(outSurfaceState.getDisableSupportForMultiGpuAtomics());
+    EXPECT_FALSE(outSurfaceState.getDisableSupportForMultiGpuPartialWrites());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

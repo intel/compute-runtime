@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/program/kernel_info.h"
@@ -390,6 +391,27 @@ struct ImportHostPointerModuleFixture : public ModuleFixture {
 
     DebugManagerStateRestore debugRestore;
     void *hostPointer = nullptr;
+};
+
+struct MultiTileModuleFixture : public MultiDeviceModuleFixture {
+    void SetUp() {
+        DebugManager.flags.EnableImplicitScaling.set(1);
+        MultiDeviceFixture::numRootDevices = 1u;
+        MultiDeviceFixture::numSubDevices = 2u;
+
+        MultiDeviceModuleFixture::SetUp();
+        createModuleFromBinary(0);
+
+        device = driverHandle->devices[0];
+    }
+
+    void TearDown() {
+        MultiDeviceModuleFixture::TearDown();
+    }
+
+    DebugManagerStateRestore debugRestore;
+    VariableBackup<bool> backup{&NEO::ImplicitScaling::apiSupport, true};
+    L0::Device *device = nullptr;
 };
 
 } // namespace ult
