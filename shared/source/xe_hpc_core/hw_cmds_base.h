@@ -82,6 +82,7 @@ struct XE_HPC_COREFamily : public XE_HPC_CORE {
     using GfxFamily = XE_HPC_COREFamily;
     using WALKER_TYPE = COMPUTE_WALKER;
     using VFE_STATE_TYPE = CFE_STATE;
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::MEM_COPY;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -115,6 +116,7 @@ struct XE_HPC_COREFamily : public XE_HPC_CORE {
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
+    static const XY_BLOCK_COPY_BLT cmdInitXyBlockCopyBlt;
     static const MEM_COPY cmdInitXyCopyBlt;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
     static const STATE_PREFETCH cmdInitStatePrefetch;

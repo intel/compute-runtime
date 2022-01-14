@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -337,53 +337,53 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         16));
 
 HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 1;
     BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
 }
 
 HWTEST2_F(BlitTests, givenTwoBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 2;
     BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
 }
 
 HWTEST2_F(BlitTests, givenFourBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 4;
     BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
 }
 
 HWTEST2_F(BlitTests, givenEightBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 8;
     BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
 }
 
 HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 16;
     BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
 }
 
 HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 48;
     EXPECT_THROW(BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd), std::exception);

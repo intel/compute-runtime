@@ -448,7 +448,7 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         8,
                                         16));
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, BlitPlatforms) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     MockGraphicsAllocation srcAlloc;
     MockGraphicsAllocation dstAlloc;
     MockGraphicsAllocation clearColorAllocation;
@@ -478,7 +478,7 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
-    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 }
 

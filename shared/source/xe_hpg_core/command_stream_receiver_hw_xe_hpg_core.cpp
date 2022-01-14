@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,8 @@ void CommandStreamReceiverHw<Family>::programAdditionalStateBaseAddress(LinearSt
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
+template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd);
+template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();
 const Family::CFE_STATE Family::cmdInitCfeState = Family::CFE_STATE::sInit();
@@ -89,6 +91,7 @@ const Family::MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd =
 const Family::L3_CONTROL Family::cmdInitL3Control = Family::L3_CONTROL::sInit();
 const Family::L3_FLUSH_ADDRESS_RANGE Family::cmdInitL3FlushAddressRange = Family::L3_FLUSH_ADDRESS_RANGE::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
 const Family::_3DSTATE_BTD Family::cmd3dStateBtd = Family::_3DSTATE_BTD::sInit();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,25 +61,26 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+template <>
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     switch (blitProperites.bytesPerPixel) {
     default:
         UNRECOVERABLE_IF(true);
     case 1:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
         break;
     case 2:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
         break;
     case 4:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
         break;
     case 8:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
         break;
     case 16:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+        blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
         break;
     }
 }
@@ -96,8 +97,8 @@ void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAlloc
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     auto srcAddress = blitProperties.srcGpuAddress;
     auto dstAddress = blitProperties.dstGpuAddress;
 
@@ -106,7 +107,7 @@ void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitPr
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
     auto tileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
@@ -191,6 +192,7 @@ const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BIN
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
 const Family::L3_CONTROL Family::cmdInitL3ControlWithoutPostSync = Family::L3_CONTROL::sInit();
 const Family::L3_CONTROL Family::cmdInitL3ControlWithPostSync = Family::L3_CONTROL::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();

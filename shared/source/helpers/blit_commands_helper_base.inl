@@ -275,7 +275,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const Bli
     auto dstSlicePitch = static_cast<uint32_t>(blitProperties.dstSlicePitch);
 
     UNRECOVERABLE_IF(blitProperties.copySize.x > BlitterConstants::maxBlitWidth || blitProperties.copySize.y > BlitterConstants::maxBlitHeight);
-    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+    auto bltCmd = GfxFamily::cmdInitXyBlockCopyBlt;
 
     bltCmd.setSourceBaseAddress(blitProperties.srcGpuAddress);
     bltCmd.setDestinationBaseAddress(blitProperties.dstGpuAddress);
@@ -289,14 +289,14 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const Bli
     bltCmd.setSourceY1CoordinateTop(static_cast<uint32_t>(blitProperties.srcOffset.y));
 
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
+    appendBlitCommandsBlockCopy(blitProperties, bltCmd, rootDeviceEnvironment);
     appendBlitCommandsForImages(blitProperties, bltCmd, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
     appendColorDepth(blitProperties, bltCmd);
     appendSurfaceType(blitProperties, bltCmd);
     dispatchPreBlitCommand(linearStream, hwInfo);
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
         appendSliceOffsets(blitProperties, bltCmd, i, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
-        auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
+        auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_BLOCK_COPY_BLT>();
         *cmd = bltCmd;
         dispatchPostBlitCommand(linearStream, hwInfo);
     }
@@ -361,6 +361,17 @@ uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandDestinationBaseAddre
     return blitProperties.dstGpuAddress + blitProperties.dstOffset.x * blitProperties.bytesPerPixel +
            (blitProperties.dstOffset.y * blitProperties.dstRowPitch) +
            (blitProperties.dstSlicePitch * (slice + blitProperties.dstOffset.z));
+}
+
+template <typename GfxFamily>
+template <typename T>
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    appendBlitCommandsBlockCopy(blitProperties, blitCmd, rootDeviceEnvironment);
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename GfxFamily::XY_COPY_BLT &blitCmd,
+                                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>
@@ -465,7 +476,7 @@ bool BlitCommandsHelper<GfxFamily>::preBlitCommandWARequired() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendExtraMemoryProperties(typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+void BlitCommandsHelper<GfxFamily>::appendExtraMemoryProperties(typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendExtraMemoryProperties(typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}

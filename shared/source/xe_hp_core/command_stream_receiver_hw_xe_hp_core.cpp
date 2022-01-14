@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,11 +75,11 @@ template <>
 void CommandStreamReceiverHw<Family>::setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args) {}
 
 template <>
-void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     if (DebugManager.flags.UseClearColorAllocationForBlitter.get()) {
-        blitCmd.setSourceClearValueEnable(XY_COPY_BLT::CLEAR_VALUE_ENABLE::CLEAR_VALUE_ENABLE_ENABLE);
-        blitCmd.setDestinationClearValueEnable(XY_COPY_BLT::CLEAR_VALUE_ENABLE::CLEAR_VALUE_ENABLE_ENABLE);
+        blitCmd.setSourceClearValueEnable(XY_BLOCK_COPY_BLT::CLEAR_VALUE_ENABLE::CLEAR_VALUE_ENABLE_ENABLE);
+        blitCmd.setDestinationClearValueEnable(XY_BLOCK_COPY_BLT::CLEAR_VALUE_ENABLE::CLEAR_VALUE_ENABLE_ENABLE);
         auto clearColorAddress = blitProperties.clearColorAllocation->getGpuAddress();
         blitCmd.setSourceClearAddressLow(static_cast<uint32_t>(clearColorAddress & 0xFFFFFFFFULL));
         blitCmd.setSourceClearAddressHigh(static_cast<uint32_t>(clearColorAddress >> 32));
@@ -91,16 +91,16 @@ void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProp
 template class CommandStreamReceiverHw<Family>;
 
 template <>
-void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &hwHelper = HwHelperHw<Family>::get();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
     if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) && hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
-        blitCmd.setSourceTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-        blitCmd.setDestinationTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+        blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+        blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 }
 
@@ -119,6 +119,8 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
 }
 
 template struct BlitCommandsHelper<Family>;
+template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd);
+template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();
 const Family::CFE_STATE Family::cmdInitCfeState = Family::CFE_STATE::sInit();
@@ -152,6 +154,7 @@ const Family::MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd =
 const Family::L3_CONTROL Family::cmdInitL3Control = Family::L3_CONTROL::sInit();
 const Family::L3_FLUSH_ADDRESS_RANGE Family::cmdInitL3FlushAddressRange = Family::L3_FLUSH_ADDRESS_RANGE::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
 const Family::_3DSTATE_BTD Family::cmd3dStateBtd = Family::_3DSTATE_BTD::sInit();

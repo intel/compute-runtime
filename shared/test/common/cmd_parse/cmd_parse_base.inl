@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ using MI_SEMAPHORE_WAIT               = GenStruct::MI_SEMAPHORE_WAIT;
 using MI_STORE_DATA_IMM               = GenStruct::MI_STORE_DATA_IMM;
 using MI_FLUSH_DW                     = GenStruct::MI_FLUSH_DW;
 using XY_COPY_BLT                     = GenGfxFamily::XY_COPY_BLT;
+using XY_BLOCK_COPY_BLT               = GenGfxFamily::XY_BLOCK_COPY_BLT;
 using XY_COLOR_BLT                    = GenGfxFamily::XY_COLOR_BLT;
 // clang-format on
 

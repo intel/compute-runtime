@@ -62,6 +62,7 @@ struct XeHpFamily : public XeHpCore {
     using GfxFamily = XeHpFamily;
     using WALKER_TYPE = COMPUTE_WALKER;
     using VFE_STATE_TYPE = CFE_STATE;
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -97,6 +98,7 @@ struct XeHpFamily : public XeHpCore {
     static const L3_CONTROL cmdInitL3Control;
     static const L3_FLUSH_ADDRESS_RANGE cmdInitL3FlushAddressRange;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
+    static const XY_BLOCK_COPY_BLT cmdInitXyBlockCopyBlt;
     static const XY_BLOCK_COPY_BLT cmdInitXyCopyBlt;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
     static const _3DSTATE_BTD cmd3dStateBtd;

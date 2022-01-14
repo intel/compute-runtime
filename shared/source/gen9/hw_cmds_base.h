@@ -55,6 +55,7 @@ struct SKLFamily : public GEN9 {
     using GfxFamily = SKLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using TimestampPacketType = uint32_t;
@@ -85,6 +86,7 @@ struct SKLFamily : public GEN9 {
     static const STATE_SIP cmdInitStateSip;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
+    static const XY_BLOCK_COPY_BLT cmdInitXyBlockCopyBlt;
     static const XY_SRC_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_COLOR_BLT cmdInitXyColorBlt;

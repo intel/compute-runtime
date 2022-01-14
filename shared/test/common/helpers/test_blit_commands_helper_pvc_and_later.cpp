@@ -261,7 +261,7 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         16));
 
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     MockGraphicsAllocation srcAlloc;
     MockGraphicsAllocation dstAlloc;
     MockGraphicsAllocation clearColorAlloc;
@@ -291,52 +291,52 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
-    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
+    auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
 }
 
 HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendBlitCommandsForImagesThenNothingChanged, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
     auto srcSlicePitch = static_cast<uint32_t>(properties.srcSlicePitch);
     auto dstSlicePitch = static_cast<uint32_t>(properties.dstSlicePitch);
     NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd, pDevice->getRootDeviceEnvironment(), srcSlicePitch, dstSlicePitch);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
+    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }
 HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendColorDepthThenNothingChanged, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
     NEO::BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
+    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }
 HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendSliceOffsetThenNothingChanged, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
     auto srcSlicePitch = 0u;
     auto dstSlicePitch = 0u;
 
     NEO::BlitCommandsHelper<FamilyType>::appendSliceOffsets(properties, bltCmd, 0, pDevice->getRootDeviceEnvironment(), srcSlicePitch, dstSlicePitch);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
+    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }
 HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendSurfaceTypeThenNothingChanged, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
     NEO::BlitCommandsHelper<FamilyType>::appendSurfaceType(properties, bltCmd);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
+    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }
 HWTEST2_F(BlitTests, givenBlockCopyCommandWhenAppendTilingTypeThenNothingChanged, IsPVC) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     auto bltCmdBefore = bltCmd;
     BlitProperties properties = {};
     NEO::BlitCommandsHelper<FamilyType>::appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, bltCmd);
-    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_COPY_BLT)), 0);
+    EXPECT_EQ(memcmp(&bltCmd, &bltCmdBefore, sizeof(XY_BLOCK_COPY_BLT)), 0);
 }

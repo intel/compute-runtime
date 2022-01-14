@@ -54,8 +54,18 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+}
+
+template <>
+template <typename T>
+void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    appendBlitCommandsMemCopy(blitProperties, blitCmd, rootDeviceEnvironment);
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd,
+                                                           const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_COPY = typename Family::MEM_COPY;
 
     auto dstAllocation = blitProperites.dstAllocation;
@@ -172,26 +182,29 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocati
 }
 
 template <>
-void BlitCommandsHelper<Family>::dispatchBlitCommandsForImageRegion(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {}
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {}
+void BlitCommandsHelper<Family>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {}
 
 template <>
-void BlitCommandsHelper<Family>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename Family::XY_COPY_BLT &blitCmd) {}
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {}
 
 template <>
-void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {}
-
-template <>
-void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 
+template <>
+template <>
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {}
+
+template <>
 template <>
 void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
+template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 const Family::COMPUTE_WALKER Family::cmdInitGpgpuWalker = Family::COMPUTE_WALKER::sInit();
 const Family::CFE_STATE Family::cmdInitCfeState = Family::CFE_STATE::sInit();
@@ -223,6 +236,7 @@ const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BIN
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
 const Family::MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd = Family::MI_CONDITIONAL_BATCH_BUFFER_END::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
+const Family::XY_BLOCK_COPY_BLT Family::cmdInitXyBlockCopyBlt = Family::XY_BLOCK_COPY_BLT::sInit();
 const Family::MEM_COPY Family::cmdInitXyCopyBlt = Family::MEM_COPY::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
 const Family::STATE_PREFETCH Family::cmdInitStatePrefetch = Family::STATE_PREFETCH::sInit();

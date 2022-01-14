@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,8 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDevic
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
     appendClearColor(blitProperties, blitCmd);
 
@@ -45,27 +45,27 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
         compressionFormat = DebugManager.flags.ForceBufferCompressionFormat.get();
     }
 
-    auto compressionEnabledField = XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE;
+    auto compressionEnabledField = XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE;
     if (DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get() != -1) {
-        compressionEnabledField = static_cast<typename XY_COPY_BLT::COMPRESSION_ENABLE>(DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
+        compressionEnabledField = static_cast<typename XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE>(DebugManager.flags.ForceCompressionDisabledForCompressedBlitCopies.get());
     }
 
     if (blitProperties.dstAllocation->isCompressionEnabled()) {
         blitCmd.setDestinationCompressionEnable(compressionEnabledField);
-        blitCmd.setDestinationAuxiliarysurfacemode(XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        blitCmd.setDestinationAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
     if (blitProperties.srcAllocation->isCompressionEnabled()) {
         blitCmd.setSourceCompressionEnable(compressionEnabledField);
-        blitCmd.setSourceAuxiliarysurfacemode(XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        blitCmd.setSourceAuxiliarysurfacemode(XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         blitCmd.setSourceCompressionFormat(compressionFormat);
     }
 
     if (MemoryPool::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
-        blitCmd.setDestinationTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+        blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
     if (MemoryPool::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
-        blitCmd.setSourceTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+        blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
@@ -77,17 +77,17 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
     blitCmd.setDestinationSurfaceHeight(blitCmd.getDestinationY2CoordinateBottom());
 
     if (blitCmd.getDestinationY2CoordinateBottom() > 1) {
-        blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
-        blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+        blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+        blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     } else {
-        blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
-        blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+        blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+        blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
     }
 
     if (AuxTranslationDirection::AuxToNonAux == blitProperties.auxTranslationDirection) {
-        blitCmd.setSpecialModeofOperation(XY_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
+        blitCmd.setSpecialModeofOperation(XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
     } else if (AuxTranslationDirection::NonAuxToAux == blitProperties.auxTranslationDirection) {
-        blitCmd.setSourceCompressionEnable(XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        blitCmd.setSourceCompressionEnable(XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
     }
 
     DEBUG_BREAK_IF((AuxTranslationDirection::None != blitProperties.auxTranslationDirection) &&
@@ -103,11 +103,11 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
     }
     if (DebugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
         if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
-            blitCmd.setDestinationTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
-            blitCmd.setSourceTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+            blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
+            blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         } else if (DebugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
-            blitCmd.setDestinationTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-            blitCmd.setSourceTargetMemory(XY_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+            blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
+            blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
         }
     }
 }
@@ -176,8 +176,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(NEO::GraphicsAll
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 
     if (blitProperties.srcAllocation->getDefaultGmm()) {
         auto resInfo = blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
@@ -186,15 +186,15 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
 
         if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D) {
             if (isArray) {
-                blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+                blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
             } else {
-                blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+                blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
             }
 
         } else if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_2D) {
-            blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+            blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
         } else if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
-            blitCmd.setSourceSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
+            blitCmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
         }
     }
 
@@ -205,58 +205,61 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
 
         if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D) {
             if (isArray) {
-                blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+                blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
             } else {
-                blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
+                blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_1D);
             }
         } else if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_2D) {
-            blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
+            blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
         } else if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
-            blitCmd.setDestinationSurfaceType(XY_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
+            blitCmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D);
         }
     }
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     if (srcTilingType == GMM_TILED_4) {
-        blitCmd.setSourceTiling(XY_COPY_BLT::TILING::TILING_TILE4);
+        blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
     } else if (srcTilingType == GMM_TILED_64) {
-        blitCmd.setSourceTiling(XY_COPY_BLT::TILING::TILING_TILE64);
+        blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
-        blitCmd.setSourceTiling(XY_COPY_BLT::TILING::TILING_LINEAR);
+        blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
     }
     if (dstTilingType == GMM_TILED_4) {
-        blitCmd.setDestinationTiling(XY_COPY_BLT::TILING::TILING_TILE4);
+        blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
     } else if (dstTilingType == GMM_TILED_64) {
-        blitCmd.setDestinationTiling(XY_COPY_BLT::TILING::TILING_TILE64);
+        blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
     } else {
-        blitCmd.setDestinationTiling(XY_COPY_BLT::TILING::TILING_LINEAR);
+        blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR);
     }
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    switch (blitProperties.bytesPerPixel) {
-    default:
-        UNRECOVERABLE_IF(true);
-    case 1:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
-        break;
-    case 2:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
-        break;
-    case 4:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
-        break;
-    case 8:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
-        break;
-    case 16:
-        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
-        break;
+template <typename T>
+void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitProperties, T &blitCmd) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+    if constexpr (std::is_same_v<XY_BLOCK_COPY_BLT, T>) {
+        switch (blitProperties.bytesPerPixel) {
+        default:
+            UNRECOVERABLE_IF(true);
+        case 1:
+            blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+            break;
+        case 2:
+            blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+            break;
+        case 4:
+            blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+            break;
+        case 8:
+            blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+            break;
+        case 16:
+            blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+            break;
+        }
     }
 }
 
@@ -287,7 +290,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
     auto srcTileType = GMM_NOT_TILED;
     auto dstTileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
@@ -327,17 +330,17 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
     auto srcAddress = blitProperties.srcGpuAddress;
     auto dstAddress = blitProperties.dstGpuAddress;
 
-    if (blitCmd.getSourceTiling() == XY_COPY_BLT::TILING::TILING_LINEAR) {
+    if (blitCmd.getSourceTiling() == XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR) {
         blitCmd.setSourceBaseAddress(ptrOffset(srcAddress, srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z)));
     } else {
         blitCmd.setSourceArrayIndex((sliceIndex + static_cast<uint32_t>(blitProperties.srcOffset.z)) + 1);
     }
-    if (blitCmd.getDestinationTiling() == XY_COPY_BLT::TILING::TILING_LINEAR) {
+    if (blitCmd.getDestinationTiling() == XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR) {
         blitCmd.setDestinationBaseAddress(ptrOffset(dstAddress, dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z)));
     } else {
         blitCmd.setDestinationArrayIndex((sliceIndex + static_cast<uint32_t>(blitProperties.dstOffset.z)) + 1);
@@ -378,7 +381,7 @@ bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 
 } // namespace NEO

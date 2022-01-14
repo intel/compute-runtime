@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,16 @@ STATE_SIP *genCmdCast<STATE_SIP *>(void *buffer) {
                    STATE_SIP::COMMAND_SUBTYPE_GFXPIPE_COMMON == pCmd->TheStructure.Common.CommandSubtype &&
                    STATE_SIP::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED == pCmd->TheStructure.Common._3DCommandOpcode &&
                    STATE_SIP::_3D_COMMAND_SUB_OPCODE_STATE_SIP == pCmd->TheStructure.Common._3DCommandSubOpcode
+               ? pCmd
+               : nullptr;
+}
+
+template <>
+XY_BLOCK_COPY_BLT *genCmdCast<XY_BLOCK_COPY_BLT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<XY_BLOCK_COPY_BLT *>(buffer);
+
+    return XY_BLOCK_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE == pCmd->TheStructure.Common.InstructionTarget_Opcode &&
+                   XY_BLOCK_COPY_BLT::CLIENT_2D_PROCESSOR == pCmd->TheStructure.Common.Client
                ? pCmd
                : nullptr;
 }
@@ -67,6 +77,11 @@ size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
+    {
+        auto pCmd = genCmdCast<XY_BLOCK_COPY_BLT *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
 
     return 0;
 }
@@ -99,6 +114,9 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 
     if (nullptr != genCmdCast<STATE_SIP *>(cmd)) {
         return "STATE_SIP";
+    }
+    if (genCmdCast<XY_BLOCK_COPY_BLT *>(cmd)) {
+        return "XY_BLOCK_COPY_BLT";
     }
 
     return "UNKNOWN";
