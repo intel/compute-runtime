@@ -255,9 +255,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                                             hwInfo);
 
     auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+
     if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+        if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.value != -1) {
+            // Reuse previous programming
+            dispatchFlags.threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+        } else {
+            // Pick default if this is first submit
+            dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+        }
     }
+
     if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
         dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
     }

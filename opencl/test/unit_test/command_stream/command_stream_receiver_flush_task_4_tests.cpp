@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -662,6 +662,25 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
         }
     }
     EXPECT_TRUE(found);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPolicyWhenPolicyIsAlreadyProgrammedThenReuse) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrThreadArbitrationPolicy = commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value;
+
+    uint32_t sentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+
+    flushTaskFlags.threadArbitrationPolicy = sentThreadArbitrationPolicy;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(static_cast<uint32_t>(csrThreadArbitrationPolicy), sentThreadArbitrationPolicy);
+
+    flushTaskFlags.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(static_cast<uint32_t>(csrThreadArbitrationPolicy), sentThreadArbitrationPolicy);
 }
 
 struct PreambleThreadArbitrationMatcher {
