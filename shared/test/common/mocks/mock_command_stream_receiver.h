@@ -252,6 +252,12 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         return taskCount;
     }
 
+    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) override {
+        for (auto &surface : allocationsForResidency) {
+            rememberedResidencies.push_back(surface);
+        }
+        CommandStreamReceiver::makeSurfacePackNonResident(allocationsForResidency);
+    }
     void programHardwareContext(LinearStream &cmdStream) override {
         programHardwareContextCalled = true;
     }
@@ -261,6 +267,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     std::unique_ptr<uint8_t> storedTaskStream;
     size_t storedTaskStreamSize = 0;
 
+    ResidencyContainer rememberedResidencies;
     int flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
     ResidencyContainer copyOfAllocations;
