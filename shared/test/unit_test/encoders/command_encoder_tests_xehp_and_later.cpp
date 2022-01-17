@@ -97,7 +97,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArg
 }
 
 HWTEST2_F(XeHPAndLaterCommandEncoderTest,
-          GivenImplicitAndAtomicsFlagsTrueWhenProgrammingSurfaceStateThenExpectMultiTileCorrectlySet, IsXEHP) {
+          GivenImplicitAndAtomicsFlagsTrueWhenProgrammingSurfaceStateThenExpectMultiTileCorrectlySet, isXeHpOrXeHpcCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
