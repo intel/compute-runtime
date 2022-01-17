@@ -313,11 +313,13 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setStateCacheInvalidationEnable(args.stateCacheInvalidationEnable);
     pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable);
     pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
-    pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
     pipeControl.setNotifyEnable(args.notifyEnable);
     pipeControl.setDcFlushEnable(args.dcFlushEnable);
 
+    if constexpr (GfxFamily::isUsingGenericMediaStateClear) {
+        pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
+    }
     setPipeControlExtraProperties(pipeControl, args);
 
     if (DebugManager.flags.FlushAllCaches.get()) {

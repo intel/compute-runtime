@@ -21,6 +21,7 @@ struct GEN11 {
 #include "shared/source/generated/gen11/hw_cmds_generated_gen11.inl"
 
     static constexpr bool supportsSampler = true;
+    static constexpr bool isUsingGenericMediaStateClear = true;
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

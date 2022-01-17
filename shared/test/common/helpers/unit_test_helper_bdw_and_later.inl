@@ -1,81 +1,62 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
-    return false;
+    return true;
 };
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, const KernelDescriptor *kernelDescriptor, uint32_t rootDeviceIndex) {
-    if (kernelDescriptor == nullptr) {
-        if (sizeBeforeEnqueue == sizeAfterEnqueue) {
-            return true;
-        }
-        return false;
+    if (sizeBeforeEnqueue != sizeAfterEnqueue) {
+        return true;
     }
-
-    auto samplerCount = kernelDescriptor->payloadMappings.samplerTable.numSamplers;
-    if (samplerCount > 0) {
-        if (sizeBeforeEnqueue != sizeAfterEnqueue) {
-            return true;
-        }
-        return false;
-    } else {
-        if (sizeBeforeEnqueue == sizeAfterEnqueue) {
-            return true;
-        }
-        return false;
-    }
+    return false;
 }
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isTimestampPacketWriteSupported() {
-    return true;
-};
+    return false;
+}
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
-    return true;
+    return false;
 }
 
 template <typename GfxFamily>
 uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
-    return (32 * 2 * 64);
+    return sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
 }
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait) {
-    return (semaphoreWait.getSemaphoreDataDword() == EncodeSempahore<GfxFamily>::invalidHardwareTag);
+    return false;
 }
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
-    return 0llu == retrievedGshAddress;
+    return usedScratchGpuAddress == retrievedGshAddress;
 }
 
 template <typename GfxFamily>
 auto UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType) {
-    return GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT;
+    return coherencyType;
 }
 
 template <typename GfxFamily>
 inline bool UnitTestHelper<GfxFamily>::getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
-    return pipeControl.getHdcPipelineFlush();
+    return false;
 }
+
 template <typename GfxFamily>
-inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush) {
-    pipeControl.setHdcPipelineFlush(hdcPipelineFlush);
-}
+inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush) {}
 } // namespace NEO

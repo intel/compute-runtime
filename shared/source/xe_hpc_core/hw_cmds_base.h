@@ -36,6 +36,7 @@ struct XE_HPC_CORE {
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = false;
+    static constexpr bool isUsingGenericMediaStateClear = true;
 
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;

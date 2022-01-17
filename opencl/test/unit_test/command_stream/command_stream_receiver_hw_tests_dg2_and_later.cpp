@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ HWTEST2_F(CommandStreamReceiverFlushTasDg2AndLaterTests, givenProgramPipeControl
     --_3dStateBtdIterator;
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*_3dStateBtdIterator);
 
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());

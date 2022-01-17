@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -248,7 +248,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, WhenAddingPipeC
 
         PIPE_CONTROL expectedPipeControl = FamilyType::cmdInitPipeControl;
         expectedPipeControl.setCommandStreamerStallEnable(true);
-        expectedPipeControl.setHdcPipelineFlush(true);
+        UnitTestHelper<FamilyType>::setPipeControlHdcPipelineFlush(expectedPipeControl, true);
         auto it = cmdList.begin();
         auto pPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         ASSERT_NE(nullptr, pPipeControl);
@@ -312,7 +312,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenRequestedC
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
@@ -328,7 +328,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugVaria
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 
@@ -346,7 +346,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipeControlHelperTestsXeHPAndLater, givenDebugDisab
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_FALSE(pipeControl->getHdcPipelineFlush());
+    EXPECT_FALSE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
 

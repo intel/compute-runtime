@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
 
         PIPE_CONTROL expectedPipeControl = FamilyType::cmdInitPipeControl;
         expectedPipeControl.setCommandStreamerStallEnable(true);
-        expectedPipeControl.setHdcPipelineFlush(true);
+        UnitTestHelper<FamilyType>::setPipeControlHdcPipelineFlush(expectedPipeControl, true);
         expectedPipeControl.setUnTypedDataPortCacheFlush(true);
         auto it = cmdList.begin();
         auto pPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -107,7 +107,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenRequestedCacheFlushesWhenProgr
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
@@ -124,7 +124,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugVariableSetWhenProgrammin
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_TRUE(pipeControl->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_TRUE(pipeControl->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }
@@ -144,7 +144,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, givenDebugDisableCacheFlushWhenProg
     MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(buffer);
-    EXPECT_FALSE(pipeControl->getHdcPipelineFlush());
+    EXPECT_FALSE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControl));
     EXPECT_FALSE(pipeControl->getUnTypedDataPortCacheFlush());
     EXPECT_FALSE(pipeControl->getCompressionControlSurfaceCcsFlush());
 }

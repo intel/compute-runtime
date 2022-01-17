@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,8 @@ struct UnitTestHelper {
     static const bool additionalMiFlushDwRequired;
 
     static uint64_t getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl);
+    static bool getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl);
+    static void setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush);
 };
 
 } // namespace NEO

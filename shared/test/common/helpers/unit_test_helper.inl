@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,46 +8,13 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
-    return true;
-};
-
-template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, const KernelDescriptor *kernelDescriptor, uint32_t rootDeviceIndex) {
-    if (sizeBeforeEnqueue != sizeAfterEnqueue) {
-        return true;
-    }
-    return false;
-}
-
-template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
     return false;
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isTimestampPacketWriteSupported() {
-    return false;
-}
-
-template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
-    return false;
-}
-
-template <typename GfxFamily>
-uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
-    return sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
-}
-
-template <typename GfxFamily>
 inline uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(uint32_t policy) {
     return policy;
-}
-
-template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
-    return usedScratchGpuAddress == retrievedGshAddress;
 }
 
 template <typename GfxFamily>
@@ -66,11 +33,6 @@ bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const Hardwa
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait) {
-    return false;
-}
-
-template <typename GfxFamily>
 inline uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
     return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
 }
@@ -83,11 +45,6 @@ inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(Ha
 template <typename GfxFamily>
 void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
     hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt = value;
-}
-
-template <typename GfxFamily>
-auto UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType) {
-    return coherencyType;
 }
 
 template <typename GfxFamily>

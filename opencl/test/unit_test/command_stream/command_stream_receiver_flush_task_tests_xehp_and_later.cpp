@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControlCmd->getDcFlushEnable());
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
@@ -111,14 +111,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
     EXPECT_NE(stateBaseAddressItor, pipeControlItor);
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
@@ -144,7 +144,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
 
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     EXPECT_TRUE(pipeControlCmd->getAmfsFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());

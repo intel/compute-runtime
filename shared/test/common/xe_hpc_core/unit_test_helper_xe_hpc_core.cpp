@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "shared/source/xe_hpc_core/hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
-using Family = NEO::XE_HPC_COREFamily;
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
+using Family = NEO::XE_HPC_COREFamily;
 
 namespace NEO {
 

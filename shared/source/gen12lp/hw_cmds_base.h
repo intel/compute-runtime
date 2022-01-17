@@ -23,6 +23,7 @@ struct GEN12LP {
 #include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
 
     static constexpr bool supportsSampler = true;
+    static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {

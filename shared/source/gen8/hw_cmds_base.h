@@ -23,6 +23,7 @@ struct GEN8 {
 #include "shared/source/generated/gen8/hw_cmds_generated_gen8.inl"
 
     static constexpr bool supportsSampler = true;
+    static constexpr bool isUsingGenericMediaStateClear = true;
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

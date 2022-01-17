@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,8 +45,8 @@ inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperti
     args.unTypedDataPortCacheFlush = true;
 }
 
-template <>
-void MemorySynchronizationCommands<Family>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
     pipeControl.setCommandStreamerStallEnable(true);
     pipeControl.setHdcPipelineFlush(true);
     pipeControl.setUnTypedDataPortCacheFlush(true);

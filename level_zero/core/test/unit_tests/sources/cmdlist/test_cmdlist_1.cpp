@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
@@ -1514,7 +1515,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
     EXPECT_NE(cmdList.end(), itor);
 
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedWithHdcAndUntypedFlushSet, IsAtLeastXeHpgCore) {
@@ -1534,7 +1535,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendingBarrierThenPipeControl
     EXPECT_NE(cmdList.end(), itor);
 
     auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
 }
 
