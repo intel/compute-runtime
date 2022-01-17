@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,4 +237,13 @@ TEST(SyncBufferHandlerDeviceTest, GivenSubDeviceWhenAllocateSyncBufferIsCalledTw
     syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(pSubDevice->syncBufferHandler.get());
 
     EXPECT_EQ(testUsedBufferSize, syncBufferHandler->usedBufferSize);
+}
+
+TEST(SyncBufferHandlerDeviceTest, givenMultipleSubDevicesWhenAllocatingSyncBufferThenClonePageTables) {
+    UltDeviceFactory ultDeviceFactory{1, 2};
+    auto rootDevice = ultDeviceFactory.rootDevices[0];
+    rootDevice->allocateSyncBufferHandler();
+    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(rootDevice->syncBufferHandler.get());
+
+    EXPECT_TRUE(syncBufferHandler->graphicsAllocation->storageInfo.cloningOfPageTables);
 }
