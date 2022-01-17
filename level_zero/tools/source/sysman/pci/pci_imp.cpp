@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/directory.h"
 
 #include <cstring>
 namespace L0 {
@@ -131,8 +132,9 @@ void PciImp::pciGetStaticFields() {
         pciProperties.address.device = 0;
         pciProperties.address.function = 0;
     } else {
-        int domain = -1, bus = -1, device = -1, function = -1;
-        sscanf(bdf.c_str(), "%04x:%02x:%02x.%d", &domain, &bus, &device, &function);
+        uint16_t domain = -1;
+        uint8_t bus = -1, device = -1, function = -1;
+        NEO::parseBdfString(bdf.c_str(), domain, bus, device, function);
         pciProperties.address.domain = static_cast<uint32_t>(domain);
         pciProperties.address.bus = static_cast<uint32_t>(bus);
         pciProperties.address.device = static_cast<uint32_t>(device);

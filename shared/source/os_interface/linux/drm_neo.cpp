@@ -768,10 +768,10 @@ Drm::~Drm() {
 
 int Drm::queryAdapterBDF() {
     constexpr int pciBusInfoTokensNum = 4;
-    uint32_t domain, bus, device, function;
+    uint16_t domain = -1;
+    uint8_t bus = -1, device = -1, function = -1;
 
-    if (std::sscanf(hwDeviceId->getPciPath(), "%04x:%02x:%02x.%01x",
-                    &domain, &bus, &device, &function) != pciBusInfoTokensNum) {
+    if (NEO::parseBdfString(hwDeviceId->getPciPath(), domain, bus, device, function) != pciBusInfoTokensNum) {
         adapterBDF.Data = std::numeric_limits<uint32_t>::max();
         return 1;
     }

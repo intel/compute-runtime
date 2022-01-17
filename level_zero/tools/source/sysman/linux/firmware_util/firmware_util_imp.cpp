@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util_imp.h"
+
+#include "shared/source/utilities/directory.h"
 
 namespace L0 {
 const std::string fwUtilLibraryFile = "libigsc.so.0";
@@ -171,7 +173,7 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
 }
 
 FirmwareUtilImp::FirmwareUtilImp(const std::string &pciBDF) {
-    sscanf(pciBDF.c_str(), "%04" SCNx16 ":%02" SCNx8 ":%02" SCNx8 ".%" SCNx8, &domain, &bus, &device, &function);
+    NEO::parseBdfString(pciBDF.c_str(), domain, bus, device, function);
 };
 
 FirmwareUtilImp::~FirmwareUtilImp() {
