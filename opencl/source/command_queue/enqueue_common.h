@@ -324,6 +324,11 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder.getEvent()->setSubmitTimeStamp();
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
+
+            //check if we have BCS associated, if so we need to make sure it is completed as well
+            if (eventBuilder.getEvent() && this->bcsEngineTypes.size() > 0u) {
+                eventBuilder.getEvent()->setupBcs(this->getBcsCommandStreamReceiver(this->bcsEngineTypes[0u])->getOsContext().getEngineType());
+            }
         }
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());

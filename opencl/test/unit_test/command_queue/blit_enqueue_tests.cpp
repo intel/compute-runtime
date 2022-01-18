@@ -1563,9 +1563,62 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     auto cmdListQueue = getCmdList<FamilyType>(mockCmdQueue->getCS(0), offset);
     expectCommand<MI_SEMAPHORE_WAIT>(cmdListQueue.begin(), cmdListQueue.end());
 
+    clReleaseEvent(outEvent1);
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperationWhenItIsWaitedItHasProperDependenciesOnWait) {
+    auto buffer = createBuffer(1, false);
+    int hostPtr = 0;
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    cl_event outEvent1;
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent1);
+
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    //make sure we wait for both
+    clWaitForEvents(1, &outEvent1);
+    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
+
     clWaitForEvents(1, &outEvent1);
 
     clReleaseEvent(outEvent1);
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperationWhenItIsWaitedItHasProperDependenciesOnWaitEvenWhenMultipleMarkersAreSequenced) {
+    auto buffer = createBuffer(1, false);
+    int hostPtr = 0;
+
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    cl_event outEvent1, outEvent2;
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent1);
+    commandQueue->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent2);
+
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    //make sure we wait for both
+    clWaitForEvents(1, &outEvent2);
+    EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
+    EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
+
+    clWaitForEvents(1, &outEvent2);
+
+    clReleaseEvent(outEvent1);
+    clReleaseEvent(outEvent2);
 }
 
 using BlitEnqueueWithDisabledGpgpuSubmissionTests = BlitEnqueueTests<1>;
