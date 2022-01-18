@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeTh
 TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturned) {
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
 }
-TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportDisabled) {
-    EXPECT_FALSE(ImplicitScaling::apiSupport);
+TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
+    EXPECT_TRUE(ImplicitScaling::apiSupport);
 }
 } // namespace NEO
