@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,12 +22,10 @@ std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniq
 }
 
 void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
-    auto builtId = static_cast<uint32_t>(func);
-
     const char *builtinName = nullptr;
     NEO::EBuiltInOps::Type builtin;
 
-    switch (static_cast<Builtin>(builtId)) {
+    switch (func) {
     case Builtin::CopyBufferBytes:
         builtinName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
@@ -76,16 +74,15 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         UNRECOVERABLE_IF(true);
     };
 
+    auto builtId = static_cast<uint32_t>(func);
     builtins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
 void BuiltinFunctionsLibImpl::initStatelessBuiltinKernel(Builtin func) {
-    auto builtId = static_cast<uint32_t>(func);
-
     const char *builtinName = nullptr;
     NEO::EBuiltInOps::Type builtin;
 
-    switch (static_cast<Builtin>(builtId)) {
+    switch (func) {
     case Builtin::CopyBufferBytes:
         builtinName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
@@ -134,16 +131,15 @@ void BuiltinFunctionsLibImpl::initStatelessBuiltinKernel(Builtin func) {
         UNRECOVERABLE_IF(true);
     };
 
+    auto builtId = static_cast<uint32_t>(func);
     builtins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
 void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
-    auto builtId = static_cast<uint32_t>(func);
-
     const char *builtinName = nullptr;
     NEO::EBuiltInOps::Type builtin;
 
-    switch (static_cast<ImageBuiltin>(builtId)) {
+    switch (func) {
     case ImageBuiltin::CopyBufferToImage3d16Bytes:
         builtinName = "CopyBufferToImage3d16Bytes";
         builtin = NEO::EBuiltInOps::CopyBufferToImage3d;
@@ -192,6 +188,7 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
         UNRECOVERABLE_IF(true);
     };
 
+    auto builtId = static_cast<uint32_t>(func);
     imageBuiltins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
