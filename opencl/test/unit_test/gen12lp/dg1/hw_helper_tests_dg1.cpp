@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 using HwHelperTestDg1 = HwHelperTest;
 
-DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
+DG1TEST_F(HwHelperTestDg1, givenDg1SteppingA0WhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
@@ -23,7 +23,7 @@ DG1TEST_F(HwHelperTestDg1, givenDg1A0WhenAdjustDefaultEngineTypeCalledThenRcsIsR
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1BWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
+DG1TEST_F(HwHelperTestDg1, givenDg1SteppingBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
