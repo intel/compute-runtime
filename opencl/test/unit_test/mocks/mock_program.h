@@ -30,7 +30,6 @@ class MockProgram : public Program {
     using Program::allowNonUniform;
     using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
-    using Program::blockKernelManager;
     using Program::buildInfos;
     using Program::context;
     using Program::createdFrom;
@@ -50,7 +49,6 @@ class MockProgram : public Program {
     using Program::options;
     using Program::packDeviceBinary;
     using Program::Program;
-    using Program::separateBlockKernels;
     using Program::setBuildStatus;
     using Program::shouldWarnAboutRebuild;
     using Program::sourceCode;

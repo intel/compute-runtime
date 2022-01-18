@@ -204,9 +204,6 @@ cl_int Program::link(
             break;
         }
         updateNonUniformFlag(&*inputProgramsInternal.begin(), inputProgramsInternal.size());
-        for (const auto &device : deviceVector) {
-            separateBlockKernels(device->getRootDeviceIndex());
-        }
     } while (false);
 
     if (retVal != CL_SUCCESS) {

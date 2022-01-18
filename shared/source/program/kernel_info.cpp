@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,14 +91,6 @@ size_t KernelInfo::getSamplerStateArrayCount() const {
 size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
     size_t samplerStateArraySize = getSamplerStateArrayCount() * HwHelper::get(hwInfo.platform.eRenderCoreFamily).getSamplerStateSize();
     return samplerStateArraySize;
-}
-
-size_t KernelInfo::getBorderColorStateSize() const {
-    size_t borderColorSize = 0;
-    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0U) {
-        borderColorSize = kernelDescriptor.payloadMappings.samplerTable.tableOffset - kernelDescriptor.payloadMappings.samplerTable.borderColor;
-    }
-    return borderColorSize;
 }
 
 size_t KernelInfo::getBorderColorOffset() const {

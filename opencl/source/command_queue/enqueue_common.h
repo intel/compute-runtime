@@ -38,7 +38,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/migration_controller.h"
-#include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/source/utilities/cl_logger.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,4 +127,13 @@ TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenate
     kernelInfoArray.push_back(&kernel1);
     kernelInfoArray.push_back(&kernel2);
     EXPECT_STREQ("kern1;kern2", concatenateKernelNames(kernelInfoArray).c_str());
+}
+
+TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateArraySizeThenCorrectValueAreReturned) {
+    KernelInfo kernel = {};
+    uint8_t numSamplers = 5u;
+    kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    auto samplerSize = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getSamplerStateSize();
+    EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
+    EXPECT_EQ(kernel.getSamplerStateArraySize(*defaultHwInfo), static_cast<size_t>(numSamplers * samplerSize));
 }

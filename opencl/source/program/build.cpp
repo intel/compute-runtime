@@ -198,10 +198,6 @@ cl_int Program::build(
                 phaseReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
             }
         }
-
-        for (const auto &device : deviceVector) {
-            separateBlockKernels(device->getRootDeviceIndex());
-        }
     } while (false);
 
     if (retVal != CL_SUCCESS) {

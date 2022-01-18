@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,6 @@ struct KernelInfo {
     }
     size_t getSamplerStateArrayCount() const;
     size_t getSamplerStateArraySize(const HardwareInfo &hwInfo) const;
-    size_t getBorderColorStateSize() const;
     size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
         return kernelDescriptor.kernelAttributes.simdSize;

@@ -18,7 +18,6 @@
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/source/program/block_kernel_manager.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -131,53 +130,6 @@ class MockKernel : public Kernel {
 
     using Kernel::slmSizes;
     using Kernel::slmTotalSize;
-
-    struct BlockPatchValues {
-        uint64_t offset;
-        uint32_t size;
-        uint64_t address;
-    };
-
-    class ReflectionSurfaceHelperPublic : public Kernel::ReflectionSurfaceHelper {
-      public:
-        static BlockPatchValues devQueue;
-        static BlockPatchValues defaultQueue;
-        static BlockPatchValues eventPool;
-        static BlockPatchValues printfBuffer;
-        static const uint64_t undefinedOffset = (uint64_t)-1;
-
-        static void patchBlocksCurbeMock(void *reflectionSurface, uint32_t blockID,
-                                         uint64_t defaultDeviceQueueCurbeOffset, uint32_t patchSizeDefaultQueue, uint64_t defaultDeviceQueueGpuAddress,
-                                         uint64_t eventPoolCurbeOffset, uint32_t patchSizeEventPool, uint64_t eventPoolGpuAddress,
-                                         uint64_t deviceQueueCurbeOffset, uint32_t patchSizeDeviceQueue, uint64_t deviceQueueGpuAddress,
-                                         uint64_t printfBufferOffset, uint32_t patchSizePrintfBuffer, uint64_t printfBufferGpuAddress) {
-            defaultQueue.address = defaultDeviceQueueGpuAddress;
-            defaultQueue.offset = defaultDeviceQueueCurbeOffset;
-            defaultQueue.size = patchSizeDefaultQueue;
-
-            devQueue.address = deviceQueueGpuAddress;
-            devQueue.offset = deviceQueueCurbeOffset;
-            devQueue.size = patchSizeDeviceQueue;
-
-            eventPool.address = eventPoolGpuAddress;
-            eventPool.offset = eventPoolCurbeOffset;
-            eventPool.size = patchSizeEventPool;
-
-            printfBuffer.address = printfBufferGpuAddress;
-            printfBuffer.offset = printfBufferOffset;
-            printfBuffer.size = patchSizePrintfBuffer;
-        }
-
-        static uint32_t getConstantBufferOffset(void *reflectionSurface, uint32_t blockID) {
-            IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface);
-            assert(blockID < pKernelHeader->m_numberOfKernels);
-
-            IGIL_KernelAddressData *addressData = pKernelHeader->m_data;
-            assert(addressData[blockID].m_ConstantBufferOffset != 0);
-
-            return addressData[blockID].m_ConstantBufferOffset;
-        }
-    };
 
     MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
         : Kernel(programArg, kernelInfoArg, clDeviceArg) {

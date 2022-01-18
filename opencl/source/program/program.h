@@ -30,7 +30,6 @@ namespace PatchTokenBinary {
 struct ProgramFromPatchtokens;
 }
 
-class BlockKernelManager;
 class BuiltinDispatchInfoBuilder;
 class ClDevice;
 class Context;
@@ -200,12 +199,6 @@ class Program : public BaseObject<_cl_program> {
         return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
     }
 
-    BlockKernelManager *getBlockKernelManager() const {
-        return blockKernelManager;
-    }
-
-    void allocateBlockPrivateSurfaces(const ClDevice &clDevice);
-    void freeBlockResources();
     void cleanCurrentKernelInfo(uint32_t rootDeviceIndex);
 
     const std::string &getOptions() const { return options; }
@@ -294,8 +287,6 @@ class Program : public BaseObject<_cl_program> {
 
     MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData, const ProgramInfo::GlobalSurfaceInfo &stringInfo);
 
-    void separateBlockKernels(uint32_t rootDeviceIndex);
-
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
@@ -365,7 +356,6 @@ class Program : public BaseObject<_cl_program> {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
     specConstValuesMap specConstantsValues;
 
-    BlockKernelManager *blockKernelManager = nullptr;
     ExecutionEnvironment &executionEnvironment;
     Context *context = nullptr;
     ClDeviceVector clDevices;

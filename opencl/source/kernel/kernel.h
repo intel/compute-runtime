@@ -221,20 +221,11 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
     }
 
-    void createReflectionSurface();
-    template <bool mockable = false>
-    void patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printfHandler);
-
     void patchDefaultDeviceQueue(DeviceQueue *devQueue);
     void patchEventPool(DeviceQueue *devQueue);
-    void patchBlocksSimdSize();
     bool usesSyncBuffer() const;
     void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
-
-    GraphicsAllocation *getKernelReflectionSurface() const {
-        return kernelReflectionSurface;
-    }
 
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
@@ -310,8 +301,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }
 
     bool hasPrintfOutput() const;
-
-    void setReflectionSurfaceBlockBtOffset(uint32_t blockID, uint32_t offset);
 
     cl_int checkCorrectImageAccessQualifier(cl_uint argIndex,
                                             size_t argSize,
@@ -428,68 +417,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         uint32_t samplerCount;
     };
 
-    class ReflectionSurfaceHelper {
-      public:
-        static const uint64_t undefinedOffset = (uint64_t)-1;
-
-        static void setKernelDataHeader(void *reflectionSurface, uint32_t numberOfBlocks,
-                                        uint32_t parentImages, uint32_t parentSamplers,
-                                        uint32_t imageOffset, uint32_t samplerOffset) {
-            IGIL_KernelDataHeader *kernelDataHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface);
-            kernelDataHeader->m_numberOfKernels = numberOfBlocks;
-            kernelDataHeader->m_ParentKernelImageCount = parentImages;
-            kernelDataHeader->m_ParentSamplerCount = parentSamplers;
-            kernelDataHeader->m_ParentImageDataOffset = imageOffset;
-            kernelDataHeader->m_ParentSamplerParamsOffset = samplerOffset;
-        }
-
-        static uint32_t setKernelData(void *reflectionSurface, uint32_t offset,
-                                      std::vector<IGIL_KernelCurbeParams> &curbeParamsIn,
-                                      uint64_t tokenMaskIn, size_t maxConstantBufferSize,
-                                      size_t samplerCount, const KernelInfo &kernelInfo,
-                                      const HardwareInfo &hwInfo);
-
-        static void setKernelAddressData(void *reflectionSurface, uint32_t offset,
-                                         uint32_t kernelDataOffset, uint32_t samplerHeapOffset,
-                                         uint32_t constantBufferOffset, uint32_t samplerParamsOffset,
-                                         uint32_t sshTokensOffset, uint32_t btOffset,
-                                         const KernelInfo &kernelInfo, const HardwareInfo &hwInfo);
-
-        static void getCurbeParams(std::vector<IGIL_KernelCurbeParams> &curbeParamsOut,
-                                   uint64_t &tokenMaskOut, uint32_t &firstSSHTokenIndex,
-                                   const KernelInfo &kernelInfo, const HardwareInfo &hwInfo);
-
-        static bool compareFunction(IGIL_KernelCurbeParams argFirst, IGIL_KernelCurbeParams argSecond) {
-            if (argFirst.m_parameterType == argSecond.m_parameterType) {
-                if (argFirst.m_parameterType == iOpenCL::DATA_PARAMETER_LOCAL_WORK_SIZE) {
-                    return argFirst.m_patchOffset < argSecond.m_patchOffset;
-                } else {
-                    return argFirst.m_sourceOffset < argSecond.m_sourceOffset;
-                }
-            } else {
-                return argFirst.m_parameterType < argSecond.m_parameterType;
-            }
-        }
-
-        static void setKernelAddressDataBtOffset(void *reflectionSurface, uint32_t blockID, uint32_t btOffset);
-
-        static void setParentImageParams(void *reflectionSurface, std::vector<Kernel::SimpleKernelArgInfo> &parentArguments, const KernelInfo &parentKernelInfo);
-        static void setParentSamplerParams(void *reflectionSurface, std::vector<Kernel::SimpleKernelArgInfo> &parentArguments, const KernelInfo &parentKernelInfo);
-
-        template <bool mockable = false>
-        static void patchBlocksCurbe(void *reflectionSurface, uint32_t blockID,
-                                     uint64_t defaultDeviceQueueCurbeOffset, uint32_t patchSizeDefaultQueue, uint64_t defaultDeviceQueueGpuAddress,
-                                     uint64_t eventPoolCurbeOffset, uint32_t patchSizeEventPool, uint64_t eventPoolGpuAddress,
-                                     uint64_t deviceQueueCurbeOffset, uint32_t patchSizeDeviceQueue, uint64_t deviceQueueGpuAddress,
-                                     uint64_t printfBufferOffset, uint32_t printfBufferSize, uint64_t printfBufferGpuAddress,
-                                     uint64_t privateSurfaceOffset, uint32_t privateSurfaceSize, uint64_t privateSurfaceGpuAddress);
-
-        static void patchBlocksCurbeWithConstantValues(void *reflectionSurface, uint32_t blockID,
-                                                       uint64_t globalMemoryCurbeOffset, uint32_t globalMemoryPatchSize, uint64_t globalMemoryGpuAddress,
-                                                       uint64_t constantMemoryCurbeOffset, uint32_t constantMemoryPatchSize, uint64_t constantMemoryGpuAddress,
-                                                       uint64_t privateMemoryCurbeOffset, uint32_t privateMemoryPatchSize, uint64_t privateMemoryGpuAddress);
-    };
-
     void
     makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
@@ -500,8 +427,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void getParentObjectCounts(ObjectCounts &objectCount);
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
     void provideInitializationHints();
-
-    void patchBlocksCurbeWithConstantValues();
 
     void markArgPatchedAndResolveArgs(uint32_t argIndex);
     void resolveArgs();
@@ -533,8 +458,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
-
-    GraphicsAllocation *kernelReflectionSurface = nullptr;
 
     bool usingSharedObjArgs = false;
     bool usingImages = false;

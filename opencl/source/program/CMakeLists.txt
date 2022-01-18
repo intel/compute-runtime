@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,8 +7,6 @@
 set(RUNTIME_SRCS_PROGRAM
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}additional_options.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/block_kernel_manager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/block_kernel_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/build.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create.cpp

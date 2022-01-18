@@ -2117,31 +2117,6 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreate
     delete kernel;
 }
 
-TEST_F(KernelCrossThreadTests, WhenPatchingBlocksSimdSizeThenSimdSizeIsPatchedCorrectly) {
-    MockKernelWithInternals *kernel = new MockKernelWithInternals(*pClDevice);
-
-    // store offset to child's simd size in kernel info
-    uint32_t crossThreadOffset = 0; //offset of simd size
-    kernel->kernelInfo.childrenKernelsIdOffset.push_back({0, crossThreadOffset});
-
-    // add a new block kernel to program
-    auto infoBlock = new KernelInfo();
-    infoBlock->kernelDescriptor.kernelAttributes.simdSize = 16;
-    kernel->mockProgram->blockKernelManager->addBlockKernelInfo(infoBlock);
-
-    // patch block's simd size
-    kernel->mockKernel->patchBlocksSimdSize();
-
-    // obtain block's simd size from cross thread data
-    void *blockSimdSize = ptrOffset(kernel->mockKernel->getCrossThreadData(), kernel->kernelInfo.childrenKernelsIdOffset[0].second);
-    uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
-
-    // check of block's simd size has been patched correctly
-    EXPECT_EQ(kernel->mockProgram->blockKernelManager->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
-
-    delete kernel;
-}
-
 TEST(KernelInfoTest, WhenPatchingBorderColorOffsetThenPatchIsAppliedCorrectly) {
     MockKernelInfo info;
     EXPECT_EQ(0u, info.getBorderColorOffset());
