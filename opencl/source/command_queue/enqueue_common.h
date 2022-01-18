@@ -236,6 +236,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
+        if (isMarkerWithProfiling) {
+            flushDependenciesForNonKernelCommand = true;
+        }
+
         if (flushDependenciesForNonKernelCommand) {
             TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps);
         }
