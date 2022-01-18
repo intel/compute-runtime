@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,11 +108,16 @@ inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_ST
         imageHeight = 1;
     }
 
+    auto imageWidth = imageInfo.imgDesc.imageWidth;
+    if (imageWidth == 0) {
+        imageWidth = 1;
+    }
+
     if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
         imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
     }
 
-    surfaceState->setWidth(static_cast<uint32_t>(imageInfo.imgDesc.imageWidth));
+    surfaceState->setWidth(static_cast<uint32_t>(imageWidth));
     surfaceState->setHeight(static_cast<uint32_t>(imageHeight));
     surfaceState->setDepth(static_cast<uint32_t>(imageCount));
     surfaceState->setSurfacePitch(static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));

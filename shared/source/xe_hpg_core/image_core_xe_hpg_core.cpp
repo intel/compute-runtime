@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using Family = XE_HPG_COREFamily;
 
 template <>
 void setFilterMode<Family>(Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
-    surfaceState->setDisallowLowQualityFlitering(false);
+    surfaceState->setDisallowLowQualityFiltering(false);
 }
 // clang-format off
 #include "shared/source/image/image_skl_and_later.inl"

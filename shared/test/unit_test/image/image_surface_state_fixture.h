@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class ImageSurfaceStateTests : public DeviceFixture,
 
     std::unique_ptr<MockGmm> mockGmm;
     GmmHelper *gmmHelper = nullptr;
-    NEO::ImageInfo imageInfo;
+    NEO::ImageInfo imageInfo{};
 };
 
 } // namespace NEO

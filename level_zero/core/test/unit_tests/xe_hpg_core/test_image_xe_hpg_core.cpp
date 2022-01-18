@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,31 +97,6 @@ HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
     desc.width = 10;
     desc.height = 10;
     desc.depth = 10;
-
-    L0::Image *image_ptr;
-
-    auto result = Image::create(productFamily, device, &desc, &image_ptr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(image_ptr);
-    ASSERT_NE(nullptr, image);
-
-    auto alloc = image->getAllocation();
-    ASSERT_NE(nullptr, alloc);
-
-    image->destroy();
-}
-
-HWTEST2_F(ImageCreate, giveImageSizeZeroThenDummyImageIsCreated, IsXeHpgCore) {
-    ze_image_desc_t desc = {};
-
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
-    desc.width = 0;
-    desc.height = 0;
-    desc.depth = 0;
 
     L0::Image *image_ptr;
 

@@ -642,22 +642,25 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
-    bool enablePartialWrites = args.implicitScaling;
-    bool enableMultiGpuAtomics = enablePartialWrites;
 
-    if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-        enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
-    }
+    if constexpr (Family::isUsingMultiGpuProgrammingInSurfaceState) {
+        bool enablePartialWrites = args.implicitScaling;
+        bool enableMultiGpuAtomics = enablePartialWrites;
 
-    surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
-    surfaceState->setDisableSupportForMultiGpuPartialWrites(!enablePartialWrites);
+        if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
+            enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
+        }
 
-    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        surfaceState->setDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
-    }
+        surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
+        surfaceState->setDisableSupportForMultiGpuPartialWrites(!enablePartialWrites);
 
-    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+        if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
+            surfaceState->setDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
+        }
+
+        if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
+            surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+        }
     }
 
     if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {

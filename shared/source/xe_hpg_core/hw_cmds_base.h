@@ -31,6 +31,7 @@ struct XE_HPG_CORE {
     static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
+    static constexpr bool isUsingMultiGpuProgrammingInSurfaceState = false;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

@@ -2330,7 +2330,7 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline void setDisallowLowQualityFlitering(const bool value) {
         TheStructure.Common.DisallowLowQualityFlitering = value;
     }
-    inline bool getDisallowLowQualityFlitering() const {
+    inline bool getDisallowLowQualityFiltering() const {
         return TheStructure.Common.DisallowLowQualityFlitering;
     }
     inline void setAuxiliarySurfaceMode(const AUXILIARY_SURFACE_MODE value) {
