@@ -27,7 +27,14 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex, deviceBitfield));
         UNRECOVERABLE_IF(!aubCSR->initializeTagAllocation());
-        *aubCSR->getTagAddress() = std::numeric_limits<uint32_t>::max();
+
+        uint32_t subDevices = static_cast<uint32_t>(this->deviceBitfield.count());
+        auto tagAddressToInitialize = aubCSR->getTagAddress();
+
+        for (uint32_t i = 0; i < subDevices; i++) {
+            *tagAddressToInitialize = std::numeric_limits<uint32_t>::max();
+            tagAddressToInitialize = ptrOffset(tagAddressToInitialize, this->postSyncWriteOffset);
+        }
     }
 }
 

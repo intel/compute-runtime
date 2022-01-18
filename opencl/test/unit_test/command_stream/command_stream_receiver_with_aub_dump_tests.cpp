@@ -317,12 +317,21 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenCrea
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(new MockAubManager());
 
     executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
-    DeviceBitfield deviceBitfield(1);
+
+    uint32_t subDevicesCount = 4;
+
+    DeviceBitfield deviceBitfield = maxNBitValue(subDevicesCount);
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0, deviceBitfield);
 
     EXPECT_NE(nullptr, csrWithAubDump.aubCSR->getTagAllocation());
     EXPECT_NE(nullptr, csrWithAubDump.aubCSR->getTagAddress());
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *csrWithAubDump.aubCSR->getTagAddress());
+
+    auto tagAddressToInitialize = csrWithAubDump.aubCSR->getTagAddress();
+
+    for (uint32_t i = 0; i < subDevicesCount; i++) {
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), *tagAddressToInitialize);
+        tagAddressToInitialize = ptrOffset(tagAddressToInitialize, csrWithAubDump.aubCSR->getPostSyncWriteOffset());
+    }
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubCsrWithHwWhenAddingCommentThenAddCommentToAubManager) {
