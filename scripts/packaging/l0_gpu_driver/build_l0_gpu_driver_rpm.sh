@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,6 +20,9 @@ fi
 BUILD_SRPM="${BUILD_SRPM:-1}"
 BUILD_RPM="${BUILD_RPM:-1}"
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
+if [[ ${SPEC_FILE} == rhel* ]]; then
+    SPEC_FILE=${SPEC_FILE%.*}
+fi
 
 export BUILD_ID="${BUILD_ID:-1}"
 export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
