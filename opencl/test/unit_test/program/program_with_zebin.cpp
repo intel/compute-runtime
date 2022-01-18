@@ -57,5 +57,8 @@ void ProgramWithDebugDataCreationFixture::SetUp() {
 }
 
 void ProgramWithDebugDataCreationFixture::TearDown() {
+    programWithDebugDataCreation->setGlobalSurface(nullptr);
+    programWithDebugDataCreation->setConstantSurface(nullptr);
+    programWithDebugDataCreation->getKernelInfoArray(rootDeviceIndex).clear();
     ProgramWithZebinFixture::TearDown();
 }

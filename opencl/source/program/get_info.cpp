@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/get_info.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -33,6 +34,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     cl_uint clFalse = CL_FALSE;
     std::vector<cl_device_id> devicesToExpose;
     StackVec<size_t, 1> binarySizes;
+    StackVec<size_t, 1> debugDataSizes;
     uint32_t numDevices = static_cast<uint32_t>(clDevices.size());
 
     switch (paramName) {
@@ -137,23 +139,48 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_DEBUG_INFO_SIZES_INTEL:
-        retSize = srcSize = sizeof(debugDataSize);
-        pSrc = &debugDataSize;
+        for (auto i = 0u; i < clDevices.size(); i++) {
+            auto rootDeviceIndex = clDevices[i]->getRootDeviceIndex();
+            if (nullptr == buildInfos[rootDeviceIndex].debugData) {
+                auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+                if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(refBin)) {
+                    createDebugZebin(rootDeviceIndex);
+                } else
+                    continue;
+            }
+            debugDataSizes.push_back(buildInfos[rootDeviceIndex].debugDataSize);
+        }
+        pSrc = debugDataSizes.data();
+        retSize = srcSize = debugDataSizes.size() * sizeof(cl_device_id);
         break;
 
-    case CL_PROGRAM_DEBUG_INFO_INTEL:
-        pSrc = debugData.get();
-        retSize = numDevices * sizeof(void **);
-        srcSize = debugDataSize;
-        if (paramValue != nullptr) {
-            if (paramValueSize < retSize) {
-                retVal = CL_INVALID_VALUE;
-                break;
-            }
-            paramValueSize = srcSize;
-            paramValue = *(void **)paramValue;
+    case CL_PROGRAM_DEBUG_INFO_INTEL: {
+        auto requiredSize = numDevices * sizeof(void **);
+        if (paramValue == nullptr) {
+            retSize = requiredSize;
+            srcSize = 0u;
+            break;
         }
-        break;
+        if (paramValueSize < requiredSize) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
+        auto outputDebugData = reinterpret_cast<unsigned char **>(paramValue);
+        for (auto i = 0u; i < clDevices.size(); i++) {
+            auto rootDeviceIndex = clDevices[i]->getRootDeviceIndex();
+            if (nullptr == buildInfos[rootDeviceIndex].debugData) {
+                auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+                if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(refBin)) {
+                    createDebugZebin(rootDeviceIndex);
+                } else
+                    continue;
+            }
+            auto dbgDataSize = buildInfos[rootDeviceIndex].debugDataSize;
+            memcpy_s(outputDebugData[i], dbgDataSize, buildInfos[rootDeviceIndex].debugData.get(), dbgDataSize);
+        }
+        GetInfo::setParamValueReturnSize(paramValueSizeRet, requiredSize, GetInfoStatus::SUCCESS);
+        return CL_SUCCESS;
+    } break;
 
     case CL_PROGRAM_SCOPE_GLOBAL_CTORS_PRESENT:
     case CL_PROGRAM_SCOPE_GLOBAL_DTORS_PRESENT:

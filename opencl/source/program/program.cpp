@@ -185,8 +185,8 @@ cl_int Program::createProgramFromBinary(
             this->options = singleDeviceBinary.buildOptions.str();
 
             if (false == singleDeviceBinary.debugData.empty()) {
-                this->debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
-                this->debugDataSize = singleDeviceBinary.debugData.size();
+                this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
+                this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
             }
             bool forceRebuildBuiltInFromIr = isBuiltIn && DebugManager.flags.RebuildPrecompiledKernels.get();
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == forceRebuildBuiltInFromIr)) {
@@ -380,7 +380,7 @@ cl_int Program::packDeviceBinary(ClDevice &clDevice) {
         singleDeviceBinary.targetDevice.stepping = stepping;
         singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
         singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
-        singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->debugData.get()), this->debugDataSize);
+        singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].debugData.get()), this->buildInfos[rootDeviceIndex].debugDataSize);
 
         std::string packWarnings;
         std::string packErrors;

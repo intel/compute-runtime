@@ -43,6 +43,7 @@ class ProgramWithDebugDataCreationFixture : public ProgramWithZebinFixture {
         }
         bool wasCreateDebugZebinCalled = false;
         void createDebugZebin(uint32_t rootDeviceIndex) override {
+            MockProgram::createDebugZebin(rootDeviceIndex);
             wasCreateDebugZebinCalled = true;
         }
     };

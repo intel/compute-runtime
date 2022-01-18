@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,8 +54,8 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
     cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize, *device);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, program->getDebugData());
-    EXPECT_NE(0u, program->getDebugDataSize());
+    EXPECT_NE(nullptr, program->getDebugData(device->getRootDeviceIndex()));
+    EXPECT_NE(0u, program->getDebugDataSize(device->getRootDeviceIndex()));
 }
 
 class ProgramWithKernelDebuggingTest : public ProgramFixture,
@@ -337,9 +337,9 @@ TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuilt
     auto retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto debugData = pProgram->getDebugData();
+    auto debugData = pProgram->getDebugData(pDevice->getRootDeviceIndex());
     EXPECT_NE(nullptr, debugData);
-    EXPECT_NE(0u, pProgram->getDebugDataSize());
+    EXPECT_NE(0u, pProgram->getDebugDataSize(pDevice->getRootDeviceIndex()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenProcessDebugDataIsCalledThenKernelInfosAreFilledWithDebugData) {

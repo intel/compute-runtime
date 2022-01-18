@@ -164,9 +164,10 @@ cl_int Program::compile(
         this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
         this->irBinarySize = compilerOuput.intermediateRepresentation.size;
         this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
-        this->debugData = std::move(compilerOuput.debugData.mem);
-        this->debugDataSize = compilerOuput.debugData.size;
-
+        for (const auto &device : deviceVector) {
+            this->buildInfos[device->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+            this->buildInfos[device->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
+        }
         updateNonUniformFlag();
     } while (false);
 

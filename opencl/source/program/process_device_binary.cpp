@@ -241,9 +241,9 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
 }
 
 void Program::processDebugData(uint32_t rootDeviceIndex) {
-    if (debugData != nullptr) {
+    if (this->buildInfos[rootDeviceIndex].debugData != nullptr) {
         auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
-        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(debugData.get());
+        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(this->buildInfos[rootDeviceIndex].debugData.get());
 
         DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != kernelInfoArray.size());
 
@@ -281,16 +281,19 @@ Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
 }
 
 void Program::createDebugZebin(uint32_t rootDeviceIndex) {
-    if (debugDataSize != 0) {
+    if (this->buildInfos[rootDeviceIndex].debugDataSize != 0) {
         return;
     }
+    auto &debugDataRef = this->buildInfos[rootDeviceIndex].debugData;
+    auto &debugDataSizeRef = this->buildInfos[rootDeviceIndex].debugDataSize;
+
     auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     auto segments = getZebinSegments(rootDeviceIndex);
     auto debugZebin = Debug::createDebugZebin(refBin, segments);
 
-    debugDataSize = debugZebin.size();
-    debugData.reset(new char[debugDataSize]);
-    memcpy_s(debugData.get(), debugDataSize,
+    debugDataSizeRef = debugZebin.size();
+    debugDataRef.reset(new char[debugDataSizeRef]);
+    memcpy_s(debugDataRef.get(), debugDataSizeRef,
              debugZebin.data(), debugZebin.size());
 }
 

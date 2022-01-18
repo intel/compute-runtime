@@ -32,10 +32,9 @@ class MockProgram : public Program {
     using Program::areSpecializationConstantsInitialized;
     using Program::buildInfos;
     using Program::context;
+    using Program::createDebugZebin;
     using Program::createdFrom;
     using Program::createProgramFromBinary;
-    using Program::debugData;
-    using Program::debugDataSize;
     using Program::deviceBuildInfos;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;

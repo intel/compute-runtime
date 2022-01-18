@@ -2891,6 +2891,38 @@ TEST_F(ProgramBinTest, GivenBuildWithDebugDataThenBuildDataAvailableViaGetInfo) 
     EXPECT_EQ(numDevices * sizeof(debugData), retData);
 }
 
+TEST_F(ProgramBinTest, givenNoDebugDataAvailableThenDebugDataIsNotAvailableViaGetInfo) {
+    const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
+    pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        &sourceCode,
+        &knownSourceSize,
+        retVal);
+    EXPECT_EQ(0u, pProgram->buildInfos[rootDeviceIndex].debugDataSize);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].debugData);
+    size_t debugDataSize = 0;
+    retVal = pProgram->getInfo(CL_PROGRAM_DEBUG_INFO_SIZES_INTEL, sizeof(debugDataSize), &debugDataSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, debugDataSize);
+
+    cl_uint numDevices;
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
+
+    debugDataSize = numDevices * sizeof(void **);
+    std::unique_ptr<char[]> debugData{new char[debugDataSize]};
+    for (size_t n = 0; n < sizeof(debugData); n++) {
+        debugData[n] = 0;
+    }
+    char *pDebugData = &debugData[0];
+    size_t retData = 0;
+    retVal = pProgram->getInfo(CL_PROGRAM_DEBUG_INFO_INTEL, debugDataSize, &pDebugData, &retData);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (size_t n = 0; n < sizeof(debugData); n++) {
+        EXPECT_EQ(0, debugData[n]);
+    }
+}
+
 TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsStoredInProgram) {
     DebugDataGuard debugDataGuard;
 
@@ -2909,7 +2941,7 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
     retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &programToLink);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_NE(nullptr, pProgram->getDebugData());
+    EXPECT_NE(nullptr, pProgram->getDebugData(rootDeviceIndex));
 }
 
 using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;

@@ -221,12 +221,12 @@ class Program : public BaseObject<_cl_program> {
         return kernelDebugEnabled;
     }
 
-    char *getDebugData() {
-        return debugData.get();
+    char *getDebugData(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].debugData.get();
     }
 
-    size_t getDebugDataSize() {
-        return debugDataSize;
+    size_t getDebugDataSize(uint32_t rootDeviceIndex) {
+        return buildInfos[rootDeviceIndex].debugDataSize;
     }
 
     const Linker::RelocatedSymbolsMap &getSymbols(uint32_t rootDeviceIndex) const {
@@ -307,9 +307,6 @@ class Program : public BaseObject<_cl_program> {
     std::unique_ptr<char[]> irBinary;
     size_t irBinarySize = 0U;
 
-    std::unique_ptr<char[]> debugData;
-    size_t debugDataSize = 0U;
-
     CreatedFrom createdFrom = CreatedFrom::UNKNOWN;
 
     struct DeviceBuildInfo {
@@ -345,6 +342,9 @@ class Program : public BaseObject<_cl_program> {
         std::unique_ptr<char[]> packedDeviceBinary;
         size_t packedDeviceBinarySize = 0U;
         ProgramInfo::GlobalSurfaceInfo constStringSectionData;
+
+        std::unique_ptr<char[]> debugData;
+        size_t debugDataSize = 0U;
     };
 
     std::vector<BuildInfo> buildInfos;

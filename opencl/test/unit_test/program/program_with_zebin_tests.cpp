@@ -48,20 +48,20 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
 TEST_F(ProgramWithZebinFixture, givenNonEmptyDebugDataThenDebugZebinIsNotCreated) {
     addEmptyZebin(program.get());
     populateProgramWithSegments(program.get());
-    program->debugDataSize = 8u;
-    program->debugData.reset(nullptr);
+    program->buildInfos[rootDeviceIndex].debugDataSize = 8u;
+    program->buildInfos[rootDeviceIndex].debugData.reset(nullptr);
     program->createDebugZebin(rootDeviceIndex);
-    EXPECT_EQ(nullptr, program->debugData.get());
+    EXPECT_EQ(nullptr, program->buildInfos[rootDeviceIndex].debugData.get());
 }
 
 TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataThenDebugZebinIsCreatedAndStoredInDebugData) {
     addEmptyZebin(program.get());
     populateProgramWithSegments(program.get());
 
-    program->debugDataSize = 0u;
-    program->debugData.reset(nullptr);
+    program->buildInfos[rootDeviceIndex].debugDataSize = 0u;
+    program->buildInfos[rootDeviceIndex].debugData.reset(nullptr);
     program->createDebugZebin(rootDeviceIndex);
-    EXPECT_NE(nullptr, program->debugData.get());
+    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData.get());
 }
 
 TEST_F(ProgramWithDebugDataCreationFixture, givenZebinaryFormatInCreateDebugDataThenCreateDebugZebinIsCalled) {
@@ -78,4 +78,54 @@ TEST_F(ProgramWithDebugDataCreationFixture, givenNonZebinaryFormatInCreateDebugD
     programWithDebugDataCreation->createDebugData(rootDeviceIndex);
     EXPECT_FALSE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
     EXPECT_TRUE(programWithDebugDataCreation->wasProcessDebugDataCalled);
+}
+
+TEST_F(ProgramWithDebugDataCreationFixture, givenEmptyDebugDataAndZebinBinaryFormatThenCreateDebugZebinAndReturnOnGetInfo) {
+    addEmptyZebin(programWithDebugDataCreation.get());
+    populateProgramWithSegments(programWithDebugDataCreation.get());
+    programWithDebugDataCreation->buildInfos[rootDeviceIndex].debugDataSize = 0u;
+    programWithDebugDataCreation->buildInfos[rootDeviceIndex].debugData.reset(nullptr);
+
+    EXPECT_FALSE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
+    auto retVal = CL_INVALID_VALUE;
+    size_t debugDataSize = 0;
+    retVal = programWithDebugDataCreation->getInfo(CL_PROGRAM_DEBUG_INFO_SIZES_INTEL, sizeof(debugDataSize), &debugDataSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, programWithDebugDataCreation->buildInfos[rootDeviceIndex].debugData);
+    EXPECT_TRUE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
+
+    programWithDebugDataCreation->wasCreateDebugZebinCalled = false;
+
+    retVal = programWithDebugDataCreation->getInfo(CL_PROGRAM_DEBUG_INFO_SIZES_INTEL, sizeof(debugDataSize), &debugDataSize, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
+
+    std::unique_ptr<char[]> debugData = std::make_unique<char[]>(debugDataSize);
+    for (size_t n = 0; n < sizeof(debugData); n++) {
+        debugData[n] = 0;
+    }
+    char *pDebugData = &debugData[0];
+    size_t retData = 0;
+
+    retVal = programWithDebugDataCreation->getInfo(CL_PROGRAM_DEBUG_INFO_INTEL, debugDataSize, &pDebugData, &retData);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
+
+    programWithDebugDataCreation->buildInfos[rootDeviceIndex].debugDataSize = 0u;
+    programWithDebugDataCreation->buildInfos[rootDeviceIndex].debugData.reset(nullptr);
+
+    std::unique_ptr<char[]> debugData2 = std::make_unique<char[]>(debugDataSize);
+    for (size_t n = 0; n < sizeof(debugData2); n++) {
+        debugData2[n] = 0;
+    }
+    char *pDebugData2 = &debugData2[0];
+    size_t retData2 = 0;
+    retVal = programWithDebugDataCreation->getInfo(CL_PROGRAM_DEBUG_INFO_INTEL, debugDataSize, &pDebugData2, &retData2);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(programWithDebugDataCreation->wasCreateDebugZebinCalled);
+
+    cl_uint numDevices;
+    retVal = clGetProgramInfo(programWithDebugDataCreation.get(), CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(numDevices * sizeof(debugData), retData);
 }

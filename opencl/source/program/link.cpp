@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -157,8 +158,8 @@ cl_int Program::link(
                 }
 
                 this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, rootDeviceIndex);
-                this->debugData = std::move(compilerOuput.debugData.mem);
-                this->debugDataSize = compilerOuput.debugData.size;
+                this->buildInfos[device->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+                this->buildInfos[device->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
 
                 retVal = processGenBinary(*device);
                 if (retVal != CL_SUCCESS) {
@@ -196,8 +197,10 @@ cl_int Program::link(
             this->irBinary = std::move(compilerOuput.intermediateRepresentation.mem);
             this->irBinarySize = compilerOuput.intermediateRepresentation.size;
             this->isSpirV = (compilerOuput.intermediateCodeType == IGC::CodeType::spirV);
-            this->debugData = std::move(compilerOuput.debugData.mem);
-            this->debugDataSize = compilerOuput.debugData.size;
+            for (const auto &device : deviceVector) {
+                this->buildInfos[device->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+                this->buildInfos[device->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
+            }
             binaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
         }
         if (retVal != CL_SUCCESS) {

@@ -145,6 +145,8 @@ cl_int Program::build(
                     this->irBinarySize = compilerOuput.intermediateRepresentation.size;
                     this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
                 }
+                this->buildInfos[clDevice->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
+                this->buildInfos[clDevice->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
                 if (BuildPhase::BinaryCreation == phaseReached[clDevice->getRootDeviceIndex()]) {
                     continue;
                 }
@@ -154,8 +156,6 @@ cl_int Program::build(
             if (retVal != CL_SUCCESS) {
                 break;
             }
-            this->debugData = std::move(compilerOuput.debugData.mem);
-            this->debugDataSize = compilerOuput.debugData.size;
         }
         updateNonUniformFlag();
 
