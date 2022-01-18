@@ -649,6 +649,10 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   size_t size,
                                   void *hostPtr,
                                   cl_int *errcodeRet) {
+    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    }
+
     TRACING_ENTER(clCreateBuffer, &context, &flags, &size, &hostPtr, &errcodeRet);
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_flags", flags,
@@ -674,6 +678,10 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                                 size_t size,
                                                 void *hostPtr,
                                                 cl_int *errcodeRet) {
+    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    }
+
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_properties", properties,
                    "cl_mem_flags", flags,
@@ -697,6 +705,10 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      size_t size,
                                                      void *hostPtr,
                                                      cl_int *errcodeRet) {
+    if (DebugManager.flags.ForceExtendedBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
+    }
+
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_properties_intel", properties,
                    "cl_mem_flags", flags,

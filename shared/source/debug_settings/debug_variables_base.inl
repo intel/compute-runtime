@@ -178,6 +178,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ClosEnabled, -1, "-1: default, 0: disabled, 1: e
 DECLARE_DEBUG_VARIABLE(int32_t, EngineUsageHint, -1, "-1: default, >=0: engine usage value to use when creating command queue on user selected engine")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBcsEngineIndex, -1, "-1: default, >=0 Copy Engine index")
 DECLARE_DEBUG_VARIABLE(int32_t, Force2dImageAsArray, -1, "-1: default, 0: WA Disabled, 1: Forces surface state of 2dImage to array")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedBufferSize, -1, "-1: default, 0: disabled, >=1: Forces extended buffer size by specify pageSize number in clCreateBuffer, clCreateBufferWithProperties and clCreateBufferWithPropertiesINTEL calls")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

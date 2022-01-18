@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -174,6 +174,56 @@ TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsR
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateBufferTests, GivenForceExtendedBufferSizeDebugFlagWhenBufferIsCreatedThenSizeIsProperlyExtended) {
+    DebugManagerStateRestore restorer;
+
+    unsigned char *pHostMem = nullptr;
+    cl_mem_flags flags = 0;
+    constexpr auto bufferSize = 16;
+
+    auto pageSizeNumber = 1;
+    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    auto buffer = clCreateBuffer(pContext, flags, bufferSize, pHostMem, &retVal);
+
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(extendedBufferSize, bufferObj->getSize());
+
+    clReleaseMemObject(buffer);
+
+    pageSizeNumber = 4;
+    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    buffer = clCreateBufferWithProperties(pContext, nullptr, flags, bufferSize, pHostMem, &retVal);
+
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(extendedBufferSize, bufferObj->getSize());
+
+    clReleaseMemObject(buffer);
+
+    pageSizeNumber = 6;
+    DebugManager.flags.ForceExtendedBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, bufferSize, pHostMem, &retVal);
+
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    bufferObj = NEO::castToObject<Buffer>(buffer);
+    EXPECT_EQ(extendedBufferSize, bufferObj->getSize());
+
+    clReleaseMemObject(buffer);
 }
 
 TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContextErrorIsReturned) {
