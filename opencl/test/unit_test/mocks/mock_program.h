@@ -92,10 +92,6 @@ class MockProgram : public Program {
     void addKernelInfo(KernelInfo *inInfo, uint32_t rootDeviceIndex) {
         buildInfos[rootDeviceIndex].kernelInfoArray.push_back(inInfo);
     }
-
-    std::vector<KernelInfo *> &getSubgroupKernelInfoArray(uint32_t rootDeviceIndex) {
-        return buildInfos[rootDeviceIndex].subgroupKernelInfoArray;
-    }
     void setContext(Context *context) {
         this->context = context;
         contextSet = true;

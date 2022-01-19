@@ -331,7 +331,6 @@ class Program : public BaseObject<_cl_program> {
 
     struct BuildInfo : public NonCopyableClass {
         std::vector<KernelInfo *> kernelInfoArray;
-        std::vector<KernelInfo *> subgroupKernelInfoArray;
         GraphicsAllocation *constantSurface = nullptr;
         GraphicsAllocation *globalSurface = nullptr;
         GraphicsAllocation *exportedFunctionsSurface = nullptr;

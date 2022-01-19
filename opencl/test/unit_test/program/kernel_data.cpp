@@ -326,34 +326,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffers
     EXPECT_EQ(KernelDescriptor::Stateless, pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode);
 }
 
-TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntRequireSubgroupIndependentForwardProgressWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
-    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
-    executionEnvironment.SubgroupIndependentForwardProgressRequired = false;
-
-    pPatchList = &executionEnvironment;
-    patchListSize = executionEnvironment.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(0u, program->getSubgroupKernelInfoArray(rootDeviceIndex).size());
-}
-
-TEST_F(KernelDataTest, GivenExecutionEnvironmentRequiresSubgroupIndependentForwardProgressWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
-    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
-    executionEnvironment.SubgroupIndependentForwardProgressRequired = true;
-
-    pPatchList = &executionEnvironment;
-    patchListSize = executionEnvironment.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(1u, program->getSubgroupKernelInfoArray(rootDeviceIndex).size());
-}
-
 TEST_F(KernelDataTest, WhenDecodingExecutionEnvironmentTokenThenWalkOrderIsForcedToXMajor) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;

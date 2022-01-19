@@ -2737,6 +2737,7 @@ TEST(KernelTest, givenKernelWhenSettingAdditinalKernelExecInfoThenCorrectValueIs
     UltClDeviceFactory deviceFactory{1, 0};
     MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0]};
     mockKernelWithInternals.kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = true;
+    EXPECT_TRUE(mockKernelWithInternals.kernelInfo.requiresSubgroupIndependentForwardProgress());
 
     auto &mockKernel = *mockKernelWithInternals.mockKernel;
 
