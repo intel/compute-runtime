@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,16 +16,16 @@
 
 using namespace NEO;
 
-typedef PreambleFixture SklSlm;
+using Gen9Slm = PreambleFixture;
 
-SKLTEST_F(SklSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
-    typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+GEN9TEST_F(Gen9Slm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
 
-    PreambleHelper<SKLFamily>::programL3(&cs, l3Config);
+    PreambleHelper<FamilyType>::programL3(&cs, l3Config);
 
-    parseCommands<SKLFamily>(cs);
+    parseCommands<FamilyType>(cs);
 
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorLRI);
@@ -36,9 +36,9 @@ SKLTEST_F(SklSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueArePr
     EXPECT_EQ(1u, lri.getDataDword() & 1);
 }
 
-typedef PreambleFixture Gen9L3Config;
+using Gen9L3Config = PreambleFixture;
 
-SKLTEST_F(Gen9L3Config, GivenNoSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
+GEN9TEST_F(Gen9L3Config, GivenNoSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = false;
     uint32_t l3Config = 0;
 
@@ -54,7 +54,7 @@ SKLTEST_F(Gen9L3Config, GivenNoSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-SKLTEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
+GEN9TEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = true;
     uint32_t l3Config = 0;
 
@@ -70,13 +70,13 @@ SKLTEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-typedef PreambleFixture ThreadArbitration;
-SKLTEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<SKLFamily>::get().getDefaultThreadArbitrationPolicy());
+using ThreadArbitration = PreambleFixture;
+GEN9TEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
-SKLTEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledThenAgeBasedAndRoundRobinAreReturned) {
-    auto supportedPolicies = PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies();
+GEN9TEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledThenAgeBasedAndRoundRobinAreReturned) {
+    auto supportedPolicies = PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
 
     EXPECT_EQ(2u, supportedPolicies.size());
     EXPECT_NE(supportedPolicies.end(), std::find(supportedPolicies.begin(),
@@ -88,7 +88,7 @@ SKLTEST_F(ThreadArbitration, whenGetSupportedThreadArbitrationPoliciesIsCalledTh
 }
 
 GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
@@ -108,7 +108,7 @@ GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsC
 }
 
 GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCorrect) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     testWaTable->flags.waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, pDevice->getHardwareInfo(), EngineGroupType::RenderCompute);
