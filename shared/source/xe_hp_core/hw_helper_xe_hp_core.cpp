@@ -40,12 +40,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 
 template <>
 inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
-    if (DebugManager.flags.ForceWorkgroupSize1x1x1.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.ForceWorkgroupSize1x1x1.get());
-    } else {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        return (!isSimulation && isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo) && hwInfoConfig.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed);
-    }
+    return false;
 }
 
 template <>

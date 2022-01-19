@@ -39,11 +39,7 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 
 template <>
 inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
-    if (DebugManager.flags.ForceWorkgroupSize1x1x1.get() != -1) {
-        return static_cast<bool>(DebugManager.flags.ForceWorkgroupSize1x1x1.get());
-    } else {
-        return false;
-    }
+    return false;
 }
 
 template <>

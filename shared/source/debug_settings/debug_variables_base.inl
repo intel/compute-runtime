@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEMaximumNumberOfThreads, -1, "Set Maximum Numb
 DECLARE_DEBUG_VARIABLE(int32_t, CFEOverDispatchControl, -1, "Set Over Dispatch Control in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFELargeGRFThreadAdjustDisable, -1, "Set Large GRF thread adjust Disable field in CFE_STATE, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumComputeUnitsForScratch, -1, "Override number of compute units used for scratch size calculation")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceWorkgroupSize1x1x1, -1, "-1: default, 0: disable, 1: enable,  force workgroup size 1x1x1 in builtins")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, 0 - TG size 8, 1 - TG size 4, 2 - TG size 2, 3 - Reserved")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessL1CachingPolicy, -1, "-1: default, >=0 : program value for stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 0: disable, 1:enable, Force index=1 of memory bank for XEHP")
