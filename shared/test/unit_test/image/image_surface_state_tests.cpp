@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenPrope
 
     setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, nullptr, *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, false);
 
-    EXPECT_EQ(castSurfaceState->getSurfaceHorizontalAlignment(), RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    EXPECT_EQ(castSurfaceState->getSurfaceHorizontalAlignment(), RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT);
     EXPECT_EQ(castSurfaceState->getSurfaceVerticalAlignment(), RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
 
     EXPECT_EQ(castSurfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);

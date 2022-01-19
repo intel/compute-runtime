@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,7 +186,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(imageDesc.image_height, surfaceState.getHeight());
     EXPECT_NE(0u, surfaceState.getSurfacePitch());
     EXPECT_NE(0u, surfaceState.getSurfaceType());
-    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4, surfaceState.getSurfaceHorizontalAlignment());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT, surfaceState.getSurfaceHorizontalAlignment());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
     EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
 }

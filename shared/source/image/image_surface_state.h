@@ -38,7 +38,7 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
 
     uint32_t renderTargetViewExtent = static_cast<uint32_t>(imageCount);
     uint32_t minimumArrayElement = 0;
-    auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4;
+    auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT;
     auto vAlign = RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
 
     if (gmm) {

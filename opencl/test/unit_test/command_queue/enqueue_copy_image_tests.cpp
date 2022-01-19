@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -190,7 +190,7 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
             surfaceFormat == RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_UINT ||
             surfaceFormat == RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT;
         EXPECT_TRUE(isRedescribedFormat);
-        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4, surfaceState.getSurfaceHorizontalAlignment());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT, surfaceState.getSurfaceHorizontalAlignment());
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
     }
 

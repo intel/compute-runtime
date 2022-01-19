@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -310,7 +310,7 @@ HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenD
     auto hAlign = static_cast<uint32_t>(surfaceState->getSurfaceHorizontalAlignment());
     auto vAlign = static_cast<uint32_t>(surfaceState->getSurfaceVerticalAlignment());
 
-    auto expectedHAlign = static_cast<uint32_t>(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    auto expectedHAlign = static_cast<uint32_t>(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT);
     auto expectedVAlign = static_cast<uint32_t>(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
 
     // 3D image

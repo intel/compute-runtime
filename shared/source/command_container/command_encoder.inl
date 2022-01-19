@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -354,7 +354,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
                                                              : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
     surfaceState->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
     surfaceState->setSurfaceVerticalAlignment(R_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
-    surfaceState->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    surfaceState->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT);
 
     surfaceState->setTileMode(R_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);

@@ -143,7 +143,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
 
     state.setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
     state.setSurfaceVerticalAlignment(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
-    state.setSurfaceHorizontalAlignment(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    state.setSurfaceHorizontalAlignment(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_DEFAULT);
 
     state.setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
     state.setVerticalLineStride(0);
