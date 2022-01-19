@@ -157,7 +157,6 @@ class MockKernel : public Kernel {
         const size_t crossThreadSize = 160;
 
         info->setLocalIds({0, 0, 0});
-        info->kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue = false;
         info->kernelDescriptor.kernelAttributes.numGrfRequired = grfNumber;
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -405,7 +405,6 @@ void dump(const SPatchExecutionEnvironment &value, std::stringstream &out, const
     out << indent << "    uint32_t    CompiledSIMD8;// = " << value.CompiledSIMD8 << "\n";
     out << indent << "    uint32_t    CompiledSIMD16;// = " << value.CompiledSIMD16 << "\n";
     out << indent << "    uint32_t    CompiledSIMD32;// = " << value.CompiledSIMD32 << "\n";
-    out << indent << "    uint32_t    HasDeviceEnqueue;// = " << value.HasDeviceEnqueue << "\n";
     out << indent << "    uint32_t    MayAccessUndeclaredResource;// = " << value.MayAccessUndeclaredResource << "\n";
     out << indent << "    uint32_t    UsesFencesForReadWriteImages;// = " << value.UsesFencesForReadWriteImages << "\n";
     out << indent << "    uint32_t    UsesStatelessSpillFill;// = " << value.UsesStatelessSpillFill << "\n";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -244,7 +244,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
     executionEnvironment.UsesStatelessSpillFill = false;
@@ -277,7 +276,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
     executionEnvironment.UsesStatelessSpillFill = false;
@@ -311,7 +309,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffers
     executionEnvironment.CompiledSubGroupsNumber = 0xaa;
     executionEnvironment.HasBarriers = false;
     executionEnvironment.DisableMidThreadPreemption = true;
-    executionEnvironment.HasDeviceEnqueue = false;
     executionEnvironment.MayAccessUndeclaredResource = false;
     executionEnvironment.UsesFencesForReadWriteImages = false;
     executionEnvironment.UsesStatelessSpillFill = false;
@@ -327,34 +324,6 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffers
     buildAndDecode();
 
     EXPECT_EQ(KernelDescriptor::Stateless, pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode);
-}
-
-TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntHaveDeviceEnqueueWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
-    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
-    executionEnvironment.HasDeviceEnqueue = false;
-
-    pPatchList = &executionEnvironment;
-    patchListSize = executionEnvironment.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(0u, program->getParentKernelInfoArray(rootDeviceIndex).size());
-}
-
-TEST_F(KernelDataTest, GivenExecutionEnvironmentHasDeviceEnqueueWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
-    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
-    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
-    executionEnvironment.HasDeviceEnqueue = true;
-
-    pPatchList = &executionEnvironment;
-    patchListSize = executionEnvironment.Size;
-
-    buildAndDecode();
-
-    EXPECT_EQ_VAL(1u, program->getParentKernelInfoArray(rootDeviceIndex).size());
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntRequireSubgroupIndependentForwardProgressWhenBuildingThenProgramIsCorrect) {

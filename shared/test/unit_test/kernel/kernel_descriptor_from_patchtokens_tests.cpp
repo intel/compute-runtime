@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,11 +87,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPar
     execEnv.LargestCompiledSIMDSize = 32;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(32U, kernelDescriptor.kernelAttributes.simdSize);
-
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue);
-    execEnv.HasDeviceEnqueue = 1U;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue);
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.usesBarriers());
     execEnv.HasBarriers = 1U;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -311,7 +311,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -393,7 +392,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -442,7 +440,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -484,7 +481,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -601,7 +597,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 0
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -846,7 +841,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -1017,7 +1011,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0
@@ -1419,7 +1412,6 @@ Kernel-scope tokens section size : )==="
       uint32_t    CompiledSIMD8;// = 0
       uint32_t    CompiledSIMD16;// = 0
       uint32_t    CompiledSIMD32;// = 1
-      uint32_t    HasDeviceEnqueue;// = 0
       uint32_t    MayAccessUndeclaredResource;// = 0
       uint32_t    UsesFencesForReadWriteImages;// = 0
       uint32_t    UsesStatelessSpillFill;// = 0

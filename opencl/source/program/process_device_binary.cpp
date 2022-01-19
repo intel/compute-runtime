@@ -234,9 +234,6 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
             return retVal;
         }
 
-        if (kernelInfo->hasDeviceEnqueue()) {
-            buildInfos[rootDeviceIndex].parentKernelInfoArray.push_back(kernelInfo);
-        }
         if (kernelInfo->requiresSubgroupIndependentForwardProgress()) {
             buildInfos[rootDeviceIndex].subgroupKernelInfoArray.push_back(kernelInfo);
         }

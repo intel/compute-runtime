@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,7 +173,6 @@ static constexpr ConstStringRef barrierCount("barrier_count");
 static constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
 static constexpr ConstStringRef grfCount("grf_count");
 static constexpr ConstStringRef has4gbBuffers("has_4gb_buffers");
-static constexpr ConstStringRef hasDeviceEnqueue("has_device_enqueue");
 static constexpr ConstStringRef hasDpas("has_dpas");
 static constexpr ConstStringRef hasFenceForImageAccess("has_fence_for_image_access");
 static constexpr ConstStringRef hasGlobalAtomics("has_global_atomics");
@@ -293,7 +292,6 @@ using BarrierCountT = int32_t;
 using DisableMidThreadPreemptionT = bool;
 using GrfCountT = int32_t;
 using Has4GBBuffersT = bool;
-using HasDeviceEnqueueT = bool;
 using HasDpasT = bool;
 using HasFenceForImageAccessT = bool;
 using HasGlobalAtomicsT = bool;
@@ -318,7 +316,6 @@ namespace Defaults {
 static constexpr BarrierCountT barrierCount = 0;
 static constexpr DisableMidThreadPreemptionT disableMidThreadPreemption = false;
 static constexpr Has4GBBuffersT has4GBBuffers = false;
-static constexpr HasDeviceEnqueueT hasDeviceEnqueue = false;
 static constexpr HasDpasT hasDpas = false;
 static constexpr HasFenceForImageAccessT hasFenceForImageAccess = false;
 static constexpr HasGlobalAtomicsT hasGlobalAtomics = false;
@@ -350,7 +347,6 @@ struct ExecutionEnvBaseT {
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;
     GrfCountT grfCount = -1;
     Has4GBBuffersT has4GBBuffers = Defaults::has4GBBuffers;
-    HasDeviceEnqueueT hasDeviceEnqueue = Defaults::hasDeviceEnqueue;
     HasDpasT hasDpas = Defaults::hasDpas;
     HasFenceForImageAccessT hasFenceForImageAccess = Defaults::hasFenceForImageAccess;
     HasGlobalAtomicsT hasGlobalAtomics = Defaults::hasGlobalAtomics;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -948,7 +948,6 @@ kernels:
         disable_mid_thread_preemption : true
         grf_count : 13
         has_4gb_buffers : true
-        has_device_enqueue : true
         has_dpas : true
         has_fence_for_image_access : true
         has_global_atomics : true
@@ -992,7 +991,6 @@ kernels:
     EXPECT_TRUE(execEnv.disableMidThreadPreemption);
     EXPECT_EQ(13, execEnv.grfCount);
     EXPECT_TRUE(execEnv.has4GBBuffers);
-    EXPECT_TRUE(execEnv.hasDeviceEnqueue);
     EXPECT_TRUE(execEnv.hasDpas);
     EXPECT_TRUE(execEnv.hasFenceForImageAccess);
     EXPECT_TRUE(execEnv.hasGlobalAtomics);
@@ -2783,7 +2781,6 @@ TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescrip
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
-    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue, Defaults::hasDeviceEnqueue);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode, Defaults::hasDpas);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites, (false == Defaults::hasNoStatelessWrite));
@@ -3674,7 +3671,6 @@ kernels:
         disable_mid_thread_preemption : true
         grf_count : 13
         has_4gb_buffers : true
-        has_device_enqueue : true
         has_fence_for_image_access : true
         has_global_atomics : true
         has_multi_scratch_spaces : true
@@ -3724,7 +3720,6 @@ kernels:
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption);
     EXPECT_EQ(13U, kernelDescriptor.kernelAttributes.numGrfRequired);
     EXPECT_EQ(KernelDescriptor::Stateless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);

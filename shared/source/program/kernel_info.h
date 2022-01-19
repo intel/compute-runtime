@@ -92,9 +92,6 @@ struct KernelInfo {
     unsigned int getMaxSimdSize() const {
         return kernelDescriptor.kernelAttributes.simdSize;
     }
-    bool hasDeviceEnqueue() const {
-        return kernelDescriptor.kernelAttributes.flags.usesDeviceSideEnqueue;
-    }
     bool requiresSubgroupIndependentForwardProgress() const {
         return kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress;
     }

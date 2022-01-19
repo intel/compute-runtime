@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,7 +191,6 @@ struct KernelDescriptor {
                 bool usesVme : 1;
                 bool usesImages : 1;
                 bool usesSamplers : 1;
-                bool usesDeviceSideEnqueue : 1;
                 bool usesSyncBuffer : 1;
                 bool useGlobalAtomics : 1;
                 bool usesStatelessWrites : 1;
