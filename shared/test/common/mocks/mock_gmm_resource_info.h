@@ -124,8 +124,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     size_t size = 0;
     size_t rowPitch = 0;
     uint32_t qPitch = 0;
-    uint32_t unifiedAuxPitch = 0;
-    uint32_t auxQPitch = 0;
+    uint32_t unifiedAuxPitch = 1u;
+    uint32_t auxQPitch = 1u;
     uint32_t mipTailStartLod = 0;
 };
 } // namespace NEO
