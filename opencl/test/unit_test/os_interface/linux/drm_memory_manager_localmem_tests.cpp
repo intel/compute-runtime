@@ -964,7 +964,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsU
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(alignUp(reinterpret_cast<void *>(0x12345678), MemoryConstants::pageSize64k), allocation->getMmapPtr());
-    EXPECT_EQ(0u, munmapCalledCount);
+    EXPECT_EQ(1u, munmapCalledCount);
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(3u, munmapCalledCount);
     munmapCalledCount = 0u;
@@ -999,10 +999,10 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsA
     };
 
     munmapCalledCount = 0u;
-    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, 1u, MemoryConstants::pageSize64k, 0u);
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, 4u, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(reinterpret_cast<void *>(0x12345678), allocation->getMmapPtr());
-    EXPECT_EQ(0u, munmapCalledCount);
+    EXPECT_EQ(1u, munmapCalledCount);
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(2u, munmapCalledCount);
     munmapCalledCount = 0u;

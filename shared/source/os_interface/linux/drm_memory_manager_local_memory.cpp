@@ -70,7 +70,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         if (pointerDiff != 0) {
             allocation->registerMemoryToUnmap(cpuBasePointer, pointerDiff, this->munmapFunction);
         }
-        allocation->registerMemoryToUnmap(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff, this->munmapFunction);
+        [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
+        DEBUG_BREAK_IF(retCode != 0);
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
 
         bo.release();

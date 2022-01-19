@@ -105,7 +105,7 @@ class DrmAllocation : public GraphicsAllocation {
     BufferObjects bufferObjects{};
     StackVec<uint32_t, 1> registeredBoBindHandles;
     MemAdviseFlags enabledMemAdviseFlags{};
-    StackVec<MemoryToUnmap, 2> memoryToUnmap;
+    StackVec<MemoryToUnmap, 1> memoryToUnmap;
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;
