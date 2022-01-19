@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
@@ -100,8 +99,7 @@ typedef ::testing::Types<
     //Kernel,
     //Sampler
     //others...
-    MockCommandQueue,
-    DeviceQueue>
+    MockCommandQueue>
     BaseObjectTypes;
 
 typedef ::testing::Types<
@@ -110,8 +108,7 @@ typedef ::testing::Types<
     Context,
     Program,
     Buffer,
-    MockCommandQueue,
-    DeviceQueue>
+    MockCommandQueue>
     BaseObjectTypesForCastInvalidMagicTest;
 
 TYPED_TEST_CASE(BaseObjectTests, BaseObjectTypes);

@@ -36,8 +36,6 @@
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device_queue/device_queue.h"
-#include "opencl/source/execution_model/device_enqueue.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -283,9 +281,6 @@ cl_int Kernel::initialize() {
             } else if (arg.getTraits().typeQualifiers.pipeQual) {
                 kernelArgHandlers[i] = &Kernel::setArgPipe;
                 kernelArguments[i].type = PIPE_OBJ;
-            } else if (arg.getExtendedTypeInfo().isDeviceQueue) {
-                kernelArgHandlers[i] = &Kernel::setArgDevQueue;
-                kernelArguments[i].type = DEVICE_QUEUE_OBJ;
             } else {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
@@ -1730,34 +1725,6 @@ cl_int Kernel::setArgAccelerator(uint32_t argIndex,
     return retVal;
 }
 
-cl_int Kernel::setArgDevQueue(uint32_t argIndex,
-                              size_t argSize,
-                              const void *argVal) {
-    if (argVal == nullptr) {
-        return CL_INVALID_ARG_VALUE;
-    }
-
-    if (argSize != sizeof(cl_command_queue)) {
-        return CL_INVALID_ARG_SIZE;
-    }
-
-    auto clDeviceQueue = *(static_cast<const device_queue *>(argVal));
-    auto pDeviceQueue = castToObject<DeviceQueue>(clDeviceQueue);
-
-    if (pDeviceQueue == nullptr) {
-        return CL_INVALID_DEVICE_QUEUE;
-    }
-
-    storeKernelArg(argIndex, DEVICE_QUEUE_OBJ, clDeviceQueue, argVal, argSize);
-
-    const auto &argAsPtr = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescPointer>();
-    auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), argAsPtr.stateless);
-    patchWithRequiredSize(patchLocation, argAsPtr.pointerSize,
-                          static_cast<uintptr_t>(pDeviceQueue->getQueueBuffer()->getGpuAddressToPatch()));
-
-    return CL_SUCCESS;
-}
-
 void Kernel::setKernelArgHandler(uint32_t argIndex, KernelArgHandler handler) {
     if (kernelArgHandlers.size() <= argIndex) {
         kernelArgHandlers.resize(argIndex + 1);
@@ -1821,39 +1788,6 @@ void Kernel::provideInitializationHints() {
     if (scratchSize > 0) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,
                                         kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), scratchSize);
-    }
-}
-
-void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
-    const auto &defaultQueueSurfaceAddress = kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress;
-    if (isValidOffset(defaultQueueSurfaceAddress.stateless) && crossThreadData) {
-        auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), defaultQueueSurfaceAddress.stateless);
-        patchWithRequiredSize(patchLocation, defaultQueueSurfaceAddress.pointerSize,
-                              static_cast<uintptr_t>(devQueue->getQueueBuffer()->getGpuAddressToPatch()));
-    }
-    if (isValidOffset(defaultQueueSurfaceAddress.bindful)) {
-        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()), defaultQueueSurfaceAddress.bindful);
-        Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, devQueue->getQueueBuffer()->getUnderlyingBufferSize(),
-                                (void *)devQueue->getQueueBuffer()->getGpuAddress(), 0, devQueue->getQueueBuffer(), 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
-    }
-}
-
-void Kernel::patchEventPool(DeviceQueue *devQueue) {
-    const auto &eventPoolSurfaceAddress = kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
-
-    if (isValidOffset(eventPoolSurfaceAddress.stateless) && crossThreadData) {
-        auto patchLocation = ptrOffset(reinterpret_cast<uint32_t *>(crossThreadData), eventPoolSurfaceAddress.stateless);
-        patchWithRequiredSize(patchLocation, eventPoolSurfaceAddress.pointerSize,
-                              static_cast<uintptr_t>(devQueue->getEventPoolBuffer()->getGpuAddressToPatch()));
-    }
-
-    if (isValidOffset(eventPoolSurfaceAddress.bindful)) {
-        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()), eventPoolSurfaceAddress.bindful);
-        auto eventPoolBuffer = devQueue->getEventPoolBuffer();
-        Buffer::setSurfaceState(&devQueue->getDevice(), surfaceState, false, false, eventPoolBuffer->getUnderlyingBufferSize(),
-                                (void *)eventPoolBuffer->getGpuAddress(), 0, eventPoolBuffer, 0, 0,
-                                kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, areMultipleSubDevicesInContext());
     }
 }
 

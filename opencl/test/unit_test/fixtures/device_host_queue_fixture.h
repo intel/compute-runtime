@@ -10,7 +10,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -23,9 +22,6 @@ struct deviceQueueProperties {
     static cl_queue_properties noProperties[5];
     static cl_queue_properties allProperties[5];
 };
-
-IGIL_CommandQueue getExpectedInitIgilCmdQueue(DeviceQueue *deviceQueue);
-IGIL_CommandQueue getExpectedgilCmdQueueAfterReset(DeviceQueue *deviceQueue);
 
 template <typename T>
 class DeviceHostQueueFixture : public ApiFixture<>,

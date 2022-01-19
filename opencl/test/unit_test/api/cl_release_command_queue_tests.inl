@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,37 +16,13 @@
 #include <type_traits>
 
 using namespace NEO;
-namespace DeviceHostQueue {
-typedef ::testing::Types<CommandQueue, DeviceQueue> QueueTypes;
 
-template <typename T>
-class clReleaseCommandQueueTypeTests : public DeviceHostQueueFixture<T> {};
+namespace ULT {
 
-TYPED_TEST_CASE(clReleaseCommandQueueTypeTests, QueueTypes);
-
-TYPED_TEST(clReleaseCommandQueueTypeTests, GivenValidCmdQueueWhenReleasingCmdQueueThenSucessIsReturned) {
-    if (std::is_same<TypeParam, DeviceQueue>::value && !this->pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        return;
-    }
-
-    using BaseType = typename TypeParam::BaseType;
-
-    auto queue = this->createClQueue();
-    ASSERT_EQ(CL_SUCCESS, this->retVal);
-    auto qObject = castToObject<TypeParam>(static_cast<BaseType *>(queue));
-    ASSERT_NE(qObject, nullptr);
-
-    this->retVal = clReleaseCommandQueue(queue);
-    EXPECT_EQ(CL_SUCCESS, this->retVal);
-}
-
-TEST(clReleaseCommandQueueTypeTests, GivenNullCmdQueueWhenReleasingCmdQueueThenClInvalidCommandQueueErrorIsReturned) {
+TEST(clReleaseCommandQueueTest, GivenNullCmdQueueWhenReleasingCmdQueueThenClInvalidCommandQueueErrorIsReturned) {
     auto retVal = clReleaseCommandQueue(nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
-} // namespace DeviceHostQueue
-
-namespace ULT {
 
 typedef api_tests clReleaseCommandQueueTests;
 

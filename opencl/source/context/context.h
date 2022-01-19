@@ -30,7 +30,6 @@ class AsyncEventsHandler;
 struct BuiltInKernel;
 class CommandQueue;
 class Device;
-class DeviceQueue;
 class MemObj;
 class MemoryManager;
 class SharingFunctions;
@@ -116,9 +115,6 @@ class Context : public BaseObject<_cl_context> {
     const std::set<uint32_t> &getRootDeviceIndices() const;
 
     uint32_t getMaxRootDeviceIndex() const;
-
-    DeviceQueue *getDefaultDeviceQueue();
-    void setDefaultDeviceQueue(DeviceQueue *queue);
 
     CommandQueue *getSpecialQueue(uint32_t rootDeviceIndex);
     void setSpecialQueue(CommandQueue *commandQueue, uint32_t rootDeviceIndex);
@@ -218,7 +214,6 @@ class Context : public BaseObject<_cl_context> {
     SVMAllocsManager *svmAllocsManager = nullptr;
     MapOperationsStorage mapOperationsStorage = {};
     StackVec<CommandQueue *, 1> specialQueues;
-    DeviceQueue *defaultDeviceQueue = nullptr;
     DriverDiagnostics *driverDiagnostics = nullptr;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();

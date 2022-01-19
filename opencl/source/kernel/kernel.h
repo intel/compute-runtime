@@ -23,7 +23,6 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
@@ -34,6 +33,7 @@
 namespace NEO {
 struct CompletionStamp;
 class Buffer;
+class CommandQueue;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 class ImageTransformer;
@@ -221,8 +221,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
     }
 
-    void patchDefaultDeviceQueue(DeviceQueue *devQueue);
-    void patchEventPool(DeviceQueue *devQueue);
     bool usesSyncBuffer() const;
     void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
@@ -270,10 +268,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     cl_int setArgAccelerator(uint32_t argIndex,
                              size_t argSize,
                              const void *argVal);
-
-    cl_int setArgDevQueue(uint32_t argIndex,
-                          size_t argSize,
-                          const void *argVal);
 
     void storeKernelArg(uint32_t argIndex,
                         kernelArgType argType,

@@ -9,7 +9,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/device_queue/device_queue.h"
 
 #include "cl_api_tests.h"
 

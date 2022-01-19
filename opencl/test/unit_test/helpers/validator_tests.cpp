@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,6 @@ REGISTER_TYPED_TEST_CASE_P(
 // Define new command types to run the parameterized tests
 typedef ::testing::Types<
     cl_command_queue,
-    device_queue, // internal type
     cl_context,
     cl_device_id,
     cl_event,

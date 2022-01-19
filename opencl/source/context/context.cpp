@@ -20,7 +20,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
@@ -132,14 +131,6 @@ const std::set<uint32_t> &Context::getRootDeviceIndices() const {
 
 uint32_t Context::getMaxRootDeviceIndex() const {
     return maxRootDeviceIndex;
-}
-
-DeviceQueue *Context::getDefaultDeviceQueue() {
-    return defaultDeviceQueue;
-}
-
-void Context::setDefaultDeviceQueue(DeviceQueue *queue) {
-    defaultDeviceQueue = queue;
 }
 
 CommandQueue *Context::getSpecialQueue(uint32_t rootDeviceIndex) {

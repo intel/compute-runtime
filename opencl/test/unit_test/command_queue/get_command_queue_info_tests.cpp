@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,20 +91,6 @@ TEST_P(GetCommandQueueInfoTest, givenNonDeviceQueueWhenQueryingQueueSizeThenInva
         &queueSize,
         nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
-}
-
-TEST_P(GetCommandQueueInfoTest, GivenClQueueDeviceDefaultWhenGettingCommandQueueInfoThenSuccessIsReturned) {
-    cl_command_queue commandQueueReturned = nullptr;
-
-    auto retVal = pCmdQ->getCommandQueueInfo(
-        CL_QUEUE_DEVICE_DEFAULT,
-        sizeof(commandQueueReturned),
-        &commandQueueReturned,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // host queue can't be default device queue
-    EXPECT_NE(pCmdQ, commandQueueReturned);
 }
 
 TEST_P(GetCommandQueueInfoTest, GivenInvalidParameterWhenGettingCommandQueueInfoThenInvalidValueIsReturned) {

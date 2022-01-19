@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@ struct _cl_command_queue : public ClDispatch {
 // device_queue is a type used internally
 struct _device_queue : public _cl_command_queue {
 };
-typedef _device_queue *device_queue;
 
 struct _cl_context : public ClDispatch {
     bool isSharedContext = false;

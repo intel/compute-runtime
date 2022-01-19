@@ -18,7 +18,6 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"

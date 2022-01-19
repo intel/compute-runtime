@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/driver_diagnostics.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
@@ -583,8 +582,6 @@ cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
         TRACING_EXIT(clRetainCommandQueue, &retVal);
         return retVal;
     }
-    // if host queue not found - try to query device queue
-    retainQueue<DeviceQueue>(commandQueue, retVal);
 
     TRACING_EXIT(clRetainCommandQueue, &retVal);
     return retVal;
@@ -601,8 +598,6 @@ cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
         TRACING_EXIT(clReleaseCommandQueue, &retVal);
         return retVal;
     }
-    // if host queue not found - try to query device queue
-    releaseQueue<DeviceQueue>(commandQueue, retVal);
 
     TRACING_EXIT(clReleaseCommandQueue, &retVal);
     return retVal;
@@ -628,7 +623,6 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
         TRACING_EXIT(clGetCommandQueueInfo, &retVal);
         return retVal;
     }
-    getQueueInfo<DeviceQueue>(commandQueue, paramName, paramValueSize, paramValue, paramValueSizeRet, retVal);
 
     TRACING_EXIT(clGetCommandQueueInfo, &retVal);
     return retVal;
@@ -5155,8 +5149,6 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         return commandQueue;
     }
 
-    auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
-                                                                                  CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     auto tokenValue = properties ? *properties : 0;
     auto propertiesAddress = properties;
 
@@ -5196,12 +5188,6 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
         if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE))) {
             err.set(CL_INVALID_VALUE);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
-            return commandQueue;
-        }
-    } else if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
-        if (pContext->getDefaultDeviceQueue()) {
-            err.set(CL_OUT_OF_RESOURCES);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
@@ -5251,30 +5237,18 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
-
-    auto maskedFlags = commandQueueProperties & minimumCreateDeviceQueueFlags;
-
-    if (maskedFlags == minimumCreateDeviceQueueFlags) {
-        commandQueue = DeviceQueue::create(
-            pContext,
-            pDevice,
-            *properties,
-            retVal);
-
-    } else {
-        commandQueue = CommandQueue::create(
-            pContext,
-            pDevice,
-            properties,
-            false,
-            retVal);
-        if (pContext->isProvidingPerformanceHints()) {
-            pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, DRIVER_CALLS_INTERNAL_CL_FLUSH);
-            if (castToObjectOrAbort<CommandQueue>(commandQueue)->isProfilingEnabled()) {
-                pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PROFILING_ENABLED);
-                if (pDevice->getDeviceInfo().preemptionSupported && pDevice->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE) {
-                    pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PROFILING_ENABLED_WITH_DISABLED_PREEMPTION);
-                }
+    commandQueue = CommandQueue::create(
+        pContext,
+        pDevice,
+        properties,
+        false,
+        retVal);
+    if (pContext->isProvidingPerformanceHints()) {
+        pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, DRIVER_CALLS_INTERNAL_CL_FLUSH);
+        if (castToObjectOrAbort<CommandQueue>(commandQueue)->isProfilingEnabled()) {
+            pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PROFILING_ENABLED);
+            if (pDevice->getDeviceInfo().preemptionSupported && pDevice->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE) {
+                pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PROFILING_ENABLED_WITH_DISABLED_PREEMPTION);
             }
         }
     }
@@ -5506,23 +5480,7 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
         return retVal;
     }
 
-    auto pDeviceQueue = castToObject<DeviceQueue>(static_cast<_device_queue *>(commandQueue));
-
-    if (!pDeviceQueue) {
-        retVal = CL_INVALID_COMMAND_QUEUE;
-        TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
-        return retVal;
-    }
-
-    if (&pDeviceQueue->getContext() != pContext) {
-        retVal = CL_INVALID_COMMAND_QUEUE;
-        TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
-        return retVal;
-    }
-
-    pContext->setDefaultDeviceQueue(pDeviceQueue);
-
-    retVal = CL_SUCCESS;
+    retVal = CL_INVALID_OPERATION;
     TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
     return retVal;
 }

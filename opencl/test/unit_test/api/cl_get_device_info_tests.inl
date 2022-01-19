@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeThenCo
 TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAskedForGlobalMemSizeThenAdjustedGlobalMemSizeIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(100u);
-    ulong globalMemSize100percent = 0u;
+    uint64_t globalMemSize100percent = 0u;
 
     auto hwInfo = *defaultHwInfo;
 
@@ -124,14 +124,14 @@ TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAsk
     auto retVal = clGetDeviceInfo(
         pDevice.get(),
         CL_DEVICE_GLOBAL_MEM_SIZE,
-        sizeof(ulong),
+        sizeof(uint64_t),
         &globalMemSize100percent,
         nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(globalMemSize100percent, 0u);
 
     DebugManager.flags.ClDeviceGlobalMemSizeAvailablePercent.set(50u);
-    ulong globalMemSize50percent = 0u;
+    uint64_t globalMemSize50percent = 0u;
 
     hwInfo = *defaultHwInfo;
 
@@ -140,7 +140,7 @@ TEST(clGetDeviceGlobalMemSizeTests, givenDebugFlagForGlobalMemSizePercentWhenAsk
     retVal = clGetDeviceInfo(
         pDevice.get(),
         CL_DEVICE_GLOBAL_MEM_SIZE,
-        sizeof(ulong),
+        sizeof(uint64_t),
         &globalMemSize50percent,
         nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);

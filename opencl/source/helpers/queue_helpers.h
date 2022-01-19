@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 
 namespace NEO {
@@ -20,9 +19,6 @@ inline void releaseVirtualEvent(CommandQueue &commandQueue) {
     if (commandQueue.getRefApiCount() == 1) {
         commandQueue.releaseVirtualEvent();
     }
-}
-
-inline void releaseVirtualEvent(DeviceQueue &commandQueue) {
 }
 
 inline bool isCommandWithoutKernel(uint32_t commandType) {
@@ -108,15 +104,7 @@ cl_int getQueueInfo(QueueType *queue,
     case CL_QUEUE_PROPERTIES:
         retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue_properties>(queue->getCommandQueueProperties()));
         break;
-    case CL_QUEUE_DEVICE_DEFAULT:
-        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue>(queue->getContext().getDefaultDeviceQueue()));
-        break;
     case CL_QUEUE_SIZE:
-        if (std::is_same<QueueType, class DeviceQueue>::value) {
-            auto devQ = reinterpret_cast<DeviceQueue *>(queue);
-            retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(devQ->getQueueSize()));
-            break;
-        }
         retVal = CL_INVALID_COMMAND_QUEUE;
         break;
     case CL_QUEUE_PROPERTIES_ARRAY: {

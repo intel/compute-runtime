@@ -43,7 +43,6 @@ MockContext::MockContext(
     contextCallback = funcNotify;
     userData = data;
     memoryManager = nullptr;
-    defaultDeviceQueue = nullptr;
     driverDiagnostics = nullptr;
     rootDeviceIndices = {};
     maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();

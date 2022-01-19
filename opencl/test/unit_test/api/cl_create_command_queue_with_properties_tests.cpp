@@ -14,7 +14,6 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -78,13 +77,6 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
             CL_QUEUE_THROTTLE_KHR, CL_QUEUE_THROTTLE_MED_KHR,
             0};
 
-    const auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
-                                                                                        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
-    const auto deviceQueueShouldBeCreated = (commandQueueProperties & minimumCreateDeviceQueueFlags) == minimumCreateDeviceQueueFlags;
-    if (deviceQueueShouldBeCreated && !castToObject<ClDevice>(testedClDevice)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        return;
-    }
-
     bool queueOnDeviceUsed = false;
     bool priorityHintsUsed = false;
     bool throttleHintsUsed = false;
@@ -131,17 +123,9 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
         EXPECT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, cmdQ);
     }
-    auto deviceQ = static_cast<device_queue>(cmdQ);
-    auto deviceQueueObj = castToObject<DeviceQueue>(deviceQ);
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
 
-    if (deviceQueueShouldBeCreated) { // created device queue
-        ASSERT_NE(deviceQueueObj, nullptr);
-        ASSERT_EQ(commandQueueObj, nullptr);
-    } else { // created host queue
-        ASSERT_EQ(deviceQueueObj, nullptr);
-        ASSERT_NE(commandQueueObj, nullptr);
-    }
+    ASSERT_NE(commandQueueObj, nullptr);
 
     retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -154,8 +138,6 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
 static cl_command_queue_properties commandQueueProperties[] =
     {
         0,
-        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
-        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT,
         CL_QUEUE_PROFILING_ENABLE};
 
 static cl_uint queueSizes[] =

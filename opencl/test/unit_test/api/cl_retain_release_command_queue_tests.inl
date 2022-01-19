@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 using namespace NEO;
 namespace DeviceHostQueue {
-typedef ::testing::Types<CommandQueue, DeviceQueue> QueueTypes;
+typedef ::testing::Types<CommandQueue> QueueTypes;
 
 template <typename T>
 class clRetainReleaseCommandQueueTests : public DeviceHostQueueFixture<T> {};
@@ -20,10 +20,6 @@ class clRetainReleaseCommandQueueTests : public DeviceHostQueueFixture<T> {};
 TYPED_TEST_CASE(clRetainReleaseCommandQueueTests, QueueTypes);
 
 TYPED_TEST(clRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetainingAndReleasingThenReferenceCountIsUpdatedCorrectly) {
-    if (std::is_same<TypeParam, DeviceQueue>::value && !this->pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        return;
-    }
-
     using BaseType = typename TypeParam::BaseType;
 
     auto queue = this->createClQueue();

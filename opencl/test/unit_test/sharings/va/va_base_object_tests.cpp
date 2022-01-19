@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -34,8 +33,7 @@ typedef ::testing::Types<
     //Kernel,
     //Sampler
     //others...
-    MockCommandQueue,
-    DeviceQueue>
+    MockCommandQueue>
     BaseObjectTypes;
 
 TYPED_TEST_CASE(VABaseObjectTests, BaseObjectTypes);
