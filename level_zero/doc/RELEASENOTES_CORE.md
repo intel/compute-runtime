@@ -6,6 +6,37 @@ SPDX-License-Identifier: MIT
 
 -->
 
+# Release Notes v1.3
+
+Level Zero Core API.
+
+January 2022
+
+## Changes in this release:
+
+### Implict Scaling
+
+Implicit scaling has been enabled by default on Level Zero on Xe HPC (PVC) B and later steppings. The `EnableImplicitScaling` debug key may be used to enable (`EnableImplicitScaling=1`) or disable (`EnableImplicitScaling=0`) implicit scaling on on Xe HPC and other multi-tile architectures.
+
+### [Blocking Free](https://spec.oneapi.io/level-zero/latest/core/api.html#zememfreeext)
+
+The blocking free memory policy has been implemented for `zeMemFreeExt` extension. Defer free policy will be added in upcoming releases.
+
+### [PCI Properties Extension](https://spec.oneapi.io/level-zero/latest/core/EXT_PCIProperties.html#pci-properties-extension)
+
+Support for PCI properties extension has been added via `zeDevicePciGetPropertiesExt` interface. This currently provides access to device's BDF address only. Device bandwidth property will be exposed in future based on support from underlying components
+
+### [Memory Compression Hints](https://spec.oneapi.io/level-zero/latest/core/EXT_MemoryCompressionHints.html#memory-compression-hints-extension)
+
+Memory compression hints for shared and device memory allocations and images have been added.
+
+### Sampler Address Modes Fix
+
+Level Zero driver had a bug in the implementation of the ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER and ZE_SAMPLER_ADDRESS_MODE_CLAMP address modes, where this were being implemented invertedly. This is now fixed and users can use driver's version to determine which address mode to use. Details on how DPC++ is handling this can be found in:
+
+[https://github.com/intel/llvm/blob/756c2e8fb45e44b51b32bd8a22b3c325f17bb5c9/sycl/plugins/level_zero/pi_level_zero.cpp#L5264?]
+
+
 # Release Notes v1.2
 
 Level Zero Core API.

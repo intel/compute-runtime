@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -566,7 +566,7 @@ TEST_F(DriverHandleTest, whenQueryingForApiVersionThenExpectedVersionIsReturned)
     ze_api_version_t version = {};
     ze_result_t result = driverHandle->getApiVersion(&version);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZE_API_VERSION_1_2, version);
+    EXPECT_EQ(ZE_API_VERSION_1_3, version);
 }
 
 TEST_F(DriverHandleTest, whenQueryingForDevicesWithCountGreaterThanZeroAndNullDevicePointerThenNullHandleIsReturned) {
