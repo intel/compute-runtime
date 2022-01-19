@@ -336,7 +336,7 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         8,
                                         16));
 
-HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -345,7 +345,7 @@ HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSe
     EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
 }
 
-HWTEST2_F(BlitTests, givenTwoBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenTwoBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -354,7 +354,7 @@ HWTEST2_F(BlitTests, givenTwoBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSe
     EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
 }
 
-HWTEST2_F(BlitTests, givenFourBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenFourBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -363,7 +363,7 @@ HWTEST2_F(BlitTests, givenFourBytePerPixelWhenAppendColrDepthThenCorrectDepthIsS
     EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
 }
 
-HWTEST2_F(BlitTests, givenEightBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenEightBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -372,7 +372,7 @@ HWTEST2_F(BlitTests, givenEightBytePerPixelWhenAppendColrDepthThenCorrectDepthIs
     EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
 }
 
-HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -381,7 +381,7 @@ HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColrDepthThenCorrectDepth
     EXPECT_EQ(bltCmd.getColorDepth(), XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
 }
 
-HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColrDepthThenCorrectDepthIsSet, IsXeHpCore) {
+HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsXeHpCore) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
@@ -607,6 +607,29 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCo
         } else {
             EXPECT_EQ(compressionFormat, 0u);
         }
+    }
+}
+
+HWTEST2_F(BlitTests, givenA0orA1SteppingAndCpuLocalMemoryAccessWhenCallingAppendExtraMemoryPropertiesThenTargetMemoryIsSet, IsXeHpCore) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    std::array<std::pair<uint32_t, typename XY_BLOCK_COPY_BLT::TARGET_MEMORY>, 3> testParams = {
+        {{REVISION_A0, XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM},
+         {REVISION_A1, XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM},
+         {REVISION_B, XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM}}};
+
+    for (const auto &[revision, expectedTargetMemory] : testParams) {
+        auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+        hwInfo->platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, *hwInfo);
+
+        BlitCommandsHelper<FamilyType>::appendExtraMemoryProperties(bltCmd, rootDeviceEnvironment);
+        EXPECT_EQ(bltCmd.getSourceTargetMemory(), expectedTargetMemory);
+        EXPECT_EQ(bltCmd.getDestinationTargetMemory(), expectedTargetMemory);
     }
 }
 

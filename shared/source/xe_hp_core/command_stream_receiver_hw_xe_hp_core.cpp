@@ -98,7 +98,8 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
     auto &hwHelper = HwHelperHw<Family>::get();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
-    if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) && hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
+    if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
+        hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
