@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_context.h"
@@ -128,7 +129,8 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsConte
     this->fillExecObjectImpl(execObject, osContext, vmHandleId);
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
+                       BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) {
     for (size_t i = 0; i < residencyCount; i++) {
         residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }
@@ -149,7 +151,8 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
-    int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
+    auto *ioctlHelper = IoctlHelper::get(drm);
+    int ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {
         int err = this->drm->getErrno();
@@ -159,12 +162,12 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         }
 
         static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(false, true);
-        ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
+        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret != 0) {
         static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(true, true);
-        ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
+        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret == 0) {
@@ -259,7 +262,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
-        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
     }
 
     return retVal;
@@ -277,7 +280,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
         }
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
-        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
     }
 
     return retVal;

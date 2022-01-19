@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,9 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
                               drmContextIds[drmContextId],
                               nullptr,
                               0,
-                              &execObject);
+                              &execObject,
+                              0,
+                              0);
             drmContextId++;
         }
     }

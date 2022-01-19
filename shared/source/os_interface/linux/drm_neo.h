@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,7 @@ class Drm : public DriverModel {
 
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::DRM;
+    static constexpr size_t completionFenceOffset = 1024;
 
     enum class ResourceClass : uint32_t {
         Elf,
@@ -251,6 +252,10 @@ class Drm : public DriverModel {
     }
     MOCKABLE_VIRTUAL std::vector<uint8_t> getMemoryRegions();
 
+    bool completionFenceSupport() const {
+        return completionFenceSupported;
+    }
+
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -333,6 +338,7 @@ class Drm : public DriverModel {
     bool directSubmissionActive = false;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
+    bool completionFenceSupported = false;
 
   private:
     int getParamIoctl(int param, int *dstValue);

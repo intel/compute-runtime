@@ -197,6 +197,10 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
+    int32_t overrideCompletionFence = DebugManager.flags.EnableDrmCompletionFence.get();
+    if (overrideCompletionFence != -1) {
+        completionFenceSupported = !!overrideCompletionFence;
+    }
 }
 
 int Drm::ioctl(unsigned long request, void *arg) {

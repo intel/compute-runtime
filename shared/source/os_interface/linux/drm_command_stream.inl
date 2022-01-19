@@ -193,6 +193,13 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
         this->execObjectsStorage.resize(requiredSize);
     }
 
+    uint64_t completionGpuAddress = 0;
+    uint32_t completionValue = 0;
+    if (this->drm->completionFenceSupport()) {
+        completionGpuAddress = getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+        completionValue = this->latestSentTaskCount;
+    }
+
     int ret = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                        batchBuffer.startOffset, execFlags,
                        batchBuffer.requiresCoherency,
@@ -200,7 +207,9 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
                        vmHandleId,
                        drmContextId,
                        this->residency.data(), this->residency.size(),
-                       this->execObjectsStorage.data());
+                       this->execObjectsStorage.data(),
+                       completionGpuAddress,
+                       completionValue);
 
     this->residency.clear();
 

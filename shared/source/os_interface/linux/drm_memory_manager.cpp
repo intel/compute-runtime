@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -806,8 +806,13 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 }
 
 void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
-    if (this->getDrm(allocation->getRootDeviceIndex()).isVmBindAvailable()) {
-        waitForEnginesCompletion(*allocation);
+    auto &drm = this->getDrm(allocation->getRootDeviceIndex());
+    if (drm.isVmBindAvailable()) {
+        if (drm.completionFenceSupport()) {
+            waitOnCompletionFence(allocation);
+        } else {
+            waitForEnginesCompletion(*allocation);
+        }
     } else {
         static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
     }
@@ -1458,6 +1463,39 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
 
     offset = mmapOffset.offset;
     return true;
+}
+
+bool DrmMemoryManager::allocationTypeForCompletionFence(GraphicsAllocation::AllocationType allocationType) {
+    if (allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::RING_BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER ||
+        allocationType == GraphicsAllocation::AllocationType::TAG_BUFFER) {
+        return true;
+    }
+    return false;
+}
+
+void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
+    auto allocationType = allocation->getAllocationType();
+    if (allocationTypeForCompletionFence(allocationType)) {
+        for (auto &engine : getRegisteredEngines()) {
+            OsContext *osContext = engine.osContext;
+            CommandStreamReceiver *csr = engine.commandStreamReceiver;
+
+            auto osContextId = osContext->getContextId();
+            auto allocationTaskCount = allocation->getTaskCount(osContextId);
+            uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress())) + Drm::completionFenceOffset;
+
+            if (allocation->isUsedByOsContext(osContextId)) {
+                uint32_t ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
+                constexpr int64_t timeout = -1;
+                constexpr uint16_t flags = 0;
+                getDrm(csr->getRootDeviceIndex()).waitUserFence(ctxId, completionFenceAddress, allocationTaskCount, Drm::ValueWidth::U32, timeout, flags);
+            }
+        }
+    } else {
+        waitForEnginesCompletion(*allocation);
+    }
 }
 
 } // namespace NEO

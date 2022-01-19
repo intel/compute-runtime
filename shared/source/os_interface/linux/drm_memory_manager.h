@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,6 +118,8 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount);
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
+    void waitOnCompletionFence(GraphicsAllocation *allocation);
+    bool allocationTypeForCompletionFence(GraphicsAllocation::AllocationType allocationType);
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);

@@ -27,6 +27,7 @@ class DrmMock : public Drm {
     using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;
     using Drm::classHandles;
+    using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
     using Drm::createDrmContextExt;
     using Drm::engineInfo;
