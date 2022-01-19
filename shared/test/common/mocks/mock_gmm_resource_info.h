@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getHAlign() override { return 4u; }
 
-    uint32_t getHAlignSurfaceState() override { return 1u; }
+    uint32_t getHAlignSurfaceState() override { return getHAlignSurfaceStateResult; }
 
     uint32_t getVAlignSurfaceState() override { return 1u; }
 
@@ -111,6 +111,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     GMM_RES_COPY_BLT requestedResCopyBlt = {};
     uint32_t cpuBltCalled = 0u;
     uint8_t cpuBltResult = 1u;
+    static constexpr uint32_t getHAlignSurfaceStateResult = 2u;
 
   protected:
     MockGmmResourceInfo();
