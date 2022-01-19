@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,8 @@ namespace Elf {
 
 template <ELF_IDENTIFIER_CLASS NumBits = EI_CLASS_64>
 struct ElfEncoder {
-    ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true, uint64_t defaultDataAlignment = 8U);
+    ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true,
+               typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignment = 8U);
 
     void appendSection(const ElfSectionHeader<NumBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
     void appendSegment(const ElfProgramHeader<NumBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
@@ -52,7 +53,7 @@ struct ElfEncoder {
   protected:
     bool addUndefSectionHeader = false;
     bool addHeaderSectionNamesSection = false;
-    uint64_t defaultDataAlignment = 8U;
+    typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignment = 8U;
     uint64_t maxDataAlignmentNeeded = 1U;
     ElfFileHeader<NumBits> elfFileHeader;
     StackVec<ElfProgramHeader<NumBits>, 32> programHeaders;

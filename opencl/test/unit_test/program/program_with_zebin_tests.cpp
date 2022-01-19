@@ -17,13 +17,13 @@ TEST_F(ProgramWithZebinFixture, givenNoZebinThenSegmentsAreEmpty) {
     auto segments = program->getZebinSegments(pClDevice->getRootDeviceIndex());
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.constData.address);
-    EXPECT_TRUE(segments.constData.data.empty());
+    EXPECT_EQ(0ULL, segments.constData.size);
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.varData.address);
-    EXPECT_TRUE(segments.varData.data.empty());
+    EXPECT_EQ(0ULL, segments.varData.size);
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.stringData.address);
-    EXPECT_TRUE(segments.stringData.data.empty());
+    EXPECT_EQ(0ULL, segments.stringData.size);
 
     EXPECT_TRUE(segments.nameToSegMap.empty());
 }
@@ -33,17 +33,16 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
     auto segments = program->getZebinSegments(rootDeviceIndex);
 
     auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Debug::Segments::Segment segment) {
-        EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddressToPatch()), segment.address);
-        EXPECT_EQ(reinterpret_cast<uint8_t *>(alloc->getUnderlyingBuffer()), segment.data.begin());
-        EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.data.size());
+        EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddress()), segment.address);
+        EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.size);
     };
     checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface, segments.constData);
     checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface, segments.varData);
     checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap["kernel1"]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.address);
-    EXPECT_EQ(reinterpret_cast<const uint8_t *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.data.begin());
-    EXPECT_EQ(program->buildInfos[rootDeviceIndex].constStringSectionData.size, segments.stringData.data.size());
+    EXPECT_EQ(reinterpret_cast<const char *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), strings);
+    EXPECT_EQ(program->buildInfos[rootDeviceIndex].constStringSectionData.size, sizeof(strings));
 }
 
 TEST_F(ProgramWithZebinFixture, givenNonEmptyDebugDataThenDebugZebinIsNotCreated) {

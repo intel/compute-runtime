@@ -19,42 +19,38 @@ Segments::Segments() {}
 
 Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaPairT> &kernels) {
     if (globalVarAlloc) {
-        varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(globalVarAlloc->getUnderlyingBuffer()), globalVarAlloc->getUnderlyingBufferSize()}};
+        varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddress()), globalVarAlloc->getUnderlyingBufferSize()};
     }
     if (globalConstAlloc) {
-        constData = {static_cast<uintptr_t>(globalConstAlloc->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(globalConstAlloc->getUnderlyingBuffer()), globalConstAlloc->getUnderlyingBufferSize()}};
+        constData = {static_cast<uintptr_t>(globalConstAlloc->getGpuAddress()), globalConstAlloc->getUnderlyingBufferSize()};
     }
     if (false == globalStrings.empty()) {
-        stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings};
+        stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings.size()};
     }
     for (auto &[kernelName, isa] : kernels) {
-        Debug::Segments::Segment kernelSegment = {static_cast<uintptr_t>(isa->getGpuAddressToPatch()), {reinterpret_cast<uint8_t *>(isa->getUnderlyingBuffer()), isa->getUnderlyingBufferSize()}};
+        Debug::Segments::Segment kernelSegment = {static_cast<uintptr_t>(isa->getGpuAddress()), isa->getUnderlyingBufferSize()};
         nameToSegMap.insert(std::pair(kernelName, kernelSegment));
     }
 }
 
 void DebugZebinCreator::createDebugZebin() {
-    ElfEncoder<EI_CLASS_64> elfEncoder(false, false);
+    ElfEncoder<EI_CLASS_64> elfEncoder(false, false, 4);
     auto &header = elfEncoder.getElfFileHeader();
     header.machine = zebin.elfFileHeader->machine;
     header.flags = zebin.elfFileHeader->flags;
-    header.type = zebin.elfFileHeader->type;
+    header.type = NEO::Elf::ET_EXEC;
     header.version = zebin.elfFileHeader->version;
     header.shStrNdx = zebin.elfFileHeader->shStrNdx;
 
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); i++) {
         const auto &section = zebin.sectionHeaders[i];
         auto sectionName = zebin.getSectionName(i);
-        ArrayRef<const uint8_t> sectionData;
 
         if (auto segment = getSegmentByName(sectionName)) {
-            sectionData = segment->data;
-            elfEncoder.appendProgramHeaderLoad(i, segment->address, sectionData.size());
-        } else {
-            sectionData = section.data;
+            elfEncoder.appendProgramHeaderLoad(i, segment->address, segment->size);
         }
 
-        auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, sectionData);
+        auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, section.data);
         sectionHeader.link = section.header->link;
         sectionHeader.info = section.header->info;
         sectionHeader.name = section.header->name;
@@ -78,27 +74,29 @@ void DebugZebinCreator::applyRelocation(uint64_t addr, uint64_t value, RELOC_TYP
     }
 }
 
-void DebugZebinCreator::applyDebugRelocations() {
+void DebugZebinCreator::applyRelocations() {
     std::string errors, warnings;
     auto elf = decodeElf(debugZebin, errors, warnings);
 
-    for (const auto &reloc : elf.getDebugInfoRelocations()) {
+    for (const auto &relocations : {elf.getDebugInfoRelocations(), elf.getRelocations()}) {
+        for (const auto &reloc : relocations) {
 
-        auto sectionName = elf.getSectionName(reloc.symbolSectionIndex);
-        uint64_t sectionAddress = 0U;
-        if (auto segment = getSegmentByName(sectionName)) {
-            sectionAddress = segment->address;
-        } else if (ConstStringRef(sectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
-            // do not offset debug symbols
-        } else {
-            DEBUG_BREAK_IF(true);
-            continue;
+            auto sectionName = elf.getSectionName(reloc.symbolSectionIndex);
+            uint64_t sectionAddress = 0U;
+            if (auto segment = getSegmentByName(sectionName)) {
+                sectionAddress = segment->address;
+            } else if (ConstStringRef(sectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
+                // do not offset debug symbols
+            } else {
+                DEBUG_BREAK_IF(true);
+                continue;
+            }
+
+            auto value = sectionAddress + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
+            auto address = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
+            auto type = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
+            applyRelocation(address, value, type);
         }
-
-        auto value = sectionAddress + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
-        auto address = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
-        auto type = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
-        applyRelocation(address, value, type);
     }
 }
 
@@ -111,7 +109,7 @@ std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Se
 
     auto dzc = DebugZebinCreator(zebin, gpuSegments);
     dzc.createDebugZebin();
-    dzc.applyDebugRelocations();
+    dzc.applyRelocations();
     return dzc.getDebugZebin();
 }
 

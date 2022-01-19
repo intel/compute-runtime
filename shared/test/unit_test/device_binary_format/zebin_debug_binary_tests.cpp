@@ -15,7 +15,6 @@
 TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     MockElfEncoder<> elfEncoder;
 
-    NEO::Debug::Segments segments;
     uint8_t constData[8] = {0x1};
     uint8_t varData[8] = {0x2};
     uint8_t kernelISA[8] = {0x3};
@@ -96,10 +95,11 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     auto &relaHeader = elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Elf::SectionsNamesZebin::debugInfo.str(), ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(debugRelocations), sizeof(debugRelocations)));
     relaHeader.info = debugInfoSectionIndex;
 
-    segments.constData = {reinterpret_cast<uintptr_t>(constData), {constData, sizeof(constData)}};
-    segments.varData = {reinterpret_cast<uintptr_t>(varData), {varData, sizeof(varData)}};
-    segments.stringData = {reinterpret_cast<uintptr_t>(stringData), {stringData, sizeof(stringData)}};
-    segments.nameToSegMap["kernel"] = {reinterpret_cast<uintptr_t>(kernelISA), {kernelISA, sizeof(kernelISA)}};
+    NEO::Debug::Segments segments;
+    segments.constData = {0x10000000, 0x10000};
+    segments.varData = {0x20000000, 0x20000};
+    segments.stringData = {0x30000000, 0x30000};
+    segments.nameToSegMap["kernel"] = {0x40000000, 0x50000};
 
     auto zebinBin = elfEncoder.encode();
 
@@ -115,14 +115,16 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     EXPECT_EQ(zebin.elfFileHeader->machine, debugZebin.elfFileHeader->machine);
     EXPECT_EQ(zebin.elfFileHeader->flags, debugZebin.elfFileHeader->flags);
-    EXPECT_EQ(zebin.elfFileHeader->type, debugZebin.elfFileHeader->type);
+    EXPECT_EQ(NEO::Elf::ET_EXEC, debugZebin.elfFileHeader->type);
     EXPECT_EQ(zebin.elfFileHeader->version, debugZebin.elfFileHeader->version);
     EXPECT_EQ(zebin.elfFileHeader->shStrNdx, debugZebin.elfFileHeader->shStrNdx);
 
     EXPECT_EQ(zebin.sectionHeaders.size(), debugZebin.sectionHeaders.size());
 
     uint64_t offsetKernel, offsetConstData, offsetVarData, offsetStringData;
+    uint64_t fileSzKernel, fileSzConstData, fileSzVarData, fileSzStringData;
     offsetKernel = offsetConstData = offsetVarData = offsetStringData = std::numeric_limits<uint64_t>::max();
+    fileSzKernel = fileSzConstData = fileSzVarData = fileSzStringData = 0;
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); ++i) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->type, debugZebin.sectionHeaders[i].header->type);
         EXPECT_EQ(zebin.sectionHeaders[i].header->link, debugZebin.sectionHeaders[i].header->link);
@@ -133,29 +135,18 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         auto sectionName = debugZebin.getSectionName(i);
         auto refSectionName = NEO::ConstStringRef(sectionName);
         if (refSectionName.startsWith(NEO::Elf::SectionsNamesZebin::textPrefix.data())) {
-            auto kernelName = sectionName.substr(NEO::Elf::SectionsNamesZebin::textPrefix.length());
-            auto segmentIdIter = segments.nameToSegMap.find(kernelName);
-            ASSERT_TRUE(segmentIdIter != segments.nameToSegMap.end());
-            const auto &kernel = segmentIdIter->second;
-
-            EXPECT_EQ(kernel.data.size(), debugZebin.sectionHeaders[i].header->size);
-            EXPECT_TRUE(memcmp(kernel.data.begin(), debugZebin.sectionHeaders[i].data.begin(), kernel.data.size()) == 0);
             offsetKernel = debugZebin.sectionHeaders[i].header->offset;
+            fileSzKernel = debugZebin.sectionHeaders[i].header->size;
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataConst) {
-            EXPECT_EQ(segments.constData.data.size(), debugZebin.sectionHeaders[i].header->size);
-            EXPECT_TRUE(memcmp(segments.constData.data.begin(), debugZebin.sectionHeaders[i].data.begin(), segments.constData.data.size()) == 0);
             offsetConstData = debugZebin.sectionHeaders[i].header->offset;
+            fileSzConstData = debugZebin.sectionHeaders[i].header->size;
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataGlobal) {
-            EXPECT_EQ(segments.varData.data.size(), debugZebin.sectionHeaders[i].header->size);
-            EXPECT_TRUE(memcmp(segments.varData.data.begin(), debugZebin.sectionHeaders[i].data.begin(), segments.varData.data.size()) == 0);
             offsetVarData = debugZebin.sectionHeaders[i].header->offset;
+            fileSzVarData = debugZebin.sectionHeaders[i].header->size;
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataConstString) {
-            EXPECT_EQ(segments.stringData.data.size(), debugZebin.sectionHeaders[i].header->size);
-            EXPECT_TRUE(memcmp(segments.stringData.data.begin(), debugZebin.sectionHeaders[i].data.begin(), segments.stringData.data.size()) == 0);
             offsetStringData = debugZebin.sectionHeaders[i].header->offset;
+            fileSzStringData = debugZebin.sectionHeaders[i].header->size;
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::debugInfo) {
-            EXPECT_EQ(zebin.sectionHeaders[i].header->size, debugZebin.sectionHeaders[i].header->size);
-
             auto ptrDebugInfo = debugZebin.sectionHeaders[i].data.begin();
             EXPECT_EQ(*reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[0].offset),
                       segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend);
@@ -180,22 +171,23 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         }
     }
 
-    std::vector<std::pair<Segment, uint64_t>> segmentsSortedByAddr = {{segments.constData, offsetConstData},
-                                                                      {segments.varData, offsetVarData},
-                                                                      {segments.stringData, offsetStringData},
-                                                                      {segments.nameToSegMap["kernel"], offsetKernel}};
-    std::sort(segmentsSortedByAddr.begin(), segmentsSortedByAddr.end(), [](auto seg1, auto seg2) { return seg1.first.address < seg2.first.address; });
+    std::vector<std::tuple<Segment, uint64_t, uint64_t>> segmentsSortedByAddr = {{segments.constData, offsetConstData, fileSzConstData},
+                                                                                 {segments.varData, offsetVarData, fileSzVarData},
+                                                                                 {segments.stringData, offsetStringData, fileSzStringData},
+                                                                                 {segments.nameToSegMap["kernel"], offsetKernel, fileSzKernel}};
+    std::sort(segmentsSortedByAddr.begin(), segmentsSortedByAddr.end(), [](auto seg1, auto seg2) { return std::get<0>(seg1).address < std::get<0>(seg2).address; });
 
     EXPECT_EQ(4U, debugZebin.programHeaders.size());
     for (size_t i = 0; i < 4U; i++) {
-        auto &segment = segmentsSortedByAddr[i].first;
-        auto &offset = segmentsSortedByAddr[i].second;
+        auto &segment = std::get<0>(segmentsSortedByAddr[i]);
+        auto &offset = std::get<1>(segmentsSortedByAddr[i]);
+        auto &fileSz = std::get<2>(segmentsSortedByAddr[i]);
         auto &ph = debugZebin.programHeaders[i].header;
 
         EXPECT_EQ(segment.address, static_cast<uintptr_t>(ph->vAddr));
-        EXPECT_EQ(segment.data.size(), static_cast<size_t>(ph->fileSz));
-        EXPECT_EQ(segment.data.size(), static_cast<size_t>(ph->memSz));
+        EXPECT_EQ(segment.size, static_cast<uintptr_t>(ph->memSz));
         EXPECT_EQ(offset, static_cast<uintptr_t>(ph->offset));
+        EXPECT_EQ(fileSz, static_cast<size_t>(ph->fileSz));
     }
 }
 

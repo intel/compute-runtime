@@ -16,7 +16,7 @@ namespace NEO {
 namespace Elf {
 
 template <ELF_IDENTIFIER_CLASS NumBits>
-ElfEncoder<NumBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, uint64_t defaultDataAlignemnt)
+ElfEncoder<NumBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectionNamesSection, typename ElfSectionHeaderTypes<NumBits>::AddrAlign defaultDataAlignemnt)
     : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignemnt) {
     // add special strings
     UNRECOVERABLE_IF(defaultDataAlignment == 0);
@@ -70,7 +70,7 @@ ElfSectionHeader<NumBits> &ElfEncoder<NumBits>::appendSection(SECTION_HEADER_TYP
     section.flags = static_cast<decltype(section.flags)>(SHF_NONE);
     section.offset = 0U;
     section.name = appendSectionName(sectionLabel);
-    section.addralign = 8U;
+    section.addralign = defaultDataAlignment;
     switch (sectionType) {
     case SHT_REL:
         section.entsize = sizeof(ElfRel<NumBits>);

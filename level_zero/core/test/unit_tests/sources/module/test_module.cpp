@@ -2280,13 +2280,13 @@ TEST_F(ModuleWithZebinTest, givenNoZebinThenSegmentsAreEmpty) {
     auto segments = module->getZebinSegments();
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.constData.address);
-    EXPECT_TRUE(segments.constData.data.empty());
+    EXPECT_EQ(0ULL, segments.constData.size);
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.varData.address);
-    EXPECT_TRUE(segments.varData.data.empty());
+    EXPECT_EQ(0ULL, segments.varData.size);
 
     EXPECT_EQ(std::numeric_limits<uintptr_t>::max(), segments.stringData.address);
-    EXPECT_TRUE(segments.stringData.data.empty());
+    EXPECT_EQ(0ULL, segments.stringData.size);
 
     EXPECT_TRUE(segments.nameToSegMap.empty());
 }
@@ -2296,17 +2296,15 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
     auto segments = module->getZebinSegments();
 
     auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Debug::Segments::Segment segment) {
-        EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddressToPatch()), segment.address);
-        EXPECT_EQ(reinterpret_cast<uint8_t *>(alloc->getUnderlyingBuffer()), segment.data.begin());
-        EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.data.size());
+        EXPECT_EQ(alloc->getGpuAddress(), segment.address);
+        EXPECT_EQ(alloc->getUnderlyingBufferSize(), segment.size);
     };
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.constData);
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.varData);
     checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap["kernel"]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.address);
-    EXPECT_EQ(reinterpret_cast<const uint8_t *>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.data.begin());
-    EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.data.size());
+    EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.size);
 }
 
 TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsCreatedAndReturned) {

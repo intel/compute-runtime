@@ -20,7 +20,7 @@ namespace Debug {
 struct Segments {
     struct Segment {
         uintptr_t address = std::numeric_limits<uintptr_t>::max();
-        ArrayRef<const uint8_t> data;
+        size_t size = 0;
     };
     using CPUSegment = Segment;
     using GPUSegment = Segment;
@@ -41,7 +41,7 @@ class DebugZebinCreator {
     DebugZebinCreator() = delete;
     DebugZebinCreator(Elf &zebin, const Segments &segments) : segments(segments), zebin(zebin) {}
 
-    void applyDebugRelocations();
+    void applyRelocations();
     void createDebugZebin();
     inline std::vector<uint8_t> getDebugZebin() { return debugZebin; }
 
