@@ -57,6 +57,10 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
     this->dispatchMode = localMemoryEnabled ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
 
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
+        this->dispatchMode = DispatchMode::ImmediateDispatch;
+    }
+
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
     }

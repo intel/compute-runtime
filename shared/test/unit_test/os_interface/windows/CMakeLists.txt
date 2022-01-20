@@ -15,6 +15,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_shared_allocations_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_TESTS_WINDOWS ${NEO_CORE_OS_INTERFACE_TESTS_WINDOWS})

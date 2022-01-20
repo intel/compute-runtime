@@ -47,6 +47,9 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     submissionAggregator.reset(new SubmissionAggregator());
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
+        this->dispatchMode = DispatchMode::ImmediateDispatch;
+    }
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }

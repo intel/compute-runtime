@@ -206,6 +206,12 @@ HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefault
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenL0CommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetIndirectHeapIsCalledThenHeapIsReturned) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &heap = csr.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10u);

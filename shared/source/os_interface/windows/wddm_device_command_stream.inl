@@ -54,6 +54,10 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnviron
 
     this->dispatchMode = DispatchMode::BatchedDispatch;
 
+    if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
+        this->dispatchMode = DispatchMode::ImmediateDispatch;
+    }
+
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
