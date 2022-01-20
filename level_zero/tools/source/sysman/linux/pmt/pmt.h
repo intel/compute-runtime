@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;
-    std::string telemetryDeviceEntry;
+    std::string telemetryDeviceEntry{};
     std::map<std::string, uint64_t> keyOffsetMap;
     ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
     ze_result_t init(FsAccess *pFsAccess, const std::string &rootPciPathOfGpuDevice);
