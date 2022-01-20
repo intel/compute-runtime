@@ -944,14 +944,23 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
+    HardwareInfo *hwInfo = defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
+
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+
     DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_FALSE(drmDefault.completionFenceSupported);
+    if (hwHelper.isLinuxCompletionFenceSupported()) {
+        EXPECT_TRUE(drmDefault.completionFenceSupport());
+    } else {
+        EXPECT_FALSE(drmDefault.completionFenceSupport());
+    }
 
     DebugManager.flags.EnableDrmCompletionFence.set(1);
     DrmMock drmEnabled{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_TRUE(drmEnabled.completionFenceSupported);
+    EXPECT_TRUE(drmEnabled.completionFenceSupport());
 
     DebugManager.flags.EnableDrmCompletionFence.set(0);
     DrmMock drmDisabled{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_FALSE(drmDisabled.completionFenceSupported);
+    EXPECT_FALSE(drmDisabled.completionFenceSupport());
 }

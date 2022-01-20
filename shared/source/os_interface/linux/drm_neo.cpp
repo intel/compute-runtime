@@ -197,10 +197,6 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
-    int32_t overrideCompletionFence = DebugManager.flags.EnableDrmCompletionFence.get();
-    if (overrideCompletionFence != -1) {
-        completionFenceSupported = !!overrideCompletionFence;
-    }
 }
 
 int Drm::ioctl(unsigned long request, void *arg) {
@@ -1033,6 +1029,19 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
 
     this->engineInfo.reset(new EngineInfo(this, hwInfo, tileCount, distanceInfos, queryItems, engines));
     return true;
+}
+
+bool Drm::completionFenceSupport() {
+    std::call_once(checkCompletionFenceOnce, [this]() {
+        bool support = IoctlHelper::get(this)->completionFenceExtensionSupported(*getRootDeviceEnvironment().getHardwareInfo());
+        int32_t overrideCompletionFence = DebugManager.flags.EnableDrmCompletionFence.get();
+        if (overrideCompletionFence != -1) {
+            support = !!overrideCompletionFence;
+        }
+
+        completionFenceSupported = support;
+    });
+    return completionFenceSupported;
 }
 
 } // namespace NEO

@@ -109,6 +109,11 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) cons
     return isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
+template <>
+inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
+    return false;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

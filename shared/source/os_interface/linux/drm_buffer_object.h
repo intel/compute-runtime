@@ -148,7 +148,7 @@ class BufferObject {
     bool isReused;
 
     //Tiling
-    uint32_t tiling_mode;
+    uint32_t tilingMode;
     bool allowCapture = false;
     bool requiresImmediateBinding = false;
     bool requiresExplicitResidency = false;

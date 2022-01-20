@@ -26,7 +26,7 @@ class TestedBufferObject : public BufferObject {
     }
 
     void tileBy(uint32_t mode) {
-        this->tiling_mode = mode;
+        this->tilingMode = mode;
     }
 
     void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
@@ -42,12 +42,14 @@ class TestedBufferObject : public BufferObject {
              BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) override {
         this->receivedCompletionGpuAddress = completionGpuAddress;
         this->receivedCompletionValue = completionValue;
+        this->execCalled++;
         return BufferObject::exec(used, startOffset, flags, requiresCoherency, osContext, vmHandleId, drmContextId, residency, residencyCount, execObjectsStorage, completionGpuAddress, completionValue);
     }
 
     uint64_t receivedCompletionGpuAddress = 0;
     drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
     uint32_t receivedCompletionValue = 0;
+    uint32_t execCalled = 0;
 };
 
 template <typename DrmClass>

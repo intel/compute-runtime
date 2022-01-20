@@ -1466,6 +1466,11 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
 }
 
 bool DrmMemoryManager::allocationTypeForCompletionFence(GraphicsAllocation::AllocationType allocationType) {
+    int32_t overrideAllowAllAllocations = DebugManager.flags.UseDrmCompletionFenceForAllAllocations.get();
+    bool allowAllAllocations = overrideAllowAllAllocations == -1 ? false : !!overrideAllowAllAllocations;
+    if (allowAllAllocations) {
+        return true;
+    }
     if (allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER ||
         allocationType == GraphicsAllocation::AllocationType::RING_BUFFER ||
         allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER ||
@@ -1482,15 +1487,28 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
             OsContext *osContext = engine.osContext;
             CommandStreamReceiver *csr = engine.commandStreamReceiver;
 
+            uint32_t activeHwContexts = csr->getActivePartitions();
             auto osContextId = osContext->getContextId();
             auto allocationTaskCount = allocation->getTaskCount(osContextId);
-            uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress())) + Drm::completionFenceOffset;
+            uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress()));
+            if (completionFenceAddress == 0) {
+                continue;
+            }
 
             if (allocation->isUsedByOsContext(osContextId)) {
-                uint32_t ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
-                constexpr int64_t timeout = -1;
-                constexpr uint16_t flags = 0;
-                getDrm(csr->getRootDeviceIndex()).waitUserFence(ctxId, completionFenceAddress, allocationTaskCount, Drm::ValueWidth::U32, timeout, flags);
+                completionFenceAddress += Drm::completionFenceOffset;
+                Drm &drm = getDrm(csr->getRootDeviceIndex());
+                auto &ctxVector = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
+
+                for (uint32_t i = 0; i < activeHwContexts; i++) {
+                    uint32_t *fenceValue = reinterpret_cast<uint32_t *>(completionFenceAddress);
+                    if (*fenceValue < allocationTaskCount) {
+                        constexpr int64_t timeout = -1;
+                        constexpr uint16_t flags = 0;
+                        drm.waitUserFence(ctxVector[i], completionFenceAddress, allocationTaskCount, Drm::ValueWidth::U32, timeout, flags);
+                    }
+                    completionFenceAddress += csr->getPostSyncWriteOffset();
+                }
             }
         }
     } else {

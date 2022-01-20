@@ -154,6 +154,7 @@ class HwHelper {
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool isLinuxCompletionFenceSupported() const = 0;
 
   protected:
     HwHelper() = default;
@@ -389,6 +390,7 @@ class HwHelperHw : public HwHelper {
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
     bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;
+    bool isLinuxCompletionFenceSupported() const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

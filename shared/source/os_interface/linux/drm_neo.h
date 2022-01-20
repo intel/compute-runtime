@@ -252,9 +252,7 @@ class Drm : public DriverModel {
     }
     MOCKABLE_VIRTUAL std::vector<uint8_t> getMemoryRegions();
 
-    bool completionFenceSupport() const {
-        return completionFenceSupported;
-    }
+    MOCKABLE_VIRTUAL bool completionFenceSupport();
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -322,6 +320,7 @@ class Drm : public DriverModel {
     std::unique_ptr<MemoryInfo> memoryInfo;
 
     std::once_flag checkBindOnce;
+    std::once_flag checkCompletionFenceOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
     uint64_t uuid = 0;

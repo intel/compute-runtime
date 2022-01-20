@@ -34,7 +34,7 @@
 namespace NEO {
 
 BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
-    this->tiling_mode = I915_TILING_NONE;
+    this->tilingMode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
 
     perContextVmsUsed = drm->isPerContextVMRequired();
@@ -86,7 +86,7 @@ int BufferObject::wait(int64_t timeoutNs) {
 }
 
 bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
-    if (this->tiling_mode == mode) {
+    if (this->tilingMode == mode) {
         return true;
     }
 
@@ -99,7 +99,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
         return false;
     }
 
-    this->tiling_mode = set_tiling.tiling_mode;
+    this->tilingMode = set_tiling.tiling_mode;
 
     return set_tiling.tiling_mode == mode;
 }

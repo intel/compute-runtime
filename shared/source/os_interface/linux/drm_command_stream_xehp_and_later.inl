@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchB
                 printf("Drm Submission of contextIndex: %u, with context id %u\n", contextIndex, drmContextIds[contextIndex]);
             }
 
-            int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex]);
+            int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex], contextIndex);
             if (ret) {
                 return ret;
             }

@@ -183,7 +183,7 @@ void DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(ResidencyContainer &
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) {
+int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) {
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
     BufferObject *bb = alloc->getBO();
@@ -199,8 +199,9 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 
     uint64_t completionGpuAddress = 0;
     uint32_t completionValue = 0;
-    if (this->drm->completionFenceSupport()) {
-        completionGpuAddress = getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset;
+    if (this->drm->isVmBindAvailable() &&
+        this->drm->completionFenceSupport()) {
+        completionGpuAddress = getTagAllocation()->getGpuAddress() + (index * this->postSyncWriteOffset) + Drm::completionFenceOffset;
         completionValue = this->latestSentTaskCount;
     }
 

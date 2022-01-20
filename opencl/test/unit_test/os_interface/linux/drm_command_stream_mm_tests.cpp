@@ -95,8 +95,10 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
     }
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceWhenCallingCsrExecThenTagAllocationIsPassed) {
+HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndCompletionFenceWhenCallingCsrExecThenTagAllocationIsPassed) {
     mock->completionFenceSupported = true;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(mock, 128);
     MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
@@ -118,11 +120,81 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceW
     auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testCsr->latestSentTaskCount = 2;
 
-    int ret = testCsr->exec(batchBuffer, 1, 2);
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
     EXPECT_EQ(testCsr->latestSentTaskCount, bo.receivedCompletionValue);
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndNotCompletionFenceWhenCallingCsrExecThenTagAllocationIsNotPassed) {
+    mock->completionFenceSupported = false;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    TestedBufferObject bo(mock, 128);
+    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    cmdBuffer.bufferObjects[0] = &bo;
+    uint8_t buff[128];
+
+    LinearStream cs(&cmdBuffer, buff, 128);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    csr->makeResident(cmdBuffer);
+    csr->makeResident(*allocation);
+    csr->makeResident(*csr->getTagAllocation());
+
+    constexpr uint64_t expectedCompletionGpuAddress = 0;
+    constexpr uint32_t expectedCompletionValue = 0;
+    auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testCsr->latestSentTaskCount = 2;
+
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
+    EXPECT_EQ(expectedCompletionValue, bo.receivedCompletionValue);
+
+    mm->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceAndNotVmBindWhenCallingCsrExecThenTagAllocationIsNotPassed) {
+    mock->completionFenceSupported = true;
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = false;
+
+    TestedBufferObject bo(mock, 128);
+    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    cmdBuffer.bufferObjects[0] = &bo;
+    uint8_t buff[128];
+
+    LinearStream cs(&cmdBuffer, buff, 128);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    csr->makeResident(cmdBuffer);
+    csr->makeResident(*allocation);
+    csr->makeResident(*csr->getTagAllocation());
+
+    constexpr uint64_t expectedCompletionGpuAddress = 0;
+    constexpr uint32_t expectedCompletionValue = 0;
+    auto *testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testCsr->latestSentTaskCount = 2;
+
+    int ret = testCsr->exec(batchBuffer, 1, 2, 0);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
+    EXPECT_EQ(expectedCompletionValue, bo.receivedCompletionValue);
 
     mm->freeGraphicsMemory(allocation);
 }

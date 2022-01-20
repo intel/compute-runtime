@@ -134,4 +134,8 @@ int IoctlHelperUpstream::execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuff
     return ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
 }
 
+bool IoctlHelperUpstream::completionFenceExtensionSupported(const HardwareInfo &hwInfo) {
+    return false;
+}
+
 } // namespace NEO

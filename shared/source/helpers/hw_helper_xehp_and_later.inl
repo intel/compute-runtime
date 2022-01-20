@@ -199,4 +199,9 @@ inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::Ha
     return ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(hwInfo);
 }
 
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::isLinuxCompletionFenceSupported() const {
+    return false;
+}
+
 } // namespace NEO

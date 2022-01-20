@@ -125,6 +125,10 @@ class DrmMockCustom : public Drm {
 
     bool isVmBindAvailable() override;
 
+    bool completionFenceSupport() override {
+        return completionFenceSupported;
+    }
+
     void testIoctls();
 
     int ioctl(unsigned long request, void *arg) override;

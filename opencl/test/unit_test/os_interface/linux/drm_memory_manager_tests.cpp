@@ -5809,14 +5809,29 @@ TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEli
 }
 
 TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnFalse) {
-    GraphicsAllocation::AllocationType validAllocations[] = {
+    GraphicsAllocation::AllocationType invalidAllocations[] = {
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
         GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
         GraphicsAllocation::AllocationType::FILL_PATTERN,
         GraphicsAllocation::AllocationType::GLOBAL_SURFACE};
 
     for (size_t i = 0; i < 4; i++) {
-        EXPECT_FALSE(memoryManager->allocationTypeForCompletionFence(validAllocations[i]));
+        EXPECT_FALSE(memoryManager->allocationTypeForCompletionFence(invalidAllocations[i]));
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeAndDebugFlagOverridingWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
+    DebugManagerStateRestore dbgState;
+    DebugManager.flags.UseDrmCompletionFenceForAllAllocations.set(1);
+
+    GraphicsAllocation::AllocationType invalidAllocations[] = {
+        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
+        GraphicsAllocation::AllocationType::FILL_PATTERN,
+        GraphicsAllocation::AllocationType::GLOBAL_SURFACE};
+
+    for (size_t i = 0; i < 4; i++) {
+        EXPECT_TRUE(memoryManager->allocationTypeForCompletionFence(invalidAllocations[i]));
     }
 }
 
@@ -5873,6 +5888,29 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     memoryManager->handleFenceCompletion(allocation);
 
     EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionAndTagAddressIsNullThenDoNotCallWaitUserFence) {
+    mock->ioctl_expected.total = -1;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto engine = memoryManager->getRegisteredEngines()[0];
+    allocation->updateTaskCount(2, engine.osContext->getContextId());
+
+    auto testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    auto backupTagAddress = testCsr->tagAddress;
+    testCsr->tagAddress = nullptr;
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    testCsr->tagAddress = backupTagAddress;
 
     memoryManager->freeGraphicsMemory(allocation);
 }

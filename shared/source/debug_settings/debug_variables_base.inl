@@ -343,6 +343,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicPipelineSelect, -1, "set SYSTOLI
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOLIC MODE ENABLE in COMPUTE_WALKER cmd, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddStatePrefetchCmdToMemoryPrefetchAPI, -1, "Add STATE_PREFETCH to zeCommandListAppendMemoryPrefetch, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDrmCompletionFence, -1, "Enables DRM completion fence, -1:default (disabled), 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, UseDrmCompletionFenceForAllAllocations, -1, "Uses DRM completion fence for all allocations, -1:default (disabled), 0:disable, 1:enable")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -62,6 +62,12 @@ endif()
 if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
+  )
+endif()
+
+if(TESTS_XEHP_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later_tests.cpp
   )
 endif()
 

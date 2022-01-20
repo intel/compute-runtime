@@ -20,10 +20,12 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::createPreemptionAllocation;
     using CommandStreamReceiver::flushStamp;
     using CommandStreamReceiver::getTagAddress;
+    using CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::postSyncWriteOffset;
+    using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
@@ -132,7 +134,7 @@ class TestedDrmCommandStreamReceiverWithFailingExec : public TestedDrmCommandStr
                                                     deviceBitfield) {
     }
 
-    int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) override {
+    int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
         return -1;
     }
 };
