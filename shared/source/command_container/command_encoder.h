@@ -58,6 +58,8 @@ struct EncodeDispatchKernel {
 
     static void appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
+    static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData, const size_t &sizePerThreadData);
+
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount,

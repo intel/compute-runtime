@@ -120,6 +120,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     using SHARED_LOCAL_MEMORY_SIZE = typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     const auto &hardwareInfo = device.getHardwareInfo();
+    const auto &kernelDescriptor = kernel.getKernelInfo().kernelDescriptor;
 
     // Allocate some memory for the interface descriptor
     auto pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
@@ -135,7 +136,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     auto slmTotalSize = kernel.getSlmTotalSize();
 
-    setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
+    EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData, sizePerThreadData);
     EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup, slmTotalSize, SlmPolicy::SlmPolicyNone);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
@@ -155,7 +156,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     EncodeDispatchKernel<GfxFamily>::programBarrierEnable(interfaceDescriptor,
-                                                          kernel.getKernelInfo().kernelDescriptor.kernelAttributes.barrierCount,
+                                                          kernelDescriptor.kernelAttributes.barrierCount,
                                                           hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);

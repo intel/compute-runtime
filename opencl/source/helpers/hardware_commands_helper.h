@@ -36,12 +36,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         uint64_t offsetInterfaceDescriptor,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 
-    static void setGrfInfo(
-        INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
-        const Kernel &kernel,
-        const size_t &sizeCrossThreadData,
-        const size_t &sizePerThreadData);
-
     inline static uint32_t additionalSizeRequiredDsh();
 
     static size_t sendInterfaceDescriptorData(

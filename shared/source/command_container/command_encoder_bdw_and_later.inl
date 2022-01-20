@@ -22,6 +22,24 @@
 #include <algorithm>
 
 namespace NEO {
+
+template <typename Family>
+void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
+                                              const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {
+    auto grfSize = sizeof(typename Family::GRF);
+    DEBUG_BREAK_IF((sizeCrossThreadData % grfSize) != 0);
+    auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / grfSize);
+    DEBUG_BREAK_IF(numGrfCrossThreadData == 0);
+    pInterfaceDescriptor->setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
+
+    DEBUG_BREAK_IF((sizePerThreadData % grfSize) != 0);
+    auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / grfSize);
+
+    // at least 1 GRF of perThreadData for each thread in a thread group when sizeCrossThreadData != 0
+    numGrfPerThreadData = std::max(numGrfPerThreadData, 1u);
+    pInterfaceDescriptor->setConstantIndirectUrbEntryReadLength(numGrfPerThreadData);
+}
+
 template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           EncodeDispatchKernelArgs &args) {
@@ -117,12 +135,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
     }
 
-    auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(float[8]));
-    idd.setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
-
-    auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / sizeof(float[8]));
-    DEBUG_BREAK_IF(numGrfPerThreadData <= 0u);
-    idd.setConstantIndirectUrbEntryReadLength(numGrfPerThreadData);
+    EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData, sizePerThreadData);
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = args.dispatchInterface->getSizeForImplicitArgsPatching();

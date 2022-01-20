@@ -35,6 +35,10 @@ namespace NEO {
 constexpr size_t TimestampDestinationAddressAlignment = 16;
 
 template <typename Family>
+void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
+                                              const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {}
+
+template <typename Family>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           EncodeDispatchKernelArgs &args) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
@@ -46,6 +50,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
     auto sizeCrossThreadData = args.dispatchInterface->getCrossThreadDataSize();
+    auto sizePerThreadData = args.dispatchInterface->getPerThreadDataSize();
     auto sizePerThreadDataForWholeGroup = args.dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
     auto pImplicitArgs = args.dispatchInterface->getImplicitArgs();
 
@@ -77,6 +82,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     WALKER_TYPE walkerCmd = Family::cmdInitGpgpuWalker;
     auto &idd = walkerCmd.getInterfaceDescriptor();
 
+    EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData, sizePerThreadData);
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     bool inlineDataProgramming = EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(kernelDescriptor);
     {
