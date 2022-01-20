@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,10 @@ struct GTPinEnableXeHpcCore {
     }
 };
 
-#include "gtpin_setup_xe_hpc_core.inl"
+template <>
+uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
+    return gtpin::GTPIN_XE_HPC_CORE;
+}
 
 static GTPinEnableXeHpcCore gtpinEnable;
 
