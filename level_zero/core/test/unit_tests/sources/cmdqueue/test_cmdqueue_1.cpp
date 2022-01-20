@@ -747,7 +747,7 @@ HWTEST2_F(CommandQueueCommandsMultiTile, givenCommandQueueOnMultiTileWhenWalkerP
 }
 
 using CommandQueueIndirectAllocations = Test<ModuleFixture>;
-HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAreMadeResident) {
+HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAddedToResidencyContainer) {
     const ze_command_queue_desc_t desc = {};
 
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
@@ -786,21 +786,19 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
                                              nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &residencyContainer = csr.rememberedResidencies;
-
-    auto itorEvent = std::find(std::begin(residencyContainer),
-                               std::end(residencyContainer),
+    auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                               std::end(commandList->commandContainer.getResidencyContainer()),
                                gpuAlloc);
-    EXPECT_EQ(itorEvent, std::end(residencyContainer));
+    EXPECT_EQ(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
 
     auto commandListHandle = commandList->toHandle();
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    itorEvent = std::find(std::begin(residencyContainer),
-                          std::end(residencyContainer),
+    itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                          std::end(commandList->commandContainer.getResidencyContainer()),
                           gpuAlloc);
-    EXPECT_NE(itorEvent, std::end(residencyContainer));
+    EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
 
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
     commandQueue->destroy();

@@ -70,12 +70,10 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
     return &iter->second;
 }
 
-void SVMAllocsManager::makeInternalAllocationsResidentAndMigrateIfNeeded(uint32_t rootDeviceIndex,
-                                                                         uint32_t requestedTypesMask,
-                                                                         CommandStreamReceiver &commandStreamReceiver,
-                                                                         bool performMigration) {
+void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                                  ResidencyContainer &residencyContainer,
+                                                                  uint32_t requestedTypesMask) {
     std::unique_lock<SpinLock> lock(mtx);
-
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (rootDeviceIndex >= allocation.second.gpuAllocations.getGraphicsAllocations().size()) {
             continue;
@@ -87,13 +85,8 @@ void SVMAllocsManager::makeInternalAllocationsResidentAndMigrateIfNeeded(uint32_
         }
 
         auto alloc = allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-        commandStreamReceiver.makeResident(*alloc);
-
-        if (performMigration &&
-            (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
-            auto pageFaultManager = memoryManager->getPageFaultManager();
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+        if (residencyContainer.end() == std::find(residencyContainer.begin(), residencyContainer.end(), alloc)) {
+            residencyContainer.push_back(alloc);
         }
     }
 }

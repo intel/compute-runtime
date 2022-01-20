@@ -138,13 +138,16 @@ NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
 
 void CommandList::makeResidentAndMigrate(bool performMigration) {
     for (auto alloc : commandContainer.getResidencyContainer()) {
-        csr->makeResident(*alloc);
+        if (csr->getResidencyAllocations().end() ==
+            std::find(csr->getResidencyAllocations().begin(), csr->getResidencyAllocations().end(), alloc)) {
+            csr->makeResident(*alloc);
 
-        if (performMigration &&
-            (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
-            auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+            if (performMigration &&
+                (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
+                 alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
+                auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+                pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+            }
         }
     }
 }

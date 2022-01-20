@@ -173,14 +173,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
 
             auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-            svmAllocsManager->makeInternalAllocationsResidentAndMigrateIfNeeded(neoDevice->getRootDeviceIndex(),
-
-                                                                                unifiedMemoryControls.generateMask(),
-                                                                                *csr, performMigration);
-            spaceForResidency += svmAllocsManager->getNumAllocs();
+            svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
+                                                                         commandList->commandContainer.getResidencyContainer(),
+                                                                         unifiedMemoryControls.generateMask());
         }
 
         totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();
+        spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
         if (statePreemption != commandListPreemption) {
             if (preemptionCmdSyncProgramming) {

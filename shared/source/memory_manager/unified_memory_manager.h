@@ -141,10 +141,9 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
-    void makeInternalAllocationsResidentAndMigrateIfNeeded(uint32_t rootDeviceIndex,
-                                                           uint32_t requestedTypesMask,
-                                                           CommandStreamReceiver &commandStreamReceiver,
-                                                           bool performMigration);
+    void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                    ResidencyContainer &residencyContainer,
+                                                    uint32_t requestedTypesMask);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
     void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);

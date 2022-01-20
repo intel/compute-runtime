@@ -1390,13 +1390,12 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
 
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(pDevice->getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
     //only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
@@ -1415,21 +1414,20 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
 
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(pDevice->getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
     //only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(pDevice->getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(1u, residencyContainer.size());
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
@@ -1605,12 +1603,11 @@ struct UpdateResidencyContainerMultipleDevicesTest : public ::testing::WithParam
 
 HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
          givenNoAllocationsCreatedThenNoInternalAllocationsAreAddedToResidencyContainer) {
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(0u, residencyContainer.size());
 }
 
@@ -1630,12 +1627,12 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationThenItIsAdd
     svmManager->insertSVMAlloc(allocData);
     EXPECT_EQ(1u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  mask,
-                                                                  csr, true);
+
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           mask);
 
     if (mask == static_cast<uint32_t>(type)) {
         EXPECT_EQ(1u, residencyContainer.size());
@@ -1667,17 +1664,16 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocDataPeer);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(numRootDevices + 1,
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(numRootDevices + 1,
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(0u, residencyContainer.size());
 
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
 }
@@ -1712,12 +1708,11 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocDataPeer);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
 }
@@ -1735,12 +1730,11 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocData);
     EXPECT_EQ(1u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::SHARED_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::SHARED_UNIFIED_MEMORY);
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
 }
@@ -1759,12 +1753,11 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocData);
     EXPECT_EQ(1u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::SHARED_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::SHARED_UNIFIED_MEMORY);
     EXPECT_EQ(0u, residencyContainer.size());
 }
 
@@ -1791,12 +1784,11 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocData1);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(device->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(2u, residencyContainer.size());
 }
 
@@ -1823,13 +1815,11 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     svmManager->insertSVMAlloc(allocData1);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
-    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
-    ResidencyContainer &residencyContainer = csr.getResidencyAllocations();
+    ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
-
-    svmManager->makeInternalAllocationsResidentAndMigrateIfNeeded(peerDevice->getDevice().getRootDeviceIndex(),
-                                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
-                                                                  csr, true);
+    svmManager->addInternalAllocationsToResidencyContainer(peerDevice->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     EXPECT_EQ(0u, residencyContainer.size());
 }
 
