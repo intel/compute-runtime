@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -55,7 +55,7 @@ if(WIN32)
                      COMMAND echo Running Windows dll tests
                      COMMAND igdrcl_windows_dll_tests
   )
-  add_dependencies(run_unit_tests run_windows_dll_tests)
+  add_dependencies(run_ocl_tests run_windows_dll_tests)
 
   set_target_properties(igdrcl_windows_dll_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
   set_target_properties(run_windows_dll_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})

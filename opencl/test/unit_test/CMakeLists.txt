@@ -27,6 +27,9 @@ add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
 add_dependencies(unit_tests copy_test_files_per_product)
 
+add_custom_target(run_ocl_tests)
+set_target_properties(run_ocl_tests PROPERTIES FOLDER ${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER})
+
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
@@ -40,7 +43,7 @@ hide_subdir(linux)
 if(UNIX)
   add_subdirectory(linux)
   add_custom_command(
-                     TARGET run_unit_tests
+                     TARGET run_ocl_tests
                      POST_BUILD
                      COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
                      COMMAND ${NEO_RUN_INTERCEPTOR_LIST} igdrcl_linux_dll_tests ${NEO_TESTS_LISTENER_OPTION}
