@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -937,4 +937,21 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
     drm.getPrelimVersion(prelimVersion);
 
     EXPECT_TRUE(prelimVersion.empty());
+}
+
+TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrectSetting) {
+    DebugManagerStateRestore restore;
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_FALSE(drmDefault.completionFenceSupported);
+
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    DrmMock drmEnabled{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_TRUE(drmEnabled.completionFenceSupported);
+
+    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    DrmMock drmDisabled{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_FALSE(drmDisabled.completionFenceSupported);
 }

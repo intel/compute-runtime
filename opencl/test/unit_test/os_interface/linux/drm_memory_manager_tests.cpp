@@ -5796,4 +5796,85 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     EXPECT_EQ(0u, memoryInfo->getMemoryRegionSize(4));
 }
 
+TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
+    GraphicsAllocation::AllocationType validAllocations[] = {
+        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+        GraphicsAllocation::AllocationType::RING_BUFFER,
+        GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER,
+        GraphicsAllocation::AllocationType::TAG_BUFFER};
+
+    for (size_t i = 0; i < 4; i++) {
+        EXPECT_TRUE(memoryManager->allocationTypeForCompletionFence(validAllocations[i]));
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnFalse) {
+    GraphicsAllocation::AllocationType validAllocations[] = {
+        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
+        GraphicsAllocation::AllocationType::FILL_PATTERN,
+        GraphicsAllocation::AllocationType::GLOBAL_SURFACE};
+
+    for (size_t i = 0; i < 4; i++) {
+        EXPECT_FALSE(memoryManager->allocationTypeForCompletionFence(validAllocations[i]));
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOfUsedAndEligbleAllocationThenCallWaitUserFence) {
+    mock->ioctl_expected.total = -1;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto engine = memoryManager->getRegisteredEngines()[0];
+    allocation->updateTaskCount(2, engine.osContext->getContextId());
+
+    uint64_t expectedFenceAddress = castToUint64(const_cast<uint32_t *>(engine.commandStreamReceiver->getTagAddress())) + Drm::completionFenceOffset;
+    constexpr uint64_t expectedValue = 2;
+
+    memoryManager->handleFenceCompletion(allocation);
+
+    EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+    EXPECT_EQ(expectedFenceAddress, mock->waitUserFenceCall.address);
+    EXPECT_EQ(expectedValue, mock->waitUserFenceCall.value);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOfNotUsedAndEligbleAllocationThenDoNotCallWaitUserFence) {
+    mock->ioctl_expected.total = -1;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+
+    memoryManager->handleFenceCompletion(allocation);
+
+    EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOfUsedAndNotEligbleAllocationThenDoNotCallWaitUserFence) {
+    mock->ioctl_expected.total = -1;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::GLOBAL_SURFACE});
+    auto engine = memoryManager->getRegisteredEngines()[0];
+    allocation->updateTaskCount(2, engine.osContext->getContextId());
+
+    memoryManager->handleFenceCompletion(allocation);
+
+    EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 } // namespace NEO

@@ -5,77 +5,20 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_buffer_object.h"
-#include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
-#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "drm/i915_drm.h"
-
-#include <memory>
 
 using namespace NEO;
 
-class TestedBufferObject : public BufferObject {
-  public:
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, 0, 1) {
-    }
-
-    void tileBy(uint32_t mode) {
-        this->tiling_mode = mode;
-    }
-
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
-        BufferObject::fillExecObject(execObject, osContext, vmHandleId, drmContextId);
-        execObjectPointerFilled = &execObject;
-    }
-
-    void setSize(size_t size) {
-        this->size = size;
-    }
-
-    drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
-};
-
-class DrmBufferObjectFixture {
-  public:
-    std::unique_ptr<DrmMockCustom> mock;
-    TestedBufferObject *bo;
-    drm_i915_gem_exec_object2 execObjectsStorage[256];
-    std::unique_ptr<OsContextLinux> osContext;
-
-    void SetUp() {
-        this->mock = std::make_unique<DrmMockCustom>(*executionEnvironment.rootDeviceEnvironments[0]);
-        ASSERT_NE(nullptr, this->mock);
-        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-        osContext.reset(new OsContextLinux(*this->mock, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
-        this->mock->reset();
-        bo = new TestedBufferObject(this->mock.get());
-        ASSERT_NE(nullptr, bo);
-    }
-
-    void TearDown() {
-        delete bo;
-        if (this->mock->ioctl_expected.total >= 0) {
-            EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
-        }
-        mock->reset();
-        osContext.reset(nullptr);
-        mock.reset(nullptr);
-    }
-    MockExecutionEnvironment executionEnvironment;
-};
-
-typedef Test<DrmBufferObjectFixture> DrmBufferObjectTest;
+using DrmMockBufferObjectFixture = DrmBufferObjectFixture<DrmMockCustom>;
+using DrmBufferObjectTest = Test<DrmMockBufferObjectFixture>;
 
 TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
     mock->ioctl_expected.total = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,12 +84,12 @@ class DrmCommandStreamTest : public ::testing::Test {
     std::unique_ptr<OsContextLinux> osContext;
 };
 
-template <typename T>
+template <typename DrmType>
 class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
   public:
     std::unique_ptr<DebugManagerStateRestore> dbgState;
     MockExecutionEnvironment *executionEnvironment;
-    T *mock;
+    DrmType *mock;
     CommandStreamReceiver *csr = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 
@@ -105,7 +105,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        mock = new DrmType(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex);
@@ -149,7 +149,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
 
   protected:
     class MockBufferObject : public BufferObject {
-        friend DrmCommandStreamEnhancedTemplate<T>;
+        friend DrmCommandStreamEnhancedTemplate<DrmType>;
 
       protected:
         MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0, 16u) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,7 @@ class DrmMockCustom : public Drm {
   public:
     using Drm::bindAvailable;
     using Drm::cacheInfo;
+    using Drm::completionFenceSupported;
     using Drm::memoryInfo;
 
     struct IoctlResExt {
@@ -141,6 +142,9 @@ class DrmMockCustom : public Drm {
         ioctl_cnt.reset();
         ioctl_expected.reset();
         ioctl_res_ext = &NONE;
+    }
+
+    virtual void execBufferExtensions(drm_i915_gem_execbuffer2 *execbuf) {
     }
 
     Ioctls ioctl_cnt;

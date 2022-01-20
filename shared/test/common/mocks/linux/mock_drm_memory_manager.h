@@ -69,6 +69,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::allocateMemoryByKMD;
+    using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
@@ -80,6 +81,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getRootDeviceIndex;
     using DrmMemoryManager::getUserptrAlignment;
     using DrmMemoryManager::gfxPartitions;
+    using DrmMemoryManager::handleFenceCompletion;
     using DrmMemoryManager::lockResourceInLocalMemoryImpl;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
@@ -94,6 +96,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
     using DrmMemoryManager::unlockResourceInLocalMemoryImpl;
+    using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::heapAssigner;
     using MemoryManager::registeredEngines;

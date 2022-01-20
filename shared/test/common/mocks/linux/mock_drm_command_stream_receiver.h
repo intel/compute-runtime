@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiver::useNotifyEnableForPostSync;
+    using DrmCommandStreamReceiver<GfxFamily>::exec;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using DrmCommandStreamReceiver<GfxFamily>::useContextForUserFenceWait;
     using DrmCommandStreamReceiver<GfxFamily>::useUserFenceWait;

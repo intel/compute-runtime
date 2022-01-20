@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,7 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         this->execBufferBufferObjects =
             *reinterpret_cast<drm_i915_gem_exec_object2 *>(this->execBuffer.buffers_ptr);
         ioctl_cnt.execbuffer2++;
+        execBufferExtensions(execbuf);
     } break;
 
     case DRM_IOCTL_I915_GEM_USERPTR: {

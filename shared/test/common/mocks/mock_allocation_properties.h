@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {
     MockAllocationProperties(uint32_t rootDeviceIndex, size_t size) : AllocationProperties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, GraphicsAllocation::AllocationType type) : AllocationProperties(rootDeviceIndex, true, size, type, false, mockDeviceBitfield) {}
     MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
     MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size) : AllocationProperties(rootDeviceIndex, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
     MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
