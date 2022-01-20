@@ -1058,13 +1058,18 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
 ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
     NEO::Device *activeDevice = getActiveDevice();
-    for (auto &it : activeDevice->getAllEngines()) {
-        if (it.osContext->isLowPriority()) {
-            *csr = it.commandStreamReceiver;
-            return ZE_RESULT_SUCCESS;
+    if (this->implicitScalingCapable) {
+        *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
+        return ZE_RESULT_SUCCESS;
+    } else {
+        for (auto &it : activeDevice->getAllEngines()) {
+            if (it.osContext->isLowPriority()) {
+                *csr = it.commandStreamReceiver;
+                return ZE_RESULT_SUCCESS;
+            }
         }
+        // if the code falls through, we have no low priority context created by neoDevice.
     }
-    // if the code falls through, we have no low priority context created by neoDevice.
     UNRECOVERABLE_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }

@@ -2485,11 +2485,12 @@ TEST_F(zeDeviceSystemBarrierTest, whenCallingSystemBarrierThenReturnErrorUnsuppo
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker>
+template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
 struct MultiSubDeviceFixture : public DeviceFixture {
     void SetUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         DebugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
+        DebugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, osLocalMemory);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
 
@@ -2506,7 +2507,7 @@ struct MultiSubDeviceFixture : public DeviceFixture {
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
-using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1>>;
+using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
     if (NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
         EXPECT_TRUE(device->isImplicitScalingCapable());
@@ -2517,22 +2518,37 @@ TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContain
     }
 }
 
-using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1>>;
+using MultiSubDeviceTestNoApi = Test<MultiSubDeviceFixture<true, false, -1, -1>>;
 TEST_F(MultiSubDeviceTestNoApi, GivenNoApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
     EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1>>;
+using MultiSubDeviceTestNoLocalMemory = Test<MultiSubDeviceFixture<false, true, -1, -1>>;
 TEST_F(MultiSubDeviceTestNoLocalMemory, GivenApiSupportAndLocalMemoryDisabledWhenDeviceContainsSubDevicesThenItIsNotImplicitScalingCapable) {
     EXPECT_FALSE(device->isImplicitScalingCapable());
     EXPECT_EQ(subDevice, deviceImp->getActiveDevice());
 }
 
-using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1>>;
+using MultiSubDeviceTestNoApiForceOn = Test<MultiSubDeviceFixture<true, false, 1, -1>>;
 TEST_F(MultiSubDeviceTestNoApiForceOn, GivenNoApiSupportAndLocalMemoryEnabledWhenForcedImplicitScalingThenItIsImplicitScalingCapable) {
     EXPECT_TRUE(device->isImplicitScalingCapable());
     EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
+}
+
+using MultiSubDeviceEnabledImplicitScalingTest = Test<MultiSubDeviceFixture<true, true, -1, 1>>;
+TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesAndSupportsImplicitScalingThenItIsImplicitScalingCapable) {
+    EXPECT_TRUE(device->isImplicitScalingCapable());
+    EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
+}
+
+TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhenDeviceReturnsLowPriorityCsrThenItIsDefaultCsr) {
+    auto &defaultEngine = deviceImp->getActiveDevice()->getDefaultEngine();
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    auto ret = deviceImp->getCsrForLowPriority(&csr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
 }
 
 } // namespace ult
