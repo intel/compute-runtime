@@ -28,7 +28,7 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
       add_custom_command(
                          COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -gen_file -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -80,7 +80,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
              add_custom_command(
                          COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -gen_file -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )

@@ -684,8 +684,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             inputFileSpirV = true;
         } else if ("-cpp_file" == currArg) {
             useCppFile = true;
-        } else if ("-gen_file" == currArg) {
-            useGenFile = true;
         } else if (("-options" == currArg) && hasMoreArgs) {
             options = argv[argIndex + 1];
             argIndex++;
@@ -1041,8 +1039,6 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -cpp_file                     Will generate c++ file with C-array
                                 containing Intel Compute device binary.
 
-  -gen_file                     Will generate gen file.
-
   -output_no_suffix             Prevents ocloc from adding family name suffix.
 
   --help                        Print this usage message.
@@ -1165,10 +1161,9 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 
     if (genBinary) {
-        if (useGenFile) {
-            std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
-            argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
-        }
+        std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
+
+        argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
 
         if (useCppFile) {
             std::string cppOutputFile = generateFilePath(outputDirectory, fileBase, ".cpp");
