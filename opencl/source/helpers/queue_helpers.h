@@ -104,6 +104,9 @@ cl_int getQueueInfo(QueueType *queue,
     case CL_QUEUE_PROPERTIES:
         retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue_properties>(queue->getCommandQueueProperties()));
         break;
+    case CL_QUEUE_DEVICE_DEFAULT:
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_command_queue>(nullptr));
+        break;
     case CL_QUEUE_SIZE:
         retVal = CL_INVALID_COMMAND_QUEUE;
         break;
