@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     uint32_t typeSize = sizeof(uint32_t);
     uint32_t srcAdditionalMul = 3u;
 
-    uint32_t expectedMemorySize = arraySize * vectorSize * typeSize;
+    uint32_t expectedMemorySize = arraySize * vectorSize * typeSize * 2;
     uint32_t srcMemorySize = expectedMemorySize * srcAdditionalMul;
     uint32_t idxMemorySize = arraySize * sizeof(uint32_t);
 

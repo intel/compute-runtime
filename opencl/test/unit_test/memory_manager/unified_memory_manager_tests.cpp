@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -802,6 +802,21 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
     EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
     EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
     EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfields.at(mockRootDeviceIndex), memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest,
+       given1ByteAsAllocationSizeWhenHostMemAllocIsCreatedItIsAlignedTo4k) {
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+
+    svmManager->multiOsContextSupport = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(1u, unifiedMemoryProperties);
+
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(MemoryConstants::pageSize, allocation->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
 
     svmManager->freeSVMAlloc(ptr);
 }

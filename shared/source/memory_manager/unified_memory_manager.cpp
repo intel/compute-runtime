@@ -125,7 +125,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
-    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize);
 
     bool compressionEnabled = false;
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
