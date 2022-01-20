@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     GmmClientContext *getGmmClientContext() const;
     double getProfilingTimerResolution();
     double getPlatformHostTimerResolution() const;
-    bool isSimulation() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters();
     PreemptionMode getPreemptionMode() const;

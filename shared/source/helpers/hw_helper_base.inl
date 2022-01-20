@@ -480,11 +480,6 @@ inline uint32_t HwHelperHw<GfxFamily>::getMinimalSIMDSize() {
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
-    return false;
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     return allocation.isAllocatedInLocalMemoryPool() &&
            (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||

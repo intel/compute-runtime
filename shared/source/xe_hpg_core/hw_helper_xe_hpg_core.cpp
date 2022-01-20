@@ -38,11 +38,6 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <>
-inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
-    return false;
-}
-
-template <>
 bool HwHelperHw<Family>::is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const {
     return !hwInfo.workaroundTable.flags.waAuxTable64KGranular && isCompressionEnabled;
 }

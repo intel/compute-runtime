@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,6 @@ GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
 GmmClientContext *ClDevice::getGmmClientContext() const { return device.getGmmClientContext(); }
 double ClDevice::getProfilingTimerResolution() { return device.getProfilingTimerResolution(); }
 double ClDevice::getPlatformHostTimerResolution() const { return device.getPlatformHostTimerResolution(); }
-bool ClDevice::isSimulation() const { return device.isSimulation(); }
 GFXCORE_FAMILY ClDevice::getRenderCoreFamily() const { return device.getRenderCoreFamily(); }
 PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerformanceCounters(); }
 PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemptionMode(); }

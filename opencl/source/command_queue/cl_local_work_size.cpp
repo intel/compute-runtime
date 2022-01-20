@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,7 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
         auto &device = dispatchInfo.getClDevice();
         const auto &hwInfo = device.getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        auto isSimulation = device.isSimulation();
-        if (kernel->requiresLimitedWorkgroupSize() && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
-            setSpecialWorkgroupSize(workGroupSize);
-        } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
+        if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
             if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && hwHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
                 ((dispatchInfo.getDim() == 1) && (dispatchInfo.getGWS().x % wsInfo.simdSize * 2 == 0))) {

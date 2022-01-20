@@ -103,7 +103,6 @@ class HwHelper {
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const = 0;
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
@@ -306,8 +305,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getMinimalSIMDSize() override;
 
     uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
-
-    bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const override;
 
     uint32_t getGlobalTimeStampBits() const override;
 

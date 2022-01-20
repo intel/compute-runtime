@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,12 +204,6 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
             }
         }
     }
-}
-
-void setSpecialWorkgroupSize(size_t workgroupSize[3]) {
-    workgroupSize[0] = 1;
-    workgroupSize[1] = 1;
-    workgroupSize[2] = 1;
 }
 
 void computeWorkgroupSize1D(uint32_t maxWorkGroupSize,

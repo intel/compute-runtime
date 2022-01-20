@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,8 +53,6 @@ inline uint32_t calculateDispatchDim(const Vec3<size_t> &dispatchSize, const Vec
 
 Vec3<size_t> canonizeWorkgroup(
     const Vec3<size_t> &workgroup);
-
-void setSpecialWorkgroupSize(size_t workgroupSize[3]);
 
 inline uint32_t computeDimensions(const size_t workItems[3]) {
     return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2

@@ -39,11 +39,6 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 }
 
 template <>
-inline bool HwHelperHw<Family>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
-    return false;
-}
-
-template <>
 uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 

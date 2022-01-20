@@ -2217,33 +2217,6 @@ bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     return false;
 }
 
-bool Kernel::requiresLimitedWorkgroupSize() const {
-    if (!this->isBuiltIn) {
-        return false;
-    }
-    if (this->auxTranslationDirection != AuxTranslationDirection::None) {
-        return false;
-    }
-
-    //if source is buffer in local memory, no need for limited workgroup
-    if (this->kernelInfo.getArgDescriptorAt(0).is<ArgDescriptor::ArgTPointer>()) {
-        if (this->getKernelArgInfo(0).object) {
-            auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-            auto buffer = castToObject<Buffer>(this->getKernelArgInfo(0u).object);
-            if (buffer && buffer->getGraphicsAllocation(rootDeviceIndex)->getMemoryPool() == MemoryPool::LocalMemory) {
-                return false;
-            }
-        }
-    }
-
-    //if we are reading from image no need for limited workgroup
-    if (this->kernelInfo.getArgDescriptorAt(0).is<ArgDescriptor::ArgTImage>()) {
-        return false;
-    }
-
-    return true;
-}
-
 void Kernel::updateAuxTranslationRequired() {
     const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     if (hwInfoConfig.allowStatelessCompression(getDevice().getHardwareInfo())) {

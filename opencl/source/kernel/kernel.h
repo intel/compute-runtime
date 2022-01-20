@@ -361,7 +361,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         const bool kernelUsesLocalIds,
         const bool isCssUsed) const;
 
-    bool requiresLimitedWorkgroupSize() const;
     bool isKernelDebugEnabled() const { return debugEnabled; }
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
