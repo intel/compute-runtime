@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 
 namespace NEO {
 
@@ -77,6 +78,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
+    using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::GSBAFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
@@ -122,7 +124,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
                              uint32_t rootDeviceIndex,
                              const DeviceBitfield deviceBitfield)
         : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
-          recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {}
+          recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {
+    }
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
@@ -169,7 +172,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         downloadAllocationCalled = true;
     }
 
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         waitForCompletionWithTimeoutTaskCountCalled++;
         if (callBaseWaitForCompletionWithTimeout) {
@@ -222,6 +225,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     bool flushBatchedSubmissions() override {
         flushBatchedSubmissionsCalled = true;
+
+        if (shouldFailFlushBatchedSubmissions) {
+            return false;
+        }
+
         return CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
     }
     void initProgrammingFlags() override {
@@ -328,6 +336,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool blitterDirectSubmissionAvailable = false;
     bool callBaseIsMultiOsContextCapable = false;
     bool callBaseWaitForCompletionWithTimeout = true;
-    bool returnWaitForCompletionWithTimeout = true;
+    bool shouldFailFlushBatchedSubmissions = false;
+    WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
 };
 } // namespace NEO

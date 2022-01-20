@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -25,17 +26,6 @@ class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
         osContext->incRefInternal();
         registeredEngines.emplace_back(commandStreamReceiver, osContext);
         return osContext;
-    }
-};
-
-struct MockDriverModel : NEO::DriverModel {
-    PhysicalDevicePciBusInfo pciBusInfo{};
-    MockDriverModel() : NEO::DriverModel(NEO::DriverModelType::UNKNOWN) {}
-    void setGmmInputArgs(void *args) override {}
-    uint32_t getDeviceHandle() const override { return {}; }
-    PhysicalDevicePciBusInfo getPciBusInfo() const override { return pciBusInfo; }
-    size_t getMaxMemAllocSize() const override {
-        return 0;
     }
 };
 

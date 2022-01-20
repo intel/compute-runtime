@@ -1487,7 +1487,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     TestEventCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<GfxFamily>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({enableTimeout, timeoutMs, taskCountToWait});
         return waitForCompletionWithTimeoutResult;
@@ -1500,7 +1500,7 @@ struct TestEventCsr : public UltCommandStreamReceiver<GfxFamily> {
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;
-    bool waitForCompletionWithTimeoutResult = true;
+    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
     StackVec<WaitForCompletionWithTimeoutParams, 1> waitForCompletionWithTimeoutParamsPassed{};
 };
 

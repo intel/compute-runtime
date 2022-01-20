@@ -97,7 +97,11 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
 ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
-        csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, false);
+        const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, false);
+        if (waitStatus == NEO::WaitStatus::GpuHang) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+
         postSyncOperations();
         return ZE_RESULT_SUCCESS;
     } else {
@@ -116,12 +120,15 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
     }
 
-    bool ready = csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
-    if (!ready) {
+    const auto waitStatus = csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    if (waitStatus == NEO::WaitStatus::NotReady) {
         return ZE_RESULT_NOT_READY;
     }
-    postSyncOperations();
+    if (waitStatus == NEO::WaitStatus::GpuHang) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
 
+    postSyncOperations();
     return ZE_RESULT_SUCCESS;
 }
 

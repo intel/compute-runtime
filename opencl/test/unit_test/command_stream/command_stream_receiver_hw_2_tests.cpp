@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -610,13 +610,14 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+        WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                         bool useQuickKmdSleep, bool forcePowerSavingMode) override {
             waitForTaskCountWithKmdNotifyFallbackCalled++;
             taskCountToWaitPassed = taskCountToWait;
             flushStampToWaitPassed = flushStampToWait;
             useQuickKmdSleepPassed = useQuickKmdSleep;
             forcePowerSavingModePassed = forcePowerSavingMode;
+            return WaitStatus::Ready;
         }
 
         FlushStamp flushStampToWaitPassed = 0;

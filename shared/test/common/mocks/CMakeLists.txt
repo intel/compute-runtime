@@ -45,6 +45,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_diagnostic_collector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver_model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_elf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_execution_environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
@@ -105,6 +106,7 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_context_linux.h
   )
 endif()
 

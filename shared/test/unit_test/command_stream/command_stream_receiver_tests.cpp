@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,6 +21,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -30,10 +32,15 @@
 
 #include "gmock/gmock.h"
 
+#include <chrono>
+#include <functional>
+#include <limits>
+
 namespace NEO {
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } // namespace NEO
 using namespace NEO;
+using namespace std::chrono_literals;
 
 struct CommandStreamReceiverTest : public DeviceFixture,
                                    public ::testing::Test {
@@ -163,6 +170,99 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_EQ(csr.peekTaskCount(), allocation->getTaskCount(csr.getOsContext().getContextId()));
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.callBaseWaitForCompletionWithTimeout = true;
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    volatile std::uint32_t tasksCount[16] = {};
+    csr.tagAddress = tasksCount;
+
+    constexpr auto enableTimeout = false;
+    constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
+    constexpr auto taskCountToWait = 1;
+
+    const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWithTimeoutThenReadyIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+
+    volatile std::uint32_t tasksCount[16] = {};
+    driverModelMock->isGpuHangDetectedSideEffect = [&tasksCount] {
+        tasksCount[0]++;
+    };
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.callBaseWaitForCompletionWithTimeout = true;
+    csr.tagAddress = tasksCount;
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    constexpr auto enableTimeout = false;
+    constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
+    constexpr auto taskCountToWait = 1;
+
+    const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    EXPECT_EQ(WaitStatus::Ready, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestFlushedTaskCount = 0;
+    csr.shouldFailFlushBatchedSubmissions = true;
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.callBaseWaitForCompletionWithTimeout = true;
+
+    constexpr auto enableTimeout = false;
+    constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
+    constexpr auto taskCountToWait = 1;
+
+    const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndNoGpuHangWhenWaititingForCompletionWithTimeoutThenNotReadyIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = false;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestFlushedTaskCount = 0;
+    csr.shouldFailFlushBatchedSubmissions = true;
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.callBaseWaitForCompletionWithTimeout = true;
+
+    constexpr auto enableTimeout = false;
+    constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
+    constexpr auto taskCountToWait = 1;
+
+    const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {

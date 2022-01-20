@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -468,7 +468,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSup
 HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNotifyThenExpectImplicitBusyLoopWaitCalled) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
-    commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::NotReady;
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
@@ -477,7 +477,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSinglePartitionWhenCallingWaitKmdNot
 HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmdNotifyThenExpectExplicitBusyLoopWaitCalled) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.callBaseWaitForCompletionWithTimeout = false;
-    commandStreamReceiver.returnWaitForCompletionWithTimeout = false;
+    commandStreamReceiver.returnWaitForCompletionWithTimeout = NEO::WaitStatus::NotReady;
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);

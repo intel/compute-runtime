@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
   public:
     MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
-    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    MOCK_METHOD3(waitForCompletionWithTimeout, WaitStatus(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
 
 void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
@@ -148,13 +148,13 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     *mockCsr0->getTagAddress() = 0;
     *mockCsr1->getTagAddress() = 0;
 
-    auto waitForCompletionWithTimeoutMock0 = [&mockCsr0](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+    auto waitForCompletionWithTimeoutMock0 = [&mockCsr0](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> NEO::WaitStatus {
         *mockCsr0->getTagAddress() = taskCountReady;
-        return true;
+        return NEO::WaitStatus::Ready;
     };
-    auto waitForCompletionWithTimeoutMock1 = [&mockCsr1](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+    auto waitForCompletionWithTimeoutMock1 = [&mockCsr1](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> NEO::WaitStatus {
         *mockCsr1->getTagAddress() = taskCountReady;
-        return true;
+        return NEO::WaitStatus::Ready;
     };
     auto osContextId0 = mockCsr0->getOsContext().getContextId();
     auto osContextId1 = mockCsr1->getOsContext().getContextId();
@@ -198,9 +198,9 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    bool desired = true;
+    auto desired = NEO::WaitStatus::Ready;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return desired; };
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
@@ -240,9 +240,9 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
-    bool desired = true;
+    auto desired = NEO::WaitStatus::Ready;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return desired; };
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -275,9 +275,9 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
-    bool desired = true;
+    auto desired = NEO::WaitStatus::Ready;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return desired; };
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -302,9 +302,9 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     device->resetCommandStreamReceiver(mockCsr);
     *mockCsr->getTagAddress() = 0;
 
-    bool desired = true;
+    auto desired = NEO::WaitStatus::Ready;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return desired; };
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
@@ -335,7 +335,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
         memObj->getMapAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
     }
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return NEO::WaitStatus::Ready; };
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -498,7 +498,7 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
 
     auto svmEntry = svmAllocationsManager->getSVMAlloc(sharedMemory);
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return NEO::WaitStatus::Ready; };
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
     svmEntry->gpuAllocations.getGraphicsAllocation(mockDevice.getRootDeviceIndex())->updateTaskCount(6u, 0u);
@@ -531,7 +531,7 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
 
     auto svmEntry = svmAllocationsManager->getSVMAlloc(hostMemory);
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) { return NEO::WaitStatus::Ready; };
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
     svmEntry->gpuAllocations.getGraphicsAllocation(mockDevice.getRootDeviceIndex())->updateTaskCount(6u, 0u);

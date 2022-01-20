@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/utilities/spinlock.h"
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 
@@ -61,6 +62,12 @@ enum class DispatchMode {
     AdaptiveDispatch,           //dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
     BatchedDispatchWithCounter, //dispatching is batched, after n commands there is implicit flush (not implemented)
     BatchedDispatch             // dispatching is batched, explicit clFlush is required
+};
+
+enum class WaitStatus {
+    NotReady = 0,
+    Ready = 1,
+    GpuHang = 2,
 };
 
 class CommandStreamReceiver {
@@ -158,9 +165,9 @@ class CommandStreamReceiver {
     void requestStallingCommandsOnNextFlush() { stallingCommandsOnNextFlushRequired = true; }
     bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
 
-    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
-    virtual bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
-    bool baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
+    virtual WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    WaitStatus baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
     bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait);
     virtual void downloadAllocations(){};
 
@@ -316,6 +323,7 @@ class CommandStreamReceiver {
     void printDeviceIndex();
     void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
+    bool isGpuHangDetected() const;
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
@@ -373,6 +381,7 @@ class CommandStreamReceiver {
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 
+    std::chrono::microseconds gpuHangCheckPeriod{500'000};
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = 0;
     uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;

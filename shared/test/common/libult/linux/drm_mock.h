@@ -17,6 +17,7 @@
 #include <fstream>
 #include <limits.h>
 #include <map>
+#include <vector>
 
 using namespace NEO;
 
@@ -145,11 +146,11 @@ class DrmMock : public Drm {
     int storedExecSoftPin = 0;
     int storedRetValForVmId = 1;
     int storedCsTimestampFrequency = 1000;
-
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
+    std::vector<drm_i915_reset_stats> resetStatsToReturn{};
 
     drm_i915_gem_context_create_ext_setparam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;

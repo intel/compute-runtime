@@ -88,7 +88,7 @@ struct KmdNotifyTests : public ::testing::Test {
         bool waitForFlushStampResult = true;
         StackVec<WaitForFlushStampParams, 1> waitForFlushStampParamsPassed{};
 
-        bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+        WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
             waitForCompletionWithTimeoutCalled++;
             waitForCompletionWithTimeoutParamsPassed.push_back({enableTimeout, timeoutMs, taskCountToWait});
             return waitForCompletionWithTimeoutResult;
@@ -101,7 +101,7 @@ struct KmdNotifyTests : public ::testing::Test {
         };
 
         uint32_t waitForCompletionWithTimeoutCalled = 0u;
-        bool waitForCompletionWithTimeoutResult = true;
+        WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
         StackVec<WaitForCompletionWithTimeoutParams, 2> waitForCompletionWithTimeoutParamsPassed{};
     };
 
@@ -127,7 +127,6 @@ struct KmdNotifyTests : public ::testing::Test {
 
 HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTryCpuPolling) {
     auto csr = createMockCsr<FamilyType>();
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
@@ -138,7 +137,6 @@ HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTr
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
     overrideKmdNotifyParams(false, 0, false, 0, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
-
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
     EXPECT_EQ(0u, csr->waitForFlushStampCalled);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
@@ -152,7 +150,8 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     *csr->getTagAddress() = taskCountToWait - 1;
 
     ::testing::InSequence is;
-    csr->waitForCompletionWithTimeoutResult = false;
+
+    csr->waitForCompletionWithTimeoutResult = WaitStatus::NotReady;
 
     //we have unrecoverable for this case, this will throw.
     EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false), std::exception);
@@ -220,7 +219,7 @@ HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSl
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait - 1;
     auto success = device->getUltCommandStreamReceiver<FamilyType>().waitForCompletionWithTimeout(true, 1, taskCountToWait);
-    EXPECT_FALSE(success);
+    EXPECT_NE(NEO::WaitStatus::Ready, success);
 }
 
 HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) {
@@ -263,6 +262,7 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOver
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenPowerSavingModeIsRequestedThenTimeoutIsEnabled) {
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
+
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, true);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);

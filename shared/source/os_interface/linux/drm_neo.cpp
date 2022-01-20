@@ -317,6 +317,28 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     return ret;
 }
 
+bool Drm::isGpuHangDetected(uint32_t contextId) {
+    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+    UNRECOVERABLE_IF(engines.size() <= contextId);
+
+    const auto osContextLinux = static_cast<OsContextLinux *>(engines[contextId].osContext);
+    const auto &drmContextIds = osContextLinux->getDrmContextIds();
+
+    for (const auto drmContextId : drmContextIds) {
+        drm_i915_reset_stats reset_stats{};
+        reset_stats.ctx_id = drmContextId;
+
+        const auto retVal{ioctl(DRM_IOCTL_I915_GET_RESET_STATS, &reset_stats)};
+        UNRECOVERABLE_IF(retVal != 0);
+
+        if (reset_stats.batch_active > 0 || reset_stats.batch_pending > 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void Drm::checkPreemptionSupport() {
     int value = 0;
     auto ret = getParamIoctl(I915_PARAM_HAS_SCHEDULER, &value);

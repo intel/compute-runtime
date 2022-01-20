@@ -15,6 +15,8 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -964,4 +966,154 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     DebugManager.flags.EnableDrmCompletionFence.set(0);
     DrmMock drmDisabled{*executionEnvironment->rootDeviceEnvironments[0]};
     EXPECT_FALSE(drmDisabled.completionFenceSupport());
+}
+
+TEST(DrmTest, GivenInvalidContextIdWhenIsGpuHangIsCalledThenErrorIsThrown) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+
+    CommandStreamReceiver *csr{nullptr};
+    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    EngineControlContainer engines{EngineControl{csr, &mockOsContextLinux}};
+
+    auto memoryManager = std::make_unique<MockMemoryManager>();
+    auto memoryManagerRaw = memoryManager.get();
+
+    memoryManagerRaw->registeredEngines = std::move(engines);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+
+    const auto invalidContextId = 1;
+    EXPECT_THROW(drm.isGpuHangDetected(invalidContextId), std::runtime_error);
+
+    memoryManagerRaw->registeredEngines.clear();
+}
+
+TEST(DrmTest, GivenIoctlErrorWhenIsGpuHangIsCalledThenErrorIsThrown) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+
+    CommandStreamReceiver *csr{nullptr};
+    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    EngineControlContainer engines{EngineControl{csr, &mockOsContextLinux}};
+
+    auto memoryManager = std::make_unique<MockMemoryManager>();
+    auto memoryManagerRaw = memoryManager.get();
+
+    memoryManagerRaw->registeredEngines = std::move(engines);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+
+    mockOsContextLinux.drmContextIds.push_back(0);
+    mockOsContextLinux.drmContextIds.push_back(3);
+
+    EXPECT_THROW(drm.isGpuHangDetected(0), std::runtime_error);
+
+    memoryManagerRaw->registeredEngines.clear();
+}
+
+TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCalledThenNoHangIsReported) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+
+    CommandStreamReceiver *csr{nullptr};
+    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    EngineControlContainer engines{EngineControl{csr, &mockOsContextLinux}};
+
+    auto memoryManager = std::make_unique<MockMemoryManager>();
+    auto memoryManagerRaw = memoryManager.get();
+
+    memoryManagerRaw->registeredEngines = std::move(engines);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+
+    drm_i915_reset_stats resetStats{};
+    resetStats.ctx_id = 0;
+    mockOsContextLinux.drmContextIds.push_back(0);
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    resetStats.ctx_id = 3;
+    mockOsContextLinux.drmContextIds.push_back(3);
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    bool isGpuHangDetected{};
+    EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(0));
+    EXPECT_FALSE(isGpuHangDetected);
+
+    memoryManagerRaw->registeredEngines.clear();
+}
+
+TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThenHangIsReported) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+
+    CommandStreamReceiver *csr{nullptr};
+    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    EngineControlContainer engines{EngineControl{csr, &mockOsContextLinux}};
+
+    auto memoryManager = std::make_unique<MockMemoryManager>();
+    auto memoryManagerRaw = memoryManager.get();
+
+    memoryManagerRaw->registeredEngines = std::move(engines);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+
+    drm_i915_reset_stats resetStats{};
+    resetStats.ctx_id = 0;
+    mockOsContextLinux.drmContextIds.push_back(0);
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    resetStats.ctx_id = 3;
+    resetStats.batch_active = 2;
+    mockOsContextLinux.drmContextIds.push_back(3);
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    bool isGpuHangDetected{};
+    EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(0));
+    EXPECT_TRUE(isGpuHangDetected);
+
+    memoryManagerRaw->registeredEngines.clear();
+}
+
+TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThenHangIsReported) {
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})};
+
+    CommandStreamReceiver *csr{nullptr};
+    MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
+    EngineControlContainer engines{EngineControl{csr, &mockOsContextLinux}};
+
+    auto memoryManager = std::make_unique<MockMemoryManager>();
+    auto memoryManagerRaw = memoryManager.get();
+
+    memoryManagerRaw->registeredEngines = std::move(engines);
+    executionEnvironment.memoryManager = std::move(memoryManager);
+
+    drm_i915_reset_stats resetStats{};
+    resetStats.ctx_id = 8;
+    resetStats.batch_pending = 7;
+    mockOsContextLinux.drmContextIds.push_back(8);
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    bool isGpuHangDetected{};
+    EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(0));
+    EXPECT_TRUE(isGpuHangDetected);
+
+    memoryManagerRaw->registeredEngines.clear();
 }

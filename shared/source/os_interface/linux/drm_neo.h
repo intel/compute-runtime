@@ -148,6 +148,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL void getPrelimVersion(std::string &prelimVersion);
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
+    bool isGpuHangDetected(uint32_t contextId) override;
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();

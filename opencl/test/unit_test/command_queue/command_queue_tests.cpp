@@ -942,8 +942,8 @@ class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
         : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     bool wiatForTaskCountCalled = false;
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override {
-        return;
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+        return WaitStatus::Ready;
     }
 
     void waitForTaskCount(uint32_t requiredTaskCount) override {

@@ -859,7 +859,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() 
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     int64_t waitTimeout = 0;
     bool enableTimeout = false;
 
@@ -870,12 +870,18 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
                        "\nWaiting for task count %u at location %p. Current value: %u\n",
                        taskCountToWait, getTagAddress(), *getTagAddress());
 
-    bool status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
-    if (!status) {
+    auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
+    if (status == WaitStatus::NotReady) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
         status = waitForCompletionWithTimeout(false, 0, taskCountToWait);
     }
+
+    // If GPU hang occured, then propagate it to the caller.
+    if (status == WaitStatus::GpuHang) {
+        return status;
+    }
+
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
 
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
@@ -884,6 +890,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 
     PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
                        "\nWaiting completed. Current value: %u\n", *getTagAddress());
+
+    return WaitStatus::Ready;
 }
 
 template <typename GfxFamily>

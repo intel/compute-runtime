@@ -1886,5 +1886,5 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
-    EXPECT_FALSE(mockCsr.waitForCompletionWithTimeout(false, 0, 1));
+    EXPECT_EQ(NEO::WaitStatus::NotReady, mockCsr.waitForCompletionWithTimeout(false, 0, 1));
 }

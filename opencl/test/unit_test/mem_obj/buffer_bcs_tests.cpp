@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,14 +35,16 @@ struct BcsBufferTests : public ::testing::Test {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+        WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                         bool useQuickKmdSleep, bool forcePowerSavingMode) override {
             EXPECT_EQ(this->latestFlushedTaskCount, taskCountToWait);
             EXPECT_EQ(0u, flushStampToWait);
             EXPECT_FALSE(useQuickKmdSleep);
             EXPECT_FALSE(forcePowerSavingMode);
             EXPECT_EQ(1u, this->activePartitions);
             waitForTaskCountWithKmdNotifyFallbackCalled++;
+
+            return WaitStatus::Ready;
         }
 
         void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {

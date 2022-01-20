@@ -121,8 +121,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         expectMemoryCompressedCalled = true;
         return AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryCompressed(gfxAddress, srcAddress, length);
     }
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
-        return true;
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+        return NEO::WaitStatus::Ready;
     }
     void addAubComment(const char *message) override {
         AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(message);

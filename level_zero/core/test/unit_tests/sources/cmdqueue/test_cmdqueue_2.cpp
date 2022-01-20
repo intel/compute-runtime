@@ -137,23 +137,22 @@ using MultiTileCommandQueueSynchronizeTest = Test<SingleRootMultiSubDeviceFixtur
 
 template <typename GfxFamily>
 struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
-
     SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
         CommandStreamReceiver::tagAddress = &tagAddressData[0];
         memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
         enableTimeoutSet = enableTimeout;
         waitForComplitionCalledTimes++;
         partitionCountSet = this->activePartitions;
-        return true;
+        return waitForCompletionWithTimeoutResult;
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
-        NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
+        return NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
     }
 
     static constexpr size_t tagSize = 128;
@@ -162,6 +161,7 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     uint32_t partitionCountSet = 0;
     bool enableTimeoutSet = false;
+    WaitStatus waitForCompletionWithTimeoutResult = WaitStatus::Ready;
 };
 
 template <typename GfxFamily>
@@ -196,6 +196,61 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
 
     EXPECT_EQ(2u, csr->waitForComplitionCalledTimes);
     EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_FALSE(csr->enableTimeoutSet);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenGpuHangWhenCallingSynchronizeThenErrorIsPropagated) {
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::GpuHang;
+
+    ze_command_queue_desc_t desc{};
+    ze_command_queue_handle_t commandQueue{};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto queue = whitebox_cast(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr.get();
+
+    constexpr auto timeout{std::numeric_limits<uint64_t>::max()};
+    const auto synchronizationResult{queue->synchronize(timeout)};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, synchronizationResult);
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_FALSE(csr->enableTimeoutSet);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledAndGpuHangWhenCallingSynchronizeThenErrorIsPropagated) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideUseKmdWaitFunction.set(1);
+
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+    csr->waitForCompletionWithTimeoutResult = NEO::WaitStatus::GpuHang;
+
+    ze_command_queue_desc_t desc{};
+    ze_command_queue_handle_t commandQueue{};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto queue = whitebox_cast(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr.get();
+
+    constexpr auto timeout{std::numeric_limits<uint64_t>::max()};
+    const auto synchronizationResult{queue->synchronize(timeout)};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, synchronizationResult);
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(1u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_FALSE(csr->enableTimeoutSet);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
@@ -349,7 +404,8 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
     TestCmdQueueCsr(const NEO::ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
-    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, bool, false, (bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+
+    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {

@@ -78,13 +78,13 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::setupContext(OsContext &osContex
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                                                      bool useQuickKmdSleep, bool forcePowerSavingMode) {
+WaitStatus CommandStreamReceiverWithAUBDump<BaseCSR>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                                                            bool useQuickKmdSleep, bool forcePowerSavingMode) {
     if (aubCSR) {
         aubCSR->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
     }
 
-    BaseCSR::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+    return BaseCSR::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
 }
 
 template <typename BaseCSR>

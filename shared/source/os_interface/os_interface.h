@@ -85,6 +85,10 @@ class DriverModel : public NonCopyableClass {
         return false;
     }
 
+    virtual bool isGpuHangDetected(uint32_t contextId) {
+        return false;
+    }
+
   protected:
     DriverModelType driverModelType;
 };
