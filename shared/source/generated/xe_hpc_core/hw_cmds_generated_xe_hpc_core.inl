@@ -5808,17 +5808,15 @@ typedef struct tagCFE_STATE {
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 7);
-            uint64_t Reserved_40 : BITFIELD_RANGE(8, 9);
+            uint64_t Reserved_32 : BITFIELD_RANGE(0, 9);
             uint64_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
             // DWORD 2
             uint64_t Reserved_64 : BITFIELD_RANGE(32, 63);
             // DWORD 3
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 2);
             uint32_t NumberOfWalkers : BITFIELD_RANGE(3, 5);
-            uint32_t FusedEuDispatch : BITFIELD_RANGE(6, 6);
-            uint32_t Reserved_103 : BITFIELD_RANGE(7, 9);
-            uint32_t LargeGRFThreadAdjustDisable : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_102 : BITFIELD_RANGE(6, 9);
+            uint32_t LargeGrfThreadAdjustDisable : BITFIELD_RANGE(10, 10);
             uint32_t ComputeOverdispatchDisable : BITFIELD_RANGE(11, 11);
             uint32_t ComputeDispatchAllWalkerEnable : BITFIELD_RANGE(12, 12);
             uint32_t SingleSliceDispatchCcsMode : BITFIELD_RANGE(13, 13);
@@ -5827,8 +5825,8 @@ typedef struct tagCFE_STATE {
             // DWORD 4
             uint32_t Reserved_128;
             // DWORD 5
-            uint32_t Reserved_160 : BITFIELD_RANGE(0, 0);
-            uint32_t Reserved_161 : BITFIELD_RANGE(1, 10);
+            uint32_t ResumeIndicatorDebugkey : BITFIELD_RANGE(0, 0);
+            uint32_t WalkerNumberDebugkey : BITFIELD_RANGE(1, 10);
             uint32_t Reserved_171 : BITFIELD_RANGE(11, 31);
         } Common;
         uint32_t RawData[6];
@@ -5899,30 +5897,23 @@ typedef struct tagCFE_STATE {
         SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
     } SCRATCHSPACEBUFFER;
     inline void setScratchSpaceBuffer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xfffffc00L);
         TheStructure.Common.ScratchSpaceBuffer = static_cast<uint32_t>(value) >> SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline uint64_t getScratchSpaceBuffer() const {
         return TheStructure.Common.ScratchSpaceBuffer << SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline void setNumberOfWalkers(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x38);
+        UNRECOVERABLE_IF((value - 1) > 0x7);
         TheStructure.Common.NumberOfWalkers = value - 1;
     }
     inline uint32_t getNumberOfWalkers() const {
         return TheStructure.Common.NumberOfWalkers + 1;
     }
-    inline void setFusedEuDispatch(const bool value) {
-        TheStructure.Common.FusedEuDispatch = value;
+    inline void setLargeGRFThreadAdjustDisable(const bool value) { // patched
+        TheStructure.Common.LargeGrfThreadAdjustDisable = value;
     }
-    inline bool getFusedEuDispatch() const {
-        return TheStructure.Common.FusedEuDispatch;
-    }
-    inline void setLargeGRFThreadAdjustDisable(const bool value) {
-        TheStructure.Common.LargeGRFThreadAdjustDisable = value;
-    }
-    inline bool getLargeGRFThreadAdjustDisable() const {
-        return TheStructure.Common.LargeGRFThreadAdjustDisable;
+    inline bool getLargeGRFThreadAdjustDisable() const { // patched
+        return TheStructure.Common.LargeGrfThreadAdjustDisable;
     }
     inline void setComputeOverdispatchDisable(const bool value) {
         TheStructure.Common.ComputeOverdispatchDisable = value;
@@ -5949,11 +5940,24 @@ typedef struct tagCFE_STATE {
         return static_cast<OVER_DISPATCH_CONTROL>(TheStructure.Common.OverDispatchControl);
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff0000);
+        UNRECOVERABLE_IF(value > 0xffff);
         TheStructure.Common.MaximumNumberOfThreads = value;
     }
     inline uint32_t getMaximumNumberOfThreads() const {
         return TheStructure.Common.MaximumNumberOfThreads;
+    }
+    inline void setResumeIndicatorDebugkey(const bool value) {
+        TheStructure.Common.ResumeIndicatorDebugkey = value;
+    }
+    inline bool getResumeIndicatorDebugkey() const {
+        return TheStructure.Common.ResumeIndicatorDebugkey;
+    }
+    inline void setWalkerNumberDebugkey(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3ff);
+        TheStructure.Common.WalkerNumberDebugkey = value;
+    }
+    inline uint32_t getWalkerNumberDebugkey() const {
+        return TheStructure.Common.WalkerNumberDebugkey;
     }
 } CFE_STATE;
 STATIC_ASSERT(24 == sizeof(CFE_STATE));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
-
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -50,20 +48,17 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenPvcAndKernelExecutionTypeAndRevisionWhe
 
 XE_HPC_CORETEST_F(PreambleCfeState, givenPvcXtTemporaryAndKernelExecutionTypeConcurrentAndRevisionBWhenCallingProgramVFEStateThenAllWalkerIsDisabled) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ForceDeviceId.set("0x0BE5");
 
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = 0x0BE5;
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::RenderCompute);
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setProperties(true, false, false, *hwInfo);
+    streamProperties.frontEndState.setProperties(true, false, false, hwInfo);
 
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *hwInfo, 0u, 0, 0, streamProperties);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), cfeStateIt);
@@ -102,7 +97,6 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenNotSetDebugFlagWhenPreambleCfeStateIsPr
     *cfeState = FamilyType::cmdInitCfeState;
 
     uint32_t numberOfWalkers = cfeState->getNumberOfWalkers();
-    uint32_t fusedEuDispach = cfeState->getFusedEuDispatch();
     uint32_t overDispatchControl = static_cast<uint32_t>(cfeState->getOverDispatchControl());
     uint32_t singleDispatchCcsMode = cfeState->getSingleSliceDispatchCcsMode();
 
@@ -114,7 +108,6 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenNotSetDebugFlagWhenPreambleCfeStateIsPr
     uint32_t maximumNumberOfThreads = cfeState->getMaximumNumberOfThreads();
 
     EXPECT_EQ(numberOfWalkers, cfeState->getNumberOfWalkers());
-    EXPECT_EQ(fusedEuDispach, cfeState->getFusedEuDispatch());
     EXPECT_NE(expectedMaxThreads, maximumNumberOfThreads);
     EXPECT_EQ(overDispatchControl, static_cast<uint32_t>(cfeState->getOverDispatchControl()));
     EXPECT_EQ(singleDispatchCcsMode, cfeState->getSingleSliceDispatchCcsMode());
