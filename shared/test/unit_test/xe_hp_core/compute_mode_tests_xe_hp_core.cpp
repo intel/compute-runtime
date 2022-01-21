@@ -1,28 +1,17 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/command_stream/compute_mode_tests.h"
-
-#include "test_traits_common.h"
+#include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 using namespace NEO;
 
-using IsDG2 = IsProduct<IGFX_DG2>;
-
-HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCorrectCommandsAreAdded, IsDG2) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCorrectCommandsAreAdded, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 
@@ -56,7 +45,6 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
@@ -66,14 +54,11 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectCommandsAreAdded, IsDG2) {
+HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectCommandsAreAdded, IsXEHP) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
     SetUpImpl<FamilyType>(&hwInfo);
-    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
-
-    getCsrHw<FamilyType>()->setupContext(ccsOsContext);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -103,7 +88,6 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControlCmd->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
@@ -113,7 +97,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsDG2) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 

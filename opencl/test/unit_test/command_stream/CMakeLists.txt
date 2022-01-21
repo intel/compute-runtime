@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,20 +28,12 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
 )
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_stream
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_flush_task_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xehp_and_later.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xehp_and_later.cpp
-  )
-endif()
-
-if(TESTS_DG2)
-  list(APPEND IGDRCL_SRCS_tests_command_stream
-       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_dg2.cpp
   )
 endif()
 
@@ -49,12 +41,6 @@ if(TESTS_DG2_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_command_stream
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_dg2_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_dg2_and_later.cpp
-  )
-endif()
-
-if(TESTS_PVC_AND_LATER)
-  list(APPEND IGDRCL_SRCS_tests_command_stream
-       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_pvc_and_later.cpp
   )
 endif()
 

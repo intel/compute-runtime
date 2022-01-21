@@ -18,7 +18,6 @@ if(TESTS_XE_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpg_core.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xe_hpg_core.cpp
   )
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ using namespace NEO;
 
 HWTEST_EXCLUDE_PRODUCT(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode, IGFX_PVC);
 HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterAubCommandStreamReceiverWithoutFixtureTests, GivenCopyHostPtrAndHostNoAccessAndReadOnlyFlagsWhenAllocatingBufferThenAllocationIsCopiedToEveryTile, IGFX_PVC);
-HWTEST_EXCLUDE_PRODUCT(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IGFX_PVC);
 
 using PvcCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetForPvcWhenFlushingThenRequestRequiredMode) {
