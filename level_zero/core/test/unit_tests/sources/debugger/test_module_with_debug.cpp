@@ -398,7 +398,9 @@ TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenModuleIsCreatedThenDeb
     EXPECT_FALSE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 }
 
-TEST_F(ModuleWithDebuggerL0Test, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreNotResidentAndNotCopied) {
+using KernelInitializeTest = Test<L0DebuggerHwFixture>;
+
+TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenAllocationsAreNotResidentAndNotCopied) {
     uint32_t kernelHeap = 0xDEAD;
     KernelInfo kernelInfo;
     kernelInfo.heapInfo.KernelHeapSize = 4;
@@ -541,9 +543,9 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializing
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
 }
 
-using ModuleTest = Test<ModuleFixture>;
+using NotifyModuleLoadTest = Test<ModuleFixture>;
 
-HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResident) {
+HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResident) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -584,7 +586,7 @@ HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenI
     }
 }
 
-HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsCreatedThenIsaAllocationsAreNotCopiedAndNotResident) {
+HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsCreatedThenIsaAllocationsAreNotCopiedAndNotResident) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -637,5 +639,81 @@ HWTEST_F(ModuleTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsCreat
     EXPECT_FALSE(module->isFullyLinked);
 }
 
+HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymbolsIsDynamicallyLinkedThenIsaAllocationsAreCopiedAndMadeResident) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+
+    auto memoryOperationsHandler = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<Module>(new Module(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+
+    constexpr uint64_t gpuAddress = 0x12345;
+    constexpr uint32_t offset = 0x20;
+
+    NEO::Linker::RelocationInfo unresolvedRelocation;
+    unresolvedRelocation.symbolName = "unresolved";
+    unresolvedRelocation.offset = offset;
+    unresolvedRelocation.type = NEO::Linker::RelocationInfo::Type::Address;
+    NEO::Linker::UnresolvedExternal unresolvedExternal;
+    unresolvedExternal.unresolvedRelocation = unresolvedRelocation;
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+    linkerInput->relocations.push_back({unresolvedRelocation});
+
+    module->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    module->unresolvedExternalsInfo[0].instructionsSegmentId = 0u;
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+    module->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_FALSE(ki->isIsaCopiedToAllocation());
+    }
+
+    NEO::SymbolInfo symbolInfo{};
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    auto module1 = std::make_unique<Module>(device, nullptr, ModuleType::User);
+
+    module1->symbols[unresolvedRelocation.symbolName] = relocatedSymbol;
+
+    std::vector<ze_module_handle_t> hModules = {module->toHandle(), module1->toHandle()};
+    ze_result_t res = module->performDynamicLink(2, hModules.data(), nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_TRUE(module->isFullyLinked);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_TRUE(ki->isIsaCopiedToAllocation());
+    }
+
+    EXPECT_EQ(4, memoryOperationsHandler->makeResidentCalledCount);
+}
 } // namespace ult
 } // namespace L0

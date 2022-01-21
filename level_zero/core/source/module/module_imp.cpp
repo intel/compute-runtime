@@ -718,6 +718,12 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
                                                                                         isaSegmentsForPatching[segmentId].segmentSize);
 
             kernelImmData->setIsaCopiedToAllocation();
+
+            if (device->getL0Debugger()) {
+                NEO::MemoryOperationsHandler *memoryOperationsIface = device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
+                auto allocation = kernelImmData->getIsaGraphicsAllocation();
+                memoryOperationsIface->makeResident(device->getNEODevice(), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
+            }
         }
     }
 }
