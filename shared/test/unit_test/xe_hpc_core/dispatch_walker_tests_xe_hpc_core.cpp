@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -69,12 +67,9 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenPvcWhenEncodeAdditionalWalk
 
 XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenPvcXtTemporaryWhenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    DebugManagerStateRestore debugRestorer;
-    DebugManager.flags.ForceDeviceId.set("0x0BE5");
 
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = 0x0BE5;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     {
