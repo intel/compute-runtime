@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -421,7 +421,7 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddr
 
     auto tileMode = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
     if (imageNV12->isTiledAllocation()) {
-        tileMode = RENDER_SURFACE_STATE::TILE_MODE_YMAJOR;
+        tileMode = static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(MockGmmResourceInfo::yMajorTileModeValue);
     }
 
     EXPECT_EQ(tileMode, surfaceState.getTileMode());

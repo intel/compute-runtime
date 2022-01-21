@@ -112,6 +112,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t cpuBltCalled = 0u;
     uint8_t cpuBltResult = 1u;
     static constexpr uint32_t getHAlignSurfaceStateResult = 2u;
+    static constexpr uint32_t yMajorTileModeValue = 3u;
 
   protected:
     MockGmmResourceInfo();

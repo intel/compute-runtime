@@ -2331,7 +2331,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplici
 
 using MultiTileModuleTest = Test<MultiTileModuleFixture>;
 
-HWTEST2_F(MultiTileModuleTest, GivenMultiTileDeviceWhenSettingKernelArgAndSurfaceStateThenMultiTileFlagsAreSetCorrectly, isXeHpOrXeHpcCore) {
+HWTEST2_F(MultiTileModuleTest, GivenMultiTileDeviceWhenSettingKernelArgAndSurfaceStateThenMultiTileFlagsAreSetCorrectly, IsXeHpCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();

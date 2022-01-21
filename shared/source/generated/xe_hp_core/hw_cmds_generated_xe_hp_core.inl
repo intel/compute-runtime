@@ -1344,7 +1344,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TILE_MODE_LINEAR = 0x0,
         TILE_MODE_TILE64 = 0x1,
         TILE_MODE_XMAJOR = 0x2,
-        TILE_MODE_YMAJOR = 0x3, // patched - old name for TILE_MODE_TILE4
+        TILE_MODE_TILE4 = 0x3,
     } TILE_MODE;
     typedef enum tagSURFACE_HORIZONTAL_ALIGNMENT {
         SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_16 = 0x0,

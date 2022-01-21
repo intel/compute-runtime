@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,7 @@ uint32_t MockGmmResourceInfo::getTileModeSurfaceState() {
 
     if (mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_2D ||
         mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_3D) {
-        return 3;
+        return yMajorTileModeValue;
     } else {
         return 0;
     }

@@ -265,6 +265,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
 
     ClSurfaceFormatInfo surfaceFormatInfo{};
     surfaceFormatInfo.surfaceFormat.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    surfaceFormatInfo.surfaceFormat.ImageElementSizeInBytes = 4u;
     imageInfo.surfaceFormat = &surfaceFormatInfo.surfaceFormat;
     cl_image_desc imageDesc = Image2dDefaults::imageDesc;
     imageDesc.image_array_size = 3u;

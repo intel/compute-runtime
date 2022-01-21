@@ -1217,9 +1217,9 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t Reserved_252 : BITFIELD_RANGE(28, 29);
             uint32_t MemoryCompressionEnable : BITFIELD_RANGE(30, 30);
             uint32_t MemoryCompressionType : BITFIELD_RANGE(31, 31);
-            // DWORD 8
+            // DWORD 8, 9
             uint64_t SurfaceBaseAddress;
-            // DWORD 10
+            // DWORD 10, 11
             uint64_t QuiltWidth : BITFIELD_RANGE(0, 4);
             uint64_t QuiltHeight : BITFIELD_RANGE(5, 9);
             uint64_t ClearValueAddressEnable : BITFIELD_RANGE(10, 10);
@@ -1259,16 +1259,15 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t SeparateUvPlaneEnable : BITFIELD_RANGE(31, 31);
             // DWORD 7
             uint32_t Reserved_224;
-            // DWORD 8
+            // DWORD 8, 9
             uint64_t Reserved_256;
             // DWORD 10
-            uint64_t Reserved_320 : BITFIELD_RANGE(0, 11);
-            uint64_t Reserved_332 : 20; /* WARNING: Uncontinuous fields, bit position gap. Patched with dummy field */
+            uint64_t Reserved_320 : BITFIELD_RANGE(0, 31);
             // DWORD 11
             uint64_t YOffsetForVPlane : BITFIELD_RANGE(32, 45);
-            uint64_t Reserved_366 : 2; /* WARNING: Uncontinuous fields, bit position gap. Patched with dummy field */
+            uint64_t Reserved_366 : BITFIELD_RANGE(46, 47);
             uint64_t XOffsetForVPlane : BITFIELD_RANGE(48, 61);
-            uint64_t Reserved_382 : 2; /* WARNING: Uncontinuous fields, bit position gap. Patched with dummy field */
+            uint64_t Reserved_382 : BITFIELD_RANGE(62, 63);
             // DWORD 12
             uint32_t Reserved_384;
             // DWORD 13
@@ -1294,15 +1293,14 @@ typedef struct tagRENDER_SURFACE_STATE {
             // DWORD 6
             uint32_t AuxiliarySurfaceMode : BITFIELD_RANGE(0, 2);
             uint32_t AuxiliarySurfacePitch : BITFIELD_RANGE(3, 12);
-            uint32_t Reserved_205 : 1; /* WARNING: Uncontinuous fields, bit position gap. Patched with dummy field */
-            uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
+            uint32_t Reserved_205 : BITFIELD_RANGE(13, 15);
             uint32_t AuxiliarySurfaceQpitch : BITFIELD_RANGE(16, 30);
             uint32_t Reserved_223 : BITFIELD_RANGE(31, 31);
             // DWORD 7
             uint32_t Reserved_224;
-            // DWORD 8
+            // DWORD 8, 9
             uint64_t Reserved_256;
-            // DWORD 10
+            // DWORD 10, 11
             uint64_t Reserved_320;
             // DWORD 12
             uint32_t Reserved_384;
@@ -1330,9 +1328,9 @@ typedef struct tagRENDER_SURFACE_STATE {
             uint32_t Reserved_192;
             // DWORD 7
             uint32_t Reserved_224;
-            // DWORD 8
+            // DWORD 8, 9
             uint64_t Reserved_256;
-            // DWORD 10
+            // DWORD 10, 11
             uint64_t Reserved_320 : BITFIELD_RANGE(0, 11);
             uint64_t AuxiliarySurfaceBaseAddress : BITFIELD_RANGE(12, 63);
             // DWORD 12
@@ -1360,7 +1358,6 @@ typedef struct tagRENDER_SURFACE_STATE {
         TILE_MODE_TILE64 = 0x1,
         TILE_MODE_XMAJOR = 0x2,
         TILE_MODE_TILE4 = 0x3,
-        TILE_MODE_YMAJOR = 0x3, // patched - old name for TILE_MODE_TILE4
     } TILE_MODE;
     typedef enum tagSURFACE_HORIZONTAL_ALIGNMENT {
         SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_16 = 0x0,
