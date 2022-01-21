@@ -111,7 +111,7 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) cons
 
 template <>
 inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
-    return false;
+    return true;
 }
 
 template class HwHelperHw<Family>;

@@ -75,7 +75,7 @@ class IoctlHelper {
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual int32_t getComputeEngineClass() = 0;
     virtual int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
-    virtual bool completionFenceExtensionSupported(const HardwareInfo &hwInfo) = 0;
+    virtual bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -98,7 +98,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
-    bool completionFenceExtensionSupported(const HardwareInfo &hwInfo) override;
+    bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -132,7 +132,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
-    bool completionFenceExtensionSupported(const HardwareInfo &hwInfo) override;
+    bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
 };
 
 } // namespace NEO

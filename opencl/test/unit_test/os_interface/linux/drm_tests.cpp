@@ -941,6 +941,7 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
 
 TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrectSetting) {
     DebugManagerStateRestore restore;
+    DebugManager.flags.UseVmBind.set(1);
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -950,7 +951,7 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
 
     DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
-    if (hwHelper.isLinuxCompletionFenceSupported()) {
+    if (hwHelper.isLinuxCompletionFenceSupported() && drmDefault.isVmBindAvailable()) {
         EXPECT_TRUE(drmDefault.completionFenceSupport());
     } else {
         EXPECT_FALSE(drmDefault.completionFenceSupport());
