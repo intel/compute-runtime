@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,6 +93,26 @@ TEST_P(ValidateRegionAndOriginTests, givenAnyZeroRegionParamWhenEnqueueCalledThe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_P(ValidateRegionAndOriginTests, givenMaxImage2DFirstAndSecondRegionCoordinateAndAnyNonZeroFirstOrSecondOriginCoordinateWhenEnqueueCalledThenReturnError) {
+    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(context.get()));
+    EXPECT_NE(nullptr, image.get());
+
+    const auto &deviceInfo = context->getDevice(0)->getDevice().getDeviceInfo();
+    size_t region[3] = {deviceInfo.image2DMaxWidth, deviceInfo.image2DMaxHeight, 1};
+
+    std::array<size_t, 3> origin = {{0, 1, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    origin = {{1, 0, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    origin = {{1, 1, 0}};
+    GetParam()(cmdQ.get(), image.get(), &origin[0], region, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 TEST_P(ValidateRegionAndOriginTests, givenSecondOriginCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
     size_t region[3] = {1, 1, 1};
     size_t origin[3] = {0, 1, 0};
@@ -146,7 +166,7 @@ TEST_P(ValidateRegionAndOriginTests, givenSecondRegionCoordinateAndNotAllowedImg
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_P(ValidateRegionAndOriginTests, givenThirdRegionnCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
+TEST_P(ValidateRegionAndOriginTests, givenThirdRegionCoordinateAndNotAllowedImgTypeWhenEnqueueCalledThenReturnError) {
     size_t region[3] = {1, 1, 2};
     size_t origin[3] = {0, 0, 0};
 

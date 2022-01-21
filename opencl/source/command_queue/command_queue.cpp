@@ -828,7 +828,6 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
         blitEnqueueImageAllowed = DebugManager.flags.EnableBlitterForEnqueueImageOperations.get();
     }
 
-    blitEnqueueImageAllowed &= (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
     blitEnqueueImageAllowed &= !isMipMapped(image.getImageDesc());
 
     const auto &defaultGmm = image.getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm();

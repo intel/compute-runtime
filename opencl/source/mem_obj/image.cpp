@@ -1433,6 +1433,23 @@ cl_int Image::validateRegionAndOrigin(const size_t *origin, const size_t *region
         return CL_INVALID_VALUE;
     }
 
+    if (origin[0] + region[0] > imgDesc.image_width) {
+        return CL_INVALID_VALUE;
+    }
+
+    if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
+        imgDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
+        if (origin[1] + region[1] > imgDesc.image_height) {
+            return CL_INVALID_VALUE;
+        }
+    }
+
+    if (imgDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
+        if (origin[2] + region[2] > imgDesc.image_depth) {
+            return CL_INVALID_VALUE;
+        }
+    }
+
     bool notMipMapped = (false == isMipMapped(imgDesc));
 
     if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&

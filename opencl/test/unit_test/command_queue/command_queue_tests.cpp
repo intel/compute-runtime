@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1349,6 +1349,15 @@ TEST(CommandQueue, givenImageTransferClCommandWhenCallingBlitEnqueueAllowedThenR
         CsrSelectionArgs args{CL_COMMAND_COPY_IMAGE, &image, &image, 0u, region, origin, origin};
         EXPECT_TRUE(queue.blitEnqueueAllowed(args));
     }
+    {
+        MockImageBase dstImage{};
+        dstImage.imageDesc.num_mip_levels = 2;
+        auto dstAlloc = static_cast<MockGraphicsAllocation *>(dstImage.getGraphicsAllocation(0));
+        dstAlloc->memoryPool = MemoryPool::System4KBPages;
+
+        CsrSelectionArgs args{CL_COMMAND_COPY_IMAGE, &image, &dstImage, 0u, region, origin, origin};
+        EXPECT_FALSE(queue.blitEnqueueAllowed(args));
+    }
 }
 
 TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
@@ -1642,33 +1651,6 @@ TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelect
         dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &queue->selectCsrForBuiltinOperation(args));
-    }
-}
-
-TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
-    MockContext context{};
-    MockCommandQueue queue(&context, context.getDevice(0), 0, false);
-    MockImageBase image;
-    image.imageDesc.num_mip_levels = 1;
-
-    auto maxBlitWidth = static_cast<size_t>(BlitterConstants::maxBlitWidth);
-    auto maxBlitHeight = static_cast<size_t>(BlitterConstants::maxBlitHeight);
-
-    std::tuple<size_t, size_t, size_t, size_t, bool> testParams[]{
-        {1, 1, 0, 0, true},
-        {maxBlitWidth, maxBlitHeight, 0, 0, true},
-        {maxBlitWidth + 1, maxBlitHeight, 0, 0, false},
-        {maxBlitWidth, maxBlitHeight + 1, 0, 0, false},
-        {maxBlitWidth, maxBlitHeight, 1, 0, false},
-        {maxBlitWidth, maxBlitHeight, 0, 1, false},
-        {maxBlitWidth - 1, maxBlitHeight - 1, 1, 1, true}};
-
-    for (auto &[regionX, regionY, originX, originY, expectedResult] : testParams) {
-        size_t region[3] = {regionX, regionY, 0};
-        size_t origin[3] = {originX, originY, 0};
-        EXPECT_EQ(expectedResult, queue.blitEnqueueImageAllowed(origin, region, image));
     }
 }
 

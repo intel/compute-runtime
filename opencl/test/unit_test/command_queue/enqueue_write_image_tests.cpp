@@ -209,44 +209,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaVfeS
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWTEST_F(EnqueueWriteImageTest, givenDeviceWithBlitterSupportWhenEnqueueWriteImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.OverrideInvalidEngineWithDefault.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
-
-    auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
-    size_t origin[] = {0, 0, 0};
-    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context));
-    {
-        size_t region[] = {BlitterConstants::maxBlitWidth + 1, BlitterConstants::maxBlitHeight, 1};
-        EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        EXPECT_EQ(hwInfoConfig->isBlitterFullySupported(*hwInfo), mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
-        EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(0);
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueWriteImageHelper<>::enqueueWriteImage(mockCmdQ.get(), image.get(), CL_FALSE, origin, region);
-        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-}
-
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenHostPtrSizeIsCalculatedProperly) {
     std::unique_ptr<Image> dstImage2(Image1dArrayHelper<>::create(context));
     auto &imageDesc = dstImage2->getImageDesc();

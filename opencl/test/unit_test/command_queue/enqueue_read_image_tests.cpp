@@ -866,43 +866,6 @@ struct EnqueueReadImageTestWithBcs : EnqueueReadImageTest {
     }
 };
 
-HWTEST_F(EnqueueReadImageTestWithBcs, givenDeviceWithBlitterSupportWhenEnqueueReadImageThenBlitEnqueueImageAllowedReturnsCorrectResult) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
-
-    auto hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(hwInfo);
-    size_t origin[] = {0, 0, 0};
-    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    std::unique_ptr<Image> image(Image2dHelper<>::create(context));
-    {
-        size_t region[] = {BlitterConstants::maxBlitWidth + 1, BlitterConstants::maxBlitHeight, 1};
-        EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        EXPECT_TRUE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(-1);
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        auto supportExpected = hwInfoConfig->isBlitterForImagesSupported();
-        EXPECT_EQ(supportExpected, mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-    {
-        DebugManager.flags.EnableBlitterForEnqueueImageOperations.set(0);
-        size_t region[] = {BlitterConstants::maxBlitWidth, BlitterConstants::maxBlitHeight, 1};
-        EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), image.get(), CL_TRUE, origin, region);
-        EXPECT_FALSE(mockCmdQ->isBlitEnqueueImageAllowed);
-    }
-}
-
 HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageIsCalledThenItCallsNotifyFunction) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
