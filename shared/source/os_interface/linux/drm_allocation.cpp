@@ -194,7 +194,7 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
         setCachePolicy(memType);
     }
 
-    auto ioctlHelper = IoctlHelper::get(drm);
+    auto ioctlHelper = drm->getIoctlHelper();
     if (flags.non_atomic != enabledMemAdviseFlags.non_atomic) {
         for (auto bo : bufferObjects) {
             if (bo != nullptr) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
-#include <map>
-#include <memory>
 #include <string>
 
 namespace NEO {
@@ -22,17 +20,17 @@ std::map<std::string, std::shared_ptr<IoctlHelper>> ioctlHelperImpls{
     {"", std::make_shared<IoctlHelperUpstream>()},
     {"2.0", std::make_shared<IoctlHelperPrelim20>()}};
 
-IoctlHelper *IoctlHelper::get(Drm *drm) {
-    auto product = drm->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily;
+IoctlHelper *IoctlHelper::get(const HardwareInfo *hwInfo, const std::string &prelimVersion) {
+    auto product = hwInfo->platform.eProductFamily;
 
     auto productSpecificIoctlHelper = ioctlHelperFactory[product];
     if (productSpecificIoctlHelper) {
-        return productSpecificIoctlHelper;
+        return productSpecificIoctlHelper->clone();
     }
-
-    std::string prelimVersion = "";
-    drm->getPrelimVersion(prelimVersion);
-    return ioctlHelperImpls[prelimVersion].get();
+    if (ioctlHelperImpls.find(prelimVersion) != ioctlHelperImpls.end()) {
+        return ioctlHelperImpls[prelimVersion]->clone();
+    }
+    return new IoctlHelperPrelim20{}; //fallback to 2.0 if no proper implementation has been found
 }
 
 } // namespace NEO

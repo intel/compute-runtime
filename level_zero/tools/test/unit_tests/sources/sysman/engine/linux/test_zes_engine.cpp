@@ -50,6 +50,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
 
         EngineHandleContext *pEngineHandleContext = pSysmanDeviceImp->pEngineHandleContext;
         pDrm = std::make_unique<NiceMock<Mock<EngineNeoDrm>>>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm->setupIoctlHelper();
         pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImp>>>(pLinuxSysmanImp);
         pOriginalDrm = pLinuxSysmanImp->pDrm;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;

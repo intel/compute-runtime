@@ -202,6 +202,7 @@ DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     createVirtualMemoryAddressSpace(NEO::HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     isVmBindAvailable();
+    setupIoctlHelper();
     reset();
 }
 

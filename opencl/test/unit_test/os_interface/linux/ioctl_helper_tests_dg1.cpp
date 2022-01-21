@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
@@ -44,7 +44,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     testing::internal::CaptureStdout();
-    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
@@ -65,7 +65,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     testing::internal::CaptureStdout();
-    auto ioctlHelper = IoctlHelper::get(drm.get());
+    auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);

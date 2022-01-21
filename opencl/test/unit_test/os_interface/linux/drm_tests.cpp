@@ -719,7 +719,7 @@ TEST(DrmTest, whenImmediateVmBindExtIsEnabledThenUseVmBindImmediate) {
     }
 }
 
-TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreserved) {
+TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreservedAndIoctlHelperSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
@@ -737,7 +737,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.setupHardwareInfo(&device, false);
-
+    EXPECT_NE(nullptr, drm.getIoctlHelper());
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSlicesSupported, hwInfo->gtSystemInfo.MaxSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSubSlicesSupported, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
@@ -941,6 +941,11 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
     EXPECT_TRUE(prelimVersion.empty());
 }
 
+TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
+    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(defaultHwInfo.get(), "-1"));
+    EXPECT_NE(nullptr, ioctlHelper.get());
+}
+
 TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrectSetting) {
     DebugManagerStateRestore restore;
     DebugManager.flags.UseVmBind.set(1);
@@ -1116,4 +1121,15 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     EXPECT_TRUE(isGpuHangDetected);
 
     memoryManagerRaw->registeredEngines.clear();
+}
+
+TEST(DrmTest, givenSetupIoctlHelperThenIoctlHelperNotNull) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper.reset(nullptr);
+    drm.setupIoctlHelper();
+
+    EXPECT_NE(nullptr, drm.ioctlHelper.get());
 }

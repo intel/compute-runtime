@@ -151,7 +151,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
-    auto *ioctlHelper = IoctlHelper::get(drm);
+    auto ioctlHelper = drm->getIoctlHelper();
     int ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {

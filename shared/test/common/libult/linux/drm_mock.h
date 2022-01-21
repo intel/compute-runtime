@@ -35,12 +35,14 @@ class DrmMock : public Drm {
     using Drm::generateElfUUID;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
+    using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::nonPersistentContextsSupported;
     using Drm::pageFaultSupported;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::requirePerContextVM;
+    using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
     using Drm::translateTopologyInfo;
@@ -56,6 +58,7 @@ class DrmMock : public Drm {
         if (!isPerContextVMRequired()) {
             createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
         }
+        setupIoctlHelper();
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
 

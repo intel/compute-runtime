@@ -79,7 +79,7 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
 
     auto hwInfo = *defaultHwInfo.get();
     std::vector<EngineCapabilities> engines(2);
-    uint16_t ccsClass = IoctlHelper::get(drm.get())->getComputeEngineClass();
+    uint16_t ccsClass = drm->getIoctlHelper()->getComputeEngineClass();
     engines[0].engine = {ccsClass, 0};
     engines[0].capabilities = 0;
     engines[1].engine = {I915_ENGINE_CLASS_COPY, 0};

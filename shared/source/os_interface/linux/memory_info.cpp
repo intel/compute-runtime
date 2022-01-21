@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
 }
 
 uint32_t MemoryInfo::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
-    return IoctlHelper::get(drm)->createGemExt(drm, memClassInstances, allocSize, handle);
+    return drm->getIoctlHelper()->createGemExt(drm, memClassInstances, allocSize, handle);
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {

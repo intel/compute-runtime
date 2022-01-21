@@ -505,6 +505,8 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
+    rootDeviceEnvironment.setHwInfo(hwInfo);
+    setupIoctlHelper();
 
     status = querySystemInfo();
     if (status) {
@@ -935,11 +937,11 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
 }
 
 int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
-    return IoctlHelper::get(this)->waitUserFence(this, ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
+    return ioctlHelper->waitUserFence(this, ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
 }
 
 bool Drm::querySystemInfo() {
-    auto request = IoctlHelper::get(this)->getHwConfigIoctlVal();
+    auto request = ioctlHelper->getHwConfigIoctlVal();
     auto deviceBlobQuery = this->query(request, DrmQueryItemFlags::empty);
     if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
@@ -954,18 +956,18 @@ void Drm::appendDrmContextFlags(drm_i915_gem_context_create_ext &gcc, bool isDir
         isDirectSubmissionRequested = DebugManager.flags.DirectSubmissionDrmContext.get();
     }
     if (isDirectSubmissionRequested) {
-        gcc.flags |= IoctlHelper::get(this)->getDirectSubmissionFlag();
+        gcc.flags |= ioctlHelper->getDirectSubmissionFlag();
     }
 }
 
 std::vector<uint8_t> Drm::getMemoryRegions() {
-    return this->query(IoctlHelper::get(this)->getMemRegionsIoctlVal(), DrmQueryItemFlags::empty);
+    return this->query(ioctlHelper->getMemRegionsIoctlVal(), DrmQueryItemFlags::empty);
 }
 
 bool Drm::queryMemoryInfo() {
     auto dataQuery = getMemoryRegions();
     if (!dataQuery.empty()) {
-        auto memRegions = IoctlHelper::get(this)->translateToMemoryRegions(dataQuery);
+        auto memRegions = ioctlHelper->translateToMemoryRegions(dataQuery);
         this->memoryInfo.reset(new MemoryInfo(memRegions));
         return true;
     }
@@ -973,7 +975,6 @@ bool Drm::queryMemoryInfo() {
 }
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto ioctlHelper = IoctlHelper::get(this);
     auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), DrmQueryItemFlags::empty);
     if (enginesQuery.empty()) {
         return false;
@@ -1055,7 +1056,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
 
 bool Drm::completionFenceSupport() {
     std::call_once(checkCompletionFenceOnce, [this]() {
-        bool support = IoctlHelper::get(this)->completionFenceExtensionSupported(*this, *getRootDeviceEnvironment().getHardwareInfo());
+        bool support = ioctlHelper->completionFenceExtensionSupported(*this, *getRootDeviceEnvironment().getHardwareInfo());
         int32_t overrideCompletionFence = DebugManager.flags.EnableDrmCompletionFence.get();
         if (overrideCompletionFence != -1) {
             support = !!overrideCompletionFence;
@@ -1064,6 +1065,13 @@ bool Drm::completionFenceSupport() {
         completionFenceSupported = support;
     });
     return completionFenceSupported;
+}
+
+void Drm::setupIoctlHelper() {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    std::string prelimVersion = "";
+    getPrelimVersion(prelimVersion);
+    this->ioctlHelper.reset(IoctlHelper::get(hwInfo, prelimVersion));
 }
 
 } // namespace NEO

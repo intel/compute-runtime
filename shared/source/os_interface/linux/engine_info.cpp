@@ -12,6 +12,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include <array>
 
@@ -41,7 +42,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineC
                              bcsInfoMask, numHostLinkCopyEngines, numScaleUpLinkCopyEngines);
             break;
         default:
-            if (engine.engineClass == IoctlHelper::get(drm)->getComputeEngineClass()) {
+            if (engine.engineClass == drm->getIoctlHelper()->getComputeEngineClass()) {
                 tileToEngineToInstanceMap[0][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEngines)] = engine;
                 computeEngines++;
             }
@@ -76,7 +77,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const
             copyEnginesPerTile++;
             break;
         default:
-            if (engine.engineClass == IoctlHelper::get(drm)->getComputeEngineClass()) {
+            if (engine.engineClass == drm->getIoctlHelper()->getComputeEngineClass()) {
                 tileToEngineToInstanceMap[tile][static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + computeEnginesPerTile)] = engine;
                 computeEnginesPerTile++;
             }

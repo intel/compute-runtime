@@ -201,6 +201,10 @@ class Drm : public DriverModel {
         return engineInfo.get();
     }
 
+    IoctlHelper *getIoctlHelper() const {
+        return ioctlHelper.get();
+    }
+
     RootDeviceEnvironment &getRootDeviceEnvironment() {
         return rootDeviceEnvironment;
     }
@@ -263,6 +267,7 @@ class Drm : public DriverModel {
     std::string getSysFsPciPath();
     std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
     void printIoctlStatistics();
+    void setupIoctlHelper();
 
 #pragma pack(1)
     struct PCIConfig {
@@ -312,6 +317,7 @@ class Drm : public DriverModel {
     std::vector<uint32_t> virtualMemoryIds;
 
     std::unique_ptr<HwDeviceIdDrm> hwDeviceId;
+    std::unique_ptr<IoctlHelper> ioctlHelper;
     std::unique_ptr<SystemInfo> systemInfo;
     std::unique_ptr<CacheInfo> cacheInfo;
     std::unique_ptr<EngineInfo> engineInfo;

@@ -32,6 +32,7 @@ struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
 class EngineNeoDrm : public Drm {
   public:
     using Drm::getEngineInfo;
+    using Drm::setupIoctlHelper;
     const int mockFd = 0;
     EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 };

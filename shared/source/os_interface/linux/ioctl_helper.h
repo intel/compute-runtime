@@ -54,8 +54,9 @@ struct DistanceInfo {
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
-    static IoctlHelper *get(Drm *drm);
+    static IoctlHelper *get(const HardwareInfo *hwInfo, const std::string &prelimVersion);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
+    virtual IoctlHelper *clone() = 0;
 
     virtual uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) = 0;
@@ -80,6 +81,8 @@ class IoctlHelper {
 
 class IoctlHelperUpstream : public IoctlHelper {
   public:
+    IoctlHelper *clone() override;
+
     uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
@@ -108,12 +111,16 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         static IoctlHelperImpl<gfxProduct> instance;
         return &instance;
     }
+    IoctlHelper *clone() override;
+
     uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
+    IoctlHelper *clone() override;
+
     uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;

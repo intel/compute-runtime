@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class DrmTipMock : public DrmMock {
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmTipMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        setupIoctlHelper();
     }
 
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
