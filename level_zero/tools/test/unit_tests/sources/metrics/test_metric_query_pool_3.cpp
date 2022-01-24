@@ -557,7 +557,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenFailedMetricsLibraryContextWhenZetMe
 }
 
 TEST_F(MultiDeviceMetricQueryPoolTest, givenExecutionQueryTypeWhenZetMetricQueryPoolCreateIsCalledThenQueryPoolIsObtained) {
-
     zet_device_handle_t metricDevice = devices[0]->toHandle();
 
     zet_metric_query_pool_handle_t poolHandle = {};

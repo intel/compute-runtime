@@ -236,7 +236,9 @@ ze_result_t MetricDeviceContext::activateMetricGroupsDeferred(uint32_t count, ze
     for (auto index = 0u; index < count; index++) {
 
         zet_metric_group_handle_t hMetricGroup = MetricGroup::fromHandle(phMetricGroups[index])->getMetricGroupForSubDevice(subDeviceIndex);
-        auto domain = MetricGroup::getProperties(hMetricGroup).domain;
+        zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
+        MetricGroup::fromHandle(hMetricGroup)->getProperties(&properties);
+        auto domain = properties.domain;
         // Domain already associated with the same handle.
         if (domains[domain].first == hMetricGroup) {
             continue;
@@ -370,8 +372,7 @@ ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_me
 ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer) {
-
-    return MetricStreamer::open(hContext, hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricStreamer);
+    return MetricGroup::fromHandle(hMetricGroup)->streamerOpen(hContext, hDevice, pDesc, hNotificationEvent, phMetricStreamer);
 }
 
 template <>

@@ -77,7 +77,7 @@ struct OaMetricGroupImp : MetricGroup {
     ~OaMetricGroupImp() override;
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
-    ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
+    ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize, const uint8_t *pRawData,
                                       uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pCalculatedData) override;
@@ -91,8 +91,6 @@ struct OaMetricGroupImp : MetricGroup {
                            const std::vector<Metric *> &groupMetrics,
                            OaMetricSourceImp &metricSource);
 
-    uint32_t getRawReportSize() override;
-
     bool activate() override;
     bool deactivate() override;
 
@@ -103,12 +101,31 @@ struct OaMetricGroupImp : MetricGroup {
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override;
 
     // Time based measurements.
-    ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) override;
-    ze_result_t waitForReports(const uint32_t timeoutMs) override;
-    ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData) override;
-    ze_result_t closeIoStream() override;
+    ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize);
+    ze_result_t waitForReports(const uint32_t timeoutMs);
+    ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData);
+    ze_result_t closeIoStream();
 
     std::vector<zet_metric_group_handle_t> &getMetricGroups();
+    ze_result_t streamerOpen(
+        zet_context_handle_t hContext,
+        zet_device_handle_t hDevice,
+        zet_metric_streamer_desc_t *desc,
+        ze_event_handle_t hNotificationEvent,
+        zet_metric_streamer_handle_t *phMetricStreamer) override;
+
+    ze_result_t metricQueryPoolCreate(
+        zet_context_handle_t hContext,
+        zet_device_handle_t hDevice,
+        const zet_metric_query_pool_desc_t *desc,
+        zet_metric_query_pool_handle_t *phMetricQueryPool) override;
+    static MetricGroup *create(zet_metric_group_properties_t &properties,
+                               MetricsDiscovery::IMetricSet_1_5 &metricSet,
+                               MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
+                               const std::vector<Metric *> &metrics,
+                               MetricSource &metricSource);
+    static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
+    uint32_t getRawReportSize();
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -134,6 +151,10 @@ struct OaMetricGroupImp : MetricGroup {
     std::vector<zet_metric_group_handle_t> metricGroups;
 
     OaMetricSourceImp *metricSource;
+
+  private:
+    ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
+                              zet_metric_streamer_handle_t *phMetricStreamer);
 };
 
 struct OaMetricImp : Metric {

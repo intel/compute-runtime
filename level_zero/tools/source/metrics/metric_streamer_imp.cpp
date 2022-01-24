@@ -67,7 +67,7 @@ ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawD
     } else {
 
         DEBUG_BREAK_IF(rawReportSize == 0);
-        auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
+        auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
 
         // Return required size if requested.
         if (*pRawDataSize == 0) {
@@ -141,7 +141,7 @@ ze_result_t OaMetricStreamerImp::initialize(ze_device_handle_t hDevice,
     this->hDevice = hDevice;
     this->hMetricGroup = hMetricGroup;
 
-    auto metricGroup = MetricGroup::fromHandle(this->hMetricGroup);
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(this->hMetricGroup));
     rawReportSize = metricGroup->getRawReportSize();
 
     return ZE_RESULT_SUCCESS;
@@ -149,7 +149,7 @@ ze_result_t OaMetricStreamerImp::initialize(ze_device_handle_t hDevice,
 
 ze_result_t OaMetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
                                                    uint32_t &samplingPeriodNs) {
-    auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
     uint32_t requestedOaBufferSize = getOaBufferSize(notifyEveryNReports);
 
     const ze_result_t result = metricGroup->openIoStream(samplingPeriodNs, requestedOaBufferSize);
@@ -179,7 +179,7 @@ void OaMetricStreamerImp::detachEvent() {
 }
 
 ze_result_t OaMetricStreamerImp::stopMeasurements() {
-    auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
 
     const ze_result_t result = metricGroup->closeIoStream();
     if (result == ZE_RESULT_SUCCESS) {
@@ -213,7 +213,7 @@ Event::State OaMetricStreamerImp::getNotificationState() {
         return Event::State::STATE_INITIAL;
     }
 
-    auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
+    auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
     bool reportsReady = metricGroup->waitForReports(0) == ZE_RESULT_SUCCESS;
 
     return reportsReady
@@ -234,8 +234,8 @@ uint32_t OaMetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCoun
                                                    : maxReportCount * rawReportSize;
 }
 
-ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
-                                          zet_metric_streamer_desc_t &desc, zet_metric_streamer_handle_t *phMetricStreamer) {
+ze_result_t OaMetricGroupImp::openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
+                                            zet_metric_streamer_handle_t *phMetricStreamer) {
 
     auto &metricSource = pDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
@@ -260,19 +260,20 @@ ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_hand
     }
 
     // Check metric group sampling type.
-    auto metricGroupProperties = MetricGroup::getProperties(hMetricGroup);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
+    getProperties(&metricGroupProperties);
     if (metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     // Check whether metric group is activated.
-    if (!metricSource.isMetricGroupActivated(hMetricGroup)) {
+    if (!metricSource.isMetricGroupActivated(toHandle())) {
         return ZE_RESULT_NOT_READY;
     }
 
     auto pMetricStreamer = new OaMetricStreamerImp();
     UNRECOVERABLE_IF(pMetricStreamer == nullptr);
-    pMetricStreamer->initialize(pDevice->toHandle(), hMetricGroup);
+    pMetricStreamer->initialize(pDevice->toHandle(), toHandle());
 
     const ze_result_t result = pMetricStreamer->startMeasurements(
         desc.notifyEveryNReports, desc.samplingPeriod);
@@ -288,9 +289,12 @@ ze_result_t MetricStreamer::openForDevice(Device *pDevice, zet_metric_group_hand
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                 zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
-                                 zet_metric_streamer_handle_t *phMetricStreamer) {
+ze_result_t OaMetricGroupImp::streamerOpen(
+    zet_context_handle_t hContext,
+    zet_device_handle_t hDevice,
+    zet_metric_streamer_desc_t *desc,
+    ze_event_handle_t hNotificationEvent,
+    zet_metric_streamer_handle_t *phMetricStreamer) {
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto pDevice = Device::fromHandle(hDevice);
@@ -303,12 +307,11 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
 
         auto &metricStreamers = pMetricStreamer->getMetricStreamers();
         metricStreamers.resize(subDeviceCount);
-        auto metricGroupRootDevice = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
 
         for (uint32_t i = 0; i < subDeviceCount; i++) {
 
-            auto metricGroupsSubDevice = metricGroupRootDevice->getMetricGroups()[i];
-            result = openForDevice(pDeviceImp->subDevices[i], metricGroupsSubDevice, desc, &metricStreamers[i]);
+            auto metricGroupsSubDevice = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(getMetricGroups()[i]));
+            result = metricGroupsSubDevice->openForDevice(pDeviceImp->subDevices[i], *desc, &metricStreamers[i]);
             if (result != ZE_RESULT_SUCCESS) {
                 for (uint32_t j = 0; j < i; j++) {
                     auto metricStreamerSubDevice = MetricStreamer::fromHandle(metricStreamers[j]);
@@ -322,7 +325,7 @@ ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handl
         *phMetricStreamer = pMetricStreamer->toHandle();
 
     } else {
-        result = openForDevice(pDevice, hMetricGroup, desc, phMetricStreamer);
+        result = openForDevice(pDevice, *desc, phMetricStreamer);
     }
 
     if (result == ZE_RESULT_SUCCESS) {

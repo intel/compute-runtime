@@ -313,7 +313,7 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
         std::vector<Metric *> metrics;
         createMetrics(metricSet, metrics);
 
-        auto pMetricGroup = MetricGroup::create(properties, metricSet, concurrentGroup, metrics, metricSource);
+        auto pMetricGroup = OaMetricGroupImp::create(properties, metricSet, concurrentGroup, metrics, metricSource);
         DEBUG_BREAK_IF(pMetricGroup == nullptr);
 
         metricGroups.push_back(pMetricGroup);
@@ -485,14 +485,14 @@ OaMetricGroupImp ::~OaMetricGroupImp() {
 
 ze_result_t OaMetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
     if (metricGroups.size() > 0) {
-        *pProperties = MetricGroup::getProperties(metricGroups[0]);
+        *pProperties = OaMetricGroupImp::getProperties(metricGroups[0]);
     } else {
         copyProperties(properties, *pProperties);
     }
     return ZE_RESULT_SUCCESS;
 }
 
-zet_metric_group_properties_t MetricGroup::getProperties(const zet_metric_group_handle_t handle) {
+zet_metric_group_properties_t OaMetricGroupImp::getProperties(const zet_metric_group_handle_t handle) {
     auto metricGroup = MetricGroup::fromHandle(handle);
     UNRECOVERABLE_IF(!metricGroup);
 
@@ -502,11 +502,11 @@ zet_metric_group_properties_t MetricGroup::getProperties(const zet_metric_group_
     return properties;
 }
 
-ze_result_t OaMetricGroupImp::getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+ze_result_t OaMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
 
     if (metricGroups.size() > 0) {
         auto metricGroupSubDevice = MetricGroup::fromHandle(metricGroups[0]);
-        return metricGroupSubDevice->getMetric(pCount, phMetrics);
+        return metricGroupSubDevice->metricGet(pCount, phMetrics);
     }
 
     if (*pCount == 0) {
@@ -916,11 +916,11 @@ void OaMetricImp::copyProperties(const zet_metric_properties_t &source,
              source.resultUnits, sizeof(destination.resultUnits));
 }
 
-MetricGroup *MetricGroup::create(zet_metric_group_properties_t &properties,
-                                 MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                                 MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
-                                 const std::vector<Metric *> &metrics,
-                                 MetricSource &metricSource) {
+MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
+                                      MetricsDiscovery::IMetricSet_1_5 &metricSet,
+                                      MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
+                                      const std::vector<Metric *> &metrics,
+                                      MetricSource &metricSource) {
     auto pMetricGroup = new OaMetricGroupImp();
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->initialize(properties, metricSet, concurrentGroup, metrics, static_cast<OaMetricSourceImp &>(metricSource));

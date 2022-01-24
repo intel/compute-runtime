@@ -81,7 +81,7 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ~MetricGroup() = default;
 
     virtual ze_result_t getProperties(zet_metric_group_properties_t *pProperties) = 0;
-    virtual ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
+    virtual ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     virtual ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                               const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                               zet_typed_value_t *pMetricValues) = 0;
@@ -89,29 +89,24 @@ struct MetricGroup : _zet_metric_group_handle_t {
                                                  const uint8_t *pRawData, uint32_t *pSetCount,
                                                  uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                                  zet_typed_value_t *pMetricValues) = 0;
-
-    static MetricGroup *create(zet_metric_group_properties_t &properties,
-                               MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                               MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
-                               const std::vector<Metric *> &metrics,
-                               MetricSource &metricSource);
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }
-    static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
-
     zet_metric_group_handle_t toHandle() { return this; }
-
-    virtual uint32_t getRawReportSize() = 0;
-
     virtual bool activate() = 0;
     virtual bool deactivate() = 0;
     virtual zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) = 0;
-
-    virtual ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) = 0;
-    virtual ze_result_t waitForReports(const uint32_t timeoutMs) = 0;
-    virtual ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData) = 0;
-    virtual ze_result_t closeIoStream() = 0;
+    virtual ze_result_t streamerOpen(
+        zet_context_handle_t hContext,
+        zet_device_handle_t hDevice,
+        zet_metric_streamer_desc_t *desc,
+        ze_event_handle_t hNotificationEvent,
+        zet_metric_streamer_handle_t *phMetricStreamer) = 0;
+    virtual ze_result_t metricQueryPoolCreate(
+        zet_context_handle_t hContext,
+        zet_device_handle_t hDevice,
+        const zet_metric_query_pool_desc_t *desc,
+        zet_metric_query_pool_handle_t *phMetricQueryPool) = 0;
 };
 
 struct MetricGroupCalculateHeader {
@@ -126,19 +121,12 @@ struct MetricGroupCalculateHeader {
 
 struct MetricStreamer : _zet_metric_streamer_handle_t {
     virtual ~MetricStreamer() = default;
-
     virtual ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                  uint8_t *pRawData) = 0;
     virtual ze_result_t close() = 0;
-    static ze_result_t openForDevice(Device *pDevice, zet_metric_group_handle_t hMetricGroup,
-                                     zet_metric_streamer_desc_t &desc,
-                                     zet_metric_streamer_handle_t *phMetricStreamer);
-    static ze_result_t open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                            zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_streamer_handle_t *phMetricStreamer);
     static MetricStreamer *fromHandle(zet_metric_streamer_handle_t handle) {
         return static_cast<MetricStreamer *>(handle);
     }
-
     virtual Event::State getNotificationState() = 0;
     inline zet_metric_streamer_handle_t toHandle() { return this; }
 };

@@ -196,23 +196,22 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
 };
 
 template <>
-struct Mock<MetricGroup> : public MetricGroup {
+struct Mock<MetricGroup> : public OaMetricGroupImp {
     Mock() {}
 
-    MOCK_METHOD(ze_result_t, getMetric, (uint32_t *, zet_metric_handle_t *), (override));
+    MOCK_METHOD(ze_result_t, metricGet, (uint32_t *, zet_metric_handle_t *), (override));
     MOCK_METHOD(ze_result_t, calculateMetricValues, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, zet_typed_value_t *), (override));
     MOCK_METHOD(ze_result_t, calculateMetricValuesExp, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, uint32_t *, uint32_t *, zet_typed_value_t *), (override));
     MOCK_METHOD(ze_result_t, getProperties, (zet_metric_group_properties_t * properties), (override));
-    MOCK_METHOD(uint32_t, getRawReportSize, (), (override));
     MOCK_METHOD(bool, activate, (), (override));
     MOCK_METHOD(bool, deactivate, (), (override));
-    MOCK_METHOD(ze_result_t, waitForReports, (const uint32_t), (override));
-    MOCK_METHOD(ze_result_t, openIoStream, (uint32_t &, uint32_t &), (override));
-    MOCK_METHOD(ze_result_t, readIoStream, (uint32_t &, uint8_t &), (override));
-    MOCK_METHOD(ze_result_t, closeIoStream, (), (override));
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override {
         return nullptr;
     }
+    MOCK_METHOD(ze_result_t, waitForReports, (const uint32_t));
+    MOCK_METHOD(ze_result_t, openIoStream, (uint32_t &, uint32_t &));
+    MOCK_METHOD(ze_result_t, readIoStream, (uint32_t &, uint8_t &));
+    MOCK_METHOD(ze_result_t, closeIoStream, ());
 };
 
 struct MetricGroupImpTest : public OaMetricGroupImp {

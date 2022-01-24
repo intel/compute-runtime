@@ -395,7 +395,7 @@ ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle
 
     // Create metrics library configuration.
     auto metricGroup = MetricGroup::fromHandle(handle);
-    auto properties = MetricGroup::getProperties(handle);
+    auto properties = OaMetricGroupImp::getProperties(handle);
     auto configuration = createConfiguration(metricGroup, properties);
 
     // Cache configuration if valid.
@@ -421,9 +421,17 @@ void MetricsLibrary::deleteAllConfigurations() {
     configurations.clear();
 }
 
-ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                  const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
+ze_result_t OaMetricGroupImp::metricQueryPoolCreate(
+    zet_context_handle_t hContext,
+    zet_device_handle_t hDevice,
+    const zet_metric_query_pool_desc_t *desc,
+    zet_metric_query_pool_handle_t *phMetricQueryPool) {
 
+    return OaMetricQueryPoolImp::metricQueryPoolCreate(hContext, hDevice, toHandle(), desc, phMetricQueryPool);
+}
+
+ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                                        const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
     auto device = Device::fromHandle(hDevice);
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
 
@@ -440,6 +448,7 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     if (metricSource.isImplicitScalingCapable()) {
 
         auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
+
         auto &metricGroups = hMetricGroup
                                  ? static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
                                  : emptyMetricGroups;
@@ -496,6 +505,17 @@ ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_hand
     *phMetricQueryPool = metricPoolImp;
 
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                  const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
+
+    if (pDesc->type == ZET_METRIC_QUERY_POOL_TYPE_EXECUTION) {
+        return OaMetricQueryPoolImp::metricQueryPoolCreate(hContext, hDevice, hMetricGroup, pDesc, phMetricQueryPool);
+    } else {
+        UNRECOVERABLE_IF(hMetricGroup == nullptr);
+        return MetricGroup::fromHandle(hMetricGroup)->metricQueryPoolCreate(hContext, hDevice, pDesc, phMetricQueryPool);
+    }
 }
 
 OaMetricQueryPoolImp::OaMetricQueryPoolImp(OaMetricSourceImp &metricSourceInput,
@@ -584,7 +604,7 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
 bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Validate metric group query - only event based is supported.
-    auto metricGroupProperites = MetricGroup::getProperties(hMetricGroup);
+    auto metricGroupProperites = OaMetricGroupImp::getProperties(hMetricGroup);
     const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     if (!validMetricGroup) {
