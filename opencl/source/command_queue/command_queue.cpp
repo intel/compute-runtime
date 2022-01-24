@@ -303,7 +303,7 @@ cl_int CommandQueue::getCommandQueueInfo(cl_command_queue_info paramName,
                                          size_t paramValueSize,
                                          void *paramValue,
                                          size_t *paramValueSizeRet) {
-    return getQueueInfo<CommandQueue>(this, paramName, paramValueSize, paramValue, paramValueSizeRet);
+    return getQueueInfo(this, paramName, paramValueSize, paramValue, paramValueSizeRet);
 }
 
 uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,

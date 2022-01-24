@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -560,7 +560,7 @@ HWTEST_F(CommandQueueHwTest, whenReleaseQueueCalledThenFlushIsCalled) {
     cl_int retVal = 0;
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
     mockCmdQ->incRefInternal();
-    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    releaseQueue(mockCmdQ, retVal);
     EXPECT_TRUE(mockCmdQ->flushCalled);
     //this call will release the queue
     mockCmdQ->decRefInternal();
@@ -703,7 +703,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplac
     EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
 
     //this call will release the queue
-    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    releaseQueue(mockCmdQ, retVal);
 }
 
 HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWithOutputEventAsVirtualEventWhenNewBlockedEnqueueReplacesVirtualEventCreatedFromOutputEventThenPreviousVirtualEventDoesntDecrementRefCount) {
@@ -748,7 +748,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWithOutputEventAsVirtualEve
     EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
     mockCmdQ->isQueueBlocked();
 
-    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    releaseQueue(mockCmdQ, retVal);
 }
 
 HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenEveryEventIsDeletedAndCmdQIsReleasedThenCmdQIsDeleted) {
@@ -798,7 +798,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenEveryEventI
 
     EXPECT_EQ(1, mockCmdQ->getRefInternalCount());
 
-    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    releaseQueue(mockCmdQ, retVal);
 }
 
 HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenCmdQIsReleasedBeforeOutputEventThenOutputEventDeletesCmdQ) {
@@ -838,7 +838,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenCmdQIsRelea
     // releasing UserEvent doesn't change the queue refCount
     EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
-    releaseQueue<CommandQueue>(mockCmdQ, retVal);
+    releaseQueue(mockCmdQ, retVal);
 
     // releasing cmdQ decrements refCount
     EXPECT_EQ(1, mockCmdQ->getRefInternalCount());

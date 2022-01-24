@@ -577,7 +577,7 @@ cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
-    retainQueue<CommandQueue>(commandQueue, retVal);
+    retainQueue(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
         TRACING_EXIT(clRetainCommandQueue, &retVal);
         return retVal;
@@ -593,7 +593,7 @@ cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
 
-    releaseQueue<CommandQueue>(commandQueue, retVal);
+    releaseQueue(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
         TRACING_EXIT(clReleaseCommandQueue, &retVal);
         return retVal;
@@ -617,7 +617,7 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
                    "paramValue", NEO::FileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "paramValueSizeRet", paramValueSizeRet);
 
-    getQueueInfo<CommandQueue>(commandQueue, paramName, paramValueSize, paramValue, paramValueSizeRet, retVal);
+    getQueueInfo(commandQueue, paramName, paramValueSize, paramValue, paramValueSizeRet, retVal);
     // if host queue not found - try to query device queue
     if (retVal == CL_SUCCESS) {
         TRACING_EXIT(clGetCommandQueueInfo, &retVal);

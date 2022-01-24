@@ -11,6 +11,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 
 namespace NEO {
@@ -32,29 +33,16 @@ inline bool isCommandWithoutKernel(uint32_t commandType) {
             (commandType == CL_COMMAND_SVM_UNMAP));
 }
 
-template <typename QueueType>
-void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
-    using BaseType = typename QueueType::BaseType;
-    auto queue = castToObject<QueueType>(static_cast<BaseType *>(commandQueue));
+inline void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
+    using BaseType = typename CommandQueue::BaseType;
+    auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(commandQueue));
     if (queue) {
         queue->retain();
         retVal = CL_SUCCESS;
     }
 }
 
-template <typename QueueType>
-void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
-    using BaseType = typename QueueType::BaseType;
-    auto queue = castToObject<QueueType>(static_cast<BaseType *>(commandQueue));
-    if (queue) {
-        releaseVirtualEvent(*queue);
-        queue->release();
-        retVal = CL_SUCCESS;
-    }
-}
-
-template <>
-inline void releaseQueue<CommandQueue>(cl_command_queue commandQueue, cl_int &retVal) {
+inline void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename CommandQueue::BaseType;
     auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(commandQueue));
     if (queue) {
@@ -79,19 +67,18 @@ inline void getHostQueueInfo(CommandQueue *queue, cl_command_queue_info paramNam
     }
 }
 
-template <typename QueueType>
-cl_int getQueueInfo(QueueType *queue,
-                    cl_command_queue_info paramName,
-                    size_t paramValueSize,
-                    void *paramValue,
-                    size_t *paramValueSizeRet) {
+inline cl_int getQueueInfo(CommandQueue *queue,
+                           cl_command_queue_info paramName,
+                           size_t paramValueSize,
+                           void *paramValue,
+                           size_t *paramValueSizeRet) {
 
     cl_int retVal = CL_SUCCESS;
     GetInfoHelper getInfoHelper(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
     case CL_QUEUE_CONTEXT:
-        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_context>(&queue->getContext()));
+        retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_context>(queue->getContextPtr()));
         break;
     case CL_QUEUE_DEVICE: {
         Device &device = queue->getDevice();
@@ -120,29 +107,23 @@ cl_int getQueueInfo(QueueType *queue,
         break;
     }
     default:
-        if (std::is_same<QueueType, class CommandQueue>::value) {
-            auto cmdQ = reinterpret_cast<CommandQueue *>(queue);
-            getHostQueueInfo(cmdQ, paramName, getInfoHelper, retVal);
-            break;
-        }
-        retVal = CL_INVALID_VALUE;
+        getHostQueueInfo(queue, paramName, getInfoHelper, retVal);
         break;
     }
 
     return retVal;
 }
 
-template <typename QueueType>
-void getQueueInfo(cl_command_queue commandQueue,
-                  cl_command_queue_info paramName,
-                  size_t paramValueSize,
-                  void *paramValue,
-                  size_t *paramValueSizeRet,
-                  cl_int &retVal) {
-    using BaseType = typename QueueType::BaseType;
-    auto queue = castToObject<QueueType>(static_cast<BaseType *>(commandQueue));
+inline void getQueueInfo(cl_command_queue commandQueue,
+                         cl_command_queue_info paramName,
+                         size_t paramValueSize,
+                         void *paramValue,
+                         size_t *paramValueSizeRet,
+                         cl_int &retVal) {
+    using BaseType = typename CommandQueue::BaseType;
+    auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(commandQueue));
     if (queue) {
-        retVal = getQueueInfo<QueueType>(queue, paramName, paramValueSize, paramValue, paramValueSizeRet);
+        retVal = getQueueInfo(queue, paramName, paramValueSize, paramValue, paramValueSizeRet);
     }
 }
 

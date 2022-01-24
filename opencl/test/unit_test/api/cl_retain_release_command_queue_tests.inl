@@ -7,24 +7,36 @@
 
 #include "shared/test/common/helpers/unit_test_helper.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
-namespace DeviceHostQueue {
-typedef ::testing::Types<CommandQueue> QueueTypes;
+namespace ULT {
 
-template <typename T>
-class clRetainReleaseCommandQueueTests : public DeviceHostQueueFixture<T> {};
+class clRetainReleaseCommandQueueTests : public ApiFixture<>,
+                                         public ::testing::Test {
+  public:
+    void SetUp() override {
+        ApiFixture::SetUp();
+    }
+    void TearDown() override {
+        ApiFixture::TearDown();
+    }
 
-TYPED_TEST_CASE(clRetainReleaseCommandQueueTests, QueueTypes);
+    cl_command_queue createClQueue() {
+        return clCreateCommandQueueWithProperties(pContext, testedClDevice, noProperties, &retVal);
+    }
 
-TYPED_TEST(clRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetainingAndReleasingThenReferenceCountIsUpdatedCorrectly) {
-    using BaseType = typename TypeParam::BaseType;
+  protected:
+    cl_queue_properties noProperties[5] = {0};
+};
+
+TEST_F(clRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetainingAndReleasingThenReferenceCountIsUpdatedCorrectly) {
 
     auto queue = this->createClQueue();
     ASSERT_EQ(CL_SUCCESS, this->retVal);
-    auto qObject = castToObject<TypeParam>(static_cast<BaseType *>(queue));
+    auto qObject = castToObject<CommandQueue>(queue);
     ASSERT_NE(qObject, nullptr);
 
     cl_uint refCount;
@@ -52,4 +64,4 @@ TYPED_TEST(clRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetaining
     this->retVal = clReleaseCommandQueue(queue);
     EXPECT_EQ(CL_SUCCESS, this->retVal);
 }
-} // namespace DeviceHostQueue
+} // namespace ULT

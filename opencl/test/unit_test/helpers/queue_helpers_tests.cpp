@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ TEST(QueueHelpersTest, givenCommandQueueWithoutVirtualEventWhenReleaseQueueIsCal
     cmdQ->incRefInternal();
     EXPECT_EQ(2, cmdQ->getRefInternalCount());
 
-    releaseQueue<CommandQueue>(cmdQ, retVal);
+    releaseQueue(cmdQ, retVal);
 
     EXPECT_EQ(1, cmdQ->getRefInternalCount());
     cmdQ->decRefInternal();

@@ -33,7 +33,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -47,7 +46,6 @@
 #include <memory>
 
 using namespace NEO;
-using namespace DeviceHostQueue;
 
 using KernelTest = ::testing::Test;
 
