@@ -5915,4 +5915,116 @@ HWTEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletion
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+static uint32_t mmapCallCount = 0u;
+static uint32_t munmapCallCount = 0u;
+
+HWTEST_F(DrmMemoryManagerTest, WhenMappingMemoryForMultipleSharedAllocationsThenMapMemoryOnce) {
+    auto mockMmap = [](void *addr, size_t len, int prot,
+                       int flags, int fd, off_t offset) throw() {
+        mmapCallCount++;
+        return reinterpret_cast<void *>(0x1000000);
+    };
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup{&memoryManager->mmapFunction, mockMmap};
+
+    mmapCallCount = 0;
+    for (int i = 0; i < 10; i++) {
+        memoryManager->mapCpuPointerOrReuse(MemoryConstants::pageSize2Mb, MemoryConstants::pageSize2Mb);
+    }
+    EXPECT_EQ(1u, mmapCallCount);
+}
+
+HWTEST_F(DrmMemoryManagerTest, givenMapReuseBufferUsedUpWhenMappingMemoryForMultipleSharedAllocationsThenReleaseLeftoverMemoryAndMapNewMapReuseBuffer) {
+    auto mockMmap = [](void *addr, size_t len, int prot,
+                       int flags, int fd, off_t offset) throw() {
+        mmapCallCount++;
+        return reinterpret_cast<void *>(0x1000000);
+    };
+    auto mockMunmap = [](void *addr, size_t len) throw() {
+        munmapCallCount++;
+        return 0;
+    };
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup{&memoryManager->mmapFunction, mockMmap};
+    VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup{&memoryManager->munmapFunction, mockMunmap};
+
+    mmapCallCount = 0;
+    munmapCallCount = 0;
+
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(1u, munmapCallCount);
+
+    memoryManager->remainingMapBufferSize = 0;
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    EXPECT_EQ(2u, mmapCallCount);
+    EXPECT_EQ(2u, munmapCallCount);
+
+    memoryManager->remainingMapBufferSize = MemoryConstants::pageSize - 1;
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    EXPECT_EQ(3u, mmapCallCount);
+    EXPECT_EQ(4u, munmapCallCount);
+}
+
+HWTEST_F(DrmMemoryManagerTest, givenMapReuseBufferAllocatedWhenMemoryManagerIsDeletedThenReleaseLeftoverMapping) {
+    auto mockMunmap = [](void *addr, size_t len) throw() {
+        munmapCallCount++;
+        return 0;
+    };
+
+    munmapCallCount = 0;
+
+    auto pMemoryManager = new TestedDrmMemoryManager(false, false, false, *executionEnvironment);
+    pMemoryManager->munmapFunction = mockMunmap;
+    delete pMemoryManager;
+    EXPECT_EQ(0u, munmapCallCount);
+
+    pMemoryManager = new TestedDrmMemoryManager(false, false, false, *executionEnvironment);
+    pMemoryManager->munmapFunction = mockMunmap;
+    pMemoryManager->remainingMapBufferSize = 1;
+    delete pMemoryManager;
+    EXPECT_EQ(1u, munmapCallCount);
+}
+
+HWTEST_F(DrmMemoryManagerTest, givenMapReuseBufferRelatedDebugValuesChangedWhenMappingMemoryForSharedAllocationsThenCorrectlyUseMapReuseBuffer) {
+    DebugManagerStateRestore restorer;
+    auto mockMmap = [](void *addr, size_t len, int prot,
+                       int flags, int fd, off_t offset) throw() {
+        mmapCallCount++;
+        return reinterpret_cast<void *>(0x1000000);
+    };
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup{&memoryManager->mmapFunction, mockMmap};
+
+    DebugManager.flags.OverrideMaxAllocationSizeForMapReuseBufferInMb.set(1);
+    DebugManager.flags.OverrideMapReuseBufferSizeInMb.set(2);
+    mmapCallCount = 0;
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, MemoryConstants::megaByte);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(1u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, MemoryConstants::megaByte);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(0u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, MemoryConstants::megaByte);
+    EXPECT_EQ(2u, mmapCallCount);
+    EXPECT_EQ(1u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, MemoryConstants::megaByte);
+    EXPECT_EQ(2u, mmapCallCount);
+    EXPECT_EQ(0u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+
+    DebugManager.flags.OverrideMaxAllocationSizeForMapReuseBufferInMb.set(3);
+    DebugManager.flags.OverrideMapReuseBufferSizeInMb.set(10);
+    mmapCallCount = 0;
+    memoryManager->remainingMapBufferSize = 0;
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, 3 * MemoryConstants::megaByte);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(7u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, 3 * MemoryConstants::megaByte);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(4u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, 3 * MemoryConstants::megaByte);
+    EXPECT_EQ(1u, mmapCallCount);
+    EXPECT_EQ(1u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+    memoryManager->mapCpuPointerOrReuse(MemoryConstants::megaByte, 3 * MemoryConstants::megaByte);
+    EXPECT_EQ(2u, mmapCallCount);
+    EXPECT_EQ(7u * MemoryConstants::megaByte, memoryManager->remainingMapBufferSize);
+}
+
 } // namespace NEO

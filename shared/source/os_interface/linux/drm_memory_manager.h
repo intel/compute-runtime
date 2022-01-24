@@ -98,6 +98,8 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithAlignmentImpl(const AllocationData &allocationData);
     DrmAllocation *createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress);
+    void *mapCpuPointer(size_t alignment, size_t alignedSize);
+    void *mapCpuPointerOrReuse(size_t alignment, size_t alignedSize);
     DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress);
     DrmAllocation *createMultiHostAllocation(const AllocationData &allocationData);
     void obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress);
@@ -137,7 +139,10 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&munmap) munmapFunction = munmap;
     decltype(&lseek) lseekFunction = lseek;
     decltype(&close) closeFunction = close;
+    void *mapBufferAddress = nullptr;
+    size_t remainingMapBufferSize = 0;
     std::vector<BufferObject *> sharingBufferObjects;
+    std::mutex mapBufferMutex;
     std::mutex mtx;
 
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;

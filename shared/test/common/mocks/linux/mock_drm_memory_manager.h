@@ -83,6 +83,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::gfxPartitions;
     using DrmMemoryManager::handleFenceCompletion;
     using DrmMemoryManager::lockResourceInLocalMemoryImpl;
+    using DrmMemoryManager::mapCpuPointerOrReuse;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
@@ -91,6 +92,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::pushSharedBufferObject;
     using DrmMemoryManager::registerAllocationInOs;
     using DrmMemoryManager::releaseGpuRange;
+    using DrmMemoryManager::remainingMapBufferSize;
     using DrmMemoryManager::retrieveMmapOffsetForBufferObject;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
