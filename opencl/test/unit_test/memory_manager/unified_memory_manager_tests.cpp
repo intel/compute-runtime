@@ -723,6 +723,148 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFl
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenNewTrackingEntryIsCreated) {
+    MockCommandQueue cmdQ;
+    MockDevice device;
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
+
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+
+    ASSERT_NE(nullptr, ptr);
+    auto graphicsAllocation = unifiedMemoryManager->getSVMAlloc(ptr);
+    auto &commandStreamReceiver = device.getGpgpuCommandStreamReceiver();
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    EXPECT_EQ(0u, unifiedMemoryManager->indirectAllocationsResidency.size());
+
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
+    EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+
+    EXPECT_EQ(1u, unifiedMemoryManager->indirectAllocationsResidency.size());
+    auto internalEntry = unifiedMemoryManager->indirectAllocationsResidency.find(&commandStreamReceiver)->second;
+    EXPECT_EQ(1u, internalEntry.latestSentTaskCount);
+    EXPECT_EQ(1u, internalEntry.latestResidentObjectId);
+
+    unifiedMemoryManager->freeSVMAlloc(ptr);
+}
+
+TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenSubsequentCallsDoNotCallResidency) {
+    MockCommandQueue cmdQ;
+    MockDevice device;
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
+
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    ASSERT_NE(nullptr, ptr);
+
+    auto graphicsAllocation = unifiedMemoryManager->getSVMAlloc(ptr);
+    auto &commandStreamReceiver = device.getGpgpuCommandStreamReceiver();
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
+
+    EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    //now call with task count 2 , allocations shouldn't change
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
+    auto internalEntry = unifiedMemoryManager->indirectAllocationsResidency.find(&commandStreamReceiver)->second;
+
+    EXPECT_EQ(2u, internalEntry.latestSentTaskCount);
+    EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    //force Graphics Allocation to be non resident
+    graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver.getOsContext().getContextId());
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    //now call with task count 3 , allocations shouldn't change
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+    unifiedMemoryManager->freeSVMAlloc(ptr);
+}
+
+TEST(UnifiedMemoryTest, givenInternalAllocationWhenNewAllocationIsCreatedThenItIsMadeResident) {
+    MockCommandQueue cmdQ;
+    MockDevice device;
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
+
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    ASSERT_NE(nullptr, ptr);
+
+    auto graphicsAllocation = unifiedMemoryManager->getSVMAlloc(ptr);
+    auto &commandStreamReceiver = device.getGpgpuCommandStreamReceiver();
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
+
+    EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+    //force to non resident
+    graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver.getOsContext().getContextId());
+
+    auto ptr2 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    auto graphicsAllocation2 = unifiedMemoryManager->getSVMAlloc(ptr);
+
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    EXPECT_FALSE(graphicsAllocation2->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    //now call with task count 2, both allocations needs to be made resident
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
+
+    EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_TRUE(graphicsAllocation2->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
+
+    unifiedMemoryManager->freeSVMAlloc(ptr);
+    unifiedMemoryManager->freeSVMAlloc(ptr2);
+}
+
+TEST(UnifiedMemoryTest, givenInternalAllocationsWhenTheyArePreparedForFreeingThenProperTaskCountIsAssigned) {
+    MockCommandQueue cmdQ;
+    MockDevice device;
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
+    memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
+
+    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    ASSERT_NE(nullptr, ptr);
+
+    auto graphicsAllocation = unifiedMemoryManager->getSVMAlloc(ptr);
+    auto &commandStreamReceiver = device.getGpgpuCommandStreamReceiver();
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
+    unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 124u);
+
+    EXPECT_EQ(1u, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+
+    auto allocationData = unifiedMemoryManager->getSVMAlloc(ptr);
+
+    unifiedMemoryManager->prepareIndirectAllocationForDestruction(allocationData);
+    EXPECT_EQ(124u, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_EQ(124u, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+    unifiedMemoryManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
     std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};

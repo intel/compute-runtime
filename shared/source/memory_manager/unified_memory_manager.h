@@ -100,6 +100,11 @@ class SVMAllocsManager {
         bool readOnly = false;
     };
 
+    struct InternalAllocationsTracker {
+        uint32_t latestSentTaskCount = 0lu;
+        uint32_t latestResidentObjectId = 0lu;
+    };
+
     struct UnifiedMemoryProperties {
         UnifiedMemoryProperties(InternalMemoryType memoryType,
                                 const std::set<uint32_t> &rootDeviceIndices,
@@ -149,6 +154,10 @@ class SVMAllocsManager {
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
+    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
+    void prepareIndirectAllocationForDestruction(SvmAllocationData *);
+
+    std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,

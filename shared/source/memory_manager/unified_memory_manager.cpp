@@ -332,6 +332,8 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
+        this->prepareIndirectAllocationForDestruction(svmData);
+
         if (blocking) {
             if (svmData->cpuAllocation) {
                 this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
@@ -483,6 +485,53 @@ bool SVMAllocsManager::hasHostAllocations() {
         }
     }
     return false;
+}
+
+void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount) {
+    std::unique_lock<SpinLock> lock(mtx);
+    bool parseAllAllocations = false;
+    auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);
+
+    if (entry == indirectAllocationsResidency.end()) {
+        parseAllAllocations = true;
+
+        InternalAllocationsTracker tracker = {};
+        tracker.latestResidentObjectId = this->allocationsCounter;
+        tracker.latestSentTaskCount = taskCount;
+
+        this->indirectAllocationsResidency.insert(std::make_pair(&commandStreamReceiver, tracker));
+    } else {
+        if (this->allocationsCounter > entry->second.latestResidentObjectId) {
+            parseAllAllocations = true;
+
+            entry->second.latestResidentObjectId = this->allocationsCounter;
+        }
+        entry->second.latestSentTaskCount = taskCount;
+    }
+    if (parseAllAllocations) {
+        for (auto &allocation : this->SVMAllocs.allocations) {
+            auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
+            UNRECOVERABLE_IF(nullptr == gpuAllocation);
+            commandStreamReceiver.makeResident(*gpuAllocation);
+            gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, commandStreamReceiver.getOsContext().getContextId());
+        }
+    }
+}
+
+void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData) {
+    std::unique_lock<SpinLock> lock(mtx);
+    if (this->indirectAllocationsResidency.size() > 0u) {
+        for (auto &internalAllocationsHandling : this->indirectAllocationsResidency) {
+            auto commandStreamReceiver = internalAllocationsHandling.first;
+            auto gpuAllocation = allocationData->gpuAllocations.getGraphicsAllocation(commandStreamReceiver->getRootDeviceIndex());
+            auto desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
+            if (gpuAllocation->getResidencyTaskCount(commandStreamReceiver->getOsContext().getContextId()) == GraphicsAllocation::objectAlwaysResident) {
+                gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver->getOsContext().getContextId());
+                gpuAllocation->updateResidencyTaskCount(desiredTaskCount, commandStreamReceiver->getOsContext().getContextId());
+                gpuAllocation->updateTaskCount(desiredTaskCount, commandStreamReceiver->getOsContext().getContextId());
+            }
+        }
+    }
 }
 
 SvmMapOperation *SVMAllocsManager::getSvmMapOperation(const void *ptr) {
