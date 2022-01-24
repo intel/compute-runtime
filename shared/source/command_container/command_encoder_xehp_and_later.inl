@@ -649,25 +649,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
 
     encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());
 
-    if constexpr (Family::isUsingMultiGpuProgrammingInSurfaceState) {
-        bool enablePartialWrites = args.implicitScaling;
-        bool enableMultiGpuAtomics = enablePartialWrites;
-
-        if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-            enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
-        }
-
-        surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
-        surfaceState->setDisableSupportForMultiGpuPartialWrites(!enablePartialWrites);
-
-        if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-            surfaceState->setDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
-        }
-
-        if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-            surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
-        }
-    }
+    encodeImplicitScalingParams(args);
 
     if (EncodeSurfaceState<Family>::isAuxModeEnabled(surfaceState, gmm)) {
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();

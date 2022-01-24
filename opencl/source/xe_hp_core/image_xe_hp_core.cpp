@@ -17,25 +17,12 @@ static auto gfxCore = IGFX_XE_HP_CORE;
 
 template <>
 void ImageHw<Family>::appendSurfaceStateParams(Family::RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex, bool useGlobalAtomics) {
-    auto imageCtxType = this->context->peekContextType();
-
-    bool enableMultiGpuPartialWrites = (imageCtxType != ContextType::CONTEXT_TYPE_SPECIALIZED) && (context->containsMultipleSubDevices(rootDeviceIndex));
-
-    bool enableMultiGpuAtomics = enableMultiGpuPartialWrites;
-
-    if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
-        enableMultiGpuAtomics &= useGlobalAtomics;
-    }
-
-    surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
-    surfaceState->setDisableSupportForMultiGpuPartialWrites(!enableMultiGpuPartialWrites);
-
-    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        surfaceState->setDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
-    }
-    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
-    }
+    EncodeSurfaceStateArgs args{};
+    args.outMemory = surfaceState;
+    args.useGlobalAtomics = useGlobalAtomics;
+    args.areMultipleSubDevicesInContext = context->containsMultipleSubDevices(rootDeviceIndex);
+    args.implicitScaling = args.areMultipleSubDevicesInContext;
+    EncodeSurfaceState<Family>::encodeImplicitScalingParams(args);
 }
 } // namespace NEO
 #include "opencl/source/mem_obj/image_tgllp_and_later.inl"

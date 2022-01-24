@@ -32,6 +32,28 @@ inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE
 }
 
 template <>
+void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
+    bool enablePartialWrites = args.implicitScaling;
+    bool enableMultiGpuAtomics = enablePartialWrites;
+
+    if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
+        enableMultiGpuAtomics = args.useGlobalAtomics && (enablePartialWrites || args.areMultipleSubDevicesInContext);
+    }
+
+    surfaceState->setDisableSupportForMultiGpuAtomics(!enableMultiGpuAtomics);
+    surfaceState->setDisableSupportForMultiGpuPartialWrites(!enablePartialWrites);
+
+    if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
+        surfaceState->setDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
+    }
+
+    if (DebugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
+        surfaceState->setDisableSupportForMultiGpuPartialWrites(!!DebugManager.flags.ForceMultiGpuPartialWrites.get());
+    }
+}
+
+template <>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
 }
 

@@ -31,7 +31,6 @@ struct XeHpCore {
     static constexpr bool isUsingMediaSamplerDopClockGate = true;
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
-    static constexpr bool isUsingMultiGpuProgrammingInSurfaceState = true;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

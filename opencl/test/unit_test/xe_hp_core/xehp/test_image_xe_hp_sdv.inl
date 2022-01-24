@@ -18,7 +18,6 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using XeHpSdvImageTests = ::testing::Test;
-using isXePlatform = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 
 XEHPTEST_F(XeHpSdvImageTests, givenContextTypeDefaultWhenImageIsWritableAndOnlyOneTileIsAvailableThenRemainFlagsToTrue) {
     DebugManagerStateRestore restorer;
@@ -247,27 +246,30 @@ XEHPTEST_F(XeHpSdvImageTests, givenContextTypeSpecializedWhenImageIsWritableThen
 }
 
 struct MultiGpuGlobalAtomicsImageTest : public XeHpSdvImageTests,
-                                        public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, ContextType, bool, bool>> {
+                                        public ::testing::WithParamInterface<std::tuple<unsigned int, unsigned int, bool, bool>> {
 };
 
 XEHPTEST_P(MultiGpuGlobalAtomicsImageTest, givenAppendSurfaceStateParamCalledThenDisableSupportForMultiGpuAtomicsIsSetCorrectly) {
-    unsigned int numAvailableDevices, memFlags;
-    ContextType contextType;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    unsigned int numAvailableSubDevices, memFlags;
     bool useGlobalAtomics, enableMultiGpuAtomicsOptimization;
-    std::tie(numAvailableDevices, memFlags, contextType, useGlobalAtomics, enableMultiGpuAtomicsOptimization) = GetParam();
+    std::tie(numAvailableSubDevices, memFlags, useGlobalAtomics, enableMultiGpuAtomicsOptimization) = GetParam();
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
-    DebugManager.flags.CreateMultipleSubDevices.set(numAvailableDevices);
-    initPlatform();
-    if (numAvailableDevices == 1) {
-        EXPECT_EQ(0u, platform()->getClDevice(0)->getNumGenericSubDevices());
-    } else {
-        EXPECT_EQ(numAvailableDevices, platform()->getClDevice(0)->getNumGenericSubDevices());
+
+    UltClDeviceFactory deviceFactory{1, 2};
+
+    ClDeviceVector deviceVector;
+
+    for (auto i = 0u; i < numAvailableSubDevices; i++) {
+        deviceVector.push_back(deviceFactory.subDevices[i]);
     }
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    MockContext context(platform()->getClDevice(0));
-    context.contextType = contextType;
+    if (deviceVector.empty()) {
+        deviceVector.push_back(deviceFactory.rootDevices[0]);
+    }
+
+    MockContext context(deviceVector);
 
     cl_int retVal = CL_SUCCESS;
     cl_image_format imageFormat = {};
@@ -294,23 +296,21 @@ XEHPTEST_P(MultiGpuGlobalAtomicsImageTest, givenAppendSurfaceStateParamCalledThe
     surfaceState.setDisableSupportForMultiGpuPartialWrites(false);
     imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), useGlobalAtomics);
 
-    bool enableGlobalAtomics = (contextType != ContextType::CONTEXT_TYPE_SPECIALIZED) && (numAvailableDevices > 1);
+    bool enableGlobalAtomics = numAvailableSubDevices != 1u;
     if (enableMultiGpuAtomicsOptimization) {
         enableGlobalAtomics &= useGlobalAtomics;
     }
     EXPECT_EQ(!enableGlobalAtomics, surfaceState.getDisableSupportForMultiGpuAtomics());
 }
 
-static unsigned int numAvailableDevicesForMultiGpuGlobalAtomicsImageTest[] = {1, 2};
+static unsigned int numAvailableSubDevicesForMultiGpuGlobalAtomicsImageTest[] = {0, 1, 2};
 static unsigned int memFlags[] = {CL_MEM_READ_ONLY, CL_MEM_READ_WRITE};
-static ContextType contextTypes[] = {ContextType::CONTEXT_TYPE_DEFAULT, ContextType::CONTEXT_TYPE_SPECIALIZED, ContextType::CONTEXT_TYPE_UNRESTRICTIVE};
 
 INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomicsImageTest,
                         MultiGpuGlobalAtomicsImageTest,
                         ::testing::Combine(
-                            ::testing::ValuesIn(numAvailableDevicesForMultiGpuGlobalAtomicsImageTest),
+                            ::testing::ValuesIn(numAvailableSubDevicesForMultiGpuGlobalAtomicsImageTest),
                             ::testing::ValuesIn(memFlags),
-                            ::testing::ValuesIn(contextTypes),
                             ::testing::Bool(),
                             ::testing::Bool()));
 
