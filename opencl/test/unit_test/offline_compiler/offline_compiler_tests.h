@@ -11,6 +11,8 @@
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
+
 #include "gtest/gtest.h"
 
 #include <cstdint>
@@ -22,7 +24,13 @@ class OfflineCompilerTests : public ::testing::Test {
   public:
     OfflineCompiler *pOfflineCompiler = nullptr;
     int retVal = OclocErrorCode::SUCCESS;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+    std::map<std::string, std::string> filesMap;
+    std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
+
+  protected:
+    void SetUp() override {
+        oclocArgHelperWithoutInput->setAllCallBase(true);
+    }
 };
 
 class MultiCommandTests : public ::testing::Test {
@@ -34,6 +42,12 @@ class MultiCommandTests : public ::testing::Test {
     std::string nameOfFileWithArgs;
     std::string outFileList;
     int retVal = OclocErrorCode::SUCCESS;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
+    std::map<std::string, std::string> filesMap;
+    std::unique_ptr<MockOclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<MockOclocArgHelper>(filesMap);
+
+  protected:
+    void SetUp() override {
+        oclocArgHelperWithoutInput->setAllCallBase(true);
+    }
 };
 } // namespace NEO

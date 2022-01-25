@@ -6,7 +6,10 @@
  */
 
 #pragma once
+
 #include "shared/offline_compiler/source/offline_compiler.h"
+
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 
 #include <string>
 
@@ -48,7 +51,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler() : OfflineCompiler() {
-        uniqueHelper = std::make_unique<OclocArgHelper>();
+        uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
+        uniqueHelper->setAllCallBase(true);
         argHelper = uniqueHelper.get();
     }
     ~MockOfflineCompiler() override = default;
@@ -79,14 +83,16 @@ class MockOfflineCompiler : public OfflineCompiler {
     }
 
     void clearLog() {
-        uniqueHelper = std::make_unique<OclocArgHelper>();
+        uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
+        uniqueHelper->setAllCallBase(true);
         argHelper = uniqueHelper.get();
     }
 
+    std::map<std::string, std::string> filesMap{};
     int buildSourceCodeStatus = 0;
     bool overrideBuildSourceCodeStatus = false;
     uint32_t generateElfBinaryCalled = 0u;
     uint32_t writeOutAllFilesCalled = 0u;
-    std::unique_ptr<OclocArgHelper> uniqueHelper;
+    std::unique_ptr<MockOclocArgHelper> uniqueHelper;
 };
 } // namespace NEO

@@ -185,8 +185,14 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
-    auto deviceMapConfig = allEnabledDeviceConfigs[0];
-    auto configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+
+    std::string configStr;
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+            break;
+        }
+    }
 
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
@@ -705,15 +711,21 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     if (allEnabledDeviceConfigs.empty()) {
         return;
     }
-    auto deviceMapConfig = allEnabledDeviceConfigs[0];
-    auto configString = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+
+    std::string configStr;
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+            break;
+        }
+    }
 
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
-        configString};
+        configStr};
 
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
 
@@ -1207,9 +1219,6 @@ TEST(OfflineCompilerTest, givenSpvOnlyOptionPassedWhenCmdLineParsedThenGenerateO
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
-
-    compilerOutputRemove("myOutputFileName", "bc");
-    compilerOutputRemove("myOutputFileName", "spv");
 }
 
 TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuccess) {
@@ -1416,11 +1425,6 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
-
-    compilerOutputRemove("myOutputFileName", "bc");
-    compilerOutputRemove("myOutputFileName", "spv");
-    compilerOutputRemove("myOutputFileName", "bin");
-    compilerOutputRemove("myOutputFileName", "gen");
 }
 
 TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataFileIsCreated) {
@@ -1458,12 +1462,6 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "dbg"));
-
-    compilerOutputRemove("myOutputFileName", "bc");
-    compilerOutputRemove("myOutputFileName", "spv");
-    compilerOutputRemove("myOutputFileName", "bin");
-    compilerOutputRemove("myOutputFileName", "gen");
-    compilerOutputRemove("myOutputFileName", "dbg");
 
     NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
 }
