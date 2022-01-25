@@ -145,7 +145,7 @@ struct OaMetricQueryPoolImp : MetricQueryPool {
     bool create();
     ze_result_t destroy() override;
 
-    ze_result_t createMetricQuery(uint32_t index, zet_metric_query_handle_t *phMetricQuery) override;
+    ze_result_t metricQueryCreate(uint32_t index, zet_metric_query_handle_t *phMetricQuery) override;
 
     bool allocateGpuMemory();
 

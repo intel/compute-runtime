@@ -115,7 +115,7 @@ zetMetricQueryCreate(
     zet_metric_query_pool_handle_t hMetricQueryPool,
     uint32_t index,
     zet_metric_query_handle_t *phMetricQuery) {
-    return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->createMetricQuery(index, phMetricQuery);
+    return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->metricQueryCreate(index, phMetricQuery);
 }
 
 ZE_DLLEXPORT ze_result_t ZE_APICALL

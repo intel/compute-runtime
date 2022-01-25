@@ -14,6 +14,8 @@
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
 #include "level_zero/tools/source/metrics/metric_source_oa.h"
 
+using namespace MetricsLibraryApi;
+
 namespace L0 {
 
 ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
@@ -334,6 +336,36 @@ ze_result_t OaMetricGroupImp::streamerOpen(
     }
 
     return result;
+}
+
+ze_result_t MetricStreamer::appendStreamerMarker(CommandList &commandList,
+                                                 zet_metric_streamer_handle_t hMetricStreamer,
+                                                 uint32_t value) {
+
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
+
+    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
+        // Use one of the sub-device contexts to append to command list.
+        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+        pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
+    }
+
+    OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    const uint32_t streamerMarkerHighBitsShift = 25;
+
+    // Obtain gpu commands.
+    CommandBufferData_1_0 commandBuffer = {};
+    commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
+    commandBuffer.MarkerStreamUser.Value = value;
+    commandBuffer.MarkerStreamUser.Reserved = (value >> streamerMarkerHighBitsShift);
+    commandBuffer.Type = metricSource.isComputeUsed()
+                             ? GpuCommandBufferType::Compute
+                             : GpuCommandBufferType::Render;
+
+    return metricsLibrary.getGpuCommands(commandList, commandBuffer) ? ZE_RESULT_SUCCESS
+                                                                     : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 } // namespace L0

@@ -42,7 +42,7 @@ ze_result_t CommandListImp::appendMetricMemoryBarrier() {
 
 ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer,
                                                        uint32_t value) {
-    return MetricQuery::appendStreamerMarker(*this, hMetricStreamer, value);
+    return MetricStreamer::appendStreamerMarker(*this, hMetricStreamer, value);
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {

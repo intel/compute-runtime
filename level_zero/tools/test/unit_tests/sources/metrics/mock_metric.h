@@ -130,7 +130,7 @@ struct Mock<MetricQueryPool> : public MetricQueryPool {
     Mock();
     ~Mock() override;
 
-    MOCK_METHOD(ze_result_t, createMetricQuery, (uint32_t, zet_metric_query_handle_t *), (override));
+    MOCK_METHOD(ze_result_t, metricQueryCreate, (uint32_t, zet_metric_query_handle_t *), (override));
     MOCK_METHOD(ze_result_t, destroy, (), (override));
 };
 
