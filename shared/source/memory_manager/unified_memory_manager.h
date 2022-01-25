@@ -34,6 +34,7 @@ struct SvmAllocationData {
         this->size = svmAllocData.size;
         this->memoryType = svmAllocData.memoryType;
         this->allocId = svmAllocData.allocId;
+        this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -44,6 +45,7 @@ struct SvmAllocationData {
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
     size_t size = 0;
+    size_t pageSizeForAlignment = 0;
     InternalMemoryType memoryType = InternalMemoryType::SVM;
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;

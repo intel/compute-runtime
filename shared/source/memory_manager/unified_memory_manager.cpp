@@ -125,7 +125,8 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
-    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize);
+    size_t pageSizeForAlignment = MemoryConstants::pageSize;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
@@ -161,6 +162,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = nullptr;
+    allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
@@ -175,8 +177,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                ? memoryProperties.device->getRootDeviceIndex()
                                : *memoryProperties.rootDeviceIndices.begin();
     DeviceBitfield deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-
-    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
@@ -221,6 +223,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
+    allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = memoryProperties.device;
@@ -279,7 +282,8 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     auto &deviceBitfield = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-    size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
+    size_t pageSizeForAlignment = 2 * MemoryConstants::megaByte;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        true,
                                        alignedSize,
@@ -288,7 +292,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
                                        false,
                                        deviceBitfield};
 
-    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    gpuProperties.alignment = pageSizeForAlignment;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
@@ -302,6 +306,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.cpuAllocation = nullptr;
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
+    allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<SpinLock> lock(mtx);
@@ -401,7 +406,8 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
     size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
-    size_t alignedSizeGpu = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
+    size_t alignedSizeGpu = alignUp<size_t>(size, pageSizeForAlignment);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
@@ -437,7 +443,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        multiStorageAllocation,
                                        subDevices};
 
-    gpuProperties.alignment = MemoryConstants::pageSize64k;
+    gpuProperties.alignment = pageSizeForAlignment;
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {
@@ -450,6 +456,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.gpuAllocations.addAllocation(allocationGpu);
     allocData.cpuAllocation = allocationCpu;
     allocData.device = unifiedMemoryProperties.device;
+    allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.size = size;
     allocData.setAllocId(this->allocationsCounter++);
 

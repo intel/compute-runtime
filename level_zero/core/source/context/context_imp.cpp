@@ -553,6 +553,7 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
     }
 
     pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
+    pMemAllocProperties->pageSize = alloc->pageSizeForAlignment;
     pMemAllocProperties->id = alloc->getAllocId();
 
     if (phDevice != nullptr) {
