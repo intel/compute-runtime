@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,7 +109,7 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
     }
 
     if (nullptr != genCmdCast<STATE_COMPUTE_MODE *>(cmd)) {
-        return "MEDIA_STATE_FLUSH";
+        return "STATE_COMPUTE_MODE";
     }
 
     if (nullptr != genCmdCast<GPGPU_CSR_BASE_ADDRESS *>(cmd)) {
