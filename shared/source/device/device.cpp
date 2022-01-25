@@ -270,7 +270,11 @@ bool Device::createDeviceImpl() {
     createBindlessHeapsHelper();
     if (!isEngineInstanced()) {
         auto hardwareInfo = getRootDeviceEnvironment().getMutableHardwareInfo();
-        uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+        uuid.isValid = false;
+
+        if (DebugManager.flags.EnableChipsetUniqueUUID.get() == 1) {
+            uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+        }
 
         if (!uuid.isValid && getRootDeviceEnvironment().osInterface != nullptr) {
             PhysicalDevicePciBusInfo pciBusInfo = getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();

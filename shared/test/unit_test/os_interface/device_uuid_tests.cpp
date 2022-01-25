@@ -170,4 +170,65 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAffinityMas
     expectedUuid[15] = 4;
     EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid, sizeof(expectedUuid)));
 }
+
+using DeviceUuidEnablementTest = MultipleDeviceBdfUuidTest;
+
+template <PRODUCT_FAMILY gfxProduct>
+class MockHwInfoConfigHwUuidEnablementTest : public HwInfoConfigHw<gfxProduct> {
+  public:
+    const bool returnStatus;
+    MockHwInfoConfigHwUuidEnablementTest(bool returnStatus) : returnStatus(returnStatus) {}
+    bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override {
+        uuid.fill(255u);
+        return returnStatus;
+    }
+};
+
+HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDefaultWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
+
+    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    std::array<uint8_t, 16> uuid, expectedUuid;
+    uuid.fill(0u);
+    expectedUuid.fill(255u);
+
+    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
+    const auto deviceFactory = createDevices(pciBusInfo, 2);
+
+    EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
+    EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+}
+
+HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsEnabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsUsed, MatchAny) {
+
+    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    std::array<uint8_t, 16> uuid, expectedUuid;
+    uuid.fill(0u);
+    expectedUuid.fill(255u);
+
+    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
+    const auto deviceFactory = createDevices(pciBusInfo, 2);
+
+    EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
+    EXPECT_TRUE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+}
+
+HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDeviceIsCreatedThenChipsetUniqueUuidUsingTelemetryIsNotUsed, MatchAny) {
+
+    mockHwInfoConfig.reset(new MockHwInfoConfigHwUuidEnablementTest<productFamily>(true));
+    VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
+    DebugManager.flags.EnableChipsetUniqueUUID.set(0);
+    std::array<uint8_t, 16> uuid, expectedUuid;
+    uuid.fill(0u);
+    expectedUuid.fill(255u);
+
+    PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
+    const auto deviceFactory = createDevices(pciBusInfo, 2);
+
+    EXPECT_EQ(true, deviceFactory->rootDevices[0]->getUuid(uuid));
+    EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
+}
+
 } // namespace NEO

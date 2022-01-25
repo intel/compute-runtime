@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ namespace ult {
 struct TestDeviceUuid : public ::testing::Test {
     void SetUp() override {}
     void TearDown() override {}
+    DebugManagerStateRestore restorer;
 };
 
 HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDeviceAndSubDevicePropertiesThenCorrectUuidIsReceived, IsXEHP) {
@@ -82,7 +83,7 @@ HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDe
 
         return -1;
     });
-    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -130,6 +131,24 @@ HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDe
     expectedUuid[15] = 2;
     EXPECT_EQ(ZE_RESULT_SUCCESS, static_cast<Device *>(subdevices[1])->getProperties(&deviceProps));
     EXPECT_TRUE(0 == std::memcmp(deviceProps.uuid.id, expectedUuid, sizeof(expectedUuid)));
+}
+
+TEST_F(TestDeviceUuid, GivenEnableChipsetUniqueUuidIsSetWhenOsInterfaceIsNotSetThenUuidOfFallbackPathIsReceived) {
+
+    DebugManager.flags.EnableChipsetUniqueUUID.set(1);
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_device_properties_t deviceProperties, devicePropertiesBefore;
+    deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    memset(&deviceProperties.uuid, std::numeric_limits<int>::max(), sizeof(deviceProperties.uuid));
+    devicePropertiesBefore = deviceProperties;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getProperties(&deviceProperties));
+    EXPECT_NE(0, memcmp(&deviceProperties.uuid, &devicePropertiesBefore.uuid, sizeof(devicePropertiesBefore.uuid)));
 }
 
 } // namespace ult
