@@ -18,6 +18,8 @@ if(TESTS_XEHP_AND_LATER)
   target_sources(igdrcl_aub_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_range_based_flush_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_walker_partition_tests_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_aub_tests_xehp_and_later.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_aub_tests_xehp_and_later.cpp
   )
 endif()
 
