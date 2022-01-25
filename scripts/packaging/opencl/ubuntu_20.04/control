@@ -18,7 +18,8 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  intel-igc-opencl,
- intel-gmmlib
+ intel-gmmlib,
+ ocl-icd-libopencl1,
 Breaks:
  intel-opencl
 Replaces:
