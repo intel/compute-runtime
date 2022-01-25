@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
         enableDirectSubmission = DebugManager.flags.EnableDirectSubmission.get();
     }
 
-    if (enableDirectSubmission && !directSubmissionAvailableChecked) {
+    if (enableDirectSubmission) {
         auto contextEngineType = this->getEngineType();
         const DirectSubmissionProperties &directSubmissionProperty =
             hwInfo.capabilityTable.directSubmissionEngines.data[contextEngineType];
@@ -95,10 +95,9 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
             this->setDirectSubmissionActive();
         }
 
-        this->directSubmissionAvailableChecked = true;
+        return engineSupported && startDirect;
     }
-
-    return this->directSubmissionActive;
+    return false;
 }
 
 bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty, aub_stream::EngineType contextEngineType, bool &startOnInit, bool &startInContext) {
