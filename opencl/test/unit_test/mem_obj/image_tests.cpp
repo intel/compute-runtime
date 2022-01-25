@@ -1592,6 +1592,7 @@ TEST(ImageTest, givenImageWhenValidateRegionAndOriginIsCalledThenAdditionalOrigi
 
         desc.image_height = 1;
         desc.image_depth = 1;
+        desc.image_array_size = 1;
         EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
 
         if (imageType == CL_MEM_OBJECT_IMAGE3D) {
@@ -1599,6 +1600,28 @@ TEST(ImageTest, givenImageWhenValidateRegionAndOriginIsCalledThenAdditionalOrigi
             EXPECT_EQ(CL_INVALID_VALUE, Image::validateRegionAndOrigin(origin, region, desc));
         }
     }
+}
+
+TEST(ImageTest, givenImageArrayWhenValidateRegionAndOriginIsCalledThenAdditionalOriginAndRegionCoordinatesAreAnalyzed) {
+    size_t region[3]{1, 1, 1};
+    size_t origin[3]{};
+    cl_image_desc desc = {};
+
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    desc.image_width = 1;
+    EXPECT_EQ(CL_INVALID_VALUE, Image::validateRegionAndOrigin(origin, region, desc));
+
+    desc.image_array_size = 1;
+    EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
+
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    desc.image_array_size = 0;
+    desc.image_width = 1;
+    desc.image_height = 1;
+    EXPECT_EQ(CL_INVALID_VALUE, Image::validateRegionAndOrigin(origin, region, desc));
+
+    desc.image_array_size = 1;
+    EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
 }
 
 typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;
@@ -1612,6 +1635,7 @@ TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsC
     desc.image_width = 1;
     desc.image_height = 1;
     desc.image_depth = 1;
+    desc.image_array_size = 1;
     origin[getMipLevelOriginIdx(desc.image_type)] = 1;
     EXPECT_EQ(CL_SUCCESS, Image::validateRegionAndOrigin(origin, region, desc));
     origin[getMipLevelOriginIdx(desc.image_type)] = 2;
