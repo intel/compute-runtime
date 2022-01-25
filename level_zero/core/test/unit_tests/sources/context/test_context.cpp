@@ -18,6 +18,7 @@
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 #include "gtest/gtest.h"
@@ -460,7 +461,11 @@ struct ContextMakeMemoryResidentAndMigrationTests : public ContextMakeMemoryResi
             moveAllocationToGpuDomainCalledTimes++;
             migratedAddress = ptr;
         }
+        void moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager) override {
+            moveAllocationsWithinUMAllocsManagerToGpuDomainCalled++;
+        }
         uint32_t moveAllocationToGpuDomainCalledTimes = 0;
+        uint32_t moveAllocationsWithinUMAllocsManagerToGpuDomainCalled = 0;
         void *migratedAddress = nullptr;
     };
 
@@ -548,7 +553,55 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     commandQueue->destroy();
     context->freeMem(ptr);
 }
+HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
+          whenExecutingKernelWithIndirectAccessThenSharedAllocationsAreMigrated, IsAtLeastSkl) {
 
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
+    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
+
+    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::SUCCESS;
+
+    ze_result_t res = context->makeMemoryResident(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
+    EXPECT_EQ(previousSize + 1, currentSize);
+
+    const ze_command_queue_desc_t desc = {};
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue);
+    EXPECT_NE(nullptr, commandQueue);
+
+    EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+    commandList->indirectAllocationsAllowed = true;
+    commandList->close();
+
+    auto commandListHandle = commandList->toHandle();
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+
+    EXPECT_EQ(mockPageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomainCalled, 1u);
+
+    mockMemoryInterface->evictResult = NEO::MemoryOperationsStatus::SUCCESS;
+    res = context->evictMemory(device, ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    commandQueue->destroy();
+    context->freeMem(ptr);
+}
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
          whenExecutingCommandListsWithNoMigrationThenMemoryFromMakeResidentIsNotMovedToGpu) {
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());

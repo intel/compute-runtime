@@ -160,6 +160,10 @@ void CommandList::migrateSharedAllocations() {
     for (auto alloc : driverHandleImp->sharedMakeResidentAllocations) {
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc.second->getGpuAddress()));
     }
+    if (this->unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+        auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(this->device->getDriverHandle()->getSvmAllocsManager());
+    }
 }
 
 } // namespace L0

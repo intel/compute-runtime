@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     virtual ~PageFaultManager() = default;
 
     MOCKABLE_VIRTUAL void moveAllocationToGpuDomain(void *ptr);
-    void moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager);
+    MOCKABLE_VIRTUAL void moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager);
     void insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties);
     void removeAllocation(void *ptr);
 
