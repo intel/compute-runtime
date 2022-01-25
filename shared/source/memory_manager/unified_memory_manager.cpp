@@ -514,6 +514,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
             UNRECOVERABLE_IF(nullptr == gpuAllocation);
             commandStreamReceiver.makeResident(*gpuAllocation);
             gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, commandStreamReceiver.getOsContext().getContextId());
+            gpuAllocation->setEvictable(false);
         }
     }
 }
@@ -525,7 +526,7 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
             auto commandStreamReceiver = internalAllocationsHandling.first;
             auto gpuAllocation = allocationData->gpuAllocations.getGraphicsAllocation(commandStreamReceiver->getRootDeviceIndex());
             auto desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
-            if (gpuAllocation->getResidencyTaskCount(commandStreamReceiver->getOsContext().getContextId()) == GraphicsAllocation::objectAlwaysResident) {
+            if (gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
                 gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver->getOsContext().getContextId());
                 gpuAllocation->updateResidencyTaskCount(desiredTaskCount, commandStreamReceiver->getOsContext().getContextId());
                 gpuAllocation->updateTaskCount(desiredTaskCount, commandStreamReceiver->getOsContext().getContextId());

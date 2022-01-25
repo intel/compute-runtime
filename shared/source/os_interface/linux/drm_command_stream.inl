@@ -242,7 +242,10 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
             gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
         }
     }
-    gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
+
+    if (!gfxAllocation.isAlwaysResident(this->osContext->getContextId())) {
+        gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
+    }
 }
 
 template <typename GfxFamily>

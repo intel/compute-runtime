@@ -747,6 +747,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenNewTracki
     unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
     EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->peekEvictable());
 
     EXPECT_EQ(1u, unifiedMemoryManager->indirectAllocationsResidency.size());
     auto internalEntry = unifiedMemoryManager->indirectAllocationsResidency.find(&commandStreamReceiver)->second;

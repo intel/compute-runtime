@@ -712,6 +712,26 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMultipleMakeResidentWhenMa
     mm->freeGraphicsMemory(allocation1);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationThatIsAlwaysResidentWhenMakeNonResidentIsCalledThenItIsNotMadeNonResident) {
+    auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    ASSERT_NE(nullptr, allocation1);
+
+    csr->makeResident(*allocation1);
+
+    allocation1->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, csr->getOsContext().getContextId());
+
+    EXPECT_NE(0u, csr->getResidencyAllocations().size());
+
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+
+    EXPECT_EQ(0u, csr->getResidencyAllocations().size());
+    EXPECT_TRUE(allocation1->isResident(csr->getOsContext().getContextId()));
+
+    mm->freeGraphicsMemory(allocation1);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMemObjectCallsDrmCsrWhenMakingNonResidentThenMakeNonResidentWithGraphicsAllocation) {
     auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), 0x1000});
     ASSERT_NE(nullptr, allocation1);

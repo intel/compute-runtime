@@ -170,12 +170,16 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         bool indirectAllocationsAllowed = commandList->hasIndirectAllocationsAllowed();
         if (indirectAllocationsAllowed) {
-            UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
-
             auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-            svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
-                                                                         commandList->commandContainer.getResidencyContainer(),
-                                                                         unifiedMemoryControls.generateMask());
+            if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() == 1) {
+                svmAllocsManager->makeIndirectAllocationsResident(*csr, csr->peekTaskCount() + 1u);
+            } else {
+                UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
+
+                svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
+                                                                             commandList->commandContainer.getResidencyContainer(),
+                                                                             unifiedMemoryControls.generateMask());
+            }
         }
 
         totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();

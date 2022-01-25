@@ -244,6 +244,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalkerForAllQueues, -1, "En
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideKernelSizeLimitForSmallDispatch, -1, "-1: default, >=0: on XEHP+ changes the threshold for treating kernel as small during NULL LWS selection")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideUseKmdWaitFunction, -1, "-1: default (L0: disabled), 0: disabled, 1: enabled. It uses only busy loop to wait or busy loop with KMD wait function, when KMD fallback is enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ResolveDependenciesViaPipeControls, -1, "-1: default , 0: disabled, 1: enabled. If enabled, instead of programming semaphores, dependencies are resolved using task levels")
+DECLARE_DEBUG_VARIABLE(int32_t, MakeIndirectAllocationsResidentAsPack, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver handles all indirect allocations as one pack instead of making them resident individually.")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")

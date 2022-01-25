@@ -138,7 +138,9 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
         }
     }
 
-    gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
+    if (!gfxAllocation.isAlwaysResident(this->osContext->getContextId())) {
+        gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
+    }
 }
 
 void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) {
