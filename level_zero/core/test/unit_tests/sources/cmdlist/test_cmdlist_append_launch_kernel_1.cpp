@@ -26,7 +26,7 @@ namespace ult {
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
-    createKernel();
+    createKernel(true);
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
     kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;

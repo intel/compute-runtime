@@ -21,4 +21,8 @@ struct UnifiedMemoryControls {
     bool indirectDeviceAllocationsAllowed = false;
     bool indirectHostAllocationsAllowed = false;
     bool indirectSharedAllocationsAllowed = false;
+
+    bool anyIndirectAllocationsAllowed() const {
+        return indirectDeviceAllocationsAllowed || indirectHostAllocationsAllowed || indirectSharedAllocationsAllowed;
+    }
 };
