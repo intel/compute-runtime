@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,4 +21,8 @@ struct UnifiedMemoryControls {
     bool indirectDeviceAllocationsAllowed = false;
     bool indirectHostAllocationsAllowed = false;
     bool indirectSharedAllocationsAllowed = false;
+
+    bool anyIndirectAllocationsAllowed() const {
+        return indirectDeviceAllocationsAllowed || indirectHostAllocationsAllowed || indirectSharedAllocationsAllowed;
+    }
 };
