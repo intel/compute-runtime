@@ -65,9 +65,30 @@ struct ContextFdMock : public L0::ContextImp {
                                       ze_device_handle_t *phDevice) override {
         ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
         if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
-            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
-            extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            ze_base_properties_t *baseProperties =
+                reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
+            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                    reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
+                extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            }
+        }
+
+        return res;
+    }
+
+    ze_result_t getImageAllocProperties(Image *image,
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
+
+        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
+            ze_base_properties_t *baseProperties =
+                reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
+            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                    reinterpret_cast<ze_external_memory_export_fd_t *>(pAllocProperties->pNext);
+                extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            }
         }
 
         return res;
@@ -153,9 +174,30 @@ struct ContextMemHandleMock : public L0::ContextImp {
                                       ze_device_handle_t *phDevice) override {
         ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
         if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
-            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
-            extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            ze_base_properties_t *baseProperties =
+                reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
+            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                    reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
+                extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            }
+        }
+
+        return res;
+    }
+
+    ze_result_t getImageAllocProperties(Image *image,
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
+
+        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
+            ze_base_properties_t *baseProperties =
+                reinterpret_cast<ze_base_properties_t *>(pAllocProperties->pNext);
+            if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
+                ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                    reinterpret_cast<ze_external_memory_export_fd_t *>(pAllocProperties->pNext);
+                extendedMemoryExportProperties->fd = driverHandle->mockFd;
+            }
         }
 
         return res;
@@ -238,13 +280,27 @@ struct ContextHandleMock : public L0::ContextImp {
                                       ze_device_handle_t *phDevice) override {
         ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
         if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
-            _ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
-                reinterpret_cast<_ze_external_memory_export_win32_handle_t *>(pMemAllocProperties->pNext);
+            ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pMemAllocProperties->pNext);
             extendedMemoryExportProperties->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(driverHandle->mockHandle));
         }
 
         return res;
     }
+
+    ze_result_t getImageAllocProperties(Image *image,
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override {
+
+        ze_result_t res = ContextImp::getImageAllocProperties(image, pAllocProperties);
+        if (ZE_RESULT_SUCCESS == res && pAllocProperties->pNext) {
+            ze_external_memory_export_win32_handle_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_win32_handle_t *>(pAllocProperties->pNext);
+            extendedMemoryExportProperties->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(driverHandle->mockHandle));
+        }
+
+        return res;
+    }
+
     ze_result_t freeMem(const void *ptr) override {
         L0::ContextImp::freeMem(ptr);
         return ZE_RESULT_SUCCESS;

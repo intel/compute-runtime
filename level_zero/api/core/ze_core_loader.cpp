@@ -460,11 +460,13 @@ zeGetImageProcAddrTable(
     pDdiTable->pfnGetProperties = zeImageGetProperties;
     pDdiTable->pfnCreate = zeImageCreate;
     pDdiTable->pfnDestroy = zeImageDestroy;
+    pDdiTable->pfnGetAllocPropertiesExt = zeImageGetAllocPropertiesExt;
     driver_ddiTable.core_ddiTable.Image = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGetProperties = zeImageGetProperties_Tracing;
         pDdiTable->pfnCreate = zeImageCreate_Tracing;
         pDdiTable->pfnDestroy = zeImageDestroy_Tracing;
+        pDdiTable->pfnGetAllocPropertiesExt = zeImageGetAllocPropertiesExt;
     }
     return result;
 }

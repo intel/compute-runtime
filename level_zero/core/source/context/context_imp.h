@@ -60,6 +60,8 @@ struct ContextImp : Context {
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override;
+    ze_result_t getImageAllocProperties(Image *image,
+                                        ze_image_allocation_ext_properties_t *pAllocProperties) override;
     ze_result_t createModule(ze_device_handle_t hDevice,
                              const ze_module_desc_t *desc,
                              ze_module_handle_t *phModule,

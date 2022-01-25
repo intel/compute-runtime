@@ -17,6 +17,7 @@ struct _ze_context_handle_t {
 
 namespace L0 {
 struct DriverHandle;
+struct Image;
 
 struct Context : _ze_context_handle_t {
     inline static ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
@@ -77,6 +78,8 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t getMemAllocProperties(const void *ptr,
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) = 0;
+    virtual ze_result_t getImageAllocProperties(Image *image,
+                                                ze_image_allocation_ext_properties_t *pAllocProperties) = 0;
     virtual ze_result_t createModule(ze_device_handle_t hDevice,
                                      const ze_module_desc_t *desc,
                                      ze_module_handle_t *phModule,

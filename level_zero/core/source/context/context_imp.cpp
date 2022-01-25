@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/helpers/allocation_extensions.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
@@ -573,31 +574,22 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
         }
     }
 
-    if (pMemAllocProperties->pNext) {
-        ze_base_properties_t *extendedProperties =
-            reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
-        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
-            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
-                reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
-            if (extendedMemoryExportProperties->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
-            if (pMemAllocProperties->type != ZE_MEMORY_TYPE_DEVICE) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-            uint64_t handle = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager());
-            extendedMemoryExportProperties->fd = static_cast<int>(handle);
-        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32) {
-            ze_external_memory_export_win32_handle_t *exportStructure = reinterpret_cast<ze_external_memory_export_win32_handle_t *>(extendedProperties);
-            if (exportStructure->flags != ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
-            uint64_t handle = alloc->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager());
-            exportStructure->handle = reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle));
-        }
+    return handleAllocationExtensions(alloc->gpuAllocations.getDefaultGraphicsAllocation(),
+                                      pMemAllocProperties->type,
+                                      pMemAllocProperties->pNext,
+                                      driverHandle);
+}
+
+ze_result_t ContextImp::getImageAllocProperties(Image *image, ze_image_allocation_ext_properties_t *pAllocProperties) {
+    NEO::GraphicsAllocation *alloc = image->getAllocation();
+
+    if (alloc == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    return ZE_RESULT_SUCCESS;
+    pAllocProperties->id = 0;
+
+    return handleAllocationExtensions(alloc, ZE_MEMORY_TYPE_DEVICE, pAllocProperties->pNext, driverHandle);
 }
 
 ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,

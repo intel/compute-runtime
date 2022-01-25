@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,14 @@ zeImageGetMemoryPropertiesExp(
     ze_image_handle_t hImage,
     ze_image_memory_properties_exp_t *pMemoryProperties) {
     return L0::Image::fromHandle(hImage)->getMemoryProperties(pMemoryProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeImageGetAllocPropertiesExt(
+    ze_context_handle_t hContext,
+    ze_image_handle_t hImage,
+    ze_image_allocation_ext_properties_t *pAllocProperties) {
+    return L0::Context::fromHandle(hContext)->getImageAllocProperties(L0::Image::fromHandle(hImage), pAllocProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

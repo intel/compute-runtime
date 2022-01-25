@@ -21,6 +21,8 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -1252,7 +1254,7 @@ TEST_F(MemoryExportImportFailTest,
 
     ze_device_handle_t deviceHandle;
     result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
     EXPECT_EQ(deviceHandle, device->toHandle());
     EXPECT_EQ(extendedProperties.fd, std::numeric_limits<int>::max());
@@ -1497,7 +1499,7 @@ TEST_F(MemoryExportImportWinHandleTest,
 }
 
 TEST_F(MemoryExportImportWinHandleTest,
-       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndSupportedFlagThenValidFileDescriptorIsReturned) {
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndSupportedFlagThenValidHandleIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1522,6 +1524,167 @@ TEST_F(MemoryExportImportWinHandleTest,
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(MemoryTest,
+          givenCallToGetImageAllocPropertiesWithNoBackingAllocationErrorIsReturned, IsAtLeastSkl) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    // uninitialized, so no backing graphics allocation
+    struct ImageCoreFamily<gfxCoreFamily> image = {};
+
+    ze_result_t result = context->getImageAllocProperties(&image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+}
+
+struct ImageWindowsExportImportTest : public MemoryExportImportWinHandleTest {
+    void SetUp() override {
+        MemoryExportImportWinHandleTest::SetUp();
+
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.arraylevels = 1u;
+        zeDesc.depth = 1u;
+        zeDesc.height = 1u;
+        zeDesc.width = 1u;
+        zeDesc.miplevels = 1u;
+        zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+        zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+        zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                         ZE_IMAGE_FORMAT_TYPE_UINT,
+                         ZE_IMAGE_FORMAT_SWIZZLE_R,
+                         ZE_IMAGE_FORMAT_SWIZZLE_G,
+                         ZE_IMAGE_FORMAT_SWIZZLE_B,
+                         ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+        auto result = Image::create(productFamily, device, &zeDesc, &image);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+
+    void TearDown() override {
+        image->destroy();
+        MemoryExportImportWinHandleTest::TearDown();
+    }
+
+    L0::Image *image;
+};
+
+TEST_F(ImageWindowsExportImportTest,
+       givenCallToGetImageAllocPropertiesThenIdIsReturned) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    ze_result_t result = context->getImageAllocProperties(image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(imageProperties.id, 0ul);
+}
+
+TEST_F(ImageWindowsExportImportTest,
+       givenCallToGetImageAllocPropertiesWithExtendedExportPropertiesThenValidHandleIsReturned) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    ze_external_memory_export_win32_handle_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    extendedProperties.handle = nullptr;
+    imageProperties.pNext = &extendedProperties;
+
+    ze_result_t result = context->getImageAllocProperties(image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(imageProperties.id, 0ul);
+
+    EXPECT_NE(extendedProperties.handle, nullptr);
+    EXPECT_EQ(extendedProperties.handle, reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(driverHandle->mockHandle)));
+}
+
+TEST_F(ImageWindowsExportImportTest,
+       givenCallToGetImageAllocPropertiesWithExtendedExportPropertiesAndInvalidStructureTypeThenErrorIsReturned) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    ze_external_memory_export_win32_handle_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    extendedProperties.handle = nullptr;
+    imageProperties.pNext = &extendedProperties;
+
+    ze_result_t result = context->getImageAllocProperties(image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, result);
+}
+
+TEST_F(ImageWindowsExportImportTest,
+       givenCallToGetImageAllocPropertiesWithExtendedExportPropertiesAndUnsupportedFlagsThenErrorIsReturned) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    ze_external_memory_export_win32_handle_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    extendedProperties.handle = nullptr;
+    imageProperties.pNext = &extendedProperties;
+
+    ze_result_t result = context->getImageAllocProperties(image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, result);
+}
+
+struct ImageFdExportImportTest : public MemoryExportImportTest {
+    void SetUp() override {
+        MemoryExportImportTest::SetUp();
+
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.arraylevels = 1u;
+        zeDesc.depth = 1u;
+        zeDesc.height = 1u;
+        zeDesc.width = 1u;
+        zeDesc.miplevels = 1u;
+        zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+        zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+        zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                         ZE_IMAGE_FORMAT_TYPE_UINT,
+                         ZE_IMAGE_FORMAT_SWIZZLE_R,
+                         ZE_IMAGE_FORMAT_SWIZZLE_G,
+                         ZE_IMAGE_FORMAT_SWIZZLE_B,
+                         ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+        auto result = Image::create(productFamily, device, &zeDesc, &image);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    }
+
+    void TearDown() override {
+        image->destroy();
+        MemoryExportImportTest::TearDown();
+    }
+
+    L0::Image *image;
+};
+
+TEST_F(ImageFdExportImportTest,
+       givenCallToGetImageAllocPropertiesWithExtendedExportPropertiesThenValidFileDescriptorIsReturned) {
+
+    ze_image_allocation_ext_properties_t imageProperties = {};
+    imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
+
+    ze_external_memory_export_fd_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    extendedProperties.fd = std::numeric_limits<int>::max();
+    imageProperties.pNext = &extendedProperties;
+
+    ze_result_t result = context->getImageAllocProperties(image, &imageProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(imageProperties.id, 0ul);
+
+    EXPECT_EQ(extendedProperties.fd, driverHandle->mockFd);
 }
 
 struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
