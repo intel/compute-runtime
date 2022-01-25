@@ -398,7 +398,6 @@ ze_result_t ContextImp::getMemAddressRange(const void *ptr,
 
         return ZE_RESULT_SUCCESS;
     }
-    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
