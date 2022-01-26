@@ -42,6 +42,7 @@ struct prelim_i915_uevent {
 struct prelim_i915_user_extension {
 #define PRELIM_I915_USER_EXT		(1 << 16)
 #define PRELIM_I915_USER_EXT_MASK(x)	(x & 0xffff)
+#define PRELIM_I915_CONTEXT_ENGINES_EXT_PARALLEL2_SUBMIT (PRELIM_I915_USER_EXT | 3)
 };
 
 struct prelim_drm_i915_gem_context_create_ext_clone {
@@ -469,274 +470,8 @@ enum prelim_drm_i915_gem_engine_class {
 	PRELIM_I915_ENGINE_CLASS_COMPUTE = 4,
 };
 
-/*
- * prelim_i915_context_engines_parallel_submit:
- *
- * Setup a gem context to allow multiple BBs to be submitted in a single execbuf
- * IOCTL. Those BBs will then be scheduled to run on the GPU in parallel.
- *
- * All hardware contexts in the engine set are configured for parallel
- * submission (i.e. once this gem context is configured for parallel submission,
- * all the hardware contexts, regardless if a BB is available on each individual
- * context, will be submitted to the GPU in parallel). A user can submit BBs to
- * subset (or superset) of the hardware contexts, in a single execbuf IOCTL, but
- * it is not recommended as it may reserve physical engines with nothing to run
- * on them. Highly recommended to configure the gem context with N hardware
- * contexts then always submit N BBs in a single IOCTL.
- *
- * Their are two currently defined ways to control the placement of the
- * hardware contexts on physical engines: default behavior (no flags) and
- * PRELIM_I915_PARALLEL_IMPLICT_BONDS (a flag). More flags may be added the in the
- * future as new hardware / use cases arise. Details of how to use this
- * interface below above the flags.
- *
- * Returns -EINVAL if hardware context placement configuration invalid or if the
- * placement configuration isn't supported on the platform / submission
- * interface.
- */
-struct prelim_i915_context_engines_parallel_submit {
-	struct i915_user_extension base;
-
-/*
- * Default placement behvavior (currently unsupported):
- *
- * Rather than restricting parallel submission to a single class with a
- * logically contiguous placement (PRELIM_I915_PARALLEL_IMPLICT_BONDS), add a mode that
- * enables parallel submission across multiple engine classes. In this case each
- * context's logical engine mask indicates where that context can placed
- * compared to the flag, PRELIM_I915_PARALLEL_IMPLICT_BONDS, where only the first
- * context's logical mask controls the placement. It is implied in this mode
- * that all contexts have mutual exclusive placement (e.g. if one context is
- * running VCS0 no other contexts can run on VCS0).
- *
- * Example 1 pseudo code:
- * INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- * set_engines(INVALID, INVALID)
- * set_load_balance(engine_index=0, num_siblings=4, engines=VCS0,VCS1,VCS2,VCS3)
- * set_load_balance(engine_index=1, num_siblings=4, engines=RCS0,RCS1,RCS2,RCS3)
- * set_parallel()
- *
- * Results in the following valid placements:
- * VCS0, RCS0
- * VCS0, RCS1
- * VCS0, RCS2
- * VCS0, RCS3
- * VCS1, RCS0
- * VCS1, RCS1
- * VCS1, RCS2
- * VCS1, RCS3
- * VCS2, RCS0
- * VCS2, RCS1
- * VCS2, RCS2
- * VCS2, RCS3
- * VCS3, RCS0
- * VCS3, RCS1
- * VCS3, RCS2
- * VCS3, RCS3
- *
- * Example 2 pseudo code:
- * INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- * set_engines(INVALID, INVALID)
- * set_load_balance(engine_index=0, num_siblings=3, engines=VCS0,VCS1,VCS2)
- * set_load_balance(engine_index=1, num_siblings=3, engines=VCS0,VCS1,VCS2)
- * set_parallel()
- *
- * Results in the following valid placements:
- * VCS0, VCS1
- * VCS0, VCS2
- * VCS1, VCS0
- * VCS1, VCS2
- * VCS2, VCS0
- * VCS2, VCS1
- *
- * This enables a use case where all engines are created equally, we don't care
- * where they are scheduled, we just want a certain number of resources, for
- * those resources to be scheduled in parallel, and possibly across multiple
- * engine classes.
- *
- * This mode is not supported with GuC submission gen12 or any prior platforms,
- * but could be supported in execlists mode. Future GuC platforms may support
- * this.
- */
-
-/*
- * PRELIM_I915_PARALLEL_IMPLICT_BONDS - Create implict bonds between each context.
- * Each context must have the same number sibling and bonds are implictly create
- * of the siblings.
- *
- * All of the below examples are in logical space.
- *
- * Example 1 pseudo code:
- * set_engines(VCS0, VCS1)
- * set_parallel(flags=PRELIM_I915_PARALLEL_IMPLICT_BONDS)
- *
- * Results in the following valid placements:
- * VCS0, VCS1
- *
- * Example 2 pseudo code:
- * INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- * set_engines(INVALID, INVALID)
- * set_load_balance(engine_index=0, num_siblings=4, engines=VCS0,VCS2,VCS4,VCS6)
- * set_load_balance(engine_index=1, num_siblings=4, engines=VCS1,VCS3,VCS5,VCS7)
- * set_parallel(flags=PRELIM_I915_PARALLEL_IMPLICT_BONDS)
- *
- * Results in the following valid placements:
- * VCS0, VCS1
- * VCS2, VCS3
- * VCS4, VCS5
- * VCS6, VCS7
- *
- * Example 3 pseudo code:
- * INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- * set_engines(INVALID, INVALID, INVALID, INVALID)
- * set_load_balance(engine_index=0, num_siblings=2, engines=VCS0,VCS4)
- * set_load_balance(engine_index=1, num_siblings=2, engines=VCS1,VCS5)
- * set_load_balance(engine_index=2, num_siblings=2, engines=VCS2,VCS6)
- * set_load_balance(engine_index=3, num_siblings=2, engines=VCS3,VCS7)
- * set_parallel(flags=PRELIM_I915_PARALLEL_IMPLICT_BONDS)
- *
- * Results in the following valid placements:
- * VCS0, VCS1, VCS2, VCS3
- * VCS4, VCS5, VCS6, VCS7
- *
- * This enables a use case where all engines are not equal and certain placement
- * rules are required (i.e. split-frame requires all contexts to be placed in a
- * logically contiguous order on the VCS engines on gen11/gen12 platforms). This
- * use case (logically contiguous placement, within a single engine class) is
- * supported when using GuC submission. Execlist mode could support all possible
- * bonding configurations.
- */
-#define PRELIM_I915_PARALLEL_IMPLICT_BONDS	(1ull << 63)
-/*
- * Do not allow BBs to be preempted mid BB rather insert coordinated preemption
- * points on all hardware contexts between each BB. An example use case of this
- * feature is split-frame on gen11 or gen12 hardware. When using this feature a
- * BB must be submitted on each hardware context in the parallel gem context.
- * The execbuf2 IOCTL enforces the user adheres to policy.
- */
-#define PRELIM_I915_PARALLEL_BATCH_PREEMPT_BOUNDARY	(1ull << 62)
-#define __PRELIM_I915_PARALLEL_UNKNOWN_FLAGS		(~GENMASK_ULL(63, 62))
-	__u64 flags; /* all undefined flags must be zero */
-	__u64 mbz64[4]; /* reserved for future use; must be zero */
-} __attribute__ ((packed));
-
-/**
- * struct prelim_drm_i915_context_engines_parallel2_submit - Configure engine
- * for parallel submission.
- *
- * Setup a slot in the context engine map to allow multiple BBs to be submitted
- * in a single execbuf IOCTL. Those BBs will then be scheduled to run on the GPU
- * in parallel. Multiple hardware contexts are created internally in the i915
- * run these BBs. Once a slot is configured for N BBs only N BBs can be
- * submitted in each execbuf IOCTL and this is implicit behavior e.g. The user
- * doesn't tell the execbuf IOCTL there are N BBs, the execbuf IOCTL knows how
- * many BBs there are based on the slot's configuration. The N BBs are the last
- * N buffer objects or first N if I915_EXEC_BATCH_FIRST is set.
- *
- * The default placement behavior is to create implicit bonds between each
- * context if each context maps to more than 1 physical engine (e.g. context is
- * a virtual engine). Also we only allow contexts of same engine class and these
- * contexts must be in logically contiguous order. Examples of the placement
- * behavior described below. Lastly, the default is to not allow BBs to
- * preempted mid BB rather insert coordinated preemption on all hardware
- * contexts between each set of BBs. Flags may be added in the future to change
- * both of these default behaviors.
- *
- * Returns -EINVAL if hardware context placement configuration is invalid or if
- * the placement configuration isn't supported on the platform / submission
- * interface.
- * Returns -ENODEV if extension isn't supported on the platform / submission
- * inteface.
- *
- * .. code-block::
- *
- *	Example 1 pseudo code:
- *	CS[X] = generic engine of same class, logical instance X
- *	INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- *	set_engines(INVALID)
- *	set_parallel(engine_index=0, width=2, num_siblings=1,
- *		     engines=CS[0],CS[1])
- *
- *	Results in the following valid placement:
- *	CS[0], CS[1]
- *
- *	Example 2 pseudo code:
- *	CS[X] = generic engine of same class, logical instance X
- *	INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- *	set_engines(INVALID)
- *	set_parallel(engine_index=0, width=2, num_siblings=2,
- *		     engines=CS[0],CS[2],CS[1],CS[3])
- *
- *	Results in the following valid placements:
- *	CS[0], CS[1]
- *	CS[2], CS[3]
- *
- *	This can also be thought of as 2 virtual engines described by 2-D array
- *	in the engines the field with bonds placed between each index of the
- *	virtual engines. e.g. CS[0] is bonded to CS[1], CS[2] is bonded to
- *	CS[3].
- *	VE[0] = CS[0], CS[2]
- *	VE[1] = CS[1], CS[3]
- *
- *	Example 3 pseudo code:
- *	CS[X] = generic engine of same class, logical instance X
- *	INVALID = I915_ENGINE_CLASS_INVALID, I915_ENGINE_CLASS_INVALID_NONE
- *	set_engines(INVALID)
- *	set_parallel(engine_index=0, width=2, num_siblings=2,
- *		     engines=CS[0],CS[1],CS[1],CS[3])
- *
- *	Results in the following valid and invalid placements:
- *	CS[0], CS[1]
- *	CS[1], CS[3] - Not logical contiguous, return -EINVAL
- */
-struct prelim_drm_i915_context_engines_parallel2_submit {
-	/**
-	 * @base: base user extension.
-	 */
-	struct i915_user_extension base;
-
-	/**
-	 * @engine_index: slot for parallel engine
-	 */
-	__u16 engine_index;
-
-	/**
-	 * @width: number of contexts per parallel engine
-	 */
-	__u16 width;
-
-	/**
-	 * @num_siblings: number of siblings per context
-	 */
-	__u16 num_siblings;
-
-	/**
-	 * @mbz16: reserved for future use; must be zero
-	 */
-	__u16 mbz16;
-
-	/**
-	 * @flags: all undefined flags must be zero, currently not defined flags
-	 */
-	__u64 flags;
-
-	/**
-	 * @mbz64: reserved for future use; must be zero
-	 */
-	__u64 mbz64[3];
-
-	/**
-	 * @engines: 2-d array of engine instances to configure parallel engine
-	 *
-	 * length = width (i) * num_siblings (j)
-	 * index = j + i * num_siblings
-	 */
-	struct i915_engine_class_instance engines[0];
-} __attribute__ ((packed));
-
 struct prelim_i915_context_param_engines {
 #define PRELIM_I915_CONTEXT_ENGINES_EXT_PARALLEL_SUBMIT (PRELIM_I915_USER_EXT | 2) /* see prelim_i915_context_engines_parallel_submit */
-#define PRELIM_I915_CONTEXT_ENGINES_EXT_PARALLEL2_SUBMIT (PRELIM_I915_USER_EXT | 3) /* see prelim_i915_context_engines_parallel2_submit */
 };
 
 /* PRELIM OA formats */
@@ -753,6 +488,7 @@ enum prelim_drm_i915_oa_format {
 	PRELIM_I915_OAC_FORMAT_A24u64_B8_C8,
 	PRELIM_I915_OA_FORMAT_A38u64_R2u64_B8_C8,
 	PRELIM_I915_OAM_FORMAT_A2u64_R2u64_B8_C8,
+	PRELIM_I915_OAC_FORMAT_A24u22_B8_C8,
 
 	PRELIM_I915_OA_FORMAT_MAX	/* non-ABI */
 };
@@ -1451,6 +1187,38 @@ struct prelim_drm_i915_gem_wait_user_fence {
 #define PRELIM_I915_UFENCE_WAIT_U32    0xfffffffful
 #define PRELIM_I915_UFENCE_WAIT_U64    0xffffffffffffffffull
 	__s64 timeout;
+};
+
+/*
+ * This extension allows user to attach a pair of <addr, value> to an execbuf.
+ * When that execbuf is finished by GPU HW, the value is written to addr.
+ * So after execbuf is submitted, user can poll addr to know whether execbuf
+ * has been finished or not. User space can also call i915_gem_wait_user_fence_ioctl
+ * (with PRELIM_I915_UFENCE_WAIT_EQ operation) to wait for finishing of execbuf.
+ * This ioctl can sleep so it is more efficient than a busy polling.
+ * So this serves as synchronization purpose. It is similar to DRM_IOCTL_I915_GEM_WAIT,
+ * which is prohibited by compute context. The method introduced here can be use for
+ * both compute and non-compute context.
+ */
+struct prelim_drm_i915_gem_execbuffer_ext_user_fence {
+#define PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE (PRELIM_I915_USER_EXT | 1)
+	struct i915_user_extension base;
+
+	/**
+	 * A virtual address mapped to current process's GPU address space.
+	 * addr has to be qword aligned. address has to be a a valid gpu
+	 * virtual address at the time of batch buffer completion.
+	 */
+	__u64 addr;
+
+	/**
+	 * value to be written to above address after execbuf finishes.
+	 */
+	__u64 value;
+	/**
+	 * for future extensions. Currently not used.
+	 */
+	__u64 rsvd;
 };
 
 struct prelim_drm_i915_vm_bind_ext_sync_fence {
