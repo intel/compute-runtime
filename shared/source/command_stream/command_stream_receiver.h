@@ -359,7 +359,7 @@ class CommandStreamReceiver {
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 
-    IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
+    IndirectHeap *indirectHeap[IndirectHeap::Type::NUM_TYPES];
     OsContext *osContext = nullptr;
 
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.

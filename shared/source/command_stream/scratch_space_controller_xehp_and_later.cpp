@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,7 +127,7 @@ size_t ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState(uint32_t requ
 }
 
 void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
-    if (heapType == IndirectHeap::SURFACE_STATE) {
+    if (heapType == IndirectHeap::Type::SURFACE_STATE) {
         indirectHeap->getSpace(getOffsetToSurfaceState(stateSlotsCount));
     }
 }

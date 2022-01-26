@@ -88,9 +88,9 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 
     completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
                                                       offset,
-                                                      commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-                                                      commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-                                                      commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
@@ -387,9 +387,9 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
 
     completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
                                                       0,
-                                                      commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-                                                      commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-                                                      commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());

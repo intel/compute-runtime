@@ -13,6 +13,7 @@
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 
@@ -25,6 +26,7 @@ namespace NEO {
 class BindlessHeapsHelper;
 class GmmHelper;
 class IndirectHeap;
+class Gmm;
 struct HardwareInfo;
 struct StateComputeModeProperties;
 

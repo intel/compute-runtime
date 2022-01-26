@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,9 +88,9 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
@@ -138,9 +138,9 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;

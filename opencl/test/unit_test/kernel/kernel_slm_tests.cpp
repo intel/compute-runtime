@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // After creating Mock Kernel now create Indirect Heap
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
 
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
@@ -152,7 +152,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
 
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
     INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;

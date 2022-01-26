@@ -758,7 +758,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    IndirectHeap &ih = cmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 2048);
+    IndirectHeap &ih = cmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 2048);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
@@ -874,7 +874,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     DebugManager.flags.EnableHwGenerationLocalIds.set(false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    IndirectHeap &ih = cmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 2048);
+    IndirectHeap &ih = cmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 2048);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
@@ -1445,7 +1445,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsB
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ->getUltCommandStreamReceiver().lastFlushedCommandStream);
-    hwParser.findHardwareCommands<FamilyType>(&cmdQ->getGpgpuCommandStreamReceiver().getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0));
+    hwParser.findHardwareCommands<FamilyType>(&cmdQ->getGpgpuCommandStreamReceiver().getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0));
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, computeWalker->getPartitionType());

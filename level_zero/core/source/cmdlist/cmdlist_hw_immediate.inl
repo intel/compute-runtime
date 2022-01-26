@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,9 +84,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     auto completionStamp = this->csr->flushTask(
         *commandStream,
         commandStreamStart,
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::DYNAMIC_STATE)),
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::INDIRECT_OBJECT)),
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::SURFACE_STATE)),
+        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE)),
+        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT)),
+        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE)),
         this->csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));

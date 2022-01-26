@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpe
     hwInfo->platform.usRevId = 0b111000; // not BD A0
 
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
+    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
@@ -94,7 +94,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpec
     hwInfo->platform.usRevId = 0b111000; // not BD A0
 
     auto commandStreamReceiver = clDevice->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
+    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
@@ -127,7 +127,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     hwInfo->platform.usRevId = 0; // BD A0
 
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
+    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());

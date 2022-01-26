@@ -1768,9 +1768,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
 
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);

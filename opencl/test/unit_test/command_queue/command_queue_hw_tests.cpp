@@ -581,9 +581,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubm
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
 
     uint32_t defaultSshUse = UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
@@ -604,9 +604,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedComma
 
     cl_event blockedEvent = &userEvent;
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
 
     auto spaceToUse = 4u;
 
@@ -636,9 +636,9 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
 
     cl_event blockedEvent = &userEvent;
 
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
 
     auto iohBase = ioh.getCpuBase();
     auto dshBase = dsh.getCpuBase();

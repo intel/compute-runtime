@@ -486,9 +486,9 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), true, 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -538,9 +538,9 @@ TEST_F(InternalsEventTest, GivenSubmitCommandTrueWhenSubmittingCommandsThenRefAp
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -573,9 +573,9 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    mockCmdQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
 
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
@@ -1025,9 +1025,9 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
     MockKernelWithInternals kernel(*pClDevice);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
@@ -1570,9 +1570,9 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
 
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
-    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
     auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     blockedCommandsData->setHeaps(dsh, ioh, ssh);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();

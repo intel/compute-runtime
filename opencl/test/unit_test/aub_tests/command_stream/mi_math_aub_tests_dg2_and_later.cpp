@@ -43,9 +43,9 @@ struct MiMath : public AUBFixture, public ::testing::Test {
         dispatchFlags.guardCommandBufferWithPipeControl = true;
 
         csr->flushTask(*taskStream, 0,
-                       csr->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-                       csr->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-                       csr->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+                       csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+                       csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+                       csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();

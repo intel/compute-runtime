@@ -2361,9 +2361,9 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 128, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 128, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 128, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 128, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 128, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 128, ih3);
 
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 128, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));

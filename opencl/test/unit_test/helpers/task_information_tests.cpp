@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,9 +102,9 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
     MockKernelWithInternals kernel(*device);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
@@ -135,9 +135,9 @@ TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAl
     auto &allocationsForReuse = allocationStorage.getAllocationsForReuse();
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     auto &heapAllocation1 = *ih1->getGraphicsAllocation();
@@ -212,9 +212,9 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
 
     PreemptionMode preemptionMode = device->getPreemptionMode();
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
@@ -260,9 +260,9 @@ HWTEST_F(DispatchFlagsTests, givenClCommandCopyImageWhenSubmitThenFlushTextureCa
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
 
     PreemptionMode preemptionMode = device->getPreemptionMode();
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
@@ -313,9 +313,9 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     mockCmdQ->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     TimestampPacketDependencies timestampPacketDependencies;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
 
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
@@ -349,9 +349,9 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
-    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
-    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
     mockCmdQ->dispatchHints = 1234;
 
     PreemptionMode preemptionMode = device->getPreemptionMode();

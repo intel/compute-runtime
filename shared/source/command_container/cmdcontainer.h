@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
 
 #include <cstdint>
 #include <limits>
@@ -21,10 +21,12 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 class AllocationsList;
+class IndirectHeap;
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
-using HeapType = IndirectHeap::Type;
+using HeapContainer = std::vector<GraphicsAllocation *>;
+using HeapType = IndirectHeapType;
 
 enum class ErrorCode {
     SUCCESS = 0,
@@ -39,19 +41,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
         MemoryConstants::cacheLineSize +
         CSRequirements::csOverfetchSize;
 
-    CommandContainer() {
-        for (auto &indirectHeap : indirectHeaps) {
-            indirectHeap = nullptr;
-        }
+    CommandContainer();
 
-        for (auto &allocationIndirectHeap : allocationIndirectHeaps) {
-            allocationIndirectHeap = nullptr;
-        }
-    }
-
-    CommandContainer(uint32_t maxNumAggregatedIdds) : CommandContainer() {
-        numIddsPerBlock = maxNumAggregatedIdds;
-    }
+    CommandContainer(uint32_t maxNumAggregatedIdds);
 
     CmdBufferContainer &getCmdBufferAllocations() { return cmdBufferAllocations; }
 
@@ -64,7 +56,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     LinearStream *getCommandStream() { return commandStream.get(); }
 
-    IndirectHeap *getIndirectHeap(HeapType heapType) { return indirectHeaps[heapType].get(); }
+    IndirectHeap *getIndirectHeap(HeapType heapType);
 
     HeapHelper *getHeapHelper() { return heapHelper.get(); }
 

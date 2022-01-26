@@ -83,7 +83,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     ASSERT_NE(nullptr, kernel);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
     auto usedIndirectHeapBefore = indirectHeap.getUsed();
     indirectHeap.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
@@ -157,7 +157,7 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
     auto usedBefore = indirectHeap.getUsed();
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::sendCrossThreadData(
@@ -181,7 +181,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
 
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     kernel->getPatchInfoDataList().push_back(patchInfoData);
@@ -247,7 +247,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWh
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
     indirectHeap.getSpace(128u);
 
     PatchInfoData patchInfoData1 = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
@@ -313,9 +313,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeDSH = dsh.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
@@ -379,9 +379,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
     auto expectedBindingTableCount = 3u;
     mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
@@ -425,9 +425,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
     auto expectedBindingTableCount = 100u;
     mockKernelWithInternal->mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
@@ -491,9 +491,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     size_t IDToffset = dsh.getUsed();
@@ -582,9 +582,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     auto sshUsed = ssh.getUsed();
 
@@ -692,9 +692,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
         auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
         *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-        auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-        auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-        auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+        auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+        auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+        auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
         // Initialize binding table state pointers with pattern
         EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
@@ -770,7 +770,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     ssh.align(8);
     auto usedBefore = ssh.getUsed();
@@ -813,7 +813,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     // Initialize binding table state pointers with pattern
     auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
@@ -841,9 +841,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
     uint32_t interfaceDescriptorIndex = 0;
@@ -913,9 +913,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     auto pWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pWalkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     const uint32_t samplerTableOffset = 64;
     const uint32_t samplerStateSize = sizeof(SAMPLER_STATE) * 2;
@@ -1285,9 +1285,9 @@ HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendi
     auto &commandStream = cmdQ.getCS(1024);
     auto pWalkerCmd = reinterpret_cast<typename FamilyType::WALKER_TYPE *>(commandStream.getSpace(0));
 
-    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
-    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     auto interfaceDescriptor = reinterpret_cast<typename FamilyType::INTERFACE_DESCRIPTOR_DATA *>(dsh.getSpace(0));
@@ -1379,7 +1379,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
 
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
     indirectHeap.getSpace(128u);
 
     PatchInfoData patchInfoData1 = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -668,7 +668,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         mockCmdQ->enqueueKernel(kernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
 
-        sshUsageWithoutSyncBuffer = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed();
+        sshUsageWithoutSyncBuffer = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0).getUsed();
     }
 
     {
@@ -687,7 +687,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         mockCmdQ->enqueueKernel(kernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
 
-        auto &surfaceStateHeap = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0);
+        auto &surfaceStateHeap = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0);
         EXPECT_EQ(sshUsageWithoutSyncBuffer + kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize, surfaceStateHeap.getUsed());
 
         ClHardwareParse hwParser;

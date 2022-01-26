@@ -54,7 +54,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
     flushStamp.reset(new FlushStampTracker(true));
-    for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
+    for (int i = 0; i < IndirectHeap::Type::NUM_TYPES; ++i) {
         indirectHeap[i] = nullptr;
     }
     internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
@@ -80,7 +80,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
         userPauseConfirmation->join();
     }
 
-    for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
+    for (int i = 0; i < IndirectHeap::Type::NUM_TYPES; ++i) {
         if (indirectHeap[i] != nullptr) {
             auto allocation = indirectHeap[i]->getGraphicsAllocation();
             if (allocation != nullptr) {
@@ -450,10 +450,10 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;
     auto finalHeapSize = defaultHeapSize;
-    if (IndirectHeap::SURFACE_STATE == heapType) {
+    if (IndirectHeap::Type::SURFACE_STATE == heapType) {
         finalHeapSize = defaultSshSize;
     }
-    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType ? canUse4GbHeaps : false;
+    bool requireInternalHeap = IndirectHeap::Type::INDIRECT_OBJECT == heapType ? canUse4GbHeaps : false;
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         requireInternalHeap = false;
@@ -475,7 +475,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }
 
-    if (IndirectHeap::SURFACE_STATE == heapType) {
+    if (IndirectHeap::Type::SURFACE_STATE == heapType) {
         DEBUG_BREAK_IF(minRequiredSize > defaultSshSize - MemoryConstants::pageSize);
         finalHeapSize = defaultSshSize - MemoryConstants::pageSize;
     }

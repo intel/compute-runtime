@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCor
         std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
         size_t gws[] = {1, 1, 1};
-        auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+        auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
         void *surfaceStates = ssh.getSpace(0);
 
         mockCmdQ->enqueueKernel(debugKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -125,7 +125,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSurfaceStateFor
         std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
         size_t gws[] = {1, 1, 1};
-        auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+        auto &ssh = mockCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 4096u);
         mockCmdQ->enqueueKernel(debugKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
         auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh.getCpuBase());

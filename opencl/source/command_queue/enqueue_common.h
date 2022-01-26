@@ -726,8 +726,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     IndirectHeap *dsh = nullptr;
     IndirectHeap *ioh = nullptr;
 
-    dsh = &getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
-    ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
+    dsh = &getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
+    ioh = &getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u);
 
     auto allocNeedsFlushDC = false;
     if (!device->isFullRangeSvm()) {
@@ -811,7 +811,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         commandStreamStart,
         *dsh,
         *ioh,
-        getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+        getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
         taskLevel,
         dispatchFlags,
         getDevice());
@@ -1015,9 +1015,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         completionStamp = getGpgpuCommandStreamReceiver().flushTask(
             *commandStream,
             commandStreamStart,
-            getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-            getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-            getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+            getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+            getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+            getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
             taskLevel,
             dispatchFlags,
             getDevice());

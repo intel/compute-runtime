@@ -10,6 +10,7 @@
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 

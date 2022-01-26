@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -523,9 +523,9 @@ INSTANTIATE_TEST_CASE_P(
     Device,
     CommandContainerHeaps,
     testing::Values(
-        IndirectHeap::DYNAMIC_STATE,
-        IndirectHeap::INDIRECT_OBJECT,
-        IndirectHeap::SURFACE_STATE));
+        IndirectHeap::Type::DYNAMIC_STATE,
+        IndirectHeap::Type::INDIRECT_OBJECT,
+        IndirectHeap::Type::SURFACE_STATE));
 
 TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThenHeapIsReturned) {
     HeapType heap = GetParam();
@@ -557,7 +557,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
     auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
     auto availableSizeAfter = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
     EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
-    EXPECT_EQ(!cmdContainer.isHeapDirty(heap), heap == IndirectHeap::INDIRECT_OBJECT);
+    EXPECT_EQ(!cmdContainer.isHeapDirty(heap), heap == IndirectHeap::Type::INDIRECT_OBJECT);
 }
 
 TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHeapsAreCreatedWithCorrectRootDeviceIndex) {

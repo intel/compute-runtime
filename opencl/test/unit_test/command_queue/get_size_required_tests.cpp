@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,9 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
-        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
-        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
+        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u);
+        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u);
+        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u);
 
         usedBeforeDSH = dsh->getUsed();
         usedBeforeIOH = ioh->getUsed();
