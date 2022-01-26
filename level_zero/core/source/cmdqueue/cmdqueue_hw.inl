@@ -171,7 +171,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         bool indirectAllocationsAllowed = commandList->hasIndirectAllocationsAllowed();
         if (indirectAllocationsAllowed) {
             auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-            if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() == 1) {
+            auto submitAsPack = device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
+            if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
+                submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
+            }
+
+            if (submitAsPack) {
                 svmAllocsManager->makeIndirectAllocationsResident(*csr, csr->peekTaskCount() + 1u);
             } else {
                 UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();

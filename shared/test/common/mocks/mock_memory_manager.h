@@ -183,6 +183,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         }
         return allocateGraphicsMemoryForNonSvmHostPtrResult;
     }
+    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override {
+        if (overrideAllocateAsPackReturn != -1) {
+            return !!overrideAllocateAsPackReturn;
+        } else {
+            return MemoryManager::allowIndirectAllocationsAsPack(rootDeviceIndex);
+        }
+    }
 
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t populateOsHandlesCalled = 0u;
@@ -191,6 +198,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
+    int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
     uint32_t successAllocatedGraphicsMemoryIndex = 0u;
