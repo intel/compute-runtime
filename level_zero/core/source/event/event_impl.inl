@@ -164,7 +164,15 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
             baseAddr += singlePacketSize;
         }
     }
-    assignKernelEventCompletionData(hostAddress);
+
+    const auto dataSize = 4u * EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    TagSizeT tagValues[dataSize];
+
+    for (uint32_t index = 0u; index < dataSize; index++) {
+        tagValues[index] = eventVal;
+    }
+
+    assignKernelEventCompletionData(tagValues);
 
     return ZE_RESULT_SUCCESS;
 }
