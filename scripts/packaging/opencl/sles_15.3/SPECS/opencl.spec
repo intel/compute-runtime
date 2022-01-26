@@ -7,7 +7,7 @@
 %global NEO_OCL_VERSION_MINOR xxx
 %global NEO_OCL_VERSION_BUILD xxx
 
-%define gmmlib_sover  12
+%define gmmlib_sover 12
 %define igc_sover 1
 
 %if !0%{?build_type:1}

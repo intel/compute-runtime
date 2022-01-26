@@ -5,7 +5,7 @@
 %global rel xxx
 %global build_id xxx
 
-%define gmmlib_sover  12
+%define gmmlib_sover 12
 %define igc_sover 1
 
 %if !0%{?build_type:1}
