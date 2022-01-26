@@ -38,19 +38,23 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 
     if (useBooMmap) {
-        void *cpuPointer = mapCpuPointerOrReuse(alignment, alignedSize);
+        auto totalSizeToAlloc = alignedSize + alignment;
+        auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
-        auto drm = &this->getDrm(allocationData.rootDeviceIndex);
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(
-            this->createBufferObjectInMemoryRegion(drm, reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
+        auto cpuBasePointer = cpuPointer;
+        cpuPointer = alignUp(cpuPointer, alignment);
+
+        auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
+
         if (!bo) {
-            this->munmapFunction(cpuPointer, alignedSize);
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
             return nullptr;
         }
 
         uint64_t offset = 0;
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, I915_MMAP_OFFSET_WB, offset)) {
-            this->munmapFunction(cpuPointer, alignedSize);
+            this->munmapFunction(cpuPointer, size);
             return nullptr;
         }
 
@@ -63,6 +67,11 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->peekAddress(), alignedSize, MemoryPool::System4KBPages);
         allocation->setMmapPtr(cpuPointer);
         allocation->setMmapSize(alignedSize);
+        if (pointerDiff != 0) {
+            allocation->registerMemoryToUnmap(cpuBasePointer, pointerDiff, this->munmapFunction);
+        }
+        [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
+        DEBUG_BREAK_IF(retCode != 0);
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
 
         bo.release();

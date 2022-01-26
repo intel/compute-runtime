@@ -125,10 +125,6 @@ DrmMemoryManager::~DrmMemoryManager() {
             MemoryManager::alignedFreeWrapper(memoryForPinBB);
         }
     }
-    if (remainingMapBufferSize > 0) {
-        [[maybe_unused]] int retCode = this->munmapFunction(mapBufferAddress, remainingMapBufferSize);
-        DEBUG_BREAK_IF(retCode != 0);
-    }
 }
 
 void DrmMemoryManager::releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) {
@@ -344,54 +340,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
     bo.release();
 
     return allocation.release();
-}
-
-void *DrmMemoryManager::mapCpuPointer(size_t alignment, size_t alignedSize) {
-    auto totalSizeToAlloc = alignedSize + alignment;
-    auto cpuBasePointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
-
-    auto *cpuPointer = alignUp(cpuBasePointer, alignment);
-    auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
-
-    if (pointerDiff != 0) {
-        [[maybe_unused]] int retCode = this->munmapFunction(cpuBasePointer, pointerDiff);
-        DEBUG_BREAK_IF(retCode != 0);
-    }
-    [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
-    DEBUG_BREAK_IF(retCode != 0);
-    return cpuPointer;
-}
-
-void *DrmMemoryManager::mapCpuPointerOrReuse(size_t alignment, size_t alignedSize) {
-    size_t maxSizeForReuse = 4 * MemoryConstants::megaByte;
-    size_t mapBufferSize = 64 * MemoryConstants::megaByte;
-
-    if (DebugManager.flags.OverrideMaxAllocationSizeForMapReuseBufferInMb.get() != -1) {
-        maxSizeForReuse = DebugManager.flags.OverrideMaxAllocationSizeForMapReuseBufferInMb.get() * MemoryConstants::megaByte;
-    }
-    if (DebugManager.flags.OverrideMapReuseBufferSizeInMb.get() != -1) {
-        mapBufferSize = DebugManager.flags.OverrideMapReuseBufferSizeInMb.get() * MemoryConstants::megaByte;
-    }
-
-    if (alignedSize > maxSizeForReuse) {
-        return mapCpuPointer(alignment, alignedSize);
-    }
-
-    std::lock_guard<std::mutex> guard(mapBufferMutex);
-    if (remainingMapBufferSize < alignedSize) {
-        if (remainingMapBufferSize > 0) {
-            [[maybe_unused]] int retCode = this->munmapFunction(mapBufferAddress, remainingMapBufferSize);
-            DEBUG_BREAK_IF(retCode != 0);
-        }
-        mapBufferAddress = mapCpuPointer(alignment, mapBufferSize);
-        remainingMapBufferSize = mapBufferSize;
-    }
-    auto cpuPointerToReturn = mapBufferAddress;
-
-    mapBufferAddress = ptrOffset(mapBufferAddress, alignedSize);
-    remainingMapBufferSize -= alignedSize;
-
-    return cpuPointerToReturn;
 }
 
 void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {
