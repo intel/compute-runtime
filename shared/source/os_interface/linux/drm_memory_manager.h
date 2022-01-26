@@ -80,6 +80,9 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr);
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
+    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override {
+        return this->getDrm(rootDeviceIndex).isVmBindAvailable();
+    }
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);

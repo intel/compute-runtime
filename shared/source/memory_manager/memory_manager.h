@@ -228,6 +228,10 @@ class MemoryManager {
         latestContextId = std::numeric_limits<uint32_t>::max();
     }
 
+    virtual bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) {
+        return false;
+    }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
