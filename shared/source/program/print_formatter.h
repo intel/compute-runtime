@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ enum class PRINTF_DATA_TYPE : int {
     VECTOR_FLOAT,
     VECTOR_DOUBLE
 };
+static_assert(sizeof(PRINTF_DATA_TYPE) == sizeof(int));
 
 class PrintFormatter {
   public:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -149,7 +149,7 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
 }
 
 size_t PrintFormatter::printStringToken(char *output, size_t size, const char *formatString) {
-    int type = 0;
+    PRINTF_DATA_TYPE type = PRINTF_DATA_TYPE::INVALID;
     read(&type);
 
     const char *string = nullptr;
@@ -158,18 +158,16 @@ size_t PrintFormatter::printStringToken(char *output, size_t size, const char *f
         read(&index);
         string = queryPrintfString(index);
     } else {
-        char *str = nullptr;
-        read(&str);
-        string = str;
+        read(&string);
     }
 
-    if (type == static_cast<int>(PRINTF_DATA_TYPE::STRING)) {
-        return simple_sprintf(output, size, formatString, string);
-    } else {
+    switch (type) {
+    default:
         return simple_sprintf(output, size, formatString, 0);
+    case PRINTF_DATA_TYPE::STRING:
+    case PRINTF_DATA_TYPE::POINTER:
+        return simple_sprintf(output, size, formatString, string);
     }
-
-    return 0;
 }
 
 size_t PrintFormatter::printPointerToken(char *output, size_t size, const char *formatString) {

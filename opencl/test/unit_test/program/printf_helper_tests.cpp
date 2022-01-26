@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -894,10 +894,10 @@ TEST_F(PrintFormatterTest, GivenNoStringMapAndBufferWithFormatStringAnd2StringsT
     storeData(formatString);
 
     const char *string1 = "str1";
-    storeData(PRINTF_DATA_TYPE::STRING);
+    storeData(PRINTF_DATA_TYPE::POINTER);
     storeData(string1);
     const char *string2 = "str2";
-    storeData(PRINTF_DATA_TYPE::STRING);
+    storeData(PRINTF_DATA_TYPE::POINTER);
     storeData(string2);
 
     const char *expectedOutput = "str1 str2";
