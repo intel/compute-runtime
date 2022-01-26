@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -353,6 +353,31 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     EXPECT_EQ(EngineHelpers::isBcs(csr.getOsContext().getEngineType()), mockCmdQ->useBcsCsrOnNotifyEnabled);
 
     alignedFree(dstHostPtr);
+}
+
+HWTEST_F(EnqueueSvmMemCopyTest, givenConstHostMemoryAsSourceWhenEnqueueSVMMemcpyThenCpuCopyIsAllowed) {
+    if (!pDevice->isFullRangeSvm()) {
+        GTEST_SKIP();
+    }
+
+    constexpr double srcConstHostPtr[] = {42.0};
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+
+    auto retVal = mockCmdQ->enqueueSVMMemcpy(
+        CL_TRUE,         // cl_bool  blocking_copy
+        dstSvmPtr,       // void *dst_ptr
+        srcConstHostPtr, // const void *src_ptr
+        sizeof(double),  // size_t size
+        0,               // cl_uint num_events_in_wait_list
+        nullptr,         // cl_event *event_wait_list
+        nullptr          // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &ultCSR = mockCmdQ->getUltCommandStreamReceiver();
+    EXPECT_GT(ultCSR.createAllocationForHostSurfaceCalled, 0u);
+    EXPECT_TRUE(ultCSR.cpuCopyForHostPtrSurfaceAllowed);
 }
 
 struct EnqueueSvmMemCopyHw : public ::testing::Test {

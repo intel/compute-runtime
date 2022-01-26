@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -372,7 +372,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, {}, dstAllocation, device->getRootDeviceIndex(), &size};
         CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
-        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size);
+        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size, true);
         GeneralSurface dstSvmSurf(dstAllocation);
         cmdType = CL_COMMAND_WRITE_BUFFER;
         if (size != 0) {

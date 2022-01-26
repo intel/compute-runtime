@@ -11,6 +11,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -295,6 +296,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
         createAllocationForHostSurfaceCalled++;
+        cpuCopyForHostPtrSurfaceAllowed = surface.peekIsPtrCopyAllowed();
         return BaseClass::createAllocationForHostSurface(surface, requiresL3Flush);
     }
 
@@ -322,6 +324,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};
     uint32_t createAllocationForHostSurfaceCalled = 0;
+    bool cpuCopyForHostPtrSurfaceAllowed = false;
 
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
