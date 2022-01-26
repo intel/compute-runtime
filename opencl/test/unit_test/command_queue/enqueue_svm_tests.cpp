@@ -1404,7 +1404,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
 
-HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyContainerThenOnlyOnceIsAdded) {
+HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyContainerThenItIsAdded) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, context->getRootDeviceIndices(), context->getDeviceBitfields());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
@@ -1428,7 +1428,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
     svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
                                                            residencyContainer,
                                                            InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(1u, residencyContainer.size());
+    EXPECT_EQ(2u, residencyContainer.size());
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
