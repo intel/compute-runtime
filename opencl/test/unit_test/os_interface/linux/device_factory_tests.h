@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@ struct DeviceFactoryLinuxTest : public ::testing::Test {
     void SetUp() override {
         pDrm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         pDrmToReturnFromCreateFunc = reinterpret_cast<Drm **>(&pDrm);
-        pDrm->setGtType(GTTYPE_GT2);
     }
 
     void TearDown() override {

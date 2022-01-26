@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct DeviceIdTests : public ::testing::Test {
 
     bool compareStructs(const DeviceDescriptor *first, const DeviceDescriptor *second) {
         return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
+               first->setupHardwareInfo == second->setupHardwareInfo;
     }
 };
 

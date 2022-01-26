@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@ struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::SetUp();
 
         drm->storedDeviceID = IICL_LP_GT1_MOB_DEVICE_F0_ID;
-        drm->setGtType(GTTYPE_GT1);
     }
 };
 
@@ -30,15 +29,6 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTX);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
@@ -77,7 +67,7 @@ TYPED_TEST(IcllpHwInfoTests, WhenGettingSystemInfoThenParamsAreValid) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@ struct HwInfoConfigTestLinuxCfl : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
         drm->storedDeviceID = 0x3E92;
-        drm->setGtType(GTTYPE_GT2);
     }
 };
 
@@ -30,23 +29,13 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
     drm->storedDeviceID = 0x3E90;
     drm->storedSSVal = 3;
-    drm->setGtType(GTTYPE_GT1);
+
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
@@ -56,19 +45,9 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     drm->storedDeviceID = 0x3EA5;
     drm->storedSSVal = 6;
-    drm->setGtType(GTTYPE_GT3);
+
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
@@ -77,16 +56,6 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    EXPECT_EQ(GTTYPE_GT3, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
@@ -153,7 +122,7 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, WhenConfiguringHwInfoThenEdramInformationIsC
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x3EA8;
-    drm->setGtType(GTTYPE_GT3);
+
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((64u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
@@ -178,7 +147,7 @@ TYPED_TEST(CflHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

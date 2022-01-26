@@ -22,7 +22,6 @@ struct HwInfoConfigTestLinuxDg2 : HwInfoConfigTestLinux {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedDeviceID = 0x1234;
-        drm->setGtType(GTTYPE_GT4);
     }
 };
 

@@ -51,7 +51,6 @@ struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
     void (*setupHardwareInfo)(HardwareInfo *, bool);
-    GTTYPE eGtType;
     const char *devName;
 };
 
@@ -128,8 +127,6 @@ class Drm : public DriverModel {
 
     unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice);
 
-    void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
-    GTTYPE getGtType() const { return this->eGtType; }
     MOCKABLE_VIRTUAL int getErrno();
     bool setQueueSliceCount(uint64_t sliceCount);
     void checkQueueSliceSupport();
@@ -327,7 +324,6 @@ class Drm : public DriverModel {
 
     int deviceId = 0;
     int revisionId = 0;
-    GTTYPE eGtType = GTTYPE_UNDEFINED;
 
     bool sliceCountChangeSupported = false;
     bool preemptionSupported = false;

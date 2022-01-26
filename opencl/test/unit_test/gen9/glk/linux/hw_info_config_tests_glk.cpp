@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ struct HwInfoConfigTestLinuxGlk : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::SetUp();
 
         drm->storedDeviceID = 0x3185;
-        drm->setGtType(GTTYPE_GTA);
+
         drm->storedEUVal = 18;
         drm->storedHasPooledEU = 1;
         drm->storedMinEUinPool = 3;
@@ -33,22 +33,12 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GTA, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
     drm->storedDeviceID = 0x3184;
-    drm->setGtType(GTTYPE_GTC); //0x3184 is GTA, but for test make it GTC
+
     drm->storedMinEUinPool = 6;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -61,18 +51,8 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GTC, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     drm->storedDeviceID = 0x3185;
-    drm->setGtType(GTTYPE_GTX); //0x3185 is GTA, but for test make it GTX
+
     drm->storedMinEUinPool = 9;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -84,16 +64,6 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    EXPECT_EQ(GTTYPE_GTX, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGTX);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
@@ -214,7 +184,7 @@ TYPED_TEST(GlkHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

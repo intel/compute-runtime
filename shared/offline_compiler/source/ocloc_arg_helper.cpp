@@ -50,8 +50,8 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     : numOutputs(numOutputs), nameOutputs(nameOutputs),
       dataOutputs(dataOutputs), lenOutputs(lenOutputs), hasOutput(numOutputs != nullptr),
       messagePrinter(hasOutput), deviceProductTable({
-#define NAMEDDEVICE(devId, product, ignored_gtType, ignored_devName) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
-#define DEVICE(devId, product, ignored_gtType) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
+#define NAMEDDEVICE(devId, product, ignored_devName) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
+#define DEVICE(devId, product) {devId, NEO::hardwarePrefix[NEO::product::hwInfo.platform.eProductFamily]},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE

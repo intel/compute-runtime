@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@ struct HwInfoConfigTestLinuxAdlp : HwInfoConfigTestLinux {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedDeviceID = IGFX_ALDERLAKE_P;
-        drm->setGtType(GTTYPE_GT2);
     }
 };
 
@@ -36,15 +35,6 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
 
-    EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTX);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
@@ -85,7 +75,7 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     auto &featureTable = hwInfo.featureTable;
     auto &workaroundTable = hwInfo.workaroundTable;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

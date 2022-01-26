@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,36 +95,13 @@ SKLTEST_F(SklHwInfo, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTableAndWor
             pPlatform.usRevId = 1;
             workaroundTable = {};
             featureTable = {};
-            featureTable.flags.ftrGT1 = true;
-            featureTable.flags.ftrGT3 = true;
+
             hardwareInfoSetup[productFamily](&hwInfo, true, config);
 
             EXPECT_EQ(true, workaroundTable.flags.waCompressedResourceRequiresConstVA21);
             EXPECT_EQ(true, workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl);
             EXPECT_EQ(true, workaroundTable.flags.waModifyVFEStateAfterGPGPUPreemption);
             EXPECT_EQ(true, workaroundTable.flags.waCSRUncachable);
-            EXPECT_EQ(true, featureTable.flags.ftrSingleVeboxSlice);
-            EXPECT_EQ(true, featureTable.flags.ftrVcs2);
-
-            workaroundTable = {};
-            featureTable = {};
-            featureTable.flags.ftrGT2 = true;
-            featureTable.flags.ftrGT4 = true;
-            hardwareInfoSetup[productFamily](&hwInfo, true, config);
-
-            EXPECT_EQ(true, featureTable.flags.ftrSingleVeboxSlice);
-            EXPECT_EQ(true, featureTable.flags.ftrVcs2);
-
-            workaroundTable = {};
-            featureTable = {};
-            featureTable.flags.ftrGT1 = true;
-            featureTable.flags.ftrGT2 = true;
-            featureTable.flags.ftrGT3 = true;
-            featureTable.flags.ftrGT4 = true;
-            hardwareInfoSetup[productFamily](&hwInfo, true, config);
-
-            EXPECT_EQ(true, featureTable.flags.ftrSingleVeboxSlice);
-            EXPECT_EQ(true, featureTable.flags.ftrVcs2);
         }
     }
 }

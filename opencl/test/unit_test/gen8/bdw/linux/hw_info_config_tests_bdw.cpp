@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@ struct HwInfoConfigTestLinuxBdw : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
         drm->storedDeviceID = 0x1616;
-        drm->setGtType(GTTYPE_GT2);
     }
 };
 
@@ -30,18 +29,8 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT2, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     drm->storedDeviceID = 0x1602;
-    drm->setGtType(GTTYPE_GT1);
+
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
@@ -50,18 +39,8 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
     drm->storedDeviceID = 0x1626;
-    drm->setGtType(GTTYPE_GT3);
+
     drm->storedSSVal = 6;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -71,16 +50,6 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    EXPECT_EQ(GTTYPE_GT3, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
 }
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenUnknownDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
@@ -137,7 +106,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsC
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
     drm->storedDeviceID = 0x1622;
-    drm->setGtType(GTTYPE_GT3);
+
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
@@ -162,7 +131,7 @@ TYPED_TEST(BdwHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,6 @@ TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCor
     EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 16);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 8);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.DualSubSliceCount, 8);
-
-    //temporararily return GT2.
-    EXPECT_EQ(1u, hwInfo->featureTable.flags.ftrGT2);
 }
 
 TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironmentsThenCorrectObtainEUCntSSCnt) {

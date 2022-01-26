@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class DrmMockDefault : public DrmMock {
         storedRetValForDeviceRevID = 0;
         storedRetValForPooledEU = 0;
         storedRetValForMinEUinPool = 0;
-        setGtType(GTTYPE_GT1);
+
         if (hwDeviceIdIn != nullptr)
             this->hwDeviceId = std::move(hwDeviceIdIn);
     }

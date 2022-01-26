@@ -732,7 +732,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     hwInfo->gtSystemInfo.SliceCount = 2;
 
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
-    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
     drm.setupHardwareInfo(&device, false);
 

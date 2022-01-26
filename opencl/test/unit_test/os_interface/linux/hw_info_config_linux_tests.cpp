@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,7 +98,7 @@ struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
         HwInfoConfigTestLinux::SetUp();
 
         drm->storedDeviceID = 1;
-        drm->setGtType(GTTYPE_GT0);
+
         testPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     }
 
@@ -113,10 +113,6 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigWhenConfiguringHwInfoThenSucc
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 }
-
-GTTYPE GtTypes[] = {
-    GTTYPE_GT1, GTTYPE_GT2, GTTYPE_GT1_5, GTTYPE_GT2_5, GTTYPE_GT3, GTTYPE_GT4, GTTYPE_GTA, GTTYPE_GTC, GTTYPE_GTX};
-
 using HwInfoConfigCommonLinuxTest = ::testing::Test;
 
 HWTEST2_F(HwInfoConfigCommonLinuxTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenIgnore, IsAtMostGen11) {
@@ -128,51 +124,6 @@ HWTEST2_F(HwInfoConfigCommonLinuxTest, givenDebugFlagSetWhenEnablingBlitterOpera
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
     hwInfoConfig->configureHardwareCustom(&hardwareInfo, nullptr);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigGtTypesThenFtrIsSetCorrectly) {
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(GTTYPE_GT0, outHwInfo.platform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT2_5);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrGTX);
-
-    size_t arrSize = sizeof(GtTypes) / sizeof(GTTYPE);
-    uint32_t FtrSum = 0;
-    for (uint32_t i = 0; i < arrSize; i++) {
-        drm->setGtType(GtTypes[i]);
-        ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(GtTypes[i], outHwInfo.platform.eGTType);
-        bool FtrPresent = (outHwInfo.featureTable.flags.ftrGT1 ||
-                           outHwInfo.featureTable.flags.ftrGT1_5 ||
-                           outHwInfo.featureTable.flags.ftrGT2 ||
-                           outHwInfo.featureTable.flags.ftrGT2_5 ||
-                           outHwInfo.featureTable.flags.ftrGT3 ||
-                           outHwInfo.featureTable.flags.ftrGT4 ||
-                           outHwInfo.featureTable.flags.ftrGTA ||
-                           outHwInfo.featureTable.flags.ftrGTC ||
-                           outHwInfo.featureTable.flags.ftrGTX);
-        EXPECT_TRUE(FtrPresent);
-        FtrSum += (outHwInfo.featureTable.flags.ftrGT1 +
-                   outHwInfo.featureTable.flags.ftrGT1_5 +
-                   outHwInfo.featureTable.flags.ftrGT2 +
-                   outHwInfo.featureTable.flags.ftrGT2_5 +
-                   outHwInfo.featureTable.flags.ftrGT3 +
-                   outHwInfo.featureTable.flags.ftrGT4 +
-                   outHwInfo.featureTable.flags.ftrGTA +
-                   outHwInfo.featureTable.flags.ftrGTC +
-                   outHwInfo.featureTable.flags.ftrGTX);
-    }
-    EXPECT_EQ(arrSize, FtrSum);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigThenEdramIsDetected) {
@@ -194,13 +145,6 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenDisabledPlatformCoherencyWhenConfiguring
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenUnknownGtTypeWhenConfiguringHwInfoThenFails) {
-    drm->setGtType(GTTYPE_UNDEFINED);
-
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenUnknownDevIdWhenConfiguringHwInfoThenFails) {
@@ -292,7 +236,6 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenFailingCustomConfigWhenConfiguringHwInfo
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenUnknownDeviceIdWhenConfiguringHwInfoThenFails) {
     drm->storedDeviceID = 0;
-    drm->setGtType(GTTYPE_GT1);
 
     auto hwConfig = DummyHwConfig{};
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
@@ -509,7 +452,6 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
 
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
     auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->setGtType(GTTYPE_GT1);
 
     auto osInterface = std::make_unique<OSInterface>();
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -562,7 +504,6 @@ HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitiali
 
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
     auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->setGtType(GTTYPE_GT1);
 
     auto osInterface = std::make_unique<OSInterface>();
     osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));

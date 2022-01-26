@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenXeHpSdvSupportedDeviceIdThenConfigIsCorrect) {
-    std::array<DeviceDescriptor, 1> expectedDescriptors = {{{0x0201, &XE_HP_SDV_CONFIG::hwInfo, &XE_HP_SDV_CONFIG::setupHardwareInfo, GTTYPE_GT4}}};
+    std::array<DeviceDescriptor, 1> expectedDescriptors = {{{0x0201, &XE_HP_SDV_CONFIG::hwInfo, &XE_HP_SDV_CONFIG::setupHardwareInfo}}};
 
     testImpl(expectedDescriptors);
 }

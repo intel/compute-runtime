@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@ struct HwInfoConfigTestLinuxPvc : HwInfoConfigTestLinux {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedDeviceID = 0x0BD0;
-        drm->setGtType(GTTYPE_GT4);
     }
 };
 

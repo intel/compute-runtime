@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,22 +142,6 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(*outHwInfo, maxGpuFreq);
-
-    GTTYPE gtType = drm->getGtType();
-    if (gtType == GTTYPE_UNDEFINED) {
-        *outHwInfo = {};
-        return -1;
-    }
-    platform->eGTType = gtType;
-    featureTable->flags.ftrGTA = (gtType == GTTYPE_GTA) ? 1 : 0;
-    featureTable->flags.ftrGTC = (gtType == GTTYPE_GTC) ? 1 : 0;
-    featureTable->flags.ftrGTX = (gtType == GTTYPE_GTX) ? 1 : 0;
-    featureTable->flags.ftrGT1 = (gtType == GTTYPE_GT1) ? 1 : 0;
-    featureTable->flags.ftrGT1_5 = (gtType == GTTYPE_GT1_5) ? 1 : 0;
-    featureTable->flags.ftrGT2 = (gtType == GTTYPE_GT2) ? 1 : 0;
-    featureTable->flags.ftrGT2_5 = (gtType == GTTYPE_GT2_5) ? 1 : 0;
-    featureTable->flags.ftrGT3 = (gtType == GTTYPE_GT3) ? 1 : 0;
-    featureTable->flags.ftrGT4 = (gtType == GTTYPE_GT4) ? 1 : 0;
 
     ret = configureHardwareCustom(outHwInfo, osIface);
     if (ret != 0) {

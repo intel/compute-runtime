@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,12 +24,12 @@
 
 namespace NEO {
 const DeviceDescriptor deviceDescriptorTable[] = {
-#define NAMEDDEVICE(devId, gt, gtType, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType, devName},
-#define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType, ""},
+#define NAMEDDEVICE(devId, gt, devName) {devId, &gt::hwInfo, &gt::setupHardwareInfo, devName},
+#define DEVICE(devId, gt) {devId, &gt::hwInfo, &gt::setupHardwareInfo, ""},
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-    {0, nullptr, nullptr, GTTYPE_UNDEFINED}};
+    {0, nullptr, nullptr}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     std::unique_ptr<Drm> drmObject;
@@ -55,11 +55,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     const DeviceDescriptor *device = nullptr;
     const char *devName = "";
-    GTTYPE eGtType = GTTYPE_UNDEFINED;
     for (auto &d : deviceDescriptorTable) {
         if (drmObject->deviceId == d.deviceId) {
             device = &d;
-            eGtType = d.eGtType;
             devName = d.devName;
             break;
         }
@@ -69,7 +67,6 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         if (ret != 0) {
             return nullptr;
         }
-        drmObject->setGtType(eGtType);
         rootDeviceEnvironment.setHwInfo(device->pHwInfo);
         rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.deviceName = devName;
     } else {

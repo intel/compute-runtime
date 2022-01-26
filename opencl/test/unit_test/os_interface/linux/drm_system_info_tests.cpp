@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     ::testing::internal::CaptureStdout();
 
@@ -134,7 +134,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     ::testing::internal::CaptureStdout();
 
@@ -157,7 +157,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
 
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo, GTTYPE_UNDEFINED};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
     EXPECT_EQ(ret, 0);

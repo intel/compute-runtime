@@ -70,7 +70,7 @@ class DrmTestsFixture {
 typedef Test<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
-    for (uint32_t i = 0; deviceDescriptorTable[i].eGtType != GTTYPE::GTTYPE_UNDEFINED; i++) {
+    for (uint32_t i = 0; deviceDescriptorTable[i].deviceId != 0; i++) {
         if (defaultHwInfo->platform.eProductFamily == deviceDescriptorTable[i].pHwInfo->platform.eProductFamily) {
             deviceId = deviceDescriptorTable[i].deviceId;
             break;

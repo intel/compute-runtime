@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedDeviceID = 0x4C8A;
-        drm->setGtType(GTTYPE_GT1);
     }
 };
 
@@ -35,15 +34,6 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, WhenConfiguringHwInfoThenConfigIsCorrect) {
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
-    EXPECT_TRUE(outHwInfo.featureTable.flags.ftrGT1);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT1_5);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT2);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT3);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGT4);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTA);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTC);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGTX);
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
@@ -78,7 +68,7 @@ TEST(RklHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &RKL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &RKL_HW_CONFIG::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 
