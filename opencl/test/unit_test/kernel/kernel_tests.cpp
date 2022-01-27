@@ -1542,13 +1542,12 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
     EXPECT_FALSE(mockKernel.mockKernel->unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicNorHasIndirectStatelessAccessThenKernelHasIndirectAccessIsSetToFalse) {
+HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicThenKernelHasIndirectAccessIsSetToFalse) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->hasIndirectStatelessAccess = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1574,7 +1573,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadThenKernelHasIndirec
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->hasIndirectStatelessAccess = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1600,7 +1598,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreThenKernelHasIndire
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->hasIndirectStatelessAccess = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1626,33 +1623,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicThenKernelHasIndir
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = true;
-    pKernelInfo->hasIndirectStatelessAccess = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    MockProgram program(toClDeviceVector(*pClDevice));
-    MockContext ctx;
-    program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-
-    EXPECT_TRUE(pKernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
-}
-
-HWTEST_F(KernelResidencyTest, givenKernelWithhasIndirectStatelessAccessThenKernelHasIndirectAccessIsSetToTrue) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->hasIndirectStatelessAccess = true;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;

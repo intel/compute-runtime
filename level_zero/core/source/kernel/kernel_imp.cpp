@@ -851,8 +851,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
                               kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
-                              getImmutableData()->getKernelInfo()->hasIndirectStatelessAccess;
+                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
 
     if (this->usesRayTracing()) {
         if (this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize > 0) {
@@ -979,7 +978,9 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
 }
 
 bool KernelImp::hasIndirectAllocationsAllowed() const {
-    return kernelHasIndirectAccess && unifiedMemoryControls.anyIndirectAllocationsAllowed();
+    return (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+            unifiedMemoryControls.indirectHostAllocationsAllowed ||
+            unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
 uint32_t KernelImp::getSlmTotalSize() const {

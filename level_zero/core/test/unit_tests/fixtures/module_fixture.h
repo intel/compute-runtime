@@ -224,14 +224,13 @@ struct ModuleFixture : public DeviceFixture {
         module.reset(Module::create(device, &moduleDesc, moduleBuildLog, type));
     }
 
-    void createKernel(bool kernelHasIndirectAccess = false) {
+    void createKernel() {
         ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
         kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
         kernel->module = module.get();
         kernel->initialize(&desc);
-        kernel->kernelHasIndirectAccess = kernelHasIndirectAccess;
     }
 
     void TearDown() {

@@ -827,7 +827,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelL
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-    module->mockKernelImmData->mockKernelInfo->hasIndirectStatelessAccess = false;
 
     kernel->initialize(&desc);
 
@@ -856,7 +855,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-        module->mockKernelImmData->mockKernelInfo->hasIndirectStatelessAccess = false;
 
         kernel->initialize(&desc);
 
@@ -873,7 +871,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-        module->mockKernelImmData->mockKernelInfo->hasIndirectStatelessAccess = false;
 
         kernel->initialize(&desc);
 
@@ -890,24 +887,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
-        module->mockKernelImmData->mockKernelInfo->hasIndirectStatelessAccess = false;
-
-        kernel->initialize(&desc);
-
-        EXPECT_TRUE(kernel->hasIndirectAccess());
-    }
-
-    {
-        std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-        ze_kernel_desc_t desc = {};
-        desc.pKernelName = kernelName.c_str();
-
-        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
-        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
-        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-        module->mockKernelImmData->mockKernelInfo->hasIndirectStatelessAccess = true;
 
         kernel->initialize(&desc);
 
