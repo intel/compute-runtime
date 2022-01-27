@@ -41,15 +41,3 @@ DG2TEST_F(HwInfoConfigTestLinuxDg2, GivenDg2WhenConfigureHardwareCustomThenKmdNo
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
-
-DG2TEST_F(HwInfoConfigTestLinuxDg2, WhenOverrideResourceInfoParamsForWslAndDriverModelWDDMThenTrueIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    bool ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::WDDM);
-    EXPECT_TRUE(ret);
-}
-
-DG2TEST_F(HwInfoConfigTestLinuxDg2, WhenOverrideResourceInfoParamsForWslAndDriverModelDRMThenFalseIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    bool ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::DRM);
-    EXPECT_FALSE(ret);
-}

@@ -239,16 +239,6 @@ struct WddmLinuxTest : public ::testing::Test {
 
 using GmmTestsDG2 = WddmLinuxTest;
 
-HWTEST_EXCLUDE_PRODUCT(GmmTests, givenGmmWithForceLocalMemThenNonLocalIsSetToFalse, IGFX_XE_HPG_CORE);
-
-HWTEST2_F(GmmTestsDG2, givenGmmForBufferWithForceLocalMemThenNonLocalIsSetToTrue, IsDG2) {
-    void *pSysMem = nullptr;
-    std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), pSysMem, 4096, 0, false, false, false, {}));
-
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 1u);
-    EXPECT_EQ(gmm->resourceParams.Flags.Info.LocalOnly, 0u);
-}
-
 HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalseAndoLocalOnlyIsSetToTrue, IsDG2) {
     const_cast<NEO::HardwareInfo *>(mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo())->featureTable.flags.ftrLocalMemory = 1u;
 

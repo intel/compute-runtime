@@ -38,10 +38,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template <>
-bool HwInfoConfigHw<gfxProduct>::overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const {
-    return driverModelType == DriverModelType::WDDM;
-}
-
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

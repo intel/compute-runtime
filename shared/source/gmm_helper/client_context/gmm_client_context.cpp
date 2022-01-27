@@ -32,7 +32,6 @@ GmmClientContext::GmmClientContext(OSInterface *osInterface, HardwareInfo *hwInf
 
     if (osInterface && osInterface->getDriverModel()) {
         osInterface->getDriverModel()->setGmmInputArgs(&inArgs);
-        driverModelType = osInterface->getDriverModel()->getDriverModelType();
     }
 
     auto ret = GmmInterface::initialize(&inArgs, &outArgs);

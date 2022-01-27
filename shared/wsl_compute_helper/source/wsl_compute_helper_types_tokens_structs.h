@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1362,7 +1362,7 @@ struct TOKSTR_GMM_RESOURCE_FLAG_REC {
         TokenVariableLength base;
 
         TOKSTR_ANONYMOUS12521(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS12521, PreGen12FastClearOnly) + sizeof(PreGen12FastClearOnly) - offsetof(TOKSTR_ANONYMOUS12521, GTMfx2ndLevelBatchRingSizeAlign), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS12521, DeniableLocalOnlyForCompression) + sizeof(DeniableLocalOnlyForCompression) - offsetof(TOKSTR_ANONYMOUS12521, GTMfx2ndLevelBatchRingSizeAlign), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
         TOKSTR_ANONYMOUS12521()
             : base(TOK_S_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521, 0, sizeof(*this) - sizeof(base)) {}
@@ -1378,6 +1378,8 @@ struct TOKSTR_GMM_RESOURCE_FLAG_REC {
         TokenDword DisableDisplayCcsClearColor = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521__DISABLE_DISPLAY_CCS_CLEAR_COLOR};
         TokenDword DisableDisplayCcsCompression = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521__DISABLE_DISPLAY_CCS_COMPRESSION};
         TokenDword PreGen12FastClearOnly = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521__PRE_GEN12FAST_CLEAR_ONLY};
+        TokenDword ForceStdAllocAlign = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521__FORCE_STD_ALLOC_ALIGN};
+        TokenDword DeniableLocalOnlyForCompression = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS12521__DENIABLE_LOCAL_ONLY_FOR_COMPRESSION};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS12521>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS12521) % sizeof(uint32_t) == 0, "");
@@ -1689,35 +1691,16 @@ struct TOKSTR_GmmResourceInfoCommonStruct {
 static_assert(std::is_standard_layout_v<TOKSTR_GmmResourceInfoCommonStruct>, "");
 static_assert(sizeof(TOKSTR_GmmResourceInfoCommonStruct) % sizeof(uint32_t) == 0, "");
 
-struct TOKSTR_GmmResourceInfoWinStructPadding00 {
-    TokenVariableLength base;
-
-    TOKSTR_GmmResourceInfoWinStructPadding00(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR_GmmResourceInfoWinStructPadding00, padding000) + sizeof(padding000) - offsetof(TOKSTR_GmmResourceInfoWinStructPadding00, padding000), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-    TokenQword padding000 = {3933};
-};
-
-struct TOKSTR_GmmResourceInfoWinStructPadding0 {
-    TokenVariableLength base;
-
-    TOKSTR_GmmResourceInfoWinStructPadding0(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR_GmmResourceInfoWinStructPadding0, padding00) + sizeof(padding00) - offsetof(TOKSTR_GmmResourceInfoWinStructPadding0, padding00), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-    TOKSTR_GmmResourceInfoWinStructPadding00 padding00 = {3943};
-};
-
 struct TOKSTR_GmmResourceInfoWinStruct {
     TokenVariableLength base;
 
     TOKSTR_GmmResourceInfoWinStruct(uint16_t tokenId, uint32_t elementId = 0)
-        : base(tokenId, elementId, offsetof(TOKSTR_GmmResourceInfoWinStruct, padding0) + sizeof(padding0) - offsetof(TOKSTR_GmmResourceInfoWinStruct, GmmResourceInfoCommon), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
+        : base(tokenId, elementId, offsetof(TOKSTR_GmmResourceInfoWinStruct, GmmResourceInfoCommon) + sizeof(GmmResourceInfoCommon) - offsetof(TOKSTR_GmmResourceInfoWinStruct, GmmResourceInfoCommon), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
 
     TOKSTR_GmmResourceInfoWinStruct()
         : base(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT, 0, sizeof(*this) - sizeof(base)) {}
 
     TOKSTR_GmmResourceInfoCommonStruct GmmResourceInfoCommon = {TOK_FS_GMM_RESOURCE_INFO_WIN_STRUCT__GMM_RESOURCE_INFO_COMMON};
-    TOKSTR_GmmResourceInfoWinStructPadding0 padding0 = {3967};
 };
 static_assert(std::is_standard_layout_v<TOKSTR_GmmResourceInfoWinStruct>, "");
 static_assert(sizeof(TOKSTR_GmmResourceInfoWinStruct) % sizeof(uint32_t) == 0, "");

@@ -277,9 +277,4 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::getUuid(Device *device, std::array<uint8_t, H
     return false;
 }
 
-template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::overrideResourceInfoParamsForWsl(DriverModelType driverModelType) const {
-    return false;
-}
-
 } //namespace NEO

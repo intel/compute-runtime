@@ -12,12 +12,10 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, false, true, {}) {}
@@ -65,12 +63,6 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
     applyMemoryFlags(systemMemoryPool, storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
-
-    auto hardwareInfo = clientContext->getHardwareInfo();
-    if (HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->overrideResourceInfoParamsForWsl(clientContext->getDriverModelType())) {
-        resourceParams.Flags.Info.NonLocalOnly = 1;
-        resourceParams.Flags.Info.LocalOnly = 0;
-    }
 
     gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
 }

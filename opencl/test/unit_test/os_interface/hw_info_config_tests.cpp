@@ -387,11 +387,3 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSI
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(pInHwInfo));
 }
-
-HWTEST_F(HwInfoConfigTest, WhenOverrideResourceInfoParamsForWslForDRMandWDDMThenFalseIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
-    bool ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::DRM);
-    EXPECT_FALSE(ret);
-    ret = hwInfoConfig->overrideResourceInfoParamsForWsl(DriverModelType::WDDM);
-    EXPECT_FALSE(ret);
-}
