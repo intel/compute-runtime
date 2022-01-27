@@ -1739,33 +1739,6 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VCS2: {
                     dst.FtrVcs2 = readTokValue<decltype(dst.FtrVcs2)>(*tok);
                 } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_BIG_DIE: {
-                    dst.FtrGtBigDie = readTokValue<decltype(dst.FtrGtBigDie)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_MEDIUM_DIE: {
-                    dst.FtrGtMediumDie = readTokValue<decltype(dst.FtrGtMediumDie)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_SMALL_DIE: {
-                    dst.FtrGtSmallDie = readTokValue<decltype(dst.FtrGtSmallDie)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT1: {
-                    dst.FtrGT1 = readTokValue<decltype(dst.FtrGT1)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT1_5: {
-                    dst.FtrGT1_5 = readTokValue<decltype(dst.FtrGT1_5)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT2: {
-                    dst.FtrGT2 = readTokValue<decltype(dst.FtrGT2)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT2_5: {
-                    dst.FtrGT2_5 = readTokValue<decltype(dst.FtrGT2_5)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT3: {
-                    dst.FtrGT3 = readTokValue<decltype(dst.FtrGT3)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT4: {
-                    dst.FtrGT4 = readTokValue<decltype(dst.FtrGT4)>(*tok);
-                } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT: {
                     dst.FtrULT = readTokValue<decltype(dst.FtrULT)>(*tok);
                 } break;
@@ -1774,15 +1747,6 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED: {
                     dst.FtrChannelSwizzlingXOREnabled = readTokValue<decltype(dst.FtrChannelSwizzlingXOREnabled)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTA: {
-                    dst.FtrGTA = readTokValue<decltype(dst.FtrGTA)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTC: {
-                    dst.FtrGTC = readTokValue<decltype(dst.FtrGTC)>(*tok);
-                } break;
-                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTX: {
-                    dst.FtrGTX = readTokValue<decltype(dst.FtrGTX)>(*tok);
                 } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR5SLICE: {
                     dst.Ftr5Slice = readTokValue<decltype(dst.Ftr5Slice)>(*tok);
@@ -2997,33 +2961,6 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VCS2: {
                                 dst.SkuTable.FtrVcs2 = readTokValue<decltype(dst.SkuTable.FtrVcs2)>(*tokSkuTable);
                             } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_BIG_DIE: {
-                                dst.SkuTable.FtrGtBigDie = readTokValue<decltype(dst.SkuTable.FtrGtBigDie)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_MEDIUM_DIE: {
-                                dst.SkuTable.FtrGtMediumDie = readTokValue<decltype(dst.SkuTable.FtrGtMediumDie)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT_SMALL_DIE: {
-                                dst.SkuTable.FtrGtSmallDie = readTokValue<decltype(dst.SkuTable.FtrGtSmallDie)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT1: {
-                                dst.SkuTable.FtrGT1 = readTokValue<decltype(dst.SkuTable.FtrGT1)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT1_5: {
-                                dst.SkuTable.FtrGT1_5 = readTokValue<decltype(dst.SkuTable.FtrGT1_5)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT2: {
-                                dst.SkuTable.FtrGT2 = readTokValue<decltype(dst.SkuTable.FtrGT2)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT2_5: {
-                                dst.SkuTable.FtrGT2_5 = readTokValue<decltype(dst.SkuTable.FtrGT2_5)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT3: {
-                                dst.SkuTable.FtrGT3 = readTokValue<decltype(dst.SkuTable.FtrGT3)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GT4: {
-                                dst.SkuTable.FtrGT4 = readTokValue<decltype(dst.SkuTable.FtrGT4)>(*tokSkuTable);
-                            } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT: {
                                 dst.SkuTable.FtrULT = readTokValue<decltype(dst.SkuTable.FtrULT)>(*tokSkuTable);
                             } break;
@@ -3032,15 +2969,6 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED: {
                                 dst.SkuTable.FtrChannelSwizzlingXOREnabled = readTokValue<decltype(dst.SkuTable.FtrChannelSwizzlingXOREnabled)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTA: {
-                                dst.SkuTable.FtrGTA = readTokValue<decltype(dst.SkuTable.FtrGTA)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTC: {
-                                dst.SkuTable.FtrGTC = readTokValue<decltype(dst.SkuTable.FtrGTC)>(*tokSkuTable);
-                            } break;
-                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_GTX: {
-                                dst.SkuTable.FtrGTX = readTokValue<decltype(dst.SkuTable.FtrGTX)>(*tokSkuTable);
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR5SLICE: {
                                 dst.SkuTable.Ftr5Slice = readTokValue<decltype(dst.SkuTable.Ftr5Slice)>(*tokSkuTable);

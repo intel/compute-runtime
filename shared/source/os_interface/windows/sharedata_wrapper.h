@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,22 +51,8 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrDesktop : 1;
     bool FtrChannelSwizzlingXOREnabled : 1;
 
-    bool FtrGtBigDie : 1;
-    bool FtrGtMediumDie : 1;
-    bool FtrGtSmallDie : 1;
-
-    bool FtrGT1 : 1;
-    bool FtrGT1_5 : 1;
-    bool FtrGT2 : 1;
-    bool FtrGT2_5 : 1;
-    bool FtrGT3 : 1;
-    bool FtrGT4 : 1;
-
     bool FtrIVBM0M1Platform : 1;
     bool FtrSGTPVSKUStrapPresent : 1;
-    bool FtrGTA : 1;
-    bool FtrGTC : 1;
-    bool FtrGTX : 1;
     bool Ftr5Slice : 1;
 
     bool FtrGpGpuMidBatchPreempt : 1;

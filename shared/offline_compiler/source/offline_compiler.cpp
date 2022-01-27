@@ -607,26 +607,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     igcFtrWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
     igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
-
-    igcFtrWa.get()->SetFtrGtBigDie(hwInfo.featureTable.flags.ftrGtBigDie);
-    igcFtrWa.get()->SetFtrGtMediumDie(hwInfo.featureTable.flags.ftrGtMediumDie);
-    igcFtrWa.get()->SetFtrGtSmallDie(hwInfo.featureTable.flags.ftrGtSmallDie);
-
-    igcFtrWa.get()->SetFtrGT1(hwInfo.featureTable.flags.ftrGT1);
-    igcFtrWa.get()->SetFtrGT1_5(hwInfo.featureTable.flags.ftrGT1_5);
-    igcFtrWa.get()->SetFtrGT2(hwInfo.featureTable.flags.ftrGT2);
-    igcFtrWa.get()->SetFtrGT3(hwInfo.featureTable.flags.ftrGT3);
-    igcFtrWa.get()->SetFtrGT4(hwInfo.featureTable.flags.ftrGT4);
-
     igcFtrWa.get()->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa.get()->SetFtrGTL(hwInfo.featureTable.flags.ftrGT1);
-    igcFtrWa.get()->SetFtrGTM(hwInfo.featureTable.flags.ftrGT2);
-    igcFtrWa.get()->SetFtrGTH(hwInfo.featureTable.flags.ftrGT3);
-
     igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa.get()->SetFtrGTA(hwInfo.featureTable.flags.ftrGTA);
-    igcFtrWa.get()->SetFtrGTC(hwInfo.featureTable.flags.ftrGTC);
-    igcFtrWa.get()->SetFtrGTX(hwInfo.featureTable.flags.ftrGTX);
     igcFtrWa.get()->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
 
     auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);

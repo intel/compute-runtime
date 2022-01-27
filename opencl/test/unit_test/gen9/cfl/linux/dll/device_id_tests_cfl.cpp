@@ -35,7 +35,6 @@ TEST_F(DeviceIdTests, GivenCflSupportedDeviceIdThenHardwareInfoIsCorrect) {
         {0x3EA5, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo},
         {0x3EA2, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo},
 
-        // CML GT1
         {0x9B21, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
         {0x9BAA, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
         {0x9BAB, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
@@ -45,7 +44,6 @@ TEST_F(DeviceIdTests, GivenCflSupportedDeviceIdThenHardwareInfoIsCorrect) {
         {0x9BA8, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
         {0x9BA4, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
         {0x9BA2, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo},
-        // CML GT2
         {0x9B41, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BCA, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BCB, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
@@ -55,7 +53,6 @@ TEST_F(DeviceIdTests, GivenCflSupportedDeviceIdThenHardwareInfoIsCorrect) {
         {0x9BC8, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BC4, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BC2, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
-        // CML WORKSTATION
         {0x9BC6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BE6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},
         {0x9BF6, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo},

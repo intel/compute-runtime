@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,22 +23,8 @@ class SkuInfoReceiver {
         RECEIVE_FTR(Desktop);
         RECEIVE_FTR(ChannelSwizzlingXOREnabled);
 
-        RECEIVE_FTR(GtBigDie);
-        RECEIVE_FTR(GtMediumDie);
-        RECEIVE_FTR(GtSmallDie);
-
-        RECEIVE_FTR(GT1);
-        RECEIVE_FTR(GT1_5);
-        RECEIVE_FTR(GT2);
-        RECEIVE_FTR(GT2_5);
-        RECEIVE_FTR(GT3);
-        RECEIVE_FTR(GT4);
-
         RECEIVE_FTR(IVBM0M1Platform);
         RECEIVE_FTR(SGTPVSKUStrapPresent);
-        RECEIVE_FTR(GTA);
-        RECEIVE_FTR(GTC);
-        RECEIVE_FTR(GTX);
         RECEIVE_FTR(5Slice);
 
         RECEIVE_FTR(GpGpuMidBatchPreempt);

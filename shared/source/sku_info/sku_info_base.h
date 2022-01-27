@@ -25,20 +25,8 @@ struct FeatureTableBase {
         // DW0
         uint32_t ftrDesktop : 1;
         uint32_t ftrChannelSwizzlingXOREnabled : 1;
-        uint32_t ftrGtBigDie : 1;
-        uint32_t ftrGtMediumDie : 1;
-        uint32_t ftrGtSmallDie : 1;
-        uint32_t ftrGT1 : 1;
-        uint32_t ftrGT1_5 : 1;
-        uint32_t ftrGT2 : 1;
-        uint32_t ftrGT2_5 : 1;
-        uint32_t ftrGT3 : 1;
-        uint32_t ftrGT4 : 1;
         uint32_t ftrIVBM0M1Platform : 1;
         uint32_t ftrSGTPVSKUStrapPresent : 1;
-        uint32_t ftrGTA : 1;
-        uint32_t ftrGTC : 1;
-        uint32_t ftrGTX : 1;
         uint32_t ftr5Slice : 1;
         uint32_t ftrGpGpuMidBatchPreempt : 1;
         uint32_t ftrGpGpuThreadGroupLevelPreempt : 1;
@@ -55,7 +43,6 @@ struct FeatureTableBase {
         uint32_t ftr3dMidBatchPreempt : 1;
         uint32_t ftr3dObjectLevelPreempt : 1;
         uint32_t ftrPerCtxtPreemptionGranularityControl : 1;
-        // DW1
         uint32_t ftrTileY : 1;
         uint32_t ftrDisplayYTiling : 1;
         uint32_t ftrTranslationTable : 1;
@@ -68,6 +55,7 @@ struct FeatureTableBase {
         uint32_t ftrVcs2 : 1;
         uint32_t ftrVEBOX : 1;
         uint32_t ftrSingleVeboxSlice : 1;
+        // DW1
         uint32_t ftrULT : 1;
         uint32_t ftrLCIA : 1;
         uint32_t ftrGttCacheInvalidation : 1;
@@ -88,7 +76,6 @@ struct FeatureTableBase {
         uint32_t ftrSimulationMode : 1;
         uint32_t ftrE2ECompression : 1;
         uint32_t ftrLinearCCS : 1;
-        //DW2
         uint32_t ftrCCSRing : 1;
         uint32_t ftrCCSNode : 1;
         uint32_t ftrRcsNode : 1;
@@ -100,14 +87,13 @@ struct FeatureTableBase {
         uint32_t ftrPpgtt64KBWalkOptimization : 1;
         uint32_t ftrUnified3DMediaCompressionFormats : 1;
         uint32_t ftr57bGPUAddressing : 1;
-        uint32_t reserved : 21;
     };
 
     BcsInfoMask ftrBcsInfo = 1;
 
     union {
         Flags flags;
-        std::array<uint32_t, 3> packed = {};
+        std::array<uint32_t, 2> packed = {};
     };
 };
 

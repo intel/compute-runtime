@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,22 +71,8 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrDesktop = true;
         refFtrTable.flags.ftrChannelSwizzlingXOREnabled = true;
 
-        refFtrTable.flags.ftrGtBigDie = true;
-        refFtrTable.flags.ftrGtMediumDie = true;
-        refFtrTable.flags.ftrGtSmallDie = true;
-
-        refFtrTable.flags.ftrGT1 = true;
-        refFtrTable.flags.ftrGT1_5 = true;
-        refFtrTable.flags.ftrGT2 = true;
-        refFtrTable.flags.ftrGT2_5 = true;
-        refFtrTable.flags.ftrGT3 = true;
-        refFtrTable.flags.ftrGT4 = true;
-
         refFtrTable.flags.ftrIVBM0M1Platform = true;
         refFtrTable.flags.ftrSGTPVSKUStrapPresent = true;
-        refFtrTable.flags.ftrGTA = true;
-        refFtrTable.flags.ftrGTC = true;
-        refFtrTable.flags.ftrGTX = true;
         refFtrTable.flags.ftr5Slice = true;
 
         refFtrTable.flags.ftrGpGpuMidBatchPreempt = true;

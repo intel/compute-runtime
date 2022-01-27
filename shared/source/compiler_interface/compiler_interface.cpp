@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -440,28 +440,9 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
 
     igcFtrWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
     igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
-
-    igcFtrWa.get()->SetFtrGtBigDie(device.getHardwareInfo().featureTable.flags.ftrGtBigDie);
-    igcFtrWa.get()->SetFtrGtMediumDie(device.getHardwareInfo().featureTable.flags.ftrGtMediumDie);
-    igcFtrWa.get()->SetFtrGtSmallDie(device.getHardwareInfo().featureTable.flags.ftrGtSmallDie);
-
-    igcFtrWa.get()->SetFtrGT1(device.getHardwareInfo().featureTable.flags.ftrGT1);
-    igcFtrWa.get()->SetFtrGT1_5(device.getHardwareInfo().featureTable.flags.ftrGT1_5);
-    igcFtrWa.get()->SetFtrGT2(device.getHardwareInfo().featureTable.flags.ftrGT2);
-    igcFtrWa.get()->SetFtrGT3(device.getHardwareInfo().featureTable.flags.ftrGT3);
-    igcFtrWa.get()->SetFtrGT4(device.getHardwareInfo().featureTable.flags.ftrGT4);
-
     igcFtrWa.get()->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa.get()->SetFtrGTL(device.getHardwareInfo().featureTable.flags.ftrGT1);
-    igcFtrWa.get()->SetFtrGTM(device.getHardwareInfo().featureTable.flags.ftrGT2);
-    igcFtrWa.get()->SetFtrGTH(device.getHardwareInfo().featureTable.flags.ftrGT3);
-
     igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa.get()->SetFtrGTA(device.getHardwareInfo().featureTable.flags.ftrGTA);
-    igcFtrWa.get()->SetFtrGTC(device.getHardwareInfo().featureTable.flags.ftrGTC);
-    igcFtrWa.get()->SetFtrGTX(device.getHardwareInfo().featureTable.flags.ftrGTX);
     igcFtrWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
-
     igcFtrWa.get()->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
     igcFtrWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
     igcFtrWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
