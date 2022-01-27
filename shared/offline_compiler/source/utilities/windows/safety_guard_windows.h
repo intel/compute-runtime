@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,6 @@ class SafetyGuardWindows {
             } __except (SehException::filter(GetExceptionCode(), GetExceptionInformation())) {
                 if (onExcept) {
                     onExcept();
-                } else {
-                    NEO::abortExecution();
                 }
                 longjmp(jmpbuf, 1);
             }
