@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,13 +124,6 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         openclCFeatures.push_back(openClCFeature);
 
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
-        openclCFeatures.push_back(openClCFeature);
-    }
-
-    auto forceDeviceEnqueueSupport = DebugManager.flags.ForceDeviceEnqueueSupport.get();
-    if ((hwInfo.capabilityTable.supportsDeviceEnqueue && (forceDeviceEnqueueSupport == -1)) ||
-        (forceDeviceEnqueueSupport == 1)) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_device_enqueue");
         openclCFeatures.push_back(openClCFeature);
     }
 

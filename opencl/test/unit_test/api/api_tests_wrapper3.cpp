@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,6 @@
 #include "opencl/test/unit_test/api/cl_retain_release_device_tests.inl"
 #include "opencl/test/unit_test/api/cl_retain_release_sampler_tests.inl"
 #include "opencl/test/unit_test/api/cl_set_context_destructor_callback.inl"
-#include "opencl/test/unit_test/api/cl_set_default_device_command_queue_tests.inl"
 #include "opencl/test/unit_test/api/cl_set_event_callback_tests.inl"
 #include "opencl/test/unit_test/api/cl_set_kernel_arg_svm_pointer_tests.inl"
 #include "opencl/test/unit_test/api/cl_set_kernel_exec_info_tests.inl"

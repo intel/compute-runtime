@@ -224,20 +224,11 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize() : 0u;
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
-    if (defaultHwInfo->capabilityTable.supportsDeviceEnqueue || (defaultHwInfo->capabilityTable.clVersionSupport == 21)) {
-        EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
-        EXPECT_EQ(1u, caps.maxOnDeviceQueues);
-        EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
-        EXPECT_EQ(128 * KB, caps.queueOnDevicePreferredSize);
-        EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
-                  caps.queueOnDeviceProperties);
-    } else {
-        EXPECT_EQ(0u, caps.maxOnDeviceEvents);
-        EXPECT_EQ(0u, caps.maxOnDeviceQueues);
-        EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
-        EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
-        EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
-    }
+    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+    EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
 
     if (defaultHwInfo->capabilityTable.supportsPipes) {
         EXPECT_EQ(16u, caps.maxPipeArgs);
@@ -1121,22 +1112,6 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / CommonConstants::maximalSimdSize, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
-TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenDeviceQueueCapsAreSetCorrectly) {
-    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
-
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceDeviceEnqueueSupport.set(0);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_EQ(0u, caps.queueOnDeviceProperties);
-    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
-    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
-    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
-    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
-}
-
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo1024) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
@@ -1317,72 +1292,28 @@ TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSu
     }
 }
 
-TEST_F(DeviceGetCapsTest, givenDeviceEnqueueSupportForcedWhenCheckingDeviceEnqueueSupportThenDeviceEnqueueIsCorrectlyReported) {
-    DebugManagerStateRestore dbgRestorer;
-    int32_t forceDeviceEnqueueSupportValues[] = {-1, 0, 1};
+TEST_F(DeviceGetCapsTest, givenCapsDeviceEnqueueWhenCheckingDeviceEnqueueSupportThenNoSupportReported) {
     auto hwInfo = *defaultHwInfo;
 
     for (auto isDeviceEnqueueSupportedByHw : ::testing::Bool()) {
         hwInfo.capabilityTable.supportsDeviceEnqueue = isDeviceEnqueueSupportedByHw;
 
-        for (auto forceDeviceEnqueueSupport : forceDeviceEnqueueSupportValues) {
-            DebugManager.flags.ForceDeviceEnqueueSupport.set(forceDeviceEnqueueSupport);
-            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-            auto &caps = pClDevice->getDeviceInfo();
+        auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+        auto &caps = pClDevice->getDeviceInfo();
 
-            size_t deviceEnqueueFeaturesCount = 0;
-            for (auto &openclCFeature : caps.openclCFeatures) {
-                if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
-                    deviceEnqueueFeaturesCount++;
-                }
-            }
-
-            bool expectedDeviceEnqueueSupport =
-                ((forceDeviceEnqueueSupport == -1) ? isDeviceEnqueueSupportedByHw : forceDeviceEnqueueSupport);
-            if (expectedDeviceEnqueueSupport) {
-                EXPECT_TRUE(pClDevice->isDeviceEnqueueSupported());
-                EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
-                EXPECT_EQ(1u, caps.maxOnDeviceQueues);
-                EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
-                EXPECT_EQ(128 * KB, caps.queueOnDevicePreferredSize);
-                EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
-                          caps.queueOnDeviceProperties);
-                EXPECT_EQ(1u, deviceEnqueueFeaturesCount);
-            } else {
-                EXPECT_FALSE(pClDevice->isDeviceEnqueueSupported());
-                EXPECT_EQ(0u, caps.maxOnDeviceEvents);
-                EXPECT_EQ(0u, caps.maxOnDeviceQueues);
-                EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
-                EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
-                EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
-                EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
+        size_t deviceEnqueueFeaturesCount = 0;
+        for (auto &openclCFeature : caps.openclCFeatures) {
+            if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
+                deviceEnqueueFeaturesCount++;
             }
         }
+        EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+        EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+        EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+        EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+        EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
+        EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
     }
-}
-
-TEST_F(DeviceGetCapsTest, givenDefaultFlagForceDeviceEnqueueSupportWhenCheckingDeviceEnqueueSupportThenFalseIsReported) {
-    DebugManagerStateRestore dbgRestorer;
-    auto hwInfo = *defaultHwInfo;
-    DebugManager.flags.ForceDeviceEnqueueSupport.set(-1);
-
-    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-    auto &caps = pClDevice->getDeviceInfo();
-
-    size_t deviceEnqueueFeaturesCount = 0;
-    for (auto &openclCFeature : caps.openclCFeatures) {
-        if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
-            deviceEnqueueFeaturesCount++;
-        }
-    }
-
-    EXPECT_FALSE(pClDevice->isDeviceEnqueueSupported());
-    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
-    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
-    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
-    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
-    EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
-    EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
 }
 
 TEST_F(DeviceGetCapsTest, givenPipeSupportForcedWhenCheckingPipeSupportThenPipeIsCorrectlyReported) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,23 +282,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
-
-    deviceInfo.deviceEnqueueSupport = isDeviceEnqueueSupported()
-                                          ? CL_DEVICE_QUEUE_SUPPORTED | CL_DEVICE_QUEUE_REPLACEABLE_DEFAULT
-                                          : 0u;
-    if (isDeviceEnqueueSupported()) {
-        deviceInfo.maxOnDeviceQueues = 1;
-        deviceInfo.maxOnDeviceEvents = 1024;
-        deviceInfo.queueOnDeviceMaxSize = 64 * MB;
-        deviceInfo.queueOnDevicePreferredSize = 128 * KB;
-        deviceInfo.queueOnDeviceProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    } else {
-        deviceInfo.maxOnDeviceQueues = 0;
-        deviceInfo.maxOnDeviceEvents = 0;
-        deviceInfo.queueOnDeviceMaxSize = 0;
-        deviceInfo.queueOnDevicePreferredSize = 0;
-        deviceInfo.queueOnDeviceProperties = 0;
-    }
 
     deviceInfo.preferredInteropUserSync = 1u;
 

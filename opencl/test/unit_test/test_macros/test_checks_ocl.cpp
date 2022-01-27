@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,16 +33,6 @@ bool TestChecks::supportsOcl21(const Context *pContext) {
 bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
     return (pHardwareInfo->capabilityTable.supportsOcl21Features && pHardwareInfo->capabilityTable.supportsDeviceEnqueue &&
             pHardwareInfo->capabilityTable.supportsPipes && pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
-}
-
-bool TestChecks::supportsDeviceEnqueue(const ClDevice *pClDevice) {
-    return pClDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
-}
-bool TestChecks::supportsDeviceEnqueue(const Context *pContext) {
-    return supportsDeviceEnqueue(pContext->getDevice(0));
-}
-bool TestChecks::supportsDeviceEnqueue(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
-    return pHardwareInfo->capabilityTable.supportsDeviceEnqueue;
 }
 
 bool TestChecks::supportsAuxResolves() {

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -110,7 +110,6 @@ set(IGDRCL_SRCS_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_retain_release_device_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_retain_release_sampler_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_context_destructor_callback.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_default_device_command_queue_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_event_callback_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_kernel_arg_svm_pointer_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_kernel_exec_info_tests.inl

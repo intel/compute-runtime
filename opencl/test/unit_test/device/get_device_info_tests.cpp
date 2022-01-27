@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -596,11 +596,11 @@ TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueSupportThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
-    cl_bool expectedDeviceEnqueueSupport = deviceFactory.rootDevices[0]->isDeviceEnqueueSupported() ? CL_TRUE : CL_FALSE;
+    cl_bool expectedDeviceEnqueueSupport = CL_FALSE;
     EXPECT_EQ(expectedDeviceEnqueueSupport, deviceEnqueueSupport);
 }
 
-TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueCapabilitiesThenProperValueIsReturned) {
+TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueCapabilitiesThenFalseIsReturned) {
     UltClDeviceFactory deviceFactory{1, 0};
 
     cl_device_device_enqueue_capabilities deviceEnqueueCapabilities;
@@ -611,11 +611,7 @@ TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueCapabilitiesThenProperValueIsReturn
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_device_device_enqueue_capabilities), paramRetSize);
 
-    cl_device_device_enqueue_capabilities expectedDeviceEnqueueCapabilities =
-        deviceFactory.rootDevices[0]->isDeviceEnqueueSupported()
-            ? CL_DEVICE_QUEUE_SUPPORTED | CL_DEVICE_QUEUE_REPLACEABLE_DEFAULT
-            : 0u;
-    EXPECT_EQ(expectedDeviceEnqueueCapabilities, deviceEnqueueCapabilities);
+    EXPECT_FALSE(deviceEnqueueCapabilities);
 }
 
 TEST(GetDeviceInfo, WhenQueryingPipesSupportThenProperValueIsReturned) {

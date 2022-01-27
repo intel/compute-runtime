@@ -195,13 +195,6 @@ DeviceBitfield ClDevice::getDeviceBitfield() const {
     return device.getDeviceBitfield();
 }
 
-bool ClDevice::isDeviceEnqueueSupported() const {
-    if (DebugManager.flags.ForceDeviceEnqueueSupport.get() != -1) {
-        return DebugManager.flags.ForceDeviceEnqueueSupport.get();
-    }
-    return device.getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
-}
-
 bool ClDevice::arePipesSupported() const {
     if (DebugManager.flags.ForcePipeSupport.get() != -1) {
         return DebugManager.flags.ForcePipeSupport.get();

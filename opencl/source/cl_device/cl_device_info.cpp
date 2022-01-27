@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,7 +177,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
         if (paramValueSize == sizeof(cl_bool)) {
             srcSize = retSize = sizeof(cl_bool);
-            param.boolean = (deviceInfo.deviceEnqueueSupport > 0u) ? CL_TRUE : CL_FALSE;
+            param.boolean = CL_FALSE;
             src = &param.boolean;
         } else {
             getCap<CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES>(src, srcSize, retSize);

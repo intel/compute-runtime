@@ -5190,11 +5190,9 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
-        if (!pDevice->isDeviceEnqueueSupported()) {
-            err.set(CL_INVALID_QUEUE_PROPERTIES);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
-            return commandQueue;
-        }
+        err.set(CL_INVALID_QUEUE_PROPERTIES);
+        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        return commandQueue;
     }
 
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
@@ -5482,12 +5480,6 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
                              WithCastToInternal(device, &pClDevice));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
-        return retVal;
-    }
-
-    if (pClDevice->isDeviceEnqueueSupported() == false) {
-        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
         return retVal;
     }
