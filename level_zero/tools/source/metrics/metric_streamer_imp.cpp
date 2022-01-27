@@ -338,9 +338,7 @@ ze_result_t OaMetricGroupImp::streamerOpen(
     return result;
 }
 
-ze_result_t MetricStreamer::appendStreamerMarker(CommandList &commandList,
-                                                 zet_metric_streamer_handle_t hMetricStreamer,
-                                                 uint32_t value) {
+ze_result_t OaMetricStreamerImp::appendStreamerMarker(CommandList &commandList, uint32_t value) {
 
     DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
 

@@ -25,6 +25,7 @@ struct OaMetricStreamerImp : MetricStreamer {
     void attachEvent(ze_event_handle_t hNotificationEvent);
     void detachEvent();
 
+    ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) override;
     std::vector<zet_metric_streamer_handle_t> &getMetricStreamers();
 
   protected:

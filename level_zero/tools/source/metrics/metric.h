@@ -127,8 +127,7 @@ struct MetricStreamer : _zet_metric_streamer_handle_t {
     static MetricStreamer *fromHandle(zet_metric_streamer_handle_t handle) {
         return static_cast<MetricStreamer *>(handle);
     }
-    static ze_result_t appendStreamerMarker(CommandList &commandList,
-                                            zet_metric_streamer_handle_t hMetricStreamer, uint32_t value);
+    virtual ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) = 0;
     virtual Event::State getNotificationState() = 0;
     inline zet_metric_streamer_handle_t toHandle() { return this; }
 };
