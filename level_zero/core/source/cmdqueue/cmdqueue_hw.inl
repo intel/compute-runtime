@@ -168,24 +168,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
 
-        bool indirectAllocationsAllowed = commandList->hasIndirectAllocationsAllowed();
-        if (indirectAllocationsAllowed) {
-            auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-            auto submitAsPack = device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
-            if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
-                submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
-            }
-
-            if (submitAsPack) {
-                svmAllocsManager->makeIndirectAllocationsResident(*csr, csr->peekTaskCount() + 1u);
-            } else {
-                UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
-
-                svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
-                                                                             commandList->commandContainer.getResidencyContainer(),
-                                                                             unifiedMemoryControls.generateMask());
-            }
-        }
+        commandList->csr = csr;
+        commandList->handleIndirectAllocationResidency();
 
         totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();
         spaceForResidency += commandList->commandContainer.getResidencyContainer().size();
@@ -212,7 +196,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         partitionCount = std::max(partitionCount, commandList->partitionCount);
-        commandList->csr = csr;
         commandList->makeResidentAndMigrate(performMigration);
     }
 

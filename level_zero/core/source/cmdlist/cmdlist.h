@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,6 +199,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool hasIndirectAllocationsAllowed() const {
         return indirectAllocationsAllowed;
     }
+
+    void handleIndirectAllocationResidency();
 
     NEO::PreemptionMode obtainFunctionPreemptionMode(Kernel *kernel);
 

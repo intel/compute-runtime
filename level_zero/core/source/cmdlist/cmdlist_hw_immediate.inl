@@ -65,6 +65,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
+    this->handleIndirectAllocationResidency();
+
     this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadScratchSize());
 
     if (performMigration) {
