@@ -87,9 +87,6 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrFbcBlitterTracking : 1;
     bool FtrFbcCpuTracking : 1;
 
-    bool FtrVcs2 : 1;
-    bool FtrVEBOX : 1;
-    bool FtrSingleVeboxSlice : 1;
     bool FtrULT : 1;
     bool FtrLCIA : 1;
     bool FtrGttCacheInvalidation : 1;
@@ -102,7 +99,6 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrCrystalwell : 1;
     bool FtrLLCBypass : 1;
     bool FtrDisplayEngineS3d : 1;
-    bool FtrVERing : 1;
     bool FtrWddm2GpuMmu : 1;
     bool FtrWddm2_1_64kbPages : 1;
     bool FtrWddmHwQueues : 1;

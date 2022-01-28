@@ -90,7 +90,6 @@ void CFL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->flags.ftrL3IACoherency = true;
-    featureTable->flags.ftrVEBOX = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
     featureTable->flags.ftr3dMidBatchPreempt = true;
     featureTable->flags.ftr3dObjectLevelPreempt = true;

@@ -70,10 +70,7 @@ SKLTEST_F(SklHwInfo, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTableAndWor
             EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
-            EXPECT_EQ(setParamBool, featureTable.flags.ftrVEBOX);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
-            EXPECT_EQ(false, featureTable.flags.ftrSingleVeboxSlice);
-            EXPECT_EQ(false, featureTable.flags.ftrVcs2);
 
             EXPECT_EQ(setParamBool, workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
             EXPECT_EQ(setParamBool, workaroundTable.flags.waSendMIFLUSHBeforeVFE);

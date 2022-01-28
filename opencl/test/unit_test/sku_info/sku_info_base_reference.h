@@ -24,8 +24,6 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrTileY = 1;
         refFtrTable.FtrDisplayYTiling = 1;
         refFtrTable.FtrFbc = 1;
-        refFtrTable.FtrVERing = 1;
-        refFtrTable.FtrVcs2 = 1;
         refFtrTable.FtrLCIA = 1;
         refFtrTable.FtrIA32eGfxPTEs = 1;
         refFtrTable.FtrWddm2GpuMmu = 1;
@@ -107,9 +105,6 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrFbcBlitterTracking = true;
         refFtrTable.flags.ftrFbcCpuTracking = true;
 
-        refFtrTable.flags.ftrVcs2 = true;
-        refFtrTable.flags.ftrVEBOX = true;
-        refFtrTable.flags.ftrSingleVeboxSlice = true;
         refFtrTable.flags.ftrULT = true;
         refFtrTable.flags.ftrLCIA = true;
         refFtrTable.flags.ftrGttCacheInvalidation = true;
@@ -122,7 +117,6 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrCrystalwell = true;
         refFtrTable.flags.ftrLLCBypass = true;
         refFtrTable.flags.ftrDisplayEngineS3d = true;
-        refFtrTable.flags.ftrVERing = true;
         refFtrTable.flags.ftrWddm2GpuMmu = true;
         refFtrTable.flags.ftrWddm2_1_64kbPages = true;
 

@@ -52,13 +52,10 @@ struct FeatureTableBase {
         uint32_t ftrFbc2AddressTranslation : 1;
         uint32_t ftrFbcBlitterTracking : 1;
         uint32_t ftrFbcCpuTracking : 1;
-        uint32_t ftrVcs2 : 1;
-        uint32_t ftrVEBOX : 1;
-        uint32_t ftrSingleVeboxSlice : 1;
-        // DW1
         uint32_t ftrULT : 1;
         uint32_t ftrLCIA : 1;
         uint32_t ftrGttCacheInvalidation : 1;
+        // DW1
         uint32_t ftrTileMappedResource : 1;
         uint32_t ftrAstcHdr2D : 1;
         uint32_t ftrAstcLdr2D : 1;
@@ -67,7 +64,6 @@ struct FeatureTableBase {
         uint32_t ftrCrystalwell : 1;
         uint32_t ftrLLCBypass : 1;
         uint32_t ftrDisplayEngineS3d : 1;
-        uint32_t ftrVERing : 1;
         uint32_t ftrWddm2GpuMmu : 1;
         uint32_t ftrWddm2_1_64kbPages : 1;
         uint32_t ftrWddmHwQueues : 1;
@@ -87,6 +83,7 @@ struct FeatureTableBase {
         uint32_t ftrPpgtt64KBWalkOptimization : 1;
         uint32_t ftrUnified3DMediaCompressionFormats : 1;
         uint32_t ftr57bGPUAddressing : 1;
+        uint32_t reserved : 5;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

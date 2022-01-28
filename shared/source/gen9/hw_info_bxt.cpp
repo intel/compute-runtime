@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,6 @@ void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->flags.ftrL3IACoherency = true;
-    featureTable->flags.ftrVEBOX = true;
     featureTable->flags.ftrULT = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
     featureTable->flags.ftr3dMidBatchPreempt = true;

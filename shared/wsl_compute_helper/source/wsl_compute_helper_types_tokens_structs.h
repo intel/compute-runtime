@@ -447,8 +447,6 @@ struct TOKSTR__SKU_FEATURE_TABLE {
             : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS3245, 0, sizeof(*this) - sizeof(base)) {}
 
         TokenDword FtrDesktop = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_DESKTOP};
-        TokenDword FtrVERing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VERING};
-        TokenDword FtrVcs2 = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VCS2};
         TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};
         TokenDword FtrIVBM0M1Platform = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_IVBM0M1PLATFORM};
         TokenDword FtrChannelSwizzlingXOREnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED};
@@ -559,24 +557,6 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS37751>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS37751) % sizeof(uint32_t) == 0, "");
 
-    struct TOKSTR_ANONYMOUS42853 {
-        TokenVariableLength base;
-
-        TOKSTR_ANONYMOUS42853(uint16_t tokenId, uint32_t elementId = 0)
-            : base(tokenId, elementId, offsetof(TOKSTR_ANONYMOUS42853, FtrVEBOX) + sizeof(FtrVEBOX) - offsetof(TOKSTR_ANONYMOUS42853, FtrFbc), (sizeof(*this) - sizeof(base)) / sizeof(uint32_t)) {}
-
-        TOKSTR_ANONYMOUS42853()
-            : base(TOK_S_SKU_FEATURE_TABLE__ANONYMOUS42853, 0, sizeof(*this) - sizeof(base)) {}
-
-        TokenDword FtrFbc = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC};
-        TokenDword FtrFbc2AddressTranslation = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC2ADDRESS_TRANSLATION};
-        TokenDword FtrFbcBlitterTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_BLITTER_TRACKING};
-        TokenDword FtrFbcCpuTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_CPU_TRACKING};
-        TokenDword FtrVEBOX = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_VEBOX};
-    };
-    static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS42853>, "");
-    static_assert(sizeof(TOKSTR_ANONYMOUS42853) % sizeof(uint32_t) == 0, "");
-
     struct TOKSTR_ANONYMOUS54736 {
         TokenVariableLength base;
 
@@ -603,7 +583,6 @@ struct TOKSTR__SKU_FEATURE_TABLE {
 
         TokenDword FtrS3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_S3D};
         TokenDword FtrDisplayEngineS3d = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_DISPLAY_ENGINE_S3D};
-        TokenDword FtrSingleVeboxSlice = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SINGLE_VEBOX_SLICE};
         TokenDword FtrSimulationMode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SIMULATION_MODE};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS66219>, "");
@@ -652,8 +631,6 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     static_assert(sizeof(TOKSTR_ANONYMOUS91822) % sizeof(uint32_t) == 0, "");
 
     TokenDword FtrDesktop = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_DESKTOP};                                                              // Indirect field from anonymous struct
-    TokenDword FtrVERing = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VERING};                                                                // Indirect field from anonymous struct
-    TokenDword FtrVcs2 = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_VCS2};                                                                    // Indirect field from anonymous struct
     TokenDword FtrULT = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_ULT};                                                                      // Indirect field from anonymous struct
     TokenDword FtrIVBM0M1Platform = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_IVBM0M1PLATFORM};                                              // Indirect field from anonymous struct
     TokenDword FtrChannelSwizzlingXOREnabled = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS3245__FTR_CHANNEL_SWIZZLING_XORENABLED};                      // Indirect field from anonymous struct
@@ -712,12 +689,10 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenDword FtrFbc2AddressTranslation = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC2ADDRESS_TRANSLATION};                              // Indirect field from anonymous struct
     TokenDword FtrFbcBlitterTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_BLITTER_TRACKING};                                     // Indirect field from anonymous struct
     TokenDword FtrFbcCpuTracking = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_FBC_CPU_TRACKING};                                             // Indirect field from anonymous struct
-    TokenDword FtrVEBOX = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS42853__FTR_VEBOX};                                                                 // Indirect field from anonymous struct
     TokenDword FtrRendComp = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_REND_COMP};                                                          // Indirect field from anonymous struct
     TokenDword FtrDisplayYTiling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS54736__FTR_DISPLAY_YTILING};                                              // Indirect field from anonymous struct
     TokenDword FtrS3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_S3D};                                                                     // Indirect field from anonymous struct
     TokenDword FtrDisplayEngineS3d = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_DISPLAY_ENGINE_S3D};                                         // Indirect field from anonymous struct
-    TokenDword FtrSingleVeboxSlice = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SINGLE_VEBOX_SLICE};                                         // Indirect field from anonymous struct
     TokenDword FtrSimulationMode = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS66219__FTR_SIMULATION_MODE};                                              // Indirect field from anonymous struct
     TokenDword FtrEnableGuC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS88095__FTR_ENABLE_GU_C};                                                       // Indirect field from anonymous struct
     TokenDword FtrVgt = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS89755__FTR_VGT};                                                                     // Indirect field from anonymous struct

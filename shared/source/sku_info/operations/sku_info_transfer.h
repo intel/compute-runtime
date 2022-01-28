@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,6 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(TileY);
         TRANSFER_FTR_TO_GMM(DisplayYTiling);
         TRANSFER_FTR_TO_GMM(Fbc);
-        TRANSFER_FTR_TO_GMM(VERing);
-        TRANSFER_FTR_TO_GMM(Vcs2);
         TRANSFER_FTR_TO_GMM(LCIA);
         TRANSFER_FTR_TO_GMM(IA32eGfxPTEs);
         TRANSFER_FTR_TO_GMM(Wddm2GpuMmu);

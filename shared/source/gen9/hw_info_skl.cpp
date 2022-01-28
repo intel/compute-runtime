@@ -112,7 +112,6 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrFbc2AddressTranslation = true;
     featureTable->flags.ftrFbcBlitterTracking = true;
     featureTable->flags.ftrFbcCpuTracking = true;
-    featureTable->flags.ftrVEBOX = true;
     featureTable->flags.ftrTileY = true;
 
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;

@@ -1058,8 +1058,6 @@ template <typename _SKU_FEATURE_TABLET>
 inline void marshall(TOKSTR__SKU_FEATURE_TABLE &dst, const _SKU_FEATURE_TABLET &src) {
     dst = {};
     dst.FtrDesktop.setValue(src.FtrDesktop);
-    dst.FtrVERing.setValue(src.FtrVERing);
-    dst.FtrVcs2.setValue(src.FtrVcs2);
     dst.FtrULT.setValue(src.FtrULT);
     dst.FtrIVBM0M1Platform.setValue(src.FtrIVBM0M1Platform);
     dst.FtrChannelSwizzlingXOREnabled.setValue(src.FtrChannelSwizzlingXOREnabled);
@@ -1119,12 +1117,10 @@ inline void marshall(TOKSTR__SKU_FEATURE_TABLE &dst, const _SKU_FEATURE_TABLET &
     dst.FtrFbc2AddressTranslation.setValue(src.FtrFbc2AddressTranslation);
     dst.FtrFbcBlitterTracking.setValue(src.FtrFbcBlitterTracking);
     dst.FtrFbcCpuTracking.setValue(src.FtrFbcCpuTracking);
-    dst.FtrVEBOX.setValue(src.FtrVEBOX);
     dst.FtrRendComp.setValue(src.FtrRendComp);
     dst.FtrDisplayYTiling.setValue(src.FtrDisplayYTiling);
     dst.FtrS3D.setValue(src.FtrS3D);
     dst.FtrDisplayEngineS3d.setValue(src.FtrDisplayEngineS3d);
-    dst.FtrSingleVeboxSlice.setValue(src.FtrSingleVeboxSlice);
     dst.FtrSimulationMode.setValue(src.FtrSimulationMode);
     dst.FtrEnableGuC.setValue(src.FtrEnableGuC);
     dst.FtrVgt.setValue(src.FtrVgt);
@@ -1401,8 +1397,6 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.GfxPlatform.usRevId_PCH.setValue(src.GfxPlatform.usRevId_PCH);
     dst.GfxPlatform.eGTType.setValue(src.GfxPlatform.eGTType);
     dst.SkuTable.FtrDesktop.setValue(src.SkuTable.FtrDesktop);
-    dst.SkuTable.FtrVERing.setValue(src.SkuTable.FtrVERing);
-    dst.SkuTable.FtrVcs2.setValue(src.SkuTable.FtrVcs2);
     dst.SkuTable.FtrULT.setValue(src.SkuTable.FtrULT);
     dst.SkuTable.FtrIVBM0M1Platform.setValue(src.SkuTable.FtrIVBM0M1Platform);
     dst.SkuTable.FtrChannelSwizzlingXOREnabled.setValue(src.SkuTable.FtrChannelSwizzlingXOREnabled);
@@ -1461,12 +1455,10 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.SkuTable.FtrFbc2AddressTranslation.setValue(src.SkuTable.FtrFbc2AddressTranslation);
     dst.SkuTable.FtrFbcBlitterTracking.setValue(src.SkuTable.FtrFbcBlitterTracking);
     dst.SkuTable.FtrFbcCpuTracking.setValue(src.SkuTable.FtrFbcCpuTracking);
-    dst.SkuTable.FtrVEBOX.setValue(src.SkuTable.FtrVEBOX);
     dst.SkuTable.FtrRendComp.setValue(src.SkuTable.FtrRendComp);
     dst.SkuTable.FtrDisplayYTiling.setValue(src.SkuTable.FtrDisplayYTiling);
     dst.SkuTable.FtrS3D.setValue(src.SkuTable.FtrS3D);
     dst.SkuTable.FtrDisplayEngineS3d.setValue(src.SkuTable.FtrDisplayEngineS3d);
-    dst.SkuTable.FtrSingleVeboxSlice.setValue(src.SkuTable.FtrSingleVeboxSlice);
     dst.SkuTable.FtrSimulationMode.setValue(src.SkuTable.FtrSimulationMode);
     dst.SkuTable.FtrEnableGuC.setValue(src.SkuTable.FtrEnableGuC);
     dst.SkuTable.FtrVgt.setValue(src.SkuTable.FtrVgt);

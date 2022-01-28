@@ -59,9 +59,6 @@ class SkuInfoReceiver {
         RECEIVE_FTR(FbcBlitterTracking);
         RECEIVE_FTR(FbcCpuTracking);
 
-        RECEIVE_FTR(Vcs2);
-        RECEIVE_FTR(VEBOX);
-        RECEIVE_FTR(SingleVeboxSlice);
         RECEIVE_FTR(ULT);
         RECEIVE_FTR(LCIA);
         RECEIVE_FTR(GttCacheInvalidation);
@@ -74,7 +71,6 @@ class SkuInfoReceiver {
         RECEIVE_FTR(Crystalwell);
         RECEIVE_FTR(LLCBypass);
         RECEIVE_FTR(DisplayEngineS3d);
-        RECEIVE_FTR(VERing);
         RECEIVE_FTR(Wddm2GpuMmu);
         RECEIVE_FTR(Wddm2_1_64kbPages);
 
