@@ -125,6 +125,13 @@ inline void setImageSurfaceStateDimensions(typename GfxFamily::RENDER_SURFACE_ST
 }
 
 template <typename GfxFamily>
+inline void setWidthForMediaBlockSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo) {
+    auto elSize = imageInfo.surfaceFormat->ImageElementSizeInBytes;
+    auto numDwords = static_cast<uint32_t>(Math::divideAndRoundUp(imageInfo.imgDesc.imageWidth * elSize, sizeof(uint32_t)));
+    surfaceState->setWidth(numDwords);
+}
+
+template <typename GfxFamily>
 inline void setUnifiedAuxBaseAddress(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
     uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
                            gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,8 +204,7 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
              &surfaceState, sizeof(RENDER_SURFACE_STATE));
     if (isMediaBlockArg) {
         RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(destSurfaceState);
-        uint32_t elSize = static_cast<uint32_t>(imgInfo.surfaceFormat->ImageElementSizeInBytes);
-        dstRss->setWidth(static_cast<uint32_t>((imgInfo.imgDesc.imageWidth * elSize) / sizeof(uint32_t)));
+        NEO::setWidthForMediaBlockSurfaceState<GfxFamily>(dstRss, imgInfo);
     }
 }
 

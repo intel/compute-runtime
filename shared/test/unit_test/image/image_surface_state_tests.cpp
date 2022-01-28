@@ -222,3 +222,63 @@ HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlag
     setImageSurfaceState<FamilyType>(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true);
     EXPECT_FALSE(castSurfaceState->getSurfaceArray());
 }
+
+struct ImageWidthTest : ImageSurfaceStateTests {
+
+    struct ImageWidthParams {
+        uint32_t imageWidth;
+        uint32_t expectedWidthInDwords;
+    };
+
+    template <typename FamilyType>
+    void verifyProgramming(typename FamilyType::RENDER_SURFACE_STATE &renderSurfaceState, const std::array<ImageWidthParams, 6> &params) {
+        for (auto &param : params) {
+            imageInfo.imgDesc.imageWidth = param.imageWidth;
+            setWidthForMediaBlockSurfaceState<FamilyType>(&renderSurfaceState, imageInfo);
+            EXPECT_EQ(param.expectedWidthInDwords, renderSurfaceState.getWidth());
+        }
+    }
+};
+
+HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCorrectValueIsProgrammed) {
+    SurfaceFormatInfo surfaceFormatInfo{};
+    imageInfo.surfaceFormat = &surfaceFormatInfo;
+
+    auto renderSurfaceState = FamilyType::cmdInitRenderSurfaceState;
+    {
+        surfaceFormatInfo.ImageElementSizeInBytes = 1u;
+        constexpr std::array<ImageWidthParams, 6> params = {{
+            {1, 1},
+            {2, 1},
+            {3, 1},
+            {4, 1},
+            {5, 2},
+            {6, 2},
+        }};
+        verifyProgramming<FamilyType>(renderSurfaceState, params);
+    }
+    {
+        surfaceFormatInfo.ImageElementSizeInBytes = 2u;
+        constexpr std::array<ImageWidthParams, 6> params = {{
+            {1, 1},
+            {2, 1},
+            {3, 2},
+            {4, 2},
+            {5, 3},
+            {6, 3},
+        }};
+        verifyProgramming<FamilyType>(renderSurfaceState, params);
+    }
+    {
+        surfaceFormatInfo.ImageElementSizeInBytes = 4u;
+        constexpr std::array<ImageWidthParams, 6> params = {{
+            {1, 1},
+            {2, 2},
+            {3, 3},
+            {4, 4},
+            {5, 5},
+            {6, 6},
+        }};
+        verifyProgramming<FamilyType>(renderSurfaceState, params);
+    }
+}
