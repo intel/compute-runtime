@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1326,13 +1326,15 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
     std::string output = testing::internal::GetCapturedStdout();
     std::stringstream expected;
 
-    expected << "Timestamp 0, profiling capable: " << ev->timestampPacketContainer->peekNodes()[0]->isProfilingCapable() << ", ";
+    expected << "Timestamp 0, cmd type: " << ev->getCommandType() << ", ";
     for (int i = 0; i < 16; i++) {
         expected << "packet " << i << ": "
                  << "global start: " << globalStart[i] << ", "
                  << "global end: " << globalEnd[i] << ", "
                  << "context start: " << contextStart[i] << ", "
-                 << "context end: " << contextEnd[i] << std::endl;
+                 << "context end: " << contextEnd[i] << ", "
+                 << "global delta: " << globalEnd[i] - globalStart[i] << ", "
+                 << "context delta: " << contextEnd[i] - contextStart[i] << std::endl;
     }
     EXPECT_EQ(0, output.compare(expected.str().c_str()));
 }

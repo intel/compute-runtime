@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,15 +298,18 @@ bool Event::calcProfilingData() {
             const auto timestamps = timestampPacketContainer->peekNodes();
 
             if (DebugManager.flags.PrintTimestampPacketContents.get()) {
+
                 for (auto i = 0u; i < timestamps.size(); i++) {
                     std::cout << "Timestamp " << i << ", "
-                              << "profiling capable: " << timestamps[i]->isProfilingCapable() << ", ";
+                              << "cmd type: " << this->cmdType << ", ";
                     for (auto j = 0u; j < timestamps[i]->getPacketsUsed(); j++) {
                         std::cout << "packet " << j << ": "
                                   << "global start: " << timestamps[i]->getGlobalStartValue(j) << ", "
                                   << "global end: " << timestamps[i]->getGlobalEndValue(j) << ", "
                                   << "context start: " << timestamps[i]->getContextStartValue(j) << ", "
-                                  << "context end: " << timestamps[i]->getContextEndValue(j) << std::endl;
+                                  << "context end: " << timestamps[i]->getContextEndValue(j) << ", "
+                                  << "global delta: " << timestamps[i]->getGlobalEndValue(j) - timestamps[i]->getGlobalStartValue(j) << ", "
+                                  << "context delta: " << timestamps[i]->getContextEndValue(j) - timestamps[i]->getContextStartValue(j) << std::endl;
                     }
                 }
             }
