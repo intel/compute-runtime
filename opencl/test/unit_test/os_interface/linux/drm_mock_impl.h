@@ -20,7 +20,7 @@ class DrmTipMock : public DrmMock {
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmTipMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
-        setupIoctlHelper();
+        setupIoctlHelper(inputHwInfo->platform.eProductFamily);
     }
 
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();

@@ -59,7 +59,7 @@ using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
-    static IoctlHelper *get(const HardwareInfo *hwInfo, const std::string &prelimVersion);
+    static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
     virtual IoctlHelper *clone() = 0;
 
@@ -77,6 +77,7 @@ class IoctlHelper {
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual int32_t getMemRegionsIoctlVal() = 0;
     virtual int32_t getEngineInfoIoctlVal() = 0;
+    virtual uint32_t getComputeSlicesIoctlVal() = 0;
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual int32_t getComputeEngineClass() = 0;
@@ -102,6 +103,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
+    uint32_t getComputeSlicesIoctlVal() override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
@@ -140,6 +142,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
+    uint32_t getComputeSlicesIoctlVal() override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;

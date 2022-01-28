@@ -73,6 +73,7 @@ DECLARE_DEBUG_VARIABLE(bool, AllowMixingRegularAndCooperativeKernels, false, "tr
 DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "true: MEDIA_VFE_STATE may be programmed in a command list")
 DECLARE_DEBUG_VARIABLE(bool, PrintMemoryRegionSizes, false, "print memory bank type, instance and it's size")
 DECLARE_DEBUG_VARIABLE(bool, UpdateCrossThreadDataSize, false, "Turn on cross thread data size calculation for PATCH TOKEN binary")
+DECLARE_DEBUG_VARIABLE(bool, UseNewQueryTopoIoctl, true, "Use DRM_I915_QUERY_COMPUTE_SLICES")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened. Ignored when unk.")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened. Ignored when unk.")

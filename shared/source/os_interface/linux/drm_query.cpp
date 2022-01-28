@@ -49,23 +49,6 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     return ret;
 }
 
-bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {
-    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology);
-    if (dataQuery.empty()) {
-        return false;
-    }
-    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
-
-    topologyData.maxSliceCount = data->max_slices;
-    topologyData.maxSubSliceCount = data->max_subslices;
-    topologyData.maxEuCount = data->max_eus_per_subslice;
-
-    TopologyMapping mapping;
-    auto result = translateTopologyInfo(data, topologyData, mapping);
-    this->topologyMap[0] = mapping;
-    return result;
-}
-
 bool Drm::isDebugAttachAvailable() {
     return false;
 }

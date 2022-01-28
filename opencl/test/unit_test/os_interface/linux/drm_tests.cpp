@@ -736,6 +736,7 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
     DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
 
+    drm.ioctlHelper.reset();
     drm.setupHardwareInfo(&device, false);
     EXPECT_NE(nullptr, drm.getIoctlHelper());
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSlicesSupported, hwInfo->gtSystemInfo.MaxSlicesSupported);
@@ -1005,7 +1006,8 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
 }
 
 TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
-    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(defaultHwInfo.get(), "-1"));
+    const auto productFamily = defaultHwInfo.get()->platform.eProductFamily;
+    std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(productFamily, "-1"));
     EXPECT_NE(nullptr, ioctlHelper.get());
 }
 
@@ -1192,7 +1194,9 @@ TEST(DrmTest, givenSetupIoctlHelperThenIoctlHelperNotNull) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     drm.ioctlHelper.reset(nullptr);
-    drm.setupIoctlHelper();
+
+    const auto productFamily = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily;
+    drm.setupIoctlHelper(productFamily);
 
     EXPECT_NE(nullptr, drm.ioctlHelper.get());
 }

@@ -109,6 +109,10 @@ int32_t IoctlHelperUpstream::getEngineInfoIoctlVal() {
     return DRM_I915_QUERY_ENGINE_INFO;
 }
 
+uint32_t IoctlHelperUpstream::getComputeSlicesIoctlVal() {
+    return 0;
+}
+
 std::vector<EngineCapabilities> IoctlHelperUpstream::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;

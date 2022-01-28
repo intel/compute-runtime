@@ -267,7 +267,7 @@ class Drm : public DriverModel {
     std::string getSysFsPciPath();
     std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
     void printIoctlStatistics();
-    void setupIoctlHelper();
+    void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
 
 #pragma pack(1)
     struct PCIConfig {

@@ -58,7 +58,7 @@ class DrmMock : public Drm {
         if (!isPerContextVMRequired()) {
             createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
         }
-        setupIoctlHelper();
+        setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
 

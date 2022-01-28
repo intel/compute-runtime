@@ -40,7 +40,7 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
-        mock->setupIoctlHelper();
+        mock->setupIoctlHelper(hwInfo->platform.eProductFamily);
         osContext = std::make_unique<OsContextLinux>(*mock, 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));

@@ -32,7 +32,7 @@ constexpr int mockFd = 0;
 class SysmanMockDrm : public Drm {
   public:
     SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {
-        setupIoctlHelper();
+        setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     }
 };
 

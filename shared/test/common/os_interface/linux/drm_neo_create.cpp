@@ -41,7 +41,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     const HardwareInfo *hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    drm->setupIoctlHelper();
+    drm->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
     drm->queryAdapterBDF();
 

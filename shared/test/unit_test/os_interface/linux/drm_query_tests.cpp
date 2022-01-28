@@ -27,48 +27,6 @@ TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
     EXPECT_FALSE(drm.isDebugAttachAvailable());
 }
 
-TEST(DrmQueryTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    Drm::QueryTopologyData topologyData = {};
-
-    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
-
-    EXPECT_EQ(drm.storedSVal, topologyData.sliceCount);
-    EXPECT_EQ(drm.storedSSVal, topologyData.subSliceCount);
-    EXPECT_EQ(drm.storedEUVal, topologyData.euCount);
-
-    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(drm.storedSSVal / drm.storedSVal, topologyData.maxSubSliceCount);
-    EXPECT_EQ(drm.storedEUVal / drm.storedSSVal, topologyData.maxEuCount);
-}
-
-TEST(DrmQueryTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
-    DrmMock drmMock{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    Drm::QueryTopologyData topologyData = {};
-
-    EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
-
-    auto device0SliceMapping = drmMock.getSliceMappings(0);
-    auto device1SliceMapping = drmMock.getSliceMappings(1);
-
-    ASSERT_EQ(static_cast<size_t>(topologyData.maxSliceCount), device0SliceMapping.size());
-    EXPECT_EQ(0u, device1SliceMapping.size());
-
-    for (int i = 0; i < topologyData.maxSliceCount; i++) {
-        EXPECT_EQ(i, device0SliceMapping[i]);
-    }
-}
-
 using HwConfigTopologyQuery = ::testing::Test;
 
 HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnSubsliceIoctlQuery, MatchAny) {

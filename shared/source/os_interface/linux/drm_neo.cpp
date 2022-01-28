@@ -481,6 +481,9 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     HardwareInfo *hwInfo = const_cast<HardwareInfo *>(device->pHwInfo);
     int ret;
 
+    const auto productFamily = hwInfo->platform.eProductFamily;
+    setupIoctlHelper(productFamily);
+
     Drm::QueryTopologyData topologyData = {};
 
     bool status = queryTopology(*hwInfo, topologyData);
@@ -506,7 +509,6 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
     rootDeviceEnvironment.setHwInfo(hwInfo);
-    setupIoctlHelper();
 
     status = querySystemInfo();
     if (status) {
@@ -1081,11 +1083,82 @@ bool Drm::completionFenceSupport() {
     return completionFenceSupported;
 }
 
-void Drm::setupIoctlHelper() {
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     std::string prelimVersion = "";
     getPrelimVersion(prelimVersion);
-    this->ioctlHelper.reset(IoctlHelper::get(hwInfo, prelimVersion));
+    this->ioctlHelper.reset(IoctlHelper::get(productFamily, prelimVersion));
+}
+
+bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {
+    topologyData.sliceCount = 0;
+    topologyData.subSliceCount = 0;
+    topologyData.euCount = 0;
+
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    int euCount = 0;
+
+    const auto queryComputeSlicesIoctl = ioctlHelper->getComputeSlicesIoctlVal();
+    if (DebugManager.flags.UseNewQueryTopoIoctl.get() && this->engineInfo && hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount > 0 && queryComputeSlicesIoctl != 0) {
+        bool success = true;
+
+        for (uint32_t i = 0; i < hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount; i++) {
+            auto classInstance = this->engineInfo->getEngineInstance(i, hwInfo.capabilityTable.defaultEngineType);
+            UNRECOVERABLE_IF(!classInstance);
+
+            uint32_t flags = classInstance->engineClass;
+            flags |= (classInstance->engineInstance << 8);
+
+            auto dataQuery = this->query(queryComputeSlicesIoctl, flags);
+            if (dataQuery.empty()) {
+                success = false;
+                break;
+            }
+            auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
+
+            QueryTopologyData tileTopologyData = {};
+            TopologyMapping mapping;
+            if (!translateTopologyInfo(data, tileTopologyData, mapping)) {
+                success = false;
+                break;
+            }
+
+            // pick smallest config
+            sliceCount = (sliceCount == 0) ? tileTopologyData.sliceCount : std::min(sliceCount, tileTopologyData.sliceCount);
+            subSliceCount = (subSliceCount == 0) ? tileTopologyData.subSliceCount : std::min(subSliceCount, tileTopologyData.subSliceCount);
+            euCount = (euCount == 0) ? tileTopologyData.euCount : std::min(euCount, tileTopologyData.euCount);
+
+            topologyData.maxSliceCount = std::max(topologyData.maxSliceCount, tileTopologyData.maxSliceCount);
+            topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, tileTopologyData.maxSubSliceCount);
+            topologyData.maxEuCount = std::max(topologyData.maxEuCount, static_cast<int>(data->max_eus_per_subslice));
+
+            this->topologyMap[i] = mapping;
+        }
+
+        if (success) {
+            topologyData.sliceCount = sliceCount;
+            topologyData.subSliceCount = subSliceCount;
+            topologyData.euCount = euCount;
+            return true;
+        }
+    }
+
+    // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
+
+    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology);
+    if (dataQuery.empty()) {
+        return false;
+    }
+    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
+
+    TopologyMapping mapping;
+    auto retVal = translateTopologyInfo(data, topologyData, mapping);
+    topologyData.maxEuCount = data->max_eus_per_subslice;
+
+    this->topologyMap.clear();
+    this->topologyMap[0] = mapping;
+
+    return retVal;
 }
 
 } // namespace NEO

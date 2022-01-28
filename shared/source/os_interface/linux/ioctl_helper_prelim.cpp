@@ -194,6 +194,10 @@ int32_t IoctlHelperPrelim20::getEngineInfoIoctlVal() {
     return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
 }
 
+uint32_t IoctlHelperPrelim20::getComputeSlicesIoctlVal() {
+    return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
+}
+
 std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;
