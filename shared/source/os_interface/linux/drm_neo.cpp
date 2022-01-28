@@ -753,11 +753,20 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
         if (subSliceIndices.size()) {
             maxSubSliceCountPerSlice = std::max(maxSubSliceCountPerSlice, subSliceIndices[subSliceIndices.size() - 1] + 1);
         }
+
+        // single slice available
+        if (sliceCount == 1) {
+            mapping.subsliceIndices = std::move(subSliceIndices);
+        }
     }
 
     if (sliceIndices.size()) {
         maxSliceCount = sliceIndices[sliceIndices.size() - 1] + 1;
         mapping.sliceIndices = std::move(sliceIndices);
+    }
+
+    if (sliceCount != 1) {
+        mapping.subsliceIndices.clear();
     }
 
     data.sliceCount = sliceCount;

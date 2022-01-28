@@ -98,8 +98,8 @@ struct DeviceImp : public Device {
     void storeReusableAllocation(NEO::GraphicsAllocation &alloc) override;
     NEO::Device *getActiveDevice() const;
 
-    bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex);
-    bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex);
+    bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex);
+    bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t deviceIndex);
 
     bool isSubdevice = false;
     void *execEnvironment = nullptr;

@@ -256,10 +256,17 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
     map[0] = mapping;
 
     uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount - 1;
-    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount - 1, sliceId);
     EXPECT_TRUE(ret);
@@ -270,7 +277,7 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
     map[0] = mapping;
 
     sliceId = 1;
-    ret = deviceImp->toApiSliceId(map, sliceId, 0);
+    ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_EQ(0u, sliceId);
     EXPECT_TRUE(ret);
@@ -294,11 +301,17 @@ TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigh
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i + 1;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = 1;
+    uint32_t subsliceId = 0;
     const uint32_t deviceIndex = 2;
-    auto ret = deviceImp->toApiSliceId(map, sliceId, deviceIndex);
+    auto ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, deviceIndex);
     EXPECT_FALSE(ret);
 }
 
@@ -320,10 +333,16 @@ TEST(L0DeviceTest, givenInvalidPhysicalSliceIdWhenGettingApiSliceIdThenFalseIsRe
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount + 1;
-    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_FALSE(ret);
 }
@@ -346,11 +365,17 @@ TEST(L0DeviceTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThenFalseIsRe
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount + 1;
+    uint32_t subsliceId = 1;
     uint32_t deviceIndex = 0;
-    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_FALSE(ret);
 }
@@ -368,7 +393,8 @@ TEST(L0DeviceTest, givenEmptyTopologyWhenGettingApiSliceIdThenFalseIsReturned) {
 
     NEO::TopologyMap map;
     uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount - 1;
-    auto ret = deviceImp->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_FALSE(ret);
 }
@@ -391,14 +417,21 @@ TEST(L0DeviceTest, givenDeviceWithoutSubDevicesWhenGettingPhysicalSliceIdThenCor
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i + 1;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = 0;
+    uint32_t subsliceId = 0;
     uint32_t deviceIndex = 10;
-    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(1u, sliceId);
+    EXPECT_EQ(0u, subsliceId);
     EXPECT_EQ(0u, deviceIndex);
 }
 
@@ -417,10 +450,118 @@ TEST(L0DeviceTest, givenTopologyNotAvaialbleWhenGettingPhysicalSliceIdThenFalseI
     TopologyMapping mapping;
 
     uint32_t sliceId = 0;
+    uint32_t subsliceId = 0;
     uint32_t deviceIndex = 10;
-    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_FALSE(ret);
+}
+
+TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToApiIdsThenSubsliceIdsAreRemapped) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    hwInfo.gtSystemInfo.SliceCount = 1;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+
+    //disable 5 physical subslices, shift subslice ids by 5
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 5;
+    }
+
+    map[0] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t subsliceId = 5;
+    auto ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
+
+    EXPECT_EQ(0u, sliceId);
+    EXPECT_EQ(0u, subsliceId);
+    EXPECT_TRUE(ret);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[0] = mapping;
+
+    sliceId = 1;
+    subsliceId = 5;
+    ret = deviceImp->toApiSliceId(map, sliceId, subsliceId, 0);
+
+    EXPECT_EQ(0u, sliceId);
+    EXPECT_EQ(0u, subsliceId);
+    EXPECT_TRUE(ret);
+}
+
+TEST(L0DeviceTest, givenSingleSliceTopologyWhenConvertingToPhysicalIdsThenSubsliceIdsAreRemapped) {
+    NEO::MockCompilerEnableGuard mock(true);
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    hwInfo.gtSystemInfo.SliceCount = 1;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i;
+    }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+
+    //disable 5 physical subslices, shift subslice ids by 5
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 5;
+    }
+
+    map[0] = mapping;
+
+    uint32_t sliceId = 0;
+    uint32_t subsliceId = 0;
+    uint32_t deviceIndex = 0;
+    auto ret = deviceImp->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+    EXPECT_EQ(0u, sliceId);
+    EXPECT_EQ(5u, subsliceId);
+    EXPECT_EQ(0u, deviceIndex);
+    EXPECT_TRUE(ret);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.sliceIndices[i] = i + 1;
+    }
+    map[0] = mapping;
+
+    sliceId = 0;
+    subsliceId = 0;
+    ret = deviceImp->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+    EXPECT_EQ(1u, sliceId);
+    EXPECT_EQ(5u, subsliceId);
+    EXPECT_EQ(0u, deviceIndex);
+    EXPECT_TRUE(ret);
 }
 
 struct DeviceTest : public ::testing::Test {
@@ -1821,6 +1962,11 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -1829,13 +1975,14 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     map[1] = mapping;
 
     uint32_t sliceId = 0;
-    auto ret = deviceImp0->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, sliceId);
 
     sliceId = 10;
-    ret = deviceImp0->toApiSliceId(map, sliceId, 1);
+    ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, 1);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount + 0u, sliceId);
@@ -1858,16 +2005,22 @@ TEST_F(MultipleDevicesTest, givenTopologyForSingleSubdeviceWhenGettingApiSliceId
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = 0;
-    auto ret = deviceImp0->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, sliceId);
 
     sliceId = 0;
-    ret = deviceImp0->toApiSliceId(map, sliceId, 1);
+    ret = deviceImp0->toApiSliceId(map, sliceId, subsliceId, 1);
 
     EXPECT_FALSE(ret);
 }
@@ -1895,6 +2048,12 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
     map[0] = mapping;
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -1903,13 +2062,14 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     map[1] = mapping;
 
     uint32_t sliceId = 0;
-    auto ret = subDeviceImp0->toApiSliceId(map, sliceId, 0);
+    uint32_t subsliceId = 0;
+    auto ret = subDeviceImp0->toApiSliceId(map, sliceId, subsliceId, 0);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, sliceId);
 
     sliceId = 10;
-    ret = subDeviceImp1->toApiSliceId(map, sliceId, 1);
+    ret = subDeviceImp1->toApiSliceId(map, sliceId, subsliceId, 1);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, sliceId);
@@ -1927,6 +2087,12 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
     map[0] = mapping;
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -1935,19 +2101,22 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
     map[1] = mapping;
 
     uint32_t sliceId = 0;
+    uint32_t subsliceId = 0;
     uint32_t deviceIndex = 100;
-    auto ret = deviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = deviceImp0->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, sliceId);
+    EXPECT_EQ(0u, subsliceId);
     EXPECT_EQ(0u, deviceIndex);
 
     sliceId = hwInfo.gtSystemInfo.SliceCount;
     deviceIndex = 200;
-    ret = deviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+    ret = deviceImp0->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(10u, sliceId);
+    EXPECT_EQ(0u, subsliceId);
     EXPECT_EQ(1u, deviceIndex);
 }
 
@@ -1974,6 +2143,12 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i + 5;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
+
     map[0] = mapping;
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -1982,19 +2157,23 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingPhysicalSlic
     map[1] = mapping;
 
     uint32_t sliceId = 0;
+    uint32_t subsliceId = 1;
     uint32_t deviceIndex = 0;
-    auto ret = subDeviceImp0->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = subDeviceImp0->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(5u, sliceId);
+    EXPECT_EQ(1u, subsliceId);
     EXPECT_EQ(0u, deviceIndex);
 
     sliceId = 0;
+    subsliceId = 1;
     deviceIndex = 100;
-    ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+    ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(10u, sliceId);
+    EXPECT_EQ(1u, subsliceId);
     EXPECT_EQ(1u, deviceIndex);
 }
 
@@ -2025,8 +2204,9 @@ TEST_F(MultipleDevicesTest, givenInvalidApiSliceIdWhenGettingPhysicalSliceIdThen
     map[1] = mapping;
 
     uint32_t sliceId = hwInfo.gtSystemInfo.SliceCount;
+    uint32_t subsliceId = 0;
     uint32_t deviceIndex = 1;
-    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_FALSE(ret);
 }
@@ -2050,11 +2230,17 @@ TEST_F(MultipleDevicesTest, givenTopologyMapForSubdeviceZeroWhenGettingPhysicalS
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i + 5;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i;
+    }
     map[0] = mapping;
 
     uint32_t sliceId = 0;
+    uint32_t subsliceId = 3;
     uint32_t deviceIndex = 1;
-    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+    auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
     EXPECT_FALSE(ret);
 }
@@ -2082,6 +2268,11 @@ TEST_F(MultipleDevicesWithCustomHwInfoTest, givenTopologyWhenMappingToAndFromApi
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
         mapping.sliceIndices[i] = i;
     }
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 10;
+    }
     map[0] = mapping;
 
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SliceCount; i++) {
@@ -2096,7 +2287,8 @@ TEST_F(MultipleDevicesWithCustomHwInfoTest, givenTopologyWhenMappingToAndFromApi
 
     for (uint32_t i = 0; i < deviceProperties.numSlices; i++) {
         uint32_t sliceId = i;
-        auto ret = device->toPhysicalSliceId(map, sliceId, deviceIndex);
+        uint32_t subsliceId = deviceProperties.numSubslicesPerSlice / 2;
+        auto ret = device->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
         EXPECT_TRUE(ret);
         if (i < sliceCount) {
@@ -2107,26 +2299,107 @@ TEST_F(MultipleDevicesWithCustomHwInfoTest, givenTopologyWhenMappingToAndFromApi
             EXPECT_EQ(1u, deviceIndex);
         }
 
-        ret = device->toApiSliceId(map, sliceId, deviceIndex);
+        ret = device->toApiSliceId(map, sliceId, subsliceId, deviceIndex);
 
         EXPECT_TRUE(ret);
         EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(deviceProperties.numSubslicesPerSlice / 2, subsliceId);
     }
 
     subDeviceImp1->getProperties(&deviceProperties);
 
     for (uint32_t i = 0; i < deviceProperties.numSlices; i++) {
         uint32_t sliceId = i;
-        auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, deviceIndex);
+        uint32_t subsliceId = deviceProperties.numSubslicesPerSlice - 1;
+        auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
 
         EXPECT_TRUE(ret);
 
         EXPECT_EQ(i + 1, sliceId);
         EXPECT_EQ(1u, deviceIndex);
-        ret = subDeviceImp1->toApiSliceId(map, sliceId, deviceIndex);
+        ret = subDeviceImp1->toApiSliceId(map, sliceId, subsliceId, deviceIndex);
 
         EXPECT_TRUE(ret);
         EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(deviceProperties.numSubslicesPerSlice - 1, subsliceId);
+    }
+}
+
+TEST_F(MultipleDevicesWithCustomHwInfoTest, givenSingleSliceTopologyWhenMappingToAndFromApiAndPhysicalSubSliceIdThenIdsAreMatching) {
+    L0::Device *device0 = driverHandle->devices[0];
+
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    auto res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice1 = Device::fromHandle(subDevices0[1]);
+    L0::DeviceImp *subDeviceImp1 = static_cast<DeviceImp *>(subDevice1);
+    L0::DeviceImp *device = static_cast<DeviceImp *>(device0);
+
+    NEO::TopologyMap map;
+    TopologyMapping mapping;
+
+    mapping.sliceIndices.resize(1);
+    mapping.sliceIndices[0] = 1;
+
+    mapping.subsliceIndices.resize(hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 10;
+    }
+    map[0] = mapping;
+
+    mapping.sliceIndices.resize(1);
+    mapping.sliceIndices[0] = 0;
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount; i++) {
+        mapping.subsliceIndices[i] = i + 20;
+    }
+    map[1] = mapping;
+
+    uint32_t deviceIndex = 0;
+
+    for (uint32_t i = 0; i < 2; i++) {
+        uint32_t sliceId = i;
+        uint32_t subsliceId = 2;
+        auto ret = device->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+        EXPECT_TRUE(ret);
+        if (i < 1) {
+            EXPECT_EQ(1u, sliceId);
+            EXPECT_EQ(12u, subsliceId);
+            EXPECT_EQ(0u, deviceIndex);
+        } else {
+            EXPECT_EQ(0u, sliceId);
+            EXPECT_EQ(22u, subsliceId);
+            EXPECT_EQ(1u, deviceIndex);
+        }
+
+        ret = device->toApiSliceId(map, sliceId, subsliceId, deviceIndex);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(i, sliceId);
+        EXPECT_EQ(2u, subsliceId);
+    }
+
+    // subdevice 1
+    {
+        uint32_t sliceId = 0;
+        uint32_t subsliceId = 1;
+        auto ret = subDeviceImp1->toPhysicalSliceId(map, sliceId, subsliceId, deviceIndex);
+
+        EXPECT_TRUE(ret);
+
+        EXPECT_EQ(0u, sliceId);
+        EXPECT_EQ(21u, subsliceId);
+        EXPECT_EQ(1u, deviceIndex);
+        ret = subDeviceImp1->toApiSliceId(map, sliceId, subsliceId, deviceIndex);
+
+        EXPECT_TRUE(ret);
+        EXPECT_EQ(0u, sliceId);
+        EXPECT_EQ(1u, subsliceId);
     }
 }
 

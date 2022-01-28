@@ -1102,7 +1102,7 @@ DebugSession *DeviceImp::createDebugSession(const zet_debug_config_t &config, ze
     return debugSession.get();
 }
 
-bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &deviceIndex) {
+bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex) {
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getHardwareInfo();
     uint32_t subDeviceCount = NEO::HwHelper::getSubDevicesCount(hwInfo);
     auto deviceBitfield = neoDevice->getDeviceBitfield();
@@ -1112,6 +1112,11 @@ bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t 
         for (uint32_t i = 0; i < topologyMap.size(); i++) {
             if (sliceId < topologyMap.at(i).sliceIndices.size()) {
                 slice = topologyMap.at(i).sliceIndices[sliceId];
+
+                if (topologyMap.at(i).sliceIndices.size() == 1) {
+                    uint32_t subsliceId = subslice;
+                    subslice = topologyMap.at(i).subsliceIndices[subsliceId];
+                }
                 deviceIndex = i;
                 return true;
             }
@@ -1125,6 +1130,11 @@ bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t 
             if (slice < topologyMap.at(subDeviceIndex).sliceIndices.size()) {
                 deviceIndex = subDeviceIndex;
                 slice = topologyMap.at(subDeviceIndex).sliceIndices[slice];
+
+                if (topologyMap.at(subDeviceIndex).sliceIndices.size() == 1) {
+                    uint32_t subsliceId = subslice;
+                    subslice = topologyMap.at(subDeviceIndex).subsliceIndices[subsliceId];
+                }
                 return true;
             }
         }
@@ -1133,7 +1143,7 @@ bool DeviceImp::toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t 
     return false;
 }
 
-bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t deviceIndex) {
+bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t deviceIndex) {
     auto deviceBitfield = neoDevice->getDeviceBitfield();
 
     if (isSubdevice) {
@@ -1153,6 +1163,13 @@ bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slic
             if (static_cast<uint32_t>(topologyMap.at(deviceIndex).sliceIndices[i]) == slice) {
                 apiSliceId += i;
                 slice = apiSliceId;
+                if (topologyMap.at(deviceIndex).sliceIndices.size() == 1) {
+                    for (uint32_t subsliceApiId = 0; subsliceApiId < topologyMap.at(deviceIndex).subsliceIndices.size(); subsliceApiId++) {
+                        if (static_cast<uint32_t>(topologyMap.at(deviceIndex).subsliceIndices[subsliceApiId]) == subslice) {
+                            subslice = subsliceApiId;
+                        }
+                    }
+                }
                 return true;
             }
         }

@@ -752,18 +752,18 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     drm.disableSomeTopology = true;
 
     Drm::QueryTopologyData topologyData = {};
-    drm.storedSVal = 2;
-    drm.storedSSVal = 6;
-    drm.storedEUVal = 16;
+    drm.storedSVal = 4;
+    drm.storedSSVal = drm.storedSVal * 7;
+    drm.storedEUVal = drm.storedSSVal * 4;
 
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
-    EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.subSliceCount);
-    EXPECT_EQ(1, topologyData.euCount);
+    EXPECT_EQ(2, topologyData.sliceCount);
+    EXPECT_EQ(6, topologyData.subSliceCount);
+    EXPECT_EQ(12, topologyData.euCount);
 
     EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(2, topologyData.maxSubSliceCount);
+    EXPECT_EQ(7, topologyData.maxSubSliceCount);
 }
 
 TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
@@ -783,6 +783,69 @@ TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
 
     for (uint32_t i = 0; i < topologyMap.size(); i++) {
         EXPECT_EQ(drmMock.storedSVal, static_cast<int>(topologyMap.at(i).sliceIndices.size()));
+    }
+}
+
+TEST(DrmQueryTest, GivenSingleSliceConfigWhenQueryingTopologyInfoThenSubsliceIndicesAreStored) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    Drm::QueryTopologyData topologyData = {};
+    drm.storedSVal = 1;
+    drm.storedSSVal = drm.storedSVal * 7;
+    drm.storedEUVal = drm.storedSSVal * 4;
+
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+
+    EXPECT_EQ(1, topologyData.sliceCount);
+    EXPECT_EQ(7, topologyData.subSliceCount);
+    EXPECT_EQ(28, topologyData.euCount);
+
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
+    EXPECT_EQ(7, topologyData.maxSubSliceCount);
+
+    auto topologyMap = drm.getTopologyMap();
+
+    for (uint32_t i = 0; i < topologyMap.size(); i++) {
+        EXPECT_EQ(drm.storedSVal, static_cast<int>(topologyMap.at(i).sliceIndices.size()));
+
+        EXPECT_EQ(7u, topologyMap.at(i).subsliceIndices.size());
+        for (int subsliceId = 0; subsliceId < static_cast<int>(topologyMap.at(i).subsliceIndices.size()); subsliceId++) {
+            EXPECT_EQ(subsliceId, topologyMap.at(i).subsliceIndices[subsliceId]);
+        }
+    }
+}
+
+TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndicesAreNotStored) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    Drm::QueryTopologyData topologyData = {};
+    drm.storedSVal = 2;
+    drm.storedSSVal = drm.storedSVal * 7;
+    drm.storedEUVal = drm.storedSSVal * 4;
+
+    EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
+
+    EXPECT_EQ(2, topologyData.sliceCount);
+    EXPECT_EQ(14, topologyData.subSliceCount);
+    EXPECT_EQ(56, topologyData.euCount);
+
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
+    EXPECT_EQ(7, topologyData.maxSubSliceCount);
+
+    auto topologyMap = drm.getTopologyMap();
+
+    for (uint32_t i = 0; i < topologyMap.size(); i++) {
+        EXPECT_EQ(drm.storedSVal, static_cast<int>(topologyMap.at(i).sliceIndices.size()));
+
+        EXPECT_EQ(0u, topologyMap.at(i).subsliceIndices.size());
     }
 }
 
