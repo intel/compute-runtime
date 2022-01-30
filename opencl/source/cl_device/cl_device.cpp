@@ -93,8 +93,8 @@ unique_ptr_if_unused<ClDevice> ClDevice::decRefInternal() {
 
 bool ClDevice::isOcl21Conformant() const {
     auto &hwInfo = device.getHardwareInfo();
-    return (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsPipes &&
-            hwInfo.capabilityTable.supportsIndependentForwardProgress);
+    return (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsDeviceEnqueue &&
+            hwInfo.capabilityTable.supportsPipes && hwInfo.capabilityTable.supportsIndependentForwardProgress);
 }
 
 void ClDevice::retainApi() {
