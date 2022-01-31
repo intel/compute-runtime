@@ -57,17 +57,13 @@ TEST_F(ContextIsShareable, whenCallingisSharedMemoryThenCorrectResultIsReturned)
 }
 
 using GetMemHandlePtrTest = Test<GetMemHandlePtrTestFixture>;
-TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidHandleThenSuccessIsReturned) {
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithValidNTHandleThenSuccessIsReturned) {
     MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
 
     uint64_t handle = 57;
 
     // Test Successfully returning NT Handle
     fixtureMemoryManager->NTHandle = true;
-    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, 0));
-
-    // Test Successfully returning fd Handle
-    fixtureMemoryManager->NTHandle = false;
     EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, 0));
 }
 
@@ -83,6 +79,28 @@ TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithInvalidHandleThenNullp
     EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, 0));
 
     // Test Failing returning fd Handle
+    fixtureMemoryManager->NTHandle = false;
+    EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, 0));
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithDRMDriverTypeWithNonNTHandleThenSuccessIsReturned) {
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>(512));
+    uint64_t handle = 57;
+
+    // Test Successfully returning fd Handle
+    fixtureMemoryManager->NTHandle = false;
+    EXPECT_NE(nullptr, context->getMemHandlePtr(device, handle, 0));
+}
+
+TEST_F(GetMemHandlePtrTest, whenCallingGetMemHandlePtrWithWDDMDriverTypeWithNonNTHandleThenNullPtrIsReturned) {
+    MemoryManagerMemHandleMock *fixtureMemoryManager = static_cast<MemoryManagerMemHandleMock *>(currMemoryManager);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelWDDM>(512));
+    uint64_t handle = 57;
+
+    // Test Successfully returning fd Handle
     fixtureMemoryManager->NTHandle = false;
     EXPECT_EQ(nullptr, context->getMemHandlePtr(device, handle, 0));
 }

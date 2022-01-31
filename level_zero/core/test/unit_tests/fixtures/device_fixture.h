@@ -53,6 +53,19 @@ struct MockDriverModelWDDM : NEO::DriverModel {
     }
 };
 
+struct MockDriverModelDRM : NEO::DriverModel {
+    size_t maxAllocSize;
+
+    MockDriverModelDRM(size_t maxAllocSize) : NEO::DriverModel(NEO::DriverModelType::DRM), maxAllocSize(maxAllocSize) {}
+
+    void setGmmInputArgs(void *args) override {}
+    uint32_t getDeviceHandle() const override { return {}; }
+    PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
+    size_t getMaxMemAllocSize() const override {
+        return maxAllocSize;
+    }
+};
+
 struct ContextShareableMock : public L0::ContextImp {
     ContextShareableMock(L0::DriverHandleImp *driverHandle) : L0::ContextImp(driverHandle) {}
     bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {

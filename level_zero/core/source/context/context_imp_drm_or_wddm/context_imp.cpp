@@ -25,11 +25,18 @@ bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory
 
 void *ContextImp::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, ze_ipc_memory_flags_t flags) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
+    auto neoDevice = device->getNEODevice();
+    NEO::DriverModelType driverType = NEO::DriverModelType::UNKNOWN;
+    if (neoDevice->getRootDeviceEnvironment().osInterface) {
+        driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
+    }
     bool isNTHandle = this->getDriverHandle()->getMemoryManager()->isNTHandle(NEO::toOsHandle(reinterpret_cast<void *>(handle)), device->getNEODevice()->getRootDeviceIndex());
     if (isNTHandle) {
         return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle));
-    } else {
+    } else if (driverType == NEO::DriverModelType::DRM) {
         return this->driverHandle->importFdHandle(hDevice, flags, handle, nullptr);
+    } else {
+        return nullptr;
     }
 }
 
