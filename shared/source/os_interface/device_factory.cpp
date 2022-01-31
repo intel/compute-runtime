@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,4 +206,12 @@ bool (*DeviceFactory::createMemoryManagerFunc)(ExecutionEnvironment &) = [](Exec
     return executionEnvironment.initializeMemoryManager();
 };
 
+bool DeviceFactory::isAllowedDeviceId(uint32_t deviceId, const std::string &deviceIdString) {
+    if (deviceIdString != "unk") {
+        char *endptr = nullptr;
+        auto reqDeviceId = strtoul(deviceIdString.c_str(), &endptr, 16);
+        return (static_cast<uint32_t>(reqDeviceId) == deviceId);
+    }
+    return true;
+}
 } // namespace NEO

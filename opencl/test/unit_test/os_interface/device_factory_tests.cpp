@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -371,6 +371,25 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExist
 TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenPrepareDeviceEnvironmentsReturnsFalse) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("invalid");
+    ExecutionEnvironment executionEnviornment;
+
+    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
+    EXPECT_FALSE(result);
+}
+
+TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDeviceThenReturnNullptr) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.FilterDeviceId.set("invalid");
+    DebugManager.flags.FilterBdfPath.set("invalid");
+    ExecutionEnvironment executionEnviornment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDeviceThenPrepareDeviceEnvironmentsReturnsFalse) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.FilterDeviceId.set("invalid");
+    DebugManager.flags.FilterBdfPath.set("invalid");
     ExecutionEnvironment executionEnviornment;
 
     auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);

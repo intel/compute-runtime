@@ -1232,6 +1232,15 @@ TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBig
     }
 }
 
+TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.FilterDeviceId.set("1234"); // Existing device Id
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+}
+
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id

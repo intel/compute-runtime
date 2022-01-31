@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_null_device.h"
 
@@ -43,6 +44,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     int ret = drmObject->getDeviceID(drmObject->deviceId);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
+        return nullptr;
+    }
+    if (!DeviceFactory::isAllowedDeviceId(drmObject->deviceId, DebugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 

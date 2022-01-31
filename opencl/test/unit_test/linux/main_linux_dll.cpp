@@ -114,27 +114,51 @@ TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHw
     EXPECT_EQ(2u, hwDeviceIds.size());
 }
 
-TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceWhenGetDeviceFdThenFail) {
+TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("1234");
-    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
-    openFull = testOpen;
-    openRetVal = -1;
+    DebugManager.flags.ForceDeviceId.set("invalid");
+    openFull = nullptr; // open shouldn't be called
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
-TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
+TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenReturnFd) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("0000:00:02.0");
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
-    openRetVal = 1023; // fakeFd
-    openFull = testOpen;
+    openFull = openWithCounter;
+    openCounter = 10;
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
+    EXPECT_EQ(9, openCounter); // only one opened file
+}
+
+TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDeviceFdThenFail) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.FilterBdfPath.set("invalid");
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openFull = nullptr; // open shouldn't be called
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingFilterBdfWhenGetDeviceFdThenReturnFd) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.FilterBdfPath.set("0000:00:02.0");
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openFull = openWithCounter;
+    openCounter = 10;
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
+    EXPECT_EQ(9, openCounter); // only one opened file
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHaveProperPciPaths) {
@@ -405,16 +429,21 @@ TEST_F(DrmSimpleTests, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevice
     EXPECT_STREQ("0000:00:02.0", hwDeviceIds[1]->as<HwDeviceIdDrm>()->getPciPath());
 }
 
-TEST_F(DrmSimpleTests, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
+TEST_F(DrmTests, GivenSelectedIncorectDeviceByDeviceIdWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("1234");
-    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
-    openFull = testOpen;
-    openRetVal = 1024;
-    ExecutionEnvironment executionEnvironment;
+    DebugManager.flags.FilterDeviceId.set("invalid");
+    auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_EQ(drm1, nullptr);
+}
 
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_TRUE(hwDeviceIds.empty());
+TEST_F(DrmTests, GivenSelectedCorrectDeviceByDeviceIdWhenGetDeviceFdThenSucceed) {
+    DebugManagerStateRestore stateRestore;
+    std::stringstream deviceIdStr;
+    deviceIdStr << std::hex << deviceId;
+
+    DebugManager.flags.FilterDeviceId.set(deviceIdStr.str());
+    auto drm1 = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_NE(drm1, nullptr);
 }
 
 TEST_F(DrmSimpleTests, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProperValue) {

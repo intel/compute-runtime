@@ -597,6 +597,11 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                 }
             }
 
+            if (DebugManager.flags.FilterBdfPath.get() != "unk") {
+                if (devicePathView.find(DebugManager.flags.FilterBdfPath.get().c_str()) == std::string::npos) {
+                    continue;
+                }
+            }
             if (DebugManager.flags.ForceDeviceId.get() != "unk") {
                 if (devicePathView.find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
                     continue;

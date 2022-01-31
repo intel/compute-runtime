@@ -75,6 +75,8 @@ DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "true: 
 DECLARE_DEBUG_VARIABLE(bool, PrintMemoryRegionSizes, false, "print memory bank type, instance and it's size")
 DECLARE_DEBUG_VARIABLE(bool, UpdateCrossThreadDataSize, false, "Turn on cross thread data size calculation for PATCH TOKEN binary")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "DeviceId selected for testing")
+DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened. Ignored when unk.")
+DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened. Ignored when unk.")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary. When file named *_header.* exists, it is used as header")
 DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk"), "Appends internal build options string to user modules")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "-1: disable, 0+: tile mask, each bit corresponds to tile")
