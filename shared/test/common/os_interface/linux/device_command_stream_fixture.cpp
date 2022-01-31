@@ -109,6 +109,9 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fd;
         ioctl_cnt.primeFdToHandle++;
+        if (failOnPrimeFdToHandle == true) {
+            return -1;
+        }
     } break;
     case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
         auto *handleToPrimeParams = (drm_prime_handle *)arg;

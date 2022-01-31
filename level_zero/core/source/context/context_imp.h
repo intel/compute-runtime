@@ -57,6 +57,21 @@ struct ContextImp : Context {
                                  ze_ipc_mem_handle_t handle,
                                  ze_ipc_memory_flags_t flags,
                                  void **ptr) override;
+
+    ze_result_t
+    getIpcMemHandles(
+        const void *ptr,
+        uint32_t *numIpcHandles,
+        ze_ipc_mem_handle_t *pIpcHandles) override;
+
+    ze_result_t
+    openIpcMemHandles(
+        ze_device_handle_t hDevice,
+        uint32_t numIpcHandles,
+        ze_ipc_mem_handle_t *pIpcHandles,
+        ze_ipc_memory_flags_t flags,
+        void **pptr) override;
+
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override;

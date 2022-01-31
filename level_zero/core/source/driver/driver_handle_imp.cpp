@@ -459,6 +459,46 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
     return reinterpret_cast<void *>(alloc->getGpuAddress());
 }
 
+void *DriverHandleImp::importFdHandles(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, std::vector<NEO::osHandle> handles, NEO::GraphicsAllocation **pAlloc) {
+    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
+    NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
+                                                      MemoryConstants::pageSize,
+                                                      NEO::AllocationType::BUFFER,
+                                                      neoDevice->getDeviceBitfield()};
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+
+    NEO::GraphicsAllocation *alloc =
+        this->getMemoryManager()->createGraphicsAllocationFromMultipleSharedHandles(handles,
+                                                                                    unifiedMemoryProperties,
+                                                                                    false,
+                                                                                    false);
+    if (alloc == nullptr) {
+        return nullptr;
+    }
+
+    NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(alloc);
+    allocData.cpuAllocation = nullptr;
+    allocData.size = alloc->getUnderlyingBufferSize();
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.device = neoDevice;
+    if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
+        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+    }
+
+    if (flags & ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED) {
+        allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
+    }
+
+    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+
+    if (pAlloc) {
+        *pAlloc = alloc;
+    }
+
+    return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
 NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
                                                             NEO::SvmAllocationData *allocData,
                                                             void *basePtr,

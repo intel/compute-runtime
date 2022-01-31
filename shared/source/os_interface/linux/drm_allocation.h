@@ -78,7 +78,17 @@ class DrmAllocation : public GraphicsAllocation {
         this->bufferObjects.resize(size);
     }
 
+    uint32_t getNumHandles() override {
+        return this->numHandles;
+    }
+
+    void setNumHandles(uint32_t numHandles) override {
+        this->numHandles = numHandles;
+    }
+
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
+
+    uint64_t peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) override;
 
     bool setCacheRegion(Drm *drm, CacheRegion regionIndex);
     bool setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex);
@@ -107,6 +117,7 @@ class DrmAllocation : public GraphicsAllocation {
     StackVec<uint32_t, 1> registeredBoBindHandles;
     MemAdviseFlags enabledMemAdviseFlags{};
     StackVec<MemoryToUnmap, 1> memoryToUnmap;
+    uint32_t numHandles = 0u;
 
     void *mmapPtr = nullptr;
     size_t mmapSize = 0u;

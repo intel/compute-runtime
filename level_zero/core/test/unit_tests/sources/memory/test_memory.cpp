@@ -19,6 +19,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
@@ -34,6 +35,215 @@
 
 namespace L0 {
 namespace ult {
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       givenCallToGetIpcHandleWithNotKnownPointerThenInvalidArgumentIsReturned) {
+
+    uint32_t value = 0;
+
+    uint32_t numIpcHandles = 0;
+    ze_result_t result = context->getIpcMemHandles(&value, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       givenCallToGetIpcHandleWithDeviceAllocationThenIpcHandleIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numIpcHandles, 2u);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       whenCallingOpenIpcHandlesWithIpcHandleThenDeviceAllocationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numIpcHandles, 2u);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>(512));
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr;
+    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       whenCallingImportFdHandlesWithAllocationPointerThenAllocationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numIpcHandles, 2u);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>(512));
+
+    std::vector<NEO::osHandle> handles;
+    for (uint32_t i = 0; i < numIpcHandles; i++) {
+        uint64_t handle = 0;
+        memcpy_s(&handle,
+                 sizeof(handle),
+                 reinterpret_cast<void *>(ipcHandles[i].data),
+                 sizeof(handle));
+        handles.push_back(static_cast<NEO::osHandle>(handle));
+    }
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr;
+    NEO::GraphicsAllocation *ipcAlloc = nullptr;
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
+    ipcPtr = driverHandleImp->importFdHandles(device->toHandle(), flags, handles, &ipcAlloc);
+    EXPECT_NE(ipcPtr, nullptr);
+    EXPECT_NE(ipcAlloc, nullptr);
+
+    result = context->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       whenCallingImportFdHandlesWithUncachedFlagAllocationPointerThenAllocationIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numIpcHandles, 2u);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>(512));
+
+    std::vector<NEO::osHandle> handles;
+    for (uint32_t i = 0; i < numIpcHandles; i++) {
+        uint64_t handle = 0;
+        memcpy_s(&handle,
+                 sizeof(handle),
+                 reinterpret_cast<void *>(ipcHandles[i].data),
+                 sizeof(handle));
+        handles.push_back(static_cast<NEO::osHandle>(handle));
+    }
+
+    ze_ipc_memory_flags_t flags = {ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED};
+    void *ipcPtr;
+    NEO::GraphicsAllocation *ipcAlloc = nullptr;
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
+    ipcPtr = driverHandleImp->importFdHandles(device->toHandle(), flags, handles, &ipcAlloc);
+    EXPECT_NE(ipcPtr, nullptr);
+    EXPECT_NE(ipcAlloc, nullptr);
+
+    result = context->closeIpcMemHandle(ipcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryExportImportImplicitScalingTest,
+       whenCallingGetIpcMemHandlesAndImportFailsThenInvalidArgumentFails) {
+    currMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numIpcHandles, 2u);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<MockDriverModelDRM>(512));
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr;
+    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
 
 using MemoryTest = Test<DeviceFixture>;
 
@@ -2526,6 +2736,44 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
     std::unique_ptr<ContextImp> context;
 };
 
+struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManagerStateRestore restorer;
+        DebugManager.flags.EnableImplicitScaling.set(1);
+        NEO::MockCompilerEnableGuard mock(true);
+        neoDevice =
+            NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerIpcMock(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(currMemoryManager);
+        device = driverHandle->devices[0];
+
+        context = std::make_unique<ContextImp>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
+
+    void TearDown() override {
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    NEO::MemoryManager *currMemoryManager = nullptr;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    std::unique_ptr<ContextImp> context;
+};
+
 TEST_F(MemoryFailedOpenIpcHandleTest,
        givenCallToOpenIpcMemHandleWithNullPtrFromCreateGraphicsAllocationFromSharedHandleThenInvalidArgumentIsReturned) {
     size_t size = 10;
@@ -2546,6 +2794,37 @@ TEST_F(MemoryFailedOpenIpcHandleTest,
     ze_ipc_memory_flags_t flags = {};
     void *ipcPtr;
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(ipcPtr, nullptr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(MemoryFailedOpenIpcHandleImplicitScalingTest,
+       givenCallToOpenIpcMemHandleWithNullPtrFromCreateGraphicsAllocationFromSharedHandleThenInvalidArgumentIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    uint32_t numIpcHandles = 0;
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    result = context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_ipc_memory_flags_t flags = {};
+    void *ipcPtr;
+    result = context->openIpcMemHandles(device->toHandle(), numIpcHandles, ipcHandles.data(), flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     EXPECT_EQ(ipcPtr, nullptr);
 

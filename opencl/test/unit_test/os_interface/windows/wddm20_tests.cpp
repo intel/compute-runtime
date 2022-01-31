@@ -552,6 +552,20 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_EQ(1u, destroyWithResourceHandleCalled);
 }
 
+TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromMultipleSharedHandlesIsCalledThenNullptrIsReturned) {
+    void *pSysMem = (void *)0x1000;
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    EXPECT_EQ(0u, status);
+
+    MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
+    AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
+
+    std::vector<osHandle> handles{ALLOCATION_HANDLE};
+    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_EQ(nullptr, graphicsAllocation);
+}
+
 TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenMapGpuVaWithCpuPtrDepensOnBitness) {
     void *pSysMem = (void *)0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));

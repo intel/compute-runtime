@@ -19,6 +19,9 @@ std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
     addToMap(lookupMap, zexDriverGetHostPointerBaseAddress);
 
     addToMap(lookupMap, zexKernelGetBaseAddress);
+
+    addToMap(lookupMap, zexMemGetIpcHandles);
+    addToMap(lookupMap, zexMemOpenIpcHandles);
 #undef addToMap
 
     return lookupMap;

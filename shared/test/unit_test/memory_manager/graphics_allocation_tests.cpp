@@ -216,6 +216,17 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsB
     EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle(nullptr));
 }
 
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandlesThenZeroIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_EQ(0u, graphicsAllocation.getNumHandles());
+}
+
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandlesAfterSettingNonZeroNumberThenZeroIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setNumHandles(64u);
+    EXPECT_EQ(0u, graphicsAllocation.getNumHandles());
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThenCorrectSizeForMemoryPoolUsedIsReturned) {
 
     MemoryPool::Type page4kPools[] = {MemoryPool::MemoryNull,

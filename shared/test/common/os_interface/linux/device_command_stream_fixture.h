@@ -212,6 +212,7 @@ class DrmMockCustom : public Drm {
     __u64 mmapOffsetExpected = 0;
     __u64 mmapOffsetFlags = 0;
     bool failOnMmapOffset = false;
+    bool failOnPrimeFdToHandle = false;
 
     int errnoValue = 0;
 

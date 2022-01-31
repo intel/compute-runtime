@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include <atomic>
 
@@ -112,6 +113,15 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     void forceLimitedRangeAllocator(uint64_t range);
     void overrideGfxPartition(GfxPartition *newGfxPartition);
 
+    BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex) override {
+        if (failOnfindAndReferenceSharedBufferObject) {
+            DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+            auto patIndex = drmMock.getPatIndex(nullptr, AllocationType::BUFFER, CacheRegion::Default, CachePolicy::WriteBack, false);
+            return new (std::nothrow) BufferObject(&drmMock, patIndex, boHandle, 4096u, 2u);
+        }
+        return MemoryManagerCreate<DrmMemoryManager>::findAndReferenceSharedBufferObject(boHandle, rootDeviceIndex);
+    }
+
     DrmAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType);
     ~TestedDrmMemoryManager() override;
     size_t peekSharedBosSize() {
@@ -152,6 +162,10 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     uint32_t alignedFreeWrapperCalled = 0u;
     uint32_t callsToCloseSharedHandle = 0;
+
+    bool failOnfindAndReferenceSharedBufferObject = false;
+
+    ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:
     std::mutex unreferenceMtx;

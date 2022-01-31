@@ -20,6 +20,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
@@ -652,6 +653,101 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle,
     }
 
     return bo;
+}
+
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+    BufferObjects bos;
+    std::vector<size_t> sizes;
+    size_t totalSize = 0;
+
+    std::unique_lock<std::mutex> lock(mtx);
+
+    uint32_t i = 0;
+
+    if (handles.size() != 1) {
+        properties.multiStorageResource = true;
+    }
+
+    auto &drm = this->getDrm(properties.rootDeviceIndex);
+
+    bool areBosSharedObjects = true;
+
+    for (auto handle : handles) {
+        drm_prime_handle openFd = {0, 0, 0};
+        openFd.fd = handle;
+
+        auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+
+        if (ret != 0) {
+            [[maybe_unused]] int err = errno;
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+
+            return nullptr;
+        }
+
+        auto boHandle = openFd.handle;
+        auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+
+        if (bo == nullptr) {
+            areBosSharedObjects = false;
+
+            size_t size = lseekFunction(handle, 0, SEEK_END);
+            totalSize += size;
+
+            auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
+
+            bo = new (std::nothrow) BufferObject(&drm, patIndex, boHandle, size, maxOsContextCount);
+            bo->setRootDeviceIndex(properties.rootDeviceIndex);
+            i++;
+        }
+        bos.push_back(bo);
+        sizes.push_back(bo->peekSize());
+    }
+
+    auto heapIndex = HeapIndex::HEAP_STANDARD2MB;
+    auto gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
+
+    lock.unlock();
+
+    AllocationData allocationData;
+    properties.size = totalSize;
+    getAllocationData(allocationData, properties, nullptr, createStorageInfoFromProperties(properties));
+
+    auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex,
+                                           handles.size(),
+                                           properties.allocationType,
+                                           bos,
+                                           nullptr,
+                                           gpuRange,
+                                           totalSize,
+                                           MemoryPool::LocalMemory);
+    drmAllocation->storageInfo = allocationData.storageInfo;
+
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
+    for (i = 0u; i < handles.size(); i++) {
+        auto bo = bos[i];
+        StorageInfo limitedStorageInfo = allocationData.storageInfo;
+        limitedStorageInfo.memoryBanks &= (1u << (i % handles.size()));
+        auto gmm = new Gmm(gmmHelper,
+                           nullptr,
+                           bo->peekSize(),
+                           0u,
+                           CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()),
+                           false,
+                           allocationData.storageInfo,
+                           true);
+        drmAllocation->setGmm(gmm, i);
+
+        if (areBosSharedObjects == false) {
+            bo->setAddress(gpuRange);
+            gpuRange += bo->peekSize();
+            bo->setUnmapSize(sizes[i]);
+            pushSharedBufferObject(bo);
+        }
+        drmAllocation->getBufferObjectToModify(i) = bo;
+    }
+
+    return drmAllocation;
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
@@ -1468,6 +1564,7 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         allocation->resizeBufferObjects(handles);
         bos.resize(handles);
     }
+    allocation->setNumHandles(handles);
 
     for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
         if (currentBank == banksCnt) {

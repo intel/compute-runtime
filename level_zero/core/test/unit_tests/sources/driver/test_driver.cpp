@@ -205,6 +205,45 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     delete device;
 }
 
+HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_device_mem_alloc_desc_t devProperties = {};
+    devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+
+    uint64_t imageHandle = 0x1;
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    devProperties.pNext = &importNTHandle;
+
+    NEO::MockDevice *neoDevice = nullptr;
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
+    executionEnvironment->memoryManager.reset(new MemoryManagerNTHandleMock(*executionEnvironment));
+
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
+
+    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
+
+    std::vector<osHandle> handles{6, 7};
+    AllocationProperties properties = {device->getRootDeviceIndex(),
+                                       true,
+                                       MemoryConstants::pageSize,
+                                       AllocationType::BUFFER,
+                                       false,
+                                       device->getNEODevice()->getDeviceBitfield()};
+    bool requireSpecificBitness{};
+    bool isHostIpcAllocation{};
+    auto ptr = executionEnvironment->memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    delete device;
+}
+
 HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErrorIsReturned) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

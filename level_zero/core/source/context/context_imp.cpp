@@ -429,6 +429,31 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
+ze_result_t ContextImp::getIpcMemHandles(const void *ptr,
+                                         uint32_t *numIpcHandles,
+                                         ze_ipc_mem_handle_t *pIpcHandles) {
+    NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (allocData) {
+        auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+        uint32_t numHandles = alloc->getNumHandles();
+        if (pIpcHandles == nullptr) {
+            *numIpcHandles = numHandles;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        for (uint32_t i = 0; i < numHandles; i++) {
+            int handle = static_cast<int>(allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), i));
+            memcpy_s(reinterpret_cast<void *>(pIpcHandles[i].data),
+                     sizeof(ze_ipc_mem_handle_t),
+                     &handle,
+                     sizeof(handle));
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
 ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                                          ze_ipc_mem_handle_t pIpcHandle,
                                          ze_ipc_memory_flags_t flags,
@@ -441,6 +466,29 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
 
     *ptr = getMemHandlePtr(hDevice, handle, flags);
     if (nullptr == *ptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
+                                          uint32_t numIpcHandles,
+                                          ze_ipc_mem_handle_t *pIpcHandles,
+                                          ze_ipc_memory_flags_t flags,
+                                          void **pptr) {
+    std::vector<NEO::osHandle> handles;
+    for (uint32_t i = 0; i < numIpcHandles; i++) {
+        uint64_t handle = 0;
+        memcpy_s(&handle,
+                 sizeof(handle),
+                 reinterpret_cast<void *>(pIpcHandles[i].data),
+                 sizeof(handle));
+        handles.push_back(static_cast<NEO::osHandle>(handle));
+    }
+
+    *pptr = this->driverHandle->importFdHandles(hDevice, flags, handles, nullptr);
+    if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

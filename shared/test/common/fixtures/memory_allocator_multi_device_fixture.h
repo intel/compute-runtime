@@ -62,3 +62,41 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
     DebugManagerStateRestore restorer;
     bool isOsAgnosticMemoryManager;
 };
+
+template <uint32_t numRootDevices, uint32_t numSubDevices>
+class MemoryAllocatorMultiDeviceAndMultiTileFixture : public MemoryManagementFixture, public MemoryAllocatorMultiDeviceSystemSpecificFixture, public ::testing::TestWithParam<bool> {
+  public:
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
+
+        isOsAgnosticMemoryManager = GetParam();
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        DebugManager.flags.CreateMultipleRootDevices.set(numSubDevices);
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+        ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
+
+        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), true, numRootDevices);
+        devices = DeviceFactory::createDevices(*executionEnvironment);
+        memoryManager = executionEnvironment->memoryManager.get();
+
+        if (!isOsAgnosticMemoryManager) {
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(*executionEnvironment);
+        }
+    }
+
+    void TearDown() override {
+        if (!isOsAgnosticMemoryManager) {
+            MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(*executionEnvironment);
+        }
+    }
+
+    uint32_t getNumRootDevices() { return numRootDevices; }
+
+  protected:
+    std::vector<std::unique_ptr<Device>> devices;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    MemoryManager *memoryManager = nullptr;
+    DebugManagerStateRestore restorer;
+    bool isOsAgnosticMemoryManager;
+};

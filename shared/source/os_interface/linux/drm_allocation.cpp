@@ -40,6 +40,10 @@ uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
     return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
 }
 
+uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) {
+    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+}
+
 void DrmAllocation::setCachePolicy(CachePolicy memType) {
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {

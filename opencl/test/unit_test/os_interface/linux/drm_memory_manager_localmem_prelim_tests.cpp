@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -1549,6 +1550,115 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationPrelimTest, givenDrmMemoryManagerWh
 }
 
 typedef Test<DrmMemoryManagerFixturePrelim> DrmMemoryManagerTestPrelim;
+
+TEST_F(DrmMemoryManagerTestPrelim, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {
+    mock->ioctl_expected.primeFdToHandle = 2;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 2;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, device->getDeviceBitfield());
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    uint32_t numHandlesExpected = 8;
+    graphicsAllocation->setNumHandles(numHandlesExpected);
+    EXPECT_EQ(graphicsAllocation->getNumHandles(), numHandlesExpected);
+
+    graphicsAllocation->setNumHandles(static_cast<uint32_t>(handles.size()));
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesAndFindAndReferenceSharedBufferObjectReturnsNonNullThenAllocationSucceeds) {
+    mock->ioctl_expected.primeFdToHandle = 4;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, device->getDeviceBitfield());
+
+    memoryManager->failOnfindAndReferenceSharedBufferObject = false;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_NE(0llu, bo->peekAddress());
+
+    auto graphicsAllocationFromReferencedHandle = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_NE(nullptr, graphicsAllocationFromReferencedHandle);
+
+    DrmAllocation *drmAllocationFromReferencedHandle = static_cast<DrmAllocation *>(graphicsAllocationFromReferencedHandle);
+    auto boFromReferencedHandle = drmAllocationFromReferencedHandle->getBO();
+    EXPECT_EQ(boFromReferencedHandle->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_NE(0llu, boFromReferencedHandle->peekAddress());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocationFromReferencedHandle);
+}
+
+TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesWithOneHandleThenAllocationSucceeds) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::vector<NEO::osHandle> handles{6};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, device->getDeviceBitfield());
+
+    memoryManager->failOnfindAndReferenceSharedBufferObject = false;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_NE(0llu, bo->peekAddress());
+    EXPECT_EQ(1u, bo->getRefCount());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesAndIoctlFailsThenNullIsReturned) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 0;
+    mock->ioctl_expected.gemClose = 0;
+    mock->failOnPrimeFdToHandle = true;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, device->getDeviceBitfield());
+
+    memoryManager->failOnfindAndReferenceSharedBufferObject = false;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    EXPECT_EQ(nullptr, graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerTestPrelim, whenCreatingAllocationFromMultipleSharedHandlesThenAllocationSucceeds) {
+    mock->ioctl_expected.primeFdToHandle = 2;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 2;
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    size_t size = 65536u * 2;
+    AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::BUFFER_HOST_MEMORY, false, device->getDeviceBitfield());
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
+    EXPECT_NE(0llu, bo->peekAddress());
+    EXPECT_EQ(1u, bo->getRefCount());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButFailsOnMmapFunctionThenReturnNullPtr) {
     mock->ioctl_expected.gemMmapOffset = 2;

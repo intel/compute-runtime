@@ -318,6 +318,25 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenSharedHandleWhenCreateGraphicsAllocationFromMultipleSharedHandlesIsCalledThenNullptrIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    auto handle = 1u;
+    gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+
+    D3DDDI_OPENALLOCATIONINFO allocationInfo;
+    allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
+    allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
+
+    gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
+
+    AllocationProperties properties(0, false, 0, AllocationType::SHARED_BUFFER, false, false, 0);
+    std::vector<osHandle> handles{handle};
+    auto allocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocationFromHandleIsCalledThenCorrectAllocationTypeIsSet) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto osHandle = 1u;

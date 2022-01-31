@@ -18,65 +18,59 @@ int sv[CHILDPROCESSES][2];
 extern bool verbose;
 bool verbose = false;
 
-size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
+size_t allocSize = 131072 + 7; // +7 to break alignment and make it harder
 
-static int sendmsg_fd(int socket, int fd) {
-    char sendBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
+static int sendmsgForIpcHandle(int socket, int fd, char *payload) {
+    char sendBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
+    memcpy(sendBuf, payload, sizeof(sendBuf));
+    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
 
-    struct iovec msgBuffer;
+    struct iovec msgBuffer = {};
     msgBuffer.iov_base = sendBuf;
-    msgBuffer.iov_len = sizeof(*sendBuf);
+    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
 
     struct msghdr msgHeader = {};
     msgHeader.msg_iov = &msgBuffer;
     msgHeader.msg_iovlen = 1;
     msgHeader.msg_control = cmsgBuf;
     msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
     struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
     controlHeader->cmsg_type = SCM_RIGHTS;
     controlHeader->cmsg_level = SOL_SOCKET;
     controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-
     *(int *)CMSG_DATA(controlHeader) = fd;
     ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
     if (bytesSent < 0) {
+        std::cerr << "Error on sendmsgForIpcHandle " << strerror(errno) << "\n";
         return -1;
     }
-
     return 0;
 }
-
-static int recvmsg_fd(int socket) {
+static int recvmsgForIpcHandle(int socket, char *payload) {
     int fd = -1;
-    char recvBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
-
+    char recvBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
+    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
     struct iovec msgBuffer;
     msgBuffer.iov_base = recvBuf;
-    msgBuffer.iov_len = sizeof(recvBuf);
-
+    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
     struct msghdr msgHeader = {};
     msgHeader.msg_iov = &msgBuffer;
     msgHeader.msg_iovlen = 1;
     msgHeader.msg_control = cmsgBuf;
     msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
     ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
     if (bytesSent < 0) {
+        std::cerr << "Error on recvmsgForIpcHandle " << strerror(errno) << "\n";
         return -1;
     }
-
     struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    if (!CMSG_DATA(controlHeader)) {
-        return -1;
-    }
     memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));
+    memmove(payload, recvBuf, sizeof(recvBuf));
     return fd;
 }
 
-inline void initializeProcess(ze_context_handle_t &context,
+inline void initializeProcess(ze_driver_handle_t &driverHandle,
+                              ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdQueue,
                               ze_command_list_handle_t &cmdList) {
@@ -86,7 +80,6 @@ inline void initializeProcess(ze_context_handle_t &context,
     uint32_t driverCount = 0;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
 
-    ze_driver_handle_t driverHandle;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
 
     ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
@@ -137,33 +130,63 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
 }
 
+typedef ze_result_t (*pFnzexMemGetIpcHandle)(ze_context_handle_t, const void *, uint32_t *, ze_ipc_mem_handle_t *);
+typedef ze_result_t (*pFnzexMemOpenIpcHandle)(ze_context_handle_t, ze_device_handle_t, uint32_t, ze_ipc_mem_handle_t *, ze_ipc_memory_flags_t, void **);
+
 void run_client(int commSocket, uint32_t clientId) {
     std::cout << "Client " << clientId << ", process ID: " << std::dec << getpid() << "\n";
 
+    ze_driver_handle_t driverHandle;
     ze_context_handle_t context;
     ze_device_handle_t device;
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
-    initializeProcess(context, device, cmdQueue, cmdList);
+    initializeProcess(driverHandle, context, device, cmdQueue, cmdList);
 
     char *heapBuffer = new char[allocSize];
     for (size_t i = 0; i < allocSize; ++i) {
         heapBuffer[i] = static_cast<char>(i + 1);
     }
 
-    // get the dma_buf from the other process
-    int dma_buf_fd = recvmsg_fd(commSocket);
-    if (dma_buf_fd < 0) {
-        std::cerr << "Failing to get dma_buf fd from server\n";
+    pFnzexMemOpenIpcHandle zexMemOpenIpcHandlePointer = nullptr;
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemOpenIpcHandles", reinterpret_cast<void **>(&zexMemOpenIpcHandlePointer)));
+
+    // receive the IPC handle for the memory from the other process
+    std::vector<ze_ipc_mem_handle_t> pIpcHandles;
+
+    char payload[ZE_MAX_IPC_HANDLE_SIZE];
+    int handle = recvmsgForIpcHandle(commSocket, payload);
+    if (handle < 0) {
+        std::cerr << "Failing to get IPC memory handle from server\n";
         std::terminate();
     }
-    ze_ipc_mem_handle_t pIpcHandle;
-    memcpy(&pIpcHandle, static_cast<void *>(&dma_buf_fd), sizeof(dma_buf_fd));
 
-    // get a memory pointer to the BO associated with the dma_buf
+    // check for the number of ipc (dma-buf) handles sent in the payload
+    uint32_t numIpcHandles = 0;
+    memcpy(&numIpcHandles, static_cast<void *>(&payload), sizeof(numIpcHandles));
+    if (numIpcHandles == 0) {
+        std::cerr << "numIpcHandles is zero\n";
+        std::terminate();
+    }
+
+    // get first handle
+    pIpcHandles.resize(numIpcHandles);
+    memcpy(pIpcHandles[0].data, static_cast<void *>(&handle), sizeof(handle));
+
+    // get rest of handles
+    for (uint32_t h = 1; h < numIpcHandles; h++) {
+        int handle = recvmsgForIpcHandle(commSocket, payload);
+        if (handle < 0) {
+            std::cerr << "Failing to get IPC memory handle from server\n";
+            std::terminate();
+        }
+        memcpy(pIpcHandles[h].data, static_cast<void *>(&handle), sizeof(handle));
+    }
+
+    // get a memory pointer to the BO associated with the dma_buf handles
     void *zeIpcBuffer;
-    SUCCESS_OR_TERMINATE(zeMemOpenIpcHandle(context, device, pIpcHandle,
-                                            0u, &zeIpcBuffer));
+    SUCCESS_OR_TERMINATE(zexMemOpenIpcHandlePointer(context, device, numIpcHandles, pIpcHandles.data(), 0u, &zeIpcBuffer));
+
     // Copy from heap to IPC buffer memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeIpcBuffer, heapBuffer, allocSize,
                                                        nullptr, 0, nullptr));
@@ -182,11 +205,12 @@ void run_client(int commSocket, uint32_t clientId) {
 void run_server(bool &validRet) {
     std::cout << "Server process ID " << std::dec << getpid() << "\n";
 
+    ze_driver_handle_t driverHandle;
     ze_context_handle_t context;
     ze_device_handle_t device;
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
-    initializeProcess(context, device, cmdQueue, cmdList);
+    initializeProcess(driverHandle, context, device, cmdQueue, cmdList);
 
     void *zeBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
@@ -203,17 +227,37 @@ void run_server(bool &validRet) {
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
 
-        // Get a dma_buf for the previously allocated pointer
-        ze_ipc_mem_handle_t pIpcHandle;
-        SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
+        // Get the IPC handles for the previously allocated pointer
+        pFnzexMemGetIpcHandle zexMemGetIpcHandlePointer = nullptr;
+        SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexMemGetIpcHandles", reinterpret_cast<void **>(&zexMemGetIpcHandlePointer)));
 
-        // Pass the dma_buf to the other process
-        int dma_buf_fd;
-        memcpy(static_cast<void *>(&dma_buf_fd), &pIpcHandle, sizeof(dma_buf_fd));
-        int commSocket = sv[i][0];
-        if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd)) < 0) {
-            std::cerr << "Failing to send dma_buf fd to client\n";
+        std::vector<ze_ipc_mem_handle_t> pIpcHandles;
+
+        // get the number of ipc handles associated with the allocation
+        uint32_t numIpcHandles = 0;
+        SUCCESS_OR_TERMINATE(zexMemGetIpcHandlePointer(context, zeBuffer, &numIpcHandles, nullptr));
+        if (numIpcHandles == 0) {
+            std::cerr << "numIpcHandles is zero\n";
             std::terminate();
+        }
+
+        // get the handles
+        pIpcHandles.resize(numIpcHandles);
+        SUCCESS_OR_TERMINATE(zexMemGetIpcHandlePointer(context, zeBuffer, &numIpcHandles, pIpcHandles.data()));
+
+        // copy the number of ipc handles to the payload, then transmit each handle to the client
+        char payload[ZE_MAX_IPC_HANDLE_SIZE];
+        memcpy(static_cast<void *>(&payload), &numIpcHandles, sizeof(numIpcHandles));
+        for (uint32_t h = 0; h < numIpcHandles; h++) {
+            int commSocket = sv[i][0];
+            int handle = 0;
+            memcpy(static_cast<void *>(&handle), &pIpcHandles[h].data, sizeof(handle));
+
+            int ret = sendmsgForIpcHandle(commSocket, handle, payload);
+            if (ret < 0) {
+                std::cerr << "Failing to send IPC memory handle to client\n";
+                std::terminate();
+            }
         }
 
         char *heapBuffer = new char[allocSize];
@@ -247,6 +291,14 @@ void run_server(bool &validRet) {
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+        char *ipcBuffer = static_cast<char *>(validateBuffer);
+        for (uint32_t h = 0; h < allocSize; h++) {
+            if (static_cast<uint32_t>(ipcBuffer[h]) != static_cast<uint32_t>(heapBuffer[h])) {
+                printf("Error: ipcBuffer %d %d, heapBuffer %d\n", h, static_cast<uint32_t>(ipcBuffer[h]), heapBuffer[h]);
+                break;
+            }
+        }
 
         // Validate stack and buffers have the original data from heapBuffer
         validRet = (0 == memcmp(heapBuffer, validateBuffer, allocSize));

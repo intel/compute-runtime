@@ -176,6 +176,17 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     virtual std::string getAllocationInfoString() const;
     virtual uint64_t peekInternalHandle(MemoryManager *memoryManager) { return 0llu; }
 
+    virtual uint64_t peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) {
+        return 0u;
+    }
+
+    virtual uint32_t getNumHandles() {
+        return 0u;
+    }
+
+    virtual void setNumHandles(uint32_t numHandles) {
+    }
+
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::COMMAND_BUFFER ||
                allocationType == AllocationType::CONSTANT_SURFACE ||

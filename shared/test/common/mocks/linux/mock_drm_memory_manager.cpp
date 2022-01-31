@@ -53,6 +53,7 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
     lseekCalledCount = 0;
     closeInputFd = 0;
     closeCalledCount = 0;
+    this->executionEnvironment = &executionEnvironment;
 }
 
 void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB, uint32_t rootDeviceIndex) {
