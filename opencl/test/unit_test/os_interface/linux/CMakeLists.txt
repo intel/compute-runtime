@@ -34,8 +34,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_create_command_queue_with_properties_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
@@ -52,11 +50,18 @@ if(NEO__LIBVA_FOUND)
   )
 endif()
 
-if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_dg1.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
   )
+
+  if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+    list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_dg1.cpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
+    )
+  endif()
 endif()
 
 if("${BRANCH_TYPE}" STREQUAL "")

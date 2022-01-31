@@ -754,6 +754,13 @@ else()
   set(NEO_EXTRA_LIBS dl pthread rt)
 endif()
 
+if(UNIX)
+  # prelim headers detection
+  if((NOT DEFINED NEO_ENABLE_i915_PRELIM_DETECTION) OR NOT ("${BRANCH_TYPE}" STREQUAL ""))
+    set(NEO_ENABLE_i915_PRELIM_DETECTION TRUE)
+  endif()
+  message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
+endif()
 add_subdirectory_unique(shared)
 
 if(NEO_BUILD_WITH_OCL)

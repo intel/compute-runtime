@@ -88,6 +88,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/pmt_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/system_info_extended.cpp
 )
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
@@ -110,6 +111,14 @@ if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_upstream.cpp
   )
+  if(NOT NEO_ENABLE_i915_PRELIM_DETECTION)
+    list(APPEND NEO_CORE_OS_INTERFACE_LINUX
+         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter_upstream.cpp
+    )
+    list(REMOVE_ITEM NEO_CORE_OS_INTERFACE_LINUX
+         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter.cpp
+    )
+  endif()
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_LINUX ${NEO_CORE_OS_INTERFACE_LINUX})
