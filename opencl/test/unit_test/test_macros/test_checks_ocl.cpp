@@ -26,13 +26,9 @@ bool TestChecks::supportsImages(const Context *pContext) {
     return pContext->getDevice(0)->getSharedDeviceInfo().imageSupport;
 }
 
-bool TestChecks::supportsOcl21(const Context *pContext) {
-    return pContext->getDevice(0)->isOcl21Conformant();
-}
-
 bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
-    return (pHardwareInfo->capabilityTable.supportsOcl21Features && pHardwareInfo->capabilityTable.supportsDeviceEnqueue &&
-            pHardwareInfo->capabilityTable.supportsPipes && pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
+    return (pHardwareInfo->capabilityTable.supportsOcl21Features && pHardwareInfo->capabilityTable.supportsPipes &&
+            pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
 }
 
 bool TestChecks::supportsAuxResolves() {

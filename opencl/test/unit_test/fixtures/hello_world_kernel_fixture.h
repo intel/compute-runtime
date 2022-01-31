@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,9 +50,6 @@ struct HelloWorldKernelFixture : public ProgramFixture {
 
         if (options) {
             std::string optionsToProgram(options);
-            if (optionsToProgram.find("-cl-std=CL2.0") != std::string::npos) {
-                ASSERT_TRUE(pDevice->isOcl21Conformant());
-            }
 
             CreateProgramFromBinary(
                 pContext,

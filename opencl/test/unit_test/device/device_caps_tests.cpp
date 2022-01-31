@@ -58,9 +58,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
 
-        if (clDevice.isOcl21Conformant()) {
-            EXPECT_EQ(CL_MAKE_VERSION(2u, 0u, 0u), (++openclCWithVersionIterator)->version);
-        }
         if (clDevice.getEnabledClVersion() == 30) {
             EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
         }
@@ -130,8 +127,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.driverVersion);
     EXPECT_NE(nullptr, caps.profile);
     EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
-    auto expectedClCVersion = (device->isOcl21Conformant() ? "OpenCL C 3.0 " : "OpenCL C 1.2 ");
-    EXPECT_STREQ(expectedClCVersion, caps.clCVersion);
+    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
     EXPECT_GT(caps.openclCFeatures.size(), 0u);
@@ -257,10 +253,6 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
         EXPECT_TRUE(sharedCaps.force32BitAddressess);
     }
-
-    if (caps.numericClVersion == 21) {
-        EXPECT_TRUE(device->isOcl21Conformant());
-    }
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
@@ -296,9 +288,8 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion30WhenCapsAreCreatedThenDeviceRepo
     DebugManager.flags.ForceOCLVersion.set(30);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    auto expectedClCVersion = (device->isOcl21Conformant() ? "OpenCL C 3.0 " : "OpenCL C 1.2 ");
     EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
-    EXPECT_STREQ(expectedClCVersion, caps.clCVersion);
+    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
     EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
