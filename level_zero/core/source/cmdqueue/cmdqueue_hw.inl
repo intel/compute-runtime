@@ -115,7 +115,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t preemptionSize = 0u;
     size_t debuggerCmdsSize = 0;
     constexpr size_t residencyContainerSpaceForPreemption = 2;
-    constexpr size_t residencyContainerSpaceForFence = 1;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
 
     NEO::Device *neoDevice = device->getNEODevice();
@@ -201,7 +200,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     size_t linearStreamSizeEstimate = totalCmdBuffers * sizeof(MI_BATCH_BUFFER_START);
     linearStreamSizeEstimate += csr->getCmdsSizeForHardwareContext();
-
     if (directSubmissionEnabled) {
         linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_START);
     } else {
@@ -212,14 +210,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (programActivePartitionConfig) {
         linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
     }
-
     const auto &hwInfo = this->device->getHwInfo();
     if (hFence) {
-        fence = Fence::fromHandle(hFence);
-        spaceForResidency += residencyContainerSpaceForFence;
         linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
     }
-
     spaceForResidency += residencyContainerSpaceForTagWrite;
 
     csr->getResidencyAllocations().reserve(spaceForResidency);
@@ -420,11 +414,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     commandQueuePreemptionMode = statePreemption;
 
     if (hFence) {
-        csr->makeResident(fence->getAllocation());
+        fence = Fence::fromHandle(hFence);
+        fence->assignTaskCountFromCsr();
         if (isCopyOnlyCommandQueue) {
             NEO::MiFlushArgs args;
             args.commandWithPostSync = true;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, args, hwInfo);
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, csr->getTagAllocation()->getGpuAddress(), csr->peekTaskCount() + 1, args, hwInfo);
         } else {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
@@ -434,8 +429,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             fence->setPartitionCount(partitionCount);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                fence->getGpuAddress(),
-                Fence::STATE_SIGNALED,
+                csr->getTagAllocation()->getGpuAddress(),
+                csr->peekTaskCount() + 1,
                 hwInfo,
                 args);
         }

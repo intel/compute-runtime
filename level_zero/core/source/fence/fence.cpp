@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,52 +18,27 @@ namespace L0 {
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
     auto fence = new FenceImp(cmdQueue);
     UNRECOVERABLE_IF(fence == nullptr);
-
-    fence->initialize();
-
+    fence->reset();
     return fence;
-}
-
-FenceImp::~FenceImp() {
-    cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(allocation);
-    allocation = nullptr;
 }
 
 ze_result_t FenceImp::queryStatus() {
     auto csr = cmdQueue->getCsr();
     csr->downloadAllocations();
 
-    volatile uint32_t *hostAddr = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
-    uint32_t queryVal = Fence::STATE_CLEARED;
-    for (uint32_t i = 0; i < partitionCount; i++) {
-        queryVal = *hostAddr;
-        if (queryVal == Fence::STATE_CLEARED) {
-            break;
-        }
-        hostAddr = ptrOffset(hostAddr, csr->getPostSyncWriteOffset());
-    }
-    return queryVal == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+    auto *hostAddr = csr->getTagAddress();
+
+    return csr->testTaskCountReady(hostAddr, taskCount) ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
 }
 
-void FenceImp::initialize() {
-    NEO::AllocationProperties properties(
-        cmdQueue->getDevice()->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, cmdQueue->getDevice()->getNEODevice()->getDeviceBitfield());
-    properties.alignment = MemoryConstants::pageSize;
-    allocation = cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    UNRECOVERABLE_IF(allocation == nullptr);
-
-    reset();
+ze_result_t FenceImp::assignTaskCountFromCsr() {
+    auto csr = cmdQueue->getCsr();
+    taskCount = csr->peekTaskCount() + 1;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FenceImp::reset() {
-    constexpr uint32_t maxPartitionCount = 16;
-    volatile uint32_t *hostAddress = static_cast<uint32_t *>(allocation->getUnderlyingBuffer());
-    for (uint32_t i = 0; i < maxPartitionCount; i++) {
-        *hostAddress = Fence::STATE_CLEARED;
-        NEO::CpuIntrinsics::clFlush(const_cast<uint32_t *>(hostAddress));
-        hostAddress = ptrOffset(hostAddress, cmdQueue->getCsr()->getPostSyncWriteOffset());
-    }
-    partitionCount = 1;
+    taskCount = std::numeric_limits<uint32_t>::max();
     return ZE_RESULT_SUCCESS;
 }
 
@@ -74,6 +49,10 @@ ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
 
     if (cmdQueue->getCsr()->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (std::numeric_limits<uint32_t>::max() == taskCount) {
+        return ZE_RESULT_NOT_READY;
     }
 
     if (timeout == 0) {

@@ -11,6 +11,8 @@
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -170,7 +172,41 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeControlUpdatingFenceAllocation, IsGen9) {
+HWTEST_F(CommandQueueExecuteCommandLists, givenFenceWhenExecutingCmdListThenFenceStatusIsCorrect) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    *csr.tagAddress = 10;
+    csr.taskCount = 10;
+
+    ze_fence_desc_t fenceDesc{};
+    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(nullptr, fence);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, fence->queryStatus());
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fence, true);
+    *csr.tagAddress = 11;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(*csr.tagAddress, fence->taskCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, fence->queryStatus());
+
+    //reset fence
+    fence->assignTaskCountFromCsr();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, fence->queryStatus());
+
+    fence->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeControlUpdatingTagAllocation, IsGen9) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using PARSE = typename FamilyType::PARSE;
@@ -213,12 +249,11 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
     ASSERT_LE(1u, pipeControls.size());
     PIPE_CONTROL *fenceUpdate = genCmdCast<PIPE_CONTROL *>(*pipeControls[pipeControls.size() - 3]);
 
-    EXPECT_EQ(fence->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*fenceUpdate));
+    EXPECT_EQ(commandQueue->getCsr()->getTagAllocation()->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*fenceUpdate));
 
     EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, fenceUpdate->getPostSyncOperation());
 
-    uint64_t fenceImmData = Fence::STATE_SIGNALED;
-    EXPECT_EQ(fenceImmData, fenceUpdate->getImmediateData());
+    EXPECT_EQ(fence->taskCount, fenceUpdate->getImmediateData());
 
     fence->destroy();
     commandQueue->destroy();

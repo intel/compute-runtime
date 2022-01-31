@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,41 +25,24 @@ struct Fence : _ze_fence_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
     virtual ze_result_t queryStatus() = 0;
+    virtual ze_result_t assignTaskCountFromCsr() = 0;
     virtual ze_result_t reset() = 0;
 
     static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
 
     inline ze_fence_handle_t toHandle() { return this; }
 
-    enum State : uint32_t {
-        STATE_SIGNALED = 0u,
-        STATE_CLEARED = std::numeric_limits<uint32_t>::max(),
-        STATE_INITIAL = STATE_CLEARED
-    };
-
-    enum EnqueueState : uint32_t { ENQUEUE_NOT_READY = 0u,
-                                   ENQUEUE_READY };
-
-    NEO::GraphicsAllocation &getAllocation() const { return *allocation; }
-
-    uint64_t getGpuAddress() {
-        UNRECOVERABLE_IF(allocation == nullptr);
-        return allocation->getGpuAddress();
-    }
-
     void setPartitionCount(uint32_t newPartitionCount) {
         partitionCount = newPartitionCount;
     }
 
   protected:
-    NEO::GraphicsAllocation *allocation = nullptr;
     uint32_t partitionCount = 1;
+    uint32_t taskCount = 0;
 };
 
 struct FenceImp : public Fence {
     FenceImp(CommandQueueImp *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
-
-    ~FenceImp() override;
 
     ze_result_t destroy() override {
         delete this;
@@ -70,9 +53,9 @@ struct FenceImp : public Fence {
 
     ze_result_t queryStatus() override;
 
-    ze_result_t reset() override;
+    ze_result_t assignTaskCountFromCsr() override;
 
-    void initialize();
+    ze_result_t reset() override;
 
   protected:
     CommandQueueImp *cmdQueue;
