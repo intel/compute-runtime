@@ -22,7 +22,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     EXPECT_EQ(0u, ret);
@@ -43,7 +43,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    std::vector<MemoryClassInstance> memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
+    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
     ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle);
 
     std::string output = testing::internal::GetCapturedStdout();

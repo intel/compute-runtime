@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         GPU_TIMESTAMP_DEVICE_BUFFER,
         SW_TAG_BUFFER,
         COUNT
+    };
+
+    enum UsmInitialPlacement {
+        DEFAULT,
+        CPU,
+        GPU
     };
 
     ~GraphicsAllocation() override;

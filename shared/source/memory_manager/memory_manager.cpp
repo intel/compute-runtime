@@ -425,6 +425,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.preferCompressed = properties.flags.preferCompressed;
     allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, *hwInfo);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
+    allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
     if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
         allocationData.flags.zeroMemory = 1;

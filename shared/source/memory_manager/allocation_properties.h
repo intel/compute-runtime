@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ struct AllocationProperties {
     size_t size = 0;
     size_t alignment = 0;
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+    GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
     ColouringPolicy colouringPolicy = ColouringPolicy::DeviceCountBased;
@@ -114,6 +115,7 @@ struct AllocationData {
     };
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
+    GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     const void *hostPtr = nullptr;
     uint64_t gpuAddress = 0;
     size_t size = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,24 @@ DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(uint32_t rootDeviceI
         return deviceBitfieldIn & memoryProperties.pDevice->getDeviceBitfield();
     }
     return deviceBitfieldIn;
+}
+
+GraphicsAllocation::UsmInitialPlacement MemoryPropertiesHelper::getUSMInitialPlacement(const MemoryProperties &memoryProperties) {
+    auto initialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    if (memoryProperties.allocFlags.usmInitialPlacementGpu) {
+        initialPlacement = GraphicsAllocation::UsmInitialPlacement::GPU;
+    }
+    if (memoryProperties.allocFlags.usmInitialPlacementCpu) {
+        initialPlacement = GraphicsAllocation::UsmInitialPlacement::CPU;
+    }
+    if (const int32_t debugFlag = DebugManager.flags.UsmInitialPlacement.get(); debugFlag != -1) {
+        initialPlacement = debugFlag != 1 ? GraphicsAllocation::UsmInitialPlacement::CPU : GraphicsAllocation::UsmInitialPlacement::GPU;
+    }
+    return initialPlacement;
+}
+
+void MemoryPropertiesHelper::setUSMInitialPlacement(AllocationProperties &allocationProperties, GraphicsAllocation::UsmInitialPlacement initialPlacement) {
+    allocationProperties.usmInitialPlacement = initialPlacement;
 }
 
 } // namespace NEO

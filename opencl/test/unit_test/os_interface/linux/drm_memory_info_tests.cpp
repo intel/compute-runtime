@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,7 +220,7 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemWithExtension
     ASSERT_NE(nullptr, memoryInfo);
 
     uint32_t handle = 0;
-    std::vector<MemoryClassInstance> memClassInstance = {regionInfo[0].region, regionInfo[1].region};
+    MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
     auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);

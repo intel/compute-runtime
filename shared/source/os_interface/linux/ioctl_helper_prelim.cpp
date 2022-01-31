@@ -23,7 +23,7 @@ IoctlHelper *IoctlHelperPrelim20::clone() {
     return new IoctlHelperPrelim20{};
 }
 
-uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) {
+uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {

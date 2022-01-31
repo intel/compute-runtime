@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -17,21 +18,12 @@
 
 namespace NEO {
 void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {
-    bool initialPlacementCpu = true;
-    if (memoryProperties.allocFlags.usmInitialPlacementGpu) {
-        initialPlacementCpu = false;
-    }
-    if (memoryProperties.allocFlags.usmInitialPlacementCpu) {
-        initialPlacementCpu = true;
-    }
-    if (const int32_t debugFlag = DebugManager.flags.UsmInitialPlacement.get(); debugFlag != -1) {
-        initialPlacementCpu = debugFlag != 1;
-    }
-    const auto domain = initialPlacementCpu ? AllocationDomain::Cpu : AllocationDomain::None;
+    auto initialPlacement = MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties);
+    const auto domain = (initialPlacement == GraphicsAllocation::UsmInitialPlacement::CPU) ? AllocationDomain::Cpu : AllocationDomain::None;
 
     std::unique_lock<SpinLock> lock{mtx};
     this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, domain}));
-    if (!initialPlacementCpu) {
+    if (initialPlacement != GraphicsAllocation::UsmInitialPlacement::CPU) {
         this->protectCPUMemoryAccess(ptr, size);
     }
 }

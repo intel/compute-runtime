@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override {
+    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }

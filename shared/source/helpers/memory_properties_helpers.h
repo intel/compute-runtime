@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,5 +35,9 @@ class MemoryPropertiesHelper {
                                             bool deviceOnlyVisibilty, uint32_t cacheRegion);
 
     static uint32_t getCacheRegion(const MemoryProperties &memoryProperties);
+
+    static GraphicsAllocation::UsmInitialPlacement getUSMInitialPlacement(const MemoryProperties &memoryProperties);
+
+    static void setUSMInitialPlacement(AllocationProperties &allocationProperties, GraphicsAllocation::UsmInitialPlacement initialPlacement);
 };
 } // namespace NEO

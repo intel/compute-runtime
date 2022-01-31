@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/stackvec.h"
+
 #include "igfxfmid.h"
 
 #include <cstddef>
@@ -52,6 +54,8 @@ struct DistanceInfo {
     int32_t distance;
 };
 
+using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
+
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
@@ -59,7 +63,7 @@ class IoctlHelper {
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
     virtual IoctlHelper *clone() = 0;
 
-    virtual uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
+    virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) = 0;
     virtual CacheRegion closAlloc(Drm *drm) = 0;
     virtual uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
@@ -84,7 +88,7 @@ class IoctlHelperUpstream : public IoctlHelper {
   public:
     IoctlHelper *clone() override;
 
-    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
@@ -114,7 +118,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
     }
     IoctlHelper *clone() override;
 
-    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
 };
 
@@ -122,7 +126,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
   public:
     IoctlHelper *clone() override;
 
-    uint32_t createGemExt(Drm *drm, const std::vector<MemoryClassInstance> &memClassInstances, size_t allocSize, uint32_t &handle) override;
+    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;

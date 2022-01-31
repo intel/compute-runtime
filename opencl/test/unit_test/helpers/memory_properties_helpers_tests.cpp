@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -451,5 +452,49 @@ TEST_F(MemoryPropertiesHelperTests, WhenAdjustingDeviceBitfieldThenCorrectBitfie
                 EXPECT_EQ(expectedDeviceBitfield, adjustedDeviceBitfield);
             }
         }
+    }
+}
+
+TEST_F(MemoryPropertiesHelperTests, WhenCallingGetInitialPlacementThenCorrectValueIsReturned) {
+    MemoryProperties memoryProperties{};
+    EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::CPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = false;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = false;
+    EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::CPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = false;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = true;
+    EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::GPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = true;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = false;
+    EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::CPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+
+    memoryProperties.allocFlags.usmInitialPlacementCpu = true;
+    memoryProperties.allocFlags.usmInitialPlacementGpu = true;
+    EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::CPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+}
+
+TEST_F(MemoryPropertiesHelperTests, givenUsmInitialPlacementSetWhenCallingHasInitialPlacementCpuThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    MemoryProperties memoryProperties{};
+
+    for (auto intialPlacement : {-1, 0, 1}) {
+        DebugManager.flags.UsmInitialPlacement.set(intialPlacement);
+        if (intialPlacement == 1) {
+            EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::GPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+        } else {
+            EXPECT_EQ(GraphicsAllocation::UsmInitialPlacement::CPU, MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties));
+        }
+    }
+}
+
+TEST_F(MemoryPropertiesHelperTests, WhenCallingSetInitialPlacementThenCorrectValueIsSetInAllocationProperties) {
+    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY, mockDeviceBitfield};
+
+    for (auto initialPlacement : {GraphicsAllocation::UsmInitialPlacement::CPU, GraphicsAllocation::UsmInitialPlacement::GPU}) {
+        MemoryPropertiesHelper::setUSMInitialPlacement(allocationProperties, initialPlacement);
+        EXPECT_EQ(initialPlacement, allocationProperties.usmInitialPlacement);
     }
 }

@@ -293,6 +293,8 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     gpuProperties.alignment = pageSizeForAlignment;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);
+    auto initialPlacement = MemoryPropertiesHelper::getUSMInitialPlacement(unifiedMemoryProperties.allocationFlags);
+    MemoryPropertiesHelper::setUSMInitialPlacement(gpuProperties, initialPlacement);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
     if (!allocationGpu) {
         return nullptr;
