@@ -28,9 +28,9 @@ HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertie
     EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
-using DeviceQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumberOfGroupsIsReturned, IsGen9) {
+HWTEST2_F(CommandQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumberOfGroupsIsReturned, IsGen9) {
     uint32_t count = 0;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -48,7 +48,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumber
     EXPECT_EQ(properties.maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
 }
 
-HWTEST2_F(DeviceQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreatedCorrectly, IsGen9) {
+HWTEST2_F(CommandQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreatedCorrectly, IsGen9) {
     uint32_t count = 0;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

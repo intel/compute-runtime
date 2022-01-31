@@ -116,9 +116,9 @@ HWTEST2_F(DeviceTestPVC, givenPvcBStepWhenCreatingMultiTileDeviceThenExpectImpli
     delete device;
 }
 
-using DeviceQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpcCore) {
+HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsXeHpcCore) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = false;
@@ -132,7 +132,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIs
     EXPECT_GE(count, 1u);
 }
 
-HWTEST2_F(DeviceQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAreReturned, IsXeHpcCore) {
+HWTEST2_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAreReturned, IsXeHpcCore) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -146,7 +146,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenNoBlitterSupportAndCCSThenTwoQueueGroupsAre
     EXPECT_GE(count, 2u);
 }
 
-HWTEST2_F(DeviceQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGroupsAreReturned, IsXeHpcCore) {
+HWTEST2_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGroupsAreReturned, IsXeHpcCore) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
     const uint32_t rootDeviceIndex = 0u;

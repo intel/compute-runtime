@@ -28,9 +28,9 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesTh
     EXPECT_EQ(0u, memProperties.maxClockRate);
 }
 
-using DeviceQueueGroupTest = Test<DeviceFixture>;
+using CommandQueueGroupTest = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -47,7 +47,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     EXPECT_EQ(count, 1u);
 }
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenBlitterSupportAndNoCCSThenTwoQueueGroupsAreReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -103,7 +103,7 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     }
 }
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenBlitterSupportAndCCSDefaultEngineThenThreeQueueGroupsAreReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -147,7 +147,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     }
 }
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenBlitterSupportAndCCSDefaultEngineAndOnlyTwoQueueGroupsRequestedThenTwoQueueGroupsAreReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -193,7 +193,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     }
 }
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenBlitterSupportAndNoCCSThenTwoQueueGroupsPropertiesAreReturned, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -230,7 +230,7 @@ HWTEST2_F(DeviceQueueGroupTest,
     }
 }
 
-HWTEST2_F(DeviceQueueGroupTest,
+HWTEST2_F(CommandQueueGroupTest,
           givenQueueGroupsReturnedThenCommandListsAreCreatedCorrectly, IsGen12LP) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
