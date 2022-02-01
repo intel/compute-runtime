@@ -44,7 +44,8 @@ PVCTEST_F(HwInfoConfigTestLinuxPvc, given57bAddressSpaceWhenConfiguringHwInfoThe
     outHwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
     ret = hwInfoConfig->configureHardwareCustom(&outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_TRUE(outHwInfo.featureTable.flags.ftr57bGPUAddressing);
+    auto value = outHwInfo.featureTable.flags.ftr57bGPUAddressing;
+    EXPECT_EQ(1u, value);
 }
 
 PVCTEST_F(HwInfoConfigTestLinuxPvc, GivenPvcWhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
