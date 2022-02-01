@@ -461,8 +461,20 @@ option(CCACHE_ALLOWED "allow use of ccache" TRUE)
 find_program(CCACHE_EXE_FOUND ccache)
 if(CCACHE_EXE_FOUND AND CCACHE_ALLOWED)
   message(STATUS "Found ccache: ${CCACHE_EXE_FOUND}")
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+
+  if(NOT NEO_DONT_SET_CCACHE_BASEDIR AND NOT DEFINED ENV{CCACHE_BASEDIR})
+    get_filename_component(__tmp_dir "../infra" ABSOLUTE)
+    if(IS_DIRECTORY ${__tmp_dir})
+      get_filename_component(NEO_CCACHE_BASEDIR ".." ABSOLUTE)
+      list(APPEND NEO_RULE_LAUNCH_LIST "CCACHE_BASEDIR=${NEO_CCACHE_BASEDIR}")
+    endif()
+  endif()
+  list(APPEND NEO_RULE_LAUNCH_LIST "ccache")
+  string(REPLACE ";" " " NEO_RULE_LAUNCH_STR "${NEO_RULE_LAUNCH_LIST}")
+  message(STATUS "Using rule: ${NEO_RULE_LAUNCH_STR}")
+
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${NEO_RULE_LAUNCH_STR})
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${NEO_RULE_LAUNCH_STR})
 endif()
 
 # Miscs options
