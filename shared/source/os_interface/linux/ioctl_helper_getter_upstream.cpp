@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <memory>
@@ -20,5 +21,6 @@ IoctlHelper *IoctlHelper::get(const HardwareInfo *hwInfo, const std::string &pre
         return productSpecificIoctlHelper->clone();
     }
     return new IoctlHelperUpstream{};
+}
 
 } // namespace NEO
