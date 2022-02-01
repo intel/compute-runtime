@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,6 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_time.h"
-
-#define OCLRT_NUM_TIMESTAMP_BITS (36)
-#define OCLRT_NUM_TIMESTAMP_BITS_FALLBACK (32)
-#define TIMESTAMP_HIGH_REG 0x0235C
-#define TIMESTAMP_LOW_REG 0x02358
 
 namespace NEO {
 
@@ -31,7 +26,6 @@ class DeviceTimeDrm : public DeviceTime {
 
   protected:
     Drm *pDrm = nullptr;
-    unsigned timestampSizeInBits;
 };
 
 } // namespace NEO

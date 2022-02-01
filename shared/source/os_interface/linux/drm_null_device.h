@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/device_time_drm.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
@@ -25,10 +26,10 @@ class DrmNullDevice : public Drm {
             struct drm_i915_reg_read *regArg = static_cast<struct drm_i915_reg_read *>(arg);
 
             // Handle only 36b timestamp
-            if (regArg->offset == (TIMESTAMP_LOW_REG | 1)) {
+            if (regArg->offset == (REG_GLOBAL_TIMESTAMP_LDW | 1)) {
                 gpuTimestamp += 1000;
                 regArg->val = gpuTimestamp & 0x0000000FFFFFFFFF;
-            } else if (regArg->offset == TIMESTAMP_LOW_REG || regArg->offset == TIMESTAMP_HIGH_REG) {
+            } else if (regArg->offset == REG_GLOBAL_TIMESTAMP_LDW || regArg->offset == REG_GLOBAL_TIMESTAMP_UN) {
                 return -1;
             }
 

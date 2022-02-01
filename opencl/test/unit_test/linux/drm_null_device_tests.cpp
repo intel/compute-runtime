@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/drm_null_device.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
@@ -67,17 +68,17 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENregReadOtherThenTimestampReadTH
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp32bOr64bTHENerror) {
     struct drm_i915_reg_read arg;
 
-    arg.offset = TIMESTAMP_LOW_REG;
+    arg.offset = REG_GLOBAL_TIMESTAMP_LDW;
     ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), -1);
 
-    arg.offset = TIMESTAMP_HIGH_REG;
+    arg.offset = REG_GLOBAL_TIMESTAMP_UN;
     ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), -1);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp36bTHENproperValues) {
     struct drm_i915_reg_read arg;
 
-    arg.offset = TIMESTAMP_LOW_REG | 1;
+    arg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
     ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), 0);
     EXPECT_EQ(arg.val, 1000ULL);
 

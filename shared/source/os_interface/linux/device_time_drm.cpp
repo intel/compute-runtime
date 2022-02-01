@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/device_time_drm.h"
 
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -30,28 +31,25 @@ void DeviceTimeDrm::timestampTypeDetect() {
     if (pDrm == nullptr)
         return;
 
-    reg.offset = (TIMESTAMP_LOW_REG | 1);
+    reg.offset = (REG_GLOBAL_TIMESTAMP_LDW | 1);
     err = pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg);
     if (err) {
-        reg.offset = TIMESTAMP_HIGH_REG;
+        reg.offset = REG_GLOBAL_TIMESTAMP_UN;
         err = pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg);
         if (err) {
             getGpuTime = &DeviceTimeDrm::getGpuTime32;
-            timestampSizeInBits = OCLRT_NUM_TIMESTAMP_BITS_FALLBACK;
         } else {
             getGpuTime = &DeviceTimeDrm::getGpuTimeSplitted;
-            timestampSizeInBits = OCLRT_NUM_TIMESTAMP_BITS;
         }
     } else {
         getGpuTime = &DeviceTimeDrm::getGpuTime36;
-        timestampSizeInBits = OCLRT_NUM_TIMESTAMP_BITS;
     }
 }
 
 bool DeviceTimeDrm::getGpuTime32(uint64_t *timestamp) {
     struct drm_i915_reg_read reg = {};
 
-    reg.offset = TIMESTAMP_LOW_REG;
+    reg.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
     if (pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg)) {
         return false;
@@ -63,7 +61,7 @@ bool DeviceTimeDrm::getGpuTime32(uint64_t *timestamp) {
 bool DeviceTimeDrm::getGpuTime36(uint64_t *timestamp) {
     struct drm_i915_reg_read reg = {};
 
-    reg.offset = TIMESTAMP_LOW_REG | 1;
+    reg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
 
     if (pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg)) {
         return false;
@@ -78,8 +76,8 @@ bool DeviceTimeDrm::getGpuTimeSplitted(uint64_t *timestamp) {
     uint64_t tmp_hi;
     int err = 0, loop = 3;
 
-    reg_hi.offset = TIMESTAMP_HIGH_REG;
-    reg_lo.offset = TIMESTAMP_LOW_REG;
+    reg_hi.offset = REG_GLOBAL_TIMESTAMP_UN;
+    reg_lo.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
     err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg_hi);
     do {
