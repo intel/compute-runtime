@@ -69,7 +69,6 @@ DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "false: di
 DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use IMM data write mode as post sync operation in Compute Walker")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampEvents, false, "Timestamp info will not be reported and events will only perform regular synchronization functions")
 DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging in GMM")
-DECLARE_DEBUG_VARIABLE(bool, EnableFlushTaskSubmission, false, "true: driver uses csr flushTask for immediate submissions, false: driver uses legacy executeCommandList path")
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "true: driver stops freeing resources")
 DECLARE_DEBUG_VARIABLE(bool, AllowMixingRegularAndCooperativeKernels, false, "true: driver allows mixing regular and cooperative kernels in a single command list and in a single execute")
 DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "true: MEDIA_VFE_STATE may be programmed in a command list")
@@ -345,6 +344,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, AddStatePrefetchCmdToMemoryPrefetchAPI, -1, "Add
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDrmCompletionFence, -1, "Enables DRM completion fence, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmCompletionFenceForAllAllocations, -1, "Uses DRM completion fence for all allocations, -1:default (disabled), 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableChipsetUniqueUUID, -1, "Enables retrieving chipset unique UUID using telemetry, -1:default (disabled), 0:disable, 1:enable")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableFlushTaskSubmission, -1, "Driver uses csr flushTask for immediate commandlist submissions, -1:default (enabled), 0:disabled, 1:enabled")
 
 /*EXPERIMENTAL TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
