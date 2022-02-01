@@ -101,7 +101,7 @@ Event::~Event() {
     }
 
     DBG_LOG(EventsDebugEnable, "~Event()", this);
-    //no commands should be registred
+    // no commands should be registred
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
 
     submitCommand(true);
@@ -154,7 +154,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
 
     // CL_PROFILING_INFO_NOT_AVAILABLE if event refers to the clEnqueueSVMFree command
     if (isUserEvent() != CL_FALSE ||         // or is a user event object.
-        !updateStatusAndCheckCompletion() || //if the execution status of the command identified by event is not CL_COMPLETE
+        !updateStatusAndCheckCompletion() || // if the execution status of the command identified by event is not CL_COMPLETE
         !profilingEnabled)                   // the CL_QUEUE_PROFILING_ENABLE flag is not set for the command-queue,
     {
         return CL_PROFILING_INFO_NOT_AVAILABLE;
@@ -245,7 +245,10 @@ void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount
 
 cl_ulong Event::getDelta(cl_ulong startTime,
                          cl_ulong endTime) {
-    cl_ulong Max = maxNBitValue(OCLRT_NUM_TIMESTAMP_BITS);
+
+    auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
+
+    cl_ulong Max = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
     cl_ulong Delta = 0;
 
     startTime &= Max;
@@ -372,7 +375,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
        const = CpuTimeQueue - GpuTimeQueue * scalar
     */
 
-    //If device enqueue has not updated complete timestamp, assign end timestamp
+    // If device enqueue has not updated complete timestamp, assign end timestamp
     gpuDuration = getDelta(contextStartTS, contextEndTS);
     if (*contextCompleteTS == 0) {
         *contextCompleteTS = contextEndTS;
@@ -495,7 +498,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     uint32_t taskLevelToPropagate = CompletionStamp::notReady;
 
     if (isStatusCompletedByTermination(transitionStatus) == false) {
-        //if we are event on top of the tree , obtain taskLevel from CSR
+        // if we are event on top of the tree , obtain taskLevel from CSR
         if (taskLevel == CompletionStamp::notReady) {
             this->taskLevel = getTaskLevel(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
             taskLevelToPropagate = this->taskLevel;
@@ -598,7 +601,7 @@ void Event::submitCommand(bool abortTasks) {
                 updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount(), peekBcsTaskCountFromCommandQueue());
             }
         }
-        //make sure that task count is synchronized for events with kernels
+        // make sure that task count is synchronized for events with kernels
         if (!this->eventWithoutCommand && !abortTasks) {
             this->synchronizeTaskCount();
         }
@@ -611,7 +614,7 @@ cl_int Event::waitForEvents(cl_uint numEvents,
         return CL_SUCCESS;
     }
 
-    //flush all command queues
+    // flush all command queues
     for (const cl_event *it = eventList, *end = eventList + numEvents; it != end; ++it) {
         Event *event = castToObjectOrAbort<Event>(*it);
         if (event->cmdQueue) {
@@ -677,7 +680,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     }
     setStatus(statusToPropagate);
 
-    //event may be completed after this operation, transtition the state to not block others.
+    // event may be completed after this operation, transtition the state to not block others.
     this->updateExecutionStatus();
 }
 
@@ -753,9 +756,9 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
 }
 
 void Event::tryFlushEvent() {
-    //only if event is not completed, completed event has already been flushed
+    // only if event is not completed, completed event has already been flushed
     if (cmdQueue && updateStatusAndCheckCompletion() == false) {
-        //flush the command queue only if it is not blocked event
+        // flush the command queue only if it is not blocked event
         if (taskLevel != CompletionStamp::notReady) {
             cmdQueue->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
         }

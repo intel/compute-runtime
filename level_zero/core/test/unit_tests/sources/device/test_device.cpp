@@ -1086,8 +1086,8 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenTimestampValidBitsAreCorrectly
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);
-    EXPECT_EQ(36u, deviceProps.timestampValidBits);
-    EXPECT_EQ(32u, deviceProps.kernelTimestampValidBits);
+    EXPECT_EQ(device->getHwInfo().capabilityTable.timestampValidBits, deviceProps.timestampValidBits);
+    EXPECT_EQ(device->getHwInfo().capabilityTable.kernelTimestampValidBits, deviceProps.kernelTimestampValidBits);
 }
 
 TEST_F(DeviceTest, givenNullDriverInfowhenPciPropertiesIsCalledThenUninitializedErrorIsReturned) {

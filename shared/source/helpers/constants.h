@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,13 @@ constexpr bool is64bit = (sizeof(void *) == 8);
 constexpr NEO::DeviceBitfield systemMemoryBitfield(0b0);
 
 constexpr uint64_t maxNBitValue(uint64_t n) {
-    return ((1ULL << n) - 1);
+    return ((n == 64) ? std::numeric_limits<uint64_t>::max()
+                      : ((1ULL << n) - 1));
 }
 static_assert(maxNBitValue(8) == std::numeric_limits<uint8_t>::max(), "");
 static_assert(maxNBitValue(16) == std::numeric_limits<uint16_t>::max(), "");
 static_assert(maxNBitValue(32) == std::numeric_limits<uint32_t>::max(), "");
+static_assert(maxNBitValue(64) == std::numeric_limits<uint64_t>::max(), "");
 
 namespace MemoryConstants {
 constexpr uint64_t zoneHigh = ~(uint64_t)0xFFFFFFFF;
