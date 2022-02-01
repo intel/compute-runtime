@@ -731,7 +731,9 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
 }
 
-HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAddedViaFlushTask) {
+HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAdded) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     ze_command_queue_desc_t desc = {};
@@ -792,6 +794,19 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
     EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
+}
+
+HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenSlushTaskSubmissionIsSetToFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
 }
 
 HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {

@@ -135,7 +135,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
     }
 
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
+    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && !isCopyOnly()) {
         this->isFlushTaskSubmissionEnabled = NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
     }
