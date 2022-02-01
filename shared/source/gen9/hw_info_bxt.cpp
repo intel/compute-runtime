@@ -82,6 +82,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // levelZeroSupported
     true,                                          // isIntegratedDevice
     true,                                          // supportsMediaBlock
+    false,                                         // p2pAccessSupported
+    false,                                         // p2pAtomicAccessSupported
     false                                          // fusedEuEnabled
 };
 

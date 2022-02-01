@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,6 +82,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     true,                                            // levelZeroSupported
     true,                                            // isIntegratedDevice
     true,                                            // supportsMediaBlock
+    false,                                           // p2pAccessSupported
+    false,                                           // p2pAtomicAccessSupported
     true                                             // fusedEuEnabled
 };
 

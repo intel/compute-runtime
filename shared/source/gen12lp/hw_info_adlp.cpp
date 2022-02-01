@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     true,                                           // levelZeroSupported
     true,                                           // isIntegratedDevice
     true,                                           // supportsMediaBlock
+    false,                                          // p2pAccessSupported
+    false,                                          // p2pAtomicAccessSupported
     true                                            // fusedEuEnabled
 };
 

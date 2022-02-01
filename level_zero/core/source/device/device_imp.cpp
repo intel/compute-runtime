@@ -303,7 +303,17 @@ ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pCom
 
 ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
                                         ze_device_p2p_properties_t *pP2PProperties) {
-    pP2PProperties->flags = 0;
+
+    DeviceImp *peerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
+    if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported &&
+        peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
+        pP2PProperties->flags = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS;
+        if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported &&
+            peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
+            pP2PProperties->flags |= ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+        }
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

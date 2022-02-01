@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,8 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     true,                                          // levelZeroSupported
     false,                                         // isIntegratedDevice
     true,                                          // supportsMediaBlock
+    true,                                          // p2pAccessSupported
+    false,                                         // p2pAtomicAccessSupported
     true                                           // fusedEuEnabled
 };
 

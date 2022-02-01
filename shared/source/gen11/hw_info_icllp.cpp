@@ -81,6 +81,8 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // levelZeroSupported
     true,                                            // isIntegratedDevice
     true,                                            // supportsMediaBlock
+    false,                                           // p2pAccessSupported
+    false,                                           // p2pAtomicAccessSupported
     false                                            // fusedEuEnabled
 };
 
