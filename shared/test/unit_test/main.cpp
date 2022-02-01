@@ -115,34 +115,6 @@ void applyWorkarounds() {
         NEO::FileLoggerInstance();
     }
 }
-#ifdef __linux__
-void handle_SIGSEGV(int signal) {
-    std::cout << "SIGSEGV on: " << lastTest << std::endl;
-    abort();
-}
-struct sigaction oldSigAbrt;
-void handle_SIGABRT(int signal) {
-    std::cout << "SIGABRT on: " << lastTest << std::endl;
-    // restore signal handler to abort
-    if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
-        std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
-        std::cout << "FATAL: try SEGV" << std::endl;
-        uint8_t *ptr = nullptr;
-        *ptr = 0;
-        std::cout << "FATAL: still alive, call exit()" << std::endl;
-        exit(-1);
-    }
-    raise(signal);
-}
-#else
-LONG WINAPI UltExceptionFilter(
-    _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
-    std::cout << "UnhandledException: 0x" << std::hex << exceptionInfo->ExceptionRecord->ExceptionCode << std::dec
-              << " on test: " << lastTest
-              << std::endl;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-#endif
 
 std::string getHardwarePrefix() {
     std::string s = hardwarePrefix[defaultHwInfo->platform.eProductFamily];
@@ -173,14 +145,14 @@ std::string getRunPath(char *argv0) {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
+    bool enableAbrt = true;
     bool enableAlarm = true;
+    bool enableSegv = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
     applyWorkarounds();
 
 #if defined(__linux__)
-    bool enable_segv = true;
-    bool enable_abrt = true;
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
         std::string wd = getRunPath(argv[0]);
         char *ldLibraryPath = getenv("LD_LIBRARY_PATH");
@@ -398,34 +370,20 @@ int main(int argc, char **argv) {
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
-
-#if defined(__linux__)
-    if (enable_segv) {
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGSEGV;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGSEGV, &sa, NULL) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGSEGV\n");
-            return -2;
-        }
     }
 
-    if (enable_abrt) {
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGABRT;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGABRT, &sa, &oldSigAbrt) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGABRT\n");
-            return -2;
-        }
+    sigOut = setSegv(enableSegv);
+    if (sigOut != 0) {
+        return sigOut;
     }
-#else
-    SetUnhandledExceptionFilter(&UltExceptionFilter);
-#endif
+
+    sigOut = setAbrt(enableAbrt);
+    if (sigOut != 0) {
+        return sigOut;
+    }
+
     if (useMockGmm) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
     } else {

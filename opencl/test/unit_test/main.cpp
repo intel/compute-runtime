@@ -117,42 +117,6 @@ void applyWorkarounds() {
         NEO::FileLoggerInstance();
     }
 }
-#ifdef __linux__
-void handle_SIGSEGV(int signal) {
-    std::cout << "SIGSEGV on: " << lastTest << std::endl;
-    abort();
-}
-struct sigaction oldSigAbrt;
-void handle_SIGABRT(int signal) {
-    std::cout << "SIGABRT on: " << lastTest << std::endl;
-    // restore signal handler to abort
-    if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
-        std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
-        std::cout << "FATAL: try SEGV" << std::endl;
-        uint8_t *ptr = nullptr;
-        *ptr = 0;
-        std::cout << "FATAL: still alive, call exit()" << std::endl;
-        exit(-1);
-    }
-    raise(signal);
-}
-#else
-#include <signal.h>
-
-LONG WINAPI UltExceptionFilter(
-    _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
-    std::cout << "UnhandledException: 0x" << std::hex << exceptionInfo->ExceptionRecord->ExceptionCode << std::dec
-              << " on test: " << lastTest
-              << std::endl;
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-void (*oldSigAbrt)(int) = nullptr;
-void handle_SIGABRT(int sig_no) {
-    std::cout << "SIGABRT on: " << lastTest << std::endl;
-    signal(SIGABRT, oldSigAbrt);
-    raise(sig_no);
-}
-#endif
 
 void initializeTestHelpers(TestMode currentTestmode) {
     MockSipData::mockSipKernel.reset(new MockSipKernel());
@@ -189,14 +153,14 @@ std::string getRunPath(char *argv0) {
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
+    bool enableAbrt = true;
     bool enableAlarm = true;
-    bool enable_abrt = true;
+    bool enableSegv = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
     applyWorkarounds();
 
 #if defined(__linux__)
-    bool enable_segv = true;
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
         std::string wd = getRunPath(argv[0]);
         char *ldLibraryPath = getenv("LD_LIBRARY_PATH");
@@ -430,42 +394,20 @@ int main(int argc, char **argv) {
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
     int sigOut = setAlarm(enableAlarm);
-    if (sigOut != 0)
+    if (sigOut != 0) {
         return sigOut;
-
-#if defined(__linux__)
-    std::cout << "enable SIGSEGV handler: " << enable_segv << std::endl;
-    std::cout << "enable SIGABRT handler: " << enable_abrt << std::endl;
-
-    if (enable_segv) {
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGSEGV;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGSEGV, &sa, NULL) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGSEGV\n");
-            return -2;
-        }
     }
 
-    if (enable_abrt) {
-        struct sigaction sa;
-        sa.sa_handler = &handle_SIGABRT;
-        sa.sa_flags = SA_RESTART;
-        sigfillset(&sa.sa_mask);
-        if (sigaction(SIGABRT, &sa, &oldSigAbrt) == -1) {
-            printf("FATAL ERROR: cannot intercept SIGABRT\n");
-            return -2;
-        }
+    sigOut = setSegv(enableSegv);
+    if (sigOut != 0) {
+        return sigOut;
     }
-#else
-    std::cout << "enable SIGABRT handler: " << enable_abrt << std::endl;
 
-    SetUnhandledExceptionFilter(&UltExceptionFilter);
-    if (enable_abrt) {
-        oldSigAbrt = signal(SIGABRT, handle_SIGABRT);
+    sigOut = setAbrt(enableAbrt);
+    if (sigOut != 0) {
+        return sigOut;
     }
-#endif
+
     if (useMockGmm) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
     } else {

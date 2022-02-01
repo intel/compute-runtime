@@ -8,3 +8,7 @@
 #pragma once
 
 int setAlarm(bool enableAlarm);
+
+int setSegv(bool enableSegv);
+
+int setAbrt(bool enableAbrt);
