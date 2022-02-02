@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -238,9 +238,8 @@ __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* d
     uint globalEnd = src[3];
 
     if(packetUsed > 1) {
-      uint timestampsOffsets = 4;
         for(uint i = 1; i < packetUsed; i++) {
-            timestampsOffsets *= i;
+            uint timestampsOffsets = 4 * i;
             if(contextStart > src[timestampsOffsets]) {
               contextStart = src[timestampsOffsets];
             }
@@ -287,9 +286,8 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
     uint globalEnd = src[3];
 
     if(packetUsed > 1) {
-      uint timestampsOffsets = 4;
         for(uint i = 1; i < packetUsed; i++) {
-            timestampsOffsets *= i;
+            uint timestampsOffsets = 4 * i;
             if(contextStart > src[timestampsOffsets]) {
               contextStart = src[timestampsOffsets];
             }
