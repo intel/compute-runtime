@@ -13,10 +13,10 @@ if(TESTS_XE_HPG_CORE)
   set(IGDRCL_SRCS_tests_xe_hpg_core
       ${IGDRCL_SRCS_tests_xe_hpg_core_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hpg_core.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xe_hpg_core.cpp
   )
