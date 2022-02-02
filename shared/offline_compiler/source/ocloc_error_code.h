@@ -17,6 +17,7 @@ enum {
     INVALID_PROGRAM = -44,
     INVALID_COMMAND_LINE = -5150,
     INVALID_FILE = -5151,
+    COMPILATION_CRASH = -5152,
 };
 
 } // namespace NEO::OclocErrorCode

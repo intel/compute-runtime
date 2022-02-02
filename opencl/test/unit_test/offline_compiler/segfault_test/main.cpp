@@ -13,7 +13,7 @@
 
 #include <string>
 
-extern void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper);
+extern int generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper);
 
 int main(int argc, char **argv) {
     int retVal = 0;
@@ -49,6 +49,7 @@ TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrinted
     SegfaultHelper segfault;
     segfault.segfaultHandlerCallback = captureAndCheckStdOut;
 
-    generateSegfaultWithSafetyGuard(&segfault);
+    auto retVal = generateSegfaultWithSafetyGuard(&segfault);
+    EXPECT_EQ(-60, retVal);
 #endif
 }
