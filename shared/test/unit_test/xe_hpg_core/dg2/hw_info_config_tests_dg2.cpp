@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,9 @@
 
 using namespace NEO;
 
-using HwInfoConfigTestWindowsDg2 = ::testing::Test;
+using HwInfoConfigTestDg2 = ::testing::Test;
 
-HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChanged, IGFX_DG2);
-DG2TEST_F(HwInfoConfigTestWindowsDg2, whenConvertingTimestampsToCsDomainThenGpuTicksAreShifted) {
+DG2TEST_F(HwInfoConfigTestDg2, whenConvertingTimestampsToCsDomainThenGpuTicksAreShifted) {
     auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     uint64_t gpuTicks = 0x12345u;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,3 +18,4 @@ HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTestXeHpAndLater, givenXeHPAndLaterPlatformWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenFalseIsReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIsInLocalMemoryHasCpuPointerAndHasStandardHeap64kbAsGpuAddress, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned, IGFX_DG2);
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChanged, IGFX_DG2);

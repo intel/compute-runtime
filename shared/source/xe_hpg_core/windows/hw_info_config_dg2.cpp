@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,11 +29,6 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
-}
-
-template <>
-void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
-    timestampData >>= 1;
 }
 
 template class HwInfoConfigHw<gfxProduct>;

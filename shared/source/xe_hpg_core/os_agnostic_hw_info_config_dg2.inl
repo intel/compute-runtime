@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,4 +160,9 @@ uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwar
         UNRECOVERABLE_IF(true);
     }
     return maxSubSlice;
+}
+
+template <>
+void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
+    timestampData >>= 1;
 }
