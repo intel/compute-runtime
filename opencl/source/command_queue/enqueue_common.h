@@ -202,10 +202,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                              timestampPacketDependencies, eventsRequest, blockQueue);
     }
 
-    if (!blockQueue && isOOQEnabled()) {
-        setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
-    }
-
     if (eventBuilder.getEvent() && computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
         eventBuilder.getEvent()->addTimestampPacketNodes(timestampPacketDependencies.nonAuxToAuxNodes);
@@ -256,6 +252,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
                                               flushDependenciesForNonKernelCommand, isMarkerWithProfiling, &blitPropertiesContainer);
+
+    if (!blockQueue && isOOQEnabled()) {
+        setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
+    }
 
     bool migratedMemory = false;
 
@@ -948,7 +948,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false)) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false, timestampPacketDependencies)) {
         flushGpgpuCsr = false;
     } else {
         csrDeps.makeResident(getGpgpuCommandStreamReceiver());
@@ -1096,21 +1096,25 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, bcsCsr, CsrDependencies::DependenciesType::All);
     auto allocator = bcsCsr.getTimestampPacketAllocator();
 
-    if (isCacheFlushForBcsRequired() && isGpgpuSubmissionForBcsRequired(blockQueue)) {
-        timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
-    }
-
     if (!blockQueue) {
         setupBarrierTimestampForBcsEngines(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
+        if (isOOQEnabled()) {
+            TimestampPacketContainer clearBarrierNodes;
+            timestampPacketDependencies.barrierNodes.swapNodes(clearBarrierNodes);
+        }
     }
     processBarrierTimestampForBcsEngine(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
+
+    if (isCacheFlushForBcsRequired() && isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies)) {
+        timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+    }
 
     obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, bcsCsr);
     csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
 
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};
-    if (isGpgpuSubmissionForBcsRequired(blockQueue)) {
+    if (isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies)) {
         gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
     }

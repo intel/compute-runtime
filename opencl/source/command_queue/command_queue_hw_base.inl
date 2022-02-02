@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,8 +193,8 @@ bool CommandQueueHw<Family>::obtainTimestampPacketForCacheFlush(bool isCacheFlus
 }
 
 template <typename Family>
-bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked) const {
-    if (queueBlocked) {
+bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const {
+    if (queueBlocked || timestampPacketDependencies.barrierNodes.peekNodes().size() > 0u) {
         return true;
     }
 

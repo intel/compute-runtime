@@ -1,19 +1,24 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 
@@ -459,4 +464,43 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS1), &queue->selectCsrForBuiltinOperation(args));
         EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2), &queue->selectCsrForBuiltinOperation(args));
     }
+}
+
+HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDRangeThenProgramBarrierBeforeGlobalAllocation, IsPVC) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernel *kernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t gws = 1;
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+    char ptr[1] = {};
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
+    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+
+    HardwareParse ccsHwParser;
+    ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+
+    const auto memFenceStateItor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+    const auto memFenceItor = find<MI_MEM_FENCE *>(memFenceStateItor, ccsHwParser.cmdList.end());
+    EXPECT_NE(ccsHwParser.cmdList.end(), memFenceItor);
+    EXPECT_NE(ccsHwParser.cmdList.end(), memFenceStateItor);
 }

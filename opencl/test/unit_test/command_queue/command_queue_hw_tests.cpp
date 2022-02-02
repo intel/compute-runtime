@@ -15,16 +15,12 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/matchers.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -1501,38 +1497,6 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
 }
 
-template <bool ooq>
-struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwFixture, ::testing::Test {
-    using ContextFixture::SetUp;
-
-    void SetUp() override {
-        hwInfo = *::defaultHwInfo;
-        hwInfo.capabilityTable.blitterOperationsSupported = true;
-        REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
-
-        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-        DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
-        ClDeviceFixture::SetUpImpl(&hwInfo);
-        cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
-        CommandQueueHwFixture::SetUp(pClDevice, queueProperties);
-    }
-
-    void TearDown() override {
-        CommandQueueHwFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
-    }
-
-    HardwareInfo hwInfo{};
-    DebugManagerStateRestore state{};
-};
-
-using IoqCommandQueueHwBlitTest = CommandQueueHwBlitTest<false>;
-using OoqCommandQueueHwBlitTest = CommandQueueHwBlitTest<true>;
-
 HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsThenGpgpuCommandStreamIsNotObtained) {
     auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
@@ -1648,6 +1612,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
 HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandThenWaitForBlitBeforeBarrier) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     if (pCmdQ->getTimestampPacketContainer() == nullptr) {
         GTEST_SKIP();
@@ -1702,6 +1667,10 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
         const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
         EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
         EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
+
+        // Only one barrier semaphore from first BCS enqueue
+        const auto blitItor = find<XY_COPY_BLT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        EXPECT_EQ(1u, findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), blitItor).size());
     }
 
     EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());

@@ -330,11 +330,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     TimestampPacketHelper::programCsrDependenciesForForTaskCountContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
 
     programActivePartitionConfigFlushTask(commandStreamCSR);
-    if (stallingCommandsOnNextFlushRequired) {
-        programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
-    }
-
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
+
     if (pageTableManager.get() && !pageTableManagerInitialized) {
         pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
     }
@@ -358,6 +355,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     programPreemption(commandStreamCSR, dispatchFlags);
+
+    if (stallingCommandsOnNextFlushRequired) {
+        programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
+    }
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
     bool iohDirty = iohState.updateAndCheck(&ioh);
