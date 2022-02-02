@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,7 +14,7 @@ add_subdirectory(registry)
 
 list(APPEND BIND_MODES
      "bindful"
-     #            "bindless"
+     "bindless"
 )
 
 set(GENERATED_BUILTINS

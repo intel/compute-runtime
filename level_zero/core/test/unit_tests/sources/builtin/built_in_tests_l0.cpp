@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,4 +48,41 @@ TEST(BuiltInTestsL0, givenUseBindlessBuiltinDisabledInL0ApiWhenBinExtensionPasse
 
 TEST(BuiltInTestsL0, givenUseBindlessBuiltinEnabledInL0ApiWhenBinExtensionPassedThenNameHasBindlessPrefix) {
     givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPrefix();
+}
+
+TEST(BuiltInTestsL0, GivenBindlessConfigWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    ASSERT_LE(2u, mockBuiltinsLib->allStorages.size());
+
+    bool bindlessFound = false;
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    std::string resourceNameGeneric = createBuiltinResourceName(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary));
+    std::string resourceNameForPlatformType = createBuiltinResourceName(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary),
+                                                                        getFamilyNameWithType(hwInfo),
+                                                                        hwHelper.getDefaultRevisionId(hwInfo));
+    std::string resourceNameForPlatformTypeAndStepping = createBuiltinResourceName(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary),
+                                                                                   getFamilyNameWithType(hwInfo),
+                                                                                   hwInfo.platform.usRevId);
+
+    for (const auto &storage : mockBuiltinsLib->allStorages) {
+        if (storage->load(resourceNameForPlatformTypeAndStepping).size() != 0) {
+            bindlessFound = true;
+        }
+    }
+
+    EXPECT_TRUE(bindlessFound);
+
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *device).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Binary, *device).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Binary, *device).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::QueryKernelTimestamps, BuiltinCode::ECodeType::Binary, *device).size());
+    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *device).size());
 }

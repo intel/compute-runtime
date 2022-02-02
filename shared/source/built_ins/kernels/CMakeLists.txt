@@ -190,6 +190,11 @@ macro(macro_for_each_core_type)
       set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${family_name_with_type}")
       foreach(MODE ${BIND_MODES})
         unset(BUILTINS_COMMANDS)
+
+        if((${MODE} STREQUAL "bindless") AND (NOT BUILD_WITH_L0 OR("${CORE_TYPE}" STREQUAL "GEN8")))
+          continue()
+        endif()
+
         foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
           compile_builtin(${CORE_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
         endforeach()
