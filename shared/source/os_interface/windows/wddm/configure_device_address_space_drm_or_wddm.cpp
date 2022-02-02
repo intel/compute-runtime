@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,11 +108,11 @@ bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gp
     const auto cpuAddressRangeSizeToReserve = getSizeToReserve();
 
     void *reservedRangeBase = nullptr;
-    if (false == wddm.reserveValidAddressRange(cpuAddressRangeSizeToReserve + GfxPartition::heapGranularity - 1, reservedRangeBase)) {
+    if (false == wddm.reserveValidAddressRange(cpuAddressRangeSizeToReserve + 2 * MemoryConstants::megaByte, reservedRangeBase)) {
         DEBUG_BREAK_IF(true);
         return false;
     }
-    auto reservedRangeBaseAligned = alignUp(reservedRangeBase, GfxPartition::heapGranularity);
+    auto reservedRangeBaseAligned = alignUp(reservedRangeBase, 2 * MemoryConstants::megaByte);
 
     auto gfxBase = reinterpret_cast<uint64_t>(reservedRangeBaseAligned);
     auto gfxTop = gfxBase + cpuAddressRangeSizeToReserve;

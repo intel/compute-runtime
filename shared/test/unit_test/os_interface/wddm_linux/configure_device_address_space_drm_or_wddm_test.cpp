@@ -547,7 +547,7 @@ TEST_F(WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest, givenTwoSvmAddressS
     EXPECT_EQ(NEO::windowsMinAddress, allReserveGpuVaArgs[0].BaseAddress);
     EXPECT_EQ(0U, allReserveGpuVaArgs[0].MinimumAddress);
     EXPECT_EQ(0U, allReserveGpuVaArgs[0].MaximumAddress);
-    EXPECT_EQ(alignUp(reservedCpuBase - allReserveGpuVaArgs[0].BaseAddress, MemoryConstants::pageSize64k), allReserveGpuVaArgs[0].Size);
+    EXPECT_EQ(alignUp(reservedCpuBase - allReserveGpuVaArgs[0].BaseAddress, 2 * MemoryConstants::megaByte), allReserveGpuVaArgs[0].Size);
     EXPECT_EQ(this->wddm->getAdapter(), allReserveGpuVaArgs[0].hAdapter);
 
     EXPECT_EQ(alignDown(reservedCpuEnd, MemoryConstants::pageSize64k), allReserveGpuVaArgs[1].BaseAddress);
