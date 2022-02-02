@@ -61,6 +61,18 @@ DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIs
     allocData.flags.useSystemMemory = true;
     AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
+    allocProperties.flags.shareable = false;
     hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
     EXPECT_TRUE(allocData.storageInfo.isLockable);
+}
+
+DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIsCalledWithShareableSetThenIsLockableIsFalse) {
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    AllocationData allocData{};
+    allocData.flags.useSystemMemory = true;
+    AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::BUFFER, {});
+    allocData.storageInfo.isLockable = false;
+    allocProperties.flags.shareable = true;
+    hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    EXPECT_FALSE(allocData.storageInfo.isLockable);
 }

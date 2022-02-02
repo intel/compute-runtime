@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         }
     }
     if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
-        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER && !properties.flags.preferCompressed) {
+        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }
     }
