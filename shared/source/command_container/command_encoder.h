@@ -384,6 +384,7 @@ struct EncodeMiArbCheck {
 template <typename GfxFamily>
 struct EncodeEnableRayTracing {
     static void programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer);
+    static void append3dStateBtd(void *ptr3dStateBtd);
 };
 
 template <typename GfxFamily>

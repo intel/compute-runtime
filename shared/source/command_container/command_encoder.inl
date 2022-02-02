@@ -841,4 +841,7 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
                                                    workloadPartitionOffset);
 }
 
+template <typename GfxFamily>
+void EncodeEnableRayTracing<GfxFamily>::append3dStateBtd(void *ptr3dStateBtd) {}
+
 } // namespace NEO

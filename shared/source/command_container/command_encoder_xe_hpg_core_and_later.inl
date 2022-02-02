@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "hw_cmds.h"
@@ -25,6 +26,7 @@ void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &co
     auto cmd = GfxFamily::cmd3dStateBtd;
     cmd.getBtdStateBody().setPerDssMemoryBackedBufferSize(static_cast<typename GfxFamily::_3DSTATE_BTD_BODY::PER_DSS_MEMORY_BACKED_BUFFER_SIZE>(RayTracingHelper::getMemoryBackedFifoSizeToPatch()));
     cmd.getBtdStateBody().setMemoryBackedBufferBasePointer(backBuffer.getGpuAddress());
+    append3dStateBtd(&cmd);
     *commandStream.getSpaceForCmd<typename GfxFamily::_3DSTATE_BTD>() = cmd;
 }
 
