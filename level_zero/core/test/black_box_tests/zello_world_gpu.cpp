@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World GPU Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+    std::cout << "\nZello World Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
 
     return 0;
 }
