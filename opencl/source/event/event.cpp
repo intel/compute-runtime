@@ -27,8 +27,6 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
-#define OCLRT_NUM_TIMESTAMP_BITS (32)
-
 namespace NEO {
 
 Event::Event(
