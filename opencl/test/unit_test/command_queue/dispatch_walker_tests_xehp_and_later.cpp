@@ -243,6 +243,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferent
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlagWhenItIsSetThenMessageSimdIsOverwritten) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceSimdMessageSizeInWalker.set(1);
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));
+    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+
+    kernel->kernelInfo.setLocalIds({0, 0, 1});
+    localWorkSizesIn[2] = 16;
+    localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
+
+    uint32_t simdProgramming[3] = {32, 16, 8};
+    bool walkerInput[4][2] = {{false, false}, {true, false}, {false, true}, {true, true}}; // {runtime local ids, inline data}
+
+    for (uint32_t i = 0; i < 4; i++) {
+        for (uint32_t j = 0; j < 3; j++) {
+            *computeWalker = FamilyType::cmdInitGpgpuWalker;
+            GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+                                                                    localWorkSizesIn, simdProgramming[j], 2,
+                                                                    walkerInput[i][0], walkerInput[i][1], 0u);
+            EXPECT_EQ(1u, computeWalker->getMessageSimd());
+        }
+    }
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     COMPUTE_WALKER *computeWalker = static_cast<COMPUTE_WALKER *>(linearStream.getSpace(sizeof(COMPUTE_WALKER)));

@@ -53,6 +53,10 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     walkerCmd->setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
     walkerCmd->setMessageSimd(walkerCmd->getSimdSize());
 
+    if (DebugManager.flags.ForceSimdMessageSizeInWalker.get() != -1) {
+        walkerCmd->setMessageSimd(DebugManager.flags.ForceSimdMessageSizeInWalker.get());
+    }
+
     walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
     walkerCmd->setThreadGroupIdStartingZ(static_cast<uint32_t>(startWorkGroups[2]));

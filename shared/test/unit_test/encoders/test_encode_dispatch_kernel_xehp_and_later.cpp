@@ -810,6 +810,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToOverrideSimdMessageSizeWhenWalkerIsProgrammedItIsOverwritten) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceSimdMessageSizeInWalker.set(1);
+
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    requiredWorkGroupOrder = 2u;
+    workGroupSizes[1] = workGroupSizes[2] = 2u;
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       0, 0, false, false, false, requiredWorkGroupOrder);
+    EXPECT_EQ(1u, walkerCmd.getMessageSimd());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueThenExpectInlineDataProgramming) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
