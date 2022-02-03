@@ -666,7 +666,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     EXPECT_STREQ("test", output.c_str());
 }
 
-HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithImplicitArgsWithoutPrintfInParentKernelBlockedByEventWhenEventUnblockedThenOutputPrinted) {
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithImplicitArgsWhenEventUnblockedThenOutputPrinted) {
     auto userEvent = make_releaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);

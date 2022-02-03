@@ -22,10 +22,6 @@ struct _cl_accelerator_intel : public ClDispatch {
 struct _cl_command_queue : public ClDispatch {
 };
 
-// device_queue is a type used internally
-struct _device_queue : public _cl_command_queue {
-};
-
 struct _cl_context : public ClDispatch {
     bool isSharedContext = false;
 };
