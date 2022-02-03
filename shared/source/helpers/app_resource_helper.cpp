@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,6 @@ const char *AppResourceHelper::getResourceTagStr(GraphicsAllocation::AllocationT
         return "CMNDBUFF";
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
         return "CSNTSRFC";
-    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
-        return "DEVQUEBF";
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         return "EXHSTPTR";
     case GraphicsAllocation::AllocationType::FILL_PATTERN:

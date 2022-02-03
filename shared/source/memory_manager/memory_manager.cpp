@@ -360,7 +360,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::RING_BUFFER:
     case GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
@@ -387,7 +386,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
-    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::IMAGE:
     case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
     case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:

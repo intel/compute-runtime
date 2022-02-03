@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -625,14 +625,6 @@ TEST(MemoryManagerTest, givenWriteCombinedTypeWhenGetAllocationDataIsCalledThenS
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenDeviceQueueBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
-    AllocationData allocData;
-    MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-}
-
 TEST(MemoryManagerTest, givenInternalHostMemoryTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -1122,7 +1114,6 @@ TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocatio
 
 static const GraphicsAllocation::AllocationType allocationHaveToBeForcedTo48Bit[] = {
     GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-    GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
     GraphicsAllocation::AllocationType::IMAGE,
     GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP,
     GraphicsAllocation::AllocationType::INSTRUCTION_HEAP,

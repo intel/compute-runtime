@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,6 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(GraphicsAlloc
     {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BFHSTMEM"},
     {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "CMNDBUFF"},
     {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CSNTSRFC"},
-    {GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, "DEVQUEBF"},
     {GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, "EXHSTPTR"},
     {GraphicsAllocation::AllocationType::FILL_PATTERN, "FILPATRN"},
     {GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLBLSRFC"},

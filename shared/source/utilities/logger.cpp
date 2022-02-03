@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,8 +147,6 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "COMMAND_BUFFER";
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
         return "CONSTANT_SURFACE";
-    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
-        return "DEVICE_QUEUE_BUFFER";
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         return "EXTERNAL_HOST_PTR";
     case GraphicsAllocation::AllocationType::FILL_PATTERN:

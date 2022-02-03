@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -903,7 +903,6 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
     {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
     {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
-    {GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER, "DEVICE_QUEUE_BUFFER"},
     {GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
     {GraphicsAllocation::AllocationType::FILL_PATTERN, "FILL_PATTERN"},
     {GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
