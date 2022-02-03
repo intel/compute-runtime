@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,12 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -98,7 +103,12 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -166,7 +176,12 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -293,7 +308,12 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
@@ -398,7 +418,12 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;

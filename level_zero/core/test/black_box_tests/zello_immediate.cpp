@@ -47,7 +47,12 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     char *stackBuffer = new char[allocSize];
     ze_command_list_handle_t cmdList;
 
-    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup < 0) {
+        std::cout << "No Copy queue group found. Skipping test run\n";
+        validRet = true;
+        return;
+    }
 
     createImmediateCommandList(device, context, copyQueueGroup, syncMode, cmdList);
 
@@ -274,6 +279,11 @@ int main(int argc, char *argv[]) {
         //Sync mode with Copy queue
         std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
         testCopyBetweenHostMemAndDeviceMem(context, device, true, outputValidationSuccessful);
+    }
+    if (outputValidationSuccessful) {
+        //Async mode with Copy queue
+        std::cout << "\nTest case: Async mode copy queue for memory copy\n";
+        testCopyBetweenHostMemAndDeviceMem(context, device, false, outputValidationSuccessful);
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

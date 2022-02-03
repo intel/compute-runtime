@@ -348,4 +348,9 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
                                                                    false);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline bool CommandListCoreFamily<gfxCoreFamily>::isFlushTaskSupported() {
+    return true;
+}
+
 } // namespace L0

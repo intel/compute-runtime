@@ -111,7 +111,7 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     return computeQueueGroupOrdinal;
 }
 
-uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
+int32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
@@ -121,7 +121,7 @@ uint32_t getCopyOnlyCommandQueueOrdinal(ze_device_handle_t &device) {
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups,
                                                                 queueProperties.data()));
-    uint32_t copyOnlyQueueGroupOrdinal = 0;
+    int32_t copyOnlyQueueGroupOrdinal = -1;
     for (uint32_t i = 0; i < numQueueGroups; i++) {
         if (!(queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) && (queueProperties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)) {
             copyOnlyQueueGroupOrdinal = i;
