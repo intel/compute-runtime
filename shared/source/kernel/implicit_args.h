@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <type_traits>
 
@@ -36,4 +37,8 @@ static_assert((sizeof(ImplicitArgs) & 31) == 0, "Implicit args size need to be a
 static_assert(std::is_pod<ImplicitArgs>::value);
 
 constexpr const char *implicitArgsRelocationSymbolName = "INTEL_PATCH_CROSS_THREAD_OFFSET_OFF_R0";
+
+namespace ImplicitArgsHelper {
+std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDimensionsOrder, bool generationOfLocalIdsByRuntime, uint32_t walkOrderForHwGenerationOfLocalIds);
+}
 } // namespace NEO

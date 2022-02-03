@@ -19,6 +19,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
@@ -298,7 +299,7 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Har
 
 template <typename Family>
 bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
-                                                                       size_t *lws,
+                                                                       const size_t *lws,
                                                                        std::array<uint8_t, 3> walkOrder,
                                                                        bool requireInputWalkOrder,
                                                                        uint32_t &requiredWalkOrder,
@@ -324,18 +325,6 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
             return true;
         }
 
-        //make sure table below matches Hardware Spec
-        constexpr uint32_t walkOrderPossibilties = 6u;
-        constexpr uint8_t X = 0;
-        constexpr uint8_t Y = 1;
-        constexpr uint8_t Z = 2;
-        constexpr uint8_t possibleWalkOrders[walkOrderPossibilties][3] = {{X, Y, Z},  // 0 1 2
-                                                                          {X, Z, Y},  // 0 2 1
-                                                                          {Y, X, Z},  // 1 0 2
-                                                                          {Z, X, Y},  // 1 2 0
-                                                                          {Y, Z, X},  // 2 0 1
-                                                                          {Z, Y, X}}; // 2 1 0
-
         //check if we need to follow kernel requirements
         if (requireInputWalkOrder) {
             for (uint32_t dimension = 0; dimension < activeChannels - 1; dimension++) {
@@ -345,24 +334,24 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
             }
 
             auto index = 0u;
-            while (index < walkOrderPossibilties) {
-                if (walkOrder[0] == possibleWalkOrders[index][0] &&
-                    walkOrder[1] == possibleWalkOrders[index][1]) {
+            while (index < HwWalkOrderHelper::walkOrderPossibilties) {
+                if (walkOrder[0] == HwWalkOrderHelper::compatibleDimensionOrders[index][0] &&
+                    walkOrder[1] == HwWalkOrderHelper::compatibleDimensionOrders[index][1]) {
                     break;
                 };
                 index++;
             }
-            DEBUG_BREAK_IF(index >= walkOrderPossibilties);
+            DEBUG_BREAK_IF(index >= HwWalkOrderHelper::walkOrderPossibilties);
 
             requiredWalkOrder = index;
             return false;
         }
 
         //kernel doesn't specify any walk order requirements, check if we have any compatible
-        for (uint32_t walkOrder = 0; walkOrder < walkOrderPossibilties; walkOrder++) {
+        for (uint32_t walkOrder = 0; walkOrder < HwWalkOrderHelper::walkOrderPossibilties; walkOrder++) {
             bool allDimensionsCompatible = true;
             for (uint32_t dimension = 0; dimension < activeChannels - 1; dimension++) {
-                if (!Math::isPow2<size_t>(lws[possibleWalkOrders[walkOrder][dimension]])) {
+                if (!Math::isPow2<size_t>(lws[HwWalkOrderHelper::compatibleDimensionOrders[walkOrder][dimension]])) {
                     allDimensionsCompatible = false;
                     break;
                 }

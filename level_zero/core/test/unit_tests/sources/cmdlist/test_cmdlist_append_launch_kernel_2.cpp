@@ -998,6 +998,85 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithImplicitArgsWhenAppendLa
 
     alignedFree(expectedLocalIds);
 }
+HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithImplicitArgsAndHwGeneratedLocalIdsWhenAppendLaunchKernelThenImplicitArgsLocalIdsRespectWalkOrder) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    auto simd = kernelDescriptor->kernelAttributes.simdSize;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = 2;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = 1;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[2] = 0;
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+    kernel->kernelRequiresGenerationOfLocalIdsByRuntime = false;
+    kernel->requiredWorkgroupOrder = 2; // walk order 1 0 2
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    ASSERT_NE(nullptr, kernel->getImplicitArgs());
+
+    kernel->setGroupSize(4, 5, 6);
+    kernel->setGroupCount(3, 2, 1);
+    kernel->setGlobalOffsetExp(1, 2, 3);
+    kernel->patchGlobalOffset();
+
+    ze_result_t result{};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    memset(indirectHeap->getSpace(0), 0, kernel->getSizeForImplicitArgsPatching());
+
+    ze_group_count_t groupCount{3, 2, 1};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
+    EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup + kernel->getSizeForImplicitArgsPatching());
+
+    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
+    expectedImplicitArgs.numWorkDim = 3;
+    expectedImplicitArgs.simdWidth = simd;
+    expectedImplicitArgs.localSizeX = 4;
+    expectedImplicitArgs.localSizeY = 5;
+    expectedImplicitArgs.localSizeZ = 6;
+    expectedImplicitArgs.globalSizeX = 12;
+    expectedImplicitArgs.globalSizeY = 10;
+    expectedImplicitArgs.globalSizeZ = 6;
+    expectedImplicitArgs.globalOffsetX = 1;
+    expectedImplicitArgs.globalOffsetY = 2;
+    expectedImplicitArgs.globalOffsetZ = 3;
+    expectedImplicitArgs.groupCountX = 3;
+    expectedImplicitArgs.groupCountY = 2;
+    expectedImplicitArgs.groupCountZ = 1;
+    expectedImplicitArgs.localIdTablePtr = indirectHeap->getGraphicsAllocation()->getGpuAddress();
+    expectedImplicitArgs.printfBufferPtr = kernel->getPrintfBufferAllocation()->getGpuAddress();
+
+    auto sizeForImplicitArgPatching = kernel->getSizeForImplicitArgsPatching();
+
+    EXPECT_LT(0u, sizeForImplicitArgPatching);
+
+    auto localIdsProgrammingSize = sizeForImplicitArgPatching - sizeof(ImplicitArgs);
+
+    auto expectedLocalIds = alignedMalloc(localIdsProgrammingSize, 64);
+    memset(expectedLocalIds, 0, localIdsProgrammingSize);
+    constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
+    NEO::generateLocalIDs(expectedLocalIds, simd,
+                          std::array<uint16_t, 3>{{4, 5, 6}},
+                          std::array<uint8_t, 3>{{1, 0, 2}},
+                          false, grfSize);
+
+    EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeap->getCpuBase(), localIdsProgrammingSize));
+    auto pImplicitArgs = reinterpret_cast<ImplicitArgs *>(ptrOffset(indirectHeap->getCpuBase(), localIdsProgrammingSize));
+    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
+
+    alignedFree(expectedLocalIds);
+}
 HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppendLaunchKernelThenImplicitArgsAreNotSentToIndirectHeap) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;

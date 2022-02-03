@@ -263,7 +263,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
 
 template <typename Family>
 inline bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
-                                                                              size_t *lws,
+                                                                              const size_t *lws,
                                                                               std::array<uint8_t, 3> walkOrder,
                                                                               bool requireInputWalkOrder,
                                                                               uint32_t &requiredWalkOrder,

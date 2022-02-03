@@ -64,7 +64,7 @@ struct EncodeDispatchKernel {
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
-                                                    size_t *lws,
+                                                    const size_t *lws,
                                                     std::array<uint8_t, 3> walkOrder,
                                                     bool requireInputWalkOrder,
                                                     uint32_t &requiredWalkOrder,

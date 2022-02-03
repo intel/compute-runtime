@@ -219,15 +219,28 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
         constexpr uint32_t grfSize = sizeof(typename GfxFamily::GRF);
+        const auto &kernelAttributes = kernelInfo.kernelDescriptor.kernelAttributes;
+        uint32_t requiredWalkOrder = 0u;
+        auto generationOfLocalIdsByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+            3,
+            localWorkSize,
+            std::array<uint8_t, 3>{
+                {kernelAttributes.workgroupWalkOrder[0],
+                 kernelAttributes.workgroupWalkOrder[1],
+                 kernelAttributes.workgroupWalkOrder[2]}},
+            kernelAttributes.flags.requiresWorkgroupWalkOrder,
+            requiredWalkOrder,
+            simd);
+
+        auto dimensionOrder = ImplicitArgsHelper::getDimensionOrderForLocalIds(kernelAttributes.workgroupDimensionsOrder, generationOfLocalIdsByRuntime, requiredWalkOrder);
+
         auto offsetLocalIds = sendPerThreadData(
             ioh,
             simd,
             grfSize,
             3u, // all channels for implicit args
             std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
-            {{kernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
-              kernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
-              kernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
+            dimensionOrder,
             kernel.usesOnlyImages());
 
         pImplicitArgs->localIdTablePtr = offsetLocalIds + ioh.getGraphicsAllocation()->getGpuAddress();

@@ -1028,19 +1028,17 @@ void KernelImp::patchImplicitArgs(void *&pOut) const {
     if (!pImplicitArgs) {
         return;
     }
-    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
+    const auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
     auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+    auto dimensionOrder = NEO::ImplicitArgsHelper::getDimensionOrderForLocalIds(kernelAttributes.workgroupDimensionsOrder, kernelRequiresGenerationOfLocalIdsByRuntime, requiredWorkgroupOrder);
+
     NEO::generateLocalIDs(
         pOut,
-        static_cast<uint16_t>(kernelDescriptor.kernelAttributes.simdSize),
+        static_cast<uint16_t>(kernelAttributes.simdSize),
         std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSize[0]),
                                  static_cast<uint16_t>(groupSize[1]),
                                  static_cast<uint16_t>(groupSize[2])}},
-        std::array<uint8_t, 3>{{
-            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
-            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
-            kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2],
-        }},
+        dimensionOrder,
         false, grfSize);
     auto sizeForLocalIdsProgramming = getSizeForImplicitArgsPatching() - sizeof(NEO::ImplicitArgs);
     pOut = ptrOffset(pOut, sizeForLocalIdsProgramming);

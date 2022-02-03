@@ -1261,7 +1261,9 @@ HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendi
     pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeapAllocation);
 }
 
-HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {
+HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndRuntimeLocalIdsGenerationWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableHwGenerationLocalIds.set(0);
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     uint32_t simd = 32;
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = simd;
@@ -1321,6 +1323,74 @@ HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendi
                      std::array<uint8_t, 3>{{pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
                                              pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
                                              pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
+                     false, grfSize);
+
+    EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
+    alignedFree(expectedLocalIds);
+
+    auto pImplicitArgs = reinterpret_cast<ImplicitArgs *>(ptrOffset(ioh.getCpuBase(), alignUp(expectedIohSize, MemoryConstants::cacheLineSize)));
+    EXPECT_EQ(ioh.getGraphicsAllocation()->getGpuAddress(), pImplicitArgs->localIdTablePtr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndHwLocalIdsGenerationWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    uint32_t simd = 32;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = simd;
+    pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 2;
+    pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
+    pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 0;
+
+    MockContext context(pClDevice);
+    CommandQueueHw<FamilyType> cmdQ(&context, pClDevice, 0, false);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    const size_t localWorkSizeX = 2;
+    const size_t localWorkSizeY = 3;
+    const size_t localWorkSizeZ = 4;
+    const size_t localWorkSizes[3]{localWorkSizeX, localWorkSizeY, localWorkSizeZ};
+    std::array<uint8_t, 3> expectedDimOrder = {0, 2, 1};
+
+    auto &commandStream = cmdQ.getCS(1024);
+    auto pWalkerCmd = reinterpret_cast<typename FamilyType::WALKER_TYPE *>(commandStream.getSpace(0));
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
+
+    dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
+    auto interfaceDescriptor = reinterpret_cast<typename FamilyType::INTERFACE_DESCRIPTOR_DATA *>(dsh.getSpace(0));
+    uint32_t interfaceDescriptorIndex = 0u;
+
+    HardwareCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        kernel,
+        0u,
+        simd,
+        localWorkSizes,
+        0u,
+        interfaceDescriptorIndex,
+        pDevice->getPreemptionMode(),
+        pWalkerCmd,
+        interfaceDescriptor,
+        false,
+        *pDevice);
+
+    constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
+    size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
+    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, 3u, localWorkSize);
+    ASSERT_LE(expectedIohSize, ioh.getUsed());
+
+    auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
+    generateLocalIDs(expectedLocalIds, simd,
+                     std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
+                     expectedDimOrder,
                      false, grfSize);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
