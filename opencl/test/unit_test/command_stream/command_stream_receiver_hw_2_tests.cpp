@@ -229,7 +229,7 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp0);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -294,7 +294,7 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.blitBuffer(blitPropertiesContainer, true, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -343,7 +343,7 @@ HWTEST_F(BcsTests, whenBlitBufferThenCommandBufferHasProperTaskCount) {
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    csr.blitBuffer(blitPropertiesContainer, true, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
 
     EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
     EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getResidencyTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
@@ -374,7 +374,7 @@ HWTEST_F(BcsTests, givenUpdateTaskCountFromWaitWhenBlitBufferThenCsrHasProperTas
 
     auto taskCount = csr.peekTaskCount();
 
-    csr.blitBuffer(blitPropertiesContainer, false, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
 
     EXPECT_EQ(csr.peekTaskCount(), taskCount + 1);
     EXPECT_EQ(csr.peekLatestFlushedTaskCount(), taskCount);
@@ -407,7 +407,7 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstru
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    bcsCsr->blitBuffer(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
@@ -454,7 +454,7 @@ HWTEST_F(BcsTests, givenNotInitializedOsContextWhenBlitBufferIsCalledThenInitial
     blitPropertiesContainer.push_back(blitProperties);
 
     EXPECT_FALSE(bcsOsContext->isInitialized());
-    bcsCsr->blitBuffer(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
     EXPECT_TRUE(bcsOsContext->isInitialized());
 }
 
@@ -491,7 +491,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.blitBuffer(blitPropertiesContainer, false, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
 
     uint32_t residentAllocationsNum = 5u;
     EXPECT_TRUE(csr.isMadeResident(graphicsAllocation1));
@@ -549,7 +549,7 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    bcsCsr->blitBuffer(blitPropertiesContainer, false, false, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
 
     uint32_t residentAllocationsNum = 6u;
     EXPECT_TRUE(bcsCsr->isMadeResident(graphicsAllocation1));
@@ -590,7 +590,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
                                                                           graphicsAllocation->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     EXPECT_EQ(commandStream.getGraphicsAllocation(), csr.latestFlushedBatchBuffer.commandBufferAllocation);
     EXPECT_EQ(commandStreamOffset, csr.latestFlushedBatchBuffer.startOffset);
@@ -647,11 +647,11 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
                                                                           graphicsAllocation->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
-    blitBuffer(myMockCsr.get(), blitProperties, false, *pDevice);
+    flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
 
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
-    blitBuffer(myMockCsr.get(), blitProperties, true, *pDevice);
+    flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
 
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
@@ -684,11 +684,11 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
                                                                           graphicsAllocation->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
-    blitBuffer(&bcsCsr, blitProperties, false, *pDevice);
+    flushBcsTask(&bcsCsr, blitProperties, false, *pDevice);
 
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
 
-    blitBuffer(&bcsCsr, blitProperties, true, *pDevice);
+    flushBcsTask(&bcsCsr, blitProperties, true, *pDevice);
 
     EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
     EXPECT_EQ(bcsCsr.taskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
@@ -729,7 +729,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                       subBuffer1->getOffset(),
                                                                                   0, {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
 
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream);
 
@@ -754,7 +754,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                       subBuffer1->getOffset(),
                                                                                   0, {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
 
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -776,7 +776,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1,
                                                                              graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -804,7 +804,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::BufferToBuffer, csr, builtinOpParams);
 
             auto offset = csr.commandStream.getUsed();
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             HardwareParse hwParser;
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
@@ -856,7 +856,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   castToUint64(mapPtr),
                                                                                   {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
 
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream);
             auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
             ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
@@ -878,7 +878,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   mapAllocation, mapPtr,
                                                                                   graphicsAllocation->getGpuAddress(),
                                                                                   castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
             auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -902,7 +902,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   mapAllocation, mapPtr,
                                                                                   graphicsAllocation->getGpuAddress(),
                                                                                   castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
             auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -924,7 +924,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   graphicsAllocation->getGpuAddress(),
                                                                                   castToUint64(mapPtr),
                                                                                   {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream);
 
             auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
@@ -1067,7 +1067,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
             EXPECT_EQ(gpuAllocation, blitProperties.srcAllocation);
             EXPECT_EQ(svmData->cpuAllocation, blitProperties.dstAllocation);
 
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             HardwareParse hwParser;
             hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1093,7 +1093,7 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
                                                                         csr, builtinOpParams);
 
             auto offset = csr.commandStream.getUsed();
-            blitBuffer(&csr, blitProperties, true, *pDevice);
+            flushBcsTask(&csr, blitProperties, true, *pDevice);
 
             HardwareParse hwParser;
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
@@ -1142,7 +1142,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                       graphicsAllocation1->getGpuAddress(),
                                                                                       0, 0, {buffer1Offset, 0, 0}, copySize, 0, 0, 0, 0);
 
-                blitBuffer(&csr, blitProperties, true, *pDevice);
+                flushBcsTask(&csr, blitProperties, true, *pDevice);
 
                 hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1166,7 +1166,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                       graphicsAllocation1->getGpuAddress(),
                                                                                       0, 0, {buffer1Offset, 0, 0}, copySize, 0, 0, 0, 0);
 
-                blitBuffer(&csr, blitProperties, true, *pDevice);
+                flushBcsTask(&csr, blitProperties, true, *pDevice);
 
                 hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1188,7 +1188,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                  graphicsAllocation2,
                                                                                  {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation());
 
-                blitBuffer(&csr, blitProperties, true, *pDevice);
+                flushBcsTask(&csr, blitProperties, true, *pDevice);
 
                 hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1245,7 +1245,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
                                                                           srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch);
 
     memoryManager->returnFakeAllocation = false;
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
     hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
     //1st rectangle  xCopy = maxWidthToCopy, yCopy = maxHeightToCopy, zCopy = 1
@@ -1337,7 +1337,7 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
                                                                                    graphicsAllocation, csr.getClearColorAllocation());
 
         auto offset = csr.commandStream.getUsed();
-        blitBuffer(&csr, blitProperties, false, *pDevice);
+        flushBcsTask(&csr, blitProperties, false, *pDevice);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
@@ -1395,7 +1395,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp0);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0u);
@@ -1656,7 +1656,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1682,7 +1682,7 @@ HWTEST_F(BcsTests, given3dImageWhenBlitBufferIsCalledThenBlitCmdIsFoundZtimes) {
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
     uint32_t xyCopyBltCmdFound = 0;
@@ -1713,7 +1713,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1743,7 +1743,7 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1778,7 +1778,7 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenBlitBufferIsCalledThenBlitCmdIsCorrect
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1810,7 +1810,7 @@ HWTEST_F(BcsTests, givenImageToImageWhenBlitBufferIsCalledThenBlitCmdIsCorrectly
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToImage,
                                                                 csr,
                                                                 builtinOpParams);
-    blitBuffer(&csr, blitProperties, true, *pDevice);
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
@@ -1833,7 +1833,7 @@ HWTEST_F(BcsTests, givenBlitBufferCalledWhenClearColorAllocationIseSetThenItIsMa
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&graphicsAllocation1,
                                                                      &graphicsAllocation2, 0, 0, copySize, 0, 0, 0, 0, &clearColorAllocation);
-    blitBuffer(&csr, blitProperties, false, *pDevice);
+    flushBcsTask(&csr, blitProperties, false, *pDevice);
     auto iter = csr.makeResidentAllocations.find(&clearColorAllocation);
     ASSERT_NE(iter, csr.makeResidentAllocations.end());
     EXPECT_EQ(&clearColorAllocation, iter->first);

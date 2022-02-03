@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,7 +206,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
                                                             hostPtr,
                                                             (memory->getGpuAddress() + offset),
                                                             0, 0, 0, size, 0, 0, 0, 0));
-        bcsEngine->commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, *pDeviceForBlit);
+        bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
     }
 
     return BlitOperationResult::Success;

@@ -800,7 +800,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
-        const auto newTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
         this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
         dispatchFlags.implicitFlush = true;
     }
@@ -1029,7 +1029,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
-        const auto newTaskCount = bcsCsr->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
         this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     }
 

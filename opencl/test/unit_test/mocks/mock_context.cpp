@@ -186,7 +186,7 @@ BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
 
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
-        bcsCsr->blitBuffer(container, true, false, const_cast<Device &>(device));
+        bcsCsr->flushBcsTask(container, true, false, const_cast<Device &>(device));
 
         return BlitOperationResult::Success;
     };

@@ -108,7 +108,7 @@ void PrintfHandler::printEnqueueOutput() {
                                                             printfOutputDecompressed.get(),
                                                             printfSurface->getGpuAddress(),
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
-        bcsEngine.commandStreamReceiver->blitBuffer(blitPropertiesContainer, true, false, device.getDevice());
+        bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device.getDevice());
     }
 
     PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit(),

@@ -260,7 +260,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        const auto newTaskCount = bcsCsrForAuxTranslation->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        const auto newTaskCount = bcsCsrForAuxTranslation->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
         commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), newTaskCount);
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
@@ -298,7 +298,7 @@ void CommandWithoutKernel::dispatchBlitOperation() {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(blitProperties.csrDependencies, *bcsCsr);
     }
 
-    const auto newTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+    const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
     commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     commandQueue.setLastBcsPacket(bcsCsr->getOsContext().getEngineType());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,11 +22,11 @@ struct BcsTests : public Test<ClDeviceFixture> {
         Test<ClDeviceFixture>::TearDown();
     }
 
-    uint32_t blitBuffer(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
+    uint32_t flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 
-        return bcsCsr->blitBuffer(container, blocking, false, device);
+        return bcsCsr->flushBcsTask(container, blocking, false, device);
     }
 
     TimestampPacketContainer timestampPacketContainer;

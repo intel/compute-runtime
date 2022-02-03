@@ -95,7 +95,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
+    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
     void flushTagUpdate() override;
     void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) override;

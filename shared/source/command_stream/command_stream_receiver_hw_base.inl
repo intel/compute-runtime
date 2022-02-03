@@ -1007,7 +1007,7 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
+uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 

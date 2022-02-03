@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,9 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
         return csr;
     }
 
-    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
-        return BaseClass::blitBuffer(blitPropertiesContainer, blocking, profilingEnabled, device);
+        return BaseClass::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
     }
 
     void pollForCompletion() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,11 +38,11 @@ struct BlitXeHpgCoreTests : public ::testing::Test {
         clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     }
 
-    uint32_t blitBuffer(CommandStreamReceiver *csr, const BlitProperties &blitProperties, bool blocking, Device &device) {
+    uint32_t flushBcsTask(CommandStreamReceiver *csr, const BlitProperties &blitProperties, bool blocking, Device &device) {
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
-        return csr->blitBuffer(blitPropertiesContainer, blocking, false, device);
+        return csr->flushBcsTask(blitPropertiesContainer, blocking, false, device);
     }
 
     std::unique_ptr<MockClDevice> clDevice;
@@ -65,7 +65,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                      buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-    blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+    flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -95,7 +95,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                      buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                      0, 0, {1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-    blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+    flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -124,7 +124,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
         // 1D
         auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
                                                                          0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-        blitBuffer(csr, blitProperties, false, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -148,7 +148,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, given2dBlitCommandWhenDispatchingThenSetVa
         // 2D
         auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
                                                                          0, 0, {(2 * BlitterConstants::maxBlitWidth) + 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
-        blitBuffer(csr, blitProperties, false, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, false, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
@@ -185,7 +185,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -203,7 +203,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
@@ -236,7 +236,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -254,7 +254,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
@@ -288,7 +288,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -306,7 +306,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
@@ -325,7 +325,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
                                                                          bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);
@@ -359,7 +359,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRev
                                                                          bufferInLocalPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream);
@@ -377,7 +377,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandAndRev
                                                                          bufferInSystemPool->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
                                                                          0, 0, {2048, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
 
-        blitBuffer(csr, blitProperties, true, clDevice->getDevice());
+        flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, offset);

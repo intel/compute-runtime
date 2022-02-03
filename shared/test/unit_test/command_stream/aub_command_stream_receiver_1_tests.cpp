@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1127,7 +1127,7 @@ HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorre
     BlitProperties blitProperties = BlitProperties::constructPropertiesForCopy(&allocation, &allocation, 0, 0, 0, 0, 0, 0, 0, aubCsr->getClearColorAllocation());
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
-    aubCsr->blitBuffer(blitPropertiesContainer, true, false, *pDevice);
+    aubCsr->flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
     EXPECT_EQ(1u, aubCsr->blitBufferCalled);
 }
 

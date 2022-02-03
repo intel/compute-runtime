@@ -107,7 +107,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
     void executeBlitCommand(const BlitProperties &blitProperties, bool blocking) {
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
-        bcsCsr->blitBuffer(blitPropertiesContainer, blocking, false, rootDevice->getDevice());
+        bcsCsr->flushBcsTask(blitPropertiesContainer, blocking, false, rootDevice->getDevice());
     }
 
     template <typename FamilyType>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaMiMemFenceTest, givenSystemMemoryFenceGene
     EXPECT_FALSE(commandStreamReceiver.isEnginePrologueSent);
 
     BlitPropertiesContainer blitPropertiesContainer;
-    commandStreamReceiver.blitBuffer(blitPropertiesContainer, false, false, *pDevice);
+    commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
     HardwareParse hwParser;
