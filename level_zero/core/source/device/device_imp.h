@@ -100,6 +100,7 @@ struct DeviceImp : public Device {
 
     bool toPhysicalSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t &deviceIndex);
     bool toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slice, uint32_t &subslice, uint32_t deviceIndex);
+    uint32_t getPhysicalSubDeviceId();
 
     bool isSubdevice = false;
     void *execEnvironment = nullptr;

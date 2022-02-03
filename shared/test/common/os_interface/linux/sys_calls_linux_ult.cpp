@@ -47,6 +47,8 @@ bool isInvalidAILTest = false;
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
 int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
+int (*sysCallsIoctl)(int fileDescriptor, unsigned long int request, void *arg) = nullptr;
+int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) = nullptr;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -77,6 +79,11 @@ void *dlopen(const char *filename, int flag) {
 }
 
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
+
+    if (sysCallsIoctl != nullptr) {
+        return sysCallsIoctl(fileDescriptor, request, arg);
+    }
+
     if (fileDescriptor == fakeFileDescriptor) {
         if (request == DRM_IOCTL_VERSION) {
             auto pVersion = static_cast<drm_version_t *>(arg);
@@ -157,6 +164,9 @@ int getDevicePath(int deviceFd, char *buf, size_t &bufSize) {
 }
 
 int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
+    if (sysCallsPoll != nullptr) {
+        return sysCallsPoll(pollFd, numberOfFds, timeout);
+    }
     return 0;
 }
 

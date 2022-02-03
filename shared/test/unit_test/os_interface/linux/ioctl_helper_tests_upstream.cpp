@@ -316,3 +316,14 @@ TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
     VmBindParams vmBindParams{};
     EXPECT_EQ(0, ioctlHelper.vmUnbind(drm.get(), vmBindParams));
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallPropertiesThenFailureIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    std::array<uint64_t, 10u> properties = {};
+    EXPECT_FALSE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1));
+}
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallFdParameterThenZeroIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    EXPECT_EQ(0u, ioctlHelper.getEuStallFdParameter());
+}

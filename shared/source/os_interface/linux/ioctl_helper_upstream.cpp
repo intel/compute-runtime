@@ -164,6 +164,13 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(const HardwareInfo &
 std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
+bool IoctlHelperUpstream::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
+    return false;
+}
+
+uint32_t IoctlHelperUpstream::getEuStallFdParameter() {
+    return 0u;
+}
 
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
     return {};

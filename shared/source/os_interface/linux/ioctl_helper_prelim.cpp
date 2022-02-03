@@ -319,6 +319,24 @@ int32_t IoctlHelperPrelim20::getComputeEngineClass() {
 std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
+bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
+    properties[0] = PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
+    properties[1] = dssBufferSize;
+    properties[2] = PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE;
+    properties[3] = samplingRate;
+    properties[4] = PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD;
+    properties[5] = pollPeriod;
+    properties[6] = PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS;
+    properties[7] = PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    properties[8] = PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE;
+    properties[9] = engineInstance;
+
+    return true;
+}
+
+uint32_t IoctlHelperPrelim20::getEuStallFdParameter() {
+    return PRELIM_I915_PERF_FLAG_FD_EU_STALL;
+}
 
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
 

@@ -112,6 +112,8 @@ class IoctlHelper {
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
     virtual int vmBind(Drm *drm, const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
+    virtual bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) = 0;
+    virtual uint32_t getEuStallFdParameter() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -155,6 +157,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
+    bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
+    uint32_t getEuStallFdParameter() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -211,6 +215,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
+    bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
+    uint32_t getEuStallFdParameter() override;
 };
 
 } // namespace NEO

@@ -4,8 +4,25 @@
 # SPDX-License-Identifier: MIT
 #
 
+set(L0_TOOLS_METRICS_LINUX_TESTS_LINUX
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_query_pool_linux.cpp
+)
+
+if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND L0_TOOLS_METRICS_LINUX_TESTS_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_linux_prelim.cpp
+  )
+endif()
+
+if("${BRANCH_TYPE}" STREQUAL "")
+  list(APPEND L0_TOOLS_METRICS_LINUX_TESTS_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_linux_upstream.cpp
+  )
+endif()
+
 if(UNIX)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_query_pool_linux.cpp
+                 ${L0_TOOLS_METRICS_LINUX_TESTS_LINUX}
   )
 endif()

@@ -241,3 +241,22 @@ TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSyncFenceThenProperV
 
     vmBindExtSyncFence.release();
 }
+
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {
+    std::array<uint64_t, 10u> properties = {};
+    EXPECT_TRUE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1));
+    EXPECT_EQ(properties[0], PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ);
+    EXPECT_EQ(properties[1], 0x101u);
+    EXPECT_EQ(properties[2], PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE);
+    EXPECT_EQ(properties[3], 0x102u);
+    EXPECT_EQ(properties[4], PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD);
+    EXPECT_EQ(properties[5], 0x103u);
+    EXPECT_EQ(properties[6], PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS);
+    EXPECT_EQ(properties[7], PRELIM_I915_ENGINE_CLASS_COMPUTE);
+    EXPECT_EQ(properties[8], PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
+    EXPECT_EQ(properties[9], 1u);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
+}

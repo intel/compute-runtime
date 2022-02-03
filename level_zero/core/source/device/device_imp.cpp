@@ -1184,4 +1184,16 @@ NEO::Device *DeviceImp::getActiveDevice() const {
     return this->neoDevice;
 }
 
+uint32_t DeviceImp::getPhysicalSubDeviceId() {
+    if (!neoDevice->isSubDevice()) {
+        uint32_t deviceBitField = static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong());
+        if (neoDevice->getDeviceBitfield().count() > 1) {
+            // Clear all set bits other than the right most bit
+            deviceBitField &= ~deviceBitField + 1;
+        }
+        return Math::log2(deviceBitField);
+    }
+    return static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex();
+}
+
 } // namespace L0
