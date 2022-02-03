@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,6 +24,7 @@ set(TEST_TARGETS
     zello_image_view
     zello_dynamic_link
     zello_events
+    zello_immediate
 )
 
 include_directories(common)
