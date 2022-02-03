@@ -240,11 +240,7 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
-    NEO::TargetDevice targetDevice = {};
-    targetDevice.coreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
-    targetDevice.productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-    targetDevice.stepping = device->getNEODevice()->getHardwareInfo().platform.usRevId;
-    targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
+    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(device->getNEODevice()->getHardwareInfo());
     std::string decodeErrors;
     std::string decodeWarnings;
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);
@@ -294,7 +290,7 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
     NEO::SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
-    binary.targetDevice.grfSize = device->getHwInfo().capabilityTable.grfSize;
+    binary.targetDevice = NEO::targetDeviceFromHwInfo(device->getHwInfo());
     std::string decodeErrors;
     std::string decodeWarnings;
 
@@ -354,17 +350,13 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    auto gfxCore = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
-    auto stepping = device->getNEODevice()->getHardwareInfo().platform.usRevId;
-
     if (this->packedDeviceBinary != nullptr) {
         return true;
     }
 
-    NEO::SingleDeviceBinary singleDeviceBinary;
+    NEO::SingleDeviceBinary singleDeviceBinary = {};
+    singleDeviceBinary.targetDevice = NEO::targetDeviceFromHwInfo(device->getNEODevice()->getHardwareInfo());
     singleDeviceBinary.buildOptions = this->options;
-    singleDeviceBinary.targetDevice.coreFamily = gfxCore;
-    singleDeviceBinary.targetDevice.stepping = stepping;
     singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
     singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
     singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->debugData.get()), this->debugDataSize);

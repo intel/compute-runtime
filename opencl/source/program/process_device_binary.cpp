@@ -156,7 +156,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
     auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
     SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
-    binary.targetDevice.grfSize = clDevice.getDevice().getHardwareInfo().capabilityTable.grfSize;
+    binary.targetDevice = NEO::targetDeviceFromHwInfo(clDevice.getDevice().getHardwareInfo());
     std::string decodeErrors;
     std::string decodeWarnings;
 

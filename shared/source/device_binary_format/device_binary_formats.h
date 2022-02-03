@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 
 namespace NEO {
 struct ProgramInfo;
+struct HardwareInfo;
 
 enum class DeviceBinaryFormat : uint8_t {
     Unknown,
@@ -60,6 +61,7 @@ struct TargetDevice {
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;
 };
+TargetDevice targetDeviceFromHwInfo(const NEO::HardwareInfo &hwInfo);
 
 struct SingleDeviceBinary {
     DeviceBinaryFormat format = DeviceBinaryFormat::Unknown;

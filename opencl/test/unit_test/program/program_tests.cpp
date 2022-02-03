@@ -1625,11 +1625,7 @@ TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGetti
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(testBinary.get()), size);
     auto productAbbreviation = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
 
-    TargetDevice targetDevice = {};
-
-    targetDevice.coreFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    targetDevice.stepping = pDevice->getHardwareInfo().platform.usRevId;
-    targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
+    TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(pDevice->getHardwareInfo());
 
     std::string decodeErrors;
     std::string decodeWarnings;

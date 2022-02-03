@@ -162,10 +162,7 @@ cl_int Program::createProgramFromBinary(
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
 
-        TargetDevice targetDevice = {};
-        targetDevice.coreFamily = hwInfo->platform.eRenderCoreFamily;
-        targetDevice.stepping = hwInfo->platform.usRevId;
-        targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
+        TargetDevice targetDevice = targetDeviceFromHwInfo(*hwInfo);
         std::string decodeErrors;
         std::string decodeWarnings;
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
@@ -370,14 +367,11 @@ cl_int Program::packDeviceBinary(ClDevice &clDevice) {
     }
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto gfxCore = hwInfo->platform.eRenderCoreFamily;
-    auto stepping = hwInfo->platform.usRevId;
 
     if (nullptr != this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()) {
-        SingleDeviceBinary singleDeviceBinary;
+        SingleDeviceBinary singleDeviceBinary = {};
+        singleDeviceBinary.targetDevice = NEO::targetDeviceFromHwInfo(*hwInfo);
         singleDeviceBinary.buildOptions = this->options;
-        singleDeviceBinary.targetDevice.coreFamily = gfxCore;
-        singleDeviceBinary.targetDevice.stepping = stepping;
         singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
         singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
         singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].debugData.get()), this->buildInfos[rootDeviceIndex].debugDataSize);
