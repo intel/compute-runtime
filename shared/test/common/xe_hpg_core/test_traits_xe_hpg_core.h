@@ -27,4 +27,5 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool numberOfWalkersInCfeStateSupported = true;
     static constexpr bool forceGpuNonCoherent = false;
     static constexpr bool isUnTypedDataPortCacheFlushSupported = true;
+    static constexpr bool imagesSupported = true;
 };
