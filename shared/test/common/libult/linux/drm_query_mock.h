@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
-#include "shared/test/common/libult/linux/drm_query_mock_context.h"
+#include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 
 using namespace NEO;
 
@@ -29,9 +29,10 @@ class DrmQueryMock : public DrmMock {
         prelimVersion = "2.0";
     }
 
-    DrmQueryMockContext context{
+    DrmMockPrelimContext context{
         .hwInfo = nullptr,
         .rootDeviceEnvironment = rootDeviceEnvironment,
+        .cacheInfo = getCacheInfo(),
         .failRetTopology = failRetTopology,
     };
 

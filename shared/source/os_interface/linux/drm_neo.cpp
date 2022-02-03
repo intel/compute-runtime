@@ -16,6 +16,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
@@ -936,6 +937,27 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
+}
+
+void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (DebugManager.flags.ClosEnabled.get() == 0 || hwHelper.getNumCacheRegions() == 0) {
+        this->cacheInfo.reset(new CacheInfoImpl(*this, 0, 0, 0));
+        return;
+    }
+
+    const GT_SYSTEM_INFO *gtSysInfo = &hwInfo.gtSystemInfo;
+
+    constexpr uint16_t maxNumWays = 32;
+    constexpr uint16_t globalReservationLimit = 16;
+    constexpr uint16_t clientReservationLimit = 8;
+    constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
+    const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
+    const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
+    const uint32_t maxReservationNumCacheRegions = hwHelper.getNumCacheRegions() - 1;
+
+    this->cacheInfo.reset(new CacheInfoImpl(*this, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {

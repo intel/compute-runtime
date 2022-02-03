@@ -174,6 +174,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ProgramGlobalFenceAsKernelInstructionInEUKernel,
 DECLARE_DEBUG_VARIABLE(int32_t, DoNotReportTile1BscWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTile0PlacementForTile1ResourcesWaActive, -1, "-1: default, 0: WA Disabled, 1: WA enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ClosEnabled, -1, "-1: default, 0: disabled, 1: enabled. Enable CLOS based cache reservation")
+DECLARE_DEBUG_VARIABLE(int32_t, ClosNumCacheWays, -1, "-1: default, >= 0 Number of cache ways to allocate within previously reserved CLOS regions (0-32)")
 DECLARE_DEBUG_VARIABLE(int32_t, EngineUsageHint, -1, "-1: default, >=0: engine usage value to use when creating command queue on user selected engine")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceBcsEngineIndex, -1, "-1: default, >=0 Copy Engine index")
 DECLARE_DEBUG_VARIABLE(int32_t, Force2dImageAsArray, -1, "-1: default, 0: WA Disabled, 1: Forces surface state of 2dImage to array")

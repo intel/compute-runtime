@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
+
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/libult/linux/drm_query_mock_context.h"
+#include "shared/source/os_interface/linux/cache_info_impl.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 #include <gtest/gtest.h>
@@ -44,14 +46,51 @@ constexpr std::array<uint64_t, 9> copyEnginesCapsMap = {{
 
 } // namespace
 
-int handlePrelimDrmQueryRequests(DrmQueryMockContext &context, unsigned long request, void *arg) {
-    return -1;
+int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) {
+    switch (request) {
+    case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
+        auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
+        closIndex++;
+        if (closIndex == 0) {
+            return EINVAL;
+        }
+        closReserveArg->clos_index = closIndex;
+    } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE: {
+        auto closFreeArg = static_cast<prelim_drm_i915_gem_clos_free *>(arg);
+        if (closFreeArg->clos_index > closIndex) {
+            return EINVAL;
+        }
+        closIndex--;
+    } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE: {
+        auto cacheReserveArg = static_cast<prelim_drm_i915_gem_cache_reserve *>(arg);
+        if (cacheReserveArg->clos_index > closIndex) {
+            return EINVAL;
+        }
+        auto cacheInfoImpl = static_cast<const CacheInfoImpl *>(cacheInfo);
+        auto maxReservationNumWays = cacheInfoImpl ? cacheInfoImpl->getMaxReservationNumWays() : maxNumWays;
+        if (cacheReserveArg->num_ways > maxReservationNumWays) {
+            return EINVAL;
+        }
+        auto freeNumWays = maxReservationNumWays - allocNumWays;
+        if (cacheReserveArg->num_ways > freeNumWays) {
+            return EINVAL;
+        }
+        allocNumWays += cacheReserveArg->num_ways;
+    } break;
+
+    default:
+        return -1;
+    }
+
+    return 0;
 }
 
-bool handlePrelimDrmQueryItem(DrmQueryMockContext &context, void *arg) {
+bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     auto queryItem = reinterpret_cast<drm_i915_query_item *>(arg);
 
-    auto &gtSystemInfo = context.hwInfo->gtSystemInfo;
+    auto &gtSystemInfo = hwInfo->gtSystemInfo;
     auto numberOfCCS = gtSystemInfo.CCSInfo.IsValid ? gtSystemInfo.CCSInfo.NumberOfCCSEnabled : 0u;
 
     switch (queryItem->query_id) {
@@ -133,7 +172,7 @@ bool handlePrelimDrmQueryItem(DrmQueryMockContext &context, void *arg) {
     } break;
 
     case PRELIM_DRM_I915_QUERY_COMPUTE_SLICES: {
-        auto &gtSystemInfo = context.rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
+        auto &gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
         auto maxEuPerSubslice = gtSystemInfo.MaxEuPerSubSlice;
         auto maxSlices = gtSystemInfo.MaxSlicesSupported;
         auto maxSubslices = gtSystemInfo.MaxSubSlicesSupported / maxSlices;
@@ -148,7 +187,7 @@ bool handlePrelimDrmQueryItem(DrmQueryMockContext &context, void *arg) {
             break;
         } else {
             auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->data_ptr);
-            if (context.failRetTopology) {
+            if (failRetTopology) {
                 return false;
             }
             topologyArg->max_slices = maxSlices;
@@ -194,4 +233,8 @@ bool handlePrelimDrmQueryItem(DrmQueryMockContext &context, void *arg) {
         break;
     }
     return true;
+}
+
+uint32_t getQueryComputeSlicesIoctl() {
+    return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
 }

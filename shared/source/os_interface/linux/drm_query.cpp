@@ -7,7 +7,6 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -51,10 +50,6 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
 bool Drm::isDebugAttachAvailable() {
     return false;
-}
-
-void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
-    this->cacheInfo.reset(new CacheInfoImpl());
 }
 
 int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {

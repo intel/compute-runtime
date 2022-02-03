@@ -36,6 +36,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -46,7 +47,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_cache_info.h"
 
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
@@ -4471,7 +4471,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfo());
+    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
@@ -4483,7 +4483,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenRe
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfo());
+    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
@@ -4495,7 +4495,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfo());
+    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockBufferObject bo(&drm, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
@@ -4591,7 +4591,7 @@ TEST(DrmAllocationTest, givenBoWhenMarkingForCaptureThenBosAreMarked) {
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
     mock->ioctl_expected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-    drm->cacheInfo.reset(new MockCacheInfo());
+    drm->cacheInfo.reset(new MockCacheInfoImpl(*drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     auto ptr = reinterpret_cast<void *>(0x1000);
     auto size = MemoryConstants::pageSize;

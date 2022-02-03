@@ -7,9 +7,6 @@
 
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 
-extern int handlePrelimDrmQueryRequests(DrmQueryMockContext &context, unsigned long request, void *arg);
-extern bool handlePrelimDrmQueryItem(DrmQueryMockContext &context, void *arg);
-
 int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_QUERY && arg) {
         auto query = static_cast<drm_i915_query *>(arg);
@@ -27,9 +24,9 @@ int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
         return 0;
     }
 
-    return handlePrelimDrmQueryRequests(context, request, arg);
+    return context.handlePrelimRequest(request, arg);
 }
 
 bool DrmQueryMock::handleQueryItem(void *arg) {
-    return handlePrelimDrmQueryItem(context, arg);
+    return context.handlePrelimQueryItem(arg);
 }

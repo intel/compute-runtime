@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
 #include "shared/source/memory_manager/residency.h"
+#include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -45,6 +46,24 @@ void DrmAllocation::setCachePolicy(CachePolicy memType) {
             bo->setCachePolicy(memType);
         }
     }
+}
+
+bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
+    if (regionIndex == CacheRegion::Default) {
+        return true;
+    }
+
+    auto cacheInfo = static_cast<CacheInfoImpl *>(drm->getCacheInfo());
+    if (cacheInfo == nullptr) {
+        return false;
+    }
+
+    auto regionSize = (cacheInfo->getMaxReservationNumCacheRegions() > 0) ? cacheInfo->getMaxReservationCacheSize() / cacheInfo->getMaxReservationNumCacheRegions() : 0;
+    if (regionSize == 0) {
+        return false;
+    }
+
+    return setCacheAdvice(drm, regionSize, regionIndex);
 }
 
 bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex) {

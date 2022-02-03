@@ -14,7 +14,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_cache_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_2.cpp
@@ -54,6 +53,7 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_cache_info_tests.cpp
   )
 
   if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")

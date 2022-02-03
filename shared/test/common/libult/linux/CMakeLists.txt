@@ -16,10 +16,8 @@ if(UNIX)
     target_sources(neo_libult_common PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock_context.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock_prelim.cpp
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_prelim_helper.cpp
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_prelim_helper.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.cpp
     )
   endif()
 
