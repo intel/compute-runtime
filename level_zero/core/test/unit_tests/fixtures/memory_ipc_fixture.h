@@ -109,6 +109,101 @@ struct MemoryExportImportTest : public ::testing::Test {
     std::unique_ptr<ContextFdMock> context;
 };
 
+struct DriverHandleGetMemHandleMock : public L0::DriverHandleImp {
+    void *importNTHandle(ze_device_handle_t hDevice, void *handle) override {
+        if (mockHandle == allocationHandleMap.second) {
+            return allocationHandleMap.first;
+        }
+        return nullptr;
+    }
+    void *importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_flags_t flags, uint64_t handle, NEO::GraphicsAllocation **pAloc) override {
+        if (mockFd == allocationFdMap.second) {
+            return allocationFdMap.first;
+        }
+        return nullptr;
+    }
+
+    const int mockFd = 57;
+    std::pair<void *, int> allocationFdMap;
+    uint64_t mockHandle = 57;
+    std::pair<void *, uint64_t> allocationHandleMap;
+};
+
+struct ContextMemHandleMock : public L0::ContextImp {
+    ContextMemHandleMock(DriverHandleGetMemHandleMock *inDriverHandle) : L0::ContextImp(static_cast<L0::DriverHandle *>(inDriverHandle)) {
+        driverHandle = inDriverHandle;
+    }
+    ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
+                               const ze_device_mem_alloc_desc_t *deviceDesc,
+                               size_t size,
+                               size_t alignment, void **ptr) override {
+        ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+        if (ZE_RESULT_SUCCESS == res) {
+            driverHandle->allocationFdMap.first = *ptr;
+            driverHandle->allocationFdMap.second = driverHandle->mockFd;
+            driverHandle->allocationHandleMap.first = *ptr;
+            driverHandle->allocationHandleMap.second = driverHandle->mockHandle;
+        }
+
+        return res;
+    }
+
+    ze_result_t getMemAllocProperties(const void *ptr,
+                                      ze_memory_allocation_properties_t *pMemAllocProperties,
+                                      ze_device_handle_t *phDevice) override {
+        ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
+        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
+            ze_external_memory_export_fd_t *extendedMemoryExportProperties =
+                reinterpret_cast<ze_external_memory_export_fd_t *>(pMemAllocProperties->pNext);
+            extendedMemoryExportProperties->fd = driverHandle->mockFd;
+        }
+
+        return res;
+    }
+
+    ze_result_t closeIpcMemHandle(const void *ptr) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    DriverHandleGetMemHandleMock *driverHandle = nullptr;
+};
+
+struct MemoryExportImportWSLTest : public ::testing::Test {
+    void SetUp() override {
+        NEO::MockCompilerEnableGuard mock(true);
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        auto mockBuiltIns = new MockBuiltins();
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<DriverHandleGetMemHandleMock>();
+        prevMemoryManager = driverHandle->getMemoryManager();
+        currMemoryManager = new MemoryManagerMemHandleMock();
+        driverHandle->setMemoryManager(currMemoryManager);
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+
+        context = std::make_unique<ContextMemHandleMock>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        auto neoDevice = device->getNEODevice();
+        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+    }
+
+    void TearDown() override {
+        driverHandle->setMemoryManager(prevMemoryManager);
+        delete currMemoryManager;
+    }
+    std::unique_ptr<DriverHandleGetMemHandleMock> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    ze_context_handle_t hContext;
+    std::unique_ptr<ContextMemHandleMock> context;
+    NEO::MemoryManager *prevMemoryManager = nullptr;
+    MemoryManagerMemHandleMock *currMemoryManager = nullptr;
+};
+
 struct DriverHandleGetWinHandleMock : public L0::DriverHandleImp {
     void *importNTHandle(ze_device_handle_t hDevice, void *handle) override {
         if (mockHandle == allocationMap.second) {

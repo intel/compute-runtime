@@ -128,7 +128,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     if (lookupTable.isSharedHandle) {
         if (lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
-            *ptr = this->driverHandle->importFdHandle(hDevice, flags, lookupTable.sharedHandleType.fd, nullptr);
+            *ptr = getMemHandlePtr(hDevice, lookupTable.sharedHandleType.fd, flags);
             if (nullptr == *ptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }

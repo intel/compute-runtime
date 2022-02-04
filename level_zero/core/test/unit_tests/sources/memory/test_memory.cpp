@@ -1388,55 +1388,6 @@ TEST_F(MemoryExportImportTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(MemoryExportImportTest,
-       givenCallToDeviceAllocWithExtendedImportDescriptorAndSupportedFlagThenSuccessIsReturned) {
-    size_t size = 10;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_external_memory_export_desc_t extendedDesc = {};
-    extendedDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
-    extendedDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    deviceDesc.pNext = &extendedDesc;
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    ze_memory_allocation_properties_t memoryProperties = {};
-    ze_external_memory_export_fd_t extendedProperties = {};
-    extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
-    extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    extendedProperties.fd = std::numeric_limits<int>::max();
-    memoryProperties.pNext = &extendedProperties;
-
-    ze_device_handle_t deviceHandle;
-    result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
-    EXPECT_EQ(deviceHandle, device->toHandle());
-    EXPECT_NE(extendedProperties.fd, std::numeric_limits<int>::max());
-    EXPECT_EQ(extendedProperties.fd, driverHandle->mockFd);
-
-    ze_device_mem_alloc_desc_t importDeviceDesc = {};
-    ze_external_memory_import_fd_t extendedImportDesc = {};
-    extendedImportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
-    extendedImportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    extendedImportDesc.fd = extendedProperties.fd;
-    importDeviceDesc.pNext = &extendedImportDesc;
-
-    void *importedPtr = nullptr;
-    result = context->allocDeviceMem(device->toHandle(),
-                                     &importDeviceDesc,
-                                     size, alignment, &importedPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
 TEST_F(MemoryExportImportWinHandleTest,
        givenCallToDeviceAllocWithExtendedExportDescriptorAndNTHandleFlagThenAllocationIsMade) {
     size_t size = 10;
