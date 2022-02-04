@@ -243,7 +243,7 @@ bool CommandStreamReceiver::skipResourceCleanup() const {
 }
 
 bool CommandStreamReceiver::isGpuHangDetected() const {
-    return this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->isGpuHangDetected(osContext->getContextId());
+    return this->osContext && this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->isGpuHangDetected(*osContext);
 }
 
 void CommandStreamReceiver::cleanupResources() {

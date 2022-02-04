@@ -23,6 +23,8 @@
 
 #include "sku_info.h"
 
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <mutex>
 
@@ -57,6 +59,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext);
 class Wddm : public DriverModel {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
+    static constexpr std::uint64_t gpuHangIndication{std::numeric_limits<std::uint64_t>::max()};
 
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef HRESULT(WINAPI *DXCoreCreateAdapterFactoryFcn)(REFIID riid, void **ppFactory);
@@ -108,6 +111,8 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void virtualFree(void *ptr, size_t size);
 
     MOCKABLE_VIRTUAL bool isShutdownInProgress();
+
+    bool isGpuHangDetected(OsContext &osContext) override;
 
     bool configureDeviceAddressSpace();
     const FeatureTable &getFeatureTable() const {

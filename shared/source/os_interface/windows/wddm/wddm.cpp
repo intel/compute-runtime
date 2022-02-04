@@ -918,6 +918,13 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     return status == STATUS_SUCCESS;
 }
 
+bool Wddm::isGpuHangDetected(OsContext &osContext) {
+    const auto osContextWin = static_cast<OsContextWin *>(&osContext);
+    const auto &monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
+
+    return monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
+}
+
 void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) const {
     if (gfxPartition.SVM.Limit != 0) {
         outGfxPartition.heapInit(HeapIndex::HEAP_SVM, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);

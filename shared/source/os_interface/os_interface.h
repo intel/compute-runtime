@@ -19,6 +19,7 @@
 namespace NEO {
 class ExecutionEnvironment;
 class MemoryManager;
+class OsContext;
 
 class HwDeviceId : public NonCopyableClass {
   public:
@@ -85,9 +86,7 @@ class DriverModel : public NonCopyableClass {
         return false;
     }
 
-    virtual bool isGpuHangDetected(uint32_t contextId) {
-        return false;
-    }
+    virtual bool isGpuHangDetected(OsContext &osContext) = 0;
 
   protected:
     DriverModelType driverModelType;

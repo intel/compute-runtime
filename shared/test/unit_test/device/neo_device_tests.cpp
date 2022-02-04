@@ -192,6 +192,10 @@ TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSize
         void setGmmInputArgs(void *args) override {}
         uint32_t getDeviceHandle() const override { return {}; }
         PhysicalDevicePciBusInfo getPciBusInfo() const override { return {}; }
+        bool isGpuHangDetected(NEO::OsContext &osContext) override {
+            return false;
+        }
+
         size_t getMaxMemAllocSize() const override {
             return maxAllocSize;
         }

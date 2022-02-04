@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -365,6 +365,10 @@ class UnknownDriverModel : public DriverModel {
     PhysicalDevicePciBusInfo getPciBusInfo() const override {
         PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
         return pciBusInfo;
+    }
+
+    bool isGpuHangDetected(OsContext &osContext) override {
+        return false;
     }
 };
 

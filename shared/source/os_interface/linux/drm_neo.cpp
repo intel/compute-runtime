@@ -318,11 +318,8 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     return ret;
 }
 
-bool Drm::isGpuHangDetected(uint32_t contextId) {
-    const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
-    UNRECOVERABLE_IF(engines.size() <= contextId);
-
-    const auto osContextLinux = static_cast<OsContextLinux *>(engines[contextId].osContext);
+bool Drm::isGpuHangDetected(OsContext &osContext) {
+    const auto osContextLinux = static_cast<OsContextLinux *>(&osContext);
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {

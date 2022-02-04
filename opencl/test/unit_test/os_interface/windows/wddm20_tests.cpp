@@ -38,7 +38,9 @@
 #include "gtest/gtest.h"
 #include "mock_gmm_memory.h"
 
+#include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 
 namespace NEO {
@@ -342,6 +344,24 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
 
     EXPECT_GE(gpuAddress, cannonizedHeapBase);
     EXPECT_LE(gpuAddress, cannonizedHeapEnd);
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, GivenInvalidCpuAddressWhenCheckingForGpuHangThenFalseIsReturned) {
+    osContext->getResidencyController().getMonitoredFence().cpuAddress = nullptr;
+    EXPECT_FALSE(wddm->isGpuHangDetected(*osContext));
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, GivenCpuValueDifferentThanGpuHangIndicationWhenCheckingForGpuHangThenFalseIsReturned) {
+    constexpr auto cpuValue{777u};
+    ASSERT_NE(NEO::Wddm::gpuHangIndication, cpuValue);
+
+    *osContext->getResidencyController().getMonitoredFence().cpuAddress = cpuValue;
+    EXPECT_FALSE(wddm->isGpuHangDetected(*osContext));
+}
+
+TEST_F(Wddm20WithMockGdiDllTests, GivenGpuHangIndicationWhenCheckingForGpuHangThenTrueIsReturned) {
+    *osContext->getResidencyController().getMonitoredFence().cpuAddress = NEO::Wddm::gpuHangIndication;
+    EXPECT_TRUE(wddm->isGpuHangDetected(*osContext));
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {

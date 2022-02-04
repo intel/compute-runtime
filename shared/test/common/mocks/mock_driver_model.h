@@ -27,7 +27,7 @@ class MockDriverModel : public NEO::DriverModel {
         return 0;
     }
 
-    bool isGpuHangDetected(uint32_t contextId) override {
+    bool isGpuHangDetected(NEO::OsContext &osContext) override {
         if (isGpuHangDetectedSideEffect) {
             std::invoke(isGpuHangDetectedSideEffect);
         }
