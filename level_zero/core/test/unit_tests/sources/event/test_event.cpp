@@ -1346,18 +1346,11 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     constexpr uint32_t packetsUsed = 4u;
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
-
-    CpuIntrinsicsTests::lastClFlushedPtr = 0u;
-    CpuIntrinsicsTests::clFlushCounter = 0u;
-
     event->hostSignal();
     for (uint32_t i = 0; i < packetsUsed; i++) {
         EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);
         hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
     }
-    uintptr_t expectedPtrVal = reinterpret_cast<uintptr_t>(hostAddr) - event->getSinglePacketSize();
-    EXPECT_EQ(expectedPtrVal, CpuIntrinsicsTests::lastClFlushedPtr);
-    EXPECT_EQ(packetsUsed, CpuIntrinsicsTests::clFlushCounter);
 }
 
 struct EventSizeFixture : public DeviceFixture {

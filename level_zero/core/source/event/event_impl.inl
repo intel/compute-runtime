@@ -144,15 +144,10 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
     auto baseAddr = castToUint64(hostAddress);
-    auto signalScopeFlag = !!this->signalScope;
 
-    auto eventTsSetFunc = [&eventVal, &signalScopeFlag](auto tsAddr) {
+    auto eventTsSetFunc = [&eventVal](auto tsAddr) {
         auto tsptr = reinterpret_cast<void *>(tsAddr);
-
         memcpy_s(tsptr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
-        if (!signalScopeFlag) {
-            NEO::CpuIntrinsics::clFlush(tsptr);
-        }
     };
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
@@ -190,7 +185,6 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++) {
             memcpy_s(packetHostAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
-            NEO::CpuIntrinsics::clFlush(packetHostAddr);
             packetHostAddr = ptrOffset(packetHostAddr, singlePacketSize);
         }
     }
