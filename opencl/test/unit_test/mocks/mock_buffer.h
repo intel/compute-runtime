@@ -52,7 +52,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
     static void setAllocationType(GraphicsAllocation *graphicsAllocation, GmmClientContext *gmmClientContext, bool compressed) {
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, false, compressed, {}, true));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, compressed, {}, true));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

@@ -25,7 +25,8 @@ class Gmm {
     virtual ~Gmm();
     Gmm() = delete;
     Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, StorageInfo storageInfo, bool allowLargePages);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment,
+        GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, bool preferCompressed, StorageInfo storageInfo, bool allowLargePages);
     Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);

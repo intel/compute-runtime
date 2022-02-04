@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -483,7 +484,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     StorageInfo systemMemoryStorageInfo = {};
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr,
-                                     allocationData.size, 0u, false, false, systemMemoryStorageInfo, true);
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
@@ -1196,7 +1197,7 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
                            nullptr,
                            currentSize,
                            0u,
-                           false,
+                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false),
                            compression,
                            limitedStorageInfo,
                            true);
@@ -1210,7 +1211,7 @@ void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *alloca
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
-        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, false, false, limitedStorageInfo, true);
+        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false), false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1279,7 +1280,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                         nullptr,
                                         sizeAligned,
                                         0u,
-                                        allocationData.flags.uncacheable,
+                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable),
                                         allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
                                         true);

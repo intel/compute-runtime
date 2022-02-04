@@ -745,7 +745,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, 0, false, true, info, true);
+    auto gmm = new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
     gmm->isCompressionEnabled = true;
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -815,7 +815,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, 0, false, true, info, true);
+    auto gmm = new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
     gmm->isCompressionEnabled = false;
 
     mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);

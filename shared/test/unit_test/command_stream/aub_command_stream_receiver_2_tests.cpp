@@ -278,7 +278,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, false, false, {}, true);
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     mockGmm.resourceParams.Flags.Info.NotLockable = true;
     allocation.setDefaultGmm(&mockGmm);
 
@@ -313,7 +313,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, false, false, {}, true);
+    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     mockGmm.resourceParams.Flags.Info.NotLockable = false;
     allocation.setDefaultGmm(&mockGmm);
 
@@ -798,7 +798,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
     aubCsr->setAubWritable(true, *gfxAllocation);
 
-    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true);
+    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gfxAllocation->setDefaultGmm(gmm);
 
     for (bool compressed : {false, true}) {
