@@ -179,16 +179,35 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return err;
 }
 
+void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal) {
+    if (retVal == 0) {
+        if (bind) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+        } else {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
+                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+        }
+    } else {
+        auto err = this->drm->getErrno();
+        if (bind) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+        } else {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
+                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+        }
+    }
+}
+
 int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
     int retVal = 0;
     auto contextId = getOsContextId(osContext);
     if (!this->bindInfo[contextId][vmHandleId]) {
         retVal = this->drm->bindBufferObject(osContext, vmHandleId, this);
-        auto err = this->drm->getErrno();
-
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                           this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
-
+        if (DebugManager.flags.PrintBOBindingResult.get()) {
+            printBOBindingResult(osContext, vmHandleId, true, retVal);
+        }
         if (!retVal) {
             this->bindInfo[contextId][vmHandleId] = true;
         }
@@ -201,11 +220,9 @@ int BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     auto contextId = getOsContextId(osContext);
     if (this->bindInfo[contextId][vmHandleId]) {
         retVal = this->drm->unbindBufferObject(osContext, vmHandleId, this);
-        auto err = this->drm->getErrno();
-
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                           this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
-
+        if (DebugManager.flags.PrintBOBindingResult.get()) {
+            printBOBindingResult(osContext, vmHandleId, false, retVal);
+        }
         if (!retVal) {
             this->bindInfo[contextId][vmHandleId] = false;
         }

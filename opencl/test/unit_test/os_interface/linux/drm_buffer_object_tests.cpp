@@ -392,6 +392,110 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 }
 
+TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPrintDebugInformationAboutBOBindingResult) {
+    struct DrmMockToSucceedBindBufferObject : public DrmMock {
+        DrmMockToSucceedBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) override { return 0; }
+        int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) override { return 0; }
+    };
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintBOBindingResult.set(true);
+
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    auto drm = new DrmMockToSucceedBindBufferObject(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drm, 0, 0, osContextCount);
+
+    EXPECT_EQ(osContextCount, bo.bindInfo.size());
+
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    osContext->ensureContextInitialized();
+
+    testing::internal::CaptureStdout();
+
+    bo.bind(osContext, 0);
+    EXPECT_TRUE(bo.bindInfo[contextId][0]);
+
+    std::string bindOutput = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(bindOutput.c_str(), "bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: 0\n");
+
+    testing::internal::CaptureStdout();
+
+    bo.unbind(osContext, 0);
+    EXPECT_FALSE(bo.bindInfo[contextId][0]);
+
+    std::string unbindOutput = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(unbindOutput.c_str(), "unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: 0\n");
+}
+
+TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrintDebugInformationAboutBOBindingResultWithErrno) {
+    struct DrmMockToFailBindBufferObject : public DrmMock {
+        DrmMockToFailBindBufferObject(RootDeviceEnvironment &rootDeviceEnvironment)
+            : DrmMock(rootDeviceEnvironment) {}
+        int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) override { return -1; }
+        int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) override { return -1; }
+        int getErrno() override { return EINVAL; }
+    };
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintBOBindingResult.set(true);
+
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    auto drm = new DrmMockToFailBindBufferObject(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drm, 0, 0, osContextCount);
+
+    EXPECT_EQ(osContextCount, bo.bindInfo.size());
+
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+    osContext->ensureContextInitialized();
+
+    testing::internal::CaptureStderr();
+
+    bo.bind(osContext, 0);
+    EXPECT_FALSE(bo.bindInfo[contextId][0]);
+
+    std::string bindOutput = testing::internal::GetCapturedStderr();
+    EXPECT_THAT(bindOutput.c_str(), testing::HasSubstr("bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
+
+    testing::internal::CaptureStderr();
+    bo.bindInfo[contextId][0] = true;
+
+    bo.unbind(osContext, 0);
+    EXPECT_TRUE(bo.bindInfo[contextId][0]);
+
+    std::string unbindOutput = testing::internal::GetCapturedStderr();
+    EXPECT_THAT(unbindOutput.c_str(), testing::HasSubstr("unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
+}
+
 TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
