@@ -784,7 +784,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAlloc);
 
-    createKernel(true);
+    createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -843,7 +843,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAlloc);
 
-    createKernel(true);
+    createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
@@ -903,7 +903,6 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -966,7 +965,6 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-    kernel->kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->overrideAllocateAsPackReturn = 1u;

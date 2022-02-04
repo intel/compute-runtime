@@ -139,7 +139,7 @@ struct KernelImp : Kernel {
         return ZE_RESULT_SUCCESS;
     }
 
-    bool hasIndirectAccess() const {
+    bool hasIndirectAccess() {
         return kernelHasIndirectAccess;
     }
 
