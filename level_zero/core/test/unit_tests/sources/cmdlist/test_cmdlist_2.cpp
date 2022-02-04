@@ -422,6 +422,21 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCall
     EXPECT_GT(cmdList.appendMemoryCopyKernel2dCalledTimes, 0u);
 }
 
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWithFlushTaskEnabledWhenAppendingMemoryCopyRegionThenSuccessIsReturned, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::Compute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    auto result = cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendMemoryFillCalledThenAppendBlitFillCalled, IsAtLeastSkl) {
     MockCommandListHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
