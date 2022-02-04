@@ -103,7 +103,10 @@ DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCo
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_TRUE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenTrueIsReturned) {
@@ -114,7 +117,10 @@ DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCo
     auto hwInfo = *defaultHwInfo;
     auto isRcs = true;
 
-    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_TRUE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenFalseIsReturned) {
@@ -125,7 +131,10 @@ DG2TEST_F(HwInfoConfigTestDg2, givenProgramPipeControlPriorToNonPipelinedStateCo
     auto hwInfo = *defaultHwInfo;
     auto isRcs = true;
 
-    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_FALSE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
@@ -134,7 +143,10 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControl
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto isRcs = false;
 
-    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_TRUE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenFalseIsReturned) {
@@ -143,7 +155,34 @@ DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithMultipleCSSWhenIsPipeControl
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     auto isRcs = true;
 
-    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_FALSE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
+}
+
+DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    auto isRcs = false;
+
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_FALSE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
+}
+
+DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWithSingleCSSWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnRcsThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    auto isRcs = true;
+
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_FALSE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2WhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {

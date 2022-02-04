@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,10 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
     size_t size = sizeof(_3DSTATE_BTD);
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    std::ignore = isWARequiredOnSingleCCS;
+
+    if (isWARequiredOnMultiCCS) {
         size += sizeof(typename Family::PIPE_CONTROL);
     }
 
@@ -52,10 +55,13 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
     auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    std::ignore = isWARequiredOnSingleCCS;
+
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
 
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
+    if (isWARequiredOnMultiCCS && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
 
         addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);

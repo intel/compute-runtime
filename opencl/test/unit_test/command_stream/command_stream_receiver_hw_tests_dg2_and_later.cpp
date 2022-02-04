@@ -8,7 +8,9 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -60,9 +62,9 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
     EXPECT_TRUE(commandStreamReceiver.isPerDssBackedBufferSent);
 }
 
-typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTasDg2AndLaterTests;
+typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskDg2AndLaterTests;
 
-HWTEST2_F(CommandStreamReceiverFlushTasDg2AndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenPerDssBackedBufferThenThereIsPipeControlPriorToIt, MatcherIsRTCapable) {
+HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenPerDssBackedBufferThenThereIsPipeControlPriorToIt, MatcherIsRTCapable) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
 
@@ -137,6 +139,37 @@ HWTEST2_F(CommandStreamReceiverFlushTasDg2AndLaterTests, givenProgramPipeControl
                                     *pDevice);
     auto cmdSizeForAllCommandsWithoutPCand3dState = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
     EXPECT_EQ(cmdSizeForAllCommandsWithoutPCand3dState + expectedCmdSize, cmdSizeForAllCommands);
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, isXeHpcOrXeHpgCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+    commandStreamReceiver.setupContext(ccsOsContext);
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
 }
 
 HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTracingEnabledButAlreadySentThenCommandIsNotAddedToBatchBuffer, MatcherIsRTCapable) {

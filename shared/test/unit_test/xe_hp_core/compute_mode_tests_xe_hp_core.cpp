@@ -48,10 +48,10 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
-    auto stateComputeModelCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModelCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModelCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
+    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
 HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectCommandsAreAdded, IsXEHP) {
@@ -91,10 +91,10 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
-    auto stateComputeModelCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModelCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModelCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
+    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
 HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {

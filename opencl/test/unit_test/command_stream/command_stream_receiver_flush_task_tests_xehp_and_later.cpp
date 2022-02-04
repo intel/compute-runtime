@@ -137,9 +137,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     configureCSRtoNonDirtyState<FamilyType>(false);
-    ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto requiredCmdSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, false);
+    auto cmdSize = sizeof(STATE_SIP) + sizeof(PIPE_CONTROL);
+    EXPECT_EQ(cmdSize, requiredCmdSize);
 
     auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
@@ -151,6 +154,48 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+
+    auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
+    auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);
+
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice).getSipAllocation();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt, IsXeHpgCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+
+    auto sipType = SipKernel::getSipKernelType(*pDevice);
+    SipKernel::initSipKernel(sipType, *pDevice);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto requiredCmdSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, false);
+    auto cmdSize = sizeof(STATE_SIP) + sizeof(PIPE_CONTROL);
+    EXPECT_EQ(cmdSize, requiredCmdSize);
+
+    // first PC prior SBA
+    auto pipeControlIterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    pipeControlIterator = find<PIPE_CONTROL *>(++pipeControlIterator, cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
 
     auto sipIterator = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     auto sipCmd = genCmdCast<STATE_SIP *>(*sipIterator);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     auto &hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
+        const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+        const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+
+        if (isWARequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
         size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
@@ -164,8 +167,9 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
     auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
 
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs())) {
+    if (isWARequiredOnMultiCCS) {
         args.textureCacheInvalidationEnable = true;
         args.hdcPipelineFlush = true;
         args.amfsFlushEnable = true;
@@ -174,6 +178,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
         args.stateCacheInvalidationEnable = true;
 
         args.dcFlushEnable = false;
+
+        setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
+    } else if (isWARequiredOnSingleCCS) {
+        args.hdcPipelineFlush = true;
 
         setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
     }
@@ -189,9 +197,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
 
-    if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs()) && debuggingEnabled &&
-        !hwHelper.isSipWANeeded(hwInfo)) {
+    if (isWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
         addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
     }
 }

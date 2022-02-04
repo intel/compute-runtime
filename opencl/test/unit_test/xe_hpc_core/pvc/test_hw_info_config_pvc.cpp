@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,10 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipe
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    EXPECT_TRUE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_TRUE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
@@ -69,7 +72,10 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramPipeControlPriorToNonPipel
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    EXPECT_FALSE(hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs));
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    EXPECT_FALSE(isWARequiredOnMultiCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 using CompilerHwInfoConfigHelperTestsPvc = ::testing::Test;

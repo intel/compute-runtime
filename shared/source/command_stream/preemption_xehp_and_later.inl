@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,10 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
             auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            if (hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs)) {
+            const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+            const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+
+            if (isWARequired) {
                 size += sizeof(typename GfxFamily::PIPE_CONTROL);
             }
             size += sizeof(typename GfxFamily::STATE_SIP);

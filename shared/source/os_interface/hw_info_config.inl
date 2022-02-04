@@ -214,8 +214,8 @@ bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    return false;
+std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    return {false, false};
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -57,10 +57,10 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedSta
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
-    auto stateComputeModelCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModelCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModelCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
+    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
 HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectCommandsAreAdded, IsDG2) {
@@ -104,10 +104,62 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
 
-    auto stateComputeModelCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModelCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModelCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModelCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
+    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+}
+
+HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommandsAreAdded, IsDG2) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    SetUpImpl<FamilyType>(&hwInfo);
+    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+
+    getCsrHw<FamilyType>()->setupContext(ccsOsContext);
+
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    char buff[1024] = {0};
+    LinearStream stream(buff, 1024);
+
+    auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
+    expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
+    auto expectedBitsMask = FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask;
+
+    overrideComputeModeRequest<FamilyType>(true, false, false, false, true);
+
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_EQ(cmdsSize, retSize);
+
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags, hwInfo);
+    EXPECT_EQ(cmdsSize, stream.getUsed());
+
+    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, startOffset);
+
+    auto pipeControlIterator = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIterator);
+
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
+
+    auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
+    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
 HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsDG2) {

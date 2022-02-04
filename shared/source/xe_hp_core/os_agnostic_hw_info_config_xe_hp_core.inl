@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,14 +104,15 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    bool required = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
+std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+    auto isWARequiredOnSingleCCS = false;
+    auto isWARequiredOnMultiCCS = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
 
     if (DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
-        required = DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get();
+        isWARequiredOnMultiCCS = DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get();
     }
 
-    return required;
+    return {isWARequiredOnSingleCCS, isWARequiredOnMultiCCS};
 }
 
 template <>
