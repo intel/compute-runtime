@@ -39,7 +39,7 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 |Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 3.0 | - |
 |Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 3.0 | Y |
 |Intel Atom Processors with Gen11 graphics devices (formerly Elkhart Lake)| 3.0 | - |
-|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake, Rocket Lake)| 3.0 | Y |
+|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake, Rocket Lake, Alder Lake)| 3.0 | Y |
 
 ## Release cadence
 
