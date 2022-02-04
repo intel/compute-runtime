@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,7 +146,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(),
                                            false, // allocateMemory
                                            0u,    // size
-                                           GraphicsAllocation::AllocationType::SHARED_BUFFER,
+                                           AllocationType::SHARED_BUFFER,
                                            false, // isMultiStorageAllocation
                                            context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         // couldn't find allocation for reuse - create new

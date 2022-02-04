@@ -101,7 +101,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndComplet
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -135,7 +135,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsVmBindAndNotComp
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -170,7 +170,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamMemExecTest, GivenDrmSupportsCompletionFenceA
     mock->isVmBindAvailableCall.returnValue = false;
 
     TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 

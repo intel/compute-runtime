@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ bool CompressionSelector::preferCompressedAllocation(const AllocationProperties 
     bool preferredCompression = false;
     int32_t compressionEnabled = DebugManager.flags.EnableUsmCompression.get();
     if (compressionEnabled == 1) {
-        if ((properties.allocationType == GraphicsAllocation::AllocationType::SVM_GPU) ||
+        if ((properties.allocationType == AllocationType::SVM_GPU) ||
             (properties.flags.isUSMDeviceAllocation)) {
             preferredCompression = true;
         }

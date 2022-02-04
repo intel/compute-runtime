@@ -325,7 +325,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true,
                                     MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                    AllocationType::MAP_ALLOCATION,
                                     false,
                                     context->getDeviceBitfieldForAllocation(device->getRootDeviceIndex())};
     mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
@@ -364,7 +364,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
         AllocationProperties properties{device->getRootDeviceIndex(),
                                         true,
                                         MemoryConstants::pageSize,
-                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        AllocationType::MAP_ALLOCATION,
                                         false,
                                         context->getDeviceBitfieldForAllocation(device->getRootDeviceIndex())};
         mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
@@ -395,7 +395,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHo
         AllocationProperties properties{device->getRootDeviceIndex(),
                                         true,
                                         MemoryConstants::pageSize,
-                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        AllocationType::MAP_ALLOCATION,
                                         false,
                                         context->getDeviceBitfieldForAllocation(device->getRootDeviceIndex())};
         mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
@@ -435,7 +435,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostP
         AllocationProperties properties{device->getRootDeviceIndex(),
                                         false,
                                         MemoryConstants::pageSize,
-                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        AllocationType::MAP_ALLOCATION,
                                         false,
                                         context->getDeviceBitfieldForAllocation(device->getRootDeviceIndex())};
         mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);

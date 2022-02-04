@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
         return this->validateAllocation(graphicsAllocation);
     }
-    GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
+    GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType) {
         bool allocateMemory = ptr == nullptr;
         AllocationData allocationData;
         MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);

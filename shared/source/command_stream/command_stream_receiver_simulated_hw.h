@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         void *cpuAddress;
         size_t size;
         this->getParametersForWriteMemory(graphicsAllocation, gpuAddress, cpuAddress, size);
-        int hint = graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::COMMAND_BUFFER
+        int hint = graphicsAllocation.getAllocationType() == AllocationType::COMMAND_BUFFER
                        ? AubMemDump::DataTypeHintValues::TraceBatchBuffer
                        : AubMemDump::DataTypeHintValues::TraceNotype;
 

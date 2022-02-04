@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
     std::unique_ptr<NEO::MockDevice> neoDevice(NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u));
 
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {neoDevice->getRootDeviceIndex(), 4096, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
+        {neoDevice->getRootDeviceIndex(), 4096, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
 
     if (allocation->getMemoryPool() == MemoryPool::LocalMemory) {
         EXPECT_EQ(1u, allocation->storageInfo.getMemoryBanks());
@@ -138,7 +138,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuff
         ASSERT_NE(nullptr, sbaAllocation);
         allocations.push_back(sbaAllocation);
 
-        EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
         EXPECT_EQ(MemoryPool::System4KBPages, sbaAllocation->getMemoryPool());
     }
 
@@ -774,10 +774,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages);
-    NEO::GraphicsAllocation dstPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages);
 
@@ -797,10 +797,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::RenderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages);
-    NEO::GraphicsAllocation dstPtr(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::System4KBPages);
 
@@ -1097,7 +1097,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     EXPECT_EQ(1, memoryOperationsHandler->makeResidentCalledCount);
 
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {neoDevice->getRootDeviceIndex(), 4096, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
+        {neoDevice->getRootDeviceIndex(), 4096, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
 
     EXPECT_EQ(allocation->storageInfo.getMemoryBanks(), debugArea->storageInfo.getMemoryBanks());
 

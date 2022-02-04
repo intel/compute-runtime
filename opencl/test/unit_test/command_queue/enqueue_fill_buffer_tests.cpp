@@ -520,7 +520,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
     GraphicsAllocation *patternAllocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
 }
 
 struct EnqueueFillBufferHw : public ::testing::Test {

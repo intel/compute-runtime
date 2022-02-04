@@ -322,7 +322,7 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
          NEO::SipKernel::maxDbgSurfaceSize,
-         NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+         NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
          false,
          false,
          device->getNEODevice()->getDeviceBitfield()});

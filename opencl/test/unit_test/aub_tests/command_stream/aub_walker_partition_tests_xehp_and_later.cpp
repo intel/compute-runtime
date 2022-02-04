@@ -220,7 +220,7 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
         DebugManager.flags.ExperimentalSetWalkerPartitionCount.set(0);
         DebugManager.flags.ExperimentalSetWalkerPartitionType.set(0);
 
-        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
+        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
         auto memoryManager = this->device->getMemoryManager();
         streamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         helperSurface = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);

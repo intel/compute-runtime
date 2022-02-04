@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
-    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    GraphicsAllocation *graphicsAllocation = createGraphicsAllocation(context, description, AllocationType::SHARED_IMAGE);
     if (!graphicsAllocation) {
         errorCode.set(CL_INVALID_MEM_OBJECT);
         return nullptr;

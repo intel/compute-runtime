@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ namespace CreateMemObj {
 struct AllocationInfo {
     GraphicsAllocation *mapAllocation = nullptr;
     GraphicsAllocation *memory = nullptr;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+    AllocationType allocationType = AllocationType::UNKNOWN;
 
     bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;

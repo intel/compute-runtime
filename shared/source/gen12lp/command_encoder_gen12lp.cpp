@@ -67,7 +67,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
     const bool isL3Allowed = surfaceState->getMemoryObjectControlState() == args.gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     if (isL3Allowed) {
-        const bool isConstantSurface = args.allocation && args.allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;
+        const bool isConstantSurface = args.allocation && args.allocation->getAllocationType() == AllocationType::CONSTANT_SURFACE;
         bool useL1 = args.isReadOnly || isConstantSurface;
 
         if (DebugManager.flags.ForceL1Caching.get() != 1) {

@@ -92,13 +92,13 @@ HWTEST_F(ModuleTest, givenBuiltinModuleTypeWhenCreatingModuleThenCorrectTypeIsSe
 
 HWTEST_F(ModuleTest, givenUserModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
     createKernel();
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernel->getIsaAllocation()->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA, kernel->getIsaAllocation()->getAllocationType());
 }
 
 HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
     createModuleFromBinary(ModuleType::Builtin);
     createKernel();
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, kernel->getIsaAllocation()->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernel->getIsaAllocation()->getAllocationType());
 }
 
 using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -1154,7 +1154,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
     kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     auto isaPtr = kernelImmData->getIsaGraphicsAllocation()->getUnderlyingBuffer();
 
@@ -1200,7 +1200,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
     kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
 
@@ -1260,7 +1260,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
     kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
 
@@ -1321,7 +1321,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
     kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
 
     module0->kernelImmDatas.push_back(std::move(kernelImmData));
 
@@ -1749,8 +1749,8 @@ kernels:
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
     EXPECT_TRUE(retVal);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, moduleTu.globalConstBuffer->getAllocationType());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, moduleTu.globalVarBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::SVM_ZERO_COPY, moduleTu.globalConstBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::SVM_ZERO_COPY, moduleTu.globalVarBuffer->getAllocationType());
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
@@ -2030,9 +2030,9 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
     module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
 
     module->translationUnit->globalVarBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
     module->translationUnit->globalConstBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();

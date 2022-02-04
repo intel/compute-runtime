@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         void *alignedBuffer = alignedMalloc(bytesRead, MemoryConstants::pageSize);
         memcpy_s(alignedBuffer, bytesRead, fileData.data(), bytesRead);
 
-        const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+        const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
         AllocationProperties properties = {rootDeviceIndex, bytesRead, allocType, device.getDeviceBitfield()};
         properties.flags.use32BitFrontWindow = false;
 
@@ -188,7 +188,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
-    const auto allocType = GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL;
+    const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;
 

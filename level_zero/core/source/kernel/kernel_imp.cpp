@@ -102,7 +102,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
     UNRECOVERABLE_IF(kernelIsaSize == 0);
     UNRECOVERABLE_IF(!kernelInfo->heapInfo.pKernelHeap);
-    const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;
+    const auto allocType = internalKernel ? NEO::AllocationType::KERNEL_ISA_INTERNAL : NEO::AllocationType::KERNEL_ISA;
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
@@ -716,7 +716,7 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
 
     UNRECOVERABLE_IF(privateSurfaceSize == 0);
     auto privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
+        {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()});
 
     UNRECOVERABLE_IF(privateMemoryGraphicsAllocation == nullptr);
     return privateMemoryGraphicsAllocation;
@@ -751,7 +751,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
-    if (isaAllocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL) {
+    if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,

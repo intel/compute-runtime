@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ void SWTagsManager::allocateBXMLHeap(Device &device) {
     const AllocationProperties properties{
         device.getRootDeviceIndex(),
         heapSizeInBytes,
-        GraphicsAllocation::AllocationType::SW_TAG_BUFFER,
+        AllocationType::SW_TAG_BUFFER,
         device.getDeviceBitfield()};
     bxmlHeap = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
@@ -44,7 +44,7 @@ void SWTagsManager::allocateSWTagHeap(Device &device) {
     const AllocationProperties properties{
         device.getRootDeviceIndex(),
         MAX_TAG_HEAP_SIZE,
-        GraphicsAllocation::AllocationType::SW_TAG_BUFFER,
+        AllocationType::SW_TAG_BUFFER,
         device.getDeviceBitfield()};
     tagHeap = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 

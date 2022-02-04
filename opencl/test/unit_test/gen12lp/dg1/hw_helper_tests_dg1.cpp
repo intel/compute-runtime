@@ -59,7 +59,7 @@ DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIs
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
-    AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::BUFFER, {});
+    AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = false;
     hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
@@ -70,7 +70,7 @@ DG1TEST_F(HwHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationDataIs
     auto &hwHelper = HwHelper::get(renderCoreFamily);
     AllocationData allocData{};
     allocData.flags.useSystemMemory = true;
-    AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::BUFFER, {});
+    AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = true;
     hwHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);

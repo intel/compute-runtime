@@ -180,7 +180,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         }
     }
     if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
-        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
+        if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }
     }

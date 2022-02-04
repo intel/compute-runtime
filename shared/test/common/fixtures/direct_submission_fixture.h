@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         DirectSubmissionFixture::SetUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
-                                                           GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
+                                                           AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
         commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
 
         batchBuffer.endCmdPtr = &bbStart[0];

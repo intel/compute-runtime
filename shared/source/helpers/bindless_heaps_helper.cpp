@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
 }
 
 GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow) {
-    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::LINEAR_STREAM;
     NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, deviceBitfield};
     properties.flags.use32BitFrontWindow = allocInFrontWindow;
     properties.alignment = alignment;

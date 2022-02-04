@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
 
         outBuffer = AUBCommandStreamFixture::createResidentAllocationAndStoreItInCsr(pDestMemory, sizeUserMemory);
         ASSERT_NE(nullptr, outBuffer);
-        outBuffer->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        outBuffer->setAllocationType(AllocationType::BUFFER);
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,9 @@
 namespace NEO {
 
 GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heapSize, size_t alignment, uint32_t rootDeviceIndex) {
-    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::LINEAR_STREAM;
     if (IndirectHeap::Type::INDIRECT_OBJECT == heapType) {
-        allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+        allocationType = AllocationType::INTERNAL_HEAP;
     }
 
     auto allocation = this->storageForReuse->obtainReusableAllocation(heapSize, allocationType);

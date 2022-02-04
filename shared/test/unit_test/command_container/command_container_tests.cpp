@@ -91,12 +91,12 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorre
     cmdContainer.initialize(pDevice, nullptr);
 
     ASSERT_NE(0u, cmdContainer.getCmdBufferAllocations().size());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
 
     cmdContainer.allocateNextCommandBuffer();
 
     ASSERT_LE(2u, cmdContainer.getCmdBufferAllocations().size());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectAllocationTypes) {
@@ -108,10 +108,10 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
         auto heap = cmdContainer.getIndirectHeap(heapType);
 
         if (HeapType::INDIRECT_OBJECT == heapType) {
-            EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
+            EXPECT_EQ(AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
             EXPECT_NE(0u, heap->getHeapGpuStartOffset());
         } else {
-            EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
+            EXPECT_EQ(AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
             EXPECT_EQ(0u, heap->getHeapGpuStartOffset());
         }
     }
@@ -144,7 +144,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
 
 TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdContainerIsInitializedThenInstructionBaseAddressIsSetToInternalHeap) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 1;

@@ -61,7 +61,7 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
         }
     }
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
-        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::EXTERNAL_HOST_PTR);
         if (allocation != nullptr) {
             auto alloc = allocation.get();
             this->csr->getInternalAllocationStorage()->storeAllocation(std::move(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
@@ -97,8 +97,8 @@ void CommandList::removeDeallocationContainerData() {
         if (allocData) {
             device->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(*allocData);
         }
-        if (!((deallocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::INTERNAL_HEAP) ||
-              (deallocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::LINEAR_STREAM))) {
+        if (!((deallocation->getAllocationType() == NEO::AllocationType::INTERNAL_HEAP) ||
+              (deallocation->getAllocationType() == NEO::AllocationType::LINEAR_STREAM))) {
             memoryManager->freeGraphicsMemory(deallocation);
             eraseDeallocationContainerEntry(deallocation);
         }
@@ -141,8 +141,8 @@ void CommandList::makeResidentAndMigrate(bool performMigration) {
         csr->makeResident(*alloc);
 
         if (performMigration &&
-            (alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::GraphicsAllocation::AllocationType::SVM_CPU)) {
+            (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||
+             alloc->getAllocationType() == NEO::AllocationType::SVM_CPU)) {
             auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
             pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
         }

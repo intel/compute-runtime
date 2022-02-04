@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,12 +35,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
 
     auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
-    auto allocationType = GraphicsAllocation::AllocationType::FILL_PATTERN;
+    auto allocationType = AllocationType::FILL_PATTERN;
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
     commandStreamReceieverOwnership.unlock();
 
     if (!patternAllocation) {
-        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), GraphicsAllocation::AllocationType::FILL_PATTERN, getDevice().getDeviceBitfield()});
+        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({getDevice().getRootDeviceIndex(), alignUp(patternSize, MemoryConstants::cacheLineSize), AllocationType::FILL_PATTERN, getDevice().getDeviceBitfield()});
     }
 
     if (patternSize == 1) {

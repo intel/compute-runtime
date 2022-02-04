@@ -91,7 +91,7 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
     cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
     cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
-    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
@@ -141,7 +141,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     cmdQ.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 1, ih1);
     cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 1, ih2);
     cmdQ.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 1, ih3);
-    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());

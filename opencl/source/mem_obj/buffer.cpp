@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,7 +214,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo[rootDeviceIndex].allocateMemory = true;
         }
 
-        if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+        if (allocationInfo[rootDeviceIndex].allocationType == AllocationType::BUFFER_HOST_MEMORY) {
             if (memoryProperties.flags.useHostPtr) {
                 if (allocationInfo[rootDeviceIndex].alignementSatisfied) {
                     allocationInfo[rootDeviceIndex].allocateMemory = false;
@@ -239,7 +239,7 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo[rootDeviceIndex].memory = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
                     allocationInfo[rootDeviceIndex].allocationType = allocationInfo[rootDeviceIndex].memory->getAllocationType();
                     allocationInfo[rootDeviceIndex].isHostPtrSVM = true;
-                    allocationInfo[rootDeviceIndex].zeroCopyAllowed = allocationInfo[rootDeviceIndex].memory->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY;
+                    allocationInfo[rootDeviceIndex].zeroCopyAllowed = allocationInfo[rootDeviceIndex].memory->getAllocationType() == AllocationType::SVM_ZERO_COPY;
                     allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = false;
                     allocationInfo[rootDeviceIndex].allocateMemory = false;
                     allocationInfo[rootDeviceIndex].mapAllocation = svmData->cpuAllocation;
@@ -297,7 +297,7 @@ Buffer *Buffer::create(Context *context,
 
         //if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
         if (memoryProperties.flags.useHostPtr && !allocationInfo[rootDeviceIndex].memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
-            allocationInfo[rootDeviceIndex].allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+            allocationInfo[rootDeviceIndex].allocationType = AllocationType::BUFFER_HOST_MEMORY;
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
             allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = true;
             AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
@@ -322,8 +322,8 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr = true;
                 }
             }
-        } else if (allocationInfo[rootDeviceIndex].allocationType == GraphicsAllocation::AllocationType::BUFFER && !compressionEnabled) {
-            allocationInfo[rootDeviceIndex].allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        } else if (allocationInfo[rootDeviceIndex].allocationType == AllocationType::BUFFER && !compressionEnabled) {
+            allocationInfo[rootDeviceIndex].allocationType = AllocationType::BUFFER_HOST_MEMORY;
         }
 
         allocationInfo[rootDeviceIndex].memory->setAllocationType(allocationInfo[rootDeviceIndex].allocationType);
@@ -368,7 +368,7 @@ Buffer *Buffer::create(Context *context,
             if (!allocationInfo[rootDeviceIndex].zeroCopyAllowed && !allocationInfo[rootDeviceIndex].isHostPtrSVM) {
                 AllocationProperties properties{rootDeviceIndex,
                                                 false, // allocateMemory
-                                                size, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                                size, AllocationType::MAP_ALLOCATION,
                                                 false, // isMultiStorageAllocation
                                                 context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
                 properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
@@ -494,19 +494,19 @@ void Buffer::checkMemory(MemoryProperties memoryProperties,
     return;
 }
 
-GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
-                                                                                             bool &compressionEnabled, bool isLocalMemoryEnabled) {
+AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
+                                                                         bool &compressionEnabled, bool isLocalMemoryEnabled) {
     if (context.isSharedContext || properties.flags.forceHostMemory) {
         compressionEnabled = false;
-        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        return AllocationType::BUFFER_HOST_MEMORY;
     }
 
     if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         compressionEnabled = false;
-        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        return AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    return GraphicsAllocation::AllocationType::BUFFER;
+    return AllocationType::BUFFER;
 }
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties) {

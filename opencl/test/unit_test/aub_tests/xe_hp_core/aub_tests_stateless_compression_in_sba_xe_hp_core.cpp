@@ -52,7 +52,7 @@ XE_HP_CORE_TEST_P(StatelessCompressionInSBA, GENERATEONLY_givenCompressedBuffers
 
     auto unCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_UNCOMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto unCompressedAllocation = unCompressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
     EXPECT_FALSE(unCompressedAllocation->isCompressionEnabled());
     EXPECT_EQ(MemoryPool::LocalMemory, unCompressedAllocation->getMemoryPool());
 
@@ -156,7 +156,7 @@ XE_HP_CORE_TEST_P(StatelessCompressionInSBA, givenUncompressibleBufferInHostMemo
 
     auto unCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_UNCOMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto unCompressedAllocation = unCompressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
     EXPECT_FALSE(unCompressedAllocation->isCompressionEnabled());
     EXPECT_EQ(MemoryPool::LocalMemory, unCompressedAllocation->getMemoryPool());
 
@@ -168,7 +168,7 @@ XE_HP_CORE_TEST_P(StatelessCompressionInSBA, givenUncompressibleBufferInHostMemo
 
     auto uncompressibleBufferInHostMemory = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_FORCE_HOST_MEMORY_INTEL, bufferSize, nullptr, retVal));
     auto uncompressibleAllocationInHostMemory = uncompressibleBufferInHostMemory->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
     EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
 
     retVal = pCmdQ->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);
@@ -218,7 +218,7 @@ XE_HP_CORE_TEST_P(StatelessCompressionInSBA, givenUncompressibleHostMemoryAlloca
     EXPECT_NE(nullptr, uncompressibleHostMemAllocPtr);
     auto uncompressibleHostMemAlloc = context->getSVMAllocsManager()->getSVMAllocs()->get(uncompressibleHostMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, uncompressibleHostMemAlloc);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, uncompressibleHostMemAlloc->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleHostMemAlloc->getAllocationType());
     EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleHostMemAlloc->getMemoryPool()));
 
     retVal = clEnqueueMemcpyINTEL(pCmdQ, true, compressedDeviceMemAllocPtr, writePattern, bufferSize, 0, nullptr, nullptr);
@@ -505,7 +505,7 @@ XE_HP_CORE_TEST_F(StatelessCompressionInSBAWithBCS, GENERATEONLY_givenCompressed
 
     auto unCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_UNCOMPRESSED_HINT_INTEL, bufferSize, nullptr, retVal));
     auto unCompressedAllocation = unCompressedBuffer->getGraphicsAllocation(tileDevices[0]->getRootDeviceIndex());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER, unCompressedAllocation->getAllocationType());
     EXPECT_FALSE(unCompressedAllocation->isCompressionEnabled());
     EXPECT_EQ(MemoryPool::LocalMemory, unCompressedAllocation->getMemoryPool());
 
@@ -548,7 +548,7 @@ XE_HP_CORE_TEST_F(StatelessCompressionInSBAWithBCS, givenUncompressibleBufferInH
 
     auto uncompressibleBufferInHostMemory = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, bufferSize, nullptr, retVal));
     auto uncompressibleAllocationInHostMemory = uncompressibleBufferInHostMemory->getGraphicsAllocation(tileDevices[0]->getRootDeviceIndex());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
     EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
 
     retVal = commandQueues[0][0]->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);

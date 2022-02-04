@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        AllocationProperties properties(0, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
         EXPECT_GE(1u, memoryManager->peekSharedBosSize());
@@ -121,7 +121,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        AllocationProperties properties(0, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+        AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
 

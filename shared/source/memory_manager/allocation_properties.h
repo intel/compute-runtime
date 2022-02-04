@@ -37,7 +37,7 @@ struct AllocationProperties {
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t size = 0;
     size_t alignment = 0;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+    AllocationType allocationType = AllocationType::UNKNOWN;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
@@ -50,12 +50,12 @@ struct AllocationProperties {
     uint32_t cacheRegion = 0;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
-                         GraphicsAllocation::AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
+                         AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
         : AllocationProperties(rootDeviceIndex, true, size, allocationType, false, subDevicesBitfieldParam) {}
 
     AllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory,
                          ImageInfo &imgInfo,
-                         GraphicsAllocation::AllocationType allocationType,
+                         AllocationType allocationType,
                          DeviceBitfield subDevicesBitfieldParam)
         : AllocationProperties(rootDeviceIndex, allocateMemory, 0u, allocationType, false, subDevicesBitfieldParam) {
         this->imgInfo = &imgInfo;
@@ -64,7 +64,7 @@ struct AllocationProperties {
     AllocationProperties(uint32_t rootDeviceIndex,
                          bool allocateMemory,
                          size_t size,
-                         GraphicsAllocation::AllocationType allocationType,
+                         AllocationType allocationType,
                          bool isMultiStorageAllocation,
                          DeviceBitfield subDevicesBitfieldParam)
         : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, subDevicesBitfieldParam) {}
@@ -72,7 +72,7 @@ struct AllocationProperties {
     AllocationProperties(uint32_t rootDeviceIndexParam,
                          bool allocateMemoryParam,
                          size_t sizeParam,
-                         GraphicsAllocation::AllocationType allocationTypeParam,
+                         AllocationType allocationTypeParam,
                          bool multiOsContextCapable,
                          bool isMultiStorageAllocationParam,
                          DeviceBitfield subDevicesBitfieldParam)
@@ -114,7 +114,7 @@ struct AllocationData {
         uint32_t allFlags = 0;
     };
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
-    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
+    AllocationType type = AllocationType::UNKNOWN;
     GraphicsAllocation::UsmInitialPlacement usmInitialPlacement = GraphicsAllocation::UsmInitialPlacement::DEFAULT;
     const void *hostPtr = nullptr;
     uint64_t gpuAddress = 0;

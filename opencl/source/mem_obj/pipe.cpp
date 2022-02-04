@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ Pipe *Pipe::create(Context *context,
         AllocationProperties allocProperties =
             MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                             true, // allocateMemory
-                                                            size, GraphicsAllocation::AllocationType::PIPE,
+                                                            size, AllocationType::PIPE,
                                                             false, // isMultiStorageAllocation
                                                             context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                             context->isSingleDeviceContext());

@@ -128,7 +128,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
 }
 
-GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
+GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType) {
     bool allocateMemory = ptr == nullptr;
     AllocationData allocationData{};
     MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);

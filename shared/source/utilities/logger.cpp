@@ -139,95 +139,95 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
     auto type = graphicsAllocation->getAllocationType();
 
     switch (type) {
-    case GraphicsAllocation::AllocationType::BUFFER:
+    case AllocationType::BUFFER:
         return "BUFFER";
-    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case AllocationType::BUFFER_HOST_MEMORY:
         return "BUFFER_HOST_MEMORY";
-    case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
+    case AllocationType::COMMAND_BUFFER:
         return "COMMAND_BUFFER";
-    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case AllocationType::CONSTANT_SURFACE:
         return "CONSTANT_SURFACE";
-    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case AllocationType::EXTERNAL_HOST_PTR:
         return "EXTERNAL_HOST_PTR";
-    case GraphicsAllocation::AllocationType::FILL_PATTERN:
+    case AllocationType::FILL_PATTERN:
         return "FILL_PATTERN";
-    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case AllocationType::GLOBAL_SURFACE:
         return "GLOBAL_SURFACE";
-    case GraphicsAllocation::AllocationType::IMAGE:
+    case AllocationType::IMAGE:
         return "IMAGE";
-    case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
+    case AllocationType::INDIRECT_OBJECT_HEAP:
         return "INDIRECT_OBJECT_HEAP";
-    case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
+    case AllocationType::INSTRUCTION_HEAP:
         return "INSTRUCTION_HEAP";
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+    case AllocationType::INTERNAL_HEAP:
         return "INTERNAL_HEAP";
-    case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
+    case AllocationType::INTERNAL_HOST_MEMORY:
         return "INTERNAL_HOST_MEMORY";
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case AllocationType::KERNEL_ISA:
         return "KERNEL_ISA";
-    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
+    case AllocationType::KERNEL_ISA_INTERNAL:
         return "KERNEL_ISA_INTERNAL";
-    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
-    case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
+    case AllocationType::MAP_ALLOCATION:
         return "MAP_ALLOCATION";
-    case GraphicsAllocation::AllocationType::MCS:
+    case AllocationType::MCS:
         return "MCS";
-    case GraphicsAllocation::AllocationType::PIPE:
+    case AllocationType::PIPE:
         return "PIPE";
-    case GraphicsAllocation::AllocationType::PREEMPTION:
+    case AllocationType::PREEMPTION:
         return "PREEMPTION";
-    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case AllocationType::PRINTF_SURFACE:
         return "PRINTF_SURFACE";
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case AllocationType::PRIVATE_SURFACE:
         return "PRIVATE_SURFACE";
-    case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
+    case AllocationType::PROFILING_TAG_BUFFER:
         return "PROFILING_TAG_BUFFER";
-    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case AllocationType::SCRATCH_SURFACE:
         return "SCRATCH_SURFACE";
-    case GraphicsAllocation::AllocationType::SHARED_BUFFER:
+    case AllocationType::SHARED_BUFFER:
         return "SHARED_BUFFER";
-    case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
+    case AllocationType::SHARED_CONTEXT_IMAGE:
         return "SHARED_CONTEXT_IMAGE";
-    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
+    case AllocationType::SHARED_IMAGE:
         return "SHARED_IMAGE";
-    case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+    case AllocationType::SHARED_RESOURCE_COPY:
         return "SHARED_RESOURCE_COPY";
-    case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
+    case AllocationType::SURFACE_STATE_HEAP:
         return "SURFACE_STATE_HEAP";
-    case GraphicsAllocation::AllocationType::SVM_CPU:
+    case AllocationType::SVM_CPU:
         return "SVM_CPU";
-    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case AllocationType::SVM_GPU:
         return "SVM_GPU";
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case AllocationType::SVM_ZERO_COPY:
         return "SVM_ZERO_COPY";
-    case GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case AllocationType::TAG_BUFFER:
         return "TAG_BUFFER";
-    case GraphicsAllocation::AllocationType::GLOBAL_FENCE:
+    case AllocationType::GLOBAL_FENCE:
         return "GLOBAL_FENCE";
-    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return "TIMESTAMP_PACKET_TAG_BUFFER";
-    case GraphicsAllocation::AllocationType::UNKNOWN:
+    case AllocationType::UNKNOWN:
         return "UNKNOWN";
-    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
+    case AllocationType::WRITE_COMBINED:
         return "WRITE_COMBINED";
-    case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
         return "DEBUG_CONTEXT_SAVE_AREA";
-    case GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
         return "DEBUG_SBA_TRACKING_BUFFER";
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::DEBUG_MODULE_AREA:
         return "DEBUG_MODULE_AREA";
-    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
+    case AllocationType::WORK_PARTITION_SURFACE:
         return "WORK_PARTITION_SURFACE";
-    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         return "GPU_TIMESTAMP_DEVICE_BUFFER";
-    case GraphicsAllocation::AllocationType::RING_BUFFER:
+    case AllocationType::RING_BUFFER:
         return "RING_BUFFER";
-    case GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER:
+    case AllocationType::SEMAPHORE_BUFFER:
         return "SEMAPHORE_BUFFER";
-    case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::UNIFIED_SHARED_MEMORY:
         return "UNIFIED_SHARED_MEMORY";
-    case GraphicsAllocation::AllocationType::SW_TAG_BUFFER:
+    case AllocationType::SW_TAG_BUFFER:
         return "SW_TAG_BUFFER";
     default:
         return "ILLEGAL_VALUE";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,8 +186,8 @@ class Buffer : public MemObj {
                             MemoryManager *memMngr,
                             uint32_t rootDeviceIndex,
                             bool forceCopyHostPtr);
-    static GraphicsAllocation::AllocationType getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
-                                                                                                bool &compressionEnabled, bool localMemoryEnabled);
+    static AllocationType getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties, Context &context,
+                                                                            bool &compressionEnabled, bool localMemoryEnabled);
     static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,22 +16,22 @@ namespace NEO {
 HeapAssigner::HeapAssigner() {
     apiAllowExternalHeapForSshAndDsh = ApiSpecificConfig::getHeapConfiguration();
 }
-bool HeapAssigner::useInternal32BitHeap(GraphicsAllocation::AllocationType allocType) {
+bool HeapAssigner::useInternal32BitHeap(AllocationType allocType) {
     return GraphicsAllocation::isIsaAllocationType(allocType) ||
-           allocType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+           allocType == AllocationType::INTERNAL_HEAP;
 }
-bool HeapAssigner::use32BitHeap(GraphicsAllocation::AllocationType allocType) {
+bool HeapAssigner::use32BitHeap(AllocationType allocType) {
     return useExternal32BitHeap(allocType) || useInternal32BitHeap(allocType);
 }
-HeapIndex HeapAssigner::get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useFrontWindow) {
+HeapIndex HeapAssigner::get32BitHeapIndex(AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useFrontWindow) {
     if (useInternal32BitHeap(allocType)) {
         return useFrontWindow ? mapInternalWindowIndex(MemoryManager::selectInternalHeap(useLocalMem)) : MemoryManager::selectInternalHeap(useLocalMem);
     }
     return useFrontWindow ? mapExternalWindowIndex(MemoryManager::selectExternalHeap(useLocalMem)) : MemoryManager::selectExternalHeap(useLocalMem);
 }
-bool HeapAssigner::useExternal32BitHeap(GraphicsAllocation::AllocationType allocType) {
+bool HeapAssigner::useExternal32BitHeap(AllocationType allocType) {
     if (apiAllowExternalHeapForSshAndDsh) {
-        return allocType == GraphicsAllocation::AllocationType::LINEAR_STREAM;
+        return allocType == AllocationType::LINEAR_STREAM;
     }
     return false;
 }

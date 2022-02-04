@@ -41,7 +41,7 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
     EXPECT_EQ(sizeof(_3DSTATE_BTD), cmdSize);
 
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     commandStreamReceiver.perDssBackedBuffer = allocation;
     std::unique_ptr<char> buffer(new char[cmdSize]);
@@ -76,7 +76,7 @@ HWTEST2_F(CommandStreamReceiverFlushTasDg2AndLaterTests, givenProgramPipeControl
     EXPECT_EQ(expectedCmdSize, cmdSize);
 
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     commandStreamReceiver.perDssBackedBuffer = allocation;
@@ -148,7 +148,7 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
     EXPECT_EQ(sizeof(_3DSTATE_BTD), cmdSize);
 
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     commandStreamReceiver.perDssBackedBuffer = allocation;
     std::unique_ptr<char> buffer(new char[cmdSize]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorF
 }
 
 TEST_F(FrontWindowAllocatorTests, givenLinearStreamAllocWhenSelectingHeapWithFrontWindowThenCorrectIndexReturned) {
-    GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::LINEAR_STREAM, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
+    GraphicsAllocation allocation{0, AllocationType::LINEAR_STREAM, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     EXPECT_EQ(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW, memManager->selectHeap(&allocation, true, true, true));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,43 +42,43 @@ HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenI
     auto memoryManager = pDevice->getMemoryManager();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    gfxAllocation->setAllocationType(AllocationType::BUFFER);
     EXPECT_FALSE(gfxAllocation->isMemObjectsAllocationWithWritableFlags());
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    gfxAllocation->setAllocationType(AllocationType::BUFFER);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setAllocationType(AllocationType::EXTERNAL_HOST_PTR);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setAllocationType(AllocationType::EXTERNAL_HOST_PTR);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setAllocationType(AllocationType::MAP_ALLOCATION);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::MAP_ALLOCATION);
+    gfxAllocation->setAllocationType(AllocationType::MAP_ALLOCATION);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    gfxAllocation->setAllocationType(AllocationType::IMAGE);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableImage(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    gfxAllocation->setAllocationType(AllocationType::IMAGE);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableImage(*gfxAllocation));
 
@@ -125,7 +125,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);

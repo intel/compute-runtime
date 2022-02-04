@@ -232,10 +232,10 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 
 template <>
 void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
-    if (properties.allocationType == GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER) {
+    if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
         allocationData.flags.useSystemMemory = false;
     }
-    if (properties.allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER && properties.subDevicesBitfield.count() == 1) {
+    if (properties.allocationType == AllocationType::COMMAND_BUFFER && properties.subDevicesBitfield.count() == 1) {
         allocationData.flags.useSystemMemory = true;
     }
     allocationData.cacheRegion = properties.cacheRegion;

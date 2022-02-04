@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
     DebugManagerStateRestore restorer;
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     auto rssCmd = FamilyType::cmdInitRenderSurfaceState;

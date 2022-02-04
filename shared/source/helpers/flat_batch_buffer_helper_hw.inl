@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
             batchBuffer.chainedBatchBuffer->setAubWritable(false, GraphicsAllocation::defaultBank);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
             auto alignedMainBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
+            AllocationProperties flatBatchBufferProperties(rootDeviceIndex, alignedMainBatchBufferSize, AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
             flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
             flatBatchBuffer =
                 getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
@@ -111,7 +111,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
+        AllocationProperties flatBatchBufferProperties(rootDeviceIndex, static_cast<size_t>(flatBatchBufferSize), AllocationType::INTERNAL_HOST_MEMORY, deviceBitfield);
         flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
         flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
         const AllocationProperties properties{
             pDevice->getRootDeviceIndex(),
             SWTagsManager::estimateSpaceForSWTags<GfxFamily>(),
-            GraphicsAllocation::AllocationType::LINEAR_STREAM,
+            AllocationType::LINEAR_STREAM,
             pDevice->getDeviceBitfield()};
 
         GraphicsAllocation *allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

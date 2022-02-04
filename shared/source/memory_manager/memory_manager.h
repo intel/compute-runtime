@@ -94,7 +94,7 @@ class MemoryManager {
     virtual bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) { return false; }
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) = 0;
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation){};
-    virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) = 0;
+    virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) = 0;
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);
 
@@ -106,10 +106,10 @@ class MemoryManager {
     MOCKABLE_VIRTUAL bool isLimitedGPU(uint32_t rootDeviceIndex) {
         return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
     }
-    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType type) {
+    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type) {
         return isLimitedGPU(rootDeviceIndex) &&
-               (type != GraphicsAllocation::AllocationType::MAP_ALLOCATION) &&
-               (type != GraphicsAllocation::AllocationType::IMAGE);
+               (type != AllocationType::MAP_ALLOCATION) &&
+               (type != AllocationType::IMAGE);
     }
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
@@ -215,12 +215,12 @@ class MemoryManager {
 
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
 
-    bool isExternalAllocation(GraphicsAllocation::AllocationType allocationType);
-    LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
+    bool isExternalAllocation(AllocationType allocationType);
+    LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(AllocationType allocationType, uint32_t rootDeviceIndex);
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
-    MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
-        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, AllocationType allocationType, uint32_t rootDeviceIndex) {
+        return !force32bitAllocations && hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::BUFFER_HOST_MEMORY);
     }
 
     virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
@@ -239,7 +239,7 @@ class MemoryManager {
 
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
-    bool useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
+    bool useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_t rootDeviceIndex);
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;
@@ -261,7 +261,7 @@ class MemoryManager {
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocationInOs(GraphicsAllocation *allocation) {}
-    bool isAllocationTypeToCapture(GraphicsAllocation::AllocationType type) const;
+    bool isAllocationTypeToCapture(AllocationType type) const;
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
         if (allocationData.flags.zeroMemory) {
             memset(cpuPtr, 0, size);

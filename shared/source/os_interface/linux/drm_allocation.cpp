@@ -123,16 +123,16 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     Drm::ResourceClass resourceClass = Drm::ResourceClass::MaxSize;
 
     switch (this->allocationType) {
-    case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
         resourceClass = Drm::ResourceClass::ContextSaveArea;
         break;
-    case GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
         resourceClass = Drm::ResourceClass::SbaTrackingBuffer;
         break;
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case AllocationType::KERNEL_ISA:
         resourceClass = Drm::ResourceClass::Isa;
         break;
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::DEBUG_MODULE_AREA:
         resourceClass = Drm::ResourceClass::ModuleHeapDebugArea;
         break;
     default:

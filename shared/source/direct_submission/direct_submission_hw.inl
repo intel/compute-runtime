@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
     const AllocationProperties commandStreamAllocationProperties{device.getRootDeviceIndex(),
                                                                  true, allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
+                                                                 AllocationType::RING_BUFFER,
                                                                  isMultiOsContextCapable, osContext.getDeviceBitfield()};
     ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     UNRECOVERABLE_IF(ringBuffer == nullptr);
@@ -77,7 +77,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
     const AllocationProperties semaphoreAllocationProperties{device.getRootDeviceIndex(),
                                                              true, MemoryConstants::pageSize,
-                                                             GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER,
+                                                             AllocationType::SEMAPHORE_BUFFER,
                                                              isMultiOsContextCapable, osContext.getDeviceBitfield()};
     semaphores = memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
     UNRECOVERABLE_IF(semaphores == nullptr);

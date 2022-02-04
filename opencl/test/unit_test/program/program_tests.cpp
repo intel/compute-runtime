@@ -1972,9 +1972,9 @@ TEST_F(ProgramTests, givenExistingConstantSurfacesWhenProcessGenBinaryThenCleanu
 
     program->buildInfos.resize(2);
     program->buildInfos[0].constantSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                GraphicsAllocation::AllocationType::CONSTANT_SURFACE, pDevice->getDeviceBitfield()});
+                                                                                                                AllocationType::CONSTANT_SURFACE, pDevice->getDeviceBitfield()});
     program->buildInfos[1].constantSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                                GraphicsAllocation::AllocationType::CONSTANT_SURFACE, pDevice->getDeviceBitfield()});
+                                                                                                                AllocationType::CONSTANT_SURFACE, pDevice->getDeviceBitfield()});
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 
@@ -1998,9 +1998,9 @@ TEST_F(ProgramTests, givenExistingGlobalSurfacesWhenProcessGenBinaryThenCleanupT
 
     program->buildInfos.resize(2);
     program->buildInfos[0].globalSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                              GraphicsAllocation::AllocationType::GLOBAL_SURFACE, pDevice->getDeviceBitfield()});
+                                                                                                              AllocationType::GLOBAL_SURFACE, pDevice->getDeviceBitfield()});
     program->buildInfos[1].globalSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::cacheLineSize,
-                                                                                                              GraphicsAllocation::AllocationType::GLOBAL_SURFACE, pDevice->getDeviceBitfield()});
+                                                                                                              AllocationType::GLOBAL_SURFACE, pDevice->getDeviceBitfield()});
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(patchtokensProgram.storage.data(), patchtokensProgram.storage.size());
     program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = patchtokensProgram.storage.size();
 

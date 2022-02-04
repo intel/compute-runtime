@@ -87,6 +87,6 @@ TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledThenReturn
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::MemoryNull);
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
 }

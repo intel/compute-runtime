@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     MockWddmAllocation allocation(getGmmClientContext());
     allocation.handle = 4;
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    allocation.setAllocationType(AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
     allocation.setGpuAddress(0x12345);
@@ -76,7 +76,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
     allocation.handle = 4;
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    allocation.setAllocationType(AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 

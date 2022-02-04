@@ -53,8 +53,8 @@ struct TimeStamps {
         start = 1;
         end = 2;
     }
-    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
-        return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
+    static constexpr AllocationType getAllocationType() {
+        return AllocationType::PROFILING_TAG_BUFFER;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }
@@ -462,9 +462,9 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSet
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();
     auto hwPerfCounterTag = hwPerfCounterAllocator.getTag();
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, timestampPacketTag->getBaseGraphicsAllocation()->getAllocationType());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, timestampPacketTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::PROFILING_TAG_BUFFER, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::PROFILING_TAG_BUFFER, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMultiGraphicsAllocation) {

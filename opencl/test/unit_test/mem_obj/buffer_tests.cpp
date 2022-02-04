@@ -356,9 +356,9 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuff
 
     ASSERT_NE(nullptr, buffer.get());
     if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
+        EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
+        EXPECT_EQ(AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     }
 }
 
@@ -379,7 +379,7 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     auto mapAllocation = buffer->getMapAllocation(device.get()->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
 
     alignedFree(ptr);
 }
@@ -395,7 +395,7 @@ TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrCompres
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
 TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
@@ -408,7 +408,7 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompr
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
 TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
@@ -422,7 +422,7 @@ TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferC
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_TRUE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturnedIn64Bit) {
@@ -436,7 +436,7 @@ TEST(Buffer, givenCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeI
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
@@ -450,7 +450,7 @@ TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTy
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenSharedContextAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
@@ -464,7 +464,7 @@ TEST(Buffer, givenSharedContextAndCompressedBuffersEnabledWhenAllocationTypeIsQu
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
@@ -479,7 +479,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQuerie
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
@@ -494,7 +494,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueried
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
@@ -509,7 +509,7 @@ TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsRet
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
@@ -524,7 +524,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnable
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
@@ -539,7 +539,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndCompressedBuffersEnabled
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
     EXPECT_TRUE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemoryIsEnabledThenBufferHostMemoryTypeIsReturned) {
@@ -554,7 +554,7 @@ TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemory
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, true);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenAllocHostPtrFlagAndCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
@@ -569,7 +569,7 @@ TEST(Buffer, givenAllocHostPtrFlagAndCompressedBuffersEnabledWhenAllocationTypeI
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_TRUE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
@@ -583,7 +583,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
 
     auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, context, compressionEnabled, false);
     EXPECT_FALSE(compressionEnabled);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    EXPECT_EQ(AllocationType::BUFFER, type);
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
@@ -643,7 +643,7 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtr
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_EQ(cacheAlignedHostPtr, allocation->getUnderlyingBuffer());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 
     uint32_t pattern[2] = {0, 0};
     pattern[0] = 0xdeadbeef;
@@ -662,7 +662,7 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtr
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_EQ(cacheAlignedHostPtr, allocation->getUnderlyingBuffer());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 
     EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(&pattern[0], sizeof(pattern)));
 
@@ -671,7 +671,7 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtr
 
 TEST_F(CompressedBuffersTests, givenAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedThenItIsZeroCopy) {
     buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, 1u, nullptr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(1u, buffer->getSize());
 }
@@ -679,7 +679,7 @@ TEST_F(CompressedBuffersTests, givenAllocationCreatedWithForceSharedPhysicalMemo
 TEST_F(CompressedBuffersTests, givenCompressedBuffersAndAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedThenItIsZeroCopy) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, 1u, nullptr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(1u, buffer->getSize());
 }
@@ -691,9 +691,9 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
     }
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
@@ -703,11 +703,11 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
     } else {
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
 }
 
@@ -720,15 +720,15 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationWhenSharedContextI
     buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
     context->isSharedContext = true;
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, bufferSize, hostPtr, retVal));
     graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 }
 
 TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelectOptionFromDebugFlag) {
@@ -742,10 +742,10 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     if (HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(bufferSize, *hwInfo)) {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     }
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
@@ -807,7 +807,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
         EXPECT_EQ(bufferSize, mockCmdQ->writeBufferSize);
         EXPECT_EQ(hostPtr, mockCmdQ->writeBufferPtr);
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
         EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
         EXPECT_FALSE(mockCmdQ->writeBufferBlocking);
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
@@ -966,9 +966,9 @@ TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
     }
 
     auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));

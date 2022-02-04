@@ -37,7 +37,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenR
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -65,15 +65,15 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpe
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
     }
     EXPECT_EQ(singleTileMask, heapAllocation->storageInfo.memoryBanks);
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::System4KBPages);
 }
@@ -97,15 +97,15 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpec
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
     }
     EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
@@ -130,15 +130,15 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
     if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
+        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
     }
     EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::System4KBPages);
 }
@@ -717,7 +717,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDefaultHwHelperHwWhenGettingIsBli
     auto &helper = HwHelper::get(renderCoreFamily);
     MockGraphicsAllocation allocation;
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, allocation));
 }
 
@@ -726,7 +726,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNonTile0AccessWhenGettingIsBlitCo
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
@@ -971,7 +971,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroTh
     constexpr DeviceBitfield tile0Mask = 1;
     constexpr DeviceBitfield allTilesMask = 0b1111;
 
-    const AllocationProperties allocProperties(0, 1, GraphicsAllocation::AllocationType::UNKNOWN, allTilesMask);
+    const AllocationProperties allocProperties(0, 1, AllocationType::UNKNOWN, allTilesMask);
 
     for (int32_t debugFlag : {-1, 0, 1}) {
         DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.set(debugFlag);
@@ -1009,8 +1009,8 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
     constexpr DeviceBitfield allTilesBitfield = 0b1111;
 
-    const AllocationProperties singleTileAllocProperties(0, 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, singleTileBitfield);
-    const AllocationProperties allTilesAllocProperties(0, 1, GraphicsAllocation::AllocationType::COMMAND_BUFFER, allTilesBitfield);
+    const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::COMMAND_BUFFER, singleTileBitfield);
+    const AllocationProperties allTilesAllocProperties(0, 1, AllocationType::COMMAND_BUFFER, allTilesBitfield);
 
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;

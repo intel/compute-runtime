@@ -23,7 +23,7 @@ class MemoryPropertiesHelper {
 
     static AllocationProperties getAllocationProperties(
         uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
-        GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
+        AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
         DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty);
 
     static DeviceBitfield adjustDeviceBitfield(uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties,

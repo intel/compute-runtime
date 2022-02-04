@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ const std::vector<char> &MockSipKernel::getStateSaveAreaHeader() const {
 void MockSipKernel::createMockSipAllocation() {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
-                                           GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL,
+                                           AllocationType::KERNEL_ISA_INTERNAL,
                                            nullptr,
                                            MemoryConstants::pageSize * 10u,
                                            0u,

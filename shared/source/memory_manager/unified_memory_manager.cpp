@@ -127,7 +127,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
-    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
+    AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     std::vector<uint32_t> rootDeviceIndicesVector(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end());
 
@@ -179,7 +179,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
-    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
+    AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     bool multiStorageAllocation = (deviceBitfield.count() > 1) && multiOsContextSupport;
     if ((deviceBitfield.count() > 1) && !multiOsContextSupport) {
@@ -285,7 +285,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        true,
                                        alignedSize,
-                                       GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY,
+                                       AllocationType::UNIFIED_SHARED_MEMORY,
                                        false,
                                        false,
                                        deviceBitfield};
@@ -356,7 +356,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             pageFaultManager->removeAllocation(ptr);
         }
         std::unique_lock<SpinLock> lock(mtx);
-        if (svmData->gpuAllocations.getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
+        if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
             freeZeroCopySvmAllocation(svmData);
         } else {
             freeSvmAllocationWithDeviceStorage(svmData);
@@ -375,7 +375,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     AllocationProperties properties{rootDeviceIndex,
                                     true, // allocateMemory
                                     size,
-                                    GraphicsAllocation::AllocationType::SVM_ZERO_COPY,
+                                    AllocationType::SVM_ZERO_COPY,
                                     false, // isMultiStorageAllocation
                                     deviceBitfield};
     MemoryPropertiesHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false, properties.cacheRegion);
@@ -411,7 +411,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
                                        true, // allocateMemory
-                                       alignedSizeCpu, GraphicsAllocation::AllocationType::SVM_CPU,
+                                       alignedSizeCpu, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
     cpuProperties.alignment = MemoryConstants::pageSize2Mb;
@@ -438,7 +438,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
                                        alignedSizeGpu,
-                                       GraphicsAllocation::AllocationType::SVM_GPU,
+                                       AllocationType::SVM_GPU,
                                        false,
                                        multiStorageAllocation,
                                        subDevices};
@@ -563,20 +563,20 @@ void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
     svmMapOperations.remove(regionSvmPtr);
 }
 
-GraphicsAllocation::AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const {
+AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const {
     compressionEnabled = false;
 
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    AllocationType allocationType = AllocationType::BUFFER_HOST_MEMORY;
     if (unifiedMemoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
         if (unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined) {
-            allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
+            allocationType = AllocationType::WRITE_COMBINED;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
             const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
             if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
                 compressionEnabled = true;
             }
-            allocationType = GraphicsAllocation::AllocationType::BUFFER;
+            allocationType = AllocationType::BUFFER;
         }
     }
     return allocationType;

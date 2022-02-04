@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledThenItRegistersBindExtHandles
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     MockBufferObject bo(drmMock, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
     device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
@@ -157,7 +157,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledInAllocationWithNoBOThenItReg
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(10u), drmMock->registeredDataSize);
@@ -169,7 +169,7 @@ TEST_F(L0DebuggerLinuxTest, givenNoOSInterfaceThenRegisterElfDoesNothing) {
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
     drmMock->registeredDataSize = 0;
-    MockDrmAllocation isaAllocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
 
     device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
 

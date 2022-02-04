@@ -24,7 +24,7 @@ struct MiAtomicAubFixture : public AUBFixture {
         AllocationProperties commandBufferProperties = {device->getRootDeviceIndex(),
                                                         true,
                                                         MemoryConstants::pageSize,
-                                                        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+                                                        AllocationType::COMMAND_BUFFER,
                                                         false,
                                                         device->getDeviceBitfield()};
         streamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
@@ -33,7 +33,7 @@ struct MiAtomicAubFixture : public AUBFixture {
         AllocationProperties deviceBufferProperties = {device->getRootDeviceIndex(),
                                                        true,
                                                        MemoryConstants::pageSize,
-                                                       GraphicsAllocation::AllocationType::BUFFER,
+                                                       AllocationType::BUFFER,
                                                        false,
                                                        device->getDeviceBitfield()};
         deviceSurface = memoryManager->allocateGraphicsMemoryWithProperties(deviceBufferProperties);
@@ -42,7 +42,7 @@ struct MiAtomicAubFixture : public AUBFixture {
         AllocationProperties systemBufferProperties = {device->getRootDeviceIndex(),
                                                        true,
                                                        MemoryConstants::pageSize,
-                                                       GraphicsAllocation::AllocationType::SVM_CPU,
+                                                       AllocationType::SVM_CPU,
                                                        false,
                                                        device->getDeviceBitfield()};
         systemSurface = memoryManager->allocateGraphicsMemoryWithProperties(systemBufferProperties);

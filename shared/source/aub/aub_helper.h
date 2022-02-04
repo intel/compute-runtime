@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,23 +15,23 @@ namespace NEO {
 
 class AubHelper : public NonCopyableOrMovableClass {
   public:
-    static bool isOneTimeAubWritableAllocationType(const GraphicsAllocation::AllocationType &type) {
+    static bool isOneTimeAubWritableAllocationType(const AllocationType &type) {
         switch (type) {
-        case GraphicsAllocation::AllocationType::PIPE:
-        case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
-        case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
-        case GraphicsAllocation::AllocationType::KERNEL_ISA:
-        case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
-        case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
-        case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
-        case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
-        case GraphicsAllocation::AllocationType::BUFFER:
-        case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-        case GraphicsAllocation::AllocationType::IMAGE:
-        case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-        case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
-        case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
-        case GraphicsAllocation::AllocationType::SVM_GPU:
+        case AllocationType::PIPE:
+        case AllocationType::CONSTANT_SURFACE:
+        case AllocationType::GLOBAL_SURFACE:
+        case AllocationType::KERNEL_ISA:
+        case AllocationType::KERNEL_ISA_INTERNAL:
+        case AllocationType::PRIVATE_SURFACE:
+        case AllocationType::SCRATCH_SURFACE:
+        case AllocationType::WORK_PARTITION_SURFACE:
+        case AllocationType::BUFFER:
+        case AllocationType::BUFFER_HOST_MEMORY:
+        case AllocationType::IMAGE:
+        case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+        case AllocationType::EXTERNAL_HOST_PTR:
+        case AllocationType::MAP_ALLOCATION:
+        case AllocationType::SVM_GPU:
             return true;
         default:
             return false;

@@ -13,104 +13,104 @@
 
 namespace NEO {
 
-void AppResourceHelper::copyResourceTagStr(char *dst, GraphicsAllocation::AllocationType type, size_t size) {
+void AppResourceHelper::copyResourceTagStr(char *dst, AllocationType type, size_t size) {
     if (DebugManager.flags.EnableResourceTags.get()) {
         auto tag = getResourceTagStr(type);
         strcpy_s(dst, size, tag);
     }
 }
 
-const char *AppResourceHelper::getResourceTagStr(GraphicsAllocation::AllocationType type) {
+const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
     switch (type) {
-    case GraphicsAllocation::AllocationType::UNKNOWN:
+    case AllocationType::UNKNOWN:
         return "UNKNOWN";
-    case GraphicsAllocation::AllocationType::BUFFER:
+    case AllocationType::BUFFER:
         return "BUFFER";
-    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case AllocationType::BUFFER_HOST_MEMORY:
         return "BFHSTMEM";
-    case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
+    case AllocationType::COMMAND_BUFFER:
         return "CMNDBUFF";
-    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case AllocationType::CONSTANT_SURFACE:
         return "CSNTSRFC";
-    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case AllocationType::EXTERNAL_HOST_PTR:
         return "EXHSTPTR";
-    case GraphicsAllocation::AllocationType::FILL_PATTERN:
+    case AllocationType::FILL_PATTERN:
         return "FILPATRN";
-    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case AllocationType::GLOBAL_SURFACE:
         return "GLBLSRFC";
-    case GraphicsAllocation::AllocationType::IMAGE:
+    case AllocationType::IMAGE:
         return "IMAGE";
-    case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
+    case AllocationType::INDIRECT_OBJECT_HEAP:
         return "INOBHEAP";
-    case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
+    case AllocationType::INSTRUCTION_HEAP:
         return "INSTHEAP";
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+    case AllocationType::INTERNAL_HEAP:
         return "INTLHEAP";
-    case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
+    case AllocationType::INTERNAL_HOST_MEMORY:
         return "INHSTMEM";
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case AllocationType::KERNEL_ISA:
         return "KERNLISA";
-    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
+    case AllocationType::KERNEL_ISA_INTERNAL:
         return "KRLISAIN";
-    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case AllocationType::LINEAR_STREAM:
         return "LINRSTRM";
-    case GraphicsAllocation::AllocationType::MAP_ALLOCATION:
+    case AllocationType::MAP_ALLOCATION:
         return "MAPALLOC";
-    case GraphicsAllocation::AllocationType::MCS:
+    case AllocationType::MCS:
         return "MCS";
-    case GraphicsAllocation::AllocationType::PIPE:
+    case AllocationType::PIPE:
         return "PIPE";
-    case GraphicsAllocation::AllocationType::PREEMPTION:
+    case AllocationType::PREEMPTION:
         return "PRMPTION";
-    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case AllocationType::PRINTF_SURFACE:
         return "PRNTSRFC";
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case AllocationType::PRIVATE_SURFACE:
         return "PRVTSRFC";
-    case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
+    case AllocationType::PROFILING_TAG_BUFFER:
         return "PROFTGBF";
-    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case AllocationType::SCRATCH_SURFACE:
         return "SCRHSRFC";
-    case GraphicsAllocation::AllocationType::SHARED_BUFFER:
+    case AllocationType::SHARED_BUFFER:
         return "SHRDBUFF";
-    case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
+    case AllocationType::SHARED_CONTEXT_IMAGE:
         return "SRDCXIMG";
-    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
+    case AllocationType::SHARED_IMAGE:
         return "SHERDIMG";
-    case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+    case AllocationType::SHARED_RESOURCE_COPY:
         return "SRDRSCCP";
-    case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
+    case AllocationType::SURFACE_STATE_HEAP:
         return "SRFCSTHP";
-    case GraphicsAllocation::AllocationType::SVM_CPU:
+    case AllocationType::SVM_CPU:
         return "SVM_CPU";
-    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case AllocationType::SVM_GPU:
         return "SVM_GPU";
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case AllocationType::SVM_ZERO_COPY:
         return "SVM0COPY";
-    case GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case AllocationType::TAG_BUFFER:
         return "TAGBUFER";
-    case GraphicsAllocation::AllocationType::GLOBAL_FENCE:
+    case AllocationType::GLOBAL_FENCE:
         return "GLBLFENC";
-    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return "TSPKTGBF";
-    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
+    case AllocationType::WRITE_COMBINED:
         return "WRTCMBND";
-    case GraphicsAllocation::AllocationType::RING_BUFFER:
+    case AllocationType::RING_BUFFER:
         return "RINGBUFF";
-    case GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER:
+    case AllocationType::SEMAPHORE_BUFFER:
         return "SMPHRBUF";
-    case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
         return "DBCXSVAR";
-    case GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER:
+    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
         return "DBSBATRB";
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
+    case AllocationType::DEBUG_MODULE_AREA:
         return "DBMDLARE";
-    case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::UNIFIED_SHARED_MEMORY:
         return "USHRDMEM";
-    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
+    case AllocationType::WORK_PARTITION_SURFACE:
         return "WRPRTSRF";
-    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         return "GPUTSDBF";
-    case GraphicsAllocation::AllocationType::SW_TAG_BUFFER:
+    case AllocationType::SW_TAG_BUFFER:
         return "SWTAGBF";
     default:
         return "NOTFOUND";

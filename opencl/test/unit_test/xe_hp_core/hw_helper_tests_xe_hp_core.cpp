@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,7 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenStatelessCompressionEnabledWhenSe
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    for (auto allocType : {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, GraphicsAllocation::AllocationType::GLOBAL_SURFACE, GraphicsAllocation::AllocationType::PRINTF_SURFACE}) {
+    for (auto allocType : {AllocationType::CONSTANT_SURFACE, AllocationType::GLOBAL_SURFACE, AllocationType::PRINTF_SURFACE}) {
         AllocationData allocData;
         AllocationProperties allocProperties(mockRootDeviceIndex, true, allocType, mockDeviceBitfield);
 

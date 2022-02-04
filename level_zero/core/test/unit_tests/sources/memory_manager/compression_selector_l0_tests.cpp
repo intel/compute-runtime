@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace ult {
 TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocationThenExpectCompressionDisabled) {
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::BUFFER,
+                                    AllocationType::BUFFER,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -29,7 +29,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::BUFFER,
+                                    AllocationType::BUFFER,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -42,7 +42,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::BUFFER,
+                                    AllocationType::BUFFER,
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
@@ -55,7 +55,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocat
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::SVM_GPU,
+                                    AllocationType::SVM_GPU,
                                     deviceBitfield);
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
@@ -67,7 +67,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocati
 
     DeviceBitfield deviceBitfield{0x0};
     AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                    AllocationType::BUFFER_HOST_MEMORY,
                                     deviceBitfield);
 
     EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));

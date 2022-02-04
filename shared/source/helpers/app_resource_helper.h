@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 namespace NEO {
 struct AppResourceHelper {
   public:
-    static const char *getResourceTagStr(GraphicsAllocation::AllocationType type);
-    static void copyResourceTagStr(char *dst, GraphicsAllocation::AllocationType type, size_t size);
+    static const char *getResourceTagStr(AllocationType type);
+    static void copyResourceTagStr(char *dst, AllocationType type, size_t size);
 };
 
 } // namespace NEO

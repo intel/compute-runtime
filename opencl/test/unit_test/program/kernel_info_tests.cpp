@@ -62,7 +62,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaF
     auto retVal = kernelInfo.createKernelAllocation(*device, false);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
-    EXPECT_EQ(GraphicsAllocation::AllocationType::KERNEL_ISA, allocation->getAllocationType());
+    EXPECT_EQ(AllocationType::KERNEL_ISA, allocation->getAllocationType());
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }
 
@@ -78,7 +78,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaT
     auto retVal = kernelInfo.createKernelAllocation(*device, true);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
-    EXPECT_EQ(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, allocation->getAllocationType());
+    EXPECT_EQ(AllocationType::KERNEL_ISA_INTERNAL, allocation->getAllocationType());
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }
 

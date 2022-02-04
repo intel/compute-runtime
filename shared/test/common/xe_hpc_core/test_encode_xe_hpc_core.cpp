@@ -52,7 +52,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePre
     constexpr uint64_t gpuVa = 0x100000;
     constexpr uint32_t gpuVaOffset = 0x10000;
 
-    const GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
     memset(buffer, 0, sizeof(buffer));
     LinearStream linearStream(buffer, sizeof(buffer));
@@ -82,7 +82,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
     constexpr size_t numCachelines = 3;
 
-    const GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, AllocationType::BUFFER, nullptr, gpuVa, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
     constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
@@ -137,7 +137,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingP
 
     EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1));
 
-    GraphicsAllocation::AllocationType isaTypes[] = {GraphicsAllocation::AllocationType::KERNEL_ISA, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
 
     for (uint32_t i = 0; i < 2; i++) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
@@ -162,7 +162,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
 
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 
-    GraphicsAllocation::AllocationType isaTypes[] = {GraphicsAllocation::AllocationType::KERNEL_ISA, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
 
     for (uint32_t i = 0; i < 2; i++) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
@@ -190,7 +190,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenSteppingWhenProgrammingPrefet
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 0b0100'0111; // [3:5] - BaseDie == A0;
 
-    const GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::KERNEL_ISA,
+    const GraphicsAllocation allocation(0, AllocationType::KERNEL_ISA,
                                         nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 
@@ -213,7 +213,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
 
-    const GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER,
+    const GraphicsAllocation allocation(0, AllocationType::BUFFER,
                                         nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 
@@ -405,7 +405,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenStreamWhenEncodingSystemMemoryFenceThenCorrectFenceAddressIsSet) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
 
-    const GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN,
+    const GraphicsAllocation allocation(0, AllocationType::UNKNOWN,
                                         nullptr, 1234, 0, 4096, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
     auto before = cmdContainer->getCommandStream()->getUsed();

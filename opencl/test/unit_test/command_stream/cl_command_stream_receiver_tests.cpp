@@ -56,7 +56,7 @@ HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenFenceAlloca
     EXPECT_TRUE(csr.createGlobalFenceAllocation());
 
     ASSERT_NE(nullptr, csr.globalFenceAllocation);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_FENCE, csr.globalFenceAllocation->getAllocationType());
 }
 
 HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenGettingFenceAllocationThenCorrectFenceAllocationIsReturned) {
@@ -69,7 +69,7 @@ HWTEST_F(ClCommandStreamReceiverTests, givenCommandStreamReceiverWhenGettingFenc
     EXPECT_TRUE(csr.createGlobalFenceAllocation());
 
     ASSERT_NE(nullptr, csr.getGlobalFenceAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_FENCE, csr.getGlobalFenceAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_FENCE, csr.getGlobalFenceAllocation()->getAllocationType());
 }
 
 using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
@@ -81,7 +81,7 @@ TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphi
     EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getRootDeviceIndex());
 
     // Linear stream / Command buffer
-    GraphicsAllocation *allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device1->getDeviceBitfield()});
+    GraphicsAllocation *allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties({expectedRootDeviceIndex, 128u, AllocationType::COMMAND_BUFFER, device1->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);

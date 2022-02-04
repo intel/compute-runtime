@@ -827,7 +827,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
     constexpr size_t mapAllocationSize = MemoryConstants::pageSize * 2;
     auto mapAllocationPtr = allocateAlignedMemory(mapAllocationSize, MemoryConstants::pageSize);
 
-    AllocationProperties properties{csr.getRootDeviceIndex(), false, mapAllocationSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, pDevice->getDeviceBitfield()};
+    AllocationProperties properties{csr.getRootDeviceIndex(), false, mapAllocationSize, AllocationType::MAP_ALLOCATION, false, pDevice->getDeviceBitfield()};
     GraphicsAllocation *mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, mapAllocationPtr.get());
 
     auto mapAllocationOffset = 0x1234;
@@ -949,7 +949,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
     constexpr size_t mapAllocationSize = MemoryConstants::pageSize * 2;
     auto mapAllocationPtr = allocateAlignedMemory(mapAllocationSize, MemoryConstants::pageSize);
 
-    AllocationProperties properties{csr.getRootDeviceIndex(), false, mapAllocationSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, pDevice->getDeviceBitfield()};
+    AllocationProperties properties{csr.getRootDeviceIndex(), false, mapAllocationSize, AllocationType::MAP_ALLOCATION, false, pDevice->getDeviceBitfield()};
     GraphicsAllocation *mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, reinterpret_cast<void *>(mapAllocationPtr.get()));
 
     auto mapAllocationOffset = 0x1234;

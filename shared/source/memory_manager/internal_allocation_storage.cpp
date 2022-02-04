@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,12 +65,12 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
     }
 }
 
-std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, GraphicsAllocation::AllocationType allocationType) {
+std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, AllocationType allocationType) {
     auto allocation = allocationsForReuse.detachAllocation(requiredSize, nullptr, &commandStreamReceiver, allocationType);
     return allocation;
 }
 
-std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, GraphicsAllocation::AllocationType allocationType) {
+std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType) {
     auto allocation = temporaryAllocations.detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType);
     return allocation;
 }

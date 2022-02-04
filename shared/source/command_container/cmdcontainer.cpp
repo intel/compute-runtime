@@ -35,7 +35,7 @@ CommandContainer::~CommandContainer() {
         }
     }
     for (auto deallocation : deallocationContainer) {
-        if (((deallocation->getAllocationType() == GraphicsAllocation::AllocationType::INTERNAL_HEAP) || (deallocation->getAllocationType() == GraphicsAllocation::AllocationType::LINEAR_STREAM))) {
+        if (((deallocation->getAllocationType() == AllocationType::INTERNAL_HEAP) || (deallocation->getAllocationType() == AllocationType::LINEAR_STREAM))) {
             getHeapHelper()->storeHeapAllocation(deallocation);
         }
     }
@@ -243,13 +243,13 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation() {
 
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, nullptr, GraphicsAllocation::AllocationType::COMMAND_BUFFER).release();
+        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, nullptr, AllocationType::COMMAND_BUFFER).release();
     }
     if (!cmdBufferAllocation) {
         AllocationProperties properties{device->getRootDeviceIndex(),
                                         true /* allocateMemory*/,
                                         alignedSize,
-                                        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+                                        AllocationType::COMMAND_BUFFER,
                                         (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                         false,
                                         device->getDeviceBitfield()};

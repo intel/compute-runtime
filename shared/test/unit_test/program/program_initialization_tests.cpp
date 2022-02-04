@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
@@ -43,7 +43,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
@@ -51,7 +51,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
@@ -59,7 +59,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
@@ -121,28 +121,28 @@ TEST(AllocateGlobalSurfaceTest, GivenNullSvmAllocsManagerWhenGlobalsAreExportedT
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(nullptr, device, initData.size(), true /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(nullptr, device, initData.size(), false /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
     alloc = allocateGlobalsSurface(nullptr, device, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
@@ -236,7 +236,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
                                                       nullptr /* linker input */, initData.data());
             ASSERT_NE(nullptr, pAllocation);
             EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(pAllocation->getGpuAddress()))));
-            EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, pAllocation->getAllocationType());
+            EXPECT_EQ(AllocationType::CONSTANT_SURFACE, pAllocation->getAllocationType());
 
             if (pAllocation->isAllocatedInLocalMemoryPool() && (localMemoryAccessMode == LocalMemoryAccessMode::CpuAccessDisallowed)) {
                 expectedBlitsCount++;

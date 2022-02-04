@@ -1216,8 +1216,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     auto commandListHandle = commandList->toHandle();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
@@ -1244,8 +1244,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     auto commandListHandle = commandList->toHandle();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
@@ -1293,8 +1293,8 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     auto commandListHandle = commandList->toHandle();
 
     void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
     commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);

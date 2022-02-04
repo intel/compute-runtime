@@ -28,7 +28,7 @@ using CommandListCreate = Test<DeviceFixture>;
 class MockEvent : public ::L0::Event {
   public:
     MockEvent() {
-        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                              MemoryPool::System4KBPages));
         this->timestampSizeInDw = 1;
@@ -176,7 +176,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
                 containsDstPtr = true;
             }
             if (residentGfxAlloc->getAllocationType() ==
-                NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
+                NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
                 gpuTimeStampAlloc = true;
             }
         }

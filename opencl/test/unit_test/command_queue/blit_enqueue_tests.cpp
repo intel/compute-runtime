@@ -160,7 +160,7 @@ struct BlitEnqueueTests : public ::testing::Test {
     }
 
     void setAllocationType(GraphicsAllocation *graphicsAllocation, bool compressed) {
-        graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        graphicsAllocation->setAllocationType(AllocationType::BUFFER);
 
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
             auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
@@ -1907,7 +1907,7 @@ using BlitCopyTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -1929,7 +1929,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -1947,7 +1947,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreating
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallowedCpuAccessAndDisabledBlitterThenFallbackToCpuCopy) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
 
@@ -1994,7 +1994,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenSubstituteKernelHeapIsCalledThenUseBcsForTransfer) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
@@ -2020,7 +2020,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
 
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenLinkerRequiresPatchingOfInstructionSegmentsThenUseBcsForTransfer) {
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::KERNEL_ISA) - 1));
 
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -515,7 +515,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferIsCall
 HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferWithMapAllocationIsCalledThenItDoesntCallNotifyFunction) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
-    GraphicsAllocation mapAllocation{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
+    GraphicsAllocation mapAllocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     auto retVal = mockCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                               CL_TRUE,
                                               0,

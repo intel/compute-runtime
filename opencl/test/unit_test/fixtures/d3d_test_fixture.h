@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,11 +55,11 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             gmmOwnershipPassed = true;
             return alloc;
         }
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
+        GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
             if (failAlloc) {
                 return nullptr;
             }
-            AllocationProperties properties(rootDeviceIndex, true, 0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
+            AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;

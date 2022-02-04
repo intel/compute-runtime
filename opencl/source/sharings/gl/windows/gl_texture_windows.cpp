@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(),
                                          false, // allocateMemory
                                          0u,    // size
-                                         GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                         AllocationType::SHARED_IMAGE,
                                          false, // isMultiStorageAllocation
                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false, false);
@@ -125,7 +125,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     GraphicsAllocation *mcsAlloc = nullptr;
     if (texInfo.globalShareHandleMCS) {
-        AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(), 0, GraphicsAllocation::AllocationType::MCS, context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
+        AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(), 0, AllocationType::MCS, context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, allocProperties, false, false);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,7 @@ NEO::GraphicsAllocation *HostPointerManager::createHostPointerAllocation(uint32_
                                                                          size_t size,
                                                                          const NEO::DeviceBitfield &deviceBitfield) {
     NEO::AllocationProperties properties = {rootDeviceIndex, false, size,
-                                            NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                            NEO::AllocationType::EXTERNAL_HOST_PTR,
                                             false, deviceBitfield};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties,

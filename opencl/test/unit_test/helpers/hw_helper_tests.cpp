@@ -479,7 +479,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0u);
+    GraphicsAllocation allocation(0, AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0u);
     allocation.setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
@@ -516,7 +516,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0u);
+    GraphicsAllocation allocation(0, AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 0u);
     allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, false));
     allocation.getDefaultGmm()->isCompressionEnabled = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
@@ -548,7 +548,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
+    GraphicsAllocation allocation(0, AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
     allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
@@ -581,7 +581,7 @@ HWTEST_F(HwHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStateIsPr
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
+    GraphicsAllocation allocation(0, AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
     allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
@@ -613,7 +613,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1u);
+    GraphicsAllocation allocation(0, AllocationType::BUFFER, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1u);
     allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, false));
     allocation.getDefaultGmm()->isCompressionEnabled = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
@@ -991,7 +991,7 @@ HWTEST_F(HwHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLo
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
@@ -1021,7 +1021,7 @@ HWTEST_F(HwHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequiredFo
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::SVM_GPU);
+    graphicsAllocation.setAllocationType(AllocationType::SVM_GPU);
     EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
@@ -1051,7 +1051,7 @@ HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLo
     auto &helper = HwHelper::get(renderCoreFamily);
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
-    graphicsAllocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
 
     EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, graphicsAllocation));
 }

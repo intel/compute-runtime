@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -238,7 +238,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
         ASSERT_NE(nullptr, svmAllocation);
         svmAllocation->setFlushL3Required(true);
 
-        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
         mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
 
@@ -293,7 +293,7 @@ class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequires
         auto svmAllocation = svmManager.getSVMAlloc(svm)->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         svmAllocation->setFlushL3Required(true);
 
-        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
         mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
 
@@ -351,7 +351,7 @@ class GivenCacheFlushAfterWalkerDisabledAndProperSteppingIsSetWhenAllocationRequ
         ASSERT_NE(nullptr, svmAllocation);
         svmAllocation->setFlushL3Required(true);
 
-        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+        mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
         mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
 

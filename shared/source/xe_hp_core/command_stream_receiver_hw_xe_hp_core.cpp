@@ -49,7 +49,7 @@ GraphicsAllocation *CommandStreamReceiverHw<Family>::getClearColorAllocation() {
         if (clearColorAllocation == nullptr) {
             auto lock = this->obtainUniqueOwnership();
             if (clearColorAllocation == nullptr) {
-                AllocationProperties properties{rootDeviceIndex, clearColorSize, GraphicsAllocation::AllocationType::BUFFER, osContext->getDeviceBitfield()};
+                AllocationProperties properties{rootDeviceIndex, clearColorSize, AllocationType::BUFFER, osContext->getDeviceBitfield()};
                 properties.flags.readOnlyMultiStorage = true;
                 properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
                 clearColorAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties, clearColorBuffer);

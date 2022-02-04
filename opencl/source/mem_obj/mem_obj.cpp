@@ -373,7 +373,7 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
             }
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
-                                            getSize(), GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                            getSize(), AllocationType::MAP_ALLOCATION,
                                             false, //isMultiStorageAllocation
                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
 

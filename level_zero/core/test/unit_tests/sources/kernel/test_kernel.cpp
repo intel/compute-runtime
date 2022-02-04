@@ -411,7 +411,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaIs
     bool isInternal = true;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->getIsaGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL);
+    mockKernelImmData->getIsaGraphicsAllocation()->setAllocationType(AllocationType::KERNEL_ISA_INTERNAL);
 
     size_t previouscopyMemoryToAllocationCalledTimes =
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
@@ -467,7 +467,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelMock.immutableData.surfaceStateHeapSize = 64;
     kernelMock.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[64]);
-    kernelMock.immutableData.getIsaGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL);
+    kernelMock.immutableData.getIsaGraphicsAllocation()->setAllocationType(AllocationType::KERNEL_ISA_INTERNAL);
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
@@ -1332,7 +1332,7 @@ struct KernelIsaTests : Test<ModuleFixture> {
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -1358,7 +1358,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
 
     uint32_t kernelHeap = 0;
     KernelInfo kernelInfo;
@@ -1380,7 +1380,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
 TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallowedCpuAccessAndDisabledBlitterThenFallbackToCpuCopy) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
-    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(NEO::AllocationType::KERNEL_ISA) - 1));
 
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
 
@@ -1410,7 +1410,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalI
     KernelImmutableData kernelImmutableData(device);
 
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, true);
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonInternalIsaThenCorrectAllocationTypeIsUsed) {
@@ -1422,7 +1422,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
     KernelImmutableData kernelImmutableData(device);
 
     kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithIsaThenPaddingIsAdded) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,8 @@ class TimestampPackets : public TagTypeBase {
     };
 
   public:
-    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
-        return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    static constexpr AllocationType getAllocationType() {
+        return AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::TimestampPacket; }

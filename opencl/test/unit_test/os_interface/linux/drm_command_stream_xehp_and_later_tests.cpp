@@ -83,7 +83,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(mock, 128);
-    MockDrmAllocation cmdBuffer(GraphicsAllocation::AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation cmdBuffer(AllocationType::COMMAND_BUFFER, MemoryPool::System4KBPages);
     cmdBuffer.bufferObjects[0] = &bo;
     uint8_t buff[128];
 
@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::COMMAND_BUFFER});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
     volatile uint32_t *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
@@ -158,7 +158,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::COMMAND_BUFFER});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
     volatile uint32_t *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();

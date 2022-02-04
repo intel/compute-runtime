@@ -193,7 +193,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
-    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
+    GraphicsAllocation allocation(0, AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = stateBuffer;

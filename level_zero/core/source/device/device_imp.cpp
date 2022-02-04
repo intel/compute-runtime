@@ -845,7 +845,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), true,
              debugSurfaceSize,
-             NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+             NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
              false,
              false,
              device->getNEODevice()->getDeviceBitfield()});
@@ -1009,7 +1009,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     }
 
     allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
+        {getRootDeviceIndex(), false, size, NEO::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
         buffer);
 
     if (allocation == nullptr) {
@@ -1029,7 +1029,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
 
 NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) {
     NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size,
-                                            NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                            NEO::AllocationType::EXTERNAL_HOST_PTR,
                                             false, neoDevice->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,
@@ -1044,7 +1044,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     return allocation;
 }
 
-NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize, NEO::GraphicsAllocation::AllocationType type) {
+NEO::GraphicsAllocation *DeviceImp::obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) {
     auto alloc = allocationsForReuse->detachAllocation(requiredSize, nullptr, nullptr, type);
     if (alloc == nullptr)
         return nullptr;

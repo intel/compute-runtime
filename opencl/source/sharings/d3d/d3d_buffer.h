@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ class D3DBuffer : public D3DSharing<D3D> {
         AllocationProperties properties = {context->getDevice(0)->getRootDeviceIndex(),
                                            false, // allocateMemory
                                            0,     // size
-                                           GraphicsAllocation::AllocationType::SHARED_BUFFER,
+                                           AllocationType::SHARED_BUFFER,
                                            false, // isMultiStorageAllocation
                                            context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         auto alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), properties, true, false);

@@ -180,7 +180,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     drm->ioctlRetVal = -1;
 
     MockBufferObject bo(drm.get(), 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -194,7 +194,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     MockBufferObject bo(drm.get(), 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
@@ -210,7 +210,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     MockBufferObject bo(drm.get(), 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};

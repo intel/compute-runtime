@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         AllocationProperties allocProperties(rootDeviceIndex,
                                              false, // allocateMemory
                                              0u,    // size
-                                             GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                             AllocationType::SHARED_IMAGE,
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(toOsHandle(surfaceInfo->shared_handle), allocProperties,
@@ -106,7 +106,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                                                                                                   memoryProperties, context->getDevice(0)->getHardwareInfo(),
                                                                                                   context->getDeviceBitfieldForAllocation(rootDeviceIndex),
                                                                                                   context->isSingleDeviceContext());
-        allocProperties.allocationType = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
+        allocProperties.allocationType = AllocationType::SHARED_RESOURCE_COPY;
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 

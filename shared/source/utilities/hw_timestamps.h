@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,8 @@ class HwTimeStamps : public TagTypeBase {
         ContextCompleteTS = 0;
     }
 
-    static constexpr GraphicsAllocation::AllocationType getAllocationType() {
-        return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
+    static constexpr AllocationType getAllocationType() {
+        return AllocationType::PROFILING_TAG_BUFFER;
     }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::HwTimeStamps; }

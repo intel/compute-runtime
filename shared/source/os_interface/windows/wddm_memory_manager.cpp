@@ -244,7 +244,7 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
 
     wddmAllocation->setDefaultGmm(gmm);
     void *mapPtr = wddmAllocation->getAlignedCpuPtr();
-    if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
+    if (allocationData.type == AllocationType::SVM_CPU) {
         //add  padding in case mapPtr is not aligned
         size_t reserveSizeAligned = sizeAligned + allocationData.alignment;
         bool ret = getWddm(wddmAllocation->getRootDeviceIndex()).reserveValidAddressRange(reserveSizeAligned, mapPtr);
@@ -395,7 +395,7 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
     return status;
 }
 
-GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
+GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex) {
     auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, maxOsContextCount);
 
     bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
@@ -434,7 +434,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex);
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) {
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
     return createAllocationFromHandle(toOsHandle(handle), false, true, allocType, rootDeviceIndex);
 }
 
@@ -946,11 +946,11 @@ void splitGmmsInAllocation(GmmClientContext *clientContext, WddmAllocation *wddm
     storageInfo.multiStorage = true;
 }
 
-uint32_t getPriorityForAllocation(GraphicsAllocation::AllocationType allocationType) {
+uint32_t getPriorityForAllocation(AllocationType allocationType) {
     if (GraphicsAllocation::isIsaAllocationType(allocationType) ||
-        allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP ||
-        allocationType == GraphicsAllocation::AllocationType::LINEAR_STREAM) {
+        allocationType == AllocationType::COMMAND_BUFFER ||
+        allocationType == AllocationType::INTERNAL_HEAP ||
+        allocationType == AllocationType::LINEAR_STREAM) {
         return DXGI_RESOURCE_PRIORITY_HIGH;
     }
     return DXGI_RESOURCE_PRIORITY_NORMAL;
@@ -972,8 +972,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     size_t alignment = 0;
     auto numBanks = allocationData.storageInfo.getNumBanks();
     bool singleBankAllocation = numBanks == 1;
-    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE ||
-        allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
+    if (allocationData.type == AllocationType::IMAGE ||
+        allocationData.type == AllocationType::SHARED_RESOURCE_COPY) {
         allocationData.imgInfo->useLocalMemory = true;
         gmm = std::make_unique<Gmm>(gmmClientContext, *allocationData.imgInfo, allocationData.storageInfo, allocationData.flags.preferCompressed);
         alignment = MemoryConstants::pageSize64k;
@@ -1015,18 +1015,18 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     wddmAllocation->needsMakeResidentBeforeLock = true;
 
     void *requiredGpuVa = nullptr;
-    if (allocationData.type == GraphicsAllocation::AllocationType::SVM_GPU) {
+    if (allocationData.type == AllocationType::SVM_GPU) {
         requiredGpuVa = const_cast<void *>(allocationData.hostPtr);
     }
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
     if (is32bit && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->isFullRangeSvm()) {
-        if (allocationData.type == GraphicsAllocation::AllocationType::BUFFER ||
-            allocationData.type == GraphicsAllocation::AllocationType::SHARED_BUFFER ||
-            allocationData.type == GraphicsAllocation::AllocationType::SCRATCH_SURFACE ||
-            allocationData.type == GraphicsAllocation::AllocationType::LINEAR_STREAM ||
-            allocationData.type == GraphicsAllocation::AllocationType::PRIVATE_SURFACE) {
+        if (allocationData.type == AllocationType::BUFFER ||
+            allocationData.type == AllocationType::SHARED_BUFFER ||
+            allocationData.type == AllocationType::SCRATCH_SURFACE ||
+            allocationData.type == AllocationType::LINEAR_STREAM ||
+            allocationData.type == AllocationType::PRIVATE_SURFACE) {
             //TODO : FOR DG2 device make sure that scratch doesn't go here
             //add 2MB padding to make sure there are no overlaps between system and local memory
             size_t reserveSizeAligned = sizeAligned + 2 * MemoryConstants::megaByte;
@@ -1077,7 +1077,7 @@ bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const v
         } else if (allocation->storageInfo.multiStorage) {
             return mapMultiHandleAllocationWithRetry(allocation, requiredPtr);
         }
-    } else if (allocation->getAllocationType() == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+    } else if (allocation->getAllocationType() == AllocationType::WRITE_COMBINED) {
         requiredPtr = lockResource(allocation);
         allocation->setCpuAddress(const_cast<void *>(requiredPtr));
     }

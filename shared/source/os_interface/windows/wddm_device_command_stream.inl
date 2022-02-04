@@ -167,9 +167,9 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
     for (auto &graphicsAllocation : allocationsForResidency) {
-        if ((GraphicsAllocation::AllocationType::LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||
-            (GraphicsAllocation::AllocationType::FILL_PATTERN == graphicsAllocation->getAllocationType()) ||
-            (GraphicsAllocation::AllocationType::COMMAND_BUFFER == graphicsAllocation->getAllocationType())) {
+        if ((AllocationType::LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||
+            (AllocationType::FILL_PATTERN == graphicsAllocation->getAllocationType()) ||
+            (AllocationType::COMMAND_BUFFER == graphicsAllocation->getAllocationType())) {
             wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->getDefaultHandle());
         }
     }

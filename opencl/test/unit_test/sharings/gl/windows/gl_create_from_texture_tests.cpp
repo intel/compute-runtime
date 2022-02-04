@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -342,6 +342,6 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureWhenCreateIsCalledThenAllocationT
 
     auto graphicsAllocation = glImage->getGraphicsAllocation(clContext.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, graphicsAllocation);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 }
 } // namespace NEO

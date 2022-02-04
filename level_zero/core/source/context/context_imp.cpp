@@ -485,7 +485,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
     size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
     NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                       alignedSize,
-                                                      NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                      NEO::AllocationType::BUFFER_HOST_MEMORY,
                                                       systemMemoryBitfield};
 
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();

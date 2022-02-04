@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,10 +13,10 @@ struct HardwareInfo;
 struct HeapAssigner {
     HeapAssigner();
     ~HeapAssigner() = default;
-    bool useExternal32BitHeap(GraphicsAllocation::AllocationType allocType);
-    bool useInternal32BitHeap(GraphicsAllocation::AllocationType allocType);
-    bool use32BitHeap(GraphicsAllocation::AllocationType allocType);
-    HeapIndex get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useFrontWindow);
+    bool useExternal32BitHeap(AllocationType allocType);
+    bool useInternal32BitHeap(AllocationType allocType);
+    bool use32BitHeap(AllocationType allocType);
+    HeapIndex get32BitHeapIndex(AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useFrontWindow);
     static bool heapTypeExternalWithFrontWindowPool(HeapIndex heap);
     static bool isInternalHeap(HeapIndex heap);
 

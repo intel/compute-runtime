@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
     void TestBodyImpl(size_t patternSize, COLOR_DEPTH expectedDepth) {
         uint32_t streamBuffer[100] = {};
         LinearStream stream(streamBuffer, sizeof(streamBuffer));
-        MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                               reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                               MemoryPool::System4KBPages);
         uint32_t patternToCommand[4];

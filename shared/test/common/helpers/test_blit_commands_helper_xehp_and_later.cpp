@@ -35,7 +35,7 @@ struct CompressionParamsSupportedMatcher {
 HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForFillBufferThenDstCompressionDisabled, CompressionParamsSupportedMatcher) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -48,7 +48,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForFill
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     gmm->isCompressionEnabled = false;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
@@ -62,7 +62,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     gmm->isCompressionEnabled = true;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
@@ -78,7 +78,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     auto gmmContext = pDevice->getGmmClientContext();
     auto gmm = std::make_unique<MockGmm>(gmmContext);
     gmm->isCompressionEnabled = true;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory);
     mockAllocation.setGmm(gmm.get(), 0);
 
@@ -98,7 +98,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     gmm->isCompressionEnabled = true;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory);
     mockAllocation.setGmm(gmm.get(), 0);
 
@@ -112,7 +112,7 @@ HWTEST2_F(BlitTests, givenA0StepWhenAppendBlitCommandsForFillBufferWithLocalAcce
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -129,7 +129,7 @@ HWTEST2_F(BlitTests, givenA0StepWhenAppendBlitCommandsForFillBufferWithLocalAcce
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -146,7 +146,7 @@ HWTEST2_F(BlitTests, givenBStepWhenAppendBlitCommandsForFillBufferWithLocalAcces
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -163,7 +163,7 @@ HWTEST2_F(BlitTests, givenBStepWhenAppendBlitCommandsForFillBufferWithLocalAcces
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -180,7 +180,7 @@ HWTEST2_F(BlitTests, givenAllocationInSystemMemWhenAppendBlitCommandsForFillBuff
 
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -197,7 +197,7 @@ HWTEST2_F(BlitTests, givenAllocationInSystemMemWhenAppendBlitCommandsForFillBuff
 
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getMutableHardwareInfo();
@@ -215,7 +215,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBuffer
     DebugManager.flags.OverrideBlitterMocs.set(mockValue);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -228,7 +228,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFi
     DebugManager.flags.OverrideBlitterTargetMemory.set(0);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -242,7 +242,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFil
     DebugManager.flags.OverrideBlitterTargetMemory.set(1);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -256,7 +256,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFil
     DebugManager.flags.OverrideBlitterTargetMemory.set(2);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
@@ -420,10 +420,10 @@ HWTEST2_F(BlitTests, givenTiled4SrcAndDestinationAppendImageCommandsThenCorrectT
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     auto flags = gmm->gmmResourceInfo->getResourceFlags();
     flags->Info.Tile4 = true;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -446,10 +446,10 @@ HWTEST2_F(BlitTests, givenNotTiled64SrcAndDestinationAppendImageCommandsThenCorr
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     auto flags = gmm->gmmResourceInfo->getResourceFlags();
     flags->Info.Tile64 = true;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -472,10 +472,10 @@ HWTEST2_F(BlitTests, givenNotTiledSrcAndDestinationAppendImageCommandsThenCorrec
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     auto flags = gmm->gmmResourceInfo->getResourceFlags();
     flags->Info.Tile64 = false;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -507,10 +507,10 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenAppendSurfaceTypeThenCorrectSurfaceTypeIs
         auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
         resourceInfo->mockResourceCreateParams.Type = resourceType;
         resourceInfo->mockResourceCreateParams.ArraySize = arraySize;
-        MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-        MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
         mockAllocationSrc.setGmm(gmm.get(), 0);
@@ -532,10 +532,10 @@ HWTEST2_F(BlitTests, givenInvalidResourceWhenAppendSurfaceTypeThenSurfaceTypeDoe
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_INVALID;
 
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
@@ -556,10 +556,10 @@ HWTEST2_F(BlitTests, givenInvalidResourceWhenAppendSurfaceTypeThenSurfaceTypeDoe
 
 HWTEST2_F(BlitTests, givenResourcesWithoutGmmsWhenAppendSurfaceTypeThenSurfaceTypeDoesNotChange, IsXeHpCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -589,7 +589,7 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCo
         auto &resInfo = resourceInfo->getResourceFlags()->Info;
         resInfo.MediaCompressed = mediaCompressed;
         resInfo.RenderCompressed = renderCompressed;
-        MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
         mockAllocationSrc.setGmm(gmm.get(), 0);
@@ -655,10 +655,10 @@ struct MyMockResourecInfo : public GmmResourceInfo {
 };
 HWTEST2_F(BlitTests, givenResourceWithoutGmmWhenAppendImageCommandsThenPitchEqualPropertiesValue, IsXeHpCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -679,10 +679,10 @@ HWTEST2_F(BlitTests, givenResourceWithoutGmmWhenAppendImageCommandsThenPitchEqua
 }
 HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImagesIsCalledThenSlicePitchIsCorrect, IsXeHpCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor;
@@ -720,10 +720,10 @@ HWTEST2_F(BlitTests, givenResourceInfoWithZeroPitchWhenAppendImageCommandsThenPi
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
     GMM_RESCREATE_PARAMS gmmParams = {};
     gmm->gmmResourceInfo.reset(new MyMockResourecInfo(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams));
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -753,10 +753,10 @@ HWTEST2_F(BlitTests, givenTiledAllocationWhenAppendBlitCommandsForImagesThenBlit
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
     auto flags = gmm->gmmResourceInfo->getResourceFlags();
     flags->Info.Tile64 = true;
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -782,10 +782,10 @@ HWTEST2_F(BlitTests, givenTiledAllocationWhenAppendBlitCommandsForImagesThenBlit
 HWTEST2_F(BlitTests, givenAlocationsWhenAppendBlitCommandsForImagesThenSurfaceSizesAreProgrammedCorrectly, IsXeHpCore) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor;
@@ -820,10 +820,10 @@ HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageComma
     myResourecInfo->pitch = 0x100;
     myResourecInfo->flags.Info.Linear = 1;
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -850,10 +850,10 @@ HWTEST2_F(BlitTests, givenLinearResorcesWhenAppendSliceOffsetsThenAdressAreOffse
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockClearColor(reinterpret_cast<void *>(0x1234), sizeof(uint32_t));
@@ -880,10 +880,10 @@ HWTEST2_F(BlitTests, givenTiledResorcesWhenAppendSliceOffsetsThenIndexsAreSet, I
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
-    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     bltCmd.setSourceTiling(XY_COPY_BLT::TILING::TILING_TILE64);
@@ -902,7 +902,7 @@ HWTEST2_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBl
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    MockGraphicsAllocation mockAllocation(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitWidth * sizeof(uint32_t)),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);

@@ -236,7 +236,7 @@ class MemoryManagerIpcMock : public NEO::MemoryManager {
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
     void addAllocationToHostPtrManager(NEO::GraphicsAllocation *memory) override{};
     void removeAllocationFromHostPtrManager(NEO::GraphicsAllocation *memory) override{};
-    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override { return nullptr; };
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; };
     AllocationStatus populateOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
     void cleanOsHandles(NEO::OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
     void freeGraphicsMemoryImpl(NEO::GraphicsAllocation *gfxAllocation) override{};
@@ -270,7 +270,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
             return nullptr;
         }
         auto alloc = new NEO::MockGraphicsAllocation(0,
-                                                     NEO::GraphicsAllocation::AllocationType::BUFFER,
+                                                     NEO::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(sharedHandleAddress++),
                                                      0x1000,
                                                      0,
@@ -279,9 +279,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
-    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
+    NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
         auto alloc = new NEO::MockGraphicsAllocation(0,
-                                                     NEO::GraphicsAllocation::AllocationType::BUFFER,
+                                                     NEO::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(sharedHandleAddress++),
                                                      0x1000,
                                                      0,

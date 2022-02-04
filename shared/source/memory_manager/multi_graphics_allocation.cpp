@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ GraphicsAllocation *MultiGraphicsAllocation::getGraphicsAllocation(uint32_t root
     return graphicsAllocations[rootDeviceIndex];
 }
 
-GraphicsAllocation::AllocationType MultiGraphicsAllocation::getAllocationType() const {
+AllocationType MultiGraphicsAllocation::getAllocationType() const {
     return getDefaultGraphicsAllocation()->getAllocationType();
 }
 

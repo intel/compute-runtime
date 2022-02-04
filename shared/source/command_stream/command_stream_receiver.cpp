@@ -180,7 +180,7 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     }
 
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
-    constexpr static auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
+    constexpr static auto allocationType = AllocationType::COMMAND_BUFFER;
     auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
     if (allocation == nullptr) {
         const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex, true, allocationSize, allocationType,
@@ -368,7 +368,7 @@ MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
     auto allocations = new MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
 
     this->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *allocations);
     return *allocations;
@@ -437,7 +437,7 @@ void CommandStreamReceiver::startControllingDirectSubmissions() {
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
-    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, getOsContext().getDeviceBitfield()});
+    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::INTERNAL_HOST_MEMORY, getOsContext().getDeviceBitfield()});
     return debugSurface;
 }
 
@@ -478,9 +478,9 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     minRequiredSize += reservedSize;
 
     finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
-    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    auto allocationType = AllocationType::LINEAR_STREAM;
     if (requireInternalHeap) {
-        allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+        allocationType = AllocationType::INTERNAL_HEAP;
     }
     auto heapMemory = internalAllocationStorage->obtainReusableAllocation(finalHeapSize, allocationType).release();
 
@@ -608,7 +608,7 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
     }
     UNRECOVERABLE_IF(device.getNumGenericSubDevices() < 2);
 
-    AllocationProperties properties{this->rootDeviceIndex, true, 4096u, GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, true, false, deviceBitfield};
+    AllocationProperties properties{this->rootDeviceIndex, true, 4096u, AllocationType::WORK_PARTITION_SURFACE, true, false, deviceBitfield};
     this->workPartitionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     if (this->workPartitionAllocation == nullptr) {
         return false;
@@ -640,7 +640,7 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
     }
 
     DEBUG_BREAK_IF(this->globalFenceAllocation != nullptr);
-    this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::GLOBAL_FENCE, osContext->getDeviceBitfield()});
+    this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::GLOBAL_FENCE, osContext->getDeviceBitfield()});
     return this->globalFenceAllocation != nullptr;
 }
 
@@ -650,7 +650,7 @@ bool CommandStreamReceiver::createPreemptionAllocation() {
     if (DebugManager.flags.OverrideCsrAllocationSize.get() > 0) {
         preemptionSurfaceSize = DebugManager.flags.OverrideCsrAllocationSize.get();
     }
-    AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, isMultiOsContextCapable(), false, deviceBitfield};
+    AllocationProperties properties{rootDeviceIndex, true, preemptionSurfaceSize, AllocationType::PREEMPTION, isMultiOsContextCapable(), false, deviceBitfield};
     properties.flags.uncacheable = hwInfo->workaroundTable.flags.waCSRUncachable;
     properties.alignment = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getPreemptionAllocationAlignment();
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -668,13 +668,13 @@ AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return intern
 
 bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) {
     std::unique_lock<decltype(hostPtrSurfaceCreationMutex)> lock = this->obtainHostPtrSurfaceCreationLock();
-    auto allocation = internalAllocationStorage->obtainTemporaryAllocationWithPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    auto allocation = internalAllocationStorage->obtainTemporaryAllocationWithPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), AllocationType::EXTERNAL_HOST_PTR);
 
     if (allocation == nullptr) {
         auto memoryManager = getMemoryManager();
         AllocationProperties properties{rootDeviceIndex,
                                         false, // allocateMemory
-                                        surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                        surface.getSurfaceSize(), AllocationType::EXTERNAL_HOST_PTR,
                                         false, // isMultiStorageAllocation
                                         osContext->getDeviceBitfield()};
         properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;

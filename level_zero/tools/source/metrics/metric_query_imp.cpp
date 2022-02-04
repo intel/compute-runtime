@@ -570,7 +570,7 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
         // Allocate gpu memory.
         NEO::AllocationProperties properties(
-            metricSource.getDevice().getRootDeviceIndex(), allocationSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricSource.getDevice().getNEODevice()->getDeviceBitfield());
+            metricSource.getDevice().getRootDeviceIndex(), allocationSize, NEO::AllocationType::BUFFER_HOST_MEMORY, metricSource.getDevice().getNEODevice()->getDeviceBitfield());
         properties.alignment = 64u;
         pAllocation = metricSource.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 

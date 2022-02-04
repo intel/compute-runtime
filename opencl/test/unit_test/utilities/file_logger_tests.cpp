@@ -894,52 +894,52 @@ TEST(FileLogger, whenFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTi
 }
 
 struct AllocationTypeTestCase {
-    GraphicsAllocation::AllocationType type;
+    AllocationType type;
     const char *str;
 };
 
 AllocationTypeTestCase allocationTypeValues[] = {
-    {GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
-    {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
-    {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
-    {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
-    {GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
-    {GraphicsAllocation::AllocationType::FILL_PATTERN, "FILL_PATTERN"},
-    {GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
-    {GraphicsAllocation::AllocationType::IMAGE, "IMAGE"},
-    {GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
-    {GraphicsAllocation::AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
-    {GraphicsAllocation::AllocationType::INTERNAL_HEAP, "INTERNAL_HEAP"},
-    {GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, "INTERNAL_HOST_MEMORY"},
-    {GraphicsAllocation::AllocationType::KERNEL_ISA, "KERNEL_ISA"},
-    {GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, "KERNEL_ISA_INTERNAL"},
-    {GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
-    {GraphicsAllocation::AllocationType::MAP_ALLOCATION, "MAP_ALLOCATION"},
-    {GraphicsAllocation::AllocationType::MCS, "MCS"},
-    {GraphicsAllocation::AllocationType::PIPE, "PIPE"},
-    {GraphicsAllocation::AllocationType::PREEMPTION, "PREEMPTION"},
-    {GraphicsAllocation::AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
-    {GraphicsAllocation::AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
-    {GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
-    {GraphicsAllocation::AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
-    {GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, "WORK_PARTITION_SURFACE"},
-    {GraphicsAllocation::AllocationType::SHARED_BUFFER, "SHARED_BUFFER"},
-    {GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE, "SHARED_CONTEXT_IMAGE"},
-    {GraphicsAllocation::AllocationType::SHARED_IMAGE, "SHARED_IMAGE"},
-    {GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
-    {GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
-    {GraphicsAllocation::AllocationType::SVM_CPU, "SVM_CPU"},
-    {GraphicsAllocation::AllocationType::SVM_GPU, "SVM_GPU"},
-    {GraphicsAllocation::AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
-    {GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
-    {GraphicsAllocation::AllocationType::GLOBAL_FENCE, "GLOBAL_FENCE"},
-    {GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
-    {GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
-    {GraphicsAllocation::AllocationType::WRITE_COMBINED, "WRITE_COMBINED"},
-    {GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DEBUG_CONTEXT_SAVE_AREA"},
-    {GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DEBUG_SBA_TRACKING_BUFFER"},
-    {GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, "DEBUG_MODULE_AREA"},
-    {GraphicsAllocation::AllocationType::SW_TAG_BUFFER, "SW_TAG_BUFFER"}};
+    {AllocationType::BUFFER, "BUFFER"},
+    {AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
+    {AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
+    {AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
+    {AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
+    {AllocationType::FILL_PATTERN, "FILL_PATTERN"},
+    {AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
+    {AllocationType::IMAGE, "IMAGE"},
+    {AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
+    {AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
+    {AllocationType::INTERNAL_HEAP, "INTERNAL_HEAP"},
+    {AllocationType::INTERNAL_HOST_MEMORY, "INTERNAL_HOST_MEMORY"},
+    {AllocationType::KERNEL_ISA, "KERNEL_ISA"},
+    {AllocationType::KERNEL_ISA_INTERNAL, "KERNEL_ISA_INTERNAL"},
+    {AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
+    {AllocationType::MAP_ALLOCATION, "MAP_ALLOCATION"},
+    {AllocationType::MCS, "MCS"},
+    {AllocationType::PIPE, "PIPE"},
+    {AllocationType::PREEMPTION, "PREEMPTION"},
+    {AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
+    {AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
+    {AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
+    {AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
+    {AllocationType::WORK_PARTITION_SURFACE, "WORK_PARTITION_SURFACE"},
+    {AllocationType::SHARED_BUFFER, "SHARED_BUFFER"},
+    {AllocationType::SHARED_CONTEXT_IMAGE, "SHARED_CONTEXT_IMAGE"},
+    {AllocationType::SHARED_IMAGE, "SHARED_IMAGE"},
+    {AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
+    {AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
+    {AllocationType::SVM_CPU, "SVM_CPU"},
+    {AllocationType::SVM_GPU, "SVM_GPU"},
+    {AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
+    {AllocationType::TAG_BUFFER, "TAG_BUFFER"},
+    {AllocationType::GLOBAL_FENCE, "GLOBAL_FENCE"},
+    {AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
+    {AllocationType::UNKNOWN, "UNKNOWN"},
+    {AllocationType::WRITE_COMBINED, "WRITE_COMBINED"},
+    {AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DEBUG_CONTEXT_SAVE_AREA"},
+    {AllocationType::DEBUG_SBA_TRACKING_BUFFER, "DEBUG_SBA_TRACKING_BUFFER"},
+    {AllocationType::DEBUG_MODULE_AREA, "DEBUG_MODULE_AREA"},
+    {AllocationType::SW_TAG_BUFFER, "SW_TAG_BUFFER"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};
 
@@ -965,7 +965,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, static_cast<GraphicsAllocation::AllocationType>(999), nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -977,10 +977,10 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
-    for (uint32_t i = 0; i < static_cast<uint32_t>(GraphicsAllocation::AllocationType::COUNT); i++) {
-        graphicsAllocation.setAllocationType(static_cast<GraphicsAllocation::AllocationType>(i));
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
+        graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
 
         auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -995,7 +995,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     testing::internal::CaptureStdout();
     fileLogger.logAllocation(&graphicsAllocation);
@@ -1013,7 +1013,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());

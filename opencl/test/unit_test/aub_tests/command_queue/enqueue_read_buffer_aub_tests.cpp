@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpe
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    GraphicsAllocation *srcAllocation = new MockGraphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN,
+    GraphicsAllocation *srcAllocation = new MockGraphicsAllocation(0, AllocationType::UNKNOWN,
                                                                    srcMemory,
                                                                    0xFFFF800400001000,
                                                                    0xFFFF800400001000,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class MultiGraphicsAllocation {
 
     GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) const;
 
-    GraphicsAllocation::AllocationType getAllocationType() const;
+    AllocationType getAllocationType() const;
 
     bool isCoherent() const;
 

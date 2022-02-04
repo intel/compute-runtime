@@ -79,7 +79,7 @@ TEST_F(ImageInLocalMemoryTest, givenImageWithoutHostPtrWhenLocalMemoryIsEnabledT
     ASSERT_NE(nullptr, imgGfxAlloc);
     EXPECT_EQ(MemoryPool::LocalMemory, imgGfxAlloc->getMemoryPool());
     EXPECT_LE(imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes, imgGfxAlloc->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::IMAGE, imgGfxAlloc->getAllocationType());
+    EXPECT_EQ(AllocationType::IMAGE, imgGfxAlloc->getAllocationType());
     EXPECT_FALSE(imgGfxAlloc->getDefaultGmm()->useSystemMemoryPool);
     EXPECT_LT(GmmHelper::canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());
     EXPECT_GT(GmmHelper::canonize(mockMemoryManager->getGfxPartition(imgGfxAlloc->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), imgGfxAlloc->getGpuAddress());

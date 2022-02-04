@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         UNRECOVERABLE_IF(svmAlloc == nullptr);
         gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     } else {
-        auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
+        auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                          true, // allocateMemory
                                                                                          size, allocationType,

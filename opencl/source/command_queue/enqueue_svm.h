@@ -77,7 +77,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
     }
     bool blocking = blockingMap == CL_TRUE;
 
-    if (svmData->gpuAllocations.getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
+    if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         NullSurface s;
         Surface *surfaces[] = {&s};
         if (context->isProvidingPerformanceHints()) {
@@ -153,7 +153,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         return CL_INVALID_VALUE;
     }
 
-    if (svmData->gpuAllocations.getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
+    if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         NullSurface s;
         Surface *surfaces[] = {&s};
         enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
@@ -457,7 +457,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
-    auto allocationType = GraphicsAllocation::AllocationType::FILL_PATTERN;
+    auto allocationType = AllocationType::FILL_PATTERN;
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
     commandStreamReceieverOwnership.unlock();
 

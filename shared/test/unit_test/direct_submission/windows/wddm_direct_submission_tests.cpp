@@ -143,7 +143,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(), allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
+                                                                 AllocationType::RING_BUFFER, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 

@@ -274,7 +274,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    allocation.setAllocationType(AllocationType::BUFFER);
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -309,7 +309,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -595,7 +595,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationProperties allocProperties{0u /* rootDeviceIndex */, true /* allocateMemory */,
-                                         imgInfo, GraphicsAllocation::AllocationType::IMAGE, deviceBitfield};
+                                         imgInfo, AllocationType::IMAGE, deviceBitfield};
 
     auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1299,7 +1299,7 @@ TEST_F(glSharingTests, whenGetGlContextHandleIsCalledThenProperHandleIsReturned)
 TEST_F(glSharingTests, givenClGLBufferWhenCreatedThenSharedBufferAllocatoinTypeIsSet) {
     std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
     ASSERT_NE(nullptr, buffer->getGraphicsAllocation(rootDeviceIndex));
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
 using clGetSupportedGLTextureFormatsINTELTests = glSharingTests;

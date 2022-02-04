@@ -307,7 +307,7 @@ Image *Image::create(Context *context,
                         gmm = new Gmm(clientContext, imgInfo, StorageInfo{}, preferCompression);
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                                                       false, // allocateMemory
-                                                                                                                      imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE,
+                                                                                                                      imgInfo.size, AllocationType::SHARED_CONTEXT_IMAGE,
                                                                                                                       false, // isMultiStorageAllocation
                                                                                                                       context->getDeviceBitfieldForAllocation(rootDeviceIndex)},
                                                                                                                      hostPtr);
@@ -318,7 +318,7 @@ Image *Image::create(Context *context,
                         if (allocationInfo[rootDeviceIndex].memory) {
                             AllocationProperties properties{rootDeviceIndex,
                                                             false, // allocateMemory
-                                                            hostPtrMinSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                                            hostPtrMinSize, AllocationType::MAP_ALLOCATION,
                                                             false, // isMultiStorageAllocation
                                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
                             properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
@@ -348,7 +348,7 @@ Image *Image::create(Context *context,
             }
 
             if (parentBuffer == nullptr) {
-                allocationInfo[rootDeviceIndex].memory->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+                allocationInfo[rootDeviceIndex].memory->setAllocationType(AllocationType::IMAGE);
             }
 
             allocationInfo[rootDeviceIndex].memory->setMemObjectsAllocationWithWritableFlags(!memoryProperties.flags.readOnly &&

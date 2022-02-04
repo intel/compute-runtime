@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ class MockGmm : public Gmm {
         imgDesc.imageWidth = 5;
         imgDesc.imageHeight = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, imgInfo, GraphicsAllocation::AllocationType::IMAGE, mockDeviceBitfield});
+        return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, imgInfo, AllocationType::IMAGE, mockDeviceBitfield});
     }
 };
 } // namespace NEO

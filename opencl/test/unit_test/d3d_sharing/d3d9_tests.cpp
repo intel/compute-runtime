@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class MockMM : public OsAgnosticMemoryManager {
     }
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, StorageInfo{}, false);
-        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false, {});
+        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, AllocationType::SHARED_IMAGE, false, {});
         auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false, false);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;
@@ -245,7 +245,7 @@ TEST_F(D3D9Tests, givenD3DHandleWhenCreatingSharedSurfaceThenAllocationTypeImage
     ASSERT_NE(nullptr, sharedImg.get());
     auto graphicsAllocation = sharedImg->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, graphicsAllocation);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 }
 
 TEST_F(D3D9Tests, givenUPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {

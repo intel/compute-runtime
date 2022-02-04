@@ -79,14 +79,14 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
     eventSize = static_cast<uint32_t>(alignUp(EventPacketsCount::eventPackets * hwHelper.getSingleTimestampPacketSize(), eventAlignment));
 
     size_t alignedSize = alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k);
-    NEO::GraphicsAllocation::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
-                                                                                           : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
+                                                                       : NEO::AllocationType::BUFFER_HOST_MEMORY;
     if (this->devices.size() > 1) {
         useDeviceAlloc = false;
     }
 
     if (useDeviceAlloc && !isEventPoolTimestampFlagSet()) {
-        allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+        allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 
     eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);

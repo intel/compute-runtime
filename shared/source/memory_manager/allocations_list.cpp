@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ struct ReusableAllocationRequirements {
     const void *requiredPtr;
     size_t requiredMinimalSize;
     volatile uint32_t *csrTagAddress;
-    GraphicsAllocation::AllocationType allocationType;
+    AllocationType allocationType;
     uint32_t contextId;
     uint32_t activeTileCount;
     uint32_t tagOffset;
@@ -27,7 +27,7 @@ AllocationsList::AllocationsList(AllocationUsage allocationUsage)
 AllocationsList::AllocationsList()
     : allocationUsage(REUSABLE_ALLOCATION) {}
 
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = (commandStreamReceiver == nullptr) ? nullptr : commandStreamReceiver->getTagAddress();

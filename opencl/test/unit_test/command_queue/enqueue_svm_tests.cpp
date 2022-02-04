@@ -739,7 +739,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
     GraphicsAllocation *patternAllocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
 }
 
 TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
@@ -1480,7 +1480,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();
-    auto allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    auto allocationType = AllocationType::BUFFER_HOST_MEMORY;
     auto maxRootDeviceIndex = numDevices - 1u;
 
     std::vector<uint32_t> rootDeviceIndices;
@@ -1526,7 +1526,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();
-    auto allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    auto allocationType = AllocationType::BUFFER_HOST_MEMORY;
     auto maxRootDeviceIndex = numDevices - 1u;
 
     std::vector<uint32_t> rootDeviceIndices;

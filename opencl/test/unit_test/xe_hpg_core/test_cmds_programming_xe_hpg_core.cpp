@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatele
 
 XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     IndirectHeap indirectHeap(allocation, 1);
@@ -65,7 +65,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL1CachingOverrideWhenState
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), 1, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     IndirectHeap indirectHeap(allocation, 1);
@@ -92,7 +92,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL1CachingOverrideWhenState
 XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, whenAppendingRssThenProgramWtL1CachePolicy) {
     auto memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
     size_t allocationSize = MemoryConstants::pageSize;
-    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield());
+    AllocationProperties properties(pDevice->getRootDeviceIndex(), allocationSize, AllocationType::BUFFER, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
     auto rssCmd = FamilyType::cmdInitRenderSurfaceState;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,7 +235,7 @@ using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreatedWithCorrectAllocationType) {
     ASSERT_NE(nullptr, deviceL0->getDebugSurface());
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, deviceL0->getDebugSurface()->getAllocationType());
+    EXPECT_EQ(NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, deviceL0->getDebugSurface()->getAllocationType());
 }
 
 TEST_F(DeviceWithDebuggerEnabledTest, givenSldDebuggerWhenGettingL0DebuggerThenNullptrIsReturned) {

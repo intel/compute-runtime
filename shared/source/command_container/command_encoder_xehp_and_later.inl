@@ -588,7 +588,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     uint32_t compressionFormat = 0;
 
     bool setConstCachePolicy = false;
-    if (args.allocation && args.allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE) {
+    if (args.allocation && args.allocation->getAllocationType() == AllocationType::CONSTANT_SURFACE) {
         setConstCachePolicy = true;
     }
 

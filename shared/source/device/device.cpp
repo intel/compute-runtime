@@ -632,7 +632,7 @@ GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
 void Device::initializeRayTracing(uint32_t maxBvhLevels) {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
-        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, GraphicsAllocation::AllocationType::BUFFER, getDeviceBitfield()});
+        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
     }
 
     while (rtDispatchGlobals.size() <= maxBvhLevels) {

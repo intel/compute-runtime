@@ -288,10 +288,10 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
 
     size_t size = 0x100000001;
-    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
-    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x100003456), size, 0, sizeof(uint32_t),
                                                   MemoryPool::System4KBPages);
     ze_command_queue_desc_t queueDesc = {};

@@ -17,8 +17,8 @@ using namespace NEO;
 using MemoryManagerMultiDeviceTest = MemoryAllocatorMultiDeviceFixture<10>;
 
 TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenGraphicsAllocationHasTheSameRootDeviceIndex) {
-    std::vector<GraphicsAllocation::AllocationType> allocationTypes{GraphicsAllocation::AllocationType::BUFFER,
-                                                                    GraphicsAllocation::AllocationType::KERNEL_ISA};
+    std::vector<AllocationType> allocationTypes{AllocationType::BUFFER,
+                                                AllocationType::KERNEL_ISA};
     for (auto allocationType : allocationTypes) {
         for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
             AllocationProperties properties{rootDeviceIndex, true, MemoryConstants::pageSize, allocationType, false, false, mockDeviceBitfield};
@@ -68,7 +68,7 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
     auto tagsMultiAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
 
     memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *tagsMultiAllocation);
     EXPECT_NE(nullptr, tagsMultiAllocation);
@@ -95,7 +95,7 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
     auto tagsMultiAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield};
+    AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, AllocationType::TAG_BUFFER, systemMemoryBitfield};
 
     memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *tagsMultiAllocation);
     EXPECT_NE(nullptr, tagsMultiAllocation);

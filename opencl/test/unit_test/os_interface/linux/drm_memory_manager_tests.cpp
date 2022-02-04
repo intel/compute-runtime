@@ -62,14 +62,14 @@ using MemoryManagerMultiDeviceSharedHandleTest = MemoryAllocatorMultiDeviceFixtu
 TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithSameHandleAndSameRootDeviceThenSameBOIsUsed) {
     uint32_t handle0 = 0;
     uint32_t rootDeviceIndex0 = 0;
-    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
     ASSERT_NE(gfxAllocation0, nullptr);
     EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
 
     uint32_t handle1 = 0;
     uint32_t rootDeviceIndex1 = 0;
-    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
     ASSERT_NE(gfxAllocation1, nullptr);
     EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
@@ -86,14 +86,14 @@ TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromShare
 TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithSameHandleAndDifferentRootDeviceThenDifferentBOIsUsed) {
     uint32_t handle0 = 0;
     uint32_t rootDeviceIndex0 = 0;
-    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
     ASSERT_NE(gfxAllocation0, nullptr);
     EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
 
     uint32_t handle1 = 0;
     uint32_t rootDeviceIndex1 = 1;
-    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
     ASSERT_NE(gfxAllocation1, nullptr);
     EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
@@ -110,14 +110,14 @@ TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromShare
 TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithDifferentHandleAndSameRootDeviceThenDifferentBOIsUsed) {
     uint32_t handle0 = 0;
     uint32_t rootDeviceIndex0 = 0;
-    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
     ASSERT_NE(gfxAllocation0, nullptr);
     EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
 
     uint32_t handle1 = 1;
     uint32_t rootDeviceIndex1 = 0;
-    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
     ASSERT_NE(gfxAllocation1, nullptr);
     EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
@@ -134,14 +134,14 @@ TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromShare
 TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromSharedHandleWithDifferentHandleAndDifferentRootDeviceThenDifferentBOIsUsed) {
     uint32_t handle0 = 0;
     uint32_t rootDeviceIndex0 = 0;
-    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties0{rootDeviceIndex0, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation0 = memoryManager->createGraphicsAllocationFromSharedHandle(handle0, properties0, false, false);
     ASSERT_NE(gfxAllocation0, nullptr);
     EXPECT_EQ(rootDeviceIndex0, gfxAllocation0->getRootDeviceIndex());
 
     uint32_t handle1 = 1;
     uint32_t rootDeviceIndex1 = 1;
-    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, false, false, mockDeviceBitfield};
+    AllocationProperties properties1{rootDeviceIndex1, true, MemoryConstants::pageSize, AllocationType::BUFFER, false, false, mockDeviceBitfield};
     auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties1, false, false);
     ASSERT_NE(gfxAllocation1, nullptr);
     EXPECT_EQ(rootDeviceIndex1, gfxAllocation1->getRootDeviceIndex());
@@ -219,7 +219,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     size_t size = 0x1000;
 
     const uint32_t rootDeviceIndex = 0u;
-    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, cpuPtr, size, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, cpuPtr, size, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment({gfxAllocation.getUnderlyingBuffer(), rootDeviceIndex});
     EXPECT_NE(fragment, nullptr);
@@ -688,7 +688,7 @@ TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds)
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
@@ -1281,7 +1281,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
 
     auto size = 10u;
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
@@ -1304,7 +1304,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWhenLi
 
     auto size = 10u;
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
@@ -1509,7 +1509,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
     auto size = 10u;
     void *host_ptr = reinterpret_cast<void *>(0x1000);
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, host_ptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, host_ptr, AllocationType::BUFFER);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1523,7 +1523,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
 
     auto size = 10u;
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::BUFFER);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1537,7 +1537,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternal32Bit
 
     auto size = 10u;
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, nullptr, AllocationType::INTERNAL_HEAP);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1660,7 +1660,7 @@ TEST_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalled
     EXPECT_NE(0llu, alloc);
 
     size_t allocationSize = 4 * GB;
-    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, allocationSize, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
+    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, allocationSize, nullptr, AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
@@ -2143,7 +2143,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledT
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
@@ -2173,7 +2173,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
@@ -2207,7 +2207,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledA
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0u);
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, false, 0u);
     ASSERT_TRUE(properties.subDevicesBitfield.none());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
@@ -2257,12 +2257,12 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShar
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
@@ -2299,12 +2299,12 @@ TEST_F(ClDrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedH
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
@@ -2341,12 +2341,12 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFa
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(rootDeviceIndex, false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
+    AllocationProperties properties(rootDeviceIndex, false, imgInfo, AllocationType::SHARED_IMAGE, context.getDevice(0)->getDeviceBitfield());
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(boHandle, mock->getTilingHandleIn);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 
     auto gmm = graphicsAllocation->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
@@ -2359,7 +2359,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
     osHandle handle = 1u;
 
     InjectedFunction method = [this, &handle](size_t failureIndex) {
-        AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+        AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
 
         auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
@@ -2393,7 +2393,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCrea
         if (i == 2)
             this->mock->outputHandle = 3u;
 
-        AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+        AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
 
         graphicsAllocations[i] = memoryManager->createGraphicsAllocationFromSharedHandle(handles[i], properties, false, false);
         //Clang-tidy false positive WA
@@ -2434,7 +2434,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
 
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, true, false);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
@@ -2452,7 +2452,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     memoryManager->setForce32BitAllocations(true);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
 
@@ -2472,7 +2472,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
@@ -2490,7 +2490,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     memoryManager->setForce32BitAllocations(false);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, true, false);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
@@ -2506,7 +2506,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreatedAndIoctlPri
 
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     EXPECT_EQ(nullptr, graphicsAllocation);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -2519,7 +2519,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     mock->ioctl_expected.gemWait = 2;
 
     osHandle sharedHandle = 1u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, mockDeviceBitfield);
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
 
@@ -2542,7 +2542,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     mock->ioctl_expected.gemWait = 2;
 
     osHandle sharedHandle = 1u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
     mock->outputHandle++;
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
@@ -2560,7 +2560,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::SHARED_IMAGE);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
@@ -2662,7 +2662,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnNullAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutBufferObjectThenReturnNullPtr) {
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2681,7 +2681,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0, 1) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2714,7 +2714,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0, 1) {}
     };
     auto bo = new BufferObjectMock(&drmMock);
-    auto drmAllocation = new DrmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::LocalMemory);
+    auto drmAllocation = new DrmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::LocalMemory);
 
     drmMemoryManager.unlockResourceImpl(*drmAllocation);
     EXPECT_TRUE(drmMemoryManager.unlockResourceInLocalMemoryImplParam.called);
@@ -2724,7 +2724,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2741,7 +2741,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0, 1) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -2757,7 +2757,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllo
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0, 1) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, true);
@@ -2806,7 +2806,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     size_t pages3size = 3 * MemoryConstants::pageSize;
 
     void *host_ptr = reinterpret_cast<void *>(0x1000);
-    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, pages3size, host_ptr, GraphicsAllocation::AllocationType::BUFFER);
+    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, pages3size, host_ptr, AllocationType::BUFFER);
 
     auto bo = graphicsAlloaction->getBO();
     EXPECT_EQ(pages3size, bo->peekSize());
@@ -2822,7 +2822,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
     osHandle sharedHandle = 1u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);
 
@@ -2882,7 +2882,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
@@ -2912,7 +2912,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
@@ -2946,7 +2946,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAlloc
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, GraphicsAllocation::AllocationType::BUFFER));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::BUFFER));
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
@@ -2960,7 +2960,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
 
     auto bufferSize = 128 * MemoryConstants::megaByte + 4 * MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::INTERNAL_HEAP));
     ASSERT_EQ(nullptr, drmAllocation);
 }
 
@@ -2971,7 +2971,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x100000);
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, bufferSize, ptr, AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
@@ -3037,7 +3037,7 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemory
     allocationData.size = 16384;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+    allocationData.type = AllocationType::SVM_CPU;
     auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
 
     EXPECT_NE(nullptr, alloc);
@@ -3283,7 +3283,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -3297,7 +3297,7 @@ TEST_F(DrmMemoryManagerBasic, givenMemoryManagerWhenCreateAllocationFromHandleIs
                                                                                                     true,
                                                                                                     executionEnvironment));
     auto osHandle = 1u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
@@ -3897,8 +3897,8 @@ TEST_F(DrmMemoryManagerBasic, givenImageOrSharedResourceCopyWhenGraphicsAllocati
     allocData.flags.allocateMemory = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
-    GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
-                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
+    AllocationType types[] = {AllocationType::IMAGE,
+                              AllocationType::SHARED_RESOURCE_COPY};
 
     for (auto type : types) {
         allocData.type = type;
@@ -3931,7 +3931,7 @@ TEST_F(DrmMemoryManagerTest, givenDebugModuleAreaTypeWhenCreatingAllocationThen3
     const auto size = MemoryConstants::pageSize64k;
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, size,
-                                         NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                         NEO::AllocationType::DEBUG_MODULE_AREA,
                                          false,
                                          device->getDeviceBitfield()};
 
@@ -3959,18 +3959,18 @@ TEST_F(DrmMemoryManagerTest, givenDebugModuleAreaTypeWhenCreatingAllocationThen3
 }
 
 TEST(DrmAllocationTest, givenAllocationTypeWhenPassedToDrmAllocationConstructorThenAllocationTypeIsStored) {
-    DrmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull};
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
+    DrmAllocation allocation{0, AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull};
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
 
-    DrmAllocation allocation2{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::MemoryNull};
-    EXPECT_EQ(GraphicsAllocation::AllocationType::UNKNOWN, allocation2.getAllocationType());
+    DrmAllocation allocation2{0, AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::MemoryNull};
+    EXPECT_EQ(AllocationType::UNKNOWN, allocation2.getAllocationType());
 }
 
 TEST(DrmAllocationTest, givenMemoryPoolWhenPassedToDrmAllocationConstructorThenMemoryPoolIsStored) {
-    DrmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::System64KBPages};
+    DrmAllocation allocation{0, AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::System64KBPages};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 
-    DrmAllocation allocation2{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible};
+    DrmAllocation allocation2{0, AllocationType::UNKNOWN, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible};
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
 }
 
@@ -4017,13 +4017,13 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedTh
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::megaByte;
     allocationData.alignment = 2 * MemoryConstants::megaByte;
-    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+    allocationData.type = AllocationType::SVM_CPU;
     allocationData.rootDeviceIndex = rootDeviceIndex;
 
     DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->getAllocationType());
+    EXPECT_EQ(AllocationType::SVM_CPU, allocation->getAllocationType());
 
     EXPECT_EQ(allocationData.size, allocation->getUnderlyingBufferSize());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
@@ -4058,7 +4058,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::megaByte;
     allocationData.alignment = 2 * MemoryConstants::megaByte;
-    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+    allocationData.type = AllocationType::SVM_CPU;
     allocationData.rootDeviceIndex = rootDeviceIndex;
 
     DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
@@ -4117,7 +4117,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryCallSequenceTest, givenDrmMemoryManagerAn
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     GMockDrmMemoryManager gmockDrmMemoryManager(executionEnvironment);
 
-    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield};
+    AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::BUFFER, mockDeviceBitfield};
     auto allocation = gmockDrmMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     ASSERT_NE(allocation, nullptr);
 
@@ -4141,7 +4141,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     ::testing::NiceMock<GMockDrmMemoryManager> gmockDrmMemoryManager(executionEnvironment);
 
     osHandle handle = 1u;
-    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+    AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
     auto allocation = gmockDrmMemoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, allocation);
 
@@ -4179,7 +4179,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -4189,7 +4189,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -4199,7 +4199,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -4209,7 +4209,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::DEBUG_MODULE_AREA, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
@@ -4220,7 +4220,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::BUFFER_HOST_MEMORY, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -4242,7 +4242,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
 
     {
         MockBufferObject bo(&drm, 0, 0, 1);
-        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, MemoryPool::System4KBPages);
+        MockDrmAllocation allocation(AllocationType::KERNEL_ISA_INTERNAL, MemoryPool::System4KBPages);
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -4257,7 +4257,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationNotEnabledWhenRegisteringBindEx
     EXPECT_EQ(0u, drm.classHandles.size());
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(0u, bo.bindExtHandles.size());
@@ -4277,7 +4277,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhe
 
     mockDrm->registeredDataSize = 0;
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
 
     memoryManager->registerAllocationInOs(&allocation);
 
@@ -4298,13 +4298,13 @@ TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhen
     mockDrm->classHandles.push_back(1);
 
     MockBufferObject bo(mockDrm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
     allocation.bufferObjects[0] = &bo;
     memoryManager->registerAllocationInOs(&allocation);
 
     EXPECT_TRUE(allocation.markedForCapture);
 
-    MockDrmAllocation allocation2(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation2(AllocationType::BUFFER, MemoryPool::System4KBPages);
     allocation2.bufferObjects[0] = &bo;
     memoryManager->registerAllocationInOs(&allocation2);
 
@@ -4327,7 +4327,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsR
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
     NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize,
-                                         NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
                                          false, 1};
 
     properties.gpuAddress = 0x20000;
@@ -4357,7 +4357,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
     NEO::AllocationProperties properties{0, true, MemoryConstants::pageSize,
-                                         NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
                                          false, 1};
 
     properties.gpuAddress = 0x20000;
@@ -4383,7 +4383,7 @@ TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
 
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
-    MockDrmAllocation gfxAllocation(GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::MemoryNull);
+    MockDrmAllocation gfxAllocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::MemoryNull);
 
     gfxAllocation.registerBOBindExtHandle(mockDrm.get());
     EXPECT_EQ(1u, gfxAllocation.registeredBoBindHandles.size());
@@ -4399,7 +4399,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationIsRegister
     drm.classHandles.push_back(1);
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
 
@@ -4420,7 +4420,7 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenIsaIsRegisteredThenC
     drm.registeredClass = Drm::ResourceClass::MaxSize;
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(2u, bo.bindExtHandles.size());
@@ -4438,7 +4438,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaultRe
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     EXPECT_TRUE(allocation.setCacheRegion(&drm, CacheRegion::Default));
 }
@@ -4449,7 +4449,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheInfoIsNotAvailableThenCacheRe
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
 }
@@ -4461,7 +4461,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThenCac
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.setupCacheInfo(*defaultHwInfo.get());
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     EXPECT_FALSE(allocation.setCacheRegion(&drm, CacheRegion::Region1));
 }
@@ -4473,7 +4473,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.cacheInfo.reset(new MockCacheInfo());
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     EXPECT_FALSE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::None));
 }
@@ -4485,7 +4485,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenRe
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     drm.cacheInfo.reset(new MockCacheInfo());
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
     EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
 }
@@ -4498,7 +4498,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
     drm.cacheInfo.reset(new MockCacheInfo());
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     EXPECT_TRUE(allocation.setCacheAdvice(&drm, 1024, CacheRegion::Region1));
@@ -4517,7 +4517,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenBufferObjectIsCreatedThenApplyDefa
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     for (auto bo : allocation.bufferObjects) {
@@ -4534,7 +4534,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenSetCachePolicyIsCalledThenUpdatePo
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     allocation.setCachePolicy(CachePolicy::Uncached);
@@ -4553,7 +4553,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenSetMemAdviseWithCachePolicyIsCalle
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     EXPECT_EQ(CachePolicy::WriteBack, bo.peekCachePolicy());
@@ -4579,7 +4579,7 @@ TEST(DrmAllocationTest, givenBoWhenMarkingForCaptureThenBosAreMarked) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
+    MockDrmAllocation allocation(AllocationType::SCRATCH_SURFACE, MemoryPool::System4KBPages);
     allocation.markForCapture();
 
     allocation.bufferObjects[0] = &bo;
@@ -4603,7 +4603,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
 
     memoryManager->populateOsHandles(storage, rootDeviceIndex);
 
-    auto allocation = std::make_unique<DrmAllocation>(rootDeviceIndex, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+    auto allocation = std::make_unique<DrmAllocation>(rootDeviceIndex, AllocationType::BUFFER_HOST_MEMORY,
                                                       nullptr, ptr, castToUint64(ptr), size, MemoryPool::System4KBPages);
     allocation->fragmentsStorage = storage;
 
@@ -4648,7 +4648,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFromUserptrWhe
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemoryWithPropertiesCalledWithDebugSurfaceTypeThenDebugSurfaceIsCreated) {
-    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
+    AllocationProperties debugSurfaceProperties{0, true, MemoryConstants::pageSize, NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA, false, false, 0b1011};
     auto debugSurface = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(debugSurfaceProperties));
 
     EXPECT_NE(nullptr, debugSurface);
@@ -4684,7 +4684,7 @@ TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeI
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     size_t sizeIn = 1024llu;
     uint64_t gpuAddress = 0x1337llu;
-    DrmAllocation stackDrmAllocation(0u, GraphicsAllocation::AllocationType::BUFFER, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::System64KBPages);
+    DrmAllocation stackDrmAllocation(0u, AllocationType::BUFFER, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::System64KBPages);
     memoryManager.freeGraphicsMemoryImpl(&stackDrmAllocation);
 }
 
@@ -4754,7 +4754,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenLockResourceIsCal
     DrmMemoryManagerToTestLockInLocalMemory memoryManager(*executionEnvironment);
     BufferObject bo(mock, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
@@ -4770,7 +4770,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenLockResourceIs
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(mock, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
@@ -4788,7 +4788,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryWhenCopyMemo
 
     std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), AllocationType::BUFFER, device->getDeviceBitfield()});
     ASSERT_NE(nullptr, allocation);
 
     auto ret = memoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
@@ -4807,7 +4807,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryAndCpuPtrWhe
 
     std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), AllocationType::BUFFER, device->getDeviceBitfield()});
     ASSERT_NE(nullptr, allocation);
     allocation->setCpuPtrAndGpuAddress(nullptr, 0u);
     auto ret = memoryManager.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
@@ -4841,7 +4841,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOn
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
 
     auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation.getBO());
     EXPECT_EQ(nullptr, ptr);
@@ -4857,7 +4857,7 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCa
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
-    auto drmAllocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    auto drmAllocation = new DrmAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation);
 
     memoryManager.freeGraphicsMemoryImpl(drmAllocation);
@@ -4874,7 +4874,7 @@ TEST(DrmMemoryManagerSimpleTest, WhenDrmIsCreatedThenQueryPageFaultSupportIsCall
 using DrmMemoryManagerWithLocalMemoryTest = Test<DrmMemoryManagerWithLocalMemoryFixture>;
 
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnAllocationInLocalMemoryThenReturnNullPtr) {
-    DrmAllocation drmAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);
@@ -4891,7 +4891,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
 
     std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), AllocationType::BUFFER, device->getDeviceBitfield()});
     ASSERT_NE(nullptr, allocation);
 
     auto ret = memoryManager->copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
@@ -4910,7 +4910,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIsCalledThenUp
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(mock, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
+    DrmAllocation drmAllocation(0, AllocationType::UNIFIED_SHARED_MEMORY, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     for (auto isCached : {false, true}) {
@@ -4936,7 +4936,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(&drm, 0, 0, 1);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     std::vector<BufferObject *> bufferObjects;
@@ -4960,7 +4960,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocat
     uint32_t vmHandleId = 0;
 
     struct MockDrmAllocationToTestPageFault : MockDrmAllocation {
-        MockDrmAllocationToTestPageFault() : MockDrmAllocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::LocalMemory){};
+        MockDrmAllocationToTestPageFault() : MockDrmAllocation(AllocationType::BUFFER, MemoryPool::LocalMemory){};
         bool shouldAllocationPageFault(const Drm *drm) override {
             return shouldPageFault;
         }
@@ -5005,7 +5005,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseSyste
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.useSystemMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -5015,7 +5015,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUseSyste
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenSvmGpuAllocationWhenHostPtrProvidedThenUseHostPtrAsGpuVa) {
     size_t size = 2 * MemoryConstants::megaByte;
-    AllocationProperties properties{rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SVM_GPU, false, mockDeviceBitfield};
+    AllocationProperties properties{rootDeviceIndex, false, size, AllocationType::SVM_GPU, false, mockDeviceBitfield};
     properties.alignment = size;
     void *svmPtr = reinterpret_cast<void *>(2 * size);
 
@@ -5042,7 +5042,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllowed3
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allow32Bit = true;
     allocData.flags.allocateMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -5059,7 +5059,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllowed3
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allow32Bit = true;
     allocData.flags.allocateMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -5080,7 +5080,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     allocData.storageInfo.multiStorage = false;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
-    GraphicsAllocation::AllocationType isaTypes[] = {GraphicsAllocation::AllocationType::KERNEL_ISA, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
     for (uint32_t i = 0; i < 2; i++) {
         allocData.type = isaTypes[i];
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -5112,7 +5112,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     allocData.allFlags = 0;
     allocData.size = 18 * MemoryConstants::pageSize64k;
     allocData.flags.allocateMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
     allocData.storageInfo.multiStorage = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
@@ -5145,7 +5145,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allocateMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
+    allocData.type = AllocationType::KERNEL_ISA;
     allocData.storageInfo.memoryBanks = 0b1011;
     allocData.storageInfo.multiStorage = false;
     allocData.rootDeviceIndex = rootDeviceIndex;
@@ -5196,7 +5196,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
     allocationData.size = MemoryConstants::pageSize;
     allocationData.flags.allocateMemory = true;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.type = AllocationType::BUFFER;
     allocationData.flags.resource48Bit = true;
     MemoryManager::AllocationStatus allocationStatus;
 
@@ -5235,7 +5235,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, given2MbAlignmentAllowedWhenAll
     allocationData.size = 2 * MemoryConstants::megaByte;
     allocationData.flags.allocateMemory = true;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.type = AllocationType::BUFFER;
     allocationData.flags.resource48Bit = true;
     MemoryManager::AllocationStatus allocationStatus;
 
@@ -5279,7 +5279,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenExtendedHeapPreferredAnd2M
     allocationData.size = 2 * MemoryConstants::megaByte;
     allocationData.flags.allocateMemory = true;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.type = AllocationType::BUFFER;
     allocationData.flags.resource48Bit = false;
     MemoryManager::AllocationStatus allocationStatus;
 
@@ -5319,7 +5319,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
     allocationData.allFlags = 0;
     allocationData.flags.allocateMemory = true;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.type = AllocationType::BUFFER;
     allocationData.flags.resource48Bit = true;
     MemoryManager::AllocationStatus allocationStatus;
 
@@ -5369,7 +5369,7 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
     allocationData.size = 3 * MemoryConstants::megaByte;
     allocationData.flags.allocateMemory = true;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocationData.type = AllocationType::BUFFER;
     allocationData.flags.resource48Bit = true;
     MemoryManager::AllocationStatus allocationStatus;
 
@@ -5404,7 +5404,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allocateMemory = true;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     auto sizeAligned = alignUp(allocData.size, MemoryConstants::pageSize64k);
 
@@ -5463,7 +5463,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
     AllocationData allocData;
     allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
-    allocData.type = GraphicsAllocation::AllocationType::IMAGE;
+    allocData.type = AllocationType::IMAGE;
     allocData.flags.resource48Bit = true;
     allocData.imgInfo = &imgInfo;
     allocData.rootDeviceIndex = rootDeviceIndex;
@@ -5514,7 +5514,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUs
     allocData.rootDeviceIndex = rootDeviceIndex;
     auto sizeAligned = alignUp(allocData.size, MemoryConstants::pageSize64k);
 
-    GraphicsAllocation::AllocationType isaTypes[] = {GraphicsAllocation::AllocationType::KERNEL_ISA, GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL};
+    AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
     for (uint32_t i = 0; i < 2; i++) {
         allocData.type = isaTypes[i];
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -5548,7 +5548,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUnsuppor
     allocData.flags.allocateMemory = true;
     allocData.rootDeviceIndex = rootDeviceIndex;
 
-    GraphicsAllocation::AllocationType unsupportedTypes[] = {GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
+    AllocationType unsupportedTypes[] = {AllocationType::SHARED_RESOURCE_COPY};
 
     for (auto unsupportedType : unsupportedTypes) {
         allocData.type = unsupportedType;
@@ -5582,7 +5582,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenOversize
     auto status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
     allocData.size = 5 * MemoryConstants::megaByte;
-    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.type = AllocationType::BUFFER;
     allocData.rootDeviceIndex = rootDeviceIndex;
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     memoryManager->getGfxPartition(rootDeviceIndex)->heapFree(heap, gpuAddress2, largerSize);
@@ -5626,7 +5626,7 @@ TEST(DrmMemoryManagerCopyMemoryToAllocationBanksTest, givenDrmMemoryManagerWhenC
     DrmMemoryManagerToTestCopyMemoryToAllocationBanks drmMemoryManger(executionEnvironment, destinationAllocationSize);
     std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
 
-    MockDrmAllocation mockAllocation(GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE, MemoryPool::LocalMemory);
+    MockDrmAllocation mockAllocation(AllocationType::WORK_PARTITION_SURFACE, MemoryPool::LocalMemory);
 
     mockAllocation.storageInfo.memoryBanks = 0b1111;
     DeviceBitfield memoryBanksToCopy = 0b1010;
@@ -5725,7 +5725,7 @@ TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithoutMmapPtrThenOnlyUserp
 
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
     auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
     ASSERT_NE(nullptr, gfxPaddedAllocation);
     memoryManager->freeGraphicsMemoryImpl(gfxPaddedAllocation);
@@ -5739,7 +5739,7 @@ TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrThenMmapCalled) 
 
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
     gfxAllocation.setMmapPtr(cpuPtr);
     gfxAllocation.setMmapSize(size);
     auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
@@ -5756,7 +5756,7 @@ TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrAndFailedMmapCal
 
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
     gfxAllocation.setMmapPtr(cpuPtr);
     gfxAllocation.setMmapSize(size);
     auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
@@ -5797,11 +5797,11 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
 }
 
 TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
-    GraphicsAllocation::AllocationType validAllocations[] = {
-        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-        GraphicsAllocation::AllocationType::RING_BUFFER,
-        GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER,
-        GraphicsAllocation::AllocationType::TAG_BUFFER};
+    AllocationType validAllocations[] = {
+        AllocationType::COMMAND_BUFFER,
+        AllocationType::RING_BUFFER,
+        AllocationType::SEMAPHORE_BUFFER,
+        AllocationType::TAG_BUFFER};
 
     for (size_t i = 0; i < 4; i++) {
         EXPECT_TRUE(memoryManager->allocationTypeForCompletionFence(validAllocations[i]));
@@ -5809,11 +5809,11 @@ TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEli
 }
 
 TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnFalse) {
-    GraphicsAllocation::AllocationType invalidAllocations[] = {
-        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
-        GraphicsAllocation::AllocationType::FILL_PATTERN,
-        GraphicsAllocation::AllocationType::GLOBAL_SURFACE};
+    AllocationType invalidAllocations[] = {
+        AllocationType::BUFFER_HOST_MEMORY,
+        AllocationType::CONSTANT_SURFACE,
+        AllocationType::FILL_PATTERN,
+        AllocationType::GLOBAL_SURFACE};
 
     for (size_t i = 0; i < 4; i++) {
         EXPECT_FALSE(memoryManager->allocationTypeForCompletionFence(invalidAllocations[i]));
@@ -5824,11 +5824,11 @@ TEST_F(DrmMemoryManagerTest, GivenNotEligbleAllocationTypeAndDebugFlagOverriding
     DebugManagerStateRestore dbgState;
     DebugManager.flags.UseDrmCompletionFenceForAllAllocations.set(1);
 
-    GraphicsAllocation::AllocationType invalidAllocations[] = {
-        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
-        GraphicsAllocation::AllocationType::FILL_PATTERN,
-        GraphicsAllocation::AllocationType::GLOBAL_SURFACE};
+    AllocationType invalidAllocations[] = {
+        AllocationType::BUFFER_HOST_MEMORY,
+        AllocationType::CONSTANT_SURFACE,
+        AllocationType::FILL_PATTERN,
+        AllocationType::GLOBAL_SURFACE};
 
     for (size_t i = 0; i < 4; i++) {
         EXPECT_TRUE(memoryManager->allocationTypeForCompletionFence(invalidAllocations[i]));
@@ -5842,7 +5842,7 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
     VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::COMMAND_BUFFER});
     auto engine = memoryManager->getRegisteredEngines()[0];
     allocation->updateTaskCount(2, engine.osContext->getContextId());
 
@@ -5865,7 +5865,7 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
     VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::COMMAND_BUFFER});
 
     memoryManager->handleFenceCompletion(allocation);
 
@@ -5881,7 +5881,7 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
     VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::GLOBAL_SURFACE});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::GLOBAL_SURFACE});
     auto engine = memoryManager->getRegisteredEngines()[0];
     allocation->updateTaskCount(2, engine.osContext->getContextId());
 
@@ -5899,7 +5899,7 @@ HWTEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletion
     VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
     VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::COMMAND_BUFFER});
     auto engine = memoryManager->getRegisteredEngines()[0];
     allocation->updateTaskCount(2, engine.osContext->getContextId());
 

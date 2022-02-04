@@ -42,9 +42,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
                                           sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
+    case AllocationType::KERNEL_ISA:
+    case AllocationType::KERNEL_ISA_INTERNAL:
+    case AllocationType::DEBUG_MODULE_AREA: {
         auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
 
         if (executionEnvironment.isDebuggingEnabled()) {
@@ -64,13 +64,13 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = false;
         }
     } break;
-    case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
-    case GraphicsAllocation::AllocationType::WORK_PARTITION_SURFACE:
+    case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+    case AllocationType::WORK_PARTITION_SURFACE:
         storageInfo.cloningOfPageTables = false;
         storageInfo.memoryBanks = allTilesValue;
         storageInfo.tileInstanced = true;
         break;
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case AllocationType::PRIVATE_SURFACE:
         storageInfo.cloningOfPageTables = false;
 
         if (properties.subDevicesBitfield.count() == 1) {
@@ -81,17 +81,17 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.tileInstanced = true;
         }
         break;
-    case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case AllocationType::COMMAND_BUFFER:
+    case AllocationType::INTERNAL_HEAP:
+    case AllocationType::LINEAR_STREAM:
         storageInfo.cloningOfPageTables = properties.flags.multiOsContextCapable;
         storageInfo.memoryBanks = preferredTile;
         if (!properties.flags.multiOsContextCapable) {
             storageInfo.pageTablesVisibility = preferredTile;
         }
         break;
-    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
-    case GraphicsAllocation::AllocationType::PREEMPTION:
+    case AllocationType::SCRATCH_SURFACE:
+    case AllocationType::PREEMPTION:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
@@ -101,7 +101,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.pageTablesVisibility = preferredTile;
         }
         break;
-    case GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+    case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = true;
         } else {
@@ -109,8 +109,8 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.cloningOfPageTables = false;
         }
         break;
-    case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::SVM_GPU: {
+    case AllocationType::BUFFER:
+    case AllocationType::SVM_GPU: {
         auto colouringPolicy = properties.colouringPolicy;
         auto granularity = properties.colouringGranularity;
 
@@ -149,7 +149,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         break;
     }
-    case GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY:
+    case AllocationType::UNIFIED_SHARED_MEMORY:
         storageInfo.memoryBanks = allTilesValue;
         break;
     default:

@@ -1512,11 +1512,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
         uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
 
-        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::GraphicsAllocation::AllocationType::FILL_PATTERN);
+        auto patternGfxAlloc = device->obtainReusableAllocation(patternAllocationSize, NEO::AllocationType::FILL_PATTERN);
         if (patternGfxAlloc == nullptr) {
             patternGfxAlloc = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getNEODevice()->getRootDeviceIndex(),
                                                                                                                    patternAllocationSize,
-                                                                                                                   NEO::GraphicsAllocation::AllocationType::FILL_PATTERN,
+                                                                                                                   NEO::AllocationType::FILL_PATTERN,
                                                                                                                    device->getNEODevice()->getDeviceBitfield()});
         }
         void *patternGfxAllocPtr = patternGfxAlloc->getUnderlyingBuffer();
@@ -2106,7 +2106,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
 
     size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);
-    NEO::GraphicsAllocation::AllocationType allocationType = NEO::GraphicsAllocation::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+    NEO::AllocationType allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     auto devices = device->getNEODevice()->getDeviceBitfield();
     NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
                                                    true,

@@ -11,12 +11,12 @@
 
 namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {
-    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size) : AllocationProperties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, GraphicsAllocation::AllocationType type) : AllocationProperties(rootDeviceIndex, true, size, type, false, mockDeviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size) : AllocationProperties(rootDeviceIndex, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, mockDeviceBitfield) {}
-    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, deviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size) : AllocationProperties(rootDeviceIndex, true, size, AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, AllocationType type) : AllocationProperties(rootDeviceIndex, true, size, type, false, mockDeviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, true, size, AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size) : AllocationProperties(rootDeviceIndex, allocateMemory, size, AllocationType::INTERNAL_HOST_MEMORY, false, mockDeviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, allocateMemory, size, AllocationType::INTERNAL_HOST_MEMORY, false, deviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, AllocationType allocationType) : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, mockDeviceBitfield) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, AllocationType allocationType, DeviceBitfield deviceBitfield) : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, deviceBitfield) {}
 };
 } // namespace NEO

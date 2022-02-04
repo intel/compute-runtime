@@ -155,7 +155,7 @@ TEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGetCSIsCalledThe
     auto commandStreamAllocation = commandStream.getGraphicsAllocation();
     ASSERT_NE(nullptr, commandStreamAllocation);
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
+    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTaskCountFromCsr) {
@@ -909,7 +909,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     uint32_t numRootDevices = 10u;
     UltDeviceFactory deviceFactory{numRootDevices, 0};
     EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
     EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
     auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
@@ -928,7 +928,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     uint32_t numRootDevices = 10u;
     UltDeviceFactory deviceFactory{numRootDevices, 0};
     EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::TAG_BUFFER, deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress() != nullptr);
     EXPECT_EQ(*deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagAddress(), initialHardwareTag);
     auto tagsMultiAllocation = deviceFactory.rootDevices[0]->commandStreamReceivers[0]->getTagsMultiAllocation();
@@ -945,7 +945,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     bool destructorCalled = false;
     int gpuTag = 0;
 
-    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(0, GraphicsAllocation::AllocationType::UNKNOWN, &gpuTag, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
+    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(0, AllocationType::UNKNOWN, &gpuTag, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
@@ -971,7 +971,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
     auto tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
@@ -991,7 +991,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
 
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_EQ(csr->getTagAllocation()->getUnderlyingBuffer(), csr->getTagAddress());
 
     auto tagAddress = csr->getTagAddress();
@@ -1085,7 +1085,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
     MockGraphicsAllocation mockAllocation;
-    mockAllocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
+    mockAllocation.setAllocationType(AllocationType::KERNEL_ISA);
 
     csr.useNewResourceImplicitFlush = true;
     csr.newResources = false;
@@ -1216,7 +1216,7 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     temporaryAllocation->updateTaskCount(0u, 0u);
     csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
 
@@ -1320,7 +1320,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
     auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
-                                                                  GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(0u, 0u);
     commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
@@ -1358,7 +1358,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     bool runPopulateOsHandlesExpects = false;
     bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!mockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
         runPopulateOsHandlesExpects = true;
         mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {
@@ -1394,7 +1394,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     bool runPopulateOsHandlesExpects = false;
     bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!mockMemoryManager->useNonSvmHostPtrAlloc(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(AllocationType::EXTERNAL_HOST_PTR, device->getRootDeviceIndex())) {
         runPopulateOsHandlesExpects = true;
         mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {
@@ -1439,7 +1439,7 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallingEnsureCommandBufferAllocationThenDoNotReallocate) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
@@ -1454,7 +1454,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallin
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocate) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
@@ -1463,7 +1463,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsureCommandBufferAllocationThenReallocateAndAlignSizeTo64kb) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
@@ -1478,7 +1478,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
 }
 
 TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsureCommandBufferAllocationThenSizesOfAllocationAndCommandBufferAreCorrect) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 350u);
@@ -1500,7 +1500,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoAllocations
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsForReuseWhenCallingEnsureCommandBufferAllocationThenObtainAllocationFromInternalAllocationStorage) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
 
@@ -1513,7 +1513,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndAllocationsFo
 }
 
 TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReusableAllocationWhenCallingEnsureCommandBufferAllocationThenObtainAllocationMemoryManager) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     LinearStream commandStream;
 

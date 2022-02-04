@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(
     const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam, bool deviceOnlyVisibilty) {
 
     auto deviceBitfield = MemoryPropertiesHelper::adjustDeviceBitfield(rootDeviceIndex, memoryProperties, subDevicesBitfieldParam);
-    AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE, deviceBitfield};
+    AllocationProperties allocationProperties{rootDeviceIndex, allocateMemory, imgInfo, AllocationType::IMAGE, deviceBitfield};
     MemoryPropertiesHelper::fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo, deviceOnlyVisibilty);
     return allocationProperties;
 }

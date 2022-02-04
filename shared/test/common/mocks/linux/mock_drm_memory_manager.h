@@ -112,7 +112,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     void forceLimitedRangeAllocator(uint64_t range);
     void overrideGfxPartition(GfxPartition *newGfxPartition);
 
-    DrmAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
+    DrmAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType);
     ~TestedDrmMemoryManager() override;
     size_t peekSharedBosSize() {
         size_t size = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(),
                                     false, // allocateMemory
-                                    imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                    imgInfo, AllocationType::SHARED_IMAGE,
                                     context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false, false);

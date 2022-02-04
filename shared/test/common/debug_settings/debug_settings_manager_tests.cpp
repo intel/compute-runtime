@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerW
 }
 
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
-    GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
 }
 

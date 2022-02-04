@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,8 +105,8 @@ class MockHwInfoConfig : public HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
 struct MemoryManagerReturningCompressedAllocations : UnifiedSharingMockMemoryManager<true> {
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override {
-        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
+        auto allocation = UnifiedSharingMockMemoryManager<true>::createGraphicsAllocationFromNTHandle(handle, rootDeviceIndex, AllocationType::SHARED_IMAGE);
 
         auto gmm = allocation->getDefaultGmm();
         auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfo>(gmm->gmmResourceInfo->peekGmmResourceInfo());

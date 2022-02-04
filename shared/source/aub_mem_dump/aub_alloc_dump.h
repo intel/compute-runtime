@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,16 +29,16 @@ enum DumpFormat {
 };
 
 inline bool isWritableBuffer(GraphicsAllocation &gfxAllocation) {
-    return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER ||
-            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY ||
-            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR ||
-            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::MAP_ALLOCATION ||
-            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::SVM_GPU) &&
+    return (gfxAllocation.getAllocationType() == AllocationType::BUFFER ||
+            gfxAllocation.getAllocationType() == AllocationType::BUFFER_HOST_MEMORY ||
+            gfxAllocation.getAllocationType() == AllocationType::EXTERNAL_HOST_PTR ||
+            gfxAllocation.getAllocationType() == AllocationType::MAP_ALLOCATION ||
+            gfxAllocation.getAllocationType() == AllocationType::SVM_GPU) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
 }
 
 inline bool isWritableImage(GraphicsAllocation &gfxAllocation) {
-    return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::IMAGE) &&
+    return (gfxAllocation.getAllocationType() == AllocationType::IMAGE) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
 }
 

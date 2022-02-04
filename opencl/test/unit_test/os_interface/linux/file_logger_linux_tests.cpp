@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, 0x12345);
 
@@ -77,7 +77,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, 0x12345);
 
@@ -125,7 +125,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 
@@ -156,7 +156,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     fileLogger.logAllocation(&allocation);
 

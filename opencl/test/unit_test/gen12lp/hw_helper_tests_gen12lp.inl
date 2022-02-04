@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -230,7 +230,7 @@ GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibil
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
 
     EXPECT_TRUE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
@@ -326,17 +326,17 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequiredWhenC
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
 
-    const GraphicsAllocation::AllocationType allocationTypesToUseSystemMemory[] = {
-        GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
-        GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
-        GraphicsAllocation::AllocationType::INTERNAL_HEAP,
-        GraphicsAllocation::AllocationType::LINEAR_STREAM,
-        GraphicsAllocation::AllocationType::PIPE,
-        GraphicsAllocation::AllocationType::PRINTF_SURFACE,
-        GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
-        GraphicsAllocation::AllocationType::RING_BUFFER,
-        GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER};
+    const AllocationType allocationTypesToUseSystemMemory[] = {
+        AllocationType::COMMAND_BUFFER,
+        AllocationType::CONSTANT_SURFACE,
+        AllocationType::GLOBAL_SURFACE,
+        AllocationType::INTERNAL_HEAP,
+        AllocationType::LINEAR_STREAM,
+        AllocationType::PIPE,
+        AllocationType::PRINTF_SURFACE,
+        AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
+        AllocationType::RING_BUFFER,
+        AllocationType::SEMAPHORE_BUFFER};
 
     MockMemoryManager mockMemoryManager;
     for (auto allocationType : allocationTypesToUseSystemMemory) {
@@ -349,7 +349,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenAllocationTypeWithCpuAccessRequiredWhenC
     }
 
     AllocationData allocData{};
-    AllocationProperties properties(mockRootDeviceIndex, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield);
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::BUFFER, false, mockDeviceBitfield);
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.requiresCpuAccess);
     EXPECT_FALSE(allocData.flags.useSystemMemory);

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
@@ -53,55 +54,6 @@ struct AubInfo {
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
-    enum class AllocationType {
-        UNKNOWN = 0,
-        BUFFER,
-        BUFFER_HOST_MEMORY,
-        COMMAND_BUFFER,
-        CONSTANT_SURFACE,
-        EXTERNAL_HOST_PTR,
-        FILL_PATTERN,
-        GLOBAL_SURFACE,
-        IMAGE,
-        INDIRECT_OBJECT_HEAP,
-        INSTRUCTION_HEAP,
-        INTERNAL_HEAP,
-        INTERNAL_HOST_MEMORY,
-        KERNEL_ISA,
-        KERNEL_ISA_INTERNAL,
-        LINEAR_STREAM,
-        MAP_ALLOCATION,
-        MCS,
-        PIPE,
-        PREEMPTION,
-        PRINTF_SURFACE,
-        PRIVATE_SURFACE,
-        PROFILING_TAG_BUFFER,
-        SCRATCH_SURFACE,
-        SHARED_BUFFER,
-        SHARED_CONTEXT_IMAGE,
-        SHARED_IMAGE,
-        SHARED_RESOURCE_COPY,
-        SURFACE_STATE_HEAP,
-        SVM_CPU,
-        SVM_GPU,
-        SVM_ZERO_COPY,
-        TAG_BUFFER,
-        GLOBAL_FENCE,
-        TIMESTAMP_PACKET_TAG_BUFFER,
-        WRITE_COMBINED,
-        RING_BUFFER,
-        SEMAPHORE_BUFFER,
-        DEBUG_CONTEXT_SAVE_AREA,
-        DEBUG_SBA_TRACKING_BUFFER,
-        DEBUG_MODULE_AREA,
-        UNIFIED_SHARED_MEMORY,
-        WORK_PARTITION_SURFACE,
-        GPU_TIMESTAMP_DEVICE_BUFFER,
-        SW_TAG_BUFFER,
-        COUNT
-    };
-
     enum UsmInitialPlacement {
         DEFAULT,
         CPU,
@@ -245,9 +197,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::SHARED_RESOURCE_COPY;
     }
 
-    static bool isIsaAllocationType(GraphicsAllocation::AllocationType type) {
-        return type == GraphicsAllocation::AllocationType::KERNEL_ISA ||
-               type == GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL ||
+    static bool isIsaAllocationType(AllocationType type) {
+        return type == AllocationType::KERNEL_ISA ||
+               type == AllocationType::KERNEL_ISA_INTERNAL ||
                type == AllocationType::DEBUG_MODULE_AREA;
     }
 

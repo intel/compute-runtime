@@ -169,7 +169,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         scratchSurfaceDirty = true;
         scratchSizeBytes = requiredScratchSizeInBytes;
         perThreadScratchSize = requiredPerThreadScratchSizeAlignedUp;
-        AllocationProperties properties{this->rootDeviceIndex, true, scratchSizeBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, multiTileCapable, false, osContext.getDeviceBitfield()};
+        AllocationProperties properties{this->rootDeviceIndex, true, scratchSizeBytes, AllocationType::SCRATCH_SURFACE, multiTileCapable, false, osContext.getDeviceBitfield()};
         scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
     if (privateScratchSpaceSupported) {
@@ -183,7 +183,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
             privateScratchSizeBytes = requiredPrivateScratchSizeInBytes;
             perThreadPrivateScratchSize = requiredPerThreadPrivateScratchSizeAlignedUp;
             scratchSurfaceDirty = true;
-            AllocationProperties properties{this->rootDeviceIndex, true, privateScratchSizeBytes, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, multiTileCapable, false, osContext.getDeviceBitfield()};
+            AllocationProperties properties{this->rootDeviceIndex, true, privateScratchSizeBytes, AllocationType::PRIVATE_SURFACE, multiTileCapable, false, osContext.getDeviceBitfield()};
             privateScratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         }
     }

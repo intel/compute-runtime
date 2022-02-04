@@ -267,7 +267,7 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if (allocationData.type == NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+    if (allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
         return createMultiHostAllocation(allocationData);
     }
 
@@ -285,7 +285,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     uint64_t alignedGpuAddress = 0;
     size_t alignedStorageSize = cSize;
     size_t alignedVirtualAdressRangeSize = cSize;
-    auto svmCpuAllocation = allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU;
+    auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
         //add padding in case reserved addr is not aligned
         alignedStorageSize = alignUp(cSize, cAlignment);
@@ -343,7 +343,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
 }
 
 void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {
-    if ((isLimitedRange(allocationData.rootDeviceIndex) || allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) &&
+    if ((isLimitedRange(allocationData.rootDeviceIndex) || allocationData.type == AllocationType::SVM_CPU) &&
         !allocationData.flags.isUSMHostAllocation) {
         bo->setAddress(gpuAddress);
     }
@@ -1111,7 +1111,7 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphi
         return nullptr;
     }
     auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
-    if (graphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+    if (graphicsAllocation.getAllocationType() == AllocationType::WRITE_COMBINED) {
         auto addr = lockResourceInLocalMemoryImpl(bo);
         auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
         auto notUsedSize = ptrDiff(alignedAddr, addr);
@@ -1213,22 +1213,22 @@ void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *alloca
     }
 }
 
-uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition,
+uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, AllocationType allocType, GfxPartition *gfxPartition,
                        size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow) {
     uint64_t gpuAddress = 0;
     switch (allocType) {
-    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case AllocationType::SVM_GPU:
         gpuAddress = reinterpret_cast<uint64_t>(hostPtr);
         sizeAllocated = 0;
         break;
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA: {
+    case AllocationType::KERNEL_ISA:
+    case AllocationType::KERNEL_ISA_INTERNAL:
+    case AllocationType::INTERNAL_HEAP:
+    case AllocationType::DEBUG_MODULE_AREA: {
         auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, useFrontWindow);
         gpuAddress = GmmHelper::canonize(gfxPartition->heapAllocate(heap, sizeAllocated));
     } break;
-    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
+    case AllocationType::WRITE_COMBINED:
         sizeAllocated = 0;
         break;
     default:
@@ -1247,11 +1247,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
         allocationData.flags.useSystemMemory ||
         (allocationData.flags.allow32Bit && this->force32bitAllocations) ||
-        allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY) {
+        allocationData.type == AllocationType::SHARED_RESOURCE_COPY) {
         return nullptr;
     }
 
-    if (allocationData.type == GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY) {
+    if (allocationData.type == AllocationType::UNIFIED_SHARED_MEMORY) {
         auto allocation = this->createSharedUnifiedMemoryAllocation(allocationData);
         status = allocation ? AllocationStatus::Success : AllocationStatus::Error;
         return allocation;
@@ -1261,13 +1261,13 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     size_t sizeAligned = 0;
     auto numHandles = allocationData.storageInfo.getNumBanks();
     bool createSingleHandle = 1 == numHandles;
-    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
+    if (allocationData.type == AllocationType::IMAGE) {
         allocationData.imgInfo->useLocalMemory = true;
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo,
                                     allocationData.storageInfo, allocationData.flags.preferCompressed);
         sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
     } else {
-        if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+        if (allocationData.type == AllocationType::WRITE_COMBINED) {
             sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
         } else {
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
@@ -1315,7 +1315,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         status = AllocationStatus::Error;
         return nullptr;
     }
-    if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
+    if (allocationData.type == AllocationType::WRITE_COMBINED) {
         auto cpuAddress = lockResource(allocation.get());
         auto alignedCpuAddress = alignDown(cpuAddress, 2 * MemoryConstants::megaByte);
         auto offset = ptrDiff(cpuAddress, alignedCpuAddress);
@@ -1465,16 +1465,16 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     return true;
 }
 
-bool DrmMemoryManager::allocationTypeForCompletionFence(GraphicsAllocation::AllocationType allocationType) {
+bool DrmMemoryManager::allocationTypeForCompletionFence(AllocationType allocationType) {
     int32_t overrideAllowAllAllocations = DebugManager.flags.UseDrmCompletionFenceForAllAllocations.get();
     bool allowAllAllocations = overrideAllowAllAllocations == -1 ? false : !!overrideAllowAllAllocations;
     if (allowAllAllocations) {
         return true;
     }
-    if (allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::RING_BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER ||
-        allocationType == GraphicsAllocation::AllocationType::TAG_BUFFER) {
+    if (allocationType == AllocationType::COMMAND_BUFFER ||
+        allocationType == AllocationType::RING_BUFFER ||
+        allocationType == AllocationType::SEMAPHORE_BUFFER ||
+        allocationType == AllocationType::TAG_BUFFER) {
         return true;
     }
     return false;

@@ -185,17 +185,17 @@ ze_command_queue_mode_t CommandQueueImp::getSynchronousMode() const {
 ze_result_t CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t sizeRequested) {
     size_t alignedSize = alignUp<size_t>(sizeRequested, MemoryConstants::pageSize64k);
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, alignedSize,
-                                         NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER,
+                                         NEO::AllocationType::COMMAND_BUFFER,
                                          (device->getNEODevice()->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                          false,
                                          device->getNEODevice()->getDeviceBitfield()};
 
-    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER);
+    auto firstBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::COMMAND_BUFFER);
     if (!firstBuffer) {
         firstBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
 
-    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER);
+    auto secondBuffer = device->obtainReusableAllocation(alignedSize, NEO::AllocationType::COMMAND_BUFFER);
     if (!secondBuffer) {
         secondBuffer = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }

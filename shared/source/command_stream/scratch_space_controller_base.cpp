@@ -47,7 +47,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
 }
 
 void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE, this->csrAllocationStorage.getDeviceBitfield()});
+    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, AllocationType::SCRATCH_SURFACE, this->csrAllocationStorage.getDeviceBitfield()});
     UNRECOVERABLE_IF(scratchAllocation == nullptr);
 }
 

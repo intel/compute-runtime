@@ -81,7 +81,7 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSvmAllocationExistsThen
     size_t usmSize = MemoryConstants::pageSize;
     void *usmBuffer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(usmSize, usmSize);
     NEO::GraphicsAllocation *usmAllocation = hostDriverHandle->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), false, usmSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
+        {device->getRootDeviceIndex(), false, usmSize, NEO::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
         usmBuffer);
     ASSERT_NE(nullptr, usmAllocation);
 
@@ -111,7 +111,7 @@ TEST_F(HostPointerManagerTest, givenSvmAllocationExistsWhenGettingExistingAlloca
     size_t usmSize = MemoryConstants::pageSize;
     void *usmBuffer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(usmSize, usmSize);
     NEO::GraphicsAllocation *usmAllocation = hostDriverHandle->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), false, usmSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
+        {device->getRootDeviceIndex(), false, usmSize, NEO::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
         usmBuffer);
     ASSERT_NE(nullptr, usmAllocation);
 

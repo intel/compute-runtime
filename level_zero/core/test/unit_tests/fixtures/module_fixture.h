@@ -62,7 +62,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                 isaGraphicsAllocation.release();
             }
             isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
-                                                                        NEO::GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                                                        NEO::AllocationType::KERNEL_ISA,
                                                                         reinterpret_cast<void *>(0x1234),
                                                                         0x1000,
                                                                         0,
@@ -307,7 +307,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
             kernelDescriptor = mockKernelDescriptor;
             this->device = device;
             isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
-                                                                        NEO::GraphicsAllocation::AllocationType::KERNEL_ISA,
+                                                                        NEO::AllocationType::KERNEL_ISA,
                                                                         reinterpret_cast<void *>(0x1234),
                                                                         0x1000,
                                                                         0,
@@ -331,14 +331,14 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         void addSegments() {
             kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));
             translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
-                                                                               NEO::GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+                                                                               NEO::AllocationType::GLOBAL_SURFACE,
                                                                                reinterpret_cast<void *>(0x1234),
                                                                                0x1000,
                                                                                0,
                                                                                sizeof(uint32_t),
                                                                                MemoryPool::System4KBPages);
             translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
-                                                                                 NEO::GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+                                                                                 NEO::AllocationType::GLOBAL_SURFACE,
                                                                                  reinterpret_cast<void *>(0x1234),
                                                                                  0x1000,
                                                                                  0,

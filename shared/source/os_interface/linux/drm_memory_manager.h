@@ -38,7 +38,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;
     void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, GraphicsAllocation::AllocationType allocType) override { return nullptr; }
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override { return nullptr; }
 
     uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override;
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
@@ -122,7 +122,7 @@ class DrmMemoryManager : public MemoryManager {
     bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount);
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
     void waitOnCompletionFence(GraphicsAllocation *allocation);
-    bool allocationTypeForCompletionFence(GraphicsAllocation::AllocationType allocationType);
+    bool allocationTypeForCompletionFence(AllocationType allocationType);
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);

@@ -33,7 +33,7 @@ void DebuggerL0::initialize() {
     sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
-                                         NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
                                          false,
                                          device->getDeviceBitfield()};
 
@@ -55,7 +55,7 @@ void DebuggerL0::initialize() {
         auto &hwInfo = device->getHardwareInfo();
         auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
-                                             NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                             NEO::AllocationType::DEBUG_MODULE_AREA,
                                              false,
                                              device->getDeviceBitfield()};
         moduleDebugArea = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);

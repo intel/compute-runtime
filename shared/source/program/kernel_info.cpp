@@ -118,7 +118,7 @@ int32_t KernelInfo::getArgNumByName(const char *name) const {
 bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.KernelHeapSize;
-    const auto allocType = internalIsa ? GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : GraphicsAllocation::AllocationType::KERNEL_ISA;
+    const auto allocType = internalIsa ? AllocationType::KERNEL_ISA_INTERNAL : AllocationType::KERNEL_ISA;
     kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
     if (!kernelAllocation) {
         return false;
