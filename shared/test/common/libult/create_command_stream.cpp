@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,9 @@ bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::s
     }
 
     return prepareDeviceEnvironmentImpl(executionEnvironment, osPciPath, rootDeviceIndex);
+}
+const HardwareInfo *getDefaultHwInfo() {
+    return defaultHwInfo.get();
 }
 
 } // namespace NEO

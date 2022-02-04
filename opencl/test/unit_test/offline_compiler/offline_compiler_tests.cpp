@@ -644,19 +644,19 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
         mockOfflineCompiler->initialize(argv.size(), argv);
 
         std::string internalOptions = mockOfflineCompiler->internalOptions;
-        std::string oclVersionOption = getOclVersionCompilerInternalOption(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport);
+        std::string oclVersionOption = getOclVersionCompilerInternalOption(mockOfflineCompiler->hwInfo.capabilityTable.clVersionSupport);
         EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
 
         if (clStdOptionValue == "-cl-std=CL2.0") {
             auto expectedRegex = std::string{"cl_khr_3d_image_writes"};
-            if (DEFAULT_PLATFORM::hwInfo.capabilityTable.supportsImages) {
+            if (mockOfflineCompiler->hwInfo.capabilityTable.supportsImages) {
                 expectedRegex += ".+" + std::string{"cl_khr_3d_image_writes"};
             }
             EXPECT_THAT(internalOptions, ::testing::ContainsRegex(expectedRegex));
         }
 
         OpenClCFeaturesContainer openclCFeatures;
-        getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
+        getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures);
         for (auto &feature : openclCFeatures) {
             if (clStdOptionValue == "-cl-std=CL3.0") {
                 EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string{feature.name}));
@@ -665,7 +665,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
             }
         }
 
-        if (DEFAULT_PLATFORM::hwInfo.capabilityTable.supportsImages) {
+        if (mockOfflineCompiler->hwInfo.capabilityTable.supportsImages) {
             EXPECT_THAT(internalOptions, ::testing::HasSubstr(CompilerOptions::enableImageSupport.data()));
         } else {
             EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(CompilerOptions::enableImageSupport.data())));
@@ -1244,7 +1244,7 @@ TEST(OfflineCompilerTest, WhenGeneratingElfBinaryThenBinaryIsCreated) {
     memset(&binHeader, 0, sizeof(binHeader));
     binHeader.Magic = iOpenCL::MAGIC_CL;
     binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = DEFAULT_PLATFORM::hwInfo.platform.eRenderCoreFamily;
+    binHeader.Device = mockOfflineCompiler->hwInfo.platform.eRenderCoreFamily;
     binHeader.GPUPointerSizeInBytes = 8;
     binHeader.NumberOfKernels = 0;
     binHeader.SteppingId = 0;
@@ -1984,7 +1984,7 @@ TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenIn
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    std::string regexToMatch = "\\-ocl\\-version=" + std::to_string(DEFAULT_PLATFORM::hwInfo.capabilityTable.clVersionSupport) +
+    std::string regexToMatch = "\\-ocl\\-version=" + std::to_string(ocloc.hwInfo.capabilityTable.clVersionSupport) +
                                "0  \\-cl\\-ext=\\-all.* \\-cl\\-ext=\\+custom_param";
     EXPECT_THAT(ocloc.internalOptions, ::testing::ContainsRegex(regexToMatch));
 }

@@ -30,7 +30,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
-    const HardwareInfo *hwInfoConst = &DEFAULT_PLATFORM::hwInfo;
+    const HardwareInfo *hwInfoConst = getDefaultHwInfo();
     getHwInfoForPlatformString(productFamily, hwInfoConst);
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;

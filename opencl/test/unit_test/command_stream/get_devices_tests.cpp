@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/create_command_stream.h"
@@ -228,14 +229,14 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                 }
                 EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
                 ASSERT_NE(nullptr, hardwarePrefix[i]);
-                HardwareInfo defaultHwInfo = DEFAULT_PLATFORM::hwInfo;
-                defaultHwInfo.featureTable = {};
-                defaultHwInfo.workaroundTable = {};
-                defaultHwInfo.gtSystemInfo = {};
-                hardwareInfoSetup[defaultHwInfo.platform.eProductFamily](&defaultHwInfo, true, 0x0);
-                HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.platform.eProductFamily);
-                hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
-                EXPECT_EQ(0, memcmp(&defaultHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
+                HardwareInfo baseHwInfo = *defaultHwInfo;
+                baseHwInfo.featureTable = {};
+                baseHwInfo.workaroundTable = {};
+                baseHwInfo.gtSystemInfo = {};
+                hardwareInfoSetup[baseHwInfo.platform.eProductFamily](&baseHwInfo, true, 0x0);
+                HwInfoConfig *hwConfig = HwInfoConfig::get(baseHwInfo.platform.eProductFamily);
+                hwConfig->configureHardwareCustom(&baseHwInfo, nullptr);
+                EXPECT_EQ(0, memcmp(&baseHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));
                 break;
             }
             default:

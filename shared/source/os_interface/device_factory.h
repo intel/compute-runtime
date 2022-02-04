@@ -15,6 +15,8 @@ namespace NEO {
 
 class ExecutionEnvironment;
 class Device;
+struct HardwareInfo;
+const HardwareInfo *getDefaultHwInfo();
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
 bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
 class DeviceFactory {
