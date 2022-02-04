@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,6 +153,21 @@ bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &
 }
 
 aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, std::atomic<uint32_t> &selectorCopyEngine) {
+    auto enableCmdQRoundRobindBcsEngineAssign = false;
+
+    if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get() != -1) {
+        enableCmdQRoundRobindBcsEngineAssign = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.get();
+    }
+
+    if (enableCmdQRoundRobindBcsEngineAssign) {
+        aub_stream::EngineType engineType;
+        do {
+            engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + (selectorCopyEngine.fetch_add(1u) % 8));
+        } while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType));
+
+        return engineType;
+    }
+
     const aub_stream::EngineType engine1 = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, aub_stream::ENGINE_BCS1)
                                                ? aub_stream::ENGINE_BCS1
                                                : aub_stream::ENGINE_BCS4;

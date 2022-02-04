@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,33 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenDebugVariableSetWhenAskingForE
             EXPECT_EQ(static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + i - 1), EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, false));
         } else {
             EXPECT_ANY_THROW(EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, false));
+        }
+    }
+}
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngineAssignWhenSelectLinkCopyEngineThenRoundRobinOverAllAvailableLinkedCopyEngines, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
+    DeviceBitfield deviceBitfield = 0b10;
+
+    const auto hwInfo = pDevice->getHardwareInfo();
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+
+    int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
+    for (int32_t i = 0; i <= 20; i++) {
+        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType))) {
+            expectedEngineType++;
+            if (static_cast<aub_stream::EngineType>(expectedEngineType) > aub_stream::EngineType::ENGINE_BCS8) {
+                expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
+            }
+        }
+
+        auto engineType = EngineHelpers::selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+        EXPECT_EQ(engineType, static_cast<aub_stream::EngineType>(expectedEngineType));
+
+        expectedEngineType++;
+        if (static_cast<aub_stream::EngineType>(expectedEngineType) > aub_stream::EngineType::ENGINE_BCS8) {
+            expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
         }
     }
 }

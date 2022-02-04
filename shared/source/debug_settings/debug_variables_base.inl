@@ -336,6 +336,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUseCtxId, -1, "-1: default (disab
 DECLARE_DEBUG_VARIABLE(int32_t, SetKmdWaitTimeout, -1, "-1: default (infinity), >0: amount of time units for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNotifyEnableForTagUpdatePostSync, -1, "-1: default (usage determined by user fence wait call), 0: disable use of NotifyEnable flag, 1: enable use NotifyEnable flag")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindEngineAssign, -1, "-1: default, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableCmdQRoundRobindBcsEngineAssign, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, Force32BitDriverSupport, -1, "-1: default, 0: disable, 1: enable, Forces the driver to support 32 bit.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicPipelineSelect, -1, "set SYSTOLIC MODE ENABLE in PIPELINE_SELECT cmd, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSystolicInComputeWalker, -1, "set SYSTOLIC MODE ENABLE in COMPUTE_WALKER cmd, -1:default, 0:disable, 1:enable")
