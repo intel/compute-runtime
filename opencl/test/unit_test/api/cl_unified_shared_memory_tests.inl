@@ -47,6 +47,64 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, GivenForceExtendedUSMBufferSizeDebugFlagWhenUSMAllocationIsCreatedThenSizeIsProperlyExtended) {
+    DebugManagerStateRestore restorer;
+
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    constexpr auto bufferSize = 16;
+    auto pageSizeNumber = 2;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    auto extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    cl_int retVal = CL_SUCCESS;
+    auto usmAllocation = clHostMemAllocINTEL(&mockContext, nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pageSizeNumber = 4;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    usmAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pageSizeNumber = 8;
+    DebugManager.flags.ForceExtendedUSMBufferSize.set(pageSizeNumber);
+    extendedBufferSize = bufferSize + MemoryConstants::pageSize * pageSizeNumber;
+
+    usmAllocation = clSharedMemAllocINTEL(&mockContext, nullptr, nullptr, bufferSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, usmAllocation);
+
+    allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    graphicsAllocation = allocationsManager->getSVMAlloc(usmAllocation);
+    EXPECT_EQ(graphicsAllocation->size, extendedBufferSize);
+
+    retVal = clMemFreeINTEL(&mockContext, usmAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(clUnifiedSharedMemoryTests, givenMappedAllocationWhenClMemFreeIntelIscalledThenMappingIsRemoved) {
 
     MockContext mockContext;

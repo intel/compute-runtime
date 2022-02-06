@@ -3799,9 +3799,11 @@ void *clHostMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
+    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
 
     Context *neoContext = nullptr;
-
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
@@ -3838,9 +3840,12 @@ void *clDeviceMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
+    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
+
     Context *neoContext = nullptr;
     ClDevice *neoDevice = nullptr;
-
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto retVal = validateObjects(WithCastToInternal(context, &neoContext), WithCastToInternal(device, &neoDevice));
@@ -3883,8 +3888,11 @@ void *clSharedMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    Context *neoContext = nullptr;
+    if (DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
 
+    Context *neoContext = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
