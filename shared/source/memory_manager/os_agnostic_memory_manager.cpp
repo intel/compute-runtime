@@ -86,7 +86,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                                                   counter, MemoryPool::System4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
 
         if (allocationData.type == AllocationType::SVM_CPU) {
-            //add  padding in case mapPtr is not aligned
+            // add  padding in case mapPtr is not aligned
             size_t reserveSize = sizeAligned + alignment;
             void *gpuPtr = reserveCpuAddressRange(reserveSize, allocationData.rootDeviceIndex);
             if (!gpuPtr) {
@@ -112,8 +112,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                                              alignment,
                                              allocationData.flags.uncacheable,
                                              true,
-                                             allocationData.flags.useSystemMemory,
-                                             allocationData.storageInfo);
+                                             allocationData.storageInfo,
+                                             true);
             memoryAllocation->setDefaultGmm(gmm.release());
         }
     }
@@ -163,8 +163,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
                                              allocationDataAlign.alignment,
                                              allocationData.flags.uncacheable,
                                              allocationData.flags.preferCompressed,
-                                             allocationData.flags.useSystemMemory,
-                                             allocationData.storageInfo);
+                                             allocationData.storageInfo, true);
             memoryAllocation->setDefaultGmm(gmm.release());
         }
     }
@@ -349,7 +348,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr,
-                                     allocationData.size, 0u, false, allocationData.flags.preferCompressed, allocationData.flags.useSystemMemory, allocationData.storageInfo);
+                                     allocationData.size, 0u, false, allocationData.flags.preferCompressed, allocationData.storageInfo, true);
 
     GraphicsAllocation *alloc = nullptr;
 
@@ -483,8 +482,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                             MemoryConstants::pageSize64k,
                                             allocationData.flags.uncacheable,
                                             true,
-                                            allocationData.flags.useSystemMemory,
-                                            allocationData.storageInfo);
+                                            allocationData.storageInfo,
+                                            true);
             }
         }
 

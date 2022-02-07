@@ -89,7 +89,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionWhenAppendi
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, 128 * 256 * 4, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, false);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, false, false, {}, true);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -130,7 +130,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenImageFromBufferWhenSet
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, 128 * 256 * 4, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, false);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, false, false, {}, true);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -173,7 +173,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    mcsAlloc->setDefaultGmm(new Gmm(context.getDevice(0)->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 1, 0, false));
+    mcsAlloc->setDefaultGmm(new Gmm(context.getDevice(0)->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 1, 0, false, false, {}, true));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);

@@ -363,7 +363,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
                                                          rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(static_cast<osHandle>(reinterpret_cast<uint64_t>(handle)));
         graphicsAllocation->set32BitAllocation(false);
-        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, false));
+        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true));
         return graphicsAllocation;
     }
 };

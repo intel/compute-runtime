@@ -815,7 +815,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_TRUE(imageAllocation->getDefaultGmm()->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
-    EXPECT_TRUE(imageAllocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.flags.ftrLocalMemory,
+              imageAllocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
@@ -974,7 +975,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
     executionEnvironment.initGmm();
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
 
-    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 123, 0, false);
+    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 123, 0, false, false, {}, true);
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
     allocation->setDefaultGmm(gmm);
 
@@ -1848,7 +1849,7 @@ TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateSharea
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturned) {
-    Gmm *gmm = new Gmm(device->getGmmClientContext(), nullptr, 65536, 0, false);
+    Gmm *gmm = new Gmm(device->getGmmClientContext(), nullptr, 65536, 0, false, false, {}, true);
     EXPECT_NE(nullptr, gmm);
     delete gmm;
 }
@@ -1969,7 +1970,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     EXPECT_EQ(csr->getTemporaryAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
 
-    //change task count so cleanup will not clear alloc in use
+    // change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
 }
 
@@ -2029,7 +2030,7 @@ class MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
 
         MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
         alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager(executionEnvironment);
-        //assert we have memory manager
+        // assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
@@ -2607,7 +2608,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
     GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, false, false, StorageInfo{}, true);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
     allocation.setDefaultGmm(gmm.get());
@@ -2617,7 +2618,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, false);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, false, false, StorageInfo{}, true);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
     allocation.setDefaultGmm(gmm.get());

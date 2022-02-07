@@ -1070,7 +1070,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_LT(GmmHelper::canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
     EXPECT_GT(GmmHelper::canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
     EXPECT_EQ(0llu, allocation->getGpuBaseAddress());

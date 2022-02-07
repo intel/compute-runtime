@@ -1699,7 +1699,7 @@ HWTEST_F(ImageTransformTest, givenSurfaceBaseAddressAndUnifiedSurfaceWhenSetUnif
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(&context));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true));
     uint64_t surfBsaseAddress = 0xABCDEF1000;
     surfaceState.setSurfaceBaseAddress(surfBsaseAddress);
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());

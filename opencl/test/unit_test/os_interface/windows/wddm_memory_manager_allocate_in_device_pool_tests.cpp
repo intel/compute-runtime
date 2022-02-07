@@ -44,7 +44,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -65,12 +65,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.allocateMemory = true;
     allocData.flags.shareable = true;
+    allocData.storageInfo.memoryBanks = 2;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
 
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
@@ -96,7 +97,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_NE(allocation->peekInternalHandle(memoryManager.get()), 0u);
 
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
@@ -121,7 +122,7 @@ struct WddmMemoryManagerDevicePoolAlignmentTests : WddmMemoryManagerSimpleTest {
         EXPECT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
         EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-        EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+        EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
         EXPECT_EQ(alignUp(allocationSize, expectedAlignment), allocation->getUnderlyingBufferSize());
         EXPECT_EQ(expectedAlignment, allocation->getDefaultGmm()->resourceParams.BaseAlignment);
 
@@ -329,7 +330,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryAndAllowed32BitWhen32
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-    EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+    EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -517,7 +518,7 @@ TEST_F(WddmMemoryManagerSimpleTestWithLocalMemory, givenLocalMemoryAndImageOrSha
         EXPECT_NE(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
         EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
-        EXPECT_FALSE(allocation->getDefaultGmm()->useSystemMemoryPool);
+        EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
         EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
         memoryManager->freeGraphicsMemory(allocation);
     }
@@ -660,7 +661,7 @@ struct WddmMemoryManagerSimple64BitTest : public WddmMemoryManagerSimpleTest {
             uint64_t totalSizeFromGmms = 0u;
             for (uint32_t gmmId = 0u; gmmId < allocation->getNumGmms(); ++gmmId) {
                 Gmm *gmm = allocation->getGmm(gmmId);
-                EXPECT_FALSE(gmm->useSystemMemoryPool);
+                EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
                 EXPECT_EQ(2 * MemoryConstants::megaByte, gmm->resourceParams.BaseAlignment);
                 EXPECT_TRUE(isAligned(gmm->resourceParams.BaseWidth64, gmm->resourceParams.BaseAlignment));
 

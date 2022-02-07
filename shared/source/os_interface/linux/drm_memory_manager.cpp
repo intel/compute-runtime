@@ -287,7 +287,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     size_t alignedVirtualAdressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
-        //add padding in case reserved addr is not aligned
+        // add padding in case reserved addr is not aligned
         alignedStorageSize = alignUp(cSize, cAlignment);
         alignedVirtualAdressRangeSize = alignedStorageSize + cAlignment;
     }
@@ -481,7 +481,9 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, 0u, false);
+    StorageInfo systemMemoryStorageInfo = {};
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr,
+                                     allocationData.size, 0u, false, false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
@@ -916,7 +918,7 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t r
 }
 
 bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable) {
-    DEBUG_BREAK_IF(writeEnable); //unsupported path (for CPU writes call SW_FINISH ioctl in unlockResource)
+    DEBUG_BREAK_IF(writeEnable); // unsupported path (for CPU writes call SW_FINISH ioctl in unlockResource)
 
     auto bo = static_cast<DrmAllocation *>(&graphicsAllocation)->getBO();
     if (bo == nullptr)
@@ -1115,8 +1117,8 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphi
         auto addr = lockResourceInLocalMemoryImpl(bo);
         auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
         auto notUsedSize = ptrDiff(alignedAddr, addr);
-        //call unmap to free the unaligned pages preceding the BO allocation and
-        //adjust the pointer in the CPU mapping to the beginning of the BO allocation
+        // call unmap to free the unaligned pages preceding the BO allocation and
+        // adjust the pointer in the CPU mapping to the beginning of the BO allocation
         munmapFunction(addr, notUsedSize);
         bo->setLockedAddress(alignedAddr);
         return bo->peekLockedAddress();
@@ -1196,8 +1198,8 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
                            0u,
                            false,
                            compression,
-                           false,
-                           limitedStorageInfo);
+                           limitedStorageInfo,
+                           true);
         allocation.setGmm(gmm, handleId);
     }
 }
@@ -1208,7 +1210,7 @@ void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *alloca
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
-        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, false, false, false, limitedStorageInfo);
+        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, false, false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1279,8 +1281,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                         0u,
                                         allocationData.flags.uncacheable,
                                         allocationData.flags.preferCompressed,
-                                        false,
-                                        allocationData.storageInfo);
+                                        allocationData.storageInfo,
+                                        true);
         }
     }
 
@@ -1396,8 +1398,8 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         }
         uint32_t memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
         if (storageInfo.getNumBanks() > 1) {
-            //check if we have this bank, if not move to next one
-            //we may have holes in memoryBanks that we need to skip i.e. memoryBanks 1101 and 3 handle allocation
+            // check if we have this bank, if not move to next one
+            // we may have holes in memoryBanks that we need to skip i.e. memoryBanks 1101 and 3 handle allocation
             while (!(memoryBanks & (1u << currentBank))) {
                 currentBank++;
             }

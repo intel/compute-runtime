@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
     static void setAllocationType(GraphicsAllocation *graphicsAllocation, GmmClientContext *gmmClientContext, bool compressed) {
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, false));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, false, compressed, {}, true));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

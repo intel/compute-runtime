@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
     cl_int retVal;
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false);
+    auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true);
     gmm->isCompressionEnabled = false;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     allocation->setDefaultGmm(gmm);

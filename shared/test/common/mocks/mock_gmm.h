@@ -23,7 +23,7 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm(GmmClientContext *clientContext) : Gmm(clientContext, nullptr, 1, 0, false){};
+    MockGmm(GmmClientContext *clientContext) : Gmm(clientContext, nullptr, 1, 0, false, false, {}, true){};
 
     static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo, bool preferCompression) {
         return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}, preferCompression));

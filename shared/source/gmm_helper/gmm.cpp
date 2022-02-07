@@ -18,13 +18,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 
 namespace NEO {
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable) : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, false, true, {}) {}
-
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo)
-    : Gmm(clientContext, alignedPtr, alignedSize, alignment, uncacheable, preferCompressed, systemMemoryPool, storageInfo, true) {
-}
-
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
+Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -60,7 +54,7 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
     }
 
     applyAuxFlagsForBuffer(preferCompressed);
-    applyMemoryFlags(systemMemoryPool, storageInfo);
+    applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
@@ -77,7 +71,7 @@ Gmm::~Gmm() = default;
 Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed) : clientContext(clientContext) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo, preferCompressed);
-    applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
+    applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
@@ -338,9 +332,9 @@ uint32_t Gmm::getAuxQPitch() {
     return this->gmmResourceInfo->getAuxQPitch();
 }
 
-void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) {
-    this->useSystemMemoryPool = systemMemoryPool;
+void Gmm::applyMemoryFlags(StorageInfo &storageInfo) {
     auto hardwareInfo = clientContext->getHardwareInfo();
+    bool systemMemoryPool = (storageInfo.getMemoryBanks() == 0);
 
     if (hardwareInfo->featureTable.flags.ftrLocalMemory) {
         if (systemMemoryPool) {

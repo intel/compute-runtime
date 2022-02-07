@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,8 +98,8 @@ TEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLoca
     auto srcAllocation = pBuffer->getMultiGraphicsAllocation().getGraphicsAllocation(0);
     auto dstAllocation = pBuffer->getMultiGraphicsAllocation().getGraphicsAllocation(1);
 
-    auto gmm0 = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false);
-    auto gmm1 = new Gmm(context.getDevice(1)->getGmmClientContext(), nullptr, 1, 0, false);
+    auto gmm0 = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true);
+    auto gmm1 = new Gmm(context.getDevice(1)->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true);
     srcAllocation->setDefaultGmm(gmm0);
     dstAllocation->setDefaultGmm(gmm1);
 

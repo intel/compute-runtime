@@ -254,6 +254,7 @@ HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalse
 
     NEO::StorageInfo storageInfo = {};
     storageInfo.localOnlyRequired = true;
+    storageInfo.memoryBanks = 2;
 
     std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo, storageInfo, false));
 

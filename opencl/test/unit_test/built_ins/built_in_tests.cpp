@@ -633,7 +633,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, false, false, {}, true));
     gmm->isCompressionEnabled = true;
 
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
@@ -688,7 +688,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    auto gmm = std::make_unique<Gmm>(pDevice->getGmmClientContext(), nullptr, 1, 0, false);
+    auto gmm = std::make_unique<Gmm>(pDevice->getGmmClientContext(), nullptr, 1, 0, false, false, StorageInfo{}, true);
     gmm->isCompressionEnabled = true;
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
         mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());

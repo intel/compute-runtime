@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,15 +25,13 @@ class Gmm {
     virtual ~Gmm();
     Gmm() = delete;
     Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo);
-    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, bool systemMemoryPool, StorageInfo storageInfo, bool allowLargePages);
+    Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, bool uncacheable, bool preferCompressed, StorageInfo storageInfo, bool allowLargePages);
     Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
     void applyAuxFlagsForBuffer(bool preferCompression);
-    void applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo);
+    void applyMemoryFlags(StorageInfo &storageInfo);
     void applyAppResource(StorageInfo &storageInfo);
 
     bool unifiedAuxTranslationCapable() const;
@@ -51,7 +49,6 @@ class Gmm {
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     bool isCompressionEnabled = false;
-    bool useSystemMemoryPool = true;
 
   protected:
     void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed);

@@ -165,7 +165,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
             auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
 
-            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, false));
+            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, false, false, {}, true));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {
