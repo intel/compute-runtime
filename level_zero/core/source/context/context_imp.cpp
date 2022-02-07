@@ -57,6 +57,9 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
+    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
 
     bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     if (hostDesc->pNext) {
@@ -104,6 +107,9 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
                                        const ze_device_mem_alloc_desc_t *deviceDesc,
                                        size_t size,
                                        size_t alignment, void **ptr) {
+    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
 
     auto device = Device::fromHandle(hDevice);
     if (isDeviceDefinedForThisContext(device) == false) {
@@ -185,6 +191,9 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
+    if (NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
+        size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
+    }
 
     auto device = this->devices.begin()->second;
     if (hDevice != nullptr) {
