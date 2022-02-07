@@ -141,7 +141,7 @@ struct ModuleImp : public Module {
     NEO::Debug::Segments getZebinSegments();
     void passDebugData();
     void createDebugZebin();
-    void registerElfInDebuggerL0(NEO::Device *neoDevice);
+    void registerElfInDebuggerL0();
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};

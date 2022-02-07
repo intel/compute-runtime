@@ -110,6 +110,10 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
 
     isaGraphicsAllocation.reset(allocation);
 
+    if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
+        createRelocatedDebugData(globalConstBuffer, globalVarBuffer);
+    }
+
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
 
     ArrayRef<uint8_t> crossThredDataArrayRef;
@@ -193,6 +197,8 @@ void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *glob
                                                                      outErrReason, outWarning);
 
         if (decodedElf.getDebugInfoRelocations().size() > 1) {
+            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.external.relocatedDebugData.get() != nullptr);
+
             auto size = kernelInfo->kernelDescriptor.external.debugData->vIsaSize;
             kernelInfo->kernelDescriptor.external.relocatedDebugData = std::make_unique<uint8_t[]>(size);
 

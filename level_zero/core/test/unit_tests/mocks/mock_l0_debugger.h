@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/kernel/debug_data.h"
+
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -43,6 +45,7 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
 
     void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
         registerElfCount++;
+        lastReceivedElf = debugData->vIsa;
         L0::DebuggerL0Hw<GfxFamily>::registerElf(debugData, isaAllocation);
     }
 
@@ -50,6 +53,7 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
+    const char *lastReceivedElf = nullptr;
 };
 
 template <uint32_t productFamily, typename GfxFamily>

@@ -536,7 +536,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
 
-    registerElfInDebuggerL0(neoDevice);
+    registerElfInDebuggerL0();
     this->maxGroupSize = static_cast<uint32_t>(this->translationUnit->device->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
@@ -992,8 +992,8 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
     return ZE_RESULT_SUCCESS;
 }
 
-void ModuleImp::registerElfInDebuggerL0(NEO::Device *neoDevice) {
-    if (neoDevice->getDebugger() == nullptr) {
+void ModuleImp::registerElfInDebuggerL0() {
+    if (device->getL0Debugger() == nullptr) {
         return;
     }
 
@@ -1001,19 +1001,27 @@ void ModuleImp::registerElfInDebuggerL0(NEO::Device *neoDevice) {
     if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
         size_t debugDataSize = 0;
         getDebugInfo(&debugDataSize, nullptr);
-        if (device->getL0Debugger()) {
-            NEO::DebugData debugData; // pass debug zebin in vIsa field
-            debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
-            debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
-            device->getL0Debugger()->registerElf(&debugData, kernelImmDatas[0]->getIsaGraphicsAllocation());
+
+        NEO::DebugData debugData; // pass debug zebin in vIsa field
+        debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
+        debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
+        for (auto &kernImmData : kernelImmDatas) {
+            device->getL0Debugger()->registerElf(&debugData, kernImmData->getIsaGraphicsAllocation());
         }
     } else {
         for (auto &kernImmData : kernelImmDatas) {
             if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
-                kernImmData->createRelocatedDebugData(translationUnit->globalConstBuffer, translationUnit->globalVarBuffer);
-                if (device->getL0Debugger()) {
-                    device->getL0Debugger()->registerElf(kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get(), kernImmData->getIsaGraphicsAllocation());
+                NEO::DebugData *notifyDebugData = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get();
+                NEO::DebugData relocatedDebugData;
+
+                if (kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get()) {
+                    relocatedDebugData.genIsa = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsa;
+                    relocatedDebugData.genIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->genIsaSize;
+                    relocatedDebugData.vIsa = reinterpret_cast<char *>(kernImmData->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get());
+                    relocatedDebugData.vIsaSize = kernImmData->getKernelInfo()->kernelDescriptor.external.debugData->vIsaSize;
+                    notifyDebugData = &relocatedDebugData;
                 }
+                device->getL0Debugger()->registerElf(notifyDebugData, kernImmData->getIsaGraphicsAllocation());
             }
         }
     }
