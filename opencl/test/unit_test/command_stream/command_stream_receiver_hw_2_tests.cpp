@@ -55,10 +55,10 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto alignedCopySize = Vec3<size_t>{alignedBltSize, 1, 1};
     auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedCopySize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedCopySize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        alignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        notAlignedCopySize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -116,10 +116,10 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
         expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     }
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        alignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        notAlignedBltSize, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -154,10 +154,10 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
         expectedNotAlignedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     }
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedBltSize, csrDependencies, false, false, rootDeviceEnvironment);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedBltSize, csrDependencies, false, false, rootDeviceEnvironment);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        alignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        notAlignedBltSize, csrDependencies, false, false, false, rootDeviceEnvironment);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);

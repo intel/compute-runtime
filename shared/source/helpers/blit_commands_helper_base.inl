@@ -101,9 +101,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies,
-                                                               bool updateTimestampPacket, bool profilingEnabled,
-                                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies,
+                                                              bool updateTimestampPacket, bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t timestampCmdSize = 0;
     if (updateTimestampPacket) {
         timestampCmdSize += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
@@ -112,12 +111,19 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
         }
     }
 
-    bool preferRegionCopy = isCopyRegionPreferred(copySize, rootDeviceEnvironment);
-    auto nBlits = preferRegionCopy ? getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment)
-                                   : getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+    size_t nBlits = 0u;
+    size_t sizePerBlit = 0u;
 
-    auto sizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + estimatePostBlitCommandSize());
+    if (isImage) {
+        nBlits = getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
+        sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT);
+    } else {
+        nBlits = std::min(getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment),
+                          getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment));
+        sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
+    }
 
+    sizePerBlit += estimatePostBlitCommandSize();
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
@@ -131,17 +137,14 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
                                                                bool blitterDirectSubmission, const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
-        size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
-                                                                        blitProperties.outputTimestampPacket != nullptr, profilingEnabled,
-                                                                        rootDeviceEnvironment);
+        auto updateTimestampPacket = blitProperties.outputTimestampPacket != nullptr;
+        auto isImage = blitProperties.isImageOperation();
+        size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
+                                                                       profilingEnabled, isImage, rootDeviceEnvironment);
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(*rootDeviceEnvironment.getHardwareInfo());
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
-    if (blitterDirectSubmission) {
-        size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
-    } else {
-        size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
-    }
+    size += blitterDirectSubmission ? sizeof(typename GfxFamily::MI_BATCH_BUFFER_START) : sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     if (debugPauseEnabled) {
         size += BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands();
@@ -337,10 +340,7 @@ uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySiz
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
-
-    if (blitProperties.blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
-        blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
-        blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToImage) {
+    if (blitProperties.isImageOperation()) {
         dispatchBlitCommandsForImageRegion(blitProperties, linearStream, rootDeviceEnvironment);
     } else {
         bool preferCopyBufferRegion = isCopyRegionPreferred(blitProperties.copySize, rootDeviceEnvironment);

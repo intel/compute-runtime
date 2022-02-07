@@ -868,10 +868,10 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
-    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        {1, 1, 1}, csrDependencies, true, false, pClDevice->getRootDeviceEnvironment());
-    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        {1, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -891,10 +891,10 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
 
     auto expectedSizeWithTimestampPacketWriteAndProfiling = expectedBaseSize + BlitCommandsHelper<FamilyType>::getProfilingMmioCmdsSize();
 
-    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        {1, 1, 1}, csrDependencies, true, false, pClDevice->getRootDeviceEnvironment());
-    auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        {1, 1, 1}, csrDependencies, true, true, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWriteAndProfiling, estimatedSizeWithTimestampPacketWriteAndProfiling);
     EXPECT_EQ(expectedBaseSize, estimatedSizeWithTimestampPacketWrite);
@@ -923,10 +923,46 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
         expectedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     }
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        {1, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, estimatedSize);
+}
+
+HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorrectCommandSize) {
+
+    for (auto isImage : {false, true}) {
+        auto expectedSize = sizeof(typename FamilyType::MI_ARB_CHECK);
+        expectedSize += isImage ? sizeof(typename FamilyType::XY_BLOCK_COPY_BLT) : sizeof(typename FamilyType::XY_COPY_BLT);
+
+        if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+            expectedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        }
+        if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+            expectedSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        }
+
+        auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment());
+
+        EXPECT_EQ(expectedSize, estimatedSize);
+    }
+}
+
+HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalledThenReturnCorrectValue) {
+
+    BlitProperties blitProperties{};
+    std::pair<bool, BlitterConstants::BlitDirection> params[] = {{false, BlitterConstants::BlitDirection::HostPtrToBuffer},
+                                                                 {false, BlitterConstants::BlitDirection::BufferToHostPtr},
+                                                                 {false, BlitterConstants::BlitDirection::BufferToBuffer},
+                                                                 {true, BlitterConstants::BlitDirection::HostPtrToImage},
+                                                                 {true, BlitterConstants::BlitDirection::ImageToHostPtr},
+                                                                 {true, BlitterConstants::BlitDirection::ImageToImage}};
+
+    for (auto [isImageDirection, blitDirection] : params) {
+        blitProperties.blitDirection = blitDirection;
+        EXPECT_EQ(isImageDirection, blitProperties.isImageOperation());
+    }
 }
 
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {

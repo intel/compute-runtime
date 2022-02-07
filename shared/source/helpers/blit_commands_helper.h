@@ -62,7 +62,7 @@ struct BlitProperties {
                                                    CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
 
     TagNodeBase *outputTimestampPacket = nullptr;
-    BlitterConstants::BlitDirection blitDirection;
+    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
     CsrDependencies csrDependencies;
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 
@@ -83,6 +83,12 @@ struct BlitProperties {
     Vec3<size_t> dstSize = 0;
     Vec3<size_t> srcSize = 0;
     size_t bytesPerPixel = 1;
+
+    bool isImageOperation() const {
+        return blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
+               blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr ||
+               blitDirection == BlitterConstants::BlitDirection::ImageToImage;
+    }
 };
 
 enum class BlitOperationResult {
@@ -118,8 +124,8 @@ struct BlitCommandsHelper {
     static size_t estimatePreBlitCommandSize();
     static void dispatchPostBlitCommand(LinearStream &linearStream, const HardwareInfo &hwInfo);
     static size_t estimatePostBlitCommandSize();
-    static size_t estimateBlitCommandsSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
-                                           bool profilingEnabled, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
+                                          bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, bool profilingEnabled,
                                            bool debugPauseEnabled, bool blitterDirectSubmission, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
