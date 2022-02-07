@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,8 @@ bool isBcsEnabled(const HardwareInfo &hwInfo, aub_stream::EngineType engineType)
 constexpr bool isLinkBcs(aub_stream::EngineType engineType) {
     return engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8;
 }
+
+constexpr uint32_t numLinkedCopyEngines = 8u;
 
 bool linkCopyEnginesSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield);
 

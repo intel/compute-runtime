@@ -46,12 +46,13 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
     DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.set(1u);
     DeviceBitfield deviceBitfield = 0b10;
 
-    const auto hwInfo = pDevice->getHardwareInfo();
+    auto hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.featureTable.ftrBcsInfo.set(7);
     auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
 
     int32_t expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;
     for (int32_t i = 0; i <= 20; i++) {
-        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType))) {
+        while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, static_cast<aub_stream::EngineType>(expectedEngineType)) || !hwInfo.featureTable.ftrBcsInfo.test(expectedEngineType - aub_stream::EngineType::ENGINE_BCS1 + 1)) {
             expectedEngineType++;
             if (static_cast<aub_stream::EngineType>(expectedEngineType) > aub_stream::EngineType::ENGINE_BCS8) {
                 expectedEngineType = aub_stream::EngineType::ENGINE_BCS1;

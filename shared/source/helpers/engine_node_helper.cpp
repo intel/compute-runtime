@@ -162,8 +162,8 @@ aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const De
     if (enableCmdQRoundRobindBcsEngineAssign) {
         aub_stream::EngineType engineType;
         do {
-            engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + (selectorCopyEngine.fetch_add(1u) % 8));
-        } while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType));
+            engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + (selectorCopyEngine.fetch_add(1u) % EngineHelpers::numLinkedCopyEngines));
+        } while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
 
         return engineType;
     }
