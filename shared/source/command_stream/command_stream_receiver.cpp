@@ -115,7 +115,16 @@ void CommandStreamReceiver::makeResident(MultiGraphicsAllocation &gfxAllocation)
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
-        this->getResidencyAllocations().push_back(&gfxAllocation);
+        auto pushAllocations = true;
+
+        if (DebugManager.flags.MakeEachAllocationResident.get() != -1) {
+            pushAllocations = !DebugManager.flags.MakeEachAllocationResident.get();
+        }
+
+        if (pushAllocations) {
+            this->getResidencyAllocations().push_back(&gfxAllocation);
+        }
+
         checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
         if (!gfxAllocation.isResident(osContext->getContextId())) {

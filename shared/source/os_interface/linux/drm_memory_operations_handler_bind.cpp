@@ -104,7 +104,15 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    MemoryOperationsStatus retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
+    if (DebugManager.flags.MakeEachAllocationResident.get() == 2) {
+        auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
+
+        auto allocLock = memoryManager->acquireAllocLock();
+        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getSysMemAllocs()), true);
+        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(memoryManager->getLocalMemAllocs(this->rootDeviceIndex)), true);
+    }
+
+    auto retVal = this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
     if (retVal != MemoryOperationsStatus::SUCCESS) {
         return retVal;
     }

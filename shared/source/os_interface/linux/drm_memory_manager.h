@@ -123,6 +123,7 @@ class DrmMemoryManager : public MemoryManager {
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
     void waitOnCompletionFence(GraphicsAllocation *allocation);
     bool allocationTypeForCompletionFence(AllocationType allocationType);
+    void makeAllocationResident(GraphicsAllocation *allocation);
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);

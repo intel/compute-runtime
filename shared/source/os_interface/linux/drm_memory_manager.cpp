@@ -1046,15 +1046,28 @@ std::vector<GraphicsAllocation *> &DrmMemoryManager::getLocalMemAllocs(uint32_t 
     return this->localMemAllocs[rootDeviceIndex];
 }
 
+void DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
+    if (DebugManager.flags.MakeEachAllocationResident.get() == 1) {
+        auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+        for (uint32_t i = 0; getDrm(allocation->getRootDeviceIndex()).getVirtualMemoryAddressSpace(i) > 0u; i++) {
+            drmAllocation->makeBOsResident(registeredEngines[defaultEngineIndex[allocation->getRootDeviceIndex()]].osContext, i, nullptr, true);
+            getDrm(allocation->getRootDeviceIndex()).waitForBind(i);
+        }
+    }
+}
+
 void DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
+    makeAllocationResident(allocation);
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->sysMemAllocs.push_back(allocation);
 }
 
 void DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
+    makeAllocationResident(allocation);
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->localMemAllocs[rootDeviceIndex].push_back(allocation);
 }
+
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
     std::lock_guard<std::mutex> lock(this->allocMutex);
     sysMemAllocs.erase(std::remove(sysMemAllocs.begin(), sysMemAllocs.end(), allocation),
