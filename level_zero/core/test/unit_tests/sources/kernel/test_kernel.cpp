@@ -2187,6 +2187,60 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     mockKernel.crossThreadData.release();
 }
 
+using KernelPrintfStringMapTests = Test<ModuleImmutableDataFixture>;
+
+TEST_F(KernelPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageEnabledWhenPrintOutputThenProperStringIsPrinted) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = true;
+    std::string expectedString("test123");
+    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    testing::internal::CaptureStdout();
+    kernel->printPrintfOutput();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(expectedString.c_str(), output.c_str());
+}
+
+TEST_F(KernelPrintfStringMapTests, givenKernelWithPrintfStringsMapUsageDisabledWhenPrintOutputThenNothingIsPrinted) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.usesPrintf = true;
+    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
+    std::string expectedString("test123");
+    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
+
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    testing::internal::CaptureStdout();
+    kernel->printPrintfOutput();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ("", output.c_str());
+}
+
 using KernelImplicitArgTests = Test<ModuleImmutableDataFixture>;
 
 TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenInitializeThenPrintfSurfaceIsCreatedAndProperlyPatchedInImplicitArgs) {
@@ -2270,36 +2324,6 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
-}
-
-TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsAndPrintfStringsMapWhenPrintOutputThenProperStringIsPrinted) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-
-    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
-    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
-    kernelDescriptor->kernelAttributes.flags.usesPrintf = false;
-    kernelDescriptor->kernelAttributes.flags.usesStringMapForPrintf = false;
-    std::string expectedString("test123");
-    kernelDescriptor->kernelMetadata.printfStringsMap.insert(std::make_pair(0u, expectedString));
-
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
-
-    auto kernel = std::make_unique<MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernel->initialize(&kernelDesc);
-
-    auto printfAllocation = reinterpret_cast<uint32_t *>(kernel->getPrintfBufferAllocation()->getUnderlyingBuffer());
-    printfAllocation[0] = 8;
-    printfAllocation[1] = 0;
-
-    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
-    ASSERT_NE(nullptr, kernel->getImplicitArgs());
-
-    testing::internal::CaptureStdout();
-    kernel->printPrintfOutput();
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(expectedString.c_str(), output.c_str());
 }
 
 TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplicitArgsThenNothingHappens) {
