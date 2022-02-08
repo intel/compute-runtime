@@ -11,7 +11,11 @@
 namespace NEO {
 enum class AllocationType;
 
-namespace CacheSettingsHelper {
-GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached);
-}
+struct CacheSettingsHelper {
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached);
+
+  protected:
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType);
+};
 } // namespace NEO

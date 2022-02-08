@@ -840,28 +840,38 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
 
         for (auto forceUncached : {true, false}) {
             auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached);
+            auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
-            if (allocationType == AllocationType::IMAGE) {
-                if (forceUncached) {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, usage);
-                } else {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, usage);
-                }
-            } else if (allocationType == AllocationType::PREEMPTION) {
-                if (forceUncached) {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, usage);
-                } else {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, usage);
-                }
-            } else {
-                if (forceUncached) {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, usage);
-                } else {
-                    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, usage);
-                }
+            switch (allocationType) {
+            case AllocationType::IMAGE:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_IMAGE;
+                break;
+            case AllocationType::PREEMPTION:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            case AllocationType::INTERNAL_HEAP:
+            case AllocationType::LINEAR_STREAM:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+                break;
+            default:
+                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
             }
+
+            EXPECT_EQ(expectedUsage, usage);
         }
     }
+}
+
+TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncachedType) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DisableCachingForHeaps.set(true);
+
+    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, false);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
+
+    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::LINEAR_STREAM, false);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 }
 
 TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {

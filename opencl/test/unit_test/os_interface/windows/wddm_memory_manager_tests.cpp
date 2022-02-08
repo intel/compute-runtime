@@ -794,6 +794,36 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(WddmMemoryManagerTest, givenInternalHeapOrLinearStreamTypeWhenAllocatingThenSetCorrectUsage) {
+    auto memoryManager = std::make_unique<MockWddmMemoryManager>(true, false, *executionEnvironment);
+
+    rootDeviceEnvironment->executionEnvironment.initializeMemoryManager();
+
+    {
+        MockAllocationProperties properties = {mockRootDeviceIndex, true, 1, AllocationType::INTERNAL_HEAP, mockDeviceBitfield};
+
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
+
+        ASSERT_NE(nullptr, allocation);
+
+        EXPECT_TRUE(allocation->getDefaultGmm()->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    {
+        MockAllocationProperties properties = {mockRootDeviceIndex, true, 1, AllocationType::LINEAR_STREAM, mockDeviceBitfield};
+
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
+
+        ASSERT_NE(nullptr, allocation);
+
+        EXPECT_TRUE(allocation->getDefaultGmm()->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferIsCalledThenIsRendeCompressedFalseAndCorrectAddressRange) {
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;

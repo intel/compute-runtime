@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/memory_compression_state.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -75,7 +76,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         stateBaseAddress->setInstructionBaseAddress(instructionHeapBaseAddress);
         stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
         stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
-        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get());
+
+        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(resourceUsage));
     }
 
     if (setGeneralStateBaseAddress) {

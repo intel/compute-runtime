@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/state_base_address_base.inl"
@@ -52,20 +53,14 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 
     stateBaseAddress->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
-    auto l3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
-    auto l1L3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC;
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get());
+    auto heapMocsValue = gmmHelper->getMOCS(heapResourceUsage);
 
-    if (DebugManager.flags.DisableCachingForHeaps.get()) {
-        l3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
-        l1L3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
-        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));
-    }
-
-    stateBaseAddress->setSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setDynamicStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setGeneralStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
-    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    stateBaseAddress->setSurfaceStateMemoryObjectControlState(heapMocsValue);
+    stateBaseAddress->setDynamicStateMemoryObjectControlState(heapMocsValue);
+    stateBaseAddress->setGeneralStateMemoryObjectControlState(heapMocsValue);
+    stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
+    stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
 
     bool enableMultiGpuAtomics = isMultiOsContextCapable;
     if (DebugManager.flags.EnableMultiGpuAtomicsOptimization.get()) {
