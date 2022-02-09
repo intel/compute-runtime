@@ -333,10 +333,9 @@ uint32_t Gmm::getAuxQPitch() {
 
 void Gmm::applyMemoryFlags(StorageInfo &storageInfo) {
     auto hardwareInfo = clientContext->getHardwareInfo();
-    bool systemMemoryPool = (storageInfo.getMemoryBanks() == 0);
 
     if (hardwareInfo->featureTable.flags.ftrLocalMemory) {
-        if (systemMemoryPool) {
+        if (storageInfo.systemMemoryPlacement) {
             resourceParams.Flags.Info.NonLocalOnly = 1;
         } else {
             if (extraMemoryFlagsRequired()) {
@@ -352,7 +351,7 @@ void Gmm::applyMemoryFlags(StorageInfo &storageInfo) {
 
     if (hardwareInfo->featureTable.flags.ftrMultiTileArch) {
         resourceParams.MultiTileArch.Enable = 1;
-        if (systemMemoryPool) {
+        if (storageInfo.systemMemoryPlacement) {
             resourceParams.MultiTileArch.GpuVaMappingSet = hardwareInfo->gtSystemInfo.MultiTileArchInfo.TileMask;
             resourceParams.MultiTileArch.LocalMemPreferredSet = 0;
             resourceParams.MultiTileArch.LocalMemEligibilitySet = 0;

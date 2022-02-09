@@ -1303,6 +1303,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryAndAllocation
     StorageInfo storageInfo{};
     storageInfo.isLockable = true;
     storageInfo.memoryBanks.set(1);
+    storageInfo.systemMemoryPlacement = false;
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
@@ -1313,6 +1314,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUsingLocalMemoryFalseAndAlloc
     StorageInfo storageInfo{};
     storageInfo.isLockable = false;
     storageInfo.memoryBanks.set(1);
+    storageInfo.systemMemoryPlacement = false;
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.LocalOnly);
@@ -1324,6 +1326,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndNotLockableAllocationAndStorageIn
     storageInfo.localOnlyRequired = true;
     storageInfo.isLockable = false;
     storageInfo.memoryBanks.set(1);
+    storageInfo.systemMemoryPlacement = false;
 
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
 
@@ -1336,6 +1339,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredW
     storageInfo.localOnlyRequired = true;
     storageInfo.isLockable = false;
     storageInfo.memoryBanks.set(1);
+    storageInfo.systemMemoryPlacement = false;
 
     DebugManagerStateRestore restorer;
 
@@ -1368,6 +1372,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryAndCompressionEnabledWhenUsingLoc
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
     StorageInfo storageInfo{};
     storageInfo.isLockable = false;
+    storageInfo.systemMemoryPlacement = false;
     storageInfo.memoryBanks.set(1);
 
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, storageInfo, true);
@@ -1383,6 +1388,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllo
         DebugManager.flags.SetCommandStreamReceiver.set(csrMode);
         StorageInfo storageInfo{};
         storageInfo.memoryBanks.set(1);
+        storageInfo.systemMemoryPlacement = false;
         storageInfo.isLockable = false;
         auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
         EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
@@ -1406,6 +1412,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
 
     imgInfo.useLocalMemory = true;
     StorageInfo storageInfo = {};
+    storageInfo.systemMemoryPlacement = false;
     storageInfo.memoryBanks.set(1);
 
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, storageInfo, false);
@@ -1433,6 +1440,7 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     StorageInfo storageInfo = {};
     storageInfo.memoryBanks.set(1);
+    storageInfo.systemMemoryPlacement = false;
 
     auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled);
@@ -1498,6 +1506,7 @@ TEST_F(MultiTileGmmTests, givenMultiTileAllocationWithoutCloningWhenGmmIsCreated
     StorageInfo storageInfo;
     storageInfo.memoryBanks = 1;
     storageInfo.cloningOfPageTables = false;
+    storageInfo.systemMemoryPlacement = false;
 
     Gmm gmm(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
 
@@ -1522,6 +1531,7 @@ TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithNonLocalMemoryThenMu
 
 TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithSpecificMemoryBanksThenMultitileArchIsEnabled) {
     StorageInfo storageInfo;
+    storageInfo.systemMemoryPlacement = false;
     storageInfo.memoryBanks = 1u;
     storageInfo.cloningOfPageTables = false;
 
@@ -1538,6 +1548,7 @@ TEST_F(MultiTileGmmTests, givenMultiTileWhenGmmIsCreatedWithCloningEnabledThenGp
     StorageInfo storageInfo;
     storageInfo.memoryBanks = 2u;
     storageInfo.cloningOfPageTables = true;
+    storageInfo.systemMemoryPlacement = false;
     storageInfo.pageTablesVisibility = 3u;
 
     Gmm gmm(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
@@ -1554,6 +1565,7 @@ TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithoutClonningPageTables
     storageInfo.cloningOfPageTables = false;
     storageInfo.tileInstanced = true;
     storageInfo.memoryBanks = 2u;
+    storageInfo.systemMemoryPlacement = false;
 
     Gmm gmm(getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, storageInfo, true);
 

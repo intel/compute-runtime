@@ -464,6 +464,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     overrideAllocationData(allocationData, properties);
     allocationData.flags.isUSMHostAllocation = properties.flags.isUSMHostAllocation;
+
+    allocationData.storageInfo.systemMemoryPlacement = allocationData.flags.useSystemMemory;
+
     return true;
 }
 

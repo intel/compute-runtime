@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ struct StorageInfo {
     bool cpuVisibleSegment = false;
     bool isLockable = false;
     bool localOnlyRequired = false;
+    bool systemMemoryPlacement = true;
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     uint32_t getMemoryBanks() const { return static_cast<uint32_t>(memoryBanks.to_ulong()); }
     uint32_t getTotalBanksCnt() const { return Math::log2(getMemoryBanks()) + 1; }

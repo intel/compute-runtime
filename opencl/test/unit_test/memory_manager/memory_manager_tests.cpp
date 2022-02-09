@@ -3022,6 +3022,36 @@ TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocati
     EXPECT_EQ(1u, allocData.flags.use32BitFrontWindow);
 }
 
+TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForSystemMemoryThenSetSystemMemoryFlag) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield);
+
+    EXPECT_NE(0lu, mockDeviceBitfield.to_ulong());
+
+    MockMemoryManager mockMemoryManager;
+    auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
+    EXPECT_NE(0lu, storageInfo.memoryBanks.to_ulong());
+
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+    EXPECT_EQ(1u, allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.storageInfo.systemMemoryPlacement);
+}
+
+TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForLocalMemoryThenClearSystemMemoryFlag) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::BUFFER, mockDeviceBitfield);
+
+    EXPECT_NE(0lu, mockDeviceBitfield.to_ulong());
+
+    MockMemoryManager mockMemoryManager;
+    auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
+    EXPECT_NE(0lu, storageInfo.memoryBanks.to_ulong());
+
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+    EXPECT_EQ(0u, allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.storageInfo.systemMemoryPlacement);
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 

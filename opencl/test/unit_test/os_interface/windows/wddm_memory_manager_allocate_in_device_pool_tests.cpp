@@ -66,6 +66,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     allocData.flags.allocateMemory = true;
     allocData.flags.shareable = true;
     allocData.storageInfo.memoryBanks = 2;
+    allocData.storageInfo.systemMemoryPlacement = false;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
