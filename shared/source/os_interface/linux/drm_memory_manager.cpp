@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -482,9 +483,11 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
     StorageInfo systemMemoryStorageInfo = {};
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable), false, systemMemoryStorageInfo, true);
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
@@ -1210,7 +1213,7 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
                            nullptr,
                            currentSize,
                            0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false),
+                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *clientContext->getHardwareInfo()),
                            compression,
                            limitedStorageInfo,
                            true);
@@ -1224,7 +1227,8 @@ void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *alloca
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
-        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u, CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false), false, limitedStorageInfo, true);
+        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u,
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, *clientContext->getHardwareInfo()), false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1273,6 +1277,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         return allocation;
     }
 
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
     auto numHandles = allocationData.storageInfo.getNumBanks();
@@ -1289,11 +1295,12 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
         if (createSingleHandle) {
+
             gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
                                         nullptr,
                                         sizeAligned,
                                         0u,
-                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable),
+                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo),
                                         allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
                                         true);
@@ -1302,7 +1309,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 
     auto sizeAllocated = sizeAligned;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
     auto gpuAddress = getGpuAddress(this->alignmentSelector, this->heapAssigner, *hwInfo,
                                     allocationData.type, gfxPartition, sizeAllocated,
                                     allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow);

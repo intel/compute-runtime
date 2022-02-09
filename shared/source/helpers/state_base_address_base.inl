@@ -77,7 +77,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
         stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
-        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get());
+        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *gmmHelper->getHardwareInfo());
 
         stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(resourceUsage));
     }

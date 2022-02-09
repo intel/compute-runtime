@@ -53,7 +53,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 
     stateBaseAddress->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get());
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *gmmHelper->getHardwareInfo());
     auto heapMocsValue = gmmHelper->getMOCS(heapResourceUsage);
 
     stateBaseAddress->setSurfaceStateMemoryObjectControlState(heapMocsValue);

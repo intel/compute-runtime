@@ -10,12 +10,13 @@
 
 namespace NEO {
 enum class AllocationType;
+struct HardwareInfo;
 
 struct CacheSettingsHelper {
-    static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getGmmUsageType(AllocationType allocationType, bool forceUncached, const HardwareInfo &hwInfo);
 
   protected:
-    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const HardwareInfo &hwInfo);
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType);
 };
 } // namespace NEO

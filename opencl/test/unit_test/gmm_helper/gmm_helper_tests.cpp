@@ -835,11 +835,13 @@ TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
 }
 
 TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
+    const auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         auto allocationType = static_cast<AllocationType>(i);
 
         for (auto forceUncached : {true, false}) {
-            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached);
+            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, *defaultHwInfo);
             auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
             switch (allocationType) {
@@ -852,6 +854,11 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::INTERNAL_HEAP:
             case AllocationType::LINEAR_STREAM:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+                break;
+            case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
+            case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+                expectedUsage = (forceUncached || hwInfoConfig->isDcFlushAllowed()) ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED
+                                                                                    : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             default:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER;
@@ -867,10 +874,10 @@ TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncache
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForHeaps.set(true);
 
-    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, false);
+    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, false, *defaultHwInfo);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 
-    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::LINEAR_STREAM, false);
+    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::LINEAR_STREAM, false, *defaultHwInfo);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 }
 
