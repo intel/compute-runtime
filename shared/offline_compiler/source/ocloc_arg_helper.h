@@ -114,6 +114,7 @@ class OclocArgHelper {
     uint32_t getProductConfig(std::vector<uint32_t> &numeration);
     uint32_t getMaskForConfig(std::vector<uint32_t> &numeration);
     PRODUCT_CONFIG findConfigMatch(const std::string &device, bool firstAppearance);
+    void insertGenNames(GFXCORE_FAMILY family);
     std::vector<std::string> headersToVectorOfStrings();
     void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
     MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &filename);

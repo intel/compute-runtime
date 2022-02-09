@@ -251,8 +251,20 @@ TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonEmptyLi
         if (nullptr != NEO::familyName[coreId]) {
             EXPECT_TRUE(argHelper->isGen(ConstStringRef(NEO::familyName[coreId]).str()));
             std::string caseInsensitive = NEO::familyName[coreId];
-            std::transform(caseInsensitive.begin(), caseInsensitive.begin() + 1, caseInsensitive.begin(), ::tolower);
+            std::transform(caseInsensitive.begin(), caseInsensitive.end(), caseInsensitive.begin(), ::tolower);
             EXPECT_TRUE(argHelper->isGen(caseInsensitive));
+
+            auto findCore = caseInsensitive.find("_core");
+            if (findCore != std::string::npos) {
+                caseInsensitive = caseInsensitive.substr(0, findCore);
+                EXPECT_TRUE(argHelper->isGen(caseInsensitive));
+            }
+
+            auto findUnderline = caseInsensitive.find("_");
+            if (findUnderline != std::string::npos) {
+                caseInsensitive.erase(std::remove(caseInsensitive.begin(), caseInsensitive.end(), '_'), caseInsensitive.end());
+                EXPECT_TRUE(argHelper->isGen(caseInsensitive));
+            }
         }
     }
 }
@@ -275,8 +287,20 @@ TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonNullIGF
         if (nullptr != NEO::familyName[coreId]) {
             EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef(NEO::familyName[coreId]).str()), coreId);
             std::string caseInsensitive = NEO::familyName[coreId];
-            std::transform(caseInsensitive.begin(), caseInsensitive.begin() + 1, caseInsensitive.begin(), ::tolower);
+            std::transform(caseInsensitive.begin(), caseInsensitive.end(), caseInsensitive.begin(), ::tolower);
             EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
+
+            auto findCore = caseInsensitive.find("_core");
+            if (findCore != std::string::npos) {
+                caseInsensitive = caseInsensitive.substr(0, findCore);
+                EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
+            }
+
+            auto findUnderline = caseInsensitive.find("_");
+            if (findUnderline != std::string::npos) {
+                caseInsensitive.erase(std::remove(caseInsensitive.begin(), caseInsensitive.end(), '_'), caseInsensitive.end());
+                EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
+            }
         }
     }
 }

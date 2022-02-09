@@ -69,12 +69,11 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     for (uint32_t i = 0; i < numInputHeaders; ++i) {
         headers.push_back(Source(dataInputHeaders[i], static_cast<size_t>(lenInputHeaders[i]), nameInputHeaders[i]));
     }
-    for (unsigned int i = 0; i < IGFX_MAX_CORE; ++i) {
-        if (NEO::familyName[i] == nullptr)
+    for (unsigned int family = 0; family < IGFX_MAX_CORE; ++family) {
+        if (NEO::familyName[family] == nullptr) {
             continue;
-        std::string gen = NEO::familyName[i];
-        std::transform(gen.begin(), gen.end(), gen.begin(), ::tolower);
-        genIGFXMap.insert({gen, i});
+        }
+        insertGenNames(static_cast<GFXCORE_FAMILY>(family));
     }
 
     std::sort(deviceMap.begin(), deviceMap.end(), compareConfigs);
@@ -365,4 +364,22 @@ PRODUCT_CONFIG OclocArgHelper::findConfigMatch(const std::string &device, bool f
         }
     }
     return PRODUCT_CONFIG::UNKNOWN_ISA;
+}
+
+void OclocArgHelper::insertGenNames(GFXCORE_FAMILY family) {
+    std::string genName = NEO::familyName[family];
+    std::transform(genName.begin(), genName.end(), genName.begin(), ::tolower);
+    genIGFXMap.insert({genName, family});
+
+    auto findCore = genName.find("_core");
+    if (findCore != std::string::npos) {
+        genName = genName.substr(0, findCore);
+        genIGFXMap.insert({genName, family});
+    }
+
+    auto findUnderline = genName.find("_");
+    if (findUnderline != std::string::npos) {
+        genName.erase(std::remove(genName.begin(), genName.end(), '_'), genName.end());
+        genIGFXMap.insert({genName, family});
+    }
 }
