@@ -475,17 +475,15 @@ EngineControl &Device::getEngine(uint32_t index) {
 }
 
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
-    bool retVal = getOSTime()->getCpuTime(hostTimestamp);
+    TimeStampData timeStamp;
+    auto retVal = getOSTime()->getCpuGpuTime(&timeStamp);
     if (retVal) {
-        TimeStampData timeStamp;
-        retVal = getOSTime()->getCpuGpuTime(&timeStamp);
-        if (retVal) {
-            if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
-                auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
-                *deviceTimestamp = static_cast<uint64_t>(timeStamp.GPUTimeStamp * resolution);
-            } else
-                *deviceTimestamp = *hostTimestamp;
-        }
+        *hostTimestamp = timeStamp.CPUTimeinNS;
+        if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
+            auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
+            *deviceTimestamp = static_cast<uint64_t>(timeStamp.GPUTimeStamp * resolution);
+        } else
+            *deviceTimestamp = *hostTimestamp;
     }
     return retVal;
 }

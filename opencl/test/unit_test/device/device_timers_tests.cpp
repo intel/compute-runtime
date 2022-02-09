@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,18 +157,6 @@ class FailingMockOSTime : public OSTime {
         return 0;
     }
 };
-
-TEST(MockOSTime, givenFailingOSTimeWhenGetDeviceAndHostTimerThenFalseIsReturned) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    mockDevice->setOSTime(new FailingMockOSTime());
-
-    uint64_t deviceTS = 0u, hostTS = 0u;
-    bool retVal = mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
-
-    EXPECT_FALSE(retVal);
-    EXPECT_EQ(deviceTS, 0u);
-    EXPECT_EQ(hostTS, 0u);
-}
 
 class FailingMockDeviceTime : public DeviceTime {
   public:
