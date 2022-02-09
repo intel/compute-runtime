@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
-    return defaultHeapSize;
+    return getDefaultHeapSize();
 }
 
 template <typename GfxFamily>

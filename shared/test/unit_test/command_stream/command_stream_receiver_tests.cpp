@@ -1477,6 +1477,20 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
 
+TEST_F(CommandStreamReceiverTest, givenForceCommandBufferAlignmentWhenEnsureCommandBufferAllocationThenItHasProperAlignment) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceCommandBufferAlignment.set(2048);
+
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
+    LinearStream commandStream{allocation};
+
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
+    EXPECT_EQ(2 * MemoryConstants::megaByte, commandStream.getMaxAvailableSpace());
+
+    memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
+}
+
 TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsureCommandBufferAllocationThenSizesOfAllocationAndCommandBufferAreCorrect) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};

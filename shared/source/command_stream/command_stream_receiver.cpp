@@ -188,7 +188,13 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
         return;
     }
 
-    const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
+    auto alignment = MemoryConstants::pageSize64k;
+
+    if (DebugManager.flags.ForceCommandBufferAlignment.get() != -1) {
+        alignment = DebugManager.flags.ForceCommandBufferAlignment.get() * MemoryConstants::kiloByte;
+    }
+
+    const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, alignment);
     constexpr static auto allocationType = AllocationType::COMMAND_BUFFER;
     auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
     if (allocation == nullptr) {
@@ -474,7 +480,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
 void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;
-    auto finalHeapSize = defaultHeapSize;
+    auto finalHeapSize = getDefaultHeapSize();
     if (IndirectHeap::Type::SURFACE_STATE == heapType) {
         finalHeapSize = defaultSshSize;
     }

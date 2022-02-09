@@ -21,6 +21,14 @@ using HeapContainer = std::vector<GraphicsAllocation *>;
 
 constexpr size_t defaultHeapSize = 64 * KB;
 
+inline size_t getDefaultHeapSize() {
+    auto defaultSize = defaultHeapSize;
+    if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {
+        defaultSize = DebugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
+    }
+    return defaultSize;
+}
+
 class IndirectHeap : public LinearStream {
     typedef LinearStream BaseClass;
 

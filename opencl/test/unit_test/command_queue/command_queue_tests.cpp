@@ -821,6 +821,23 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledT
     delete indirectHeap;
 }
 
+TEST_F(CommandQueueIndirectHeapTest, givenForceDefaultHeapSizeWhenGetHeapMemoryIsCalledThenHeapIsCreatedWithProperSize) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceDefaultHeapSize.set(64 * MemoryConstants::kiloByte);
+
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
+
+    IndirectHeap *indirectHeap = nullptr;
+    cmdQ.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 100, indirectHeap);
+    EXPECT_NE(nullptr, indirectHeap);
+    EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+    EXPECT_EQ(indirectHeap->getAvailableSpace(), 64 * MemoryConstants::megaByte);
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
+    delete indirectHeap;
+}
+
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pClDevice, props, false);
