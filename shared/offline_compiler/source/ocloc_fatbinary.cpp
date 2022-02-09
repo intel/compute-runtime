@@ -306,10 +306,10 @@ std::vector<DeviceMapping> getTargetConfigsForFatbinary(ConstStringRef deviceArg
     return retVal;
 }
 
-int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary, OfflineCompiler *pCompiler, OclocArgHelper *argHelper) {
+int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
+                            OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig) {
     std::string product = hardwarePrefix[pCompiler->getHardwareInfo().platform.eProductFamily];
     auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
-    std::string deviceConfig = product + "." + std::to_string(stepping);
 
     if (retVal == 0) {
         retVal = buildWithSafetyGuard(pCompiler);
@@ -331,7 +331,7 @@ int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::
     if (retVal) {
         return retVal;
     }
-    fatbinary.appendFileEntry(pointerSize + "." + deviceConfig, pCompiler->getPackedDeviceBinaryOutput());
+    fatbinary.appendFileEntry(pointerSize + "." + product + "." + std::to_string(stepping), pCompiler->getPackedDeviceBinaryOutput());
     return retVal;
 }
 
@@ -384,7 +384,11 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
                 return retVal;
             }
 
-            retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper);
+            std::string product = hardwarePrefix[pCompiler->getHardwareInfo().platform.eProductFamily];
+            auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
+            auto targetPlatforms = product + "." + std::to_string(stepping);
+
+            retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper, targetPlatforms);
             if (retVal) {
                 return retVal;
             }
@@ -408,7 +412,8 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
                 return retVal;
             }
 
-            retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper);
+            auto targetConfigStr = argHelper->parseProductConfigFromValue(targetConfig.config);
+            retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper, targetConfigStr);
             if (retVal) {
                 return retVal;
             }

@@ -84,6 +84,10 @@ class OclocArgHelper {
         return deviceMap0.config < deviceMap1.config;
     }
 
+    static bool isDuplicateConfig(DeviceMapping deviceMap0, DeviceMapping deviceMap1) {
+        return deviceMap0.config == deviceMap1.config;
+    }
+
   public:
     OclocArgHelper();
     OclocArgHelper(const uint32_t numSources, const uint8_t **dataSources,

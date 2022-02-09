@@ -62,7 +62,7 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
 #include "product_config.inl"
 #undef DEVICE_CONFIG
 #undef DEVICE_CONFIG_REVISION
-          {PRODUCT_CONFIG::UNKNOWN_ISA, {}, 0x0}}) {
+      }) {
     for (uint32_t i = 0; i < numSources; ++i) {
         inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
     }
@@ -76,6 +76,9 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
         std::transform(gen.begin(), gen.end(), gen.begin(), ::tolower);
         genIGFXMap.insert({gen, i});
     }
+
+    std::sort(deviceMap.begin(), deviceMap.end(), compareConfigs);
+    deviceMap.erase(std::unique(deviceMap.begin(), deviceMap.end(), isDuplicateConfig), deviceMap.end());
 }
 
 OclocArgHelper::OclocArgHelper() : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
@@ -190,8 +193,6 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInf
 
 void OclocArgHelper::getProductConfigsForGfxCoreFamily(GFXCORE_FAMILY core, std::vector<DeviceMapping> &out) {
     for (auto &deviceConfig : deviceMap) {
-        if (deviceConfig.config == PRODUCT_CONFIG::UNKNOWN_ISA)
-            continue;
         if (deviceConfig.hwInfo->platform.eRenderCoreFamily == core) {
             out.push_back(deviceConfig);
         }
@@ -228,15 +229,7 @@ std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) 
 }
 
 std::vector<DeviceMapping> OclocArgHelper::getAllSupportedDeviceConfigs() {
-    std::vector<DeviceMapping> allConfigs;
-
-    for (auto &deviceConfig : deviceMap) {
-        if (deviceConfig.config != PRODUCT_CONFIG::UNKNOWN_ISA) {
-            allConfigs.push_back(deviceConfig);
-        }
-    }
-    std::sort(allConfigs.begin(), allConfigs.end(), compareConfigs);
-    return allConfigs;
+    return deviceMap;
 }
 
 const std::string OclocArgHelper::parseProductConfigFromValue(PRODUCT_CONFIG config) {
@@ -252,9 +245,7 @@ const std::string OclocArgHelper::parseProductConfigFromValue(PRODUCT_CONFIG con
 std::vector<PRODUCT_CONFIG> OclocArgHelper::getAllSupportedProductConfigs() {
     std::vector<PRODUCT_CONFIG> allConfigs;
     for (auto &deviceConfig : deviceMap) {
-        if (deviceConfig.config != PRODUCT_CONFIG::UNKNOWN_ISA) {
-            allConfigs.push_back(deviceConfig.config);
-        }
+        allConfigs.push_back(deviceConfig.config);
     }
     std::sort(allConfigs.begin(), allConfigs.end());
     return allConfigs;

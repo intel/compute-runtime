@@ -79,19 +79,14 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgToFatBinaryWhenConfigMatche
     EXPECT_TRUE(NEO::requestedFatBinary(3, fewConfigs, argHelper.get()));
 }
 
-TEST(OclocFatBinaryProductConfigSupport, WhenPlatformIsSupportedThenAtLeastOneCorrespondingProductConfigExists) {
+TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgAsSingleProductConfigThenFatBinaryIsNotRequested) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    auto allSuportedPlatforms = getAllSupportedTargetPlatforms();
-    for (auto &platform : allSuportedPlatforms) {
-        bool supportExist = false;
-        for (auto &config : allEnabledDeviceConfigs) {
-            if (config.hwInfo->platform.eProductFamily == platform) {
-                supportExist = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(supportExist);
+
+    for (auto &deviceConfig : allEnabledDeviceConfigs) {
+        std::string configStr = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        const char *singleConfig[] = {"ocloc", "-device", configStr.c_str()};
+        EXPECT_FALSE(NEO::requestedFatBinary(3, singleConfig, argHelper.get()));
     }
 }
 
@@ -851,9 +846,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryB
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
-        std::string revId = std::to_string(deviceConfig.revId);
-        resString << "Build succeeded for : " << platformName + "." + revId + ".\n";
+        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
@@ -897,9 +891,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFr
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
-        std::string revId = std::to_string(deviceConfig.revId);
-        resString << "Build succeeded for : " << platformName + "." + revId + ".\n";
+        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
@@ -943,9 +936,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeTo
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
-        std::string revId = std::to_string(deviceConfig.revId);
-        resString << "Build succeeded for : " << platformName + "." + revId + ".\n";
+        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
@@ -997,9 +989,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        std::string platformName = hardwarePrefix[deviceConfig.hwInfo->platform.eProductFamily];
-        std::string revId = std::to_string(deviceConfig.revId);
-        resString << "Build succeeded for : " << platformName + "." + revId + ".\n";
+        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
     EXPECT_STREQ(output.c_str(), resString.str().c_str());

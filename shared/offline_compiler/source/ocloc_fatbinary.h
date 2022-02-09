@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,6 @@ std::vector<DeviceMapping> getProductConfigsForSpecificTargets(CompilerOptions::
 std::vector<ConstStringRef> getPlatformsForSpecificTargets(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper);
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
-int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize,
-                            Ar::ArEncoder &fatbinary, OfflineCompiler *pCompiler, OclocArgHelper *argHelper);
+int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
+                            OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);
 } // namespace NEO
