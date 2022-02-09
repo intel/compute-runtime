@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, false);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
-    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, val, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));
 
     driverHandle->svmAllocsManager->freeSVMAlloc(srcMemory);
     driverHandle->svmAllocsManager->freeSVMAlloc(dstMemory);
