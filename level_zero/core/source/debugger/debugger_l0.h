@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,6 +89,9 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
+
+    MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle);
+    MOCKABLE_VIRTUAL bool removeZebinModule(uint32_t moduleHandle);
 
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {

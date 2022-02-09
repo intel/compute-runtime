@@ -69,6 +69,7 @@ class Drm : public DriverModel {
         ModuleHeapDebugArea,
         ContextSaveArea,
         SbaTrackingBuffer,
+        L0ZebinModule,
         MaxSize
     };
 

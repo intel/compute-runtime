@@ -49,11 +49,28 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         L0::DebuggerL0Hw<GfxFamily>::registerElf(debugData, isaAllocation);
     }
 
+    bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs, uint32_t &moduleHandle) override {
+        segmentCountWithAttachedModuleHandle = static_cast<uint32_t>(allocs.size());
+        if (std::numeric_limits<uint32_t>::max() != moduleHandleToReturn) {
+            moduleHandle = moduleHandleToReturn;
+            return true;
+        }
+        return L0::DebuggerL0Hw<GfxFamily>::attachZebinModuleToSegmentAllocations(allocs, moduleHandle);
+    }
+    bool removeZebinModule(uint32_t moduleHandle) override {
+        removedZebinModuleHandle = moduleHandle;
+        return L0::DebuggerL0Hw<GfxFamily>::removeZebinModule(moduleHandle);
+    }
+
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
     const char *lastReceivedElf = nullptr;
+
+    uint32_t segmentCountWithAttachedModuleHandle = 0;
+    uint32_t removedZebinModuleHandle = 0;
+    uint32_t moduleHandleToReturn = std::numeric_limits<uint32_t>::max();
 };
 
 template <uint32_t productFamily, typename GfxFamily>

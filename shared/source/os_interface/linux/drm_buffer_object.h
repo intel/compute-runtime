@@ -77,7 +77,7 @@ class BufferObject {
     bool peekIsReusableAllocation() const { return this->isReused; }
     void markAsReusableAllocation() { this->isReused = true; }
     void addBindExtHandle(uint32_t handle);
-    StackVec<uint32_t, 2> &getBindExtHandles() { return bindExtHandles; }
+    const StackVec<uint32_t, 2> &getBindExtHandles() const { return bindExtHandles; }
     void markForCapture() {
         allowCapture = true;
     }

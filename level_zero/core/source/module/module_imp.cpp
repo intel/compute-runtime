@@ -1005,9 +1005,21 @@ void ModuleImp::registerElfInDebuggerL0() {
         NEO::DebugData debugData; // pass debug zebin in vIsa field
         debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
         debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
+
+        StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
         for (auto &kernImmData : kernelImmDatas) {
             device->getL0Debugger()->registerElf(&debugData, kernImmData->getIsaGraphicsAllocation());
+            segmentAllocs.push_back(kernImmData->getIsaGraphicsAllocation());
         }
+
+        if (translationUnit->globalVarBuffer) {
+            segmentAllocs.push_back(translationUnit->globalVarBuffer);
+        }
+        if (translationUnit->globalConstBuffer) {
+            segmentAllocs.push_back(translationUnit->globalConstBuffer);
+        }
+
+        device->getL0Debugger()->attachZebinModuleToSegmentAllocations(segmentAllocs, debugModuleHandle);
     } else {
         for (auto &kernImmData : kernelImmDatas) {
             if (kernImmData->getKernelInfo()->kernelDescriptor.external.debugData.get()) {

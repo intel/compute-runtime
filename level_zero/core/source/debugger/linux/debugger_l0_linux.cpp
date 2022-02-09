@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,5 +31,31 @@ void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation 
         auto handle = drm->registerResource(NEO::Drm::ResourceClass::Elf, debugData->vIsa, debugData->vIsaSize);
         static_cast<NEO::DrmAllocation *>(isaAllocation)->linkWithRegisteredHandle(handle);
     }
+}
+
+bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs, uint32_t &moduleHandle) {
+    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
+        return false;
+    }
+    auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+    uint32_t segmentCount = static_cast<uint32_t>(allocs.size());
+    moduleHandle = drm->registerResource(NEO::Drm::ResourceClass::L0ZebinModule, &segmentCount, sizeof(uint32_t));
+
+    for (auto &allocation : allocs) {
+        auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+        drmAllocation->linkWithRegisteredHandle(moduleHandle);
+    }
+
+    return true;
+}
+
+bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
+    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
+        return false;
+    }
+    auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+
+    drm->unregisterResource(moduleHandle);
+    return true;
 }
 } // namespace L0

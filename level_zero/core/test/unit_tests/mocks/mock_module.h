@@ -74,6 +74,7 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
 struct MockModule : public L0::ModuleImp {
     using ModuleImp::debugEnabled;
+    using ModuleImp::debugModuleHandle;
     using ModuleImp::kernelImmDatas;
     using ModuleImp::translationUnit;
 

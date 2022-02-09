@@ -85,7 +85,12 @@ struct ModuleImp : public Module {
     ~ModuleImp() override;
 
     ze_result_t destroy() override {
+        auto tempHandle = debugModuleHandle;
+        auto tempDevice = device;
         delete this;
+        if (tempDevice->getL0Debugger()) {
+            tempDevice->getL0Debugger()->removeZebinModule(tempHandle);
+        }
         return ZE_RESULT_SUCCESS;
     }
 
@@ -157,6 +162,7 @@ struct ModuleImp : public Module {
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
+    uint32_t debugModuleHandle = 0;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

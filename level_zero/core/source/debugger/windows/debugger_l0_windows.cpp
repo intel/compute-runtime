@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,14 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 }
 
 void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
+}
+
+bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle) {
+    return false;
+}
+
+bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
+    return false;
 }
 
 } // namespace L0
