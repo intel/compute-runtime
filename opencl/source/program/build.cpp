@@ -186,13 +186,24 @@ cl_int Program::build(
                 if (BuildPhase::DebugDataNotification == phaseReached[rootDeviceIndex]) {
                     continue;
                 }
-                createDebugData(clDevice->getRootDeviceIndex());
-                if (clDevice->getSourceLevelDebugger()) {
-                    for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
-                        clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                                  kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
-                                                                                  kernelInfo->heapInfo.pKernelHeap,
-                                                                                  kernelInfo->heapInfo.KernelHeapSize);
+                auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[clDevice->getRootDeviceIndex()].unpackedDeviceBinary.get()), this->buildInfos[clDevice->getRootDeviceIndex()].unpackedDeviceBinarySize);
+                if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+                    createDebugZebin(clDevice->getRootDeviceIndex());
+                    if (clDevice->getSourceLevelDebugger()) {
+                        NEO::DebugData debugData;
+                        debugData.vIsa = reinterpret_cast<const char *>(this->buildInfos[clDevice->getRootDeviceIndex()].debugData.get());
+                        debugData.vIsaSize = static_cast<uint32_t>(this->buildInfos[clDevice->getRootDeviceIndex()].debugDataSize);
+                        clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&debugData, "debug_zebin", nullptr, 0);
+                    }
+                } else {
+                    processDebugData(clDevice->getRootDeviceIndex());
+                    if (clDevice->getSourceLevelDebugger()) {
+                        for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
+                            clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
+                                                                                      kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
+                                                                                      kernelInfo->heapInfo.pKernelHeap,
+                                                                                      kernelInfo->heapInfo.KernelHeapSize);
+                        }
                     }
                 }
                 phaseReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;

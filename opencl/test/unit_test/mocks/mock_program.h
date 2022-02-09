@@ -32,7 +32,6 @@ class MockProgram : public Program {
     using Program::areSpecializationConstantsInitialized;
     using Program::buildInfos;
     using Program::context;
-    using Program::createDebugZebin;
     using Program::createdFrom;
     using Program::createProgramFromBinary;
     using Program::deviceBuildInfos;
@@ -42,6 +41,7 @@ class MockProgram : public Program {
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isBuiltIn;
+    using Program::isCreatedFromBinary;
     using Program::isSpirV;
     using Program::kernelDebugEnabled;
     using Program::linkBinary;
@@ -179,12 +179,24 @@ class MockProgram : public Program {
         return kernelInfos;
     }
 
+    void processDebugData(uint32_t rootDeviceIndex) override {
+        Program::processDebugData(rootDeviceIndex);
+        wasProcessDebugDataCalled = true;
+    }
+
+    void createDebugZebin(uint32_t rootDeviceIndex) override {
+        Program::createDebugZebin(rootDeviceIndex);
+        wasCreateDebugZebinCalled = true;
+    }
+
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
     static int getInternalOptionsCalled;
     bool contextSet = false;
     int isFlagOptionOverride = -1;
     int isOptionValueValidOverride = -1;
+    bool wasProcessDebugDataCalled = false;
+    bool wasCreateDebugZebinCalled = false;
 };
 
 class MockProgramAppendKernelDebugOptions : public Program {

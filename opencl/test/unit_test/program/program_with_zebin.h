@@ -27,29 +27,3 @@ class ProgramWithZebinFixture : public ProgramTests {
     void populateProgramWithSegments(MockProgram *program);
     ~ProgramWithZebinFixture() = default;
 };
-
-class ProgramWithDebugDataCreationFixture : public ProgramWithZebinFixture {
-
-    class MockProgramWithDebugDataCreation : public MockProgram {
-      public:
-        using Program::createDebugData;
-        MockProgramWithDebugDataCreation(const ClDeviceVector &deviceVector) : MockProgram(deviceVector) {
-        }
-        ~MockProgramWithDebugDataCreation() {
-        }
-        bool wasProcessDebugDataCalled = false;
-        void processDebugData(uint32_t rootDeviceIndex) override {
-            wasProcessDebugDataCalled = true;
-        }
-        bool wasCreateDebugZebinCalled = false;
-        void createDebugZebin(uint32_t rootDeviceIndex) override {
-            MockProgram::createDebugZebin(rootDeviceIndex);
-            wasCreateDebugZebinCalled = true;
-        }
-    };
-
-  public:
-    std::unique_ptr<MockProgramWithDebugDataCreation> programWithDebugDataCreation;
-    void SetUp() override;
-    void TearDown() override;
-};

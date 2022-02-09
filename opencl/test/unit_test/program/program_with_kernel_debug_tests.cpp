@@ -353,3 +353,15 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenPro
     EXPECT_NE(0u, kernelInfo->debugData.vIsaSize);
     EXPECT_NE(nullptr, kernelInfo->debugData.vIsa);
 }
+
+TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithNonZebinaryFormatAndKernelDebugEnabledWhenProgramIsBuiltThenProcessDebugDataIsCalledAndDebuggerNotified) {
+    MockSourceLevelDebugger *sourceLevelDebugger = new MockSourceLevelDebugger;
+    pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
+    pProgram->enableKernelDebug();
+
+    cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(pProgram->wasCreateDebugZebinCalled);
+    EXPECT_TRUE(pProgram->wasProcessDebugDataCalled);
+    EXPECT_EQ(1u, sourceLevelDebugger->notifyKernelDebugDataCalled);
+}

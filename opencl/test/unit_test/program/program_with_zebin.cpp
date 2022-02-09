@@ -50,15 +50,3 @@ void ProgramWithZebinFixture::populateProgramWithSegments(NEO::MockProgram *prog
     program->buildInfos[rootDeviceIndex].constStringSectionData.initData = &strings;
     program->buildInfos[rootDeviceIndex].constStringSectionData.size = sizeof(strings);
 }
-
-void ProgramWithDebugDataCreationFixture::SetUp() {
-    ProgramWithZebinFixture::SetUp();
-    programWithDebugDataCreation = std::make_unique<MockProgramWithDebugDataCreation>(toClDeviceVector(*pClDevice));
-}
-
-void ProgramWithDebugDataCreationFixture::TearDown() {
-    programWithDebugDataCreation->setGlobalSurface(nullptr);
-    programWithDebugDataCreation->setConstantSurface(nullptr);
-    programWithDebugDataCreation->getKernelInfoArray(rootDeviceIndex).clear();
-    ProgramWithZebinFixture::TearDown();
-}
