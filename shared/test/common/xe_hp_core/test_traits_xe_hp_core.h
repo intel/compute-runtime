@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,4 +26,5 @@ struct TestTraits<IGFX_XE_HP_CORE> {
     static constexpr bool fusedEuDispatchSupported = true;
     static constexpr bool numberOfWalkersInCfeStateSupported = true;
     static constexpr bool forceGpuNonCoherent = false;
+    static constexpr bool isUnTypedDataPortCacheFlushSupported = false;
 };

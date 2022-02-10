@@ -105,7 +105,7 @@ LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMod
 
 template <>
 std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isWARequiredOnSingleCCS = false;
+    auto isWARequiredOnSingleCCS = true;
     auto isWARequiredOnMultiCCS = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
 
     if (DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() != -1) {

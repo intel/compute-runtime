@@ -21,7 +21,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+        std::ignore = isWARequiredOnMultiCCS;
+        const auto isWARequired = isWARequiredOnSingleCCS;
 
         if (isWARequired) {
             PipeControlArgs args;

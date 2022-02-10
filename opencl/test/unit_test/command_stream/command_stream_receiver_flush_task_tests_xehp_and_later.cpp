@@ -9,14 +9,18 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+
+#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -251,6 +255,38 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeContr
     auto sipAllocation = SipKernel::getSipKernel(*mockDevice).getSipAllocation();
 
     EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenSBACommandToProgramOnSingleCCSSetupThenThereIsPipeControlPriorToIt, IsWithinXeGfxFamily) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    hardwareInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0u));
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    MockOsContext ccsOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular}));
+    commandStreamReceiver.setupContext(ccsOsContext);
+
+    configureCSRtoNonDirtyState<FamilyType>(false);
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+
+    auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto pipeControlItor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), stateBaseAddressItor);
+    EXPECT_NE(stateBaseAddressItor, pipeControlItor);
+
+    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*pipeControlItor);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
+    if constexpr (TestTraits<gfxCoreFamily>::isUnTypedDataPortCacheFlushSupported) {
+        EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+    }
+    EXPECT_FALSE(pipeControlCmd->getAmfsFlushEnable());
+    EXPECT_FALSE(pipeControlCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshButInitProgrammingFlagsThenBindingTablePoolIsProgrammed) {

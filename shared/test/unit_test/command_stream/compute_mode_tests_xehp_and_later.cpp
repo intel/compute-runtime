@@ -19,9 +19,17 @@ using namespace NEO;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     SetUpImpl<FamilyType>();
 
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    std::ignore = isWARequiredOnMultiCCS;
+
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
+    if (isWARequiredOnSingleCCS) {
+        cmdsSize += +sizeof(PIPE_CONTROL);
+    }
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -45,6 +53,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    std::ignore = isWARequiredOnMultiCCS;
     auto cmdsSize = 0u;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
@@ -56,6 +67,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     EXPECT_EQ(cmdsSize, retSize);
 
     cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    if (isWARequiredOnSingleCCS) {
+        cmdsSize += +sizeof(PIPE_CONTROL);
+    }
 
     overrideComputeModeRequest<FamilyType>(true, true, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
@@ -332,7 +346,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_EQ(cmdSize, retSize);
 
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    std::ignore = isWARequiredOnMultiCCS;
+
     cmdSize = sizeof(STATE_COMPUTE_MODE);
+    if (isWARequiredOnSingleCCS) {
+        cmdSize += +sizeof(PIPE_CONTROL);
+    }
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();

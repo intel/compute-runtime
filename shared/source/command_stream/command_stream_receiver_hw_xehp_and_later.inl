@@ -60,7 +60,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     if (isComputeModeNeeded()) {
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
         const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+        std::ignore = isWARequiredOnMultiCCS;
+        const auto isWARequired = isWARequiredOnSingleCCS;
 
         if (isWARequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
@@ -198,7 +199,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
     const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-    const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+    std::ignore = isWARequiredOnMultiCCS;
+    const auto isWARequired = isWARequiredOnSingleCCS;
 
     if (isWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
         addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);

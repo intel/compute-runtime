@@ -124,7 +124,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenHwInfoConfigWithMultipleCSSWhenIsPipeControlPr
     const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_TRUE(isWARequiredOnMultiCCS);
-    EXPECT_FALSE(isWARequiredOnSingleCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenTrueIsReturned) {
@@ -138,7 +138,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateComm
     const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_TRUE(isWARequiredOnMultiCCS);
-    EXPECT_FALSE(isWARequiredOnSingleCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledThenFalseIsReturned) {
@@ -152,5 +152,5 @@ XEHPTEST_F(XeHPHwInfoConfig, givenProgramPipeControlPriorToNonPipelinedStateComm
     const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
     EXPECT_FALSE(isWARequiredOnMultiCCS);
-    EXPECT_FALSE(isWARequiredOnSingleCCS);
+    EXPECT_TRUE(isWARequiredOnSingleCCS);
 }
