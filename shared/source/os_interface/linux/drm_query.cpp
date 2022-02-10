@@ -80,11 +80,4 @@ uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t
     return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
 }
 
-void Drm::queryPageFaultSupport() {
-}
-
-bool Drm::hasPageFaultSupport() const {
-    return pageFaultSupported;
-}
-
 } // namespace NEO

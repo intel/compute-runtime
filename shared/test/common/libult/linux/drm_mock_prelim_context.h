@@ -22,6 +22,9 @@ struct DrmMockPrelimContext {
     uint16_t maxNumWays{32};
     uint32_t allocNumWays{0};
 
+    int hasPageFaultQueryValue{0};
+    int hasPageFaultQueryReturn{0};
+
     int handlePrelimRequest(unsigned long request, void *arg);
     bool handlePrelimQueryItem(void *arg);
 };

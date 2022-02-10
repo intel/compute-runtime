@@ -181,6 +181,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, Force2dImageAsArray, -1, "-1: default, 0: WA Dis
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedBufferSize, -1, "-1: default, 0: disabled, >=1: Forces extended buffer size by specify pageSize number in clCreateBuffer, clCreateBufferWithProperties and clCreateBufferWithPropertiesINTEL calls")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedUSMBufferSize, -1, "-1: default, 0: disabled, >=1: Forces extended buffer size by specify pageSize number in USM calls")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSimdMessageSizeInWalker, -1, "-1: default, >=0 Program given value in Walker command for SIMD size")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableRecoverablePageFaults, -1, "-1: default - ignore, 0: disable, 1: enable recoverable page faults on all VMs (on faultable hardware)")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitMigrationOnFaultableHardware, -1, "-1: default - ignore, 0: disable, 1: enable implicit migration on faultable hardware (for all allocations)")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initialized OsContexts to standard output")

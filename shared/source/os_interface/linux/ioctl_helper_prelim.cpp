@@ -247,4 +247,8 @@ int32_t IoctlHelperPrelim20::getComputeEngineClass() {
     return PRELIM_I915_ENGINE_CLASS_COMPUTE;
 }
 
+std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
+    return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
+};
+
 } // namespace NEO

@@ -146,4 +146,8 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(Drm &drm, const Hard
     return false;
 }
 
+std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
+    return std::nullopt;
+};
+
 } // namespace NEO

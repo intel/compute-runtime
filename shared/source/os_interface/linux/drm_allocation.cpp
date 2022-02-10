@@ -134,6 +134,34 @@ int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHan
     return retVal;
 }
 
+int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+    int retVal = 0;
+    if (this->storageInfo.getNumBanks() > 1) {
+        auto &bos = this->getBOs();
+        if (this->storageInfo.tileInstanced) {
+            auto bo = bos[vmHandleId];
+            retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+            if (retVal) {
+                return retVal;
+            }
+        } else {
+            for (auto bo : bos) {
+                retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+                if (retVal) {
+                    return retVal;
+                }
+            }
+        }
+    } else {
+        auto bo = this->getBO();
+        retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+        if (retVal) {
+            return retVal;
+        }
+    }
+    return 0;
+}
+
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (!drm->resourceRegistrationEnabled()) {
         return;
@@ -202,6 +230,23 @@ void DrmAllocation::markForCapture() {
         if (bo) {
             bo->markForCapture();
         }
+    }
+}
+
+bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
+    if (!drm->hasPageFaultSupport()) {
+        return false;
+    }
+
+    if (DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get() != -1) {
+        return DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.get();
+    }
+
+    switch (this->allocationType) {
+    case AllocationType::UNIFIED_SHARED_MEMORY:
+        return DebugManager.flags.UseKmdMigration.get();
+    default:
+        return false;
     }
 }
 

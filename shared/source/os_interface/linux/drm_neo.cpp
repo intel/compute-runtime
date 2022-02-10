@@ -1180,4 +1180,21 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
     return retVal;
 }
 
+void Drm::queryPageFaultSupport() {
+
+    if (const auto paramId = ioctlHelper->getHasPageFaultParamId(); paramId) {
+        int support = 0;
+        const auto ret = getParamIoctl(*paramId, &support);
+        pageFaultSupported = (0 == ret) && (support > 0);
+    }
+}
+
+bool Drm::hasPageFaultSupport() const {
+    if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+        return DebugManager.flags.EnableRecoverablePageFaults.get();
+    }
+
+    return pageFaultSupported;
+}
+
 } // namespace NEO
