@@ -517,6 +517,8 @@ if(MSVC)
   # Use legacy float rounding
   set(LINKER_FLAGS "${LINKER_FLAGS} legacy_stdio_float_rounding.obj")
 
+  set(LINKER_FLAGS "${LINKER_FLAGS} /CETCOMPAT")
+
   # Support for WUD
   set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
   foreach(IT kernel32.lib;user32.lib;gdi32.lib;advapi32.lib;ole32.lib;)
