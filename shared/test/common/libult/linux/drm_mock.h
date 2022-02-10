@@ -122,6 +122,15 @@ class DrmMock : public Drm {
         queryPageFaultSupportCalled = true;
     }
 
+    uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) override {
+        capturedCooperativeContextRequest = isCooperativeContextRequested;
+        if (callBaseCreateDrmContext) {
+            return Drm::createDrmContext(drmVmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+        }
+
+        return 0;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -156,6 +165,10 @@ class DrmMock : public Drm {
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;
+    bool callBaseCreateDrmContext = true;
+
+    bool capturedCooperativeContextRequest = false;
+
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
     std::vector<drm_i915_reset_stats> resetStatsToReturn{};
 

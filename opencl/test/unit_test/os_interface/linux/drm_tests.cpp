@@ -607,6 +607,7 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextTh
 
     DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.contextDebugSupported = true;
+    drmMock.callBaseCreateDrmContext = false;
 
     OsContextLinux osContext(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
@@ -630,6 +631,37 @@ TEST(DrmTest, givenProgramDebuggingAndContextDebugAvailableWhenCreatingContextFo
     osContext.ensureContextInitialized();
 
     EXPECT_EQ(static_cast<uint32_t>(-1), drmMock.passedContextDebugId);
+}
+
+TEST(DrmTest, givenNotEnabledDebuggingOrContextDebugUnsupportedWhenCreatingContextThenCooperativeFlagIsNotPassedToCreateDrmContext) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmMockNonFailing drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drmMock.contextDebugSupported = true;
+    drmMock.callBaseCreateDrmContext = false;
+    drmMock.capturedCooperativeContextRequest = true;
+
+    EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
+
+    OsContextLinux osContext(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
+
+    executionEnvironment->setDebuggingEnabled();
+    drmMock.contextDebugSupported = false;
+    drmMock.callBaseCreateDrmContext = false;
+    drmMock.capturedCooperativeContextRequest = true;
+
+    OsContextLinux osContext2(drmMock, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_FALSE(drmMock.capturedCooperativeContextRequest);
 }
 
 TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptureExpectedOutput) {

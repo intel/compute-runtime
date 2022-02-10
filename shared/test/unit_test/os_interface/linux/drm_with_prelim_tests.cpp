@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -393,4 +395,28 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextExtIsCalledThenIoctlIsCalle
             }
         }
     }
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWhenCreatingContextThenCooperativeFlagIsPassedToCreateDrmContextOnlyIfCCSEnginesArePresent) {
+    executionEnvironment->setDebuggingEnabled();
+    drm->contextDebugSupported = true;
+    drm->callBaseCreateDrmContext = false;
+
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
+
+    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
+        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+    } else {
+        EXPECT_FALSE(drm->capturedCooperativeContextRequest);
+    }
+
+    OsContextLinux osContext2(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
 }
