@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -285,7 +285,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenLinkingIrThenLinkFailure
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
+TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarget) {
     // link only from .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
     retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".bc");
@@ -294,12 +294,10 @@ TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenLlvmBcIsUsedAsIntermediateRepr
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     gEnvironment->igcPopDebugVars();
     ASSERT_EQ(TranslationOutput::ErrorCode::Success, err);
-    ASSERT_EQ(2U, pCompilerInterface->requestedTranslationCtxs.size());
+    ASSERT_EQ(1u, pCompilerInterface->requestedTranslationCtxs.size());
 
-    MockCompilerInterface::TranslationOpT firstTranslation = {IGC::CodeType::elf, IGC::CodeType::llvmBc},
-                                          secondTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
-    EXPECT_EQ(firstTranslation, pCompilerInterface->requestedTranslationCtxs[0]);
-    EXPECT_EQ(secondTranslation, pCompilerInterface->requestedTranslationCtxs[1]);
+    MockCompilerInterface::TranslationOpT translation = {IGC::CodeType::elf, IGC::CodeType::oclGenBin};
+    EXPECT_EQ(translation, pCompilerInterface->requestedTranslationCtxs[0]);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenLinkFailsGracefully) {
