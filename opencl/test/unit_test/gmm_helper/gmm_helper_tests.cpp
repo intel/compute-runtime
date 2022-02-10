@@ -881,6 +881,26 @@ TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncache
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 }
 
+TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
+
+    for (auto allocType : {AllocationType::BUFFER,
+                           AllocationType::BUFFER_HOST_MEMORY,
+                           AllocationType::EXTERNAL_HOST_PTR,
+                           AllocationType::FILL_PATTERN,
+                           AllocationType::INTERNAL_HOST_MEMORY,
+                           AllocationType::MAP_ALLOCATION,
+                           AllocationType::SHARED_BUFFER,
+                           AllocationType::SVM_CPU,
+                           AllocationType::SVM_GPU,
+                           AllocationType::SVM_ZERO_COPY,
+                           AllocationType::UNIFIED_SHARED_MEMORY}) {
+
+        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageType(allocType, false, *defaultHwInfo));
+    }
+}
+
 TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
     struct MyMockResourecInfo : public GmmResourceInfo {
         using GmmResourceInfo::resourceInfo;

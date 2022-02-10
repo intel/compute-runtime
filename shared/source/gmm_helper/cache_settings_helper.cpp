@@ -34,12 +34,27 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+    case AllocationType::BUFFER:
+    case AllocationType::BUFFER_HOST_MEMORY:
+    case AllocationType::EXTERNAL_HOST_PTR:
+    case AllocationType::FILL_PATTERN:
+    case AllocationType::INTERNAL_HOST_MEMORY:
+    case AllocationType::MAP_ALLOCATION:
+    case AllocationType::SHARED_BUFFER:
+    case AllocationType::SVM_CPU:
+    case AllocationType::SVM_GPU:
+    case AllocationType::SVM_ZERO_COPY:
+    case AllocationType::UNIFIED_SHARED_MEMORY:
+        if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+        }
+        return GMM_RESOURCE_USAGE_OCL_BUFFER;
     case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
     case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         if (hwInfoConfig->isDcFlushAllowed()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
-        [[fallthrough]];
+        return GMM_RESOURCE_USAGE_OCL_BUFFER;
     default:
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     }
