@@ -126,6 +126,35 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
     bool alignedMallocShouldFail = false;
     size_t alignedMallocSizeRequired = 0u;
+    uint32_t unreference(BufferObject *bo, bool synchronousDestroy) override {
+        std::unique_lock<std::mutex> lock(unreferenceMtx);
+        unreferenceCalled++;
+        unreferenceParamsPassed.push_back({bo, synchronousDestroy});
+        return DrmMemoryManager::unreference(bo, synchronousDestroy);
+    }
+    struct UnreferenceParams {
+        BufferObject *bo;
+        bool synchronousDestroy;
+    };
+    uint32_t unreferenceCalled = 0u;
+    StackVec<UnreferenceParams, 4> unreferenceParamsPassed{};
+    void releaseGpuRange(void *ptr, size_t size, uint32_t rootDeviceIndex) override {
+        std::unique_lock<std::mutex> lock(releaseGpuRangeMtx);
+        releaseGpuRangeCalled++;
+        DrmMemoryManager::releaseGpuRange(ptr, size, rootDeviceIndex);
+    }
+    uint32_t releaseGpuRangeCalled = 0u;
+    void alignedFreeWrapper(void *ptr) override {
+        std::unique_lock<std::mutex> lock(alignedFreeWrapperMtx);
+        alignedFreeWrapperCalled++;
+        DrmMemoryManager::alignedFreeWrapper(ptr);
+    }
+    uint32_t alignedFreeWrapperCalled = 0u;
+
+  protected:
+    std::mutex unreferenceMtx;
+    std::mutex releaseGpuRangeMtx;
+    std::mutex alignedFreeWrapperMtx;
 };
 
 struct MockDrmGemCloseWorker : DrmGemCloseWorker {

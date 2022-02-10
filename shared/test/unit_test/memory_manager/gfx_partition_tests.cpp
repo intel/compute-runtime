@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -407,6 +407,7 @@ using GfxPartitionTestForAllHeapTypes = ::testing::TestWithParam<HeapIndex>;
 TEST_P(GfxPartitionTestForAllHeapTypes, givenHeapIndexWhenFreeGpuAddressRangeIsCalledThenFreeMemory) {
     MockGfxPartition gfxPartition;
     gfxPartition.init(maxNBitValue(48), reservedCpuAddressRangeSize, 0, 1);
+    gfxPartition.callBasefreeGpuAddressRange = true;
     const HeapIndex heapIndex = GetParam();
     const size_t allocationSize = static_cast<size_t>(gfxPartition.getHeapSize(heapIndex)) * 3 / 4;
     if (allocationSize == 0) {

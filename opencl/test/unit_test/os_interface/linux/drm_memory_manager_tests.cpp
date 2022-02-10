@@ -4068,14 +4068,12 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThenGpuAddressIsDecanonized) {
     constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
     auto hwInfo = defaultHwInfo.get();
-    auto mockGfxPartition = std::make_unique<GmockGfxPartition>();
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
     mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1);
     auto size = 2 * MemoryConstants::megaByte;
     auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);
     auto gpuAddressCanonized = GmmHelper::canonize(gpuAddress);
     EXPECT_LE(gpuAddress, gpuAddressCanonized);
-
-    EXPECT_CALL(*mockGfxPartition.get(), freeGpuAddressRange(gpuAddress, size));
 
     memoryManager->overrideGfxPartition(mockGfxPartition.release());
     memoryManager->releaseGpuRange(reinterpret_cast<void *>(gpuAddressCanonized), size, 0);
@@ -4084,51 +4082,26 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThen
     memoryManager->overrideGfxPartition(mockGfxPartitionBasic.release());
 }
 
-class GMockDrmMemoryManager : public TestedDrmMemoryManager {
-  public:
-    GMockDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(executionEnvironment) {
-        ON_CALL(*this, unreference).WillByDefault([this](BufferObject *bo, bool synchronousDestroy) {
-            return this->baseUnreference(bo, synchronousDestroy);
-        });
-
-        ON_CALL(*this, releaseGpuRange).WillByDefault([this](void *ptr, size_t size, uint32_t rootDeviceIndex) {
-            return this->baseReleaseGpuRange(ptr, size, rootDeviceIndex);
-        });
-
-        ON_CALL(*this, alignedFreeWrapper).WillByDefault([this](void *ptr) {
-            return this->baseAlignedFreeWrapper(ptr);
-        });
-    }
-
-    MOCK_METHOD2(unreference, uint32_t(BufferObject *, bool));
-    MOCK_METHOD3(releaseGpuRange, void(void *, size_t, uint32_t));
-    MOCK_METHOD1(alignedFreeWrapper, void(void *));
-
-    uint32_t baseUnreference(BufferObject *bo, bool synchronousDestroy) { return TestedDrmMemoryManager::unreference(bo, synchronousDestroy); }
-    void baseReleaseGpuRange(void *ptr, size_t size, uint32_t rootDeviceIndex) { TestedDrmMemoryManager::releaseGpuRange(ptr, size, rootDeviceIndex); }
-    void baseAlignedFreeWrapper(void *ptr) { TestedDrmMemoryManager::alignedFreeWrapper(ptr); }
-};
-
 TEST(DrmMemoryManagerFreeGraphicsMemoryCallSequenceTest, givenDrmMemoryManagerAndFreeGraphicsMemoryIsCalledThenUnreferenceBufferObjectIsCalledFirstWithSynchronousDestroySetToTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-    GMockDrmMemoryManager gmockDrmMemoryManager(executionEnvironment);
+    TestedDrmMemoryManager memoryManger(executionEnvironment);
 
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::BUFFER, mockDeviceBitfield};
-    auto allocation = gmockDrmMemoryManager.allocateGraphicsMemoryWithProperties(properties);
+    auto allocation = memoryManger.allocateGraphicsMemoryWithProperties(properties);
     ASSERT_NE(allocation, nullptr);
 
-    {
-        ::testing::InSequence inSequence;
-        EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true)).Times(EngineLimits::maxHandleCount);
-        EXPECT_CALL(gmockDrmMemoryManager, releaseGpuRange(::testing::_, ::testing::_, ::testing::_)).Times(1);
-        EXPECT_CALL(gmockDrmMemoryManager, alignedFreeWrapper(::testing::_)).Times(1);
-    }
+    memoryManger.freeGraphicsMemory(allocation);
 
-    gmockDrmMemoryManager.freeGraphicsMemory(allocation);
+    EXPECT_EQ(EngineLimits::maxHandleCount, memoryManger.unreferenceCalled);
+    for (size_t i = 0; i < EngineLimits::maxHandleCount; ++i) {
+        EXPECT_TRUE(memoryManger.unreferenceParamsPassed[i].synchronousDestroy);
+    }
+    EXPECT_EQ(1u, memoryManger.releaseGpuRangeCalled);
+    EXPECT_EQ(1u, memoryManger.alignedFreeWrapperCalled);
 }
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAndFreeGraphicsMemoryIsCalledForSharedAllocationThenUnreferenceBufferObjectIsCalledWithSynchronousDestroySetToFalse) {
@@ -4138,17 +4111,20 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-    ::testing::NiceMock<GMockDrmMemoryManager> gmockDrmMemoryManager(executionEnvironment);
+    TestedDrmMemoryManager memoryManger(executionEnvironment);
 
     osHandle handle = 1u;
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::SHARED_BUFFER, false, {});
-    auto allocation = gmockDrmMemoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
+    auto allocation = memoryManger.createGraphicsAllocationFromSharedHandle(handle, properties, false, false);
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, false)).Times(1);
-    EXPECT_CALL(gmockDrmMemoryManager, unreference(::testing::_, true)).Times(EngineLimits::maxHandleCount - 1);
+    memoryManger.freeGraphicsMemory(allocation);
 
-    gmockDrmMemoryManager.freeGraphicsMemory(allocation);
+    EXPECT_EQ(1 + EngineLimits::maxHandleCount - 1, memoryManger.unreferenceCalled);
+    EXPECT_FALSE(memoryManger.unreferenceParamsPassed[0].synchronousDestroy);
+    for (size_t i = 1; i < EngineLimits::maxHandleCount - 1; ++i) {
+        EXPECT_TRUE(memoryManger.unreferenceParamsPassed[i].synchronousDestroy);
+    }
 }
 
 TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrmIsFromCorrectRootDevice) {

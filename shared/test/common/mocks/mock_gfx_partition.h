@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/memory_manager/gfx_partition.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -48,17 +48,22 @@ class MockGfxPartition : public GfxPartition {
         }
     }
 
+    void freeGpuAddressRange(uint64_t gpuAddress, size_t size) override {
+        freeGpuAddressRangeCalled++;
+        if (callBasefreeGpuAddressRange) {
+            GfxPartition::freeGpuAddressRange(gpuAddress, size);
+        }
+    }
+
+    uint32_t freeGpuAddressRangeCalled = 0u;
+    bool callBasefreeGpuAddressRange = false;
+
     static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     bool callHeapAllocate = true;
     HeapIndex heapAllocateIndex = HeapIndex::TOTAL_HEAPS;
     const uint64_t mockGpuVa = std::numeric_limits<uint64_t>::max();
-};
-
-struct GmockGfxPartition : MockGfxPartition {
-    using MockGfxPartition::MockGfxPartition;
-    MOCK_METHOD(void, freeGpuAddressRange, (uint64_t gpuAddress, size_t size), (override));
 };
 
 class MockGfxPartitionBasic : public GfxPartition {

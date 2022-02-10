@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/os_memory_linux.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -22,18 +23,39 @@ class MockOSMemoryLinux : public OSMemoryLinux {
         return std::make_unique<MockOSMemoryLinux>();
     }
 
-    MockOSMemoryLinux() {
-        ON_CALL(*this, mmapWrapper).WillByDefault([this](void *addr, size_t size, int prot, int flags, int fd, off_t off) {
-            return this->baseMmapWrapper(addr, size, prot, flags, fd, off);
-        });
+    MockOSMemoryLinux() = default;
 
-        ON_CALL(*this, munmapWrapper).WillByDefault([this](void *addr, size_t size) {
-            return this->baseMunmapWrapper(addr, size);
-        });
+    void *mmapWrapper(void *addr, size_t size, int prot, int flags, int fd, off_t off) override {
+        mmapWrapperCalled++;
+        mmapWrapperParamsPassed.push_back({addr, size, prot, flags, fd, off});
+        return this->baseMmapWrapper(addr, size, prot, flags, fd, off);
     }
 
-    MOCK_METHOD6(mmapWrapper, void *(void *, size_t, int, int, int, off_t));
-    MOCK_METHOD2(munmapWrapper, int(void *, size_t));
+    struct MmapWrapperParams {
+        void *addr;
+        size_t size;
+        int prot;
+        int flags;
+        int fd;
+        off_t off;
+    };
+
+    uint32_t mmapWrapperCalled = 0u;
+    StackVec<MmapWrapperParams, 1> mmapWrapperParamsPassed{};
+
+    int munmapWrapper(void *addr, size_t size) override {
+        munmapWrapperCalled++;
+        munmapWrapperParamsPassed.push_back({addr, size});
+        return this->baseMunmapWrapper(addr, size);
+    }
+
+    struct MunmapWrapperParams {
+        void *addr;
+        size_t size;
+    };
+
+    uint32_t munmapWrapperCalled = 0u;
+    StackVec<MunmapWrapperParams, 1> munmapWrapperParamsPassed{};
 
     void *baseMmapWrapper(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
         return OSMemoryLinux::mmapWrapper(addr, size, prot, flags, fd, off);
@@ -47,37 +69,39 @@ class MockOSMemoryLinux : public OSMemoryLinux {
 TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledThenMinusOneIsPassedToMmapAsFdParam) {
     auto mockOSMemoryLinux = MockOSMemoryLinux::create();
 
-    EXPECT_CALL(*mockOSMemoryLinux, mmapWrapper(_, _, _, _, -1, _));
-
     auto reservedCpuRange = mockOSMemoryLinux->reserveCpuAddressRange(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
-    EXPECT_CALL(*mockOSMemoryLinux, munmapWrapper(reservedCpuRange.originalPtr, reservedCpuRange.actualReservedSize));
-
     mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
+
+    EXPECT_EQ(-1, mockOSMemoryLinux->mmapWrapperParamsPassed[0].fd);
+    EXPECT_EQ(reservedCpuRange.originalPtr, mockOSMemoryLinux->munmapWrapperParamsPassed[0].addr);
+    EXPECT_EQ(reservedCpuRange.actualReservedSize, mockOSMemoryLinux->munmapWrapperParamsPassed[0].size);
 }
 
 TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledAndBaseAddressIsSpecifiedThenCorrectValueIsPassedToMmapAsAddrParam) {
     auto mockOSMemoryLinux = MockOSMemoryLinux::create();
 
-    EXPECT_CALL(*mockOSMemoryLinux, mmapWrapper(reinterpret_cast<void *>(0x10000000), _, _, _, -1, _));
-
     auto reservedCpuRange = mockOSMemoryLinux->reserveCpuAddressRange(reinterpret_cast<void *>(0x10000000), MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
-    EXPECT_CALL(*mockOSMemoryLinux, munmapWrapper(reservedCpuRange.originalPtr, reservedCpuRange.actualReservedSize));
-
     mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
+
+    EXPECT_EQ(reinterpret_cast<void *>(0x10000000), mockOSMemoryLinux->mmapWrapperParamsPassed[0].addr);
+    EXPECT_EQ(-1, mockOSMemoryLinux->mmapWrapperParamsPassed[0].fd);
+    EXPECT_EQ(reservedCpuRange.originalPtr, mockOSMemoryLinux->munmapWrapperParamsPassed[0].addr);
+    EXPECT_EQ(reservedCpuRange.actualReservedSize, mockOSMemoryLinux->munmapWrapperParamsPassed[0].size);
 }
 
 TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledAndBaseAddressIsNotSpecifiedThenoZeroIsPassedToMmapAsAddrParam) {
     auto mockOSMemoryLinux = MockOSMemoryLinux::create();
 
-    EXPECT_CALL(*mockOSMemoryLinux, mmapWrapper(nullptr, _, _, _, -1, _));
-
     auto reservedCpuRange = mockOSMemoryLinux->reserveCpuAddressRange(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
-    EXPECT_CALL(*mockOSMemoryLinux, munmapWrapper(reservedCpuRange.originalPtr, reservedCpuRange.actualReservedSize));
-
     mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
+
+    EXPECT_EQ(nullptr, mockOSMemoryLinux->mmapWrapperParamsPassed[0].addr);
+    EXPECT_EQ(-1, mockOSMemoryLinux->mmapWrapperParamsPassed[0].fd);
+    EXPECT_EQ(reservedCpuRange.originalPtr, mockOSMemoryLinux->munmapWrapperParamsPassed[0].addr);
+    EXPECT_EQ(reservedCpuRange.actualReservedSize, mockOSMemoryLinux->munmapWrapperParamsPassed[0].size);
 }
 
 TEST(OSMemoryLinux, GivenProcSelfMapsFileExistsWhenGetMemoryMapsIsQueriedThenValidValueIsReturned) {
