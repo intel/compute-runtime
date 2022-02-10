@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,11 +61,12 @@ void StateComputeModeProperties::clearIsDirty() {
     threadArbitrationPolicy.isDirty = false;
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice,
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice,
                                        const HardwareInfo &hwInfo) {
     clearIsDirty();
 
     this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
+    this->disableEUFusion.set(disableEUFusion);
     this->disableOverdispatch.set(disableOverdispatch);
     this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
 }
@@ -74,15 +75,17 @@ void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
     clearIsDirty();
 
     disableOverdispatch.set(properties.disableOverdispatch.value);
+    disableEUFusion.set(properties.disableEUFusion.value);
     singleSliceDispatchCcsMode.set(properties.singleSliceDispatchCcsMode.value);
     computeDispatchAllWalkerEnable.set(properties.computeDispatchAllWalkerEnable.value);
 }
 
 bool FrontEndProperties::isDirty() const {
-    return disableOverdispatch.isDirty || singleSliceDispatchCcsMode.isDirty || computeDispatchAllWalkerEnable.isDirty;
+    return disableOverdispatch.isDirty || disableEUFusion.isDirty || singleSliceDispatchCcsMode.isDirty || computeDispatchAllWalkerEnable.isDirty;
 }
 
 void FrontEndProperties::clearIsDirty() {
+    disableEUFusion.isDirty = false;
     disableOverdispatch.isDirty = false;
     singleSliceDispatchCcsMode.isDirty = false;
     computeDispatchAllWalkerEnable.isDirty = false;

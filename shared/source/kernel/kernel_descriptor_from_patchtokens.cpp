@@ -55,6 +55,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.simdSize = execEnv.LargestCompiledSIMDSize;
     dst.kernelAttributes.barrierCount = execEnv.HasBarriers;
 
+    dst.kernelAttributes.flags.requiresDisabledEUFusion = (0 != execEnv.RequireDisableEUFusion);
     dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = (0 != execEnv.DisableMidThreadPreemption);
     dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
     dst.kernelAttributes.flags.useGlobalAtomics = (0 != execEnv.HasGlobalAtomics);

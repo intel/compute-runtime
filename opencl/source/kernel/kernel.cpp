@@ -564,7 +564,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
         preferredWorkGroupSizeMultiple = kernelInfo.getMaxSimdSize();
-        if (hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+        if (hwHelper.isFusedEuDispatchEnabled(hwInfo) && !kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion) {
             preferredWorkGroupSizeMultiple *= 2;
         }
         srcSize = sizeof(preferredWorkGroupSizeMultiple);

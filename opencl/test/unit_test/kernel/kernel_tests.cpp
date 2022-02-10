@@ -310,6 +310,29 @@ TEST_F(KernelTests, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenC
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
+TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPrefferedWorkGroupSizeMultipleThenCorectValueIsReturned) {
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+
+    cl_kernel_info paramName = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
+    size_t paramValue;
+    size_t paramValueSize = sizeof(paramValue);
+    size_t paramValueSizeRet = 0;
+
+    retVal = kernel.getWorkGroupInfo(
+        paramName,
+        paramValueSize,
+        &paramValue,
+        &paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(paramValueSize, paramValueSizeRet);
+
+    EXPECT_EQ(kernelInfo.getMaxSimdSize(), paramValue);
+
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = false;
+}
+
 TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0x1234u;
 

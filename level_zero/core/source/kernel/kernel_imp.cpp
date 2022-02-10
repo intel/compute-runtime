@@ -374,7 +374,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
 
         NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
                                  hwInfo, numThreadsPerSubSlice, localMemSize,
-                                 usesImages, false);
+                                 usesImages, false, kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
     } else {
         if (1U == dim) {

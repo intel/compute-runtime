@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
 
 std::vector<StreamProperty *> getAllFrontEndProperties(FrontEndProperties &properties) {
     std::vector<StreamProperty *> allProperties;
+    allProperties.push_back(&properties.disableEUFusion);
     allProperties.push_back(&properties.disableOverdispatch);
     allProperties.push_back(&properties.singleSliceDispatchCcsMode);
     allProperties.push_back(&properties.computeDispatchAllWalkerEnable);

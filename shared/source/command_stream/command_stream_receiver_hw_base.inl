@@ -942,7 +942,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo) &&
                                    (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
         streamProperties.frontEndState.setProperties(lastKernelExecutionType == KernelExecutionType::Concurrent,
-                                                     disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
+                                                     dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), hwInfo);
         PreambleHelper<GfxFamily>::programVfeState(
             pVfeState, hwInfo, requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties);

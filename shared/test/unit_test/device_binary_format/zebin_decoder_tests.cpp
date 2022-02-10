@@ -954,6 +954,7 @@ kernels:
         has_multi_scratch_spaces : true
         has_no_stateless_write : true
         has_stack_calls : true
+        require_disable_eufusion : true
         hw_preemption_mode : 2
         inline_data_payload_size : 32
         offset_to_skip_per_thread_data_load : 23

@@ -2239,13 +2239,14 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto disableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(hwInfo);
 
+    auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, -1, hwInfo);
+        requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
         finalStreamState = requiredStreamState;
         containsAnyKernel = true;
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, disableOverdispatch, -1, hwInfo);
+    finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && isPatchingVfeStateAllowed) {
         auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
@@ -2254,7 +2255,6 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
     }
 
-    auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     auto &neoDevice = *device->getNEODevice();
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, this->threadArbitrationPolicy);
 

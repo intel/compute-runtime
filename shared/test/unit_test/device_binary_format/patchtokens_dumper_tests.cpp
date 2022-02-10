@@ -324,6 +324,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
@@ -405,6 +406,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchAllocateLocalSurface :
          SPatchItemHeader (Token=15(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE), Size=)==="
@@ -453,6 +455,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 kernel[2] <UNNAMED>:
 Kernel of size : )==="
@@ -494,6 +497,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
@@ -608,6 +612,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   struct SPatchThreadPayload :
          SPatchItemHeader (Token=22(PATCH_TOKEN_THREAD_PAYLOAD), Size=)==="
@@ -843,6 +848,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   String literals [3] :
    + [0]:
@@ -1009,6 +1015,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
   localWorkSize [3] :
    + [0]:
@@ -1381,6 +1388,7 @@ Kernel-scope tokens section size : )==="
       uint32_t    WorkgroupWalkOrderDims;// = 0
       uint32_t    HasGlobalAtomics;// = 0
       uint32_t    HasStackCalls;// = 0
+      uint32_t    RequireDisableEUFusion;// = 0
   }
 Kernel arguments [2] :
   + kernelArg[0]:

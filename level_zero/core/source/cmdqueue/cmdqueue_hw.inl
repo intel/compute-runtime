@@ -84,7 +84,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto anyCommandListWithCooperativeKernels = false;
     auto anyCommandListWithoutCooperativeKernels = false;
-
+    bool anyCommandListRequiresDisabledEUFusion = false;
     bool cachedMOCSAllowed = true;
 
     for (auto i = 0u; i < numCommandLists; i++) {
@@ -102,6 +102,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         } else {
             anyCommandListWithoutCooperativeKernels = true;
         }
+
+        if (commandList->getRequiredStreamState().frontEndState.disableEUFusion.value == 1) {
+            anyCommandListRequiresDisabledEUFusion = true;
+        }
+
         // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
         if (commandList->requiresQueueUncachedMocs && cachedMOCSAllowed == true) {
             cachedMOCSAllowed = false;
@@ -235,8 +240,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (!isPatchingVfeStateAllowed) {
-        streamProperties.frontEndState.setProperties(anyCommandListWithCooperativeKernels, disableOverdispatch,
-                                                     isEngineInstanced, hwInfo);
+        streamProperties.frontEndState.setProperties(anyCommandListWithCooperativeKernels, anyCommandListRequiresDisabledEUFusion,
+                                                     disableOverdispatch, isEngineInstanced, hwInfo);
     } else {
         streamProperties.frontEndState.singleSliceDispatchCcsMode.set(isEngineInstanced);
     }

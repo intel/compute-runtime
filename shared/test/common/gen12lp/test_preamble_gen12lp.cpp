@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
     for (auto &[expectedValue, waDisableFusedThreadScheduling, debugKeyValue] : testParams) {
         waTable.flags.waDisableFusedThreadScheduling = waDisableFusedThreadScheduling;
         ::DebugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
-        PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo);
+        PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo, false);
         EXPECT_EQ(expectedValue, pMediaVfeState->getDisableSlice0Subslice2());
     }
 }
@@ -165,8 +165,18 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenMaxNumberOfDssDebugVariableWhenMediaVfeS
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(linearStream.getSpace(sizeof(MEDIA_VFE_STATE)));
     *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
-    PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo);
+    PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo, false);
     EXPECT_EQ(2u, pMediaVfeState->getMaximumNumberOfDualSubslices());
+}
+
+HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionWhenProgramAdditionalFieldsInVfeStateThenCorrectFieldIsSet, IsTGLLP) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(linearStream.getSpace(sizeof(MEDIA_VFE_STATE)));
+    *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
+    PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo, true);
+    EXPECT_TRUE(pMediaVfeState->getDisableSlice0Subslice2());
 }
 
 typedef PreambleFixture ThreadArbitrationGen12Lp;

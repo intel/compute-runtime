@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,4 +43,20 @@ HWTEST2_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComma
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
     EXPECT_EQ(0xe400u, pCmd->getRegisterOffset());
     EXPECT_EQ((1u << 7) | (1u << 4) | (1u << 2) | (1u << 0), pCmd->getDataDword());
+}
+
+HWTEST2_F(PreambleTest, givenDisableEUFusionWhenProgramVFEStateThenFusedEUDispatchIsSetCorrectly, IsXeHpgCore) {
+    typedef typename FamilyType::CFE_STATE CFE_STATE;
+
+    auto bufferSize = PreambleHelper<FamilyType>::getVFECommandsSize();
+    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
+    LinearStream stream(buffer.get(), bufferSize);
+
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&stream, *defaultHwInfo.get(), EngineGroupType::RenderCompute);
+    StreamProperties props;
+    props.frontEndState.disableEUFusion.set(true);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *defaultHwInfo.get(), 0, 0, 0, props);
+
+    auto cfeCmd = reinterpret_cast<CFE_STATE *>(pVfeCmd);
+    EXPECT_EQ(1u, cfeCmd->getFusedEuDispatch());
 }

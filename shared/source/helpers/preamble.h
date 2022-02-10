@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ struct PreambleHelper {
                                 uint32_t maxFrontEndThreads,
                                 const StreamProperties &streamProperties);
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
-    static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);
+    static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static void programKernelDebugging(LinearStream *pCommandStream);

@@ -56,7 +56,7 @@ struct WorkGroupSizeBase {
         size_t workGroupSize[3];
         auto maxWorkGroupSize = 256u;
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-            WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, ::defaultHwInfo.get(), 32u, 0u, false, false);
+            WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, ::defaultHwInfo.get(), 32u, 0u, false, false, false);
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dims);
         } else {
             if (dims == 1) {

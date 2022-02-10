@@ -55,7 +55,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setScratchSpaceBasePointer(lowAddress);
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
-    programAdditionalFieldsInVfeState(&cmd, hwInfo);
+    programAdditionalFieldsInVfeState(&cmd, hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1);
     appendProgramVFEState(hwInfo, streamProperties, &cmd);
     *pMediaVfeState = cmd;
 }

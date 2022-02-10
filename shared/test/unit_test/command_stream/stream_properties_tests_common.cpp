@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,10 +46,13 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
             for (auto disableOverdispatch : ::testing::Bool()) {
-                properties.frontEndState.setProperties(isCooperativeKernel, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
-                EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
-                EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
-                EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                for (auto disableEUFusion : ::testing::Bool()) {
+                    properties.frontEndState.setProperties(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced, *defaultHwInfo);
+                    EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                    EXPECT_EQ(disableEUFusion, properties.frontEndState.disableEUFusion.value);
+                    EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+                    EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                }
             }
         }
     }

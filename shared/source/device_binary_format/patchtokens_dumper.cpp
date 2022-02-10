@@ -406,6 +406,7 @@ void dump(const SPatchExecutionEnvironment &value, std::stringstream &out, const
     out << indent << "    uint32_t    WorkgroupWalkOrderDims;// = " << value.WorkgroupWalkOrderDims << "\n";
     out << indent << "    uint32_t    HasGlobalAtomics;// = " << value.HasGlobalAtomics << "\n";
     out << indent << "    uint32_t    HasStackCalls;// = " << value.HasStackCalls << "\n";
+    out << indent << "    uint32_t    RequireDisableEUFusion;// = " << value.RequireDisableEUFusion << "\n";
     out << indent << "}\n";
 }
 

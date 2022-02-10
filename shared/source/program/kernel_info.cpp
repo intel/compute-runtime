@@ -30,7 +30,7 @@ struct KernelArgumentType {
     uint64_t argTypeQualifierValue;
 };
 
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface) {
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
@@ -41,7 +41,7 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t
     this->imgUsed = imgUsed;
     this->yTiledSurfaces = yTiledSurface;
 
-    setMinWorkGroupSize(hwInfo);
+    setMinWorkGroupSize(hwInfo, disableEUFusion);
 }
 
 void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
@@ -53,7 +53,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
         }
     }
 }
-void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo) {
+void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
         uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
@@ -65,7 +65,7 @@ void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo) {
     }
 
     const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo)) {
+    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo) && !disableEUFusion) {
         minWorkGroupSize *= 2;
     }
 }

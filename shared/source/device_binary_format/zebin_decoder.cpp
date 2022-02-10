@@ -281,6 +281,8 @@ DecodeError readZeInfoExecutionEnvironment(const NEO::Yaml::YamlParser &parser, 
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requiredSubGroupSize, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::requiredWorkGroupSize == key) {
             validExecEnv = validExecEnv & readZeInfoValueCollectionChecked(outExecEnv.requiredWorkGroupSize, parser, execEnvMetadataNd, context, outErrReason);
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::requireDisableEUFusion == key) {
+            validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.requireDisableEUFusion, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::simdSize == key) {
             validExecEnv = validExecEnv & readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.simdSize, context, outErrReason);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::ExecutionEnv::slmSize == key) {
@@ -1032,6 +1034,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     kernelDescriptor.kernelAttributes.flags.passInlineData = (execEnv.inlineDataPayloadSize != 0);
     kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
     kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = execEnv.subgroupIndependentForwardProgress;
+    kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = execEnv.requireDisableEUFusion;
     kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
     kernelDescriptor.kernelAttributes.flags.useStackCalls = execEnv.hasStackCalls;
     kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;

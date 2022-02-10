@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,12 @@ struct StateComputeModeProperties {
 };
 
 struct FrontEndProperties {
+    StreamProperty computeDispatchAllWalkerEnable{};
+    StreamProperty disableEUFusion{};
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
-    StreamProperty computeDispatchAllWalkerEnable{};
 
-    void setProperties(bool isCooperativeKernel, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
+    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
     bool isDirty() const;
     void clearIsDirty();

@@ -185,6 +185,7 @@ static constexpr ConstStringRef offsetToSkipPerThreadDataLoad("offset_to_skip_pe
 static constexpr ConstStringRef offsetToSkipSetFfidGp("offset_to_skip_set_ffid_gp");
 static constexpr ConstStringRef requiredSubGroupSize("required_sub_group_size");
 static constexpr ConstStringRef requiredWorkGroupSize("required_work_group_size");
+static constexpr ConstStringRef requireDisableEUFusion("require_disable_eufusion");
 static constexpr ConstStringRef simdSize("simd_size");
 static constexpr ConstStringRef slmSize("slm_size");
 static constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_independent_forward_progress");
@@ -308,6 +309,7 @@ using OffsetToSkipPerThreadDataLoadT = int32_t;
 using OffsetToSkipSetFfidGpT = int32_t;
 using RequiredSubGroupSizeT = int32_t;
 using RequiredWorkGroupSizeT = int32_t[3];
+using RequireDisableEUFusionT = bool;
 using SimdSizeT = int32_t;
 using SlmSizeT = int32_t;
 using SubgroupIndependentForwardProgressT = bool;
@@ -332,6 +334,7 @@ static constexpr OffsetToSkipPerThreadDataLoadT offsetToSkipPerThreadDataLoad = 
 static constexpr OffsetToSkipSetFfidGpT offsetToSkipSetFfidGp = 0;
 static constexpr RequiredSubGroupSizeT requiredSubGroupSize = 0;
 static constexpr RequiredWorkGroupSizeT requiredWorkGroupSize = {0, 0, 0};
+static constexpr RequireDisableEUFusionT requireDisableEUFusion = false;
 static constexpr SlmSizeT slmSize = 0;
 static constexpr SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = false;
 static constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0, 1, 2};
@@ -360,6 +363,7 @@ struct ExecutionEnvBaseT {
     OffsetToSkipSetFfidGpT offsetToSkipSetFfidGp = Defaults::offsetToSkipSetFfidGp;
     RequiredSubGroupSizeT requiredSubGroupSize = Defaults::requiredSubGroupSize;
     RequiredWorkGroupSizeT requiredWorkGroupSize = {Defaults::requiredWorkGroupSize[0], Defaults::requiredWorkGroupSize[1], Defaults::requiredWorkGroupSize[2]};
+    RequireDisableEUFusionT requireDisableEUFusion = Defaults::requireDisableEUFusion;
     SimdSizeT simdSize = -1;
     SlmSizeT slmSize = Defaults::slmSize;
     SubgroupIndependentForwardProgressT subgroupIndependentForwardProgress = Defaults::subgroupIndependentForwardProgress;

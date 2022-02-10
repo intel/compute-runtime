@@ -200,6 +200,7 @@ struct KernelDescriptor {
                 bool passInlineData : 1;
                 bool perThreadDataHeaderIsPresent : 1;
                 bool perThreadDataUnusedGrfIsPresent : 1;
+                bool requiresDisabledEUFusion : 1;
                 bool requiresDisabledMidThreadPreemption : 1;
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;

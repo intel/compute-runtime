@@ -772,6 +772,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
 
+    dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion;
+
     const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !clearDependenciesForSubCapture) {

@@ -29,7 +29,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenPvcAndKernelExecutionTypeAndRevisionWhe
 
     for (const auto &[revision, kernelExecutionType] : revisions) {
         hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *hwInfo);
-        streamProperties.frontEndState.setProperties(kernelExecutionType, false, false, *hwInfo);
+        streamProperties.frontEndState.setProperties(kernelExecutionType, false, false, false, *hwInfo);
 
         PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *hwInfo, 0u, 0, 0, streamProperties);
         parseCommands<FamilyType>(linearStream);
@@ -56,7 +56,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenPvcXtTemporaryAndKernelExecutionTypeCon
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setProperties(true, false, false, hwInfo);
+    streamProperties.frontEndState.setProperties(true, false, false, false, hwInfo);
 
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);

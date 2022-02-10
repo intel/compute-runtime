@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,6 +115,7 @@ struct DispatchFlags {
     bool areMultipleSubDevicesInContext = false;
     bool memoryMigrationRequired = false;
     bool textureCacheFlush = false;
+    bool disableEUFusion = false;
 };
 
 struct CsrSizeRequestFlags {

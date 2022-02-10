@@ -107,9 +107,9 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         numThreadsPerSubSlice,
                         static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),
                         false,
-                        false);
+                        false,
+                        kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
     wsInfo.setIfUseImg(kernelInfo);
-    wsInfo.setMinWorkGroupSize(&device.getHardwareInfo());
 
     return wsInfo;
 }

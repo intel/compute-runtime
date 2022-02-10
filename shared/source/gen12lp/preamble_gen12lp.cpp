@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,9 +83,9 @@ uint32_t PreambleHelper<TGLLPFamily>::getUrbEntryAllocationSize() {
 }
 
 template <>
-void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo) {
+void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo) || disableEUFusion) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
     if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {

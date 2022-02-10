@@ -222,7 +222,7 @@ HWTEST2_F(CommandQueueCommandsPvc, whenExecuteCommandListsIsCalledThenAdditional
     auto hCommandListBA = commandListBA->toHandle();
 
     // Set state B
-    csr->getStreamProperties().frontEndState.setProperties(true, false, false, *NEO::defaultHwInfo);
+    csr->getStreamProperties().frontEndState.setProperties(true, false, false, false, *NEO::defaultHwInfo);
     // Execute command list AB
     commandQueue->executeCommandLists(1, &hCommandListAB, nullptr, false);
 
@@ -243,7 +243,7 @@ HWTEST2_F(CommandQueueCommandsPvc, whenExecuteCommandListsIsCalledThenAdditional
     EXPECT_EQ(true, genCmdCast<CFE_STATE *>(*cfeStates[0])->getComputeDispatchAllWalkerEnable());
 
     // Set state A
-    csr->getStreamProperties().frontEndState.setProperties(false, false, false, *NEO::defaultHwInfo);
+    csr->getStreamProperties().frontEndState.setProperties(false, false, false, false, *NEO::defaultHwInfo);
     // Execute command list BA
     commandQueue->executeCommandLists(1, &hCommandListBA, nullptr, false);
 
