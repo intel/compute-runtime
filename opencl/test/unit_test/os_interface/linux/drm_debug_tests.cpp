@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,12 +43,25 @@ TEST(DrmTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }
 
-TEST(DrmTest, WhenCheckingContextDebugSupportThenNoIoctlIsCalled) {
+TEST(DrmTest, whenCheckingContextDebugSupportThenNoIoctlIsCalled) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.checkContextDebugSupport();
     EXPECT_FALSE(drmMock.isContextDebugSupported());
 
+    EXPECT_EQ(0u, drmMock.ioctlCallsCount);
+}
+
+TEST(DrmTest, whenNotifyCommandQueueCreateDestroyAreCalledThenImplementationsAreEmpty) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto handle = drmMock.notifyFirstCommandQueueCreated();
+    EXPECT_EQ(0u, handle);
+    EXPECT_EQ(0u, drmMock.ioctlCallsCount);
+
+    drmMock.notifyLastCommandQueueDestroyed(0);
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }

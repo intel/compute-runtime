@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,5 +45,7 @@ std::string Drm::generateElfUUID(const void *data) {
 
 void Drm::checkContextDebugSupport() {}
 void Drm::setContextDebugFlag(uint32_t drmContextId) {}
+uint32_t Drm::notifyFirstCommandQueueCreated() { return 0; }
+void Drm::notifyLastCommandQueueDestroyed(uint32_t handle) {}
 
 } // namespace NEO

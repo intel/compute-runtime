@@ -58,4 +58,23 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
     drm->unregisterResource(moduleHandle);
     return true;
 }
+
+void DebuggerL0::notifyCommandQueueCreated() {
+    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        if (++commandQueueCount == 1) {
+            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+            uuidL0CommandQueueHandle = drm->notifyFirstCommandQueueCreated();
+        }
+    }
+}
+
+void DebuggerL0::notifyCommandQueueDestroyed() {
+    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        if (--commandQueueCount == 0) {
+            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+            drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle);
+        }
+    }
+}
+
 } // namespace L0

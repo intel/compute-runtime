@@ -27,4 +27,10 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
     return false;
 }
 
+void DebuggerL0::notifyCommandQueueCreated() {
+}
+
+void DebuggerL0::notifyCommandQueueDestroyed() {
+}
+
 } // namespace L0

@@ -56,6 +56,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
         commandStream = nullptr;
     }
     buffers.destroy(this->getDevice());
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
+        device->getL0Debugger()->notifyCommandQueueDestroyed();
+    }
     delete this;
     return ZE_RESULT_SUCCESS;
 }

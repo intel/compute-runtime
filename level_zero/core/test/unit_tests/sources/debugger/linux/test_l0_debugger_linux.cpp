@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 #include <algorithm>
@@ -217,6 +218,31 @@ TEST_F(L0DebuggerLinuxTest, givenModuleHandleWhenRemoveZebinModuleIsCalledThenHa
 
     EXPECT_EQ(1u, drmMock->unregisterCalledCount);
     EXPECT_EQ(20u, drmMock->unregisteredHandle);
+}
+
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    drmMock->ioctlCallsCount = 0;
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto commandQueue1 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
+
+    auto commandQueue2 = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
+
+    commandQueue1->destroy();
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    commandQueue2->destroy();
+    EXPECT_EQ(1u, drmMock->unregisterCalledCount);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 
 } // namespace ult

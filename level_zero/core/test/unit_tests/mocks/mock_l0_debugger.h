@@ -57,15 +57,28 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         }
         return L0::DebuggerL0Hw<GfxFamily>::attachZebinModuleToSegmentAllocations(allocs, moduleHandle);
     }
+
     bool removeZebinModule(uint32_t moduleHandle) override {
         removedZebinModuleHandle = moduleHandle;
         return L0::DebuggerL0Hw<GfxFamily>::removeZebinModule(moduleHandle);
+    }
+
+    void notifyCommandQueueCreated() override {
+        commandQueueCreatedCount++;
+        L0::DebuggerL0Hw<GfxFamily>::notifyCommandQueueCreated();
+    }
+
+    void notifyCommandQueueDestroyed() override {
+        commandQueueDestroyedCount++;
+        L0::DebuggerL0Hw<GfxFamily>::notifyCommandQueueDestroyed();
     }
 
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t programSbaTrackingCommandsCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
+    uint32_t commandQueueCreatedCount = 0;
+    uint32_t commandQueueDestroyedCount = 0;
     const char *lastReceivedElf = nullptr;
 
     uint32_t segmentCountWithAttachedModuleHandle = 0;

@@ -249,6 +249,9 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool completionFenceSupport();
 
+    MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated();
+    MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
+
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 

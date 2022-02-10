@@ -288,6 +288,15 @@ class DrmMockResources : public DrmMock {
         return bindAvailable;
     }
 
+    uint32_t notifyFirstCommandQueueCreated() override {
+        ioctlCallsCount++;
+        return 4;
+    }
+
+    void notifyLastCommandQueueDestroyed(uint32_t handle) override {
+        unregisterResource(handle);
+    }
+
     static const uint32_t registerResourceReturnHandle;
 
     uint32_t unregisteredHandle = 0;

@@ -86,6 +86,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     void captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
     MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
+    MOCKABLE_VIRTUAL void notifyCommandQueueCreated();
+    MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed();
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
@@ -108,6 +110,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
     NEO::AddressRange sbaTrackingGpuVa;
     NEO::GraphicsAllocation *moduleDebugArea = nullptr;
+    std::atomic<uint32_t> commandQueueCount = 0u;
+    uint32_t uuidL0CommandQueueHandle = 0;
 };
 
 using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);
