@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,12 +64,9 @@ struct AUBReadImage
 };
 
 HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMet) {
-
-    const unsigned int testWidth = 5;
-    const unsigned int testHeight =
-        std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5 : 1;
-    const unsigned int testDepth =
-        std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5 : 1;
+    const auto testWidth = 5u;
+    const auto testHeight = std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5u : 1u;
+    const auto testDepth = std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5u : 1u;
     auto numPixels = testWidth * testHeight * testDepth;
 
     cl_image_format imageFormat;
@@ -90,55 +87,50 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
     imageDesc.mem_object        = NULL;
     // clang-format on
 
-    auto perChannelDataSize = 0;
+    auto perChannelDataSize = 0u;
     switch (imageFormat.image_channel_data_type) {
     case CL_UNORM_INT8:
-        perChannelDataSize = 1;
+        perChannelDataSize = 1u;
         break;
     case CL_SIGNED_INT16:
     case CL_HALF_FLOAT:
-        perChannelDataSize = 2;
+        perChannelDataSize = 2u;
         break;
     case CL_UNSIGNED_INT32:
     case CL_FLOAT:
-        perChannelDataSize = 4;
+        perChannelDataSize = 4u;
         break;
     }
 
     auto numChannels = 0u;
     switch (imageFormat.image_channel_order) {
     case CL_R:
-        numChannels = 1;
+        numChannels = 1u;
         break;
     case CL_RG:
-        numChannels = 2;
+        numChannels = 2u;
         break;
     case CL_RGBA:
-        numChannels = 4;
+        numChannels = 4u;
         break;
     }
-
     size_t elementSize = perChannelDataSize * numChannels;
+    size_t rowPitch = testWidth * elementSize;
+    size_t slicePitch = rowPitch * testHeight;
 
-    // Generate initial dst memory but make it unaligned to
-    // stress test enqueueReadImage logic
-    auto dstMemoryAligned = alignedMalloc(1 + elementSize * numPixels, 0x1000);
-    auto dstMemoryUnaligned =
-        ptrOffset(reinterpret_cast<uint8_t *>(dstMemoryAligned), 1);
+    // Generate initial dst memory but make it unaligned to page size
+    auto dstMemoryAligned = alignedMalloc(4 + elementSize * numPixels, MemoryConstants::pageSize);
+    auto dstMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(dstMemoryAligned), 4);
 
     auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
     auto srcMemory = new (std::nothrow) uint8_t[sizeMemory];
     ASSERT_NE(nullptr, srcMemory);
 
-    for (unsigned i = 0; i < sizeMemory; ++i) {
-        uint8_t origValue = i;
-        memcpy(srcMemory + i, &origValue, sizeof(origValue));
+    for (auto i = 0u; i < sizeMemory; ++i) {
+        srcMemory[i] = static_cast<uint8_t>(i);
     }
 
-    for (unsigned i = 0; i < numPixels * elementSize; ++i) {
-        uint8_t origValue = 0xff;
-        memcpy(dstMemoryUnaligned + i, &origValue, sizeof(origValue));
-    }
+    memset(dstMemoryUnaligned, 0xFF, numPixels * elementSize);
 
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -161,16 +153,13 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
                               std::max(testHeight / 2, 1u),
                               std::max(testDepth / 2, 1u)};
 
-    size_t inputRowPitch = testWidth * elementSize;
-    size_t inputSlicePitch = inputRowPitch * testHeight;
-
     retVal = pCmdQ->enqueueReadImage(
         srcImage.get(),
-        CL_FALSE,
+        CL_TRUE,
         origin,
         region,
-        inputRowPitch,
-        inputSlicePitch,
+        rowPitch,
+        slicePitch,
         dstMemoryUnaligned,
         nullptr,
         0,
@@ -178,51 +167,31 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pCmdQ->flush();
+    retVal = pCmdQ->finish();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto imageMemory = srcMemory;
-
-    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(
-                                                          srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
+    auto memoryPool = srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool();
+    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(memoryPool);
     if (!isGpuCopy) {
-        imageMemory = (uint8_t *)(srcImage->getCpuAddress());
+        imageMemory = reinterpret_cast<uint8_t *>(srcImage->getCpuAddress());
     }
 
-    auto pSrcMemory =
-        ptrOffset(imageMemory, (origin[2] * testWidth * testHeight + origin[1] * testWidth + origin[0]) * elementSize);
-
+    auto offset = (origin[2] * testWidth * testHeight + origin[1] * testWidth + origin[0]) * elementSize;
+    auto pSrcMemory = ptrOffset(imageMemory, offset);
     auto pDstMemory = dstMemoryUnaligned;
 
-    for (auto depth = origin[2] + 1; depth < (origin[2] + region[2]); ++depth) {
+    for (size_t z = 0; z < region[2]; ++z) {
+        for (size_t y = 0; y < region[1]; ++y) {
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, elementSize * region[0]);
 
-        for (size_t row = 0; row < region[1]; ++row) {
-
-            size_t length = region[0] * elementSize;
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, length);
-            pDstMemory = ptrOffset(pDstMemory, length);
-
-            length = (testWidth - region[0]) * elementSize;
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pDstMemory, length);
-            pDstMemory = ptrOffset(pDstMemory, length);
-
-            pSrcMemory = ptrOffset(pSrcMemory, testWidth * elementSize);
+            pDstMemory = ptrOffset(pDstMemory, rowPitch);
+            pSrcMemory = ptrOffset(pSrcMemory, rowPitch);
         }
 
-        size_t remainingRows = testHeight - region[1];
-        while (remainingRows > 0) {
-            size_t length = testHeight * elementSize;
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pDstMemory, length);
-            pDstMemory = ptrOffset(pDstMemory, length);
-            --remainingRows;
-        }
-
-        pDstMemory =
-            ptrOffset(dstMemoryUnaligned, testWidth * testHeight * elementSize);
+        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * region[1]));
+        pSrcMemory = ptrOffset(pSrcMemory, slicePitch - (rowPitch * region[1]));
     }
-
-    retVal = pCmdQ->finish(); //FixMe - not all test cases verified with expects
-    EXPECT_EQ(CL_SUCCESS, retVal);
 
     alignedFree(dstMemoryAligned);
     delete[] srcMemory;

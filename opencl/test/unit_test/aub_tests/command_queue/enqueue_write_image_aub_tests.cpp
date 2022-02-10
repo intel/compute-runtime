@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,12 +62,9 @@ struct AUBWriteImage
 };
 
 HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreMet) {
-
-    const unsigned int testWidth = 5;
-    const unsigned int testHeight =
-        std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5 : 1;
-    const unsigned int testDepth =
-        std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5 : 1;
+    const auto testWidth = 5u;
+    const auto testHeight = std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5u : 1u;
+    const auto testDepth = std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5u : 1u;
     auto numPixels = testWidth * testHeight * testDepth;
 
     cl_image_format imageFormat;
@@ -88,51 +85,44 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
     imageDesc.mem_object        = NULL;
     // clang-format on
 
-    auto perChannelDataSize = 0;
+    auto perChannelDataSize = 0u;
     switch (imageFormat.image_channel_data_type) {
     case CL_UNORM_INT8:
-        perChannelDataSize = 1;
+        perChannelDataSize = 1u;
         break;
     case CL_SIGNED_INT16:
     case CL_HALF_FLOAT:
-        perChannelDataSize = 2;
+        perChannelDataSize = 2u;
         break;
     case CL_UNSIGNED_INT32:
     case CL_FLOAT:
-        perChannelDataSize = 4;
+        perChannelDataSize = 4u;
         break;
     }
 
     auto numChannels = 0u;
     switch (imageFormat.image_channel_order) {
     case CL_R:
-        numChannels = 1;
+        numChannels = 1u;
         break;
     case CL_RG:
-        numChannels = 2;
+        numChannels = 2u;
         break;
     case CL_RGBA:
-        numChannels = 4;
+        numChannels = 4u;
         break;
     }
     size_t elementSize = perChannelDataSize * numChannels;
+    size_t rowPitch = testWidth * elementSize;
+    size_t slicePitch = rowPitch * testHeight;
 
-    // Generate initial src memory but make it unaligned to
-    // stress test enqueueWriteImage logic
-    auto srcMemoryAligned = alignedMalloc(1 + elementSize * numPixels, 0x1000);
-    auto srcMemoryUnaligned =
-        ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 1);
+    // Generate initial src memory but make it unaligned to page size
+    auto srcMemoryAligned = alignedMalloc(4 + elementSize * numPixels, MemoryConstants::pageSize);
+    auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4);
 
-    for (unsigned i = 0; i < numPixels * elementSize; ++i) {
-        uint8_t origValue = i;
-        memcpy(srcMemoryUnaligned + i, &origValue, sizeof(origValue));
+    for (auto i = 0u; i < numPixels * elementSize; ++i) {
+        srcMemoryUnaligned[i] = static_cast<uint8_t>(i);
     }
-
-    // Initialize dest memory
-    auto sizeMemory = testWidth * testHeight * testDepth * elementSize;
-    auto dstMemory = new (std::nothrow) uint8_t[sizeMemory];
-    ASSERT_NE(nullptr, dstMemory);
-    memset(dstMemory, 0xff, sizeMemory);
 
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = 0;
@@ -156,18 +146,14 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
                               std::max(testHeight / 2, 1u),
                               std::max(testDepth / 2, 1u)};
 
-    // Offset the source memory
-    auto pSrcMemory = ptrOffset(srcMemoryUnaligned, (origin[1] * testWidth + origin[0]) * elementSize);
-    size_t inputRowPitch = testWidth * elementSize;
-    size_t inputSlicePitch = inputRowPitch * testHeight;
     retVal = pCmdQ->enqueueWriteImage(
         dstImage.get(),
         CL_TRUE,
         origin,
         region,
-        inputRowPitch,
-        inputSlicePitch,
-        pSrcMemory,
+        rowPitch,
+        slicePitch,
+        srcMemoryUnaligned,
         nullptr,
         0,
         nullptr,
@@ -175,48 +161,28 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto readMemory = new uint8_t[dstImage->getSize()];
-    size_t imgOrigin[] = {0, 0, 0};
-    size_t imgRegion[] = {testWidth, testHeight, testDepth};
-    retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, origin, region, rowPitch, slicePitch, readMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pCmdQ->flush();
+    retVal = pCmdQ->finish();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pDstMemory = readMemory;
-    auto pSrc = pSrcMemory;
+    auto pSrcMemory = srcMemoryUnaligned;
 
-    auto rowPitch = dstImage->getHostPtrRowPitch();
-    auto slicePitch = dstImage->getHostPtrSlicePitch();
+    for (size_t z = 0; z < region[2]; ++z) {
+        for (size_t y = 0; y < region[1]; ++y) {
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, elementSize * region[0]);
 
-    for (size_t z = 0; z < testDepth; ++z) {
-        for (size_t y = 0; y < testHeight; ++y) {
-            for (size_t x = 0; x < testWidth; ++x) {
-                auto pos = x * elementSize;
-                if (z >= origin[2] && z < (origin[2] + region[2]) &&
-                    y >= origin[1] && y < (origin[1] + region[1]) &&
-                    x >= origin[0] && x < (origin[0] + region[0])) {
-                    // this texel should be updated
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], pSrc, elementSize);
-                    pSrc = ptrOffset(pSrc, elementSize);
-                } else {
-                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], dstMemory, elementSize);
-                }
-            }
             pDstMemory = ptrOffset(pDstMemory, rowPitch);
-            if (y >= origin[1] && y < origin[1] + region[1] &&
-                z >= origin[2] && z < origin[2] + region[2]) {
-                pSrc = ptrOffset(pSrc, inputRowPitch - (elementSize * region[0]));
-            }
+            pSrcMemory = ptrOffset(pSrcMemory, rowPitch);
         }
-        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * (testHeight > 0 ? testHeight : 1)));
-        if (z >= origin[2] && z < origin[2] + region[2]) {
-            pSrc = ptrOffset(pSrc, inputSlicePitch - (inputRowPitch * (region[1])));
-        }
+
+        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * region[1]));
+        pSrcMemory = ptrOffset(pSrcMemory, slicePitch - (rowPitch * region[1]));
     }
 
     alignedFree(srcMemoryAligned);
-    delete[] dstMemory;
     delete[] readMemory;
 }
 
