@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,12 @@
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 
 #include "gtest/gtest.h"
+#include "mock/mock_argument_helper.h"
 
 #include <memory>
 
 namespace NEO {
+
 class OclocFatBinaryGetTargetConfigsForFatbinary : public ::testing::Test {
   public:
     OclocFatBinaryGetTargetConfigsForFatbinary() {
@@ -23,4 +25,23 @@ class OclocFatBinaryGetTargetConfigsForFatbinary : public ::testing::Test {
     }
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 };
+
+class OclocFatBinaryTest : public ::testing::Test {
+  public:
+    OclocFatBinaryTest() {
+        mockArgHelperFilesMap[spirvFilename] = spirvFileContent;
+        mockArgHelper.interceptOutput = true;
+    }
+
+  protected:
+    constexpr static ConstStringRef archiveGenericIrName{"generic_ir"};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
+
+    std::string outputArchiveName{"output_archive"};
+    std::string spirvFilename{"input_file.spv"};
+    std::string spirvFileContent{"\x07\x23\x02\x03"};
+};
+
 } // namespace NEO

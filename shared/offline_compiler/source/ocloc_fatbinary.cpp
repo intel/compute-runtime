@@ -9,6 +9,9 @@
 
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/utilities/safety_caller.h"
+#include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -341,6 +344,8 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     std::string inputFileName = "";
     std::string outputFileName = "";
     std::string outputDirectory = "";
+    bool spirvInput = false;
+    bool excludeIr = false;
 
     std::vector<std::string> argsCopy(args);
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
@@ -362,7 +367,16 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         } else if ((ConstStringRef("-out_dir") == currArg) && hasMoreArgs) {
             outputDirectory = args[argIndex + 1];
             ++argIndex;
+        } else if (ConstStringRef("-exclude_ir") == currArg) {
+            excludeIr = true;
+        } else if (ConstStringRef("-spirv_input") == currArg) {
+            spirvInput = true;
         }
+    }
+
+    const bool shouldPreserveGenericIr = spirvInput && !excludeIr;
+    if (shouldPreserveGenericIr) {
+        argsCopy.push_back("-exclude_ir");
     }
 
     Ar::ArEncoder fatbinary(true);
@@ -420,6 +434,14 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         }
     }
 
+    if (shouldPreserveGenericIr) {
+        const auto errorCode = appendGenericIr(fatbinary, inputFileName, argHelper);
+        if (errorCode != OclocErrorCode::SUCCESS) {
+            argHelper->printf("Error! Couldn't append generic IR file!\n");
+            return errorCode;
+        }
+    }
+
     auto fatbinaryData = fatbinary.encode();
     std::string fatbinaryFileName = outputFileName;
     if (outputFileName.empty() && (false == inputFileName.empty())) {
@@ -431,6 +453,37 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     argHelper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
 
     return 0;
+}
+
+int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper) {
+    std::size_t fileSize = 0;
+    std::unique_ptr<char[]> fileContents = argHelper->loadDataFromFile(inputFile, fileSize);
+    if (fileSize == 0) {
+        argHelper->printf("Error! Couldn't read input file!\n");
+        return OclocErrorCode::INVALID_FILE;
+    }
+
+    const auto ir = ArrayRef<const uint8_t>::fromAny(fileContents.get(), fileSize);
+    if (!isSpirVBitcode(ir)) {
+        argHelper->printf("Error! Input file is not in supported generic IR format! "
+                          "Currently supported format is SPIR-V.\n");
+        return OclocErrorCode::INVALID_FILE;
+    }
+
+    const auto encodedElf = createEncodedElfWithSpirv(ir);
+    ArrayRef<const uint8_t> genericIrFile{encodedElf.data(), encodedElf.size()};
+
+    fatbinary.appendFileEntry("generic_ir", genericIrFile);
+    return OclocErrorCode::SUCCESS;
+}
+
+std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv) {
+    using namespace NEO::Elf;
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = ET_OPENCL_OBJECTS;
+    elfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, spirv);
+
+    return elfEncoder.encode();
 }
 
 } // namespace NEO

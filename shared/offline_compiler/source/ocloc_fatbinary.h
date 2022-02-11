@@ -14,6 +14,7 @@
 #include "compiler_options.h"
 #include "igfxfmid.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -48,4 +49,7 @@ std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &pr
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
 int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);
+int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper);
+std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv);
+
 } // namespace NEO

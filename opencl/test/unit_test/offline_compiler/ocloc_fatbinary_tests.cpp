@@ -9,12 +9,37 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/source/device_binary_format/ar/ar.h"
+#include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include <algorithm>
 #include <unordered_set>
 
 namespace NEO {
+
+auto searchInArchiveByFilename(const Ar::Ar &archive, const ConstStringRef &name) {
+    const auto isSearchedFile = [&name](const auto &file) {
+        return file.fileName == name;
+    };
+
+    const auto &arFiles = archive.files;
+    return std::find_if(arFiles.begin(), arFiles.end(), isSearchedFile);
+}
+
+std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
+    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.size() < 2) {
+        return {};
+    }
+
+    const auto cfg1 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[0].config);
+    const auto cfg2 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[1].config);
+
+    return cfg1 + "," + cfg2;
+}
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
@@ -1047,6 +1072,163 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNum
 
     auto got = NEO::getTargetConfigsForFatbinary(ConstStringRef(cutMinorAndRevision), oclocArgHelperWithoutInput.get());
     EXPECT_FALSE(got.empty());
+}
+
+TEST_F(OclocFatBinaryTest, GivenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsGenericIrFileWithSpirvContent) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-output",
+        outputArchiveName,
+        "-file",
+        spirvFilename,
+        "-output_no_suffix",
+        "-spirv_input",
+        "-device",
+        devices};
+
+    const auto buildResult = buildFatBinary(args, &mockArgHelper);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
+
+    const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
+    const auto archiveBytes = ArrayRef<const std::uint8_t>::fromAny(rawArchive.data(), rawArchive.size());
+
+    std::string outErrReason{};
+    std::string outWarning{};
+    const auto decodedArchive = NEO::Ar::decodeAr(archiveBytes, outErrReason, outWarning);
+
+    ASSERT_NE(nullptr, decodedArchive.magic);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto spirvFileIt = searchInArchiveByFilename(decodedArchive, archiveGenericIrName);
+    ASSERT_NE(decodedArchive.files.end(), spirvFileIt);
+
+    const auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(spirvFileIt->fileData, outErrReason, outWarning);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto isSpirvSection = [](const auto &section) {
+        return section.header && section.header->type == Elf::SHT_OPENCL_SPIRV;
+    };
+
+    const auto spirvSectionIt = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(), isSpirvSection);
+    ASSERT_NE(elf.sectionHeaders.end(), spirvSectionIt);
+
+    ASSERT_EQ(spirvFileContent.size() + 1, spirvSectionIt->header->size);
+    const auto isSpirvDataEqualsInputFileData = std::memcmp(spirvFileContent.data(), spirvSectionIt->data.begin(), spirvFileContent.size()) == 0;
+    EXPECT_TRUE(isSpirvDataEqualsInputFileData);
+}
+
+TEST_F(OclocFatBinaryTest, GivenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-output",
+        outputArchiveName,
+        "-file",
+        spirvFilename,
+        "-output_no_suffix",
+        "-spirv_input",
+        "-exclude_ir",
+        "-device",
+        devices};
+
+    const auto buildResult = buildFatBinary(args, &mockArgHelper);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
+
+    const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
+    const auto archiveBytes = ArrayRef<const std::uint8_t>::fromAny(rawArchive.data(), rawArchive.size());
+
+    std::string outErrReason{};
+    std::string outWarning{};
+    const auto decodedArchive = NEO::Ar::decodeAr(archiveBytes, outErrReason, outWarning);
+
+    ASSERT_NE(nullptr, decodedArchive.magic);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto spirvFileIt = searchInArchiveByFilename(decodedArchive, archiveGenericIrName);
+    EXPECT_EQ(decodedArchive.files.end(), spirvFileIt);
+}
+
+TEST_F(OclocFatBinaryTest, GivenClInputFileWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    const std::string clFilename = "some_kernel.cl";
+    mockArgHelperFilesMap[clFilename] = "__kernel void some_kernel(){}";
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-output",
+        outputArchiveName,
+        "-file",
+        clFilename,
+        "-output_no_suffix",
+        "-device",
+        devices};
+
+    const auto buildResult = buildFatBinary(args, &mockArgHelper);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
+
+    const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
+    const auto archiveBytes = ArrayRef<const std::uint8_t>::fromAny(rawArchive.data(), rawArchive.size());
+
+    std::string outErrReason{};
+    std::string outWarning{};
+    const auto decodedArchive = NEO::Ar::decodeAr(archiveBytes, outErrReason, outWarning);
+
+    ASSERT_NE(nullptr, decodedArchive.magic);
+    ASSERT_TRUE(outErrReason.empty());
+    ASSERT_TRUE(outWarning.empty());
+
+    const auto spirvFileIt = searchInArchiveByFilename(decodedArchive, archiveGenericIrName);
+    EXPECT_EQ(decodedArchive.files.end(), spirvFileIt);
+}
+
+TEST_F(OclocFatBinaryTest, GivenEmptyFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
+    Ar::ArEncoder ar;
+    std::string emptyFile{"empty_file.spv"};
+    mockArgHelperFilesMap[emptyFile] = "";
+    mockArgHelper.shouldLoadDataFromFileReturnZeroSize = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto errorCode{appendGenericIr(ar, emptyFile, &mockArgHelper)};
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
+    EXPECT_EQ("Error! Couldn't read input file!\n", output);
+}
+
+TEST_F(OclocFatBinaryTest, GivenInvalidIrFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
+    Ar::ArEncoder ar;
+    std::string dummyFile{"dummy_file.spv"};
+    mockArgHelperFilesMap[dummyFile] = "This is not IR!";
+
+    ::testing::internal::CaptureStdout();
+    const auto errorCode{appendGenericIr(ar, dummyFile, &mockArgHelper)};
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, errorCode);
+
+    const auto expectedErrorMessage{"Error! Input file is not in supported generic IR format! "
+                                    "Currently supported format is SPIR-V.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
 }
 
 } // namespace NEO

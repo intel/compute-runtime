@@ -163,7 +163,7 @@ int OfflineLinker::loadInputFilesContent() {
     for (const auto &filename : inputFilenames) {
         size = 0;
         bytes = argHelper->loadDataFromFile(filename, size);
-        if (bytes == nullptr || size == 0) {
+        if (size == 0) {
             argHelper->printf("Error: Cannot read input file: %s\n", filename.c_str());
             return OclocErrorCode::INVALID_FILE;
         }

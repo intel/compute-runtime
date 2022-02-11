@@ -24,7 +24,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     using OclocArgHelper::deviceProductTable;
     FilesMap &filesMap;
     bool interceptOutput{false};
-    bool shouldReturnReadingError{false};
+    bool shouldLoadDataFromFileReturnZeroSize{false};
     FilesMap interceptedFiles;
     std::vector<std::string> createdFiles{};
     bool callBaseFileExists = false;
@@ -67,8 +67,9 @@ class MockOclocArgHelper : public OclocArgHelper {
             return OclocArgHelper::loadDataFromFile(filename, retSize);
         }
 
-        if (shouldReturnReadingError) {
-            return nullptr;
+        if (shouldLoadDataFromFileReturnZeroSize) {
+            retSize = 0;
+            return {};
         }
 
         if (!fileExists(filename)) {
@@ -76,10 +77,12 @@ class MockOclocArgHelper : public OclocArgHelper {
         }
 
         const auto &file = filesMap[filename];
-        std::unique_ptr<char[]> result{new char[file.size()]};
 
+        std::unique_ptr<char[]> result{new char[file.size() + 1]};
         std::copy(file.begin(), file.end(), result.get());
-        retSize = file.size();
+        result[file.size()] = '\0';
+
+        retSize = file.size() + 1;
 
         return result;
     }

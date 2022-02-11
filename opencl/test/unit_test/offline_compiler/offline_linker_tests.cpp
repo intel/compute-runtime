@@ -339,9 +339,8 @@ TEST_F(OfflineLinkerTest, GivenValidCommandWhenVerificationIsPerformedThenSucces
 
 TEST_F(OfflineLinkerTest, GivenEmptyFileWhenLoadingInputFilesThenErrorIsReturned) {
     const std::string filename{"some_file.spv"};
-
-    // Empty file is treated as an error.
     mockArgHelperFilesMap[filename] = "";
+    mockArgHelper.shouldLoadDataFromFileReturnZeroSize = true;
 
     const std::vector<std::string> argv = {
         "ocloc.exe",
@@ -380,25 +379,6 @@ TEST_F(OfflineLinkerTest, GivenValidFileWithUnknownFormatWhenLoadingInputFilesTh
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
-TEST_F(OfflineLinkerTest, GivenReadingErrorWhenLoadingInputFilesThenErrorIsReturned) {
-    const std::string filename{"some_file1.spv"};
-    mockArgHelperFilesMap[filename] = getEmptySpirvFile();
-
-    mockArgHelper.shouldReturnReadingError = true;
-
-    MockOfflineLinker mockOfflineLinker{&mockArgHelper};
-    mockOfflineLinker.inputFilenames.push_back(filename);
-
-    ::testing::internal::CaptureStdout();
-    const auto readingResult = mockOfflineLinker.loadInputFilesContent();
-    const auto output{::testing::internal::GetCapturedStdout()};
-
-    ASSERT_EQ(OclocErrorCode::INVALID_FILE, readingResult);
-
-    const std::string expectedErrorMessage{"Error: Cannot read input file: some_file1.spv\n"};
-    EXPECT_EQ(expectedErrorMessage, output);
-}
-
 TEST_F(OfflineLinkerTest, GivenValidFilesWithValidFormatsWhenLoadingInputFilesThenFilesAreLoadedAndSuccessIsReturned) {
     const std::string firstFilename{"some_file1.spv"};
     const std::string secondFilename{"some_file2.llvmbc"};
@@ -420,14 +400,14 @@ TEST_F(OfflineLinkerTest, GivenValidFilesWithValidFormatsWhenLoadingInputFilesTh
     const auto &firstExpectedContent = mockArgHelperFilesMap[firstFilename];
     const auto &firstActualContent = mockOfflineLinker.inputFilesContent[0];
 
-    ASSERT_EQ(firstExpectedContent.size(), firstActualContent.size);
+    ASSERT_EQ(firstExpectedContent.size() + 1, firstActualContent.size);
     const auto isFirstPairEqual = std::equal(firstExpectedContent.begin(), firstExpectedContent.end(), firstActualContent.bytes.get());
     EXPECT_TRUE(isFirstPairEqual);
 
     const auto &secondExpectedContent = mockArgHelperFilesMap[secondFilename];
     const auto &secondActualContent = mockOfflineLinker.inputFilesContent[1];
 
-    ASSERT_EQ(secondExpectedContent.size(), secondActualContent.size);
+    ASSERT_EQ(secondExpectedContent.size() + 1, secondActualContent.size);
     const auto isSecondPairEqual = std::equal(secondExpectedContent.begin(), secondExpectedContent.end(), secondActualContent.bytes.get());
     EXPECT_TRUE(isSecondPairEqual);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,20 +27,26 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
     std::string pointerSize = ((requestedTargetDevice.maxPointerSizeInBytes == 8) ? "64" : "32");
     std::string filterPointerSizeAndPlatform = pointerSize + "." + requestedProductAbbreviation.str();
     std::string filterPointerSizeAndPlatformAndStepping = filterPointerSizeAndPlatform + "." + std::to_string(requestedTargetDevice.stepping);
+    ConstStringRef genericIrFileName{"generic_ir"};
 
-    Ar::ArFileEntryHeaderAndData *matchedFiles[2] = {};
+    Ar::ArFileEntryHeaderAndData *matchedFiles[3] = {};
     Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatformAndStepping = matchedFiles[0]; // best match
     Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatform = matchedFiles[1];
-    for (auto &f : archiveData.files) {
-        if (ConstStringRef(f.fileName.begin(), filterPointerSizeAndPlatform.size()) != filterPointerSizeAndPlatform) {
-            continue;
-        }
+    Ar::ArFileEntryHeaderAndData *&matchedGenericIr = matchedFiles[2];
 
-        if (ConstStringRef(f.fileName.begin(), filterPointerSizeAndPlatformAndStepping.size()) != filterPointerSizeAndPlatformAndStepping) {
-            matchedPointerSizeAndPlatform = &f;
-            continue;
+    for (auto &file : archiveData.files) {
+        const auto &filename = file.fileName;
+        constexpr std::string::size_type zeroIndex{0};
+
+        if (filename.size() >= filterPointerSizeAndPlatformAndStepping.size() &&
+            filename.substr(zeroIndex, filterPointerSizeAndPlatformAndStepping.size()) == filterPointerSizeAndPlatformAndStepping) {
+            matchedPointerSizeAndPlatformAndStepping = &file;
+        } else if (filename.size() >= filterPointerSizeAndPlatform.size() &&
+                   filename.substr(zeroIndex, filterPointerSizeAndPlatform.size()) == filterPointerSizeAndPlatform) {
+            matchedPointerSizeAndPlatform = &file;
+        } else if (file.fileName == genericIrFileName) {
+            matchedGenericIr = &file;
         }
-        matchedPointerSizeAndPlatformAndStepping = &f;
     }
 
     std::string unpackErrors;
@@ -55,6 +61,14 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
             if (matchedFile != matchedPointerSizeAndPlatformAndStepping) {
                 outWarning = "Couldn't find perfectly matched binary (right stepping) in AR, using best usable";
             }
+
+            if (unpacked.intermediateRepresentation.empty() && matchedGenericIr) {
+                auto unpackedGenericIr = unpackSingleDeviceBinary(matchedGenericIr->fileData, requestedProductAbbreviation, requestedTargetDevice, unpackErrors, unpackWarnings);
+                if (!unpackedGenericIr.intermediateRepresentation.empty()) {
+                    unpacked.intermediateRepresentation = unpackedGenericIr.intermediateRepresentation;
+                }
+            }
+
             return unpacked;
         }
         if (binaryForRecompilation.intermediateRepresentation.empty() && (false == unpacked.intermediateRepresentation.empty())) {
