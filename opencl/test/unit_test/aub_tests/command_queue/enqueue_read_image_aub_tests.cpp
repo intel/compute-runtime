@@ -72,19 +72,19 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     // clang-format off
-    imageFormat.image_channel_data_type = std::get<0>(GetParam());
-    imageFormat.image_channel_order     = std::get<1>(GetParam());
+        imageFormat.image_channel_data_type = std::get<0>(GetParam());
+        imageFormat.image_channel_order     = std::get<1>(GetParam());
 
-    imageDesc.image_type        = std::get<2>(GetParam()).imageType;
-    imageDesc.image_width       = testWidth;
-    imageDesc.image_height      = testHeight;
-    imageDesc.image_depth       = testDepth;
-    imageDesc.image_array_size  = 1;
-    imageDesc.image_row_pitch   = 0;
-    imageDesc.image_slice_pitch = 0;
-    imageDesc.num_mip_levels    = 0;
-    imageDesc.num_samples       = 0;
-    imageDesc.mem_object        = NULL;
+        imageDesc.image_type        = std::get<2>(GetParam()).imageType;
+        imageDesc.image_width       = testWidth;
+        imageDesc.image_height      = testHeight;
+        imageDesc.image_depth       = testDepth;
+        imageDesc.image_array_size  = 1;
+        imageDesc.image_row_pitch   = 0;
+        imageDesc.image_slice_pitch = 0;
+        imageDesc.num_mip_levels    = 0;
+        imageDesc.num_samples       = 0;
+        imageDesc.mem_object        = NULL;
     // clang-format on
 
     auto perChannelDataSize = 0u;
@@ -123,9 +123,8 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
     auto dstMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(dstMemoryAligned), 4);
 
     auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
-    auto srcMemory = new (std::nothrow) uint8_t[sizeMemory];
-    ASSERT_NE(nullptr, srcMemory);
-
+    auto srcMemoryAligned = alignedMalloc(sizeMemory, 4);
+    auto srcMemory = reinterpret_cast<uint8_t *>(srcMemoryAligned);
     for (auto i = 0u; i < sizeMemory; ++i) {
         srcMemory[i] = static_cast<uint8_t>(i);
     }
@@ -181,20 +180,34 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
     auto pSrcMemory = ptrOffset(imageMemory, offset);
     auto pDstMemory = dstMemoryUnaligned;
 
-    for (size_t z = 0; z < region[2]; ++z) {
-        for (size_t y = 0; y < region[1]; ++y) {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, elementSize * region[0]);
+    for (auto depth = origin[2] + 1; depth < (origin[2] + region[2]); ++depth) {
 
-            pDstMemory = ptrOffset(pDstMemory, rowPitch);
-            pSrcMemory = ptrOffset(pSrcMemory, rowPitch);
+        for (size_t row = 0; row < region[1]; ++row) {
+
+            size_t length = region[0] * elementSize;
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, length);
+            pDstMemory = ptrOffset(pDstMemory, length);
+
+            length = (testWidth - region[0]) * elementSize;
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pDstMemory, length);
+            pDstMemory = ptrOffset(pDstMemory, length);
+
+            pSrcMemory = ptrOffset(pSrcMemory, testWidth * elementSize);
         }
 
-        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * region[1]));
-        pSrcMemory = ptrOffset(pSrcMemory, slicePitch - (rowPitch * region[1]));
+        size_t remainingRows = testHeight - region[1];
+        while (remainingRows > 0) {
+            size_t length = testHeight * elementSize;
+            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pDstMemory, length);
+            pDstMemory = ptrOffset(pDstMemory, length);
+            --remainingRows;
+        }
+
+        pDstMemory = ptrOffset(dstMemoryUnaligned, testWidth * testHeight * elementSize);
     }
 
     alignedFree(dstMemoryAligned);
-    delete[] srcMemory;
+    alignedFree(srcMemoryAligned);
 }
 
 INSTANTIATE_TEST_CASE_P(

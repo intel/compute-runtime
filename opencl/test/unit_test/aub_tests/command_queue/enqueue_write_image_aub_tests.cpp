@@ -113,8 +113,8 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
         break;
     }
     size_t elementSize = perChannelDataSize * numChannels;
-    size_t rowPitch = testWidth * elementSize;
-    size_t slicePitch = rowPitch * testHeight;
+    size_t inputRowPitch = testWidth * elementSize;
+    size_t inputSlicePitch = inputRowPitch * testHeight;
 
     // Generate initial src memory but make it unaligned to page size
     auto srcMemoryAligned = alignedMalloc(4 + elementSize * numPixels, MemoryConstants::pageSize);
@@ -151,8 +151,8 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
         CL_TRUE,
         origin,
         region,
-        rowPitch,
-        slicePitch,
+        inputRowPitch,
+        inputSlicePitch,
         srcMemoryUnaligned,
         nullptr,
         0,
@@ -161,7 +161,9 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto readMemory = new uint8_t[dstImage->getSize()];
-    retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, origin, region, rowPitch, slicePitch, readMemory, nullptr, 0, nullptr, nullptr);
+    size_t imgOrigin[] = {0, 0, 0};
+    size_t imgRegion[] = {testWidth, testHeight, testDepth};
+    retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pCmdQ->finish();
@@ -169,17 +171,35 @@ HWTEST_P(AUBWriteImage, GivenUnalignedMemoryWhenWritingImageThenExpectationsAreM
 
     auto pDstMemory = readMemory;
     auto pSrcMemory = srcMemoryUnaligned;
+    std::vector<uint8_t> referenceMemory(elementSize, 0xFF);
 
-    for (size_t z = 0; z < region[2]; ++z) {
-        for (size_t y = 0; y < region[1]; ++y) {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(pDstMemory, pSrcMemory, elementSize * region[0]);
+    auto rowPitch = dstImage->getHostPtrRowPitch();
+    auto slicePitch = dstImage->getHostPtrSlicePitch();
 
+    for (size_t z = 0; z < testDepth; ++z) {
+        for (size_t y = 0; y < testHeight; ++y) {
+            for (size_t x = 0; x < testWidth; ++x) {
+                auto pos = x * elementSize;
+                if (z >= origin[2] && z < (origin[2] + region[2]) &&
+                    y >= origin[1] && y < (origin[1] + region[1]) &&
+                    x >= origin[0] && x < (origin[0] + region[0])) {
+                    // this texel should be updated
+                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], pSrcMemory, elementSize);
+                    pSrcMemory = ptrOffset(pSrcMemory, elementSize);
+                } else {
+                    AUBCommandStreamFixture::expectMemory<FamilyType>(&pDstMemory[pos], referenceMemory.data(), elementSize);
+                }
+            }
             pDstMemory = ptrOffset(pDstMemory, rowPitch);
-            pSrcMemory = ptrOffset(pSrcMemory, rowPitch);
+            if (y >= origin[1] && y < origin[1] + region[1] &&
+                z >= origin[2] && z < origin[2] + region[2]) {
+                pSrcMemory = ptrOffset(pSrcMemory, inputRowPitch - (elementSize * region[0]));
+            }
         }
-
-        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * region[1]));
-        pSrcMemory = ptrOffset(pSrcMemory, slicePitch - (rowPitch * region[1]));
+        pDstMemory = ptrOffset(pDstMemory, slicePitch - (rowPitch * (testHeight > 0 ? testHeight : 1)));
+        if (z >= origin[2] && z < origin[2] + region[2]) {
+            pSrcMemory = ptrOffset(pSrcMemory, inputSlicePitch - (inputRowPitch * (region[1])));
+        }
     }
 
     alignedFree(srcMemoryAligned);
