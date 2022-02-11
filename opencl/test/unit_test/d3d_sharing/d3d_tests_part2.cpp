@@ -21,7 +21,6 @@
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace NEO {
@@ -31,9 +30,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
     this->context->setInteropUserSyncEnabled(true);
     this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
-    EXPECT_CALL(*this->mockSharingFcns, getBufferDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockBufferDesc));
+    this->mockSharingFcns->getBufferDescSetParams = true;
+    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
     class MockCmdQ : public MockCommandQueue {
       public:
@@ -58,6 +56,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenRel
     retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, mockCmdQ->finishCalled);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->getBufferDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice) {
@@ -92,9 +92,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
     this->context->setInteropUserSyncEnabled(false);
     this->mockSharingFcns->mockBufferDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
-    EXPECT_CALL(*this->mockSharingFcns, getBufferDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockBufferDesc));
+    this->mockSharingFcns->getBufferDescSetParams = true;
+    this->mockSharingFcns->getBufferDescParamsSet.bufferDesc = this->mockSharingFcns->mockBufferDesc;
 
     class MockCmdQ : public MockCommandQueue {
       public:
@@ -119,6 +118,8 @@ TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncDisabledWhenRe
     retVal = this->enqueueReleaseD3DObjectsApi(this->mockSharingFcns, mockCmdQ.get(), 1, &bufferMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockCmdQ->finishCalled);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->getBufferDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDoExplicitFinishOnce) {
@@ -150,122 +151,152 @@ TYPED_TEST_P(D3DTests, givenNonSharedResourceBufferAndInteropUserSyncEnabledWhen
 }
 
 TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate2dTextureThenStagingTextureEqualsPassedTexture) {
-    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
-    this->mockSharingFcns->mockTexture2dDesc.ArraySize = 4;
-    this->mockSharingFcns->mockTexture2dDesc.MipLevels = 4;
+    std::vector<IUnknown *> releaseExpectedParams{};
 
-    ::testing::InSequence is;
-    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture2d(_, _, _))
-        .Times(0);
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle((D3DTexture2d *)&this->dummyD3DTexture, _))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, addRef((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
+    {
+        this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+        this->mockSharingFcns->mockTexture2dDesc.ArraySize = 4;
+        this->mockSharingFcns->mockTexture2dDesc.MipLevels = 4;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
-    ASSERT_NE(nullptr, image.get());
-    auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
-    ASSERT_NE(nullptr, d3dTexture);
+        this->mockSharingFcns->getTexture2dDescSetParams = true;
+        this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    EXPECT_TRUE(d3dTexture->isSharedResource());
-    EXPECT_EQ(&this->dummyD3DTexture, d3dTexture->getResourceStaging());
+        auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
+        ASSERT_NE(nullptr, image.get());
+        auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
+        ASSERT_NE(nullptr, d3dTexture);
 
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DQuery *)d3dTexture->getQuery()))
-        .Times(1);
+        EXPECT_TRUE(d3dTexture->isSharedResource());
+        EXPECT_EQ(&this->dummyD3DTexture, d3dTexture->getResourceStaging());
+
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dTexture->getQuery()));
+
+        EXPECT_EQ(0u, this->mockSharingFcns->createTexture2dCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
+
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
+    }
+    EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
+
+    EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
+    EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate2dTextureThenCreateStagingTexture) {
-    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = 0;
+    std::vector<IUnknown *> releaseExpectedParams{};
 
-    ::testing::InSequence is;
-    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture2d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>((D3DTexture2d *)&this->dummyD3DTextureStaging));
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle((D3DTexture2d *)&this->dummyD3DTextureStaging, _))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, addRef((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
+    {
+        this->mockSharingFcns->mockTexture2dDesc.MiscFlags = 0;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
-    ASSERT_NE(nullptr, image.get());
-    auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
-    ASSERT_NE(nullptr, d3dTexture);
+        this->mockSharingFcns->getTexture2dDescSetParams = true;
+        this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    EXPECT_FALSE(d3dTexture->isSharedResource());
-    EXPECT_EQ(&this->dummyD3DTextureStaging, d3dTexture->getResourceStaging());
+        mockSharingFcns->createTexture2dSetParams = true;
+        mockSharingFcns->createTexture2dParamsSet.texture = reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging);
 
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTextureStaging))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DQuery *)d3dTexture->getQuery()))
-        .Times(1);
+        auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+        ASSERT_NE(nullptr, image.get());
+        auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
+        ASSERT_NE(nullptr, d3dTexture);
+
+        EXPECT_FALSE(d3dTexture->isSharedResource());
+        EXPECT_EQ(&this->dummyD3DTextureStaging, d3dTexture->getResourceStaging());
+
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dTexture->getQuery()));
+
+        EXPECT_EQ(1u, this->mockSharingFcns->createTexture2dCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
+
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
+    }
+    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
+
+    EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
+    EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
+    EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedResourceFlagWhenCreate3dTextureThenStagingTextureEqualsPassedTexture) {
-    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
-    this->mockSharingFcns->mockTexture3dDesc.MipLevels = 4;
+    std::vector<IUnknown *> releaseExpectedParams{};
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(0);
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle((D3DTexture2d *)&this->dummyD3DTexture, _))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, addRef((D3DTexture3d *)&this->dummyD3DTexture))
-        .Times(1);
+    {
+        this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+        this->mockSharingFcns->mockTexture3dDesc.MipLevels = 4;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 0, nullptr));
-    ASSERT_NE(nullptr, image.get());
-    auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
-    ASSERT_NE(nullptr, d3dTexture);
+        this->mockSharingFcns->getTexture3dDescSetParams = true;
+        this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
-    EXPECT_TRUE(d3dTexture->isSharedResource());
-    EXPECT_EQ(&this->dummyD3DTexture, d3dTexture->getResourceStaging());
+        auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, nullptr));
+        ASSERT_NE(nullptr, image.get());
+        auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
+        ASSERT_NE(nullptr, d3dTexture);
 
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DQuery *)d3dTexture->getQuery()))
-        .Times(1);
+        EXPECT_TRUE(d3dTexture->isSharedResource());
+        EXPECT_EQ(&this->dummyD3DTexture, d3dTexture->getResourceStaging());
+
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dTexture->getQuery()));
+
+        EXPECT_EQ(0u, this->mockSharingFcns->createTexture3dCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
+
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
+    }
+    EXPECT_EQ(2u, this->mockSharingFcns->releaseCalled);
+
+    EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
+    EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenNonSharedResourceFlagWhenCreate3dTextureThenCreateStagingTexture) {
-    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = 0;
+    std::vector<IUnknown *> releaseExpectedParams{};
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>((D3DTexture3d *)&this->dummyD3DTextureStaging));
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle((D3DTexture2d *)&this->dummyD3DTextureStaging, _))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, addRef((D3DTexture3d *)&this->dummyD3DTexture))
-        .Times(1);
+    {
+        this->mockSharingFcns->mockTexture3dDesc.MiscFlags = 0;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
-    ASSERT_NE(nullptr, image.get());
-    auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
-    ASSERT_NE(nullptr, d3dTexture);
+        this->mockSharingFcns->getTexture3dDescSetParams = true;
+        this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
-    EXPECT_FALSE(d3dTexture->isSharedResource());
-    EXPECT_EQ(&this->dummyD3DTextureStaging, d3dTexture->getResourceStaging());
+        this->mockSharingFcns->createTexture3dSetParams = true;
+        this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTextureStaging))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DTexture2d *)&this->dummyD3DTexture))
-        .Times(1);
-    EXPECT_CALL(*this->mockSharingFcns, release((D3DQuery *)d3dTexture->getQuery()))
-        .Times(1);
+        auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+        ASSERT_NE(nullptr, image.get());
+        auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
+        ASSERT_NE(nullptr, d3dTexture);
+
+        EXPECT_FALSE(d3dTexture->isSharedResource());
+        EXPECT_EQ(&this->dummyD3DTextureStaging, d3dTexture->getResourceStaging());
+
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture));
+        releaseExpectedParams.push_back(reinterpret_cast<D3DQuery *>(d3dTexture->getQuery()));
+
+        EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->getSharedHandleCalled);
+        EXPECT_EQ(1u, this->mockSharingFcns->addRefCalled);
+
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging), this->mockSharingFcns->getSharedHandleParamsPassed[0].resource);
+        EXPECT_EQ(reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), this->mockSharingFcns->addRefParamsPassed[0].resource);
+    }
+    EXPECT_EQ(3u, this->mockSharingFcns->releaseCalled);
+
+    EXPECT_EQ(releaseExpectedParams[0], this->mockSharingFcns->releaseParamsPassed[0].resource);
+    EXPECT_EQ(releaseExpectedParams[1], this->mockSharingFcns->releaseParamsPassed[1].resource);
+    EXPECT_EQ(releaseExpectedParams[2], this->mockSharingFcns->releaseParamsPassed[2].resource);
 }
 
 TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues) {
@@ -286,41 +317,41 @@ TYPED_TEST_P(D3DTests, givenD3DDeviceParamWhenContextCreationThenSetProperValues
 TYPED_TEST_P(D3DTests, givenSharedNtHandleFlagWhenCreate2dTextureThenGetNtHandle) {
     this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture2d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>((D3DTexture2d *)&this->dummyD3DTextureStaging));
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle(_, _))
-        .Times(0);
-    EXPECT_CALL(*this->mockSharingFcns, getSharedNTHandle(_, _))
-        .Times(1);
+    this->mockSharingFcns->getTexture2dDescSetParams = true;
+    this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    mockSharingFcns->createTexture2dSetParams = true;
+    mockSharingFcns->createTexture2dParamsSet.texture = reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTextureStaging);
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
     auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
     ASSERT_NE(nullptr, d3dTexture);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture2dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->getSharedHandleCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getSharedNTHandleCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>((D3DTexture3d *)&this->dummyD3DTextureStaging));
-    EXPECT_CALL(*this->mockSharingFcns, getSharedHandle(_, _))
-        .Times(0);
-    EXPECT_CALL(*this->mockSharingFcns, getSharedNTHandle(_, _))
-        .Times(1);
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
-    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
     auto d3dTexture = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
     ASSERT_NE(nullptr, d3dTexture);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
+    EXPECT_EQ(0u, this->mockSharingFcns->getSharedHandleCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getSharedNTHandleCalled);
 }
 
 TYPED_TEST_P(D3DTests, WhenFillingBufferDescThenBufferContentIsCorrect) {
@@ -438,41 +469,44 @@ TYPED_TEST_P(D3DTests, GivenForced32BitAddressingWhenCreatingBufferThenBufferHas
 
 TYPED_TEST_P(D3DTests, givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet) {
     this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_P016;
-    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+
+    this->mockSharingFcns->getTexture2dDescSetParams = true;
+    this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
     ASSERT_NE(nullptr, image->getGraphicsAllocation(rootDeviceIndex));
     EXPECT_EQ(AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
     ASSERT_NE(nullptr, image->getGraphicsAllocation(rootDeviceIndex));
     EXPECT_EQ(AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
     mockMM.get()->verifyValue = false;
@@ -480,17 +514,19 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen3dCreatedThenRetur
     mockMM.get()->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
     mockMM.get()->verifyValue = false;
@@ -498,17 +534,19 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreat
     mockMM.get()->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
     mockMM.get()->failAlloc = true;
@@ -516,17 +554,19 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenRetur
     mockMM.get()->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode) {
     this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
+
+    this->mockSharingFcns->createTexture3dSetParams = true;
+    this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
     mockMM.get()->failAlloc = true;
@@ -534,6 +574,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCrea
     mockMM.get()->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->createTexture3dCalled);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned) {
@@ -562,17 +605,10 @@ TYPED_TEST_P(D3DTests, givenFormatNotSupportedByDxWhenGettingSupportedFormatsThe
         DXGI_FORMAT_V408,
         DXGI_FORMAT_FORCE_UINT};
 
-    auto checkFormat = [&](DXGI_FORMAT format, UINT *pFormat) -> bool {
-        auto iter = std::find(unsupportedDXGIformats.begin(), unsupportedDXGIformats.end(), format);
-        if (iter != unsupportedDXGIformats.end()) {
-            return false;
-        }
-        *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
-        return true;
-    };
-
-    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
-    ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
+    mockSharingFcns->checkFormatSupportSetParam1 = true;
+    mockSharingFcns->checkUnsupportedDXGIformats = true;
+    mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+    mockSharingFcns->unsupportedDXGIformats = unsupportedDXGIformats;
 
     std::vector<DXGI_FORMAT> formats;
     cl_uint numTextureFormats = 0;
@@ -596,69 +632,50 @@ TYPED_TEST_P(D3DTests, givenFormatNotSupportedByDxWhenGettingSupportedFormatsThe
 }
 
 TYPED_TEST_P(D3DTests, givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned) {
+    mockSharingFcns->checkFormatSupportSetParam1 = true;
+    mockSharingFcns->checkUnsupportedDXGIformats = true;
+    mockSharingFcns->checkFormatSupportSetParam0 = true;
+    mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+    mockSharingFcns->checkFormatSupportParamsSet.format = DXGI_FORMAT_R32_FLOAT;
+    mockSharingFcns->unsupportedDXGIformats = {DXGI_FORMAT_R32_FLOAT};
 
-    auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool {
-        if (format == DXGI_FORMAT_R32_FLOAT) {
-            return false;
-        }
-        *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
-        return true;
-    };
-
-    auto validate = [&](DXGI_FORMAT format, cl_mem_object_type type) -> cl_int {
-        return mockSharingFcns->validateFormatSupportBase(format, type);
-    };
-
-    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
-    ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
-
-    ON_CALL(*mockSharingFcns, validateFormatSupport(::testing::_, ::testing::_))
-        .WillByDefault(::testing::Invoke(validate));
+    mockSharingFcns->callBaseValidateFormatSupport = true;
 
     this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_R32_FLOAT;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+    this->mockSharingFcns->getTexture2dDescSetParams = true;
+    this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = CL_SUCCESS;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, &retCode));
     EXPECT_EQ(nullptr, image.get());
 
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retCode);
+
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
 
 TYPED_TEST_P(D3DTests, givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned) {
+    mockSharingFcns->checkFormatSupportSetParam1 = true;
+    mockSharingFcns->checkUnsupportedDXGIformats = true;
+    mockSharingFcns->checkFormatSupportSetParam0 = true;
+    mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
+    mockSharingFcns->checkFormatSupportParamsSet.format = DXGI_FORMAT_R32_FLOAT;
+    mockSharingFcns->unsupportedDXGIformats = {DXGI_FORMAT_R32_FLOAT};
 
-    auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool {
-        if (format == DXGI_FORMAT_R32_FLOAT) {
-            return false;
-        }
-        *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
-        return true;
-    };
-
-    auto validate = [&](DXGI_FORMAT format, cl_mem_object_type type) -> cl_int {
-        return mockSharingFcns->validateFormatSupportBase(format, type);
-    };
-
-    ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
-    ON_CALL(*mockSharingFcns, memObjectFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Return(true));
-
-    ON_CALL(*mockSharingFcns, validateFormatSupport(::testing::_, ::testing::_))
-        .WillByDefault(::testing::Invoke(validate));
+    mockSharingFcns->callBaseValidateFormatSupport = true;
 
     this->mockSharingFcns->mockTexture3dDesc.Format = DXGI_FORMAT_R32_FLOAT;
 
-    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
-        .Times(1)
-        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    this->mockSharingFcns->getTexture3dDescSetParams = true;
+    this->mockSharingFcns->getTexture3dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture3dDesc;
 
     cl_int retCode = CL_SUCCESS;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 0, &retCode));
     EXPECT_EQ(nullptr, image.get());
 
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retCode);
+    EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
 REGISTER_TYPED_TEST_CASE_P(D3DTests,

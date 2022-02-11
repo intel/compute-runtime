@@ -101,9 +101,9 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         context->preferD3dSharedResources = true;
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 
-        mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
-        auto checkFormat = [](DXGI_FORMAT format, UINT *pFormat) -> bool { *pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D; return true; };
-        ON_CALL(*mockSharingFcns, checkFormatSupport(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(checkFormat));
+        mockSharingFcns = new MockD3DSharingFunctions<T>();
+        mockSharingFcns->checkFormatSupportSetParam1 = true;
+        mockSharingFcns->checkFormatSupportParamsSet.pFormat = D3D11_FORMAT_SUPPORT_BUFFER | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D;
 
         context->setSharingFunctions(mockSharingFcns);
         context->memoryManager = mockMM.get();
@@ -193,7 +193,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         return clGetDeviceIDsFromD3D11KHR(platform, d3dDeviceSource, d3dObject, d3dDeviceSet, numEntries, devices, numDevices);
     }
 
-    NiceMock<MockD3DSharingFunctions<T>> *mockSharingFcns;
+    MockD3DSharingFunctions<T> *mockSharingFcns;
     MockContext *context;
     MockCommandQueue *cmdQ;
     char dummyD3DBuffer;
