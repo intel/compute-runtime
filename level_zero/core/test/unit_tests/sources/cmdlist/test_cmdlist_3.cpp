@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -230,6 +230,8 @@ HWTEST2_F(CommandListCreate,
     size_t offset = 0x21u;
     void *offsetMemory = ptrOffset(startMemory, offset);
     expectedOffset = ptrDiff(offsetMemory, baseAddress);
+    size_t alignedOffset = offset & EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignmentMask();
+    expectedGpuAddress = ptrOffset(expectedGpuAddress, alignedOffset);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
     outData = commandList->getAlignedAllocation(device, offsetMemory, 4u, false);
