@@ -52,10 +52,10 @@ PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipe
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
-    EXPECT_TRUE(isWARequiredOnMultiCCS);
-    EXPECT_TRUE(isWARequiredOnSingleCCS);
+    EXPECT_TRUE(isBasicWARequired);
+    EXPECT_TRUE(isExtendedWARequired);
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
@@ -64,18 +64,18 @@ PVCTEST_F(PvcHwInfoConfig, givenPvcHwInfoConfigWhenCheckDirectSubmissionSupporte
     EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
 }
 
-PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
+PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandDisabledWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(0);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(0);
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
-    EXPECT_FALSE(isWARequiredOnMultiCCS);
-    EXPECT_TRUE(isWARequiredOnSingleCCS);
+    EXPECT_FALSE(isExtendedWARequired);
+    EXPECT_TRUE(isBasicWARequired);
 }
 
 using CompilerHwInfoConfigHelperTestsPvc = ::testing::Test;

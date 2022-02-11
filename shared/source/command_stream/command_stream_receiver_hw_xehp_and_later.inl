@@ -59,9 +59,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
     auto &hwInfo = peekHwInfo();
     if (isComputeModeNeeded()) {
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        std::ignore = isWARequiredOnMultiCCS;
-        const auto isWARequired = isWARequiredOnSingleCCS;
+        const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+        std::ignore = isExtendedWARequired;
+        const auto isWARequired = isBasicWARequired;
 
         if (isWARequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
@@ -168,9 +168,9 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
     auto &hwInfo = peekHwInfo();
     auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
 
-    if (isWARequiredOnMultiCCS) {
+    if (isExtendedWARequired) {
         args.textureCacheInvalidationEnable = true;
         args.hdcPipelineFlush = true;
         args.amfsFlushEnable = true;
@@ -181,7 +181,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipeline
         args.dcFlushEnable = false;
 
         setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
-    } else if (isWARequiredOnSingleCCS) {
+    } else if (isBasicWARequired) {
         args.hdcPipelineFlush = true;
 
         setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
@@ -198,11 +198,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-    std::ignore = isWARequiredOnMultiCCS;
-    const auto isWARequired = isWARequiredOnSingleCCS;
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    std::ignore = isExtendedWARequired;
 
-    if (isWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
+    if (isBasicWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
         addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
     }
 }

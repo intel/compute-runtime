@@ -99,9 +99,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -125,9 +125,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(UnitTestHelper<FamilyType>::getPipeControlHdcPipelineFlush(*pipeControlCmd));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateSipWhenItIsRequiredThenThereIsPipeControlPriorToIt) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
@@ -209,9 +209,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeContr
     EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipCmd->getSystemInstructionPointer());
 }
 
-HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandDebugKeyAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledAndStateSipWhenA0SteppingIsActivatedThenOnlyGlobalSipIsProgrammed, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

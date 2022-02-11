@@ -392,9 +392,9 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingThenCorrectComm
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenProgramPipeControlPriorToNonPipelinedStateCommandThenCorrectCommandsAreAdded) {
+PVCTEST_F(PvcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledThenCorrectCommandsAreAdded) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;

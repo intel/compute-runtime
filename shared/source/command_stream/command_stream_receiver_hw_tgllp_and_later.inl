@@ -20,11 +20,10 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
 
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        std::ignore = isWARequiredOnMultiCCS;
-        const auto isWARequired = isWARequiredOnSingleCCS;
+        const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+        std::ignore = isExtendedWARequired;
 
-        if (isWARequired) {
+        if (isBasicWARequired) {
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
             addPipeControlPriorToNonPipelinedStateCommand(stream, args);

@@ -316,10 +316,10 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPrefetchDisablingIsRequir
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPipeControlPriorToNonPipelinedStateCommandsWARequiredThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     auto isRcs = false;
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs);
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(pInHwInfo, isRcs);
 
-    EXPECT_FALSE(isWARequiredOnMultiCCS);
-    EXPECT_FALSE(isWARequiredOnSingleCCS);
+    EXPECT_FALSE(isExtendedWARequired);
+    EXPECT_FALSE(isBasicWARequired);
 }
 
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsAtMostGen12lp) {

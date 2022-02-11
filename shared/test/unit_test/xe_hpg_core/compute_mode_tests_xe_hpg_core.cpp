@@ -24,11 +24,11 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
-    const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
-    std::ignore = isWARequiredOnMultiCCS;
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
+    std::ignore = isExtendedWARequired;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    if (isWARequiredOnSingleCCS) {
+    if (isBasicWARequired) {
         cmdsSize += +sizeof(PIPE_CONTROL);
     }
 
@@ -68,7 +68,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
         EXPECT_EQ(cmdsSize, stream.getUsed());
 
         auto pScmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
-        if (isWARequiredOnSingleCCS) {
+        if (isBasicWARequired) {
             pScmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
         }
         EXPECT_EQ(testValue.zPassThreadLimit, pScmCmd->getZPassAsyncComputeThreadLimit());
@@ -89,7 +89,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     auto pScmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
-    if (isWARequiredOnSingleCCS) {
+    if (isBasicWARequired) {
         pScmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScmCmd->getZPassAsyncComputeThreadLimit());

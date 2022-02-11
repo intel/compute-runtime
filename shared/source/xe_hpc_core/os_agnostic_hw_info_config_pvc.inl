@@ -102,14 +102,14 @@ bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareIn
 
 template <>
 std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isWARequiredOnSingleCCS = true;
-    auto isWARequiredOnMultiCCS = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
+    auto isBasicWARequired = true;
+    auto isExtendedWARequired = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1;
 
-    if (DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
-        isWARequiredOnMultiCCS = DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.get();
+    if (DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get() != -1) {
+        isExtendedWARequired = DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.get();
     }
 
-    return {isWARequiredOnSingleCCS, isWARequiredOnMultiCCS};
+    return {isBasicWARequired, isExtendedWARequired};
 }
 
 template <>

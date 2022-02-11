@@ -64,9 +64,9 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskDg2AndLaterTests;
 
-HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramPipeControlPriorToNonPipelinedStateCommandWhenPerDssBackedBufferThenThereIsPipeControlPriorToIt, MatcherIsRTCapable) {
+HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledWhenPerDssBackedBufferThenThereIsPipeControlPriorToIt, MatcherIsRTCapable) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;

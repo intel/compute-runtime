@@ -11,9 +11,9 @@
 
 using namespace NEO;
 
-HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCorrectCommandsAreAdded, IsXEHP) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledThenCorrectCommandsAreAdded, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     SetUpImpl<FamilyType>();
 
@@ -97,9 +97,9 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, GivenProgramPipeControlPriorToNonPipelinedStateCommandThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {
+HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledThenCommandSizeIsCalculatedAndCorrectCommandSizeIsReturned, IsXEHP) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ProgramPipeControlPriorToNonPipelinedStateCommand.set(true);
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

@@ -83,8 +83,8 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
             auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            const auto &[isWARequiredOnSingleCCS, isWARequiredOnMultiCCS] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
-            const auto isWARequired = isWARequiredOnSingleCCS || isWARequiredOnMultiCCS;
+            const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+            const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 
             if (isWARequired) {
                 size += sizeof(typename GfxFamily::PIPE_CONTROL);
