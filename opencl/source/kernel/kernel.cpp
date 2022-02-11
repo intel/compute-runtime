@@ -1744,19 +1744,6 @@ void Kernel::unsetArg(uint32_t argIndex) {
     }
 }
 
-void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
-    objectCount.imageCount = 0;
-    objectCount.samplerCount = 0;
-
-    for (const auto &arg : this->kernelArguments) {
-        if (arg.type == SAMPLER_OBJ) {
-            objectCount.samplerCount++;
-        } else if (arg.type == IMAGE_OBJ) {
-            objectCount.imageCount++;
-        }
-    }
-}
-
 bool Kernel::hasPrintfOutput() const {
     return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf;
 }

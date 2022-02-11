@@ -146,7 +146,6 @@ SelectorCopyEngine &ClDevice::getSelectorCopyEngine() { return device.getSelecto
 MemoryManager *ClDevice::getMemoryManager() const { return device.getMemoryManager(); }
 GmmHelper *ClDevice::getGmmHelper() const { return device.getGmmHelper(); }
 GmmClientContext *ClDevice::getGmmClientContext() const { return device.getGmmClientContext(); }
-double ClDevice::getProfilingTimerResolution() { return device.getProfilingTimerResolution(); }
 double ClDevice::getPlatformHostTimerResolution() const { return device.getPlatformHostTimerResolution(); }
 GFXCORE_FAMILY ClDevice::getRenderCoreFamily() const { return device.getRenderCoreFamily(); }
 PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerformanceCounters(); }

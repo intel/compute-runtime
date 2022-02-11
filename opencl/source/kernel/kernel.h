@@ -405,11 +405,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     ImplicitArgs *getImplicitArgs() const { return pImplicitArgs.get(); }
 
   protected:
-    struct ObjectCounts {
-        uint32_t imageCount;
-        uint32_t samplerCount;
-    };
-
     void
     makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
@@ -417,7 +412,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
 
-    void getParentObjectCounts(ObjectCounts &objectCount);
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
     void provideInitializationHints();
 

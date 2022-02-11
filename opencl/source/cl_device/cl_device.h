@@ -72,7 +72,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
-    double getProfilingTimerResolution();
     double getPlatformHostTimerResolution() const;
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters();
