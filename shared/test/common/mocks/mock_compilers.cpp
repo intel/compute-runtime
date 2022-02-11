@@ -334,12 +334,6 @@ IGC::OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 1):
     return nullptr;
 }
 
-void CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 2)::GetFclOptions(CIF::Builtins::BufferSimple *options) {
-}
-
-void CIF_GET_INTERFACE_CLASS(FclOclTranslationCtx, 2)::GetFclInternalOptions(CIF::Builtins::BufferSimple *internalOptions) {
-}
-
 // MockFclOclDeviceCtx
 FclOclDeviceCtx<0>::~FclOclDeviceCtx() {}
 
