@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
 
@@ -29,7 +30,7 @@ int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchB
 
             this->processResidency(allocationsForResidency, tileIterator);
             if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-                printf("Drm Submission of contextIndex: %u, with context id %u\n", contextIndex, drmContextIds[contextIndex]);
+                printf("%u: Drm Submission of contextIndex: %u, with context id %u\n", SysCalls::getProcessId(), contextIndex, drmContextIds[contextIndex]);
             }
 
             int ret = this->exec(batchBuffer, tileIterator, drmContextIds[contextIndex], contextIndex);

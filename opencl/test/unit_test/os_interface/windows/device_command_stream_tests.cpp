@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
@@ -247,10 +248,14 @@ TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices)
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
     std::ostringstream expectedValue;
-    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex()
+    expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
                   << " (" << engineType << ", " << engineUsage << ")\n";
+
+    auto osContextWin = static_cast<OsContextWin *>(&csr->getOsContext());
+
+    expectedValue << SysCalls::getProcessId() << ": Wddm Submission with context handle " << osContextWin->getWddmContextHandle() << " and HwQueue handle " << osContextWin->getHwQueue().handle << "\n";
     EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
 
     memoryManager->freeGraphicsMemory(commandBuffer);

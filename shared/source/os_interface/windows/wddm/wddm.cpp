@@ -22,6 +22,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/dxcore_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
@@ -855,6 +856,10 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, Wddm
         return false;
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", submitArguments.monitorFence->currentFenceValue);
+
+    if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
+        printf("%u: Wddm Submission with context handle %u and HwQueue handle %u\n", SysCalls::getProcessId(), submitArguments.contextHandle, submitArguments.hwQueueHandle);
+    }
 
     status = wddmInterface->submit(commandBuffer, size, commandHeader, submitArguments);
     if (status) {

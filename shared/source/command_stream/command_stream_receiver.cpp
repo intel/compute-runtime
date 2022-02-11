@@ -30,6 +30,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
@@ -757,7 +758,8 @@ bool CommandStreamReceiver::needsPageTableManager() const {
 
 void CommandStreamReceiver::printDeviceIndex() {
     if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
-        printf("Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
+        printf("%u: Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u (%s, %s)\n",
+               SysCalls::getProcessId(),
                this->getRootDeviceIndex(),
                this->osContext->getDeviceBitfield().to_ulong(),
                this->osContext->getEngineType(),

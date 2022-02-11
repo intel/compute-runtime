@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
@@ -203,7 +204,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     const std::string engineType = EngineHelpers::engineTypeToString(csr->getOsContext().getEngineType());
     const std::string engineUsage = EngineHelpers::engineUsageToString(csr->getOsContext().getEngineUsage());
     std::ostringstream expectedValue;
-    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex()
+    expectedValue << SysCalls::getProcessId() << ": Submission to RootDevice Index: " << csr->getRootDeviceIndex()
                   << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong()
                   << ", EngineId: " << csr->getOsContext().getEngineType()
                   << " (" << engineType << ", " << engineUsage << ")\n";
