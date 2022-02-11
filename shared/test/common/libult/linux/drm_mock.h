@@ -32,6 +32,7 @@ class DrmMock : public Drm {
     using Drm::contextDebugSupported;
     using Drm::createDrmContextExt;
     using Drm::engineInfo;
+    using Drm::fenceVal;
     using Drm::generateElfUUID;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
@@ -39,6 +40,7 @@ class DrmMock : public Drm {
     using Drm::memoryInfo;
     using Drm::nonPersistentContextsSupported;
     using Drm::pageFaultSupported;
+    using Drm::pagingFence;
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::requirePerContextVM;
@@ -69,6 +71,8 @@ class DrmMock : public Drm {
         }
         return errnoRetVal;
     }
+
+    int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
 
     void writeConfigFile(const char *name, int deviceID) {
         std::ofstream tempfile(name, std::ios::binary);
@@ -209,6 +213,16 @@ class DrmMock : public Drm {
     uint64_t storedParamSseu = ULONG_MAX;
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
+
+    struct WaitUserFenceParams {
+        uint32_t ctxId;
+        uint64_t address;
+        uint64_t value;
+        ValueWidth dataWidth;
+        int64_t timeout;
+        uint16_t flags;
+    };
+    StackVec<WaitUserFenceParams, 1> waitUserFenceParams;
 };
 
 class DrmMockNonFailing : public DrmMock {

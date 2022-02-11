@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_impl.h"
+#include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 namespace PROD_DG1 {
 #undef DRM_IOCTL_I915_GEM_CREATE_EXT

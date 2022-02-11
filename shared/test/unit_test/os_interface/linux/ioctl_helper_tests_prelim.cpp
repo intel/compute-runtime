@@ -374,3 +374,9 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
 
     EXPECT_EQ(nullptr, engineInfo);
 }
+
+TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenGettingFlagForWaitUserFenceSoftThenProperFlagIsReturned) {
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    EXPECT_EQ((1u << 15), ioctlHelper->getWaitUserFenceSoftFlag());
+}

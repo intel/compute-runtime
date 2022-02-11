@@ -82,6 +82,7 @@ class IoctlHelper {
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual int32_t getComputeEngineClass() = 0;
+    virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) = 0;
     virtual std::optional<int> getHasPageFaultParamId() = 0;
@@ -111,6 +112,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
+    uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
     std::optional<int> getHasPageFaultParamId() override;
@@ -153,6 +155,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
+    uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
     std::optional<int> getHasPageFaultParamId() override;

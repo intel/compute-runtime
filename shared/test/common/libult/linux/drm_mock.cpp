@@ -253,6 +253,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     return handleRemainingRequests(request, arg);
 }
 
+int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
+    waitUserFenceParams.push_back({ctxIdx, address, value, dataWidth, timeout, flags});
+    return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags);
+}
 int DrmMockEngine::handleRemainingRequests(unsigned long request, void *arg) {
     if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {
         if (i915QuerySuccessCount == 0) {

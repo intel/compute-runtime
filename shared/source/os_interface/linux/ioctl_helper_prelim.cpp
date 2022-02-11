@@ -198,6 +198,10 @@ uint32_t IoctlHelperPrelim20::getComputeSlicesIoctlVal() {
     return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
 }
 
+uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
+    return PRELIM_I915_UFENCE_WAIT_SOFT;
+};
+
 std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;

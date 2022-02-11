@@ -12,8 +12,6 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
-
 #include "gmock/gmock.h"
 
 using namespace NEO;

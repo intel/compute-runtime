@@ -22,7 +22,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_localmem_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp
@@ -46,27 +45,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
 if(NEO__LIBVA_FOUND)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp
-  )
-endif()
-
-if(NEO_ENABLE_i915_PRELIM_DETECTION)
-  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_cache_info_tests.cpp
-  )
-
-  if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
-    list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_dg1.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
-    )
-  endif()
-endif()
-
-if("${BRANCH_TYPE}" STREQUAL "")
-  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
   )
 endif()
 

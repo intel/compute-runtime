@@ -1297,4 +1297,12 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     return I915_EXEC_DEFAULT;
 }
 
+void Drm::waitForBind(uint32_t vmHandleId) {
+    if (pagingFence[vmHandleId] >= fenceVal[vmHandleId]) {
+        return;
+    }
+    auto lock = this->lockBindFenceMutex();
+    waitUserFence(0u, castToUint64(&this->pagingFence[vmHandleId]), this->fenceVal[vmHandleId], ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
+}
+
 } // namespace NEO
