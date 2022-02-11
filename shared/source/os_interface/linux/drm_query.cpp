@@ -5,19 +5,10 @@
  *
  */
 
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/linux/drm_engine_mapper.h"
-#include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/os_interface/linux/system_info.h"
 
 #include "drm_neo.h"
-#include "drm_query_flags.h"
-
-#include <fstream>
 
 namespace NEO {
 
@@ -30,10 +21,6 @@ std::string getIoctlParamStringRemaining(int param) {
     return std::to_string(param);
 }
 } // namespace IoctlToStringHelper
-
-unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
-    return DrmEngineMapper::engineNodeMap(engineType);
-}
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     drm_i915_gem_vm_control ctl = {};

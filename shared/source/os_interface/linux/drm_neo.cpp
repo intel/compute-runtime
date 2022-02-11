@@ -17,6 +17,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
@@ -1195,6 +1196,105 @@ bool Drm::hasPageFaultSupport() const {
     }
 
     return pageFaultSupported;
+}
+
+unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
+    auto engineInfo = this->engineInfo.get();
+    if (!engineInfo) {
+        return DrmEngineMapper::engineNodeMap(engineType);
+    }
+    auto engine = engineInfo->getEngineInstance(deviceIndex, engineType);
+    if (!engine) {
+        return DrmEngineMapper::engineNodeMap(engineType);
+    }
+
+    bool useVirtualEnginesForCcs = !engineInstancedDevice;
+    if (DebugManager.flags.UseDrmVirtualEnginesForCcs.get() != -1) {
+        useVirtualEnginesForCcs = !!DebugManager.flags.UseDrmVirtualEnginesForCcs.get();
+    }
+
+    auto numberOfCCS = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    constexpr uint32_t maxEngines = 9u;
+
+    bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled();
+    auto numberOfBCS = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.count();
+
+    if (DebugManager.flags.LimitEngineCountForVirtualBcs.get() != -1) {
+        numberOfBCS = DebugManager.flags.LimitEngineCountForVirtualBcs.get();
+    }
+
+    if (DebugManager.flags.LimitEngineCountForVirtualCcs.get() != -1) {
+        numberOfCCS = DebugManager.flags.LimitEngineCountForVirtualCcs.get();
+    }
+
+    uint32_t numEnginesInContext = 1;
+
+    I915_DEFINE_CONTEXT_PARAM_ENGINES(contextEngines, 1 + maxEngines){};
+    I915_DEFINE_CONTEXT_ENGINES_LOAD_BALANCE(balancer, maxEngines){};
+
+    contextEngines.engines[0] = {engine->engineClass, engine->engineInstance};
+
+    bool setupVirtualEngines = false;
+    unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
+    if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getComputeEngineClass() && numberOfCCS > 1u) {
+        numEnginesInContext = numberOfCCS + 1;
+        balancer.num_siblings = numberOfCCS;
+        setupVirtualEngines = true;
+    }
+
+    bool includeMainCopyEngineInGroup = false;
+    if (useVirtualEnginesForBcs && engine->engineClass == I915_ENGINE_CLASS_COPY && numberOfBCS > 1u) {
+        numEnginesInContext = static_cast<uint32_t>(numberOfBCS) + 1;
+        balancer.num_siblings = numberOfBCS;
+        setupVirtualEngines = true;
+        engineCount = static_cast<unsigned int>(rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.size());
+        if (EngineHelpers::getBcsIndex(engineType) == 0u) {
+            includeMainCopyEngineInGroup = true;
+        } else {
+            engineCount--;
+            balancer.num_siblings = numberOfBCS - 1;
+            numEnginesInContext = static_cast<uint32_t>(numberOfBCS);
+        }
+    }
+
+    if (setupVirtualEngines) {
+        balancer.base.name = I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
+        contextEngines.extensions = castToUint64(&balancer);
+        contextEngines.engines[0].engine_class = I915_ENGINE_CLASS_INVALID;
+        contextEngines.engines[0].engine_instance = I915_ENGINE_CLASS_INVALID_NONE;
+
+        for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
+            if (useVirtualEnginesForBcs && engine->engineClass == I915_ENGINE_CLASS_COPY) {
+                auto mappedBcsEngineType = static_cast<aub_stream::EngineType>(EngineHelpers::mapBcsIndexToEngineType(engineIndex, includeMainCopyEngineInGroup));
+                bool isBcsEnabled = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(mappedBcsEngineType));
+
+                if (!isBcsEnabled) {
+                    continue;
+                }
+
+                engine = engineInfo->getEngineInstance(deviceIndex, mappedBcsEngineType);
+            }
+            UNRECOVERABLE_IF(!engine);
+
+            if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getComputeEngineClass()) {
+                engine = engineInfo->getEngineInstance(deviceIndex, static_cast<aub_stream::EngineType>(EngineHelpers::mapCcsIndexToEngineType(engineIndex)));
+            }
+            UNRECOVERABLE_IF(!engine);
+            balancer.engines[engineIndex] = {engine->engineClass, engine->engineInstance};
+            contextEngines.engines[1 + engineIndex] = {engine->engineClass, engine->engineInstance};
+        }
+    }
+
+    drm_i915_gem_context_param param{};
+    param.ctx_id = drmContextId;
+    param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
+    param.param = I915_CONTEXT_PARAM_ENGINES;
+    param.value = castToUint64(&contextEngines);
+
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &param);
+    UNRECOVERABLE_IF(retVal != 0);
+
+    return I915_EXEC_DEFAULT;
 }
 
 } // namespace NEO

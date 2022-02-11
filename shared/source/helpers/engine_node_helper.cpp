@@ -181,5 +181,8 @@ aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const De
         return isBcsEnabled(hwInfo, engine1) ? engine1 : engine2;
     }
 }
+aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index) {
+    return static_cast<aub_stream::EngineType>(index + static_cast<uint32_t>(aub_stream::ENGINE_CCS));
+}
 
 } // namespace NEO::EngineHelpers

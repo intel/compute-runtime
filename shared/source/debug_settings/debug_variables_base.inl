@@ -183,6 +183,10 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceExtendedUSMBufferSize, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSimdMessageSizeInWalker, -1, "-1: default, >=0 Program given value in Walker command for SIMD size")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRecoverablePageFaults, -1, "-1: default - ignore, 0: disable, 1: enable recoverable page faults on all VMs (on faultable hardware)")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitMigrationOnFaultableHardware, -1, "-1: default - ignore, 0: disable, 1: enable implicit migration on faultable hardware (for all allocations)")
+DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForCcs, -1, "-1: default, 0: disable, 1: enable,  Combine all CCS nodes to single VE (per context)")
+DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForBcs, -1, "-1: default, 0: disable, 1: enable,  Combine all BCS nodes to single VE (per context)")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualBcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualCcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initialized OsContexts to standard output")
