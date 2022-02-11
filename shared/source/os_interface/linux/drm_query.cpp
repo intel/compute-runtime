@@ -5,22 +5,11 @@
  *
  */
 
-#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm_neo.h"
 
 namespace NEO {
-
-namespace IoctlToStringHelper {
-std::string getIoctlStringRemaining(unsigned long request) {
-    return std::to_string(request);
-}
-
-std::string getIoctlParamStringRemaining(int param) {
-    return std::to_string(param);
-}
-} // namespace IoctlToStringHelper
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     drm_i915_gem_vm_control ctl = {};

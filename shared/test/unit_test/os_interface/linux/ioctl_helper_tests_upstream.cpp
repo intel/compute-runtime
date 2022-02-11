@@ -13,6 +13,22 @@
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 using namespace NEO;
+extern std::map<unsigned long, const char *> ioctlCodeStringMap;
+extern std::map<int, const char *> ioctlParamCodeStringMap;
+
+TEST(IoctlHelperUpstreamTest, givenIoctlWhenParseToStringThenProperStringIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    for (auto ioctlCodeString : ioctlCodeStringMap) {
+        EXPECT_STREQ(ioctlHelper.getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+    }
+}
+
+TEST(IoctlHelperUpstreamTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
+        EXPECT_STREQ(ioctlHelper.getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
+    }
+}
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectValue) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

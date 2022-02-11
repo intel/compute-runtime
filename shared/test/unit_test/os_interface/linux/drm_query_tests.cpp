@@ -60,18 +60,6 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
 }
 
-TEST(DrmQueryTest, givenIoctlWhenParseToStringThenProperStringIsReturned) {
-    for (auto ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(IoctlToStringHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
-    }
-}
-
-TEST(DrmQueryTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
-    for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
-        EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
-    }
-}
-
 TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalse) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

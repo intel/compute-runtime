@@ -62,6 +62,8 @@ class IoctlHelper {
     virtual ~IoctlHelper() {}
     static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
+    virtual std::string getIoctlString(unsigned long request);
+    virtual std::string getIoctlParamString(int param);
     virtual IoctlHelper *clone() = 0;
 
     virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
@@ -131,6 +133,8 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
+    std::string getIoctlString(unsigned long request) override;
+    std::string getIoctlParamString(int param) override;
     IoctlHelper *clone() override;
 
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
