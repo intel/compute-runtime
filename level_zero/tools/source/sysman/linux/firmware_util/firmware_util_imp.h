@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/tools/source/sysman/linux/firmware_util/firmware_util.h"
 
 #include <cinttypes>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -101,5 +102,6 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     uint8_t bus = 0;
     uint8_t device = 0;
     uint8_t function = 0;
+    std::mutex fwLock;
 };
 } // namespace L0
