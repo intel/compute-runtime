@@ -86,8 +86,6 @@ class IoctlHelper {
     virtual int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) = 0;
     virtual std::optional<int> getHasPageFaultParamId() = 0;
-    virtual bool hasGemVmAdviseSupport() = 0;
-    virtual uint32_t getVmAdviseAtomicAttribute() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -116,8 +114,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
     std::optional<int> getHasPageFaultParamId() override;
-    bool hasGemVmAdviseSupport() override;
-    uint32_t getVmAdviseAtomicAttribute() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -159,8 +155,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(Drm &drm, const HardwareInfo &hwInfo) override;
     std::optional<int> getHasPageFaultParamId() override;
-    bool hasGemVmAdviseSupport() override;
-    uint32_t getVmAdviseAtomicAttribute() override;
 };
 
 } // namespace NEO

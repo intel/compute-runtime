@@ -255,19 +255,4 @@ std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
 
-bool IoctlHelperPrelim20::hasGemVmAdviseSupport() {
-    return true;
-}
-
-uint32_t IoctlHelperPrelim20::getVmAdviseAtomicAttribute() {
-    switch (NEO::DebugManager.flags.SetVmAdviseAtomicAttribute.get()) {
-    case 0:
-        return PRELIM_I915_VM_ADVISE_ATOMIC_NONE;
-    case 1:
-        return PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE;
-    default:
-        return PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
-    }
-}
-
 } // namespace NEO
