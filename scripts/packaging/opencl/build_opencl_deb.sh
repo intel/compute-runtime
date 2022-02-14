@@ -13,6 +13,7 @@ REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
 
 BUILD_DIR="${REPO_DIR}/../build_opencl"
 NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
+NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
@@ -107,8 +108,8 @@ EOF
     fi
     if [ "${TARGET_ARCH}" == "aarch64" ]; then
         NEO_SKIP_UNIT_TESTS="TRUE"
-        export NEO_DISABLE_BUILTINS_COMPILATION="TRUE"
     fi
+    export NEO_DISABLE_BUILTINS_COMPILATION
     export NEO_SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION" -b

@@ -154,22 +154,19 @@ function(generate_cpp_spirv builtin)
     set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
   else()
     set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.spv")
-    if(EXISTS ${_file_prebuilt})
-      add_custom_command(
-                         OUTPUT ${GENERATED_SPV_INPUT}
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
-      )
-    endif()
+    add_custom_command(
+                       OUTPUT ${GENERATED_SPV_INPUT}
+                       COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
+                       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
+    )
     set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.cpp")
-    if(EXISTS ${_file_prebuilt})
-      add_custom_command(
-                         OUTPUT ${OUTPUT_FILE_CPP}
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
-      )
-      set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
-    endif()
+    add_custom_command(
+                       OUTPUT ${OUTPUT_FILE_CPP}
+                       COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
+                       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
+                       DEPENDS ${GENERATED_SPV_INPUT}
+    )
+    set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
   endif()
 endfunction()
 
