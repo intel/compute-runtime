@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
@@ -199,4 +200,26 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithDeviceMemoryA
     auto totalEnginesCount = engineInfo->engines.size();
     ASSERT_NE(nullptr, engineInfo);
     EXPECT_EQ(totalEnginesCount, engines.size());
+}
+
+TEST(IoctlHelperTestsUpstream, whenCreateContextWithAccessCountersIsCalledThenErrorIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    drm_i915_gem_context_create_ext gcc{};
+    IoctlHelperUpstream ioctlHelper{};
+
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createContextWithAccessCounters(drm.get(), gcc));
+}
+
+TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    drm_i915_gem_context_create_ext gcc{};
+    IoctlHelperUpstream ioctlHelper{};
+
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(drm.get(), gcc));
 }

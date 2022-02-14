@@ -313,3 +313,61 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
 
     EXPECT_EQ(nullptr, engineInfo);
 }
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCountersIsCalledThenErrorIsReturned) {
+    drm->ioctlRetVal = EINVAL;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    drm_i915_gem_context_create_ext gcc{};
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCountersIsCalledThenSuccessIsReturned) {
+    drm->ioctlRetVal = 0;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    drm_i915_gem_context_create_ext gcc{};
+    EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsCalledThenErrorIsReturned) {
+    drm->ioctlRetVal = EINVAL;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    drm_i915_gem_context_create_ext gcc{};
+    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper->createCooperativeContext(drm.get(), gcc));
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsCalledThenSuccessIsReturned) {
+    drm->ioctlRetVal = 0u;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    drm_i915_gem_context_create_ext gcc{};
+    EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(drm.get(), gcc));
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextExtIsCalledThenIoctlIsCalledOnlyOnce) {
+    drm->ioctlRetVal = 0u;
+
+    DebugManagerStateRestore stateRestore;
+
+    for (auto &cooperativeContextRequested : {-1, 0, 1}) {
+        DebugManager.flags.ForceRunAloneContext.set(cooperativeContextRequested);
+        for (auto &accessCountersRequested : {-1, 0, 1}) {
+            DebugManager.flags.CreateContextWithAccessCounters.set(accessCountersRequested);
+            for (auto vmId = 0u; vmId < 3; vmId++) {
+                drm->ioctlCallsCount = 0u;
+
+                drm_i915_gem_context_create_ext gcc{};
+
+                drm->createDrmContextExt(gcc, vmId, true);
+
+                EXPECT_EQ(1u, drm->ioctlCallsCount);
+            }
+        }
+    }
+}

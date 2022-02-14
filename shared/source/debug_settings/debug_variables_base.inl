@@ -187,6 +187,9 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForCcs, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForBcs, -1, "-1: default, 0: disable, 1: enable,  Combine all BCS nodes to single VE (per context)")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualBcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualCcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
+DECLARE_DEBUG_VARIABLE(int32_t, CreateContextWithAccessCounters, -1, "-1: default, 0: ignore, 1: create context with Access Counter programming")
+DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabled, 0: disabled, >= 0: triggering thresholds")
+DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularites - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintOsContextInitializations, false, "print initialized OsContexts to standard output")
@@ -299,6 +302,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memo
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(bool, EngineInstancedSubDevices, false, "Create subdevices assigned to specific engine")
 DECLARE_DEBUG_VARIABLE(bool, AllowSingleTileEngineInstancedSubDevices, false, "Create subdevices assigned to specific engine on single tile config")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableKernelTunning, -1, "Perform a tunning of enqueue kernel, -1:default(disabled), 0:disable, 1:enable simple kernel tunning, 2:enable full kernel tunning")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBOMmapCreate, -1, "Create BOs using mmap, -1:default, 0:disable(GEM_USERPTR), 1:enable")

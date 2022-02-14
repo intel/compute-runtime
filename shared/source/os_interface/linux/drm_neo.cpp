@@ -1151,4 +1151,28 @@ void Drm::waitForBind(uint32_t vmHandleId) {
     waitUserFence(0u, castToUint64(&this->pagingFence[vmHandleId]), this->fenceVal[vmHandleId], ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
 }
 
+uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isCooperativeContextRequested) {
+    drm_i915_gem_context_create_ext_setparam extSetparam = {};
+
+    if (drmVmId > 0) {
+        extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
+        extSetparam.param.param = I915_CONTEXT_PARAM_VM;
+        extSetparam.param.value = drmVmId;
+        gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
+        gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
+    }
+
+    if (DebugManager.flags.CreateContextWithAccessCounters.get() != -1) {
+        return ioctlHelper->createContextWithAccessCounters(this, gcc);
+    }
+
+    if (DebugManager.flags.ForceRunAloneContext.get() != -1) {
+        isCooperativeContextRequested = DebugManager.flags.ForceRunAloneContext.get();
+    }
+    if (isCooperativeContextRequested) {
+        return ioctlHelper->createCooperativeContext(this, gcc);
+    }
+    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+}
+
 } // namespace NEO

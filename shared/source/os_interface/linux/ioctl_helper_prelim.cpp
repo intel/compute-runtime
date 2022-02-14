@@ -303,4 +303,51 @@ std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
 
+uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, drm_i915_gem_context_create_ext_setparam &extSetparam) {
+    gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
+    extSetparam.base.next_extension = gcc.extensions;
+    gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
+
+    return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+}
+
+uint32_t gemCreateContextAcc(Drm *drm, drm_i915_gem_context_create_ext &gcc, uint16_t trigger, uint8_t granularity) {
+    prelim_drm_i915_gem_context_param_acc paramAcc = {};
+    paramAcc.trigger = trigger;
+    paramAcc.notify = 1;
+    paramAcc.granularity = granularity;
+
+    i915_user_extension userExt = {};
+    userExt.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
+
+    drm_i915_gem_context_param ctxParam = {};
+    ctxParam.param = PRELIM_I915_CONTEXT_PARAM_ACC;
+    ctxParam.ctx_id = 0;
+    ctxParam.size = sizeof(paramAcc);
+    ctxParam.value = reinterpret_cast<uint64_t>(&paramAcc);
+
+    drm_i915_gem_context_create_ext_setparam extSetparam = {};
+    extSetparam.base = userExt;
+    extSetparam.param = ctxParam;
+
+    return gemCreateContextExt(drm, gcc, extSetparam);
+}
+uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+    uint16_t trigger = 0;
+    if (DebugManager.flags.AccessCountersTrigger.get() != -1) {
+        trigger = static_cast<uint16_t>(DebugManager.flags.AccessCountersTrigger.get());
+    }
+    uint8_t granularity = PRELIM_I915_CONTEXT_ACG_2M;
+    if (DebugManager.flags.AccessCountersGranularity.get() != -1) {
+        granularity = static_cast<uint8_t>(DebugManager.flags.AccessCountersGranularity.get());
+    }
+    return gemCreateContextAcc(drm, gcc, trigger, granularity);
+}
+
+uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+    struct drm_i915_gem_context_create_ext_setparam extSetparam = {};
+    extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
+    extSetparam.param.param = PRELIM_I915_CONTEXT_PARAM_RUNALONE;
+    return gemCreateContextExt(drm, gcc, extSetparam);
+}
 } // namespace NEO

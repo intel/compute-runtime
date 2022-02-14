@@ -40,17 +40,4 @@ bool Drm::isVmBindAvailable() {
     return this->bindAvailable;
 }
 
-uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t drmVmId, bool isCooperativeContextRequested) {
-    drm_i915_gem_context_create_ext_setparam extSetparam = {};
-
-    if (drmVmId > 0) {
-        extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
-        extSetparam.param.param = I915_CONTEXT_PARAM_VM;
-        extSetparam.param.value = drmVmId;
-        gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
-        gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
-    }
-    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
-}
-
 } // namespace NEO

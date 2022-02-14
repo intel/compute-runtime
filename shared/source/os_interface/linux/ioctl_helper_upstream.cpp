@@ -154,4 +154,10 @@ std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
 
+uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+    return EINVAL;
+}
+uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+    return EINVAL;
+}
 } // namespace NEO
