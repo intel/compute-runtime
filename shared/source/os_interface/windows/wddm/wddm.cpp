@@ -926,8 +926,11 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
     const auto osContextWin = static_cast<OsContextWin *>(&osContext);
     const auto &monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
+    bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
 
-    return monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
+    PRINT_DEBUG_STRING(hangDetected && DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
+
+    return hangDetected;
 }
 
 void Wddm::initGfxPartition(GfxPartition &outGfxPartition, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool) const {

@@ -176,6 +176,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
         UNRECOVERABLE_IF(retVal != 0);
 
         if (reset_stats.batch_active > 0 || reset_stats.batch_pending > 0) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             return true;
         }
     }
