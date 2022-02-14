@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/kernel/debug_data.h"
@@ -164,6 +165,8 @@ struct KernelDescriptor {
         AddressingMode imageAddressingMode = Bindful;
         AddressingMode samplerAddressingMode = Bindful;
 
+        DeviceBinaryFormat binaryFormat = DeviceBinaryFormat::Unknown;
+
         uint8_t workgroupWalkOrder[3] = {0, 1, 2};
         uint8_t workgroupDimensionsOrder[3] = {0, 1, 2};
 
@@ -206,6 +209,13 @@ struct KernelDescriptor {
             uint32_t packed;
         } flags;
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
+
+        bool usesStringMap() const {
+            if (binaryFormat == DeviceBinaryFormat::Patchtokens) {
+                return flags.usesStringMapForPrintf || flags.requiresImplicitArgs;
+            }
+            return false;
+        }
     } kernelAttributes;
 
     struct {

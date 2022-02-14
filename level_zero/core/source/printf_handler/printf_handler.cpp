@@ -30,7 +30,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
                                 NEO::GraphicsAllocation *printfBuffer, Device *device) {
     bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
 
-    auto usesStringMap = kernelData->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf;
+    auto usesStringMap = kernelData->getDescriptor().kernelAttributes.usesStringMap();
     NEO::PrintFormatter printfFormatter{
         static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer()),
         static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize()),

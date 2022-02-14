@@ -523,6 +523,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);
     }
 
+    dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
 
     if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {

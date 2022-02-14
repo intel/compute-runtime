@@ -631,6 +631,54 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
+    *mockKernel.mockKernel->pImplicitArgs = {};
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+
+    FillValues();
+
+    cl_event blockedEvent = userEvent.get();
+    cl_event outEvent{};
+    auto retVal = pCmdQ->enqueueKernel(
+        mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        1,
+        &blockedEvent,
+        &outEvent);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto pOutEvent = castToObject<Event>(outEvent);
+
+    auto printfAllocation = reinterpret_cast<uint32_t *>(static_cast<CommandComputeKernel *>(pOutEvent->peekCommand())->peekPrintfHandler()->getSurface()->getUnderlyingBuffer());
+    printfAllocation[0] = 8;
+    printfAllocation[1] = 0;
+
+    pOutEvent->release();
+
+    testing::internal::CaptureStdout();
+    userEvent->setStatus(CL_COMPLETE);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_STREQ("test", output.c_str());
+}
+
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenOutputPrinted) {
+    auto userEvent = make_releaseable<UserEvent>(context);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    std::string testString = "test";
+    mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};
 

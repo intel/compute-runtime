@@ -14,15 +14,19 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
-TEST(KernelDescriptorFromPatchtokens, GivenEmptyInputKernelFromPatchtokensThenOnlySetsUpPointerSize) {
+TEST(KernelDescriptorFromPatchtokens, GivenEmptyInputKernelFromPatchtokensThenOnlySetsUpPointerSizeAndBinaryType) {
     NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
     iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
     kernelTokens.header = &kernelHeader;
     NEO::KernelDescriptor kernelDescriptor;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.gpuPointerSize, 4);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::Patchtokens);
+
+    kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Unknown;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.gpuPointerSize, 8);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.binaryFormat, DeviceBinaryFormat::Patchtokens);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenKernelFromPatchtokensWhenKernelNameIsSpecifiedThenItIsCopiedIntoKernelDescriptor) {

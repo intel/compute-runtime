@@ -586,6 +586,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto pKernel = mockKernelWithInternals.mockKernel;
 
     auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
     kernelInfo.addToPrintfStringsMap(0, testString);
 

@@ -88,7 +88,7 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 void PrintfHandler::printEnqueueOutput() {
     auto &hwInfo = device.getHardwareInfo();
 
-    auto usesStringMap = kernel->getDescriptor().kernelAttributes.flags.usesStringMapForPrintf;
+    auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto printfOutputBuffer = reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
