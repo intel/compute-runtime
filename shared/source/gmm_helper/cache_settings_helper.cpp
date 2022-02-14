@@ -34,6 +34,11 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+    case AllocationType::CONSTANT_SURFACE:
+        if (DebugManager.flags.ForceL1Caching.get() == 0) {
+            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+        }
+        return GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
     case AllocationType::BUFFER:
     case AllocationType::BUFFER_HOST_MEMORY:
     case AllocationType::EXTERNAL_HOST_PTR:
