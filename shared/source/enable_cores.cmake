@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -93,7 +93,7 @@ macro(macro_for_each_platform)
         list(APPEND ${CORE_TYPE}_SRC_LINK_BASE ${SRC_FILE})
       endif()
 
-      set(SRC_FILE "${CORE_COREX_PREFIX}/os_agnostic_hw_info_config_${PLATFORM_IT_LOWER}.inl")
+      set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}os_agnostic_hw_info_config_${PLATFORM_IT_LOWER}.inl)
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
       endif()
