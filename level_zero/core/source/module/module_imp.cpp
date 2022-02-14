@@ -16,7 +16,6 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -44,7 +43,6 @@ namespace BuildOptions {
 NEO::ConstStringRef optDisable = "-ze-opt-disable";
 NEO::ConstStringRef optLevel = "-ze-opt-level";
 NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
-NEO::ConstStringRef smallerThan4GbBuffersOnly = "-ze-opt-smaller-than-4GB-buffers-only";
 NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
 NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 } // namespace BuildOptions
@@ -126,10 +124,8 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
-    auto disableStatelessToStatefulOptimization = NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get();
-    auto isForceToStatelessNeeded = NEO::AddressingModeHelper::forceToStatelessNeeded(options, BuildOptions::smallerThan4GbBuffersOnly.str(), device->getHwInfo());
-
-    if (disableStatelessToStatefulOptimization || isForceToStatelessNeeded) {
+    if (NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get() ||
+        device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
@@ -526,14 +522,6 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
     this->updateBuildLog(neoDevice);
     verifyDebugCapabilities();
-
-    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos);
-    auto isForceToStatelessNeeded = NEO::AddressingModeHelper::forceToStatelessNeeded(translationUnit->options, BuildOptions::smallerThan4GbBuffersOnly.str(), device->getHwInfo());
-    auto isUserKernel = (type == ModuleType::User);
-
-    if (containsStatefulAccess && isForceToStatelessNeeded && isUserKernel) {
-        success = false;
-    }
 
     if (false == success) {
         return false;

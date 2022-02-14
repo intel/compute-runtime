@@ -16,7 +16,6 @@
 namespace NEO {
 namespace CompilerOptions {
 static constexpr ConstStringRef greaterThan4gbBuffersRequired = "-cl-intel-greater-than-4GB-buffer-required";
-static constexpr ConstStringRef smallerThan4gbBuffersOnly = "-cl-opt-smaller-than-4GB-buffers-only";
 static constexpr ConstStringRef hasBufferOffsetArg = "-cl-intel-has-buffer-offset-arg";
 static constexpr ConstStringRef kernelDebugEnable = "-cl-kernel-debug-enable";
 static constexpr ConstStringRef arch32bit = "-m32";

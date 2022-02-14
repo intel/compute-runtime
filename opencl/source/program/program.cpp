@@ -15,7 +15,6 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -72,11 +71,9 @@ std::string Program::getInternalOptions() const {
     if (force32BitAddressess && !isBuiltIn) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
     }
-    auto &hwInfo = pClDevice->getHardwareInfo();
-    auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
-    auto forceToStatelessNeeded = AddressingModeHelper::forceToStatelessNeeded(options, CompilerOptions::smallerThan4gbBuffersOnly.str(), hwInfo);
 
-    if ((isBuiltIn && is32bit) || forceToStatelessNeeded || disableStatelessToStatefulOptimization) {
+    if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
+        DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
@@ -93,6 +90,7 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
+    auto &hwInfo = pClDevice->getHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
