@@ -13,7 +13,6 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -171,13 +170,7 @@ cl_int Program::link(
                     if (kernelDebugDataNotified[rootDeviceIndex]) {
                         continue;
                     }
-                    createDebugData(rootDeviceIndex);
-                    for (auto kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
-                        device->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                                kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
-                                                                                kernelInfo->heapInfo.pKernelHeap,
-                                                                                kernelInfo->heapInfo.KernelHeapSize);
-                    }
+                    notifyDebuggerWithDebugData(device);
                     kernelDebugDataNotified[device->getRootDeviceIndex()] = true;
                 }
             }

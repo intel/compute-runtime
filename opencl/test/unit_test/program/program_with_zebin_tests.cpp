@@ -65,22 +65,6 @@ TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataThenDebugZebinIsCreatedAndSto
     EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData.get());
 }
 
-TEST_F(ProgramWithZebinFixture, givenZebinaryFormatInCreateDebugDataThenCreateDebugZebinIsCalled) {
-    addEmptyZebin(program.get());
-    program->createDebugData(rootDeviceIndex);
-    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
-    EXPECT_FALSE(program->wasProcessDebugDataCalled);
-}
-
-TEST_F(ProgramWithZebinFixture, givenNonZebinaryFormatInCreateDebugDataThenProcessDebugDataIsCalled) {
-    size_t fakeBinarySize = 8u;
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = fakeBinarySize;
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(new char[fakeBinarySize]);
-    program->createDebugData(rootDeviceIndex);
-    EXPECT_FALSE(program->wasCreateDebugZebinCalled);
-    EXPECT_TRUE(program->wasProcessDebugDataCalled);
-}
-
 TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataAndZebinBinaryFormatThenCreateDebugZebinAndReturnOnGetInfo) {
     addEmptyZebin(program.get());
     populateProgramWithSegments(program.get());
@@ -131,41 +115,40 @@ TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataAndZebinBinaryFormatThenCreat
     EXPECT_EQ(numDevices * sizeof(debugData), retData);
 }
 
-TEST_F(ProgramWithZebinFixture, givenZebinBinaryFormatWhenProgramIsBuiltWithKernelDebugEnabledAndDebuggerAvailableThenDebugZebinCreationIsCalledAndDebuggerNotified) {
-    addEmptyZebin(program.get());
+TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerNotAvailableWhenNotifyingDebuggerThenCreateDebugZebinIsCalled) {
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
 
+    addEmptyZebin(program.get());
+    populateProgramWithSegments(program.get());
+    auto &buildInfo = program->buildInfos[rootDeviceIndex];
+    buildInfo.debugDataSize = 0u;
+    buildInfo.debugData.reset(nullptr);
+    for (auto &device : program->getDevices()) {
+        program->notifyDebuggerWithDebugData(device);
+    }
+    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
+    EXPECT_FALSE(program->wasProcessDebugDataCalled);
+    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData);
+    EXPECT_GT(program->buildInfos[rootDeviceIndex].debugDataSize, 0u);
+}
+
+TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerAvailableWhenNotifyingDebuggerThenCreateDebugZebinIsCalledAndDebuggerNotified) {
     MockSourceLevelDebugger *sourceLevelDebugger = new MockSourceLevelDebugger;
     sourceLevelDebugger->setActive(true);
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
-    program->createdFrom = Program::CreatedFrom::BINARY;
-    program->isCreatedFromBinary = true;
-    program->enableKernelDebug();
-    auto retVal = program->build(
-        program->getDevices(),
-        nullptr,
-        false);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
-    EXPECT_FALSE(program->wasProcessDebugDataCalled);
-    EXPECT_EQ(1u, sourceLevelDebugger->notifyKernelDebugDataCalled);
-}
-
-TEST_F(ProgramWithZebinFixture, givenZebinBinaryFormatWhenProgramIsBuiltWithKernelDebugEnabledAndNoDebuggerThenDebugZebinCreationIsCalled) {
     addEmptyZebin(program.get());
-
-    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
-
-    program->createdFrom = Program::CreatedFrom::BINARY;
-    program->isCreatedFromBinary = true;
-    program->enableKernelDebug();
-    auto retVal = program->build(
-        program->getDevices(),
-        nullptr,
-        false);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    populateProgramWithSegments(program.get());
+    auto &buildInfo = program->buildInfos[rootDeviceIndex];
+    buildInfo.debugDataSize = 0u;
+    buildInfo.debugData.reset(nullptr);
+    for (auto &device : program->getDevices()) {
+        program->notifyDebuggerWithDebugData(device);
+    }
     EXPECT_TRUE(program->wasCreateDebugZebinCalled);
     EXPECT_FALSE(program->wasProcessDebugDataCalled);
+    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData);
+    EXPECT_GT(program->buildInfos[rootDeviceIndex].debugDataSize, 0u);
+
+    EXPECT_EQ(1u, sourceLevelDebugger->notifyKernelDebugDataCalled);
 }

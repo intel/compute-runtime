@@ -276,7 +276,7 @@ class Program : public BaseObject<_cl_program> {
         this->context = pContext;
     }
 
-    void createDebugData(uint32_t rootDeviceIndex);
+    void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
 
