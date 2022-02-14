@@ -13,8 +13,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
-#include "level_zero/tools/source/metrics/metric_source_oa.h"
-#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

@@ -11,8 +11,8 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
 namespace L0 {
 namespace ult {

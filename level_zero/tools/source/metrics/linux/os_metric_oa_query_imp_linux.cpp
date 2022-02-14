@@ -1,54 +1,46 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
-
-#if defined(_WIN64)
-#define METRICS_LIBRARY_NAME "igdml64.dll"
-#elif defined(_WIN32)
-#define METRICS_LIBRARY_NAME "igdml32.dll"
-#else
-#error "Unsupported OS"
-#endif
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-const char *MetricsLibrary::getFilename() { return METRICS_LIBRARY_NAME; }
+const char *MetricsLibrary::getFilename() { return "libigdml.so.1"; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 
-    auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
-    auto &osData = contextData.ClientData->Windows;
+    auto &osInterface = device.getOsInterface();
+    auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
+    auto drmFileDescriptor = drm->getFileDescriptor();
+    auto &osData = contextData.ClientData->Linux;
 
-    // Copy escape data (adapter/device/escape function).
-    osData.KmdInstrumentationEnabled = true;
-    osData.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle()));
-    osData.Escape = wddm->getEscapeHandle();
-    osData.Adapter =
-        reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
+    osData.Adapter->Type = LinuxAdapterType::DrmFileDescriptor;
+    osData.Adapter->DrmFileDescriptor = drmFileDescriptor;
 
-    return osData.Device && osData.Escape && osData.Adapter;
+    return drmFileDescriptor != -1;
 }
 
 bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {
 
     ConfigurationActivateData_1_0 activateData = {};
-    activateData.Type = GpuConfigurationActivationType::EscapeCode;
+    activateData.Type = GpuConfigurationActivationType::Tbs;
 
     const bool validMetricsLibrary = isInitialized();
     const bool validConfiguration = configurationHandle.IsValid();
-    const bool result = validMetricsLibrary && validConfiguration &&
-                        (api.ConfigurationActivate(configurationHandle, &activateData) == StatusCode::Success);
+    const bool result =
+        validMetricsLibrary && validConfiguration &&
+        (api.ConfigurationActivate(configurationHandle, &activateData) == StatusCode::Success);
 
     DEBUG_BREAK_IF(!result);
     return result;
@@ -66,6 +58,11 @@ bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 confi
 }
 
 void MetricsLibrary::cacheConfiguration(zet_metric_group_handle_t metricGroup, ConfigurationHandle_1_0 configurationHandle) {
+    // Linux does not support configuration cache.
+    // Any previous configuration should be deleted.
+    deleteAllConfigurations();
+
+    // Cache only a single configuration.
     configurations[metricGroup] = configurationHandle;
 }
 } // namespace L0

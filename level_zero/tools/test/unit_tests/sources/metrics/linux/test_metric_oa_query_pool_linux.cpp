@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

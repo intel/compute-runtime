@@ -8,9 +8,9 @@
 #pragma once
 
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
-#include "level_zero/tools/source/metrics/metric_streamer_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
 
 namespace NEO {
 class OsLibrary;

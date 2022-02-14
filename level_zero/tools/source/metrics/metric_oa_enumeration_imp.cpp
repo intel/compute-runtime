@@ -5,15 +5,15 @@
  *
  */
 
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
-#include "level_zero/tools/source/metrics/metric_source_oa.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #include <algorithm>
 

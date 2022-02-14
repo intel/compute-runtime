@@ -5,14 +5,14 @@
  *
  */
 
-#include "level_zero/tools/source/metrics/metric_streamer_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
-#include "level_zero/tools/source/metrics/metric_source_oa.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 using namespace MetricsLibraryApi;
 

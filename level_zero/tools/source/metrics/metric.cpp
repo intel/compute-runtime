@@ -14,9 +14,9 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_query_imp.h"
-#include "level_zero/tools/source/metrics/metric_source_oa.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #include <map>
 #include <utility>

@@ -8,8 +8,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
-#include "level_zero/tools/source/metrics/metric_source_oa.h"
+#include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_source.h"
 
 #if defined(_WIN64)
 #define METRICS_DISCOVERY_NAME "igdmd64.dll"
