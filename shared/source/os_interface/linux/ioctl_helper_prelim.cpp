@@ -250,6 +250,36 @@ uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
     return PRELIM_I915_UFENCE_WAIT_SOFT;
 };
 
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+    std::unique_ptr<prelim_drm_i915_vm_bind_ext_uuid[]> extensions;
+    extensions = std::make_unique<prelim_drm_i915_vm_bind_ext_uuid[]>(bindExtHandles.size());
+    memset(extensions.get(), 0, sizeof(prelim_drm_i915_vm_bind_ext_uuid) * bindExtHandles.size());
+
+    extensions[0].uuid_handle = bindExtHandles[0];
+    extensions[0].base.name = PRELIM_I915_VM_BIND_EXT_UUID;
+
+    for (size_t i = 1; i < bindExtHandles.size(); i++) {
+        extensions[i - 1].base.next_extension = reinterpret_cast<uint64_t>(&extensions[i]);
+        extensions[i].uuid_handle = bindExtHandles[i];
+        extensions[i].base.name = PRELIM_I915_VM_BIND_EXT_UUID;
+    }
+    return std::unique_ptr<uint8_t[]>(reinterpret_cast<uint8_t *>(extensions.release()));
+}
+
+uint64_t IoctlHelperPrelim20::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
+    uint64_t flags = 0u;
+    if (bindCapture) {
+        flags |= PRELIM_I915_GEM_VM_BIND_CAPTURE;
+    }
+    if (bindImmediate) {
+        flags |= PRELIM_I915_GEM_VM_BIND_IMMEDIATE;
+    }
+    if (bindMakeResident) {
+        flags |= PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT;
+    }
+    return flags;
+}
+
 std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;

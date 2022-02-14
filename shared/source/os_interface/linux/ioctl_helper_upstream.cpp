@@ -113,6 +113,13 @@ uint32_t IoctlHelperUpstream::getComputeSlicesIoctlVal() {
     return 0;
 }
 
+std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+    return {};
+}
+uint64_t IoctlHelperUpstream::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
+    return 0u;
+}
+
 std::vector<EngineCapabilities> IoctlHelperUpstream::translateToEngineCaps(const std::vector<uint8_t> &data) {
     auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;

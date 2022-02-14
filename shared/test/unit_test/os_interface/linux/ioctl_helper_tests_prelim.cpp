@@ -72,6 +72,47 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
     }
 }
 
+TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreReturned) {
+    for (auto &bindCapture : ::testing::Bool()) {
+        for (auto &bindImmediate : ::testing::Bool()) {
+            for (auto &bindMakeResident : ::testing::Bool()) {
+                auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
+                if (bindCapture) {
+                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_CAPTURE, (flags & PRELIM_I915_GEM_VM_BIND_CAPTURE));
+                }
+                if (bindImmediate) {
+                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_IMMEDIATE, (flags & PRELIM_I915_GEM_VM_BIND_IMMEDIATE));
+                }
+                if (bindMakeResident) {
+                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT, (flags & PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT));
+                }
+                if (flags == 0) {
+                    EXPECT_FALSE(bindCapture);
+                    EXPECT_FALSE(bindImmediate);
+                    EXPECT_FALSE(bindMakeResident);
+                }
+            }
+        }
+    }
+}
+
+TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {
+    StackVec<uint32_t, 2> bindExtHandles;
+    bindExtHandles.push_back(1u);
+    bindExtHandles.push_back(2u);
+    bindExtHandles.push_back(3u);
+    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles);
+    auto vmBindExt = reinterpret_cast<prelim_drm_i915_vm_bind_ext_uuid *>(retVal.get());
+
+    for (size_t i = 0; i < bindExtHandles.size(); i++) {
+        EXPECT_EQ(bindExtHandles[i], vmBindExt[i].uuid_handle);
+        EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_UUID), vmBindExt[i].base.name);
+    }
+
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.next_extension);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.next_extension);
+}
+
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetHwConfigIoctlValThenCorrectValueReturned) {
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE), ioctlHelper.getHwConfigIoctlVal());
 }

@@ -82,6 +82,8 @@ class IoctlHelper {
     virtual int32_t getMemRegionsIoctlVal() = 0;
     virtual int32_t getEngineInfoIoctlVal() = 0;
     virtual uint32_t getComputeSlicesIoctlVal() = 0;
+    virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
+    virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual int32_t getComputeEngineClass() = 0;
@@ -112,6 +114,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
+    std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
@@ -157,6 +161,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
+    std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;

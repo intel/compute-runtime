@@ -30,6 +30,27 @@ TEST(IoctlHelperUpstreamTest, givenIoctlParamWhenParseToStringThenProperStringIs
         EXPECT_STREQ(ioctlHelper.getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
     }
 }
+TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmBindThenZeroIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    for (auto &bindCapture : ::testing::Bool()) {
+        for (auto &bindImmediate : ::testing::Bool()) {
+            for (auto &bindMakeResident : ::testing::Bool()) {
+                auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
+                EXPECT_EQ(0u, flags);
+            }
+        }
+    }
+}
+
+TEST(IoctlHelperUpstreamTest, whenGettingVmBindExtFromHandlesThenNullptrIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    StackVec<uint32_t, 2> bindExtHandles;
+    bindExtHandles.push_back(1u);
+    bindExtHandles.push_back(2u);
+    bindExtHandles.push_back(3u);
+    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles);
+    EXPECT_EQ(nullptr, retVal);
+}
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectValue) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
