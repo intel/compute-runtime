@@ -98,6 +98,8 @@ class IoctlHelper {
     virtual void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
     virtual std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() = 0;
     virtual void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
+    virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
+    virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -135,6 +137,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
+    std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -187,6 +191,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
+    std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
 };
 
 } // namespace NEO

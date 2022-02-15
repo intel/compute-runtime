@@ -55,7 +55,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ioctl_helper_prelim_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_info_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flags${BRANCH_DIR_SUFFIX}drm_query_flags.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.cpp

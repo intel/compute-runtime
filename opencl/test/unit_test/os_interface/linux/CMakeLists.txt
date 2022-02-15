@@ -20,7 +20,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_debug_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_memory_manager_localmem_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp

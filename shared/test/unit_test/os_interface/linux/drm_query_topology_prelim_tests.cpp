@@ -37,7 +37,7 @@ struct QueryTopologyTests : ::testing::Test {
 
         bool handleQueryItem(void *arg) override {
             const auto queryItem = reinterpret_cast<drm_i915_query_item *>(arg);
-            if (queryItem->query_id != getQueryComputeSlicesIoctl()) {
+            if (queryItem->query_id != DrmPrelimHelper::getQueryComputeSlicesIoctl()) {
                 return DrmQueryMock::handleQueryItem(queryItem);
             }
 

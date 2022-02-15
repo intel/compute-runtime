@@ -21,7 +21,31 @@ namespace DrmEngineMappingHelper {
 constexpr std::array<aub_stream::EngineType, 9> engineMapping = {{aub_stream::ENGINE_BCS, aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS2,
                                                                   aub_stream::ENGINE_BCS3, aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS5,
                                                                   aub_stream::ENGINE_BCS6, aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8}};
+
+// 3 types of copy engines:
+// - Main - BCS (legacy, aka. BCS0)
+// - Host (flavor of link copy engine) - BCS1-2
+// - Scale-up (flavor of link copy engine) - BCS3-8
+constexpr aub_stream::EngineType baseForMainCopyEngine = aub_stream::EngineType::ENGINE_BCS;
+constexpr aub_stream::EngineType baseForHostLinkCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
+constexpr aub_stream::EngineType baseForScaleUpLinkCopyEngine = aub_stream::EngineType::ENGINE_BCS3;
+
 } // namespace DrmEngineMappingHelper
+
+namespace {
+void assignLinkCopyEngine(std::vector<EngineInfo::EngineToInstanceMap> &tileToEngineToInstanceMap, aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
+                          BcsInfoMask &bcsInfoMask, uint32_t &engineCounter) {
+    engineCounter++;
+
+    auto engineIndex = (baseEngineType + engineCounter - 1);
+    tileToEngineToInstanceMap[tileId][static_cast<aub_stream::EngineType>(engineIndex)] = engine;
+
+    // Example: For BCS5 (3rd scale-up engine): BCS3 + 3 - BCS1 = 5
+    size_t engineMaskIndex = (baseEngineType + engineCounter - aub_stream::EngineType::ENGINE_BCS1);
+    UNRECOVERABLE_IF(bcsInfoMask.test(engineMaskIndex));
+    bcsInfoMask.set(engineMaskIndex, true);
+}
+} // namespace
 
 EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineCapabilities> &engineInfos)
     : engines(engineInfos), tileToEngineToInstanceMap(1) {
@@ -38,7 +62,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineC
             tileToEngineToInstanceMap[0][EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *hwInfo)] = engine;
             break;
         case I915_ENGINE_CLASS_COPY:
-            assignCopyEngine(EngineInfo::getBaseCopyEngineType(engineInfo.capabilities), 0, engine,
+            assignCopyEngine(EngineInfo::getBaseCopyEngineType(drm->getIoctlHelper(), engineInfo.capabilities), 0, engine,
                              bcsInfoMask, numHostLinkCopyEngines, numScaleUpLinkCopyEngines);
             break;
         default:
@@ -141,6 +165,41 @@ void EngineInfo::getListOfEnginesOnATile(uint32_t tile, std::vector<EngineClassI
     for (auto itr = range.first; itr != range.second; ++itr) {
         listOfEngines.push_back(itr->second);
     }
+}
+
+void EngineInfo::assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
+                                  BcsInfoMask &bcsInfoMask, uint32_t &numHostLinkCopyEngines, uint32_t &numScaleUpLinkCopyEngines) {
+    // Link copy engines:
+    if (baseEngineType == DrmEngineMappingHelper::baseForHostLinkCopyEngine) {
+        assignLinkCopyEngine(tileToEngineToInstanceMap, baseEngineType, tileId, engine, bcsInfoMask, numHostLinkCopyEngines);
+        return;
+    }
+
+    if (baseEngineType == DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine) {
+        assignLinkCopyEngine(tileToEngineToInstanceMap, baseEngineType, tileId, engine, bcsInfoMask, numScaleUpLinkCopyEngines);
+        return;
+    }
+
+    // Main copy engine:
+    UNRECOVERABLE_IF(baseEngineType != DrmEngineMappingHelper::baseForMainCopyEngine);
+    UNRECOVERABLE_IF(bcsInfoMask.test(0));
+    tileToEngineToInstanceMap[tileId][aub_stream::ENGINE_BCS] = engine;
+    bcsInfoMask.set(0, true);
+}
+
+// EngineIndex = (Base + EngineCounter - 1)
+aub_stream::EngineType EngineInfo::getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities) {
+
+    if (const auto capa = ioctlHelper->getCopyClassSaturatePCIECapability(); capa && isValueSet(capabilities, *capa)) {
+        return DrmEngineMappingHelper::baseForHostLinkCopyEngine;
+    }
+
+    if (const auto capa = ioctlHelper->getCopyClassSaturateLinkCapability(); capa && isValueSet(capabilities, *capa)) {
+        return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
+    }
+
+    // no capabilites check for BCS0, to be backward compatible
+    return DrmEngineMappingHelper::baseForMainCopyEngine;
 }
 
 } // namespace NEO

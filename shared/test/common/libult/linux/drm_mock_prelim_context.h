@@ -18,6 +18,8 @@ struct DrmMockPrelimContext {
     const RootDeviceEnvironment &rootDeviceEnvironment;
     const CacheInfo *cacheInfo;
     const bool &failRetTopology;
+    const BcsInfoMask &supportedCopyEnginesMask;
+
     uint16_t closIndex{0};
     uint16_t maxNumWays{32};
     uint32_t allocNumWays{0};
@@ -29,8 +31,15 @@ struct DrmMockPrelimContext {
     int hasPageFaultQueryValue{0};
     int hasPageFaultQueryReturn{0};
 
+    bool failDistanceInfoQuery{false};
+    bool disableCcsSupport{false};
+
     int handlePrelimRequest(unsigned long request, void *arg);
     bool handlePrelimQueryItem(void *arg);
 };
 
+namespace DrmPrelimHelper {
 uint32_t getQueryComputeSlicesIoctl();
+uint32_t getDistanceInfoQueryId();
+uint32_t getComputeEngineClass();
+}; // namespace DrmPrelimHelper

@@ -171,6 +171,7 @@ uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, drm_i915
 uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
     return EINVAL;
 }
+
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtSetPat() {
     return {};
 };
@@ -179,4 +180,13 @@ std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtSyncFence() {
     return {};
 }
 void IoctlHelperUpstream::fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {}
+
+std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturatePCIECapability() {
+    return std::nullopt;
+}
+
+std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturateLinkCapability() {
+    return std::nullopt;
+}
+
 } // namespace NEO

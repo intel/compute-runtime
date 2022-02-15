@@ -417,4 +417,13 @@ void IoctlHelperPrelim20::fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]
     prelimVmBindExtSyncFence->addr = fenceAddress;
     prelimVmBindExtSyncFence->val = fenceValue;
 }
+
+std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() {
+    return PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE;
+}
+
+std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability() {
+    return PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK;
+}
+
 } // namespace NEO

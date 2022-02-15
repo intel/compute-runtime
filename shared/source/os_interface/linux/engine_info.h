@@ -36,7 +36,7 @@ struct EngineInfo {
     std::vector<EngineCapabilities> engines;
 
   protected:
-    static aub_stream::EngineType getBaseCopyEngineType(uint64_t capabilities);
+    static aub_stream::EngineType getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities);
     static void setSupportedEngiesInfo(HardwareInfo *hwInfo, uint32_t numComputeEngines, const BcsInfoMask &bcsInfoMask);
 
     void assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
