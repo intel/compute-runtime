@@ -72,6 +72,48 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
     }
 }
 
+TEST_F(IoctlPrelimHelperTests, givenEmptyRegionInstanceClassWhenCreatingVmControlRegionExtThenNullptrIsReturned) {
+    std::optional<MemoryClassInstance> regionInstanceClass{};
+
+    EXPECT_FALSE(regionInstanceClass.has_value());
+    EXPECT_EQ(nullptr, ioctlHelper.createVmControlExtRegion(regionInstanceClass));
+}
+
+TEST_F(IoctlPrelimHelperTests, givenValidRegionInstanceClassWhenCreatingVmControlRegionExtThenProperStructIsReturned) {
+    std::optional<MemoryClassInstance> regionInstanceClass = MemoryClassInstance{PRELIM_I915_MEMORY_CLASS_DEVICE, 2};
+
+    EXPECT_TRUE(regionInstanceClass.has_value());
+
+    auto retVal = ioctlHelper.createVmControlExtRegion(regionInstanceClass);
+
+    EXPECT_NE(nullptr, retVal);
+
+    auto regionExt = reinterpret_cast<prelim_drm_i915_gem_vm_region_ext *>(retVal.get());
+
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_GEM_VM_CONTROL_EXT_REGION), regionExt->base.name);
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_MEMORY_CLASS_DEVICE), regionExt->region.memory_class);
+    EXPECT_EQ(2u, regionExt->region.memory_instance);
+}
+
+TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmCreateThenProperValueIsReturned) {
+    for (auto &disableScratch : ::testing::Bool()) {
+        for (auto &enablePageFault : ::testing::Bool()) {
+            auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault);
+            if (disableScratch) {
+                EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH), (flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH));
+            }
+            if (enablePageFault) {
+                EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT), (flags & PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT));
+            }
+            if (disableScratch || enablePageFault) {
+                EXPECT_NE(0u, flags);
+            } else {
+                EXPECT_EQ(0u, flags);
+            }
+        }
+    }
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreReturned) {
     for (auto &bindCapture : ::testing::Bool()) {
         for (auto &bindImmediate : ::testing::Bool()) {

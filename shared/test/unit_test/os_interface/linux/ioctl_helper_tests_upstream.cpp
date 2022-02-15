@@ -36,6 +36,29 @@ TEST(IoctlHelperUpstreamTest, givenIoctlParamWhenParseToStringThenProperStringIs
         EXPECT_STREQ(ioctlHelper.getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
     }
 }
+
+TEST(IoctlHelperUpstreamTest, whenCreatingVmControlRegionExtThenNullptrIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    std::optional<MemoryClassInstance> regionInstanceClass = MemoryClassInstance{};
+
+    EXPECT_TRUE(regionInstanceClass.has_value());
+    EXPECT_EQ(nullptr, ioctlHelper.createVmControlExtRegion(regionInstanceClass));
+
+    regionInstanceClass = {};
+    EXPECT_FALSE(regionInstanceClass.has_value());
+    EXPECT_EQ(nullptr, ioctlHelper.createVmControlExtRegion(regionInstanceClass));
+}
+
+TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmCreateThenZeroIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    for (auto &disableScratch : ::testing::Bool()) {
+        for (auto &enablePageFault : ::testing::Bool()) {
+            auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault);
+            EXPECT_EQ(0u, flags);
+        }
+    }
+}
+
 TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmBindThenZeroIsReturned) {
     IoctlHelperUpstream ioctlHelper{};
     for (auto &bindCapture : ::testing::Bool()) {

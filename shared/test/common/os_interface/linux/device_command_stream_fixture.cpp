@@ -200,8 +200,8 @@ DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     reset();
     ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
-    createVirtualMemoryAddressSpace(NEO::HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
+    createVirtualMemoryAddressSpace(NEO::HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     isVmBindAvailable();
     reset();
 }

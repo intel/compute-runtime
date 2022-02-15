@@ -345,6 +345,36 @@ std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
 
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
+
+    if (regionInstanceClass) {
+        auto retVal = std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_gem_vm_region_ext));
+
+        auto regionExt = reinterpret_cast<prelim_drm_i915_gem_vm_region_ext *>(retVal.get());
+
+        *regionExt = {};
+        regionExt->base.name = PRELIM_I915_GEM_VM_CONTROL_EXT_REGION;
+        regionExt->region.memory_class = regionInstanceClass.value().memoryClass;
+        regionExt->region.memory_instance = regionInstanceClass.value().memoryInstance;
+
+        return retVal;
+    }
+    return {};
+}
+
+uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enablePageFault) {
+    uint32_t flags = 0u;
+    if (disableScratch) {
+        flags |= PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH;
+    }
+
+    if (enablePageFault) {
+        flags |= PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT;
+    }
+
+    return flags;
+}
+
 uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, drm_i915_gem_context_create_ext_setparam &extSetparam) {
     gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
     extSetparam.base.next_extension = gcc.extensions;

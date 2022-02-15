@@ -165,6 +165,14 @@ std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
 
+std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
+    return {};
+}
+
+uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enablePageFault) {
+    return 0u;
+}
+
 uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
     return EINVAL;
 }
