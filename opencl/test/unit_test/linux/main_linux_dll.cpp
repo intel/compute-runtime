@@ -669,6 +669,7 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
+    drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
@@ -687,6 +688,7 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
+    drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);

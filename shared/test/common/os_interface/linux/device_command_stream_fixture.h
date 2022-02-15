@@ -38,6 +38,7 @@ class DrmMockImpl : public Drm {
 
 class DrmMockSuccess : public Drm {
   public:
+    using Drm::setupIoctlHelper;
     DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {}
 
     int ioctl(unsigned long request, void *arg) override { return 0; };

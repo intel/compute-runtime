@@ -67,6 +67,7 @@ class IoctlHelper {
     virtual std::string getIoctlParamString(int param);
     virtual IoctlHelper *clone() = 0;
 
+    virtual bool isVmBindAvailable(Drm *drm) = 0;
     virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) = 0;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) = 0;
     virtual CacheRegion closAlloc(Drm *drm) = 0;
@@ -99,6 +100,7 @@ class IoctlHelperUpstream : public IoctlHelper {
   public:
     IoctlHelper *clone() override;
 
+    bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
@@ -146,6 +148,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::string getIoctlParamString(int param) override;
     IoctlHelper *clone() override;
 
+    bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;

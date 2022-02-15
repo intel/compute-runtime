@@ -34,6 +34,7 @@ using namespace NEO;
 
 class DrmMockForWorker : public Drm {
   public:
+    using Drm::setupIoctlHelper;
     std::mutex mutex;
     std::atomic<int> gem_close_cnt;
     std::atomic<int> gem_close_expected;
@@ -67,6 +68,9 @@ class DrmGemCloseWorkerFixture {
 
     void SetUp() {
         this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
+
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        drmMock->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));

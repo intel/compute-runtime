@@ -53,6 +53,10 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         if (gp->param == PRELIM_I915_PARAM_HAS_PAGE_FAULT) {
             *gp->value = hasPageFaultQueryValue;
             return hasPageFaultQueryReturn;
+        } else if (gp->param == PRELIM_I915_PARAM_HAS_VM_BIND) {
+            vmBindQueryCalled++;
+            *gp->value = vmBindQueryValue;
+            return vmBindQueryReturn;
         }
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {

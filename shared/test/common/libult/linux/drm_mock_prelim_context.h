@@ -22,6 +22,10 @@ struct DrmMockPrelimContext {
     uint16_t maxNumWays{32};
     uint32_t allocNumWays{0};
 
+    size_t vmBindQueryCalled{0};
+    int vmBindQueryValue{0};
+    int vmBindQueryReturn{0};
+
     int hasPageFaultQueryValue{0};
     int hasPageFaultQueryReturn{0};
 

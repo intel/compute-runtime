@@ -71,6 +71,18 @@ IoctlHelper *IoctlHelperPrelim20::clone() {
     return new IoctlHelperPrelim20{};
 }
 
+bool IoctlHelperPrelim20::isVmBindAvailable(Drm *drm) {
+    int vmBindSupported = 0;
+    drm_i915_getparam_t getParam = {};
+    getParam.param = PRELIM_I915_PARAM_HAS_VM_BIND;
+    getParam.value = &vmBindSupported;
+    int retVal = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GETPARAM, &getParam);
+    if (retVal) {
+        return false;
+    }
+    return vmBindSupported;
+}
+
 uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);

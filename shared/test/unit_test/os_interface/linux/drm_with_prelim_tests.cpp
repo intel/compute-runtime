@@ -5,12 +5,13 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -49,6 +50,28 @@ class IoctlHelperPrelimFixture : public ::testing::Test {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<DrmPrelimMock> drm;
 };
+
+TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturnedBasedOnIoctlResult) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    IoctlHelperPrelim20 ioctlHelper{};
+
+    for (auto &ioctlValue : {0, EINVAL}) {
+        drm.context.vmBindQueryReturn = ioctlValue;
+        for (auto &hasVmBind : ::testing::Bool()) {
+            drm.context.vmBindQueryValue = hasVmBind;
+            drm.context.vmBindQueryCalled = 0u;
+
+            if (ioctlValue == 0) {
+                EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable(&drm));
+            } else {
+                EXPECT_FALSE(ioctlHelper.isVmBindAvailable(&drm));
+            }
+            EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
+        }
+    }
+}
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
     auto ioctlHelper = drm->getIoctlHelper();

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -16,6 +15,13 @@
 using namespace NEO;
 extern std::map<unsigned long, const char *> ioctlCodeStringMap;
 extern std::map<int, const char *> ioctlParamCodeStringMap;
+
+TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) {
+    IoctlHelperUpstream ioctlHelper{};
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_FALSE(ioctlHelper.isVmBindAvailable(drm.get()));
+}
 
 TEST(IoctlHelperUpstreamTest, givenIoctlWhenParseToStringThenProperStringIsReturned) {
     IoctlHelperUpstream ioctlHelper{};

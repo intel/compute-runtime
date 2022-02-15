@@ -35,14 +35,15 @@ class DrmCommandStreamTestL0 : public ::testing::Test {
 
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
         mock = new ::testing::NiceMock<DrmMockImpl>(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+        mock->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
 
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
         osContext = std::make_unique<OsContextLinux>(*mock, 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
