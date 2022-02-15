@@ -72,19 +72,19 @@ HWTEST_P(AUBReadImage, GivenUnalignedMemoryWhenReadingImageThenExpectationsAreMe
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     // clang-format off
-        imageFormat.image_channel_data_type = std::get<0>(GetParam());
-        imageFormat.image_channel_order     = std::get<1>(GetParam());
+    imageFormat.image_channel_data_type = std::get<0>(GetParam());
+    imageFormat.image_channel_order     = std::get<1>(GetParam());
 
-        imageDesc.image_type        = std::get<2>(GetParam()).imageType;
-        imageDesc.image_width       = testWidth;
-        imageDesc.image_height      = testHeight;
-        imageDesc.image_depth       = testDepth;
-        imageDesc.image_array_size  = 1;
-        imageDesc.image_row_pitch   = 0;
-        imageDesc.image_slice_pitch = 0;
-        imageDesc.num_mip_levels    = 0;
-        imageDesc.num_samples       = 0;
-        imageDesc.mem_object        = NULL;
+    imageDesc.image_type        = std::get<2>(GetParam()).imageType;
+    imageDesc.image_width       = testWidth;
+    imageDesc.image_height      = testHeight;
+    imageDesc.image_depth       = testDepth;
+    imageDesc.image_array_size  = 1;
+    imageDesc.image_row_pitch   = 0;
+    imageDesc.image_slice_pitch = 0;
+    imageDesc.num_mip_levels    = 0;
+    imageDesc.num_samples       = 0;
+    imageDesc.mem_object        = NULL;
     // clang-format on
 
     auto perChannelDataSize = 0u;
@@ -223,7 +223,7 @@ using AUBReadImageUnaligned = AUBImageUnaligned;
 
 HWTEST_F(AUBReadImageUnaligned, GivenMisalignedHostPtrWhenReadingImageThenExpectationsAreMet) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
-    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
 
     for (auto pixelSize : pixelSizes) {

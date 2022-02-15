@@ -219,7 +219,7 @@ using AUBWriteImageUnaligned = AUBImageUnaligned;
 
 HWTEST_F(AUBWriteImageUnaligned, GivenMisalignedHostPtrWhenWritingImageThenExpectationsAreMet) {
     const std::vector<size_t> pixelSizes = {1, 2, 4};
-    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> offsets = {0, 4, 8, 12};
     const std::vector<size_t> sizes = {3, 2, 1};
 
     for (auto pixelSize : pixelSizes) {
