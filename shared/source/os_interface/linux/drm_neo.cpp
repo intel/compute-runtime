@@ -1175,4 +1175,20 @@ uint32_t Drm::createDrmContextExt(drm_i915_gem_context_create_ext &gcc, uint32_t
     return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
 }
 
+bool Drm::isVmBindAvailable() {
+    std::call_once(checkBindOnce, [this]() {
+        int ret = ioctlHelper->isVmBindAvailable(this);
+
+        auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
+        auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+        ret &= static_cast<int>(hwInfoConfig->isNewResidencyModelSupported());
+
+        bindAvailable = ret;
+
+        Drm::overrideBindSupport(bindAvailable);
+    });
+
+    return bindAvailable;
+}
+
 } // namespace NEO

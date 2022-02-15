@@ -1013,7 +1013,6 @@ TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
 
 TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrectSetting) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.UseVmBind.set(1);
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -1029,6 +1028,7 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
         EXPECT_FALSE(drmDefault.completionFenceSupport());
     }
 
+    DebugManager.flags.UseVmBind.set(1);
     DebugManager.flags.EnableDrmCompletionFence.set(1);
     DrmMock drmEnabled{*executionEnvironment->rootDeviceEnvironments[0]};
     EXPECT_TRUE(drmEnabled.completionFenceSupport());

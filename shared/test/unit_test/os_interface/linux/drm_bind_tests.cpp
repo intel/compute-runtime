@@ -53,3 +53,10 @@ TEST(DrmBindTest, givenBindNotCompleteWhenWaitForBindThenWaitUserFenceIoctlIsCal
     EXPECT_EQ(drm.fenceVal[0], drm.waitUserFenceParams[0].value);
     EXPECT_EQ(-1, drm.waitUserFenceParams[0].timeout);
 }
+
+TEST(DrmBindTest, whenCheckingVmBindAvailabilityThenIoctlHelperSupportIsUsed) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    EXPECT_EQ(drm.isVmBindAvailable(), drm.getIoctlHelper()->isVmBindAvailable(&drm));
+}
