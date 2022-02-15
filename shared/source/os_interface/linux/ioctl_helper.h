@@ -94,6 +94,10 @@ class IoctlHelper {
     virtual std::optional<int> getHasPageFaultParamId() = 0;
     virtual uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) = 0;
     virtual uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) = 0;
+    virtual std::unique_ptr<uint8_t[]> createVmBindExtSetPat() = 0;
+    virtual void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
+    virtual std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() = 0;
+    virtual void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -127,6 +131,10 @@ class IoctlHelperUpstream : public IoctlHelper {
     std::optional<int> getHasPageFaultParamId() override;
     uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtSetPat() override;
+    void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
+    void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -175,6 +183,10 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::optional<int> getHasPageFaultParamId() override;
     uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtSetPat() override;
+    void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
+    void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
 };
 
 } // namespace NEO

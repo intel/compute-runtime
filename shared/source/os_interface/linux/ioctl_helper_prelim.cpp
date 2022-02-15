@@ -392,4 +392,29 @@ uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, drm_i915_gem_co
     extSetparam.param.param = PRELIM_I915_CONTEXT_PARAM_RUNALONE;
     return gemCreateContextExt(drm, gcc, extSetparam);
 }
+
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtSetPat() {
+    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_set_pat));
+};
+
+void IoctlHelperPrelim20::fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {
+    auto prelimVmBindExtSetPat = reinterpret_cast<prelim_drm_i915_vm_bind_ext_set_pat *>(vmBindExtSetPat.get());
+    UNRECOVERABLE_IF(!prelimVmBindExtSetPat);
+    prelimVmBindExtSetPat->base.name = PRELIM_I915_VM_BIND_EXT_SET_PAT;
+    prelimVmBindExtSetPat->pat_index = patIndex;
+    prelimVmBindExtSetPat->base.next_extension = nextExtension;
+}
+
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtSyncFence() {
+    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_sync_fence));
+}
+
+void IoctlHelperPrelim20::fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
+    auto prelimVmBindExtSyncFence = reinterpret_cast<prelim_drm_i915_vm_bind_ext_sync_fence *>(vmBindExtSyncFence.get());
+    UNRECOVERABLE_IF(!prelimVmBindExtSyncFence);
+    prelimVmBindExtSyncFence->base.name = PRELIM_I915_VM_BIND_EXT_SYNC_FENCE;
+    prelimVmBindExtSyncFence->base.next_extension = nextExtension;
+    prelimVmBindExtSyncFence->addr = fenceAddress;
+    prelimVmBindExtSyncFence->val = fenceValue;
+}
 } // namespace NEO

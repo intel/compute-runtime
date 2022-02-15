@@ -148,3 +148,53 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSa
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGettingFlagForWaitUserFenceSoftThenProperFlagIsReturned) {
     EXPECT_EQ(PRELIM_I915_UFENCE_WAIT_SOFT, ioctlHelper.getWaitUserFenceSoftFlag());
 }
+
+TEST_F(IoctlPrelimHelperTests, whenCreateVmBindSetPatThenValidPointerIsReturned) {
+    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtSetPat());
+}
+
+TEST_F(IoctlPrelimHelperTests, whenCreateVmBindSyncFenceThenValidPointerIsReturned) {
+    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtSyncFence());
+}
+
+TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSetPatThenUnrecoverableIsThrown) {
+    std::unique_ptr<uint8_t[]> vmBindExtSetPat{};
+    EXPECT_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u), std::runtime_error);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSyncFenceThenUnrecoverableIsThrown) {
+    std::unique_ptr<uint8_t[]> vmBindExtSyncFence{};
+    EXPECT_THROW(ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, 0u, 0u, 0u), std::runtime_error);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSetPatThenProperValuesAreSet) {
+    std::unique_ptr<uint8_t[]> vmBindExtSetPat{};
+    prelim_drm_i915_vm_bind_ext_set_pat prelimVmBindExtSetPat{};
+    vmBindExtSetPat.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtSetPat));
+
+    uint64_t expectedPatIndex = 2;
+    uint64_t expectedNextExtension = 3;
+    ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, expectedPatIndex, expectedNextExtension);
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_SET_PAT), prelimVmBindExtSetPat.base.name);
+    EXPECT_EQ(expectedPatIndex, prelimVmBindExtSetPat.pat_index);
+    EXPECT_EQ(expectedNextExtension, prelimVmBindExtSetPat.base.next_extension);
+
+    vmBindExtSetPat.release();
+}
+
+TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSyncFenceThenProperValuesAreSet) {
+    std::unique_ptr<uint8_t[]> vmBindExtSyncFence{};
+    prelim_drm_i915_vm_bind_ext_sync_fence prelimVmBindExtSyncFence{};
+    vmBindExtSyncFence.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtSyncFence));
+
+    uint64_t expectedAddress = 0xdead;
+    uint64_t expectedValue = 0xc0de;
+    uint64_t expectedNextExtension = 1234;
+    ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, expectedAddress, expectedValue, expectedNextExtension);
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_SYNC_FENCE), prelimVmBindExtSyncFence.base.name);
+    EXPECT_EQ(expectedAddress, prelimVmBindExtSyncFence.addr);
+    EXPECT_EQ(expectedValue, prelimVmBindExtSyncFence.val);
+    EXPECT_EQ(expectedNextExtension, prelimVmBindExtSyncFence.base.next_extension);
+
+    vmBindExtSyncFence.release();
+}
