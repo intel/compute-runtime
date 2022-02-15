@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,4 +62,9 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingISAPaddingThenC
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenTrueIsReturned) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_TRUE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
+}
+
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled());
 }

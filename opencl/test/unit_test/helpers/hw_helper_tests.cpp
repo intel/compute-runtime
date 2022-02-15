@@ -1421,6 +1421,17 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIs
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_FALSE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
+
+HWTEST2_F(HwHelperTest, givenAtsOrDg2HwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, ATSOrDG2) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled());
+}
+
+HWTEST2_F(HwHelperTest, givenNotAtsOrDg2HwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.isPlatformFlushTaskEnabled());
+}
+
 struct CoherentWANotNeeded {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

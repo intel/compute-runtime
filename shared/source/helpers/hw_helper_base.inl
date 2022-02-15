@@ -718,4 +718,8 @@ template <typename GfxFamily>
 const void *HwHelperHw<GfxFamily>::getBatchBufferEndReference() const {
     return reinterpret_cast<const void *>(&GfxFamily::cmdInitBatchBufferEnd);
 }
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isPlatformFlushTaskEnabled() const {
+    return false;
+}
 } // namespace NEO

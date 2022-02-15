@@ -136,7 +136,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && !isCopyOnly() && !isInternal()) {
-        this->isFlushTaskSubmissionEnabled = this->isFlushTaskSupported();
+        this->isFlushTaskSubmissionEnabled = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).isPlatformFlushTaskEnabled();
         if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
             this->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
         }

@@ -202,9 +202,4 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
     return 0;
 }
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-inline bool CommandListCoreFamily<gfxCoreFamily>::isFlushTaskSupported() {
-    return false;
-}
-
 } // namespace L0
