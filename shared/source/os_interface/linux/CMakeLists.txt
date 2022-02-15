@@ -20,7 +20,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_buffer_object_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_and_later.inl

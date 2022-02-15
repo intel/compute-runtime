@@ -126,7 +126,10 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsConte
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
 
-    this->fillExecObjectImpl(execObject, osContext, vmHandleId);
+    const auto osContextId = drm->isPerContextVMRequired() ? osContext->getContextId() : 0;
+    if (this->bindInfo[osContextId][vmHandleId]) {
+        execObject.handle = 0u;
+    }
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
