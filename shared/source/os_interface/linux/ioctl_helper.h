@@ -56,6 +56,16 @@ struct DistanceInfo {
     int32_t distance;
 };
 
+struct VmBindParams {
+    uint32_t vmId;
+    uint32_t handle;
+    uint64_t start;
+    uint64_t offset;
+    uint64_t length;
+    uint64_t flags;
+    uint64_t extensions;
+};
+
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 
 class IoctlHelper {
@@ -100,6 +110,8 @@ class IoctlHelper {
     virtual void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
+    virtual int vmBind(Drm *drm, const VmBindParams &vmBindParams) = 0;
+    virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -139,6 +151,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
+    int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -193,6 +207,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
+    int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
 };
 
 } // namespace NEO

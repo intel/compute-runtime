@@ -75,6 +75,38 @@ TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturn
     }
 }
 
+TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIoctlResult) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    IoctlHelperPrelim20 ioctlHelper{};
+
+    VmBindParams vmBindParams{};
+
+    for (auto &ioctlValue : {0, EINVAL}) {
+        drm.context.vmBindReturn = ioctlValue;
+        drm.context.vmBindCalled = 0u;
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(&drm, vmBindParams));
+        EXPECT_EQ(1u, drm.context.vmBindCalled);
+    }
+}
+
+TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOnIoctlResult) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    IoctlHelperPrelim20 ioctlHelper{};
+
+    VmBindParams vmBindParams{};
+
+    for (auto &ioctlValue : {0, EINVAL}) {
+        drm.context.vmUnbindReturn = ioctlValue;
+        drm.context.vmUnbindCalled = 0u;
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(&drm, vmBindParams));
+        EXPECT_EQ(1u, drm.context.vmUnbindCalled);
+    }
+}
+
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;

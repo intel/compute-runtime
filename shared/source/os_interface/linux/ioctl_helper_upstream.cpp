@@ -189,4 +189,10 @@ std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturateLinkCapability(
     return std::nullopt;
 }
 
+int IoctlHelperUpstream::vmBind(Drm *drm, const VmBindParams &vmBindParams) {
+    return 0;
+}
+int IoctlHelperUpstream::vmUnbind(Drm *drm, const VmBindParams &vmBindParams) {
+    return 0;
+}
 } // namespace NEO

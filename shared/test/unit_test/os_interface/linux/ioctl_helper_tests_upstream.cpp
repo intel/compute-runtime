@@ -272,3 +272,23 @@ TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindSyncFenceThenNothingThr
     auto vmBindExtSyncFence = ioctlHelper.createVmBindExtSyncFence();
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, 0u, 0u, 0u));
 }
+
+TEST(IoctlHelperTestsUpstream, whenVmBindIsCalledThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    VmBindParams vmBindParams{};
+    IoctlHelperUpstream ioctlHelper{};
+    EXPECT_EQ(0, ioctlHelper.vmBind(drm.get(), vmBindParams));
+}
+
+TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(nullptr, drm);
+
+    IoctlHelperUpstream ioctlHelper{};
+    VmBindParams vmBindParams{};
+    EXPECT_EQ(0, ioctlHelper.vmUnbind(drm.get(), vmBindParams));
+}

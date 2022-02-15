@@ -28,6 +28,12 @@ struct DrmMockPrelimContext {
     int vmBindQueryValue{0};
     int vmBindQueryReturn{0};
 
+    size_t vmBindCalled{0};
+    int vmBindReturn{0};
+
+    size_t vmUnbindCalled{0};
+    int vmUnbindReturn{0};
+
     int hasPageFaultQueryValue{0};
     int hasPageFaultQueryReturn{0};
 

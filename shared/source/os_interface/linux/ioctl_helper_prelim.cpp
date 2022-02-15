@@ -426,4 +426,25 @@ std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability(
     return PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK;
 }
 
+prelim_drm_i915_gem_vm_bind translateVmBindParamsToPrelimStruct(const VmBindParams &vmBindParams) {
+    prelim_drm_i915_gem_vm_bind vmBind{};
+    vmBind.vm_id = vmBindParams.vmId;
+    vmBind.handle = vmBindParams.handle;
+    vmBind.start = vmBindParams.start;
+    vmBind.offset = vmBindParams.offset;
+    vmBind.length = vmBindParams.length;
+    vmBind.flags = vmBindParams.flags;
+    vmBind.extensions = vmBindParams.extensions;
+    return vmBind;
+}
+
+int IoctlHelperPrelim20::vmBind(Drm *drm, const VmBindParams &vmBindParams) {
+    auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
+    return IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_VM_BIND, &prelimVmBind);
+}
+
+int IoctlHelperPrelim20::vmUnbind(Drm *drm, const VmBindParams &vmBindParams) {
+    auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
+    return IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND, &prelimVmBind);
+}
 } // namespace NEO

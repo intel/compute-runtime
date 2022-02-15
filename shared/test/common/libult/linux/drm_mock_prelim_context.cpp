@@ -78,6 +78,14 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         }
         allocNumWays += cacheReserveArg->num_ways;
     } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_VM_BIND: {
+        vmBindCalled++;
+        return vmBindReturn;
+    } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
+        vmUnbindCalled++;
+        return vmUnbindReturn;
+    } break;
 
     default:
         return -1;
