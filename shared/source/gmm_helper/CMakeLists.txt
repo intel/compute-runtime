@@ -7,6 +7,7 @@
 set(NEO_CORE_GMM_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}resource_info_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/client_context${BRANCH_DIR_SUFFIX}/gmm_client_context_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_settings_helper.cpp
