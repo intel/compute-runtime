@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,8 +87,14 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
     void flushTagUpdate() override {
         flushTagCalled = true;
     }
+
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainUniqueOwnership() override {
+        obtainUniqueOwnershipCalled++;
+        return TbxCommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
+    }
     std::set<GraphicsAllocation *> downloadedAllocations;
     bool flushBatchedSubmissionsCalled = false;
     bool flushTagCalled = false;
+    size_t obtainUniqueOwnershipCalled = 0;
 };
 } // namespace NEO

@@ -394,7 +394,9 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenLatestFlushedTaskCountLowerThanTagWhenF
     tbxCsr.latestFlushedTaskCount = 0u;
     EXPECT_FALSE(tbxCsr.flushTagCalled);
 
+    EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
     tbxCsr.flushSubmissionsAndDownloadAllocations(1u);
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
 
     EXPECT_TRUE(tbxCsr.flushTagCalled);
 }
@@ -410,7 +412,9 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThen
     MockGraphicsAllocation allocation1, allocation2, allocation3;
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
+    EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
     tbxCsr.downloadAllocations();
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
 
     std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
     EXPECT_EQ(0u, tbxCsr.allocationsForDownload.size());
