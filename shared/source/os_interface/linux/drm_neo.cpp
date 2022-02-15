@@ -17,9 +17,11 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/clos_helper.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -1191,4 +1193,127 @@ bool Drm::isVmBindAvailable() {
     return bindAvailable;
 }
 
+int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
+    auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    uint64_t flags = 0u;
+
+    if (drm->isPerContextVMRequired()) {
+        auto osContextLinux = static_cast<const OsContextLinux *>(osContext);
+        UNRECOVERABLE_IF(osContextLinux->getDrmVmIds().size() <= vmHandleId);
+        vmId = osContextLinux->getDrmVmIds()[vmHandleId];
+    }
+
+    std::unique_ptr<uint8_t[]> extensions;
+    if (bind) {
+        bool allowUUIDsForDebug = !osContext->isInternalEngine() && !EngineHelpers::isBcs(osContext->getEngineType());
+        if (bo->getBindExtHandles().size() > 0 && allowUUIDsForDebug) {
+            extensions = ioctlHelper->prepareVmBindExt(bo->getBindExtHandles());
+        }
+        bool bindCapture = bo->isMarkedForCapture();
+        bool bindImmediate = bo->isImmediateBindingRequired();
+        bool bindMakeResident = false;
+        if (drm->useVMBindImmediate()) {
+            bindMakeResident = bo->isExplicitResidencyRequired();
+            bindImmediate = true;
+        }
+        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
+    }
+
+    auto bindAddresses = bo->getColourAddresses();
+    auto bindIterations = bindAddresses.size();
+    if (bindIterations == 0) {
+        bindIterations = 1;
+    }
+
+    int ret = 0;
+    for (size_t i = 0; i < bindIterations; i++) {
+
+        VmBindParams vmBind{};
+        vmBind.vmId = static_cast<uint32_t>(vmId);
+        vmBind.flags = flags;
+        vmBind.handle = bo->peekHandle();
+        vmBind.length = bo->peekSize();
+        vmBind.offset = 0;
+        vmBind.start = bo->peekAddress();
+
+        if (bo->getColourWithBind()) {
+            vmBind.length = bo->getColourChunk();
+            vmBind.offset = bo->getColourChunk() * i;
+            vmBind.start = bindAddresses[i];
+        }
+
+        auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+
+        bool closEnabled = (hwHelper.getNumCacheRegions() > 0);
+
+        if (DebugManager.flags.ClosEnabled.get() != -1) {
+            closEnabled = !!DebugManager.flags.ClosEnabled.get();
+        }
+
+        auto vmBindExtSetPat = ioctlHelper->createVmBindExtSetPat();
+
+        if (closEnabled) {
+            uint64_t patIndex = ClosHelper::getPatIndex(bo->peekCacheRegion(), bo->peekCachePolicy());
+            if (DebugManager.flags.OverridePatIndex.get() != -1) {
+                patIndex = static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
+            }
+            ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, patIndex, castToUint64(extensions.get()));
+            vmBind.extensions = castToUint64(vmBindExtSetPat.get());
+        } else {
+            vmBind.extensions = castToUint64(extensions.get());
+        }
+
+        if (bind) {
+            std::unique_lock<std::mutex> lock;
+
+            auto vmBindExtSyncFence = ioctlHelper->createVmBindExtSyncFence();
+
+            if (drm->useVMBindImmediate()) {
+                lock = drm->lockBindFenceMutex();
+
+                if (!drm->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
+                    auto nextExtension = vmBind.extensions;
+                    auto address = castToUint64(drm->getFenceAddr(vmHandleId));
+                    auto value = drm->getNextFenceVal(vmHandleId);
+
+                    ioctlHelper->fillVmBindExtSyncFence(vmBindExtSyncFence, address, value, nextExtension);
+                    vmBind.extensions = castToUint64(vmBindExtSyncFence.get());
+                }
+            }
+
+            ret = ioctlHelper->vmBind(drm, vmBind);
+
+            if (ret) {
+                break;
+            }
+
+            drm->setNewResourceBoundToVM(vmHandleId);
+        } else {
+            vmBind.handle = 0u;
+            ret = ioctlHelper->vmUnbind(drm, vmBind);
+
+            if (ret) {
+                break;
+            }
+        }
+    }
+
+    return ret;
+}
+
+int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
+    auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+    if (ret != 0) {
+        static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
+        ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+    }
+    return ret;
+}
+
+int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
+    return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false);
+}
 } // namespace NEO

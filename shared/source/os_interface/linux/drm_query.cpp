@@ -28,12 +28,4 @@ bool Drm::isDebugAttachAvailable() {
     return false;
 }
 
-int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    return 0;
-}
-
-int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    return 0;
-}
-
 } // namespace NEO
