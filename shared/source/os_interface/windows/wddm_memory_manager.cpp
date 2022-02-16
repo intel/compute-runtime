@@ -1052,7 +1052,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
             allocationData.type == AllocationType::SCRATCH_SURFACE ||
             allocationData.type == AllocationType::LINEAR_STREAM ||
             allocationData.type == AllocationType::PRIVATE_SURFACE) {
-            // TODO : FOR DG2 device make sure that scratch doesn't go here
             // add 2MB padding to make sure there are no overlaps between system and local memory
             size_t reserveSizeAligned = sizeAligned + 2 * MemoryConstants::megaByte;
             wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa);
