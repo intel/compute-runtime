@@ -252,25 +252,30 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenAppendDrmContextFlagsThenCorrectFlagsSet) {
+TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl) {
     DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DirectSubmissionDrmContext.set(-1);
-
+    uint32_t vmId = 0u;
+    constexpr bool isCooperativeContextRequested = false;
+    bool isDirectSubmissionRequested{};
     uint32_t ioctlVal = (1u << 31);
 
-    drm_i915_gem_context_create_ext ctx{};
-    drm->appendDrmContextFlags(ctx, true);
-    EXPECT_EQ(ioctlVal, ctx.flags);
+    DebugManager.flags.DirectSubmissionDrmContext.set(-1);
+    drm->receivedContextCreateFlags = 0;
+    isDirectSubmissionRequested = true;
+    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+    EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
 
-    ctx.flags = 0u;
     DebugManager.flags.DirectSubmissionDrmContext.set(0);
-
-    drm->appendDrmContextFlags(ctx, true);
-    EXPECT_EQ(0u, ctx.flags);
+    drm->receivedContextCreateFlags = 0;
+    isDirectSubmissionRequested = true;
+    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+    EXPECT_EQ(0u, drm->receivedContextCreateFlags);
 
     DebugManager.flags.DirectSubmissionDrmContext.set(1);
-    drm->appendDrmContextFlags(ctx, false);
-    EXPECT_EQ(ioctlVal, ctx.flags);
+    drm->receivedContextCreateFlags = 0;
+    isDirectSubmissionRequested = false;
+    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+    EXPECT_EQ(ioctlVal, drm->receivedContextCreateFlags);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet) {
@@ -376,7 +381,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
 
     auto ioctlHelper = drm->getIoctlHelper();
     drm_i915_gem_context_create_ext gcc{};
-    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(drm.get(), gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -394,7 +399,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
 
     auto ioctlHelper = drm->getIoctlHelper();
     drm_i915_gem_context_create_ext gcc{};
-    EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper->createCooperativeContext(drm.get(), gcc));
+    EXPECT_THROW(ioctlHelper->createCooperativeContext(drm.get(), gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -407,10 +412,12 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsC
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
-TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextExtIsCalledThenIoctlIsCalledOnlyOnce) {
+TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOnlyOnce) {
     drm->ioctlRetVal = 0u;
 
     DebugManagerStateRestore stateRestore;
+    constexpr bool isCooperativeContextRequested = true;
+    constexpr bool isDirectSubmissionRequested = false;
 
     for (auto &cooperativeContextRequested : {-1, 0, 1}) {
         DebugManager.flags.ForceRunAloneContext.set(cooperativeContextRequested);
@@ -418,10 +425,7 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextExtIsCalledThenIoctlIsCalle
             DebugManager.flags.CreateContextWithAccessCounters.set(accessCountersRequested);
             for (auto vmId = 0u; vmId < 3; vmId++) {
                 drm->ioctlCallsCount = 0u;
-
-                drm_i915_gem_context_create_ext gcc{};
-
-                drm->createDrmContextExt(gcc, vmId, true);
+                drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
 
                 EXPECT_EQ(1u, drm->ioctlCallsCount);
             }

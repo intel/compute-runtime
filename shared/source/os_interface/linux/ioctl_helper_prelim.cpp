@@ -403,7 +403,9 @@ uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, drm
     extSetparam.base.next_extension = gcc.extensions;
     gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
 
-    return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+    auto ioctlResult = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+    UNRECOVERABLE_IF(ioctlResult != 0);
+    return gcc.ctx_id;
 }
 
 uint32_t gemCreateContextAcc(Drm *drm, drm_i915_gem_context_create_ext &gcc, uint16_t trigger, uint8_t granularity) {

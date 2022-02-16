@@ -30,7 +30,6 @@ class DrmMock : public Drm {
     using Drm::classHandles;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
-    using Drm::createDrmContextExt;
     using Drm::engineInfo;
     using Drm::fenceVal;
     using Drm::generateElfUUID;

@@ -178,9 +178,11 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFla
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    drm_i915_gem_context_create_ext ctx{};
-    drm->appendDrmContextFlags(ctx, false);
-    EXPECT_EQ(0u, ctx.flags);
+    uint32_t vmId = 0u;
+    constexpr bool isCooperativeContextRequested = false;
+    constexpr bool isDirectSubmissionRequested = true;
+    drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
+    EXPECT_EQ(0u, drm->receivedContextCreateFlags);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetMemRegionsIoctlValThenCorrectValueReturned) {
