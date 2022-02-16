@@ -7,6 +7,9 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
@@ -261,6 +264,26 @@ uint32_t IoctlHelperPrelim20::getComputeSlicesIoctlVal() {
 uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
     return PRELIM_I915_UFENCE_WAIT_SOFT;
 };
+
+int IoctlHelperPrelim20::execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
+    prelim_drm_i915_gem_execbuffer_ext_user_fence fenceObject = {};
+    if (completionGpuAddress != 0) {
+        fenceObject.base.name = PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE;
+        fenceObject.addr = completionGpuAddress;
+        fenceObject.value = counterValue;
+
+        execBuffer->flags |= I915_EXEC_USE_EXTENSIONS;
+        execBuffer->num_cliprects = 0;
+        execBuffer->cliprects_ptr = castToUint64(&fenceObject);
+    }
+
+    return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
+}
+
+bool IoctlHelperPrelim20::completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    return hwHelper.isLinuxCompletionFenceSupported() && isVmBindAvailable;
+}
 
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
     std::unique_ptr<prelim_drm_i915_vm_bind_ext_uuid[]> extensions;
