@@ -1317,4 +1317,46 @@ int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObjec
 int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
     return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false);
 }
+
+int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
+    drm_i915_gem_vm_control ctl = {};
+
+    std::optional<MemoryClassInstance> regionInstanceClass;
+
+    uint32_t memoryBank = 1 << drmVmId;
+
+    auto hwInfo = this->getRootDeviceEnvironment().getHardwareInfo();
+    auto memInfo = this->getMemoryInfo();
+    if (DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.get() != 0) {
+        if (memInfo && HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo)) {
+            regionInstanceClass = memInfo->getMemoryRegionClassAndInstance(memoryBank, *this->rootDeviceEnvironment.getHardwareInfo());
+        }
+    }
+
+    auto vmControlExtRegion = ioctlHelper->createVmControlExtRegion(regionInstanceClass);
+
+    if (vmControlExtRegion) {
+        ctl.extensions = castToUint64(vmControlExtRegion.get());
+    }
+
+    bool disableScratch = DebugManager.flags.DisableScratchPages.get();
+    bool enablePageFault = hasPageFaultSupport() && isVmBindAvailable();
+
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault);
+
+    auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
+
+    if (ret == 0) {
+        drmVmId = ctl.vm_id;
+        if (ctl.vm_id == 0) {
+            // 0 is reserved for invalid/unassigned ppgtt
+            return -1;
+        }
+    } else {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
+                         "INFO: Cannot create Virtual Memory at memory bank 0x%x info present %d  return code %d\n",
+                         memoryBank, memoryInfo != nullptr, ret);
+    }
+    return ret;
+}
 } // namespace NEO
