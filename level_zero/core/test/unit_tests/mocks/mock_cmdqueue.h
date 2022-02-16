@@ -69,7 +69,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     }
     ze_result_t synchronize(uint64_t timeout) override {
         synchronizedCalled++;
-        return ZE_RESULT_SUCCESS;
+        return synchronizeReturnValue;
     }
 
     NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
@@ -79,6 +79,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
 
     uint32_t synchronizedCalled = 0;
     NEO::ResidencyContainer residencyContainerSnapshot;
+    ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
 };
 
 struct Deleter {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
+#include <chrono>
 #include <limits>
 
 struct _ze_event_handle_t {};
@@ -102,6 +103,7 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t waitScope = 0u;
 
     uint32_t kernelCount = 1u;
+    std::chrono::microseconds gpuHangCheckPeriod{500'000};
 
   protected:
     size_t contextStartOffset = 0u;

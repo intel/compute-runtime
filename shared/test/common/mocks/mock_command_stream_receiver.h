@@ -19,6 +19,7 @@
 
 #include "gmock/gmock.h"
 
+#include <optional>
 #include <vector>
 
 using namespace NEO;
@@ -62,6 +63,22 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
+
+    bool isGpuHangDetected() const override {
+        if (isGpuHangDetectedReturnValue.has_value()) {
+            return *isGpuHangDetectedReturnValue;
+        } else {
+            return CommandStreamReceiver::isGpuHangDetected();
+        }
+    }
+
+    bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) override {
+        if (testTaskCountReadyReturnValue.has_value()) {
+            return *testTaskCountReadyReturnValue;
+        } else {
+            return CommandStreamReceiver::testTaskCountReady(pollAddress, taskCountToWait);
+        }
+    }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const override {
         return MemoryCompressionState::NotApplicable;
@@ -147,6 +164,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
     bool programComputeBarrierCommandCalled = false;
+    std::optional<bool> isGpuHangDetectedReturnValue{};
+    std::optional<bool> testTaskCountReadyReturnValue{};
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

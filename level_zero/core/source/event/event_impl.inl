@@ -199,7 +199,8 @@ ze_result_t EventImp<TagSizeT>::hostSignal() {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
-    std::chrono::high_resolution_clock::time_point time1, time2;
+    std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
+    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     uint64_t timeDiff = 0;
 
     ze_result_t ret = ZE_RESULT_NOT_READY;
@@ -212,7 +213,8 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         return queryStatus();
     }
 
-    time1 = std::chrono::high_resolution_clock::now();
+    waitStartTime = std::chrono::high_resolution_clock::now();
+    lastHangCheckTime = waitStartTime;
     while (true) {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
@@ -221,12 +223,21 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         NEO::WaitUtils::waitFunction(nullptr, 0u);
 
+        currentTime = std::chrono::high_resolution_clock::now();
+        elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
+
+        if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
+            lastHangCheckTime = currentTime;
+            if (this->csr->isGpuHangDetected()) {
+                return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+        }
+
         if (timeout == std::numeric_limits<uint32_t>::max()) {
             continue;
         }
 
-        time2 = std::chrono::high_resolution_clock::now();
-        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count();
+        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
 
         if (timeDiff >= timeout) {
             break;

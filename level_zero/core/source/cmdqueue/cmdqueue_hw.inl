@@ -462,7 +462,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
-        this->synchronize(std::numeric_limits<uint64_t>::max());
+        const auto synchronizeResult = this->synchronize(std::numeric_limits<uint64_t>::max());
+        if (synchronizeResult == ZE_RESULT_ERROR_DEVICE_LOST) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
     }
 
     this->heapContainer.clear();

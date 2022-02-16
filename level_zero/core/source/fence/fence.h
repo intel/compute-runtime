@@ -13,6 +13,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include <level_zero/ze_api.h>
 
+#include <chrono>
 #include <limits>
 
 struct _ze_fence_handle_t {};
@@ -39,6 +40,7 @@ struct Fence : _ze_fence_handle_t {
   protected:
     uint32_t partitionCount = 1;
     uint32_t taskCount = 0;
+    std::chrono::microseconds gpuHangCheckPeriod{500'000};
 };
 
 struct FenceImp : public Fence {

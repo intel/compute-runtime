@@ -15,6 +15,13 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
 
+#include <chrono>
+#include <cstdint>
+#include <limits>
+#include <memory>
+
+using namespace std::chrono_literals;
+
 namespace L0 {
 namespace ult {
 
@@ -47,6 +54,87 @@ TEST_F(FenceTest, whenQueryingStatusWithoutCsrAndFenceUnsignaledThenReturnsNotRe
     auto status = fence->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, status);
     fence->destroy();
+}
+
+TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = true;
+    csr->testTaskCountReadyReturnValue = false;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc;
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whitebox_cast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    fence->gpuHangCheckPeriod = 0ms;
+
+    const auto timeout = std::numeric_limits<std::uint32_t>::max();
+    const auto result = fence->hostSynchronize(timeout);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+TEST_F(FenceTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+    csr->testTaskCountReadyReturnValue = false;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc;
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whitebox_cast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    fence->gpuHangCheckPeriod = 0ms;
+
+    const auto timeoutNanoseconds = 1;
+    const auto result = fence->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(FenceTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->testTaskCountReadyReturnValue = false;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc;
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whitebox_cast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+    fence->gpuHangCheckPeriod = 50000000ms;
+
+    const auto timeoutNanoseconds = 1;
+    const auto result = fence->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(FenceTest, GivenSuccessfulQueryResultAndNoTimeoutWhenHostSynchronizeIsCalledThenResultSuccessIsReturned) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->testTaskCountReadyReturnValue = true;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc;
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whitebox_cast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+
+    const auto timeout = std::numeric_limits<std::uint32_t>::max();
+    const auto result = fence->hostSynchronize(timeout);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using FenceSynchronizeTest = Test<DeviceFixture>;

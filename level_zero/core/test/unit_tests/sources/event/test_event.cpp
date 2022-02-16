@@ -21,6 +21,12 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 #include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <limits>
+#include <memory>
+
+using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uintptr_t> lastClFlushedPtr;
@@ -596,6 +602,43 @@ class EventSynchronizeTest : public Test<DeviceFixture> {
     std::unique_ptr<L0::EventPool> eventPool = nullptr;
     std::unique_ptr<L0::Event> event;
 };
+
+TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturned) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = true;
+
+    event->csr = csr.get();
+    event->gpuHangCheckPeriod = 0ms;
+
+    const auto timeout = std::numeric_limits<std::uint32_t>::max();
+    const auto result = event->hostSynchronize(timeout);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    event->csr = csr.get();
+    event->gpuHangCheckPeriod = 0ms;
+
+    const auto timeoutNanoseconds = 1;
+    const auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    event->csr = csr.get();
+    event->gpuHangCheckPeriod = 50000000ms;
+
+    const auto timeoutNanoseconds = 1;
+    const auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateInitialHostSynchronizeReturnsNotReady) {
     ze_result_t result = event->hostSynchronize(0);

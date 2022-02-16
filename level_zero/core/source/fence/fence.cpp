@@ -43,11 +43,13 @@ ze_result_t FenceImp::reset() {
 }
 
 ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
-    std::chrono::high_resolution_clock::time_point time1, time2;
+    std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
+    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     uint64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
+    const auto csr = cmdQueue->getCsr();
 
-    if (cmdQueue->getCsr()->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
+    if (csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -59,7 +61,8 @@ ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
         return queryStatus();
     }
 
-    time1 = std::chrono::high_resolution_clock::now();
+    waitStartTime = std::chrono::high_resolution_clock::now();
+    lastHangCheckTime = waitStartTime;
     while (timeDiff < timeout) {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
@@ -68,12 +71,21 @@ ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
 
         NEO::WaitUtils::waitFunction(nullptr, 0u);
 
+        currentTime = std::chrono::high_resolution_clock::now();
+        elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
+
+        if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
+            lastHangCheckTime = currentTime;
+            if (csr->isGpuHangDetected()) {
+                return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+        }
+
         if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
         }
 
-        time2 = std::chrono::high_resolution_clock::now();
-        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(time2 - time1).count();
+        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
     }
 
     return ret;
