@@ -80,8 +80,10 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
     UNRECOVERABLE_IF(alloc == nullptr);
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
         this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-    } else {
+    } else if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
         hostPtrMap.insert(std::make_pair(buffer, alloc));
+    } else {
+        commandContainer.getDeallocationContainer().push_back(alloc);
     }
     return alloc;
 }

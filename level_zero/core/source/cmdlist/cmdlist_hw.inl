@@ -1757,10 +1757,12 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         } else {
             alloc = getHostPtrAlloc(buffer, bufferSize, hostCopyAllowed);
             alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
-            auto hostAllocCpuPtr = reinterpret_cast<uintptr_t>(alloc->getUnderlyingBuffer());
-            hostAllocCpuPtr = alignDown(hostAllocCpuPtr, NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment());
-            auto allignedPtrOffset = sourcePtr - hostAllocCpuPtr;
-            alignedPtr = ptrOffset(alignedPtr, allignedPtrOffset);
+            if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
+                auto hostAllocCpuPtr = reinterpret_cast<uintptr_t>(alloc->getUnderlyingBuffer());
+                hostAllocCpuPtr = alignDown(hostAllocCpuPtr, NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment());
+                auto allignedPtrOffset = sourcePtr - hostAllocCpuPtr;
+                alignedPtr = ptrOffset(alignedPtr, allignedPtrOffset);
+            }
         }
 
         hostPointerNeedsFlush = true;

@@ -1287,5 +1287,76 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 }
 
+template <NEO::AllocationType AllocType>
+class MyDeviceMock : public Mock<Device> {
+  public:
+    NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override {
+        auto alloc = std::make_unique<NEO::MockGraphicsAllocation>(const_cast<void *>(buffer), reinterpret_cast<uintptr_t>(buffer), size);
+        alloc->allocationType = AllocType;
+        return alloc.release();
+    }
+    const NEO::HardwareInfo &getHwInfo() const override {
+        return neoDevice->getHardwareInfo();
+    }
+};
+
+HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenInternalMemCreatedThenNewAllocAddedToDealocationContainer, IsAtLeastSkl) {
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>();
+    myDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
+    auto buffer = std::make_unique<uint8_t>(0x100);
+
+    auto deallocationSize = commandList->commandContainer.getDeallocationContainer().size();
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x80, true);
+    EXPECT_EQ(deallocationSize + 1, commandList->commandContainer.getDeallocationContainer().size());
+    EXPECT_NE(alloc, nullptr);
+    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(alloc);
+    commandList->commandContainer.getDeallocationContainer().clear();
+}
+
+HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNewAllocAddedToHostPtrMap, IsAtLeastSkl) {
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>();
+    myDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
+    auto buffer = std::make_unique<uint8_t>(0x100);
+
+    auto hostPtrMapSize = commandList->getHostPtrMap().size();
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
+    EXPECT_EQ(hostPtrMapSize + 1, commandList->getHostPtrMap().size());
+    EXPECT_NE(alloc, nullptr);
+    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(alloc);
+    commandList->hostPtrMap.clear();
+}
+
+HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::INTERNAL_HOST_MEMORY>>();
+    myDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
+    auto buffer = std::make_unique<uint8_t>(0x100);
+
+    auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
+    auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
+    EXPECT_NE(outData1.alloc, outData2.alloc);
+    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
+    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
+    commandList->commandContainer.getDeallocationContainer().clear();
+}
+HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem, IsAtLeastSkl) {
+    auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::EXTERNAL_HOST_PTR>>();
+    myDevice->neoDevice = device->getNEODevice();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
+    auto buffer = std::make_unique<uint8_t>(0x100);
+
+    auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
+    auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
+    EXPECT_EQ(outData1.alloc, outData2.alloc);
+    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
+    commandList->hostPtrMap.clear();
+}
+
 } // namespace ult
 } // namespace L0
