@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(TESTS_TGLLP)
   set(IGDRCL_SRCS_tests_gen12lp_tgllp_excludes
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_tgllp.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_tgllp.cpp
   )
   set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_gen12lp_tgllp_excludes})
 

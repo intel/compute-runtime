@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(TESTS_ADLP)
   set(IGDRCL_SRCS_tests_gen12lp_adlp_excludes
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_adlp.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_adlp.cpp
   )
   set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_gen12lp_adlp_excludes})
 

@@ -6,7 +6,7 @@
 
 if(TESTS_DG1)
   set(IGDRCL_SRCS_tests_gen12lp_dg1_excludes
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_dg1.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_dg1.cpp
   )
   set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_gen12lp_dg1_excludes})
 

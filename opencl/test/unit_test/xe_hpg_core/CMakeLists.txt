@@ -6,7 +6,7 @@
 
 if(TESTS_XE_HPG_CORE)
   set(IGDRCL_SRCS_tests_xe_hpg_core_excludes
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_xe_hpg_core.cpp
   )
   set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_xe_hpg_core_excludes})
 
