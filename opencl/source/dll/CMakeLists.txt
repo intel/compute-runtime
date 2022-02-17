@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -40,7 +40,10 @@ set(RUNTIME_SRCS_DLL_BASE
     ${EXPORTS_FILENAME}
 )
 
-append_sources_from_properties(RUNTIME_SRCS_DLL_BASE NEO_CORE_SRCS_LINK)
+append_sources_from_properties(RUNTIME_SRCS_DLL_BASE
+                               NEO_CORE_SRCS_LINK
+                               NEO_SRCS_ENABLE_CORE
+)
 
 set(RUNTIME_SRCS_DLL_LINUX
     ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp

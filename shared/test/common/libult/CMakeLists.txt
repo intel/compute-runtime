@@ -40,7 +40,7 @@ macro(macro_for_each_core_type)
       if(EXISTS ${SRC_FILE})
         list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()
-      foreach(SRC_IT "enable_" "enable_family_full_core_" "implicit_scaling_")
+      foreach(SRC_IT "enable_family_full_core_" "implicit_scaling_")
         set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${CORE_TYPE_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
           list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
@@ -57,6 +57,8 @@ macro(macro_for_each_core_type)
 endmacro()
 
 apply_macro_for_each_core_type("TESTED")
+
+append_sources_from_properties(neo_libult_common_SRCS_ENABLE_TESTED_HW NEO_SRCS_ENABLE_CORE)
 
 set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h

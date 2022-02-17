@@ -78,6 +78,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CLOC_LIB_SRCS_LIB}
     ${CLOC_LIB_SRCS_UTILITIES}
 )
+append_sources_from_properties(IGDRCL_SRCS_offline_compiler_tests NEO_SRCS_ENABLE_CORE)
 
 if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests

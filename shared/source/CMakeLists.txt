@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -193,7 +193,10 @@ else()
   endif()
 endif()
 
-set_property(GLOBAL PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK})
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK})
+
+get_property(NEO_SRCS_ENABLE_CORE GLOBAL PROPERTY NEO_SRCS_ENABLE_CORE)
+target_sources(ocloc_lib PRIVATE ${NEO_SRCS_ENABLE_CORE})
 if(UNIX)
   set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CORE_SRCS_LINK_LINUX})
 endif()
