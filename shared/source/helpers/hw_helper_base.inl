@@ -719,7 +719,8 @@ const void *HwHelperHw<GfxFamily>::getBatchBufferEndReference() const {
     return reinterpret_cast<const void *>(&GfxFamily::cmdInitBatchBufferEnd);
 }
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isPlatformFlushTaskEnabled() const {
-    return false;
+bool HwHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const HardwareInfo &hwInfo) const {
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    return hwInfoConfig.isFlushTaskAllowed();
 }
 } // namespace NEO

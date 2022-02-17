@@ -421,11 +421,6 @@ bool HwHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
     return true;
 }
 
-template <>
-bool HwHelperHw<Family>::isPlatformFlushTaskEnabled() const {
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

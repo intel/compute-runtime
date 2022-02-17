@@ -116,3 +116,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isDcFlushAllowed() const {
     return false;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+    return true;
+}

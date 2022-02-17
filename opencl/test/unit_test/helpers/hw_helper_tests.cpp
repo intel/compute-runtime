@@ -1422,14 +1422,19 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIs
     EXPECT_FALSE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
 
-HWTEST2_F(HwHelperTest, givenAtsOrDg2HwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, ATSOrDG2) {
+HWTEST2_F(HwHelperTest, givenDG2HwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsDG2) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled());
+    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
 }
 
-HWTEST2_F(HwHelperTest, givenNotAtsOrDg2HwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
+HWTEST2_F(HwHelperTest, givenPvcHwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsPVC) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_FALSE(hwHelper.isPlatformFlushTaskEnabled());
+    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
+}
+
+HWTEST2_F(HwHelperTest, givenAtMostGen12lpHwHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_FALSE(hwHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
 }
 
 struct CoherentWANotNeeded {

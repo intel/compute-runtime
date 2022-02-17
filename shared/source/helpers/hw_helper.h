@@ -157,7 +157,7 @@ class HwHelper {
     virtual bool isLinuxCompletionFenceSupported() const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
-    virtual bool isPlatformFlushTaskEnabled() const = 0;
+    virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
 
   protected:
     HwHelper() = default;
@@ -396,7 +396,7 @@ class HwHelperHw : public HwHelper {
     bool isLinuxCompletionFenceSupported() const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
-    bool isPlatformFlushTaskEnabled() const override;
+    bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

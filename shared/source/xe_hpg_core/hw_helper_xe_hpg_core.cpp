@@ -114,11 +114,6 @@ inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
     return true;
 }
 
-template <>
-bool HwHelperHw<Family>::isPlatformFlushTaskEnabled() const {
-    return true;
-}
-
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

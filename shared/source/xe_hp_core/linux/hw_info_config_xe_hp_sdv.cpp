@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,11 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
     return 2800u;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+    return true;
 }
 
 template class HwInfoConfigHw<gfxProduct>;

@@ -244,8 +244,7 @@ class CommandListImmediateFlushTaskTests : public DeviceFixture {
 };
 
 using CommandListImmediateFlushTaskComputeTests = Test<CommandListImmediateFlushTaskTests>;
-using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenATSOrDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, ATSOrDG2) {
+HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsDG2) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));

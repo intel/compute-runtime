@@ -63,8 +63,3 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpeci
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_TRUE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
-
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned) {
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.isPlatformFlushTaskEnabled());
-}

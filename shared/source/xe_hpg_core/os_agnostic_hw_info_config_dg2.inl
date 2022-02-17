@@ -167,3 +167,8 @@ template <>
 void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
     timestampData >>= 1;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+    return true;
+}
