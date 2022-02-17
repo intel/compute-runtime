@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/ioctl_strings.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"

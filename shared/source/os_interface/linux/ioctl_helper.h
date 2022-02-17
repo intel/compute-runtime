@@ -66,6 +66,11 @@ struct VmBindParams {
     uint64_t extensions;
 };
 
+struct UuidRegisterResult {
+    uint32_t retVal;
+    uint32_t handle;
+};
+
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 
 class IoctlHelper {
@@ -114,6 +119,11 @@ class IoctlHelper {
     virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
     virtual bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
+    virtual UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
+    virtual UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
+    virtual int unregisterUuid(Drm *drm, uint32_t handle) = 0;
+    virtual bool isContextDebugSupported(Drm *drm) = 0;
+    virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -159,6 +169,11 @@ class IoctlHelperUpstream : public IoctlHelper {
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
     uint32_t getEuStallFdParameter() override;
+    UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
+    UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;
+    int unregisterUuid(Drm *drm, uint32_t handle) override;
+    bool isContextDebugSupported(Drm *drm) override;
+    int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -217,6 +232,11 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
     uint32_t getEuStallFdParameter() override;
+    UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
+    UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;
+    int unregisterUuid(Drm *drm, uint32_t handle) override;
+    bool isContextDebugSupported(Drm *drm) override;
+    int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
 };
 
 } // namespace NEO
