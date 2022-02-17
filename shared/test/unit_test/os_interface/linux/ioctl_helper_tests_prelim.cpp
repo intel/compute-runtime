@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
@@ -23,32 +24,32 @@ struct IoctlPrelimHelperTests : ::testing::Test {
 
 TEST_F(IoctlPrelimHelperTests, givenIoctlWhenParseToStringThenProperStringIsReturned) {
     for (auto &ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(ioctlHelper.getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+        EXPECT_STREQ(IoctlToStringHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
     }
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_BIND).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_UUID_REGISTER).c_str(), "PRELIM_DRM_IOCTL_I915_UUID_REGISTER");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER).c_str(), "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN).c_str(), "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DRM_IOCTL_I915_GEM_MMAP_GTT).c_str(), "DRM_IOCTL_I915_GEM_MMAP_GTT");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DRM_IOCTL_I915_GEM_MMAP_OFFSET).c_str(), "DRM_IOCTL_I915_GEM_MMAP_OFFSET");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DRM_IOCTL_I915_GEM_VM_CREATE).c_str(), "DRM_IOCTL_I915_GEM_VM_CREATE");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DRM_IOCTL_I915_GEM_VM_DESTROY).c_str(), "DRM_IOCTL_I915_GEM_VM_DESTROY");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DRM_IOCTL_I915_GEM_VM_DESTROY).c_str(), "DRM_IOCTL_I915_GEM_VM_DESTROY");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_BIND).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_UUID_REGISTER).c_str(), "PRELIM_DRM_IOCTL_I915_UUID_REGISTER");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER).c_str(), "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN).c_str(), "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE).c_str(), "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(DRM_IOCTL_I915_GEM_MMAP_GTT).c_str(), "DRM_IOCTL_I915_GEM_MMAP_GTT");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(DRM_IOCTL_I915_GEM_MMAP_OFFSET).c_str(), "DRM_IOCTL_I915_GEM_MMAP_OFFSET");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(DRM_IOCTL_I915_GEM_VM_CREATE).c_str(), "DRM_IOCTL_I915_GEM_VM_CREATE");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(DRM_IOCTL_I915_GEM_VM_DESTROY).c_str(), "DRM_IOCTL_I915_GEM_VM_DESTROY");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlString(DRM_IOCTL_I915_GEM_VM_DESTROY).c_str(), "DRM_IOCTL_I915_GEM_VM_DESTROY");
 }
 
 TEST_F(IoctlPrelimHelperTests, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
     for (auto &ioctlParamCodeString : ioctlParamCodeStringMap) {
-        EXPECT_STREQ(ioctlHelper.getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
+        EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
     }
-    EXPECT_STREQ(ioctlHelper.getIoctlParamString(PRELIM_I915_PARAM_HAS_VM_BIND).c_str(), "PRELIM_I915_PARAM_HAS_VM_BIND");
+    EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(PRELIM_I915_PARAM_HAS_VM_BIND).c_str(), "PRELIM_I915_PARAM_HAS_VM_BIND");
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenReturnSameData) {

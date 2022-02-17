@@ -73,8 +73,6 @@ class IoctlHelper {
     virtual ~IoctlHelper() {}
     static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
-    virtual std::string getIoctlString(unsigned long request);
-    virtual std::string getIoctlParamString(int param);
     virtual IoctlHelper *clone() = 0;
 
     virtual bool isVmBindAvailable(Drm *drm) = 0;
@@ -174,8 +172,6 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
 class IoctlHelperPrelim20 : public IoctlHelper {
   public:
-    std::string getIoctlString(unsigned long request) override;
-    std::string getIoctlParamString(int param) override;
     IoctlHelper *clone() override;
 
     bool isVmBindAvailable(Drm *drm) override;

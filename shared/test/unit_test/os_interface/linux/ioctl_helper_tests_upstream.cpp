@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -24,16 +25,14 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) 
 }
 
 TEST(IoctlHelperUpstreamTest, givenIoctlWhenParseToStringThenProperStringIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
     for (auto ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(ioctlHelper.getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+        EXPECT_STREQ(IoctlToStringHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
     }
 }
 
 TEST(IoctlHelperUpstreamTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
     for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
-        EXPECT_STREQ(ioctlHelper.getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
+        EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
     }
 }
 
