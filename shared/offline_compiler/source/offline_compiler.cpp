@@ -339,7 +339,6 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
         return retVal;
     }
 
-    overridePlatformName(deviceName);
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
     const char hexPrefix = 2;
     std::string product("");
