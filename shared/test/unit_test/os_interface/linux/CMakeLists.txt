@@ -6,6 +6,8 @@
 
 set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_bind_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_l0_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_engine_info_tests.cpp

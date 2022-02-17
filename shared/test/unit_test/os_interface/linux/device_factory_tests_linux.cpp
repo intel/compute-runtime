@@ -5,9 +5,10 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/device_factory_tests.h"
+#include "shared/test/unit_test/os_interface/linux/device_factory_tests_linux.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
