@@ -1561,6 +1561,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
     Vec3<size_t> localWorkgroupSize(workGroupSize);
     auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
 
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1u;
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
     MockKernel kernelWithoutImplicitArgs(program.get(), kernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernelWithoutImplicitArgs.initialize());
@@ -1609,11 +1610,13 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
 
     {
         auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
+        auto simdSize = kernelInfo.getMaxSimdSize();
         uint32_t grfSize = sizeof(typename FamilyType::GRF);
+        auto grfSizeForImplicitArgs = ImplicitArgsHelper::getGrfSize(simdSize, grfSize);
         auto size = kernelWithImplicitArgs.getCrossThreadDataSize() +
-                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, numChannels, Math::computeTotalElementsCount(localWorkgroupSize)) +
+                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, Math::computeTotalElementsCount(localWorkgroupSize)) +
                     sizeof(ImplicitArgs) +
-                    alignUp(HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(kernelInfo.getMaxSimdSize(), grfSize, 3u, Math::computeTotalElementsCount(localWorkgroupSize)), MemoryConstants::cacheLineSize);
+                    alignUp(HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSizeForImplicitArgs, 3u, Math::computeTotalElementsCount(localWorkgroupSize)), MemoryConstants::cacheLineSize);
 
         size = alignUp(size, MemoryConstants::cacheLineSize);
         EXPECT_EQ(size, iohSizeWithImplicitArgs);

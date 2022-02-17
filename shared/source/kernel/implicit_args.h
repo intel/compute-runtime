@@ -40,5 +40,6 @@ constexpr const char *implicitArgsRelocationSymbolName = "INTEL_PATCH_CROSS_THRE
 
 namespace ImplicitArgsHelper {
 std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDimensionsOrder, bool generationOfLocalIdsByRuntime, uint32_t walkOrderForHwGenerationOfLocalIds);
-}
+uint32_t getGrfSize(uint32_t simd, uint32_t grfSize);
+} // namespace ImplicitArgsHelper
 } // namespace NEO

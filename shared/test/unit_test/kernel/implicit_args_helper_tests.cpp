@@ -32,3 +32,15 @@ TEST(ImplicitArgsHelperTest, whenLocalIdsAreGeneratedByHwThenProperDimensionOrde
         EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[i], dimOrderForImplicitArgs);
     }
 }
+
+TEST(ImplicitArgsHelperTest, whenGettingGrfSizeForSimd1ThenSizeOfSingleLocalIdIsReturned) {
+    auto regularGrfsize = 32u;
+    EXPECT_EQ(3 * sizeof(uint16_t), ImplicitArgsHelper::getGrfSize(1u, regularGrfsize));
+}
+
+TEST(ImplicitArgsHelperTest, givenSimdGreaterThanOneWhenGettingGrfSizeThenInputGrfSizeIsReturned) {
+    auto regularGrfsize = 32u;
+    EXPECT_EQ(regularGrfsize, ImplicitArgsHelper::getGrfSize(8u, regularGrfsize));
+    EXPECT_EQ(regularGrfsize, ImplicitArgsHelper::getGrfSize(16u, regularGrfsize));
+    EXPECT_EQ(regularGrfsize, ImplicitArgsHelper::getGrfSize(32u, regularGrfsize));
+}

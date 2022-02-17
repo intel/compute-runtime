@@ -1077,6 +1077,78 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithImplicitArgsAndHwGenerat
 
     alignedFree(expectedLocalIds);
 }
+
+HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithImplicitArgsWhenAppendLaunchKernelWithSimd1ThenLocalIdsAreGeneratedCorrectly) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+    kernelDescriptor->kernelAttributes.simdSize = 1u;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = 2;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = 1;
+    kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[2] = 0;
+    createModuleFromBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
+    ASSERT_NE(nullptr, kernel->getImplicitArgs());
+
+    kernel->setGroupSize(2, 2, 1);
+
+    ze_result_t result{};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    memset(indirectHeap->getSpace(0), 0, kernel->getSizeForImplicitArgsPatching());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
+    EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup + kernel->getSizeForImplicitArgsPatching());
+
+    ImplicitArgs expectedImplicitArgs{sizeof(ImplicitArgs)};
+    expectedImplicitArgs.numWorkDim = 2;
+    expectedImplicitArgs.simdWidth = 1;
+    expectedImplicitArgs.localSizeX = 2;
+    expectedImplicitArgs.localSizeY = 2;
+    expectedImplicitArgs.localSizeZ = 1;
+    expectedImplicitArgs.globalSizeX = 2;
+    expectedImplicitArgs.globalSizeY = 2;
+    expectedImplicitArgs.globalSizeZ = 1;
+    expectedImplicitArgs.groupCountX = 1;
+    expectedImplicitArgs.groupCountY = 1;
+    expectedImplicitArgs.groupCountZ = 1;
+    expectedImplicitArgs.localIdTablePtr = indirectHeap->getGraphicsAllocation()->getGpuAddress();
+    expectedImplicitArgs.printfBufferPtr = kernel->getPrintfBufferAllocation()->getGpuAddress();
+
+    auto sizeForImplicitArgPatching = kernel->getSizeForImplicitArgsPatching();
+
+    EXPECT_LT(0u, sizeForImplicitArgPatching);
+
+    auto localIdsProgrammingSize = sizeForImplicitArgPatching - sizeof(ImplicitArgs);
+
+    uint16_t expectedLocalIds[][3] = {{0, 0, 0},
+                                      {0, 1, 0},
+                                      {0, 0, 1},
+                                      {0, 1, 1}};
+
+    uint8_t zeros[MemoryConstants::cacheLineSize]{};
+    EXPECT_EQ(localIdsProgrammingSize, alignUp(sizeof(expectedLocalIds), MemoryConstants::cacheLineSize));
+
+    EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeap->getCpuBase(), sizeof(expectedLocalIds)));
+    EXPECT_EQ(0, memcmp(zeros, ptrOffset(indirectHeap->getCpuBase(), sizeof(expectedLocalIds)), localIdsProgrammingSize - sizeof(expectedLocalIds)));
+    auto pImplicitArgs = reinterpret_cast<ImplicitArgs *>(ptrOffset(indirectHeap->getCpuBase(), localIdsProgrammingSize));
+    EXPECT_EQ(0, memcmp(&expectedImplicitArgs, pImplicitArgs, sizeof(ImplicitArgs)));
+}
+
 HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppendLaunchKernelThenImplicitArgsAreNotSentToIndirectHeap) {
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
