@@ -88,7 +88,7 @@ struct ModuleImp : public Module {
         auto tempHandle = debugModuleHandle;
         auto tempDevice = device;
         delete this;
-        if (tempDevice->getL0Debugger()) {
+        if (tempDevice->getL0Debugger() && tempHandle != 0) {
             tempDevice->getL0Debugger()->removeZebinModule(tempHandle);
         }
         return ZE_RESULT_SUCCESS;

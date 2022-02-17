@@ -220,6 +220,13 @@ TEST_F(L0DebuggerLinuxTest, givenModuleHandleWhenRemoveZebinModuleIsCalledThenHa
     EXPECT_EQ(20u, drmMock->unregisteredHandle);
 }
 
+TEST_F(L0DebuggerLinuxTest, givenModuleHandleZeroWhenRemoveZebinModuleIsCalledThenDrmUnregisterIsNotCalled) {
+    uint32_t handle = 0;
+
+    EXPECT_FALSE(device->getL0Debugger()->removeZebinModule(handle));
+    EXPECT_EQ(0u, drmMock->unregisterCalledCount);
+}
+
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 

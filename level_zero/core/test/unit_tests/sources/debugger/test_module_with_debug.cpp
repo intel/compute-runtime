@@ -644,6 +644,48 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     EXPECT_EQ(6u, getMockDebuggerL0Hw<FamilyType>()->removedZebinModuleHandle);
 }
 
+HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitializingAndDestoryingModuleThenHandleIsNotPassedToDebugger) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    uint32_t kernelHeap = 0;
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+
+    auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
+    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
+
+    auto zebin = ZebinTestData::ValidEmptyProgram();
+    moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    moduleMock->translationUnit->unpackedDeviceBinarySize = zebin.storage.size();
+    moduleMock->translationUnit->unpackedDeviceBinary.reset(new char[zebin.storage.size()]);
+    memcpy_s(moduleMock->translationUnit->unpackedDeviceBinary.get(), moduleMock->translationUnit->unpackedDeviceBinarySize,
+             zebin.storage.data(), zebin.storage.size());
+
+    getMockDebuggerL0Hw<FamilyType>()->moduleHandleToReturn = 0u;
+    EXPECT_TRUE(moduleMock->initialize(&moduleDesc, neoDevice));
+
+    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->segmentCountWithAttachedModuleHandle);
+    EXPECT_EQ(getMockDebuggerL0Hw<FamilyType>()->moduleHandleToReturn, moduleMock->debugModuleHandle);
+
+    getMockDebuggerL0Hw<FamilyType>()->removedZebinModuleHandle = std::numeric_limits<uint32_t>::max();
+
+    moduleMock->destroy();
+    moduleMock.release();
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), getMockDebuggerL0Hw<FamilyType>()->removedZebinModuleHandle);
+}
+
 using NotifyModuleLoadTest = Test<ModuleFixture>;
 
 HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResident) {

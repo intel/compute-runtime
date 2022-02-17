@@ -50,7 +50,7 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
 }
 
 bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
-    if (device->getRootDeviceEnvironment().osInterface == nullptr) {
+    if (device->getRootDeviceEnvironment().osInterface == nullptr || moduleHandle == 0) {
         return false;
     }
     auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
