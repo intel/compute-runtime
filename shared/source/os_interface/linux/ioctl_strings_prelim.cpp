@@ -8,6 +8,7 @@
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
 #include <string>
+#include <sys/ioctl.h>
 
 namespace NEO {
 
