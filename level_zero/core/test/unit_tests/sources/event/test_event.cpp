@@ -258,7 +258,7 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNum
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
         nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC,
         numEvents};
 
     auto deviceHandle = device->toHandle();

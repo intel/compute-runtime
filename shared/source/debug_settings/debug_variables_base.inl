@@ -192,6 +192,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabl
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularites - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndex, -1, "-1: default, >=0: PatIndex to override")
 DECLARE_DEBUG_VARIABLE(int32_t, UseTileMemoryBankInVirtualMemoryCreation, -1, "-1: default - on, 0: do not assign tile memory bank to virtual memory space, 1: assign tile memory bank to virtual memory space")
+DECLARE_DEBUG_VARIABLE(int32_t, SetVmAdviseAtomicAttribute, -1, "-1: default - atomic system, 0: atomic none, 1: atomic device, 2: atomic system)")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
