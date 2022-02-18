@@ -730,6 +730,11 @@ ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugP
         isDebugAttachAvailable = false;
     }
 
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    if (!hwInfo.capabilityTable.l0DebuggerSupported) {
+        isDebugAttachAvailable = false;
+    }
+
     if (isDebugAttachAvailable && !isSubdevice) {
         pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
     } else {

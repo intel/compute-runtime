@@ -79,7 +79,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // supportsMediaBlock
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
-    false                                          // fusedEuEnabled
+    false,                                         // fusedEuEnabled
+    false                                          // l0DebuggerSupported;
 };
 
 WorkaroundTable CFL::workaroundTable = {};

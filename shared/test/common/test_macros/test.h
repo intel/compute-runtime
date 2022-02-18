@@ -849,6 +849,14 @@ struct IsWithinProducts {
     }
 };
 
+template <PRODUCT_FAMILY productFamilyMin, PRODUCT_FAMILY productFamilyMax>
+struct IsNotWithinProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (productFamily < productFamilyMin) || (productFamily > productFamilyMax);
+    }
+};
+
 struct MatchAny {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() { return true; }

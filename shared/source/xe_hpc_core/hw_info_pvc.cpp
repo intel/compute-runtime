@@ -93,7 +93,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     false,                                                     // supportsMediaBlock
     true,                                                      // p2pAccessSupported
     true,                                                      // p2pAtomicAccessSupported
-    false                                                      // fusedEuEnabled
+    false,                                                     // fusedEuEnabled
+    true                                                       // l0DebuggerSupported;
 };
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

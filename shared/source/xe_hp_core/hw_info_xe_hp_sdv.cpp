@@ -84,7 +84,8 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     true,                                                      // supportsMediaBlock
     true,                                                      // p2pAccessSupported
     false,                                                     // p2pAtomicAccessSupported
-    true                                                       // fusedEuEnabled
+    true,                                                      // fusedEuEnabled
+    true                                                       // l0DebuggerSupported;
 };
 
 WorkaroundTable XE_HP_SDV::workaroundTable = {};

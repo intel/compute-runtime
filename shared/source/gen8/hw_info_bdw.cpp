@@ -87,7 +87,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                              // supportsMediaBlock
     false,                                             // p2pAccessSupported
     false,                                             // p2pAtomicAccessSupported
-    false                                              // fusedEuEnabled
+    false,                                             // fusedEuEnabled
+    false                                              // l0DebuggerSupported;
 };
 
 WorkaroundTable BDW::workaroundTable = {};

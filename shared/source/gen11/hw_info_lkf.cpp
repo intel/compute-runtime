@@ -82,7 +82,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // supportsMediaBlock
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
-    false                                          // fusedEuEnabled
+    false,                                         // fusedEuEnabled
+    false                                          // l0DebuggerSupported;
 };
 
 WorkaroundTable LKF::workaroundTable = {};

@@ -88,7 +88,8 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     true,                                          // supportsMediaBlock
     true,                                          // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
-    true                                           // fusedEuEnabled
+    true,                                          // fusedEuEnabled
+    true,                                          // l0DebuggerSupported;
 };
 
 WorkaroundTable DG1::workaroundTable = {};

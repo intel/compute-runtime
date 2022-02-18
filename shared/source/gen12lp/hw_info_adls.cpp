@@ -80,7 +80,8 @@ const RuntimeCapabilityTable ADLS::capabilityTable{
     true,                                           // supportsMediaBlock
     false,                                          // p2pAccessSupported
     false,                                          // p2pAtomicAccessSupported
-    true                                            // fusedEuEnabled
+    true,                                           // fusedEuEnabled
+    false                                           // l0DebuggerSupported;
 };
 
 WorkaroundTable ADLS::workaroundTable = {};

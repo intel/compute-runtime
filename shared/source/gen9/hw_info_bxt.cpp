@@ -84,7 +84,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,                                          // supportsMediaBlock
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
-    false                                          // fusedEuEnabled
+    false,                                         // fusedEuEnabled
+    false                                          // l0DebuggerSupported;
 };
 
 WorkaroundTable BXT::workaroundTable = {};
