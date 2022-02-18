@@ -175,6 +175,7 @@ struct EnableGfxFamilyHw {
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn);
 void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn);
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
+void overridePlatformName(std::string &name);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
 
