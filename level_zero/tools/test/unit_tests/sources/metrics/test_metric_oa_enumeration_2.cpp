@@ -134,7 +134,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenIncorrectMetricsDiscoveryInterface
         .WillOnce(Return(&metricsDeviceParams));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 

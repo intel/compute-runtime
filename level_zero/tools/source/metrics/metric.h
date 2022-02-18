@@ -27,7 +27,8 @@ class MetricSource {
   public:
     enum class SourceType {
         Undefined,
-        Oa
+        Oa,
+        IpSampling
     };
     virtual void enable() = 0;
     virtual bool isAvailable() = 0;
@@ -72,7 +73,6 @@ struct Metric : _zet_metric_handle_t {
 
     virtual ze_result_t getProperties(zet_metric_properties_t *pProperties) = 0;
 
-    static Metric *create(zet_metric_properties_t &properties);
     static Metric *fromHandle(zet_metric_handle_t handle) { return static_cast<Metric *>(handle); }
     inline zet_metric_handle_t toHandle() { return this; }
 };

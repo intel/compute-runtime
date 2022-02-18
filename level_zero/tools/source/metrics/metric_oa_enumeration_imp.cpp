@@ -33,7 +33,7 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
                                               zet_metric_group_handle_t *phMetricGroups) {
     ze_result_t result = initialize();
     if (result != ZE_RESULT_SUCCESS) {
-        return result;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     if (count == 0) {
@@ -354,7 +354,7 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
         properties.metricType = getMetricType(pSourceMetricParams->MetricType);
         properties.resultType = getMetricResultType(pSourceMetricParams->ResultType);
 
-        auto pMetric = Metric::create(properties);
+        auto pMetric = OaMetricImp::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
 
         metrics.push_back(pMetric);
@@ -385,7 +385,7 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
                                     ? ZET_VALUE_TYPE_BOOL8
                                     : ZET_VALUE_TYPE_UINT64;
 
-        auto pMetric = Metric::create(properties);
+        auto pMetric = OaMetricImp::create(properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
 
         metrics.push_back(pMetric);
@@ -927,7 +927,7 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
     return pMetricGroup;
 }
 
-Metric *Metric::create(zet_metric_properties_t &properties) {
+Metric *OaMetricImp::create(zet_metric_properties_t &properties) {
     auto pMetric = new OaMetricImp();
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);

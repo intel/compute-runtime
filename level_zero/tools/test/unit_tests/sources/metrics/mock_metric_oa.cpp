@@ -10,8 +10,10 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
+#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"
+#include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
 using namespace MetricsLibraryApi;
 
@@ -21,6 +23,21 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
+class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
+
+  public:
+    ~MockIpSamplingOsInterface() override = default;
+    ze_result_t startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) override {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    ze_result_t stopMeasurement() override { return ZE_RESULT_ERROR_UNKNOWN; }
+    ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override { return ZE_RESULT_ERROR_UNKNOWN; }
+    uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override { return 0; }
+    uint32_t getUnitReportSize() override { return 0; }
+    bool isNReportsAvailable() override { return false; }
+    bool isDependencyAvailable() override { return false; }
+};
+
 void MetricContextFixture::SetUp() {
 
     // Call base class.
@@ -29,6 +46,11 @@ void MetricContextFixture::SetUp() {
     // Initialize metric api.
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
     metricSource.setInitializationState(ZE_RESULT_SUCCESS);
+
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface =
+        std::unique_ptr<MetricIpSamplingOsInterface>(new MockIpSamplingOsInterface());
+    auto &ipMetricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+    ipMetricSource.setMetricOsInterface(metricIpSamplingOsInterface);
 
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
@@ -124,6 +146,7 @@ void MetricMultiDeviceFixture::SetUp() {
 
     // Initialize metric api.
     auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    metricSource.setInitializationState(ZE_RESULT_SUCCESS);
 
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricSource));
@@ -149,6 +172,8 @@ void MetricMultiDeviceFixture::SetUp() {
         mockMetricsLibrarySubDevices[i] = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricsSubDeviceContext));
         mockMetricsLibrarySubDevices[i]->setMockedApi(&mockMetricsLibraryApi);
         mockMetricsLibrarySubDevices[i]->handle = new MockOsLibrary();
+
+        metricsSubDeviceContext.setInitializationState(ZE_RESULT_SUCCESS);
     }
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;

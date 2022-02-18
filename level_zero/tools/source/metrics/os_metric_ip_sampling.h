@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include <level_zero/zet_api.h>
 
 #include <memory>

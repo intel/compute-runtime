@@ -60,7 +60,6 @@ class OaMetricSourceImp : public MetricSource {
     std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
-    bool available = false;
 };
 
 template <>

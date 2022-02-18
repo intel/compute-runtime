@@ -25,7 +25,7 @@ namespace ult {
 
 using MetricEnumerationTest = Test<MetricContextFixture>;
 
-TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetricGroupIsCalledThenReturnsFail) {
+TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetricGroupIsCalledThenNoMetricGroupsAreReturned) {
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -35,7 +35,7 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryDeviceWhenZetGetMetr
         .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
@@ -55,16 +55,17 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoveryWhenLoadMetricsDiscov
     EXPECT_EQ(mockMetricEnumeration->baseLoadMetricsDiscovery(), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
-TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoveryWhenMetricGroupGetIsCalledThenReturnsErrorUnknown) {
+TEST_F(MetricEnumerationTest, givenIncorrectMetricDiscoveryWhenMetricGroupGetIsCalledThenNoMetricGroupsAreReturned) {
 
     mockMetricEnumeration->hMetricsDiscovery = nullptr;
     mockMetricEnumeration->openAdapterGroup = nullptr;
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 0u);
 }
 
-TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhenZetGetMetricGroupIsCalledThenReturnsFail) {
+TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhenZetGetMetricGroupIsCalledThenNoMetricGroupsAreReturned) {
 
     metricsDeviceParams.Version.MajorNumber = 0;
     metricsDeviceParams.Version.MinorNumber = 1;
@@ -76,11 +77,11 @@ TEST_F(MetricEnumerationTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhen
         .WillOnce(Return(&metricsDeviceParams));
 
     uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupCount, 0u);
 }
 
-TEST_F(MetricEnumerationTest, givenNoConcurrentMetricGroupsWhenZetGetMetricGroupIsCalledThenReturnsZeroMetricsGroups) {
+TEST_F(MetricEnumerationTest, givenNoConcurrentMetricGroupsWhenZetGetMetricGroupIsCalledThenNoMetricGroupsAreReturned) {
 
     openMetricsAdapter();
 

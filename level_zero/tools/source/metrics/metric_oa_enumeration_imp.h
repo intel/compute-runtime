@@ -164,6 +164,8 @@ struct OaMetricImp : Metric {
 
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 
+    static Metric *create(zet_metric_properties_t &properties);
+
   protected:
     void copyProperties(const zet_metric_properties_t &source,
                         zet_metric_properties_t &destination);

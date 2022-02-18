@@ -19,6 +19,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_streamer_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_streamer_3.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_initialization.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_enumeration.cpp
 
 )
 
