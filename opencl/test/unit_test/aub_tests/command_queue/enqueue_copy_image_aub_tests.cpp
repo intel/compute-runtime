@@ -21,10 +21,6 @@ struct AUBCopyImage
       public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>>,
       public ::testing::Test {
     void SetUp() override {
-        if (enableBlitter && !(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterForImagesSupported())) {
-            GTEST_SKIP();
-        }
-
         ImageAubFixture::SetUp(enableBlitter);
     }
 
@@ -122,7 +118,7 @@ struct AUBCopyImage
         retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, dstOutMemory, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = pCmdQ->flush();
+        retVal = pCmdQ->finish();
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         // Offset the source memory
