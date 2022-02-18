@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
@@ -37,7 +38,7 @@ class DrmCommandStreamTestL0 : public ::testing::Test {
         DebugManager.flags.EnableForcePin.set(false);
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
-        mock = new ::testing::NiceMock<DrmMockImpl>(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
+        mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
         mock->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -54,15 +55,14 @@ class DrmCommandStreamTestL0 : public ::testing::Test {
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
-        // Memory manager creates pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
-            .Times(1);
+        mock->ioctlCallsCount = 0u;
         memoryManager = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerActive,
                                              DebugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
-        ::testing::Mock::VerifyAndClearExpectations(mock);
+        // Memory manager creates pinBB with ioctl, expect one call
+        EXPECT_EQ(1u, mock->ioctlCallsCount);
 
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
@@ -73,15 +73,15 @@ class DrmCommandStreamTestL0 : public ::testing::Test {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
         delete csr;
-        ::testing::Mock::VerifyAndClearExpectations(mock);
-        // Memory manager closes pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
-            .Times(::testing::AtLeast(1));
+        // Expect 1 call with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on destroyDrmContext
+        // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
+        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 2;
+        mock->expectIoctlCallsOnDestruction = true;
     }
 
     CommandStreamReceiver *csr = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
-    ::testing::NiceMock<DrmMockImpl> *mock;
+    DrmMock *mock = nullptr;
     const int mockFd = 33;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore dbgState;
