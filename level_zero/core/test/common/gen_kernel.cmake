@@ -36,7 +36,7 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
       list(APPEND ${target_list} ${output_files})
     else()
       foreach(_file_name "bin" "gen" "spv" "dbg")
-        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/level_zero/${suffix}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/level_zero/${suffix}/test_files/${NEO_ARCH}/${basename}_${suffix}.${_file_name}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${_file_name}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
@@ -88,7 +88,7 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
       list(APPEND ${target_list} ${output_files})
     else()
       foreach(_file_name "bin" "gen" "spv" "dbg")
-        set(_file_prebuilt "${NEO_SOURCE_DIR}/../neo_test_kernels/level_zero/${suffix}/test_files/${NEO_ARCH}/${prefix}_${basename}_${suffix}.${_file_name}")
+        set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/level_zero/${suffix}/test_files/${NEO_ARCH}/${prefix}_${basename}_${suffix}.${_file_name}")
         add_custom_command(
                            OUTPUT ${outputpath_base}.${_file_name}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
