@@ -376,5 +376,9 @@ void Gmm::applyDebugOverrides() {
     if (-1 != DebugManager.flags.OverrideGmmResourceUsageField.get()) {
         resourceParams.Usage = static_cast<GMM_RESOURCE_USAGE_TYPE>(DebugManager.flags.OverrideGmmResourceUsageField.get());
     }
+
+    if (true == (DebugManager.flags.ForceAllResourcesUncached.get())) {
+        resourceParams.Usage = GMM_RESOURCE_USAGE_SURFACE_UNCACHED;
+    }
 }
 } // namespace NEO

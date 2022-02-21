@@ -1178,12 +1178,12 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
 
 using NotATSOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 HWTEST2_F(L0DebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, NotATSOrDG2) {
-    EXPECT_FALSE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->l3CacheForDebugDisabled);
+    EXPECT_FALSE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 
 using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 HWTEST2_F(L0DebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
-    EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->l3CacheForDebugDisabled);
+    EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 } // namespace ult
 } // namespace L0

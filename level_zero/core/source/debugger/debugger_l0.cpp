@@ -79,7 +79,7 @@ void DebuggerL0::initialize() {
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
         if (hwHelper.disableL3CacheForDebug(hwInfo)) {
-            device->getGmmHelper()->disableL3CacheForDebug();
+            device->getGmmHelper()->forceAllResourcesUncached();
         }
     }
 }

@@ -27,9 +27,13 @@ namespace ClosHelper {
     7          2      WB (11)
  */
 
-constexpr uint64_t getPatIndex(CacheRegion closIndex, CachePolicy memType) {
-    UNRECOVERABLE_IF((closIndex > CacheRegion::Default) && (memType < CachePolicy::WriteThrough));
+static inline uint64_t getPatIndex(CacheRegion closIndex, CachePolicy memType) {
+    if ((DebugManager.flags.ForceAllResourcesUncached.get() == true)) {
+        closIndex = CacheRegion::Default;
+        memType = CachePolicy::Uncached;
+    }
 
+    UNRECOVERABLE_IF((closIndex > CacheRegion::Default) && (memType < CachePolicy::WriteThrough));
     return (static_cast<uint32_t>(memType) + (static_cast<uint16_t>(closIndex) * 2));
 }
 } // namespace ClosHelper

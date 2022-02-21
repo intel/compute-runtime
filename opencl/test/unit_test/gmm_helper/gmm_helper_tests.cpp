@@ -912,6 +912,25 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
     }
 }
 
+TEST_F(GmmTests, whenGmmIsCreatedAndForceAllResourcesUncachedIsSetThenResourceUsageIsSetToUncachedSurface) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceAllResourcesUncached = true;
+
+    auto size = 4096u;
+    void *incomingPtr = (void *)0x1000;
+    auto gmm1 = std::make_unique<Gmm>(getGmmClientContext(), incomingPtr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm1->resourceParams.Usage);
+
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::Image1D;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto gmm2 = MockGmm::queryImgParams(getGmmClientContext(), imgInfo, false);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm2->resourceParams.Usage);
+
+    auto gmm3 = std::make_unique<Gmm>(getGmmClientContext(), gmm1->gmmResourceInfo->peekGmmResourceInfo());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_SURFACE_UNCACHED, gmm3->resourceParams.Usage);
+}
+
 TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
     struct MyMockResourecInfo : public GmmResourceInfo {
         using GmmResourceInfo::resourceInfo;
@@ -1022,7 +1041,36 @@ TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsRet
     EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
 
-    gmmHelper->disableL3CacheForDebug();
+    gmmHelper->forceAllResourcesUncached();
+
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
+    GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
+}
+
+TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetThenCorrectMOCSIsReturned) {
+    decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;
+    GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
+
+    std::unique_ptr<GmmHelper> gmmHelper;
+    auto hwInfo = defaultHwInfo.get();
+    gmmHelper.reset(new GmmHelper(nullptr, hwInfo));
+
+    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    EXPECT_EQ(2u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+    EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
+    EXPECT_EQ(4u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
+    EXPECT_EQ(8u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+    EXPECT_EQ(16u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    EXPECT_EQ(32u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
 
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));

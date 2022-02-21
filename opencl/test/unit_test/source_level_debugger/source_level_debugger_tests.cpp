@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -887,7 +887,7 @@ HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3Cache
     MockPlatform platform(*executionEnvironment);
     platform.initializeWithNewDevices();
 
-    EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->l3CacheForDebugDisabled);
+    EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->allResourcesUncached);
 }
 
 using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
@@ -898,5 +898,5 @@ HWTEST2_F(LegacyDebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInG
     MockPlatform platform(*executionEnvironment);
     platform.initializeWithNewDevices();
 
-    EXPECT_TRUE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->l3CacheForDebugDisabled);
+    EXPECT_TRUE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->allResourcesUncached);
 }

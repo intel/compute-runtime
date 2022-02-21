@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
-    void disableL3CacheForDebug() { l3CacheForDebugDisabled = true; };
+    void forceAllResourcesUncached() { allResourcesUncached = true; };
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
@@ -45,6 +45,6 @@ class GmmHelper {
     static uint32_t addressWidth;
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<GmmClientContext> gmmClientContext;
-    bool l3CacheForDebugDisabled = false;
+    bool allResourcesUncached = false;
 };
 } // namespace NEO
