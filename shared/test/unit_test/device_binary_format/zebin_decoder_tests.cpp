@@ -3808,7 +3808,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidThenCalculateNumChannelAccordingly) {
+TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
     uint32_t simdSizes[] = {8, 16, 32};
     uint32_t numChannelsOpts[] = {1, 2, 3};
 
@@ -3849,6 +3849,11 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypeLocalIdWhenSizeIsValidTh
             ASSERT_EQ(1U, programInfo.kernelInfos.size());
             EXPECT_EQ(numChannels, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_EQ(simdSize, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+
+            const auto &emitLocalId = programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.localId;
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 0), emitLocalId[0]);
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 1), emitLocalId[1]);
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 2), emitLocalId[2]);
         }
     }
 }
@@ -3919,7 +3924,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsValidThenCalculateNumChannelAccordingly) {
+TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsValidThenCalculateNumChannelAndSetEmitLocalIdAccordingly) {
     uint32_t simdSizes[] = {1};
     uint32_t numChannelsOpts[] = {1, 2, 3};
 
@@ -3960,6 +3965,11 @@ TEST(PopulateArgDescriptorPerThreadPayload, GivenArgTypePackedLocalIdWhenSizeIsV
             ASSERT_EQ(1U, programInfo.kernelInfos.size());
             EXPECT_EQ(numChannels, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.numLocalIdChannels) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
             EXPECT_EQ(simdSize, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.simdSize) << warnings << "simd : " << simdSize << ", num channels : " << numChannels;
+
+            const auto &emitLocalId = programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.localId;
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 0), emitLocalId[0]);
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 1), emitLocalId[1]);
+            EXPECT_EQ(static_cast<uint8_t>(numChannels > 2), emitLocalId[2]);
         }
     }
 }

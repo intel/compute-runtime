@@ -687,6 +687,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;
         }
+        dst.kernelAttributes.localId[0] = tupleSize > 0;
+        dst.kernelAttributes.localId[1] = tupleSize > 1;
+        dst.kernelAttributes.localId[2] = tupleSize > 2;
         dst.kernelAttributes.perThreadDataSize = dst.kernelAttributes.simdSize;
         dst.kernelAttributes.perThreadDataSize *= sizeof(LocalIdT);
         dst.kernelAttributes.perThreadDataSize = alignUp(dst.kernelAttributes.perThreadDataSize, grfSize);
@@ -711,6 +714,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             dst.kernelAttributes.numLocalIdChannels = static_cast<uint8_t>(tupleSize);
             break;
         }
+        dst.kernelAttributes.localId[0] = tupleSize > 0;
+        dst.kernelAttributes.localId[1] = tupleSize > 1;
+        dst.kernelAttributes.localId[2] = tupleSize > 2;
         dst.kernelAttributes.simdSize = 1;
         dst.kernelAttributes.perThreadDataSize = dst.kernelAttributes.simdSize;
         dst.kernelAttributes.perThreadDataSize *= dst.kernelAttributes.numLocalIdChannels;
