@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.mediaVfeState[0];
     empty &= nullptr == toks.mediaVfeState[1];
     empty &= nullptr == toks.mediaInterfaceDescriptorLoad;
-    empty &= nullptr == toks.interfaceDescriptorData;
     empty &= nullptr == toks.threadPayload;
     empty &= nullptr == toks.executionEnvironment;
     empty &= nullptr == toks.dataParameterStream;
@@ -322,7 +321,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     auto mediaVfeState0Off = pushBackToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE, storage);
     auto mediaVfeState1Off = pushBackToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1, storage);
     auto mediaInterfaceDescriptorLoadOff = pushBackToken<SPatchMediaInterfaceDescriptorLoad>(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD, storage);
-    auto interfaceDescriptorDataOff = pushBackToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, storage);
     auto threadPayloadOff = pushBackToken<SPatchThreadPayload>(PATCH_TOKEN_THREAD_PAYLOAD, storage);
     auto executionEnvironmentOff = pushBackToken<SPatchExecutionEnvironment>(PATCH_TOKEN_EXECUTION_ENVIRONMENT, storage);
     auto kernelAttributesInfoOff = pushBackToken<SPatchKernelAttributesInfo>(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO, storage);
@@ -359,7 +357,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     EXPECT_TRUE(tokenOffsetMatched(base, mediaVfeState0Off, decodedKernel.tokens.mediaVfeState[0]));
     EXPECT_TRUE(tokenOffsetMatched(base, mediaVfeState1Off, decodedKernel.tokens.mediaVfeState[1]));
     EXPECT_TRUE(tokenOffsetMatched(base, mediaInterfaceDescriptorLoadOff, decodedKernel.tokens.mediaInterfaceDescriptorLoad));
-    EXPECT_TRUE(tokenOffsetMatched(base, interfaceDescriptorDataOff, decodedKernel.tokens.interfaceDescriptorData));
     EXPECT_TRUE(tokenOffsetMatched(base, threadPayloadOff, decodedKernel.tokens.threadPayload));
     EXPECT_TRUE(tokenOffsetMatched(base, executionEnvironmentOff, decodedKernel.tokens.executionEnvironment));
     EXPECT_TRUE(tokenOffsetMatched(base, kernelAttributesInfoOff, decodedKernel.tokens.kernelAttributesInfo));

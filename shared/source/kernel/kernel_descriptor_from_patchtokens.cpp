@@ -87,10 +87,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchMediaVFEState &
     dst.kernelAttributes.perThreadScratchSize[slot] = token.PerThreadScratchSpace;
 }
 
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchInterfaceDescriptorData &token) {
-    dst.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset = token.Offset;
-}
-
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {
     dst.kernelAttributes.flags.perThreadDataHeaderIsPresent = (0U != token.HeaderPresent);
     dst.kernelAttributes.numLocalIdChannels = token.LocalIDXPresent + token.LocalIDYPresent + token.LocalIDZPresent;
@@ -470,7 +466,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateLocalSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.mediaVfeState[0], 0);
     populateKernelDescriptorIfNotNull(dst, src.tokens.mediaVfeState[1], 1);
-    populateKernelDescriptorIfNotNull(dst, src.tokens.interfaceDescriptorData);
     populateKernelDescriptorIfNotNull(dst, src.tokens.threadPayload);
     populateKernelDescriptorIfNotNull(dst, src.tokens.dataParameterStream);
     populateKernelDescriptorIfNotNull(dst, src.tokens.kernelAttributesInfo);
@@ -515,9 +510,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.payloadMappings.implicitArgs.privateMemorySize = getOffset(src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowSize = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress);
-    for (auto &childSimdSize : src.tokens.crossThreadPayloadArgs.childBlockSimdSize) {
-        dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset.push_back({childSimdSize->ArgumentNumber, childSimdSize->Offset});
-    }
 
     if (src.tokens.gtpinInfo) {
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);

@@ -277,8 +277,6 @@ struct KernelDescriptor {
         std::string kernelName;
         std::string kernelLanguageAttributes;
         StringMap printfStringsMap;
-        std::vector<std::pair<uint32_t, uint32_t>> deviceSideEnqueueChildrenKernelsIdOffset;
-        uint32_t deviceSideEnqueueBlockInterfaceDescriptorOffset = 0U;
 
         struct ByValueArgument {
             ArgDescValue::Element byValueElement;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,8 +82,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_TRUE(desc.kernelMetadata.printfStringsMap.empty());
-    EXPECT_TRUE(desc.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset.empty());
-    EXPECT_EQ(0U, desc.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset);
     EXPECT_TRUE(desc.kernelMetadata.allByValueKernelArguments.empty());
     EXPECT_EQ(0U, desc.kernelMetadata.compiledSubGroupsNumber);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);

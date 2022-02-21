@@ -244,14 +244,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.mediaVfeState[0] = nullptr;
     kernelTokens.tokens.mediaVfeState[1] = nullptr;
 
-    EXPECT_EQ(0U, kernelDescriptor.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset);
-    iOpenCL::SPatchInterfaceDescriptorData interfaceDescriptorData = {};
-    interfaceDescriptorData.Offset = 4096;
-    kernelTokens.tokens.interfaceDescriptorData = &interfaceDescriptorData;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_EQ(interfaceDescriptorData.Offset, kernelDescriptor.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset);
-    kernelTokens.tokens.interfaceDescriptorData = nullptr;
-
     EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.crossThreadDataSize);
     iOpenCL::SPatchDataParameterStream dataParameterStream = {};
     dataParameterStream.DataParameterStreamSize = 4096;
@@ -1287,28 +1279,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithDitpatchMetadataImplicitArg
         EXPECT_EQ(kernelTokens.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize->Offset, dst.payloadMappings.implicitArgs.localMemoryStatelessWindowSize);
         EXPECT_EQ(kernelTokens.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress->Offset, dst.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres);
     }
-}
-
-TEST(KernelDescriptorFromPatchtokens, GivenKernelWithChildBlocksMetadataImplicitArgsThenKernelDescriptorIsProperlyPopulated) {
-    std::vector<uint8_t> storage;
-    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens = PatchTokensTestData::ValidEmptyKernel::create(storage);
-    NEO::KernelDescriptor dst;
-    NEO::populateKernelDescriptor(dst, kernelTokens, 4);
-    EXPECT_TRUE(dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset.empty());
-
-    iOpenCL::SPatchDataParameterBuffer childBlocks[2] = {};
-    childBlocks[0].ArgumentNumber = 0;
-    childBlocks[1].ArgumentNumber = 1;
-    childBlocks[0].Offset = 4096;
-    childBlocks[1].Offset = 8192;
-    kernelTokens.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlocks[0]);
-    kernelTokens.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlocks[1]);
-    NEO::populateKernelDescriptor(dst, kernelTokens, 4);
-    ASSERT_EQ(2U, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset.size());
-    EXPECT_EQ(childBlocks[0].ArgumentNumber, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[0].first);
-    EXPECT_EQ(childBlocks[1].ArgumentNumber, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[1].first);
-    EXPECT_EQ(childBlocks[0].Offset, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[0].second);
-    EXPECT_EQ(childBlocks[1].Offset, dst.kernelMetadata.deviceSideEnqueueChildrenKernelsIdOffset[1].second);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenDispatchTraitsImplicitArgsAndExplicitArgsWhenPopulatingKernelDescriptorThenCrossThreadDataSizeIsSetToMaxOffsetAndAligned) {

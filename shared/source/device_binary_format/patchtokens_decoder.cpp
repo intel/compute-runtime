@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -330,9 +330,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         break;
     case PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:
         assignToken(out.tokens.mediaInterfaceDescriptorLoad, token);
-        break;
-    case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
-        assignToken(out.tokens.interfaceDescriptorData, token);
         break;
     case PATCH_TOKEN_THREAD_PAYLOAD:
         assignToken(out.tokens.threadPayload, token);

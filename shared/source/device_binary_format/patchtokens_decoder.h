@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,6 @@ struct KernelFromPatchtokens {
         const SPatchAllocateLocalSurface *allocateLocalSurface = nullptr;
         const SPatchMediaVFEState *mediaVfeState[2] = {nullptr, nullptr};
         const SPatchMediaInterfaceDescriptorLoad *mediaInterfaceDescriptorLoad = nullptr;
-        const SPatchInterfaceDescriptorData *interfaceDescriptorData = nullptr;
         const SPatchThreadPayload *threadPayload = nullptr;
         const SPatchExecutionEnvironment *executionEnvironment = nullptr;
         const SPatchDataParameterStream *dataParameterStream = nullptr;

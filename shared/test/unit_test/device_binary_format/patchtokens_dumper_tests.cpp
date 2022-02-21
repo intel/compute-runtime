@@ -509,7 +509,6 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     auto allocateLocalSurface = initToken<SPatchAllocateLocalSurface>(PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE);
     SPatchMediaVFEState mediaVfeState[2] = {initToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE), initToken<SPatchMediaVFEState>(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1)};
     auto mediaInterfaceDescriptorLoad = initToken<SPatchMediaInterfaceDescriptorLoad>(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    auto interfaceDescriptorData = initToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA);
     auto threadPayload = initToken<SPatchThreadPayload>(PATCH_TOKEN_THREAD_PAYLOAD);
     auto executionEnvironment = initToken<SPatchExecutionEnvironment>(PATCH_TOKEN_EXECUTION_ENVIRONMENT);
     auto dataParameterStream = initToken<SPatchDataParameterStream>(PATCH_TOKEN_DATA_PARAMETER_STREAM);
@@ -536,7 +535,6 @@ TEST(KernelDumper, GivenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     kernel.tokens.mediaVfeState[0] = &mediaVfeState[0];
     kernel.tokens.mediaVfeState[1] = &mediaVfeState[1];
     kernel.tokens.mediaInterfaceDescriptorLoad = &mediaInterfaceDescriptorLoad;
-    kernel.tokens.interfaceDescriptorData = &interfaceDescriptorData;
     kernel.tokens.threadPayload = &threadPayload;
     kernel.tokens.executionEnvironment = &executionEnvironment;
     kernel.tokens.dataParameterStream = &dataParameterStream;
@@ -676,15 +674,6 @@ Kernel-scope tokens section size : )==="
              << sizeof(SPatchMediaInterfaceDescriptorLoad) << R"===()
   {
       uint32_t   InterfaceDescriptorDataOffset;// = 0
-  }
-  struct SPatchInterfaceDescriptorData :
-         SPatchItemHeader (Token=21(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA), Size=)==="
-             << sizeof(SPatchInterfaceDescriptorData) << R"===()
-  {
-      uint32_t   Offset;// = 0
-      uint32_t   SamplerStateOffset;// = 0
-      uint32_t   KernelOffset;// = 0
-      uint32_t   BindingTableOffset;// = 0
   }
   struct SPatchKernelAttributesInfo :
          SPatchItemHeader (Token=27(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO), Size=)==="

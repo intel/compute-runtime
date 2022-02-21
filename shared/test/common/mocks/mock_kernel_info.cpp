@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,10 +191,6 @@ void MockKernelInfo::setSamplerTable(DynamicStateHeapOffset borderColor, uint8_t
     samplerTable.borderColor = borderColor;
     samplerTable.numSamplers = numSamplers;
     samplerTable.tableOffset = tableOffset;
-}
-
-void MockKernelInfo::setDeviceSideEnqueueBlockInterfaceDescriptorOffset(uint32_t offset) {
-    kernelDescriptor.kernelMetadata.deviceSideEnqueueBlockInterfaceDescriptorOffset = offset;
 }
 
 void MockKernelInfo::setPerThreadScratchSize(uint32_t perThreadScratchSize, uint32_t slot) {

@@ -285,19 +285,6 @@ void dump(const SPatchMediaInterfaceDescriptorLoad &value, std::stringstream &ou
     out << indent << "}\n";
 }
 
-void dump(const SPatchInterfaceDescriptorData &value, std::stringstream &out, const std::string &indent) {
-    out << indent << "struct SPatchInterfaceDescriptorData :\n";
-    out << indent << "       SPatchItemHeader (";
-    dumpPatchItemHeaderInline(value, out, "");
-    out << ")\n"
-        << indent << "{\n";
-    out << indent << "    uint32_t   Offset;// = " << value.Offset << "\n";
-    out << indent << "    uint32_t   SamplerStateOffset;// = " << value.SamplerStateOffset << "\n";
-    out << indent << "    uint32_t   KernelOffset;// = " << value.KernelOffset << "\n";
-    out << indent << "    uint32_t   BindingTableOffset;// = " << value.BindingTableOffset << "\n";
-    out << indent << "}\n";
-}
-
 void dump(const SPatchDataParameterStream &value, std::stringstream &out, const std::string &indent) {
     out << indent << "struct SPatchDataParameterStream :\n";
     out << indent << "       SPatchItemHeader (";
@@ -746,7 +733,6 @@ std::string asString(const KernelFromPatchtokens &kern) {
     dumpOrNull(kern.tokens.allocateLocalSurface, "", stream, indentLevel1);
     dumpOrNullArrayIfNotEmpty(kern.tokens.mediaVfeState, "mediaVfeState", stream, indentLevel1);
     dumpOrNull(kern.tokens.mediaInterfaceDescriptorLoad, "", stream, indentLevel1);
-    dumpOrNull(kern.tokens.interfaceDescriptorData, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.kernelAttributesInfo, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.allocateStatelessPrivateSurface, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.allocateStatelessConstantMemorySurfaceWithInitialization, "", stream, indentLevel1);
