@@ -1,14 +1,24 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_FREQUENCY_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_frequency_imp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_frequency_imp.h
 )
+
+if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND L0_SRCS_TOOLS_SYSMAN_FREQUENCY_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp_prelim.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp_prelim.h
+  )
+else()
+  list(APPEND L0_SRCS_TOOLS_SYSMAN_FREQUENCY_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.h
+  )
+endif()
 
 if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
