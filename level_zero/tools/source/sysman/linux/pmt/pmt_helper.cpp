@@ -1,25 +1,24 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt_xml_offsets.h"
 
 namespace L0 {
 
-const std::map<std::string, uint64_t> deviceKeyOffsetMap = {
-    {"PACKAGE_ENERGY", 0x400},
-    {"COMPUTE_TEMPERATURES", 0x68},
-    {"SOC_TEMPERATURES", 0x60},
-    {"CORE_TEMPERATURES", 0x6c}};
-
 ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap) {
-    if (guid.empty()) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ze_result_t retVal = ZE_RESULT_ERROR_UNKNOWN;
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
+    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
+        // We didnt have any entry for this guid in guidToKeyOffsetMap
+        retVal = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return retVal;
     }
-    keyOffsetMap = deviceKeyOffsetMap;
+    keyOffsetMap = keyOffsetMapEntry->second;
     return ZE_RESULT_SUCCESS;
 }
 

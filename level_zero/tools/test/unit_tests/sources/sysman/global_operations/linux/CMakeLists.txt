@@ -1,15 +1,25 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
+set(L0_TESTS_TOOLS_SYSMAN_GLOBAL_OPERATIONS_LINUX
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_global_operations.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_global_operations.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_zes_global_operations_helper.cpp
+)
+
+if((NEO_ENABLE_i915_PRELIM_DETECTION) AND ("${BRANCH_TYPE}" STREQUAL ""))
+  list(REMOVE_ITEM L0_TESTS_TOOLS_SYSMAN_GLOBAL_OPERATIONS_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_global_operations_helper.cpp
+  )
+endif()
+
 if(UNIX)
   target_sources(${TARGET_NAME}
                  PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_global_operations.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_global_operations.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}test_zes_global_operations_helper.cpp
+                 ${L0_TESTS_TOOLS_SYSMAN_GLOBAL_OPERATIONS_LINUX}
   )
 endif()
