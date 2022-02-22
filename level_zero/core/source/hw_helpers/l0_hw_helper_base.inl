@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,4 +111,10 @@ template <typename GfxFamily>
 bool L0HwHelperHw<GfxFamily>::forceDefaultUsmCompressionSupport() const {
     return false;
 }
+
+template <typename GfxFamily>
+bool L0HwHelperHw<GfxFamily>::isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace L0

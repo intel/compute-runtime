@@ -11,10 +11,10 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
 #include <algorithm>
@@ -163,20 +163,10 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
 
 bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
 
-    auto hwInfo = device.getNEODevice()->getHardwareInfo();
-    auto isSupportedDevice = false;
+    const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
+    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    if (hwInfo.platform.eProductFamily == IGFX_PVC) {
-        if (hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[0] ||
-            hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[1] ||
-            hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[2] ||
-            hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[3] ||
-            hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[4]) {
-            isSupportedDevice = true;
-        }
-    }
-
-    if (!isSupportedDevice) {
+    if (!l0HwHelper.isIpSamplingSupported(hardwareInfo)) {
         return false;
     }
 

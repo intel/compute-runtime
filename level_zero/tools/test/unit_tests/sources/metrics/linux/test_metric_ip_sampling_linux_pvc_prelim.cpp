@@ -16,6 +16,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
+#include "hw_cmds.h"
+
 namespace NEO {
 namespace SysCalls {
 extern int closeFuncRetVal;
@@ -182,13 +184,6 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenPollIsFailureWhenisNReportsAvail
         return -1;
     });
     EXPECT_FALSE(metricIpSamplingOsInterface->isNReportsAvailable());
-}
-
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenUnsupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsDG2) {
-
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
-    EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndUnsupportedDeviceIdIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
