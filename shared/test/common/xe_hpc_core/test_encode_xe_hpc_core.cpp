@@ -455,14 +455,17 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialMo
         {0x7, false},
     };
     for (auto &testInput : testInputs) {
-        hwInfo->platform.usRevId = testInput.revId;
-        cmdContainer->lastPipelineSelectModeRequired = false;
+        for (auto &deviceId : PVC_XL_IDS) {
+            hwInfo->platform.usDeviceID = deviceId;
+            hwInfo->platform.usRevId = testInput.revId;
+            cmdContainer->lastPipelineSelectModeRequired = false;
 
-        EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-        dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
+            EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+            dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
-        EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
-        EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
+            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+            EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
+        }
     }
 }
 
@@ -489,16 +492,19 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialMo
         {0x7, false},
     };
     for (auto &testInput : testInputs) {
-        hwInfo->platform.usRevId = testInput.revId;
-        EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), dispatchInterface->kernelDescriptor);
-        GenCmdList commands;
-        CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+        for (auto &deviceId : PVC_XL_IDS) {
+            hwInfo->platform.usDeviceID = deviceId;
+            hwInfo->platform.usRevId = testInput.revId;
+            EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), dispatchInterface->kernelDescriptor);
+            GenCmdList commands;
+            CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-        auto itor = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-        ASSERT_NE(itor, commands.end());
+            auto itor = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+            ASSERT_NE(itor, commands.end());
 
-        auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*itor);
-        EXPECT_EQ(testInput.expectedValue, pipelineSelectCmd->getSystolicModeEnable());
-        cmdContainer->reset();
+            auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(*itor);
+            EXPECT_EQ(testInput.expectedValue, pipelineSelectCmd->getSystolicModeEnable());
+            cmdContainer->reset();
+        }
     }
 }

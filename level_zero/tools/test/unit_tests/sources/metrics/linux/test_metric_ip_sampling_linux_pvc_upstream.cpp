@@ -51,14 +51,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestUpstream, GivenSupportedProductFamilyAndSuppo
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 
-    const std::vector<uint32_t> supportedDeviceIds = {
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[0],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[1],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[2],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[3],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[4]};
-
-    for (uint32_t deviceId : supportedDeviceIds) {
+    for (auto deviceId : NEO::PVC_XT_IDS) {
         hwInfo->platform.usDeviceID = deviceId;
         EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
     }

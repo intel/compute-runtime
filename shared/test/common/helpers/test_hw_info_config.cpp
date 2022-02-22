@@ -50,5 +50,5 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenF
 
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsThreaEuRatio16ForScratchRequiredThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isThreaEuRatio16ForScratchRequired(*defaultHwInfo));
+    EXPECT_FALSE(hwInfoConfig.isThreadEuRatio16ForScratchRequired(*defaultHwInfo));
 }

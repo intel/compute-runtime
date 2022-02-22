@@ -108,7 +108,9 @@ PVCTEST_F(PvcHwInfo, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConve
     auto hwInfo = *defaultHwInfo;
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    uint32_t deviceIds[] = {FamilyType::pvcXlDeviceId, FamilyType::pvcXtDeviceIds[0], FamilyType::pvcXtDeviceIds[1], FamilyType::pvcXtDeviceIds[2], FamilyType::pvcXtTemporaryDeviceId};
+    std::vector<unsigned short> deviceIds = PVC_XL_IDS;
+    deviceIds.insert(deviceIds.end(), PVC_XT_IDS.begin(), PVC_XT_IDS.end());
+
     for (uint32_t testValue = 0; testValue < 0xFF; testValue++) {
         for (auto deviceId : deviceIds) {
             hwInfo.platform.usDeviceID = deviceId;

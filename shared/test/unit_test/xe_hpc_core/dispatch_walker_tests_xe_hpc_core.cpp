@@ -40,14 +40,16 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, whenEncodeAdditionalWalkerFields
     }
 
     for (auto &testInput : testInputs) {
-        hwInfo.platform.usRevId = testInput.revisionId;
-        DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
-            testInput.programGlobalFenceAsPostSyncOperationInComputeWalker);
+        for (auto &deviceId : PVC_XL_IDS) {
+            hwInfo.platform.usDeviceID = deviceId;
+            hwInfo.platform.usRevId = testInput.revisionId;
+            DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
+                testInput.programGlobalFenceAsPostSyncOperationInComputeWalker);
 
-        postSyncData.setSystemMemoryFenceRequest(false);
-
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
-        EXPECT_EQ(testInput.expectSystemMemoryFenceRequest, postSyncData.getSystemMemoryFenceRequest());
+            postSyncData.setSystemMemoryFenceRequest(false);
+            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
+            EXPECT_EQ(testInput.expectSystemMemoryFenceRequest, postSyncData.getSystemMemoryFenceRequest());
+        }
     }
 }
 
@@ -65,29 +67,6 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenPvcWhenEncodeAdditionalWalk
     {
         DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
-        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
-    }
-}
-
-XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenPvcXtTemporaryWhenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.usDeviceID = 0x0BE5;
-
-    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-
-    {
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
-        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
-    }
-
-    {
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Concurrent);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 }

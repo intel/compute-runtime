@@ -7,6 +7,9 @@
 
 #pragma once
 #include "shared/source/xe_hpc_core/hw_cmds_base.h"
+
+#include "device_ids_configs_pvc.h"
+
 namespace NEO {
 
 struct PVC : public XE_HPC_COREFamily {
@@ -28,7 +31,22 @@ struct PVC : public XE_HPC_COREFamily {
     static void adjustHardwareInfo(HardwareInfo *hwInfo);
     static bool isXlA0(const HardwareInfo &hwInfo);
     static bool isAtMostXtA0(const HardwareInfo &hwInfo);
-    static bool isXtTemporary(const HardwareInfo &hwInfo);
+
+    static bool isXl(const HardwareInfo &hwInfo) {
+        auto it = std::find(PVC_XL_IDS.begin(), PVC_XL_IDS.end(), hwInfo.platform.usDeviceID);
+        if (it != PVC_XL_IDS.end()) {
+            return true;
+        }
+        return false;
+    }
+
+    static bool isXt(const HardwareInfo &hwInfo) {
+        auto it = std::find(PVC_XT_IDS.begin(), PVC_XT_IDS.end(), hwInfo.platform.usDeviceID);
+        if (it != PVC_XT_IDS.end()) {
+            return true;
+        }
+        return false;
+    }
 };
 
 class PVC_CONFIG : public PVC {

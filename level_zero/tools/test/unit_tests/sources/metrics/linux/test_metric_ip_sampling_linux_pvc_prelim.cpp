@@ -16,6 +16,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
+#include "device_ids_configs.h"
 #include "hw_cmds.h"
 
 namespace NEO {
@@ -274,7 +275,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndUnsuppo
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::XE_HPC_CORE::pvcXlDeviceId;
+    hwInfo->platform.usDeviceID = NEO::PVC_XL_IDS.front();
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }
 
@@ -283,14 +284,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupport
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 
-    const std::vector<uint32_t> supportedDeviceIds = {
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[0],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[1],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[2],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[3],
-        NEO::XE_HPC_CORE::pvcXtDeviceIds[4]};
-
-    for (uint32_t deviceId : supportedDeviceIds) {
+    for (auto deviceId : NEO::PVC_XT_IDS) {
         hwInfo->platform.usDeviceID = deviceId;
         EXPECT_TRUE(metricIpSamplingOsInterface->isDependencyAvailable());
     }
@@ -300,7 +294,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenDriverOpenFailsWhenIsDependencyA
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::XE_HPC_CORE::pvcXtDeviceIds[0];
+    hwInfo->platform.usDeviceID = NEO::PVC_XT_IDS.front();
 
     auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
     VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
@@ -313,7 +307,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenIoctlHelperFailsWhenIsDependency
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::XE_HPC_CORE::pvcXtDeviceIds[0];
+    hwInfo->platform.usDeviceID = NEO::PVC_XT_IDS.front();
 
     auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
 

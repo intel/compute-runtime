@@ -140,20 +140,6 @@ void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.sharedSystemMemCapabilities = (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS);
 }
 
-bool PVC::isXlA0(const HardwareInfo &hwInfo) {
-    auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
-    return (revId < 0x3) && !isXtTemporary(hwInfo);
-}
-
-bool PVC::isAtMostXtA0(const HardwareInfo &hwInfo) {
-    auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
-    return (revId <= 0x3) && !isXtTemporary(hwInfo);
-}
-
-bool PVC::isXtTemporary(const HardwareInfo &hwInfo) {
-    return (hwInfo.platform.usDeviceID == pvcXtTemporaryDeviceId);
-}
-
 void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * PVC::threadsPerEu;

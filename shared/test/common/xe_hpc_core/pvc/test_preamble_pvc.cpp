@@ -40,35 +40,11 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
         auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
 
         auto expectedValue = (HwInfoConfig::get(hwInfo->platform.eProductFamily)->getSteppingFromHwRevId(*hwInfo) >= REVISION_B) &&
-                             (!PVC::isXtTemporary(*defaultHwInfo)) &&
                              kernelExecutionType;
         EXPECT_EQ(expectedValue, cfeState->getComputeDispatchAllWalkerEnable());
         EXPECT_EQ(expectedValue, cfeState->getSingleSliceDispatchCcsMode());
         EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
     }
-}
-
-PVCTEST_F(PreambleCfeState, givenPvcXtTemporaryAndKernelExecutionTypeConcurrentAndRevisionBWhenCallingProgramVFEStateThenAllWalkerIsDisabled) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.usDeviceID = 0x0BE5;
-
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
-    StreamProperties streamProperties{};
-    streamProperties.frontEndState.setProperties(true, false, false, false, hwInfo);
-
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
-    parseCommands<FamilyType>(linearStream);
-    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), cfeStateIt);
-    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
-
-    EXPECT_FALSE(cfeState->getComputeDispatchAllWalkerEnable());
-    EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
 }
 
 using PreamblePipelineSelectState = PreambleFixture;

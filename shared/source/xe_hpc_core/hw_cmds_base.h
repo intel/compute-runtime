@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
@@ -17,8 +18,8 @@
 
 template <class T>
 struct CmdParse;
-namespace NEO {
 
+namespace NEO {
 struct XE_HPC_CORE {
 #include "shared/source/generated/xe_hpc_core/hw_cmds_generated_xe_hpc_core.inl"
 
@@ -29,9 +30,6 @@ struct XE_HPC_CORE {
     static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
     static constexpr uint32_t pvcSteppingBits = 0b111;
-    static constexpr uint32_t pvcXlDeviceId = 0x0BD0;
-    static constexpr uint32_t pvcXtDeviceIds[5] = {0x0BD5, 0x0BD6, 0x0BD7, 0x0BD8, 0x0BE1};
-    static constexpr uint32_t pvcXtTemporaryDeviceId = 0x0BE5;
 
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;

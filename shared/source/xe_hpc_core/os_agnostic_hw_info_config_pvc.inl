@@ -14,16 +14,21 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
-    auto deviceId = hwInfo.platform.usDeviceID;
-    return XE_HPC_COREFamily::pvcXlDeviceId == deviceId;
+    return PVC::isXl(hwInfo);
 }
 
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    switch (hwInfo.platform.usDeviceID) {
-    default:
-    case XE_HPC_COREFamily::pvcXtTemporaryDeviceId:
-    case XE_HPC_COREFamily::pvcXlDeviceId:
+    if (PVC::isXt(hwInfo)) {
+        switch (stepping) {
+        case REVISION_A0:
+            return 0x3;
+        case REVISION_B:
+            return 0x9D;
+        case REVISION_C:
+            return 0x7;
+        }
+    } else {
         switch (stepping) {
         case REVISION_A0:
             return 0x0;
@@ -33,19 +38,8 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
             DEBUG_BREAK_IF(true);
             return 0x7;
         }
-        break;
-    case XE_HPC_COREFamily::pvcXtDeviceIds[0]:
-    case XE_HPC_COREFamily::pvcXtDeviceIds[1]:
-    case XE_HPC_COREFamily::pvcXtDeviceIds[2]:
-        switch (stepping) {
-        case REVISION_A0:
-            return 0x3;
-        case REVISION_B:
-            return 0x9D;
-        case REVISION_C:
-            return 0x7;
-        }
     }
+
     return CommonConstants::invalidStepping;
 }
 
@@ -138,11 +132,6 @@ bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsPostSyncOperationInComputeWalker
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
-    return PVC::isXtTemporary(hwInfo);
-}
-
-template <>
 bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return !PVC::isXlA0(hwInfo);
 }
@@ -150,14 +139,4 @@ bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsMiMemFenceCommandInCommandStream
 template <>
 bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
     return PVC::isXlA0(hwInfo);
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isThreaEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
-    return !PVC::isXtTemporary(hwInfo);
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
-    return !PVC::isXtTemporary(hwInfo);
 }

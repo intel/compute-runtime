@@ -37,13 +37,16 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
     };
 
     for (auto &revisionToTest : revisionsToTest) {
-        hwInfo.platform.usRevId = revisionToTest.revisionId;
-        INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-        EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
-        if (revisionToTest.isWaRequired) {
-            EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K, idd.getPreferredSlmAllocationSize());
-        } else {
-            EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K, idd.getPreferredSlmAllocationSize());
+        for (auto &deviceId : PVC_XL_IDS) {
+            hwInfo.platform.usDeviceID = deviceId;
+            hwInfo.platform.usRevId = revisionToTest.revisionId;
+            INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
+            EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
+            if (revisionToTest.isWaRequired) {
+                EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K, idd.getPreferredSlmAllocationSize());
+            } else {
+                EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K, idd.getPreferredSlmAllocationSize());
+            }
         }
     }
 }

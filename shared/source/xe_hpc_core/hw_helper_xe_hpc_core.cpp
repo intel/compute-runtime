@@ -415,7 +415,7 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
 
     const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
     auto revId = pHwInfo->platform.usRevId & Family::pvcSteppingBits;
-    uint32_t threadEuRatio = ((0x3 <= revId) && hwInfoConfig.isThreaEuRatio16ForScratchRequired(*pHwInfo)) ? 16 : 8;
+    uint32_t threadEuRatio = ((0x3 <= revId) && hwInfoConfig.isThreadEuRatio16ForScratchRequired(*pHwInfo)) ? 16 : 8;
 
     return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
 }

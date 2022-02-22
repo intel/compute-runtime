@@ -161,11 +161,13 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDeviceIdThenProperMaxThreadsForWo
         GTEST_SKIP();
     }
 
-    hardwareInfo.platform.usDeviceID = FamilyType::pvcXlDeviceId;
-    EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
-    auto xtDevicesCount = 3;
-    for (int32_t i = 0; i < xtDevicesCount; i++) {
-        hardwareInfo.platform.usDeviceID = FamilyType::pvcXtDeviceIds[i];
+    for (auto &deviceId : PVC_XL_IDS) {
+        hardwareInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+    }
+
+    for (auto &deviceId : PVC_XT_IDS) {
+        hardwareInfo.platform.usDeviceID = deviceId;
         uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
         EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
     }
@@ -1076,7 +1078,4 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsed
         hwInfo.platform.usRevId = testInput.revId;
         EXPECT_EQ(expectedValue * testInput.expectedRatio, helper.getComputeUnitsUsedForScratch(&hwInfo));
     }
-    hwInfo.platform.usRevId = 0x5;
-    hwInfo.platform.usDeviceID = FamilyType::pvcXtTemporaryDeviceId;
-    EXPECT_EQ(expectedValue * 8, helper.getComputeUnitsUsedForScratch(&hwInfo));
 }
