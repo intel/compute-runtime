@@ -1240,34 +1240,6 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, GivenAllocationTypeThatRequiresCpuAccessForKmdAllocationThenLockTheResourceIsCalled) {
-    struct DrmMemoryManagerToTestLockResource : public DrmMemoryManager {
-        using DrmMemoryManager::allocateMemoryByKMD;
-
-        DrmMemoryManagerToTestLockResource(ExecutionEnvironment &executionEnvironment)
-            : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
-        }
-        void *lockResourceImpl(GraphicsAllocation &allocation) override {
-            return reinterpret_cast<void *>(0xDEADBEEF);
-        }
-    };
-
-    DrmMemoryManagerToTestLockResource drmMemoryManager(*executionEnvironment);
-
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemCreate = 1;
-    mock->ioctl_expected.gemClose = 1;
-
-    allocationData.type = AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
-
-    auto allocation = drmMemoryManager.allocateMemoryByKMD(allocationData);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_NE(0u, allocation->getGpuAddress());
-    EXPECT_EQ(0xDEADBEEF, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllocationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     mock->ioctl_expected.gemUserptr = 3;
     mock->ioctl_expected.gemWait = 3;

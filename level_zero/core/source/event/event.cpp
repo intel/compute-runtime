@@ -104,14 +104,8 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         }
 
     } else {
-        const bool isShareable = (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC);
-        if (isShareable) {
-            allocationType = NEO::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
-        }
-
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), alignedSize, allocationType, systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
-        allocationProperties.flags.shareable = isShareable;
 
         std::vector<uint32_t> rootDeviceIndicesVector = {rootDeviceIndices.begin(), rootDeviceIndices.end()};
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector,
