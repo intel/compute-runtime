@@ -1572,3 +1572,29 @@ TEST(KernelDescriptorFromPatchtokens, GivenUpdateCrossThreadDataSizeFalseWhenPop
 
     EXPECT_EQ(32u, kernelDescriptor.kernelAttributes.crossThreadDataSize);
 }
+
+TEST(KernelDescriptorFromPatchtokens, givenDataParameterImplArgBufferTokenWhenPopulateKernelDescriptorThenProperOffsetIsSetAndImplicitArgsAreRequired) {
+    NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
+    kernelTokens.header = &kernelHeader;
+
+    NEO::KernelDescriptor kernelDescriptor;
+
+    uint16_t offset = 0x30;
+
+    iOpenCL::SPatchDataParameterBuffer dataParameterToken{};
+    dataParameterToken.Token = iOpenCL::PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+    dataParameterToken.Size = sizeof(iOpenCL::SPatchDataParameterBuffer);
+    dataParameterToken.Type = iOpenCL::DATA_PARAMETER_IMPL_ARG_BUFFER;
+    dataParameterToken.ArgumentNumber = 0;
+    dataParameterToken.Offset = offset;
+    dataParameterToken.DataSize = sizeof(uint32_t);
+    dataParameterToken.SourceOffset = 0;
+
+    kernelTokens.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset = &dataParameterToken;
+
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
+
+    EXPECT_EQ(offset, kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
+}

@@ -510,6 +510,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.payloadMappings.implicitArgs.privateMemorySize = getOffset(src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowSize = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress);
+    dst.payloadMappings.implicitArgs.implcitArgsBuffer = getOffset(src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset);
 
     if (src.tokens.gtpinInfo) {
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);
@@ -517,6 +518,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
 
     dst.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     dst.kernelAttributes.gpuPointerSize = gpuPointerSizeInBytes;
+    dst.kernelAttributes.flags.requiresImplicitArgs = src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset != nullptr;
 
     if (DebugManager.flags.UpdateCrossThreadDataSize.get()) {
         dst.updateCrossThreadDataSize();

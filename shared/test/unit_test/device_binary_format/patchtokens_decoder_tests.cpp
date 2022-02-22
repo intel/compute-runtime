@@ -578,6 +578,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     auto childBlockSimdSize0Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
     auto childBlockSimdSize1Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
     auto childBlockSimdSize2Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
+    auto implictArgBufferOffset = pushBackDataParameterToken(DATA_PARAMETER_IMPL_ARG_BUFFER, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
     auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
@@ -620,6 +621,7 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize0Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[0]));
     EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize1Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[1]));
     EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize2Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[2]));
+    EXPECT_TRUE(tokenOffsetMatched(base, implictArgBufferOffset, decodedKernel.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset));
 }
 
 TEST(KernelDecoder, GivenKernelWithArgCrossThreadDataPatchtokensWhenSourceIndexIsGreaterThan2ThenThenDecodingSucceedsButTokenIsMarkedAsUnhandled) {

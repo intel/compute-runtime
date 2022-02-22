@@ -290,6 +290,9 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE:
         crossthread.preferredWorkgroupMultiple = token;
         break;
+    case DATA_PARAMETER_IMPL_ARG_BUFFER:
+        out.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset = token;
+        break;
 
     case DATA_PARAMETER_NUM_HARDWARE_THREADS:
     case DATA_PARAMETER_PRINTF_SURFACE_SIZE:
@@ -300,6 +303,7 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_EXECUTION_MASK:
     case DATA_PARAMETER_VME_IMAGE_TYPE:
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
+    case DATA_PARAMETER_LOCAL_ID_BUFFER:
         // ignored intentionally
         break;
     }

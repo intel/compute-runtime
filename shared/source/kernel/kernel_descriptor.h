@@ -266,6 +266,7 @@ struct KernelDescriptor {
             CrossThreadDataOffset preferredWkgMultiple = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset localMemoryStatelessWindowSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset localMemoryStatelessWindowStartAddres = undefined<CrossThreadDataOffset>;
+            CrossThreadDataOffset implcitArgsBuffer = undefined<CrossThreadDataOffset>;
         } implicitArgs;
 
         std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;

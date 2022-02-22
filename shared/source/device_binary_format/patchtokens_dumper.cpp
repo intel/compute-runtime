@@ -135,6 +135,7 @@ std::string asString(DATA_PARAMETER_TOKEN dataParameter) {
         CASE_TOK_STR(DATA_PARAMETER_STAGE_IN_GRID_SIZE);
         CASE_TOK_STR(DATA_PARAMETER_BUFFER_OFFSET);
         CASE_TOK_STR(DATA_PARAMETER_BUFFER_STATEFUL);
+        CASE_TOK_STR(DATA_PARAMETER_IMPL_ARG_BUFFER);
     }
 }
 #undef CASE_TOK_STR
@@ -764,6 +765,7 @@ std::string asString(const KernelFromPatchtokens &kern) {
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple, "", stream, indentLevel1);
     dumpVecIfNotEmpty(kern.tokens.crossThreadPayloadArgs.childBlockSimdSize, "Child block simd size(s)", stream, indentLevel1);
+    dumpOrNull(kern.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset, "", stream, indentLevel1);
 
     if (kern.tokens.kernelArgs.size() != 0) {
         stream << "Kernel arguments [" << kern.tokens.kernelArgs.size() << "] :\n";
