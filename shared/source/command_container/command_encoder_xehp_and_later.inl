@@ -76,6 +76,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData, sizePerThreadData);
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
+    auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();
     bool inlineDataProgramming = EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(kernelDescriptor);
     {
         auto alloc = args.dispatchInterface->getIsaAllocation();
@@ -160,7 +161,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
-    uint32_t sizeForImplicitArgsPatching = args.dispatchInterface->getSizeForImplicitArgsPatching();
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     {
         auto heap = container.getIndirectHeap(HeapType::INDIRECT_OBJECT);
@@ -174,7 +175,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         if (pImplicitArgs) {
             offsetThreadData -= sizeof(ImplicitArgs);
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
-            args.dispatchInterface->patchImplicitArgs(ptr);
+            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, hwInfo, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder));
         }
 
         if (sizeCrossThreadData > 0) {
@@ -231,7 +232,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                    localIdsGenerationByRuntime,
                                                    inlineDataProgramming,
                                                    args.isIndirect,
-                                                   args.dispatchInterface->getRequiredWorkgroupOrder());
+                                                   requiredWorkgroupOrder);
 
     using POSTSYNC_DATA = typename Family::POSTSYNC_DATA;
     auto &postSync = walkerCmd.getPostSync();

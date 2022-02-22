@@ -403,6 +403,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool requiresMemoryMigration() const { return migratableArgsMap.size() > 0; }
     const std::map<uint32_t, MemObj *> &getMemObjectsToMigrate() const { return migratableArgsMap; }
     ImplicitArgs *getImplicitArgs() const { return pImplicitArgs.get(); }
+    const HardwareInfo &getHardwareInfo() const;
 
   protected:
     void
@@ -425,8 +426,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
-
-    const HardwareInfo &getHardwareInfo() const;
 
     const ClDevice &getDevice() const {
         return clDevice;

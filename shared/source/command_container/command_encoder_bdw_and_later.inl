@@ -129,7 +129,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData, sizePerThreadData);
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
-    uint32_t sizeForImplicitArgsPatching = args.dispatchInterface->getSizeForImplicitArgsPatching();
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     uint64_t offsetThreadData = 0u;
     {
@@ -144,7 +144,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         if (pImplicitArgs) {
             offsetThreadData -= sizeof(ImplicitArgs);
             pImplicitArgs->localIdTablePtr = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - iohRequiredSize;
-            args.dispatchInterface->patchImplicitArgs(ptr);
+            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, hwInfo, {});
         }
 
         memcpy_s(ptr, sizeCrossThreadData,

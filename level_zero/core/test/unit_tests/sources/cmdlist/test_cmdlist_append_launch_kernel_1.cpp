@@ -648,6 +648,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
     kernel.pImplicitArgs.reset(new ImplicitArgs());
 
     kernel.setGroupSize(1, 1, 1);
+
+    auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), neoDevice->getHardwareInfo());
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
 
@@ -661,7 +664,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
                                                      nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto heap = commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT);
-    uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + kernel.getSizeForImplicitArgsPatching() - sizeof(ImplicitArgs);
+    uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + implicitArgsProgrammingSize - sizeof(ImplicitArgs);
     auto workDimStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     workDimStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R0);
     workDimStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA);

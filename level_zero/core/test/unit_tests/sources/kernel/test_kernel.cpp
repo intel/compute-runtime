@@ -2357,33 +2357,6 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, sizeof(ImplicitArgs)));
 }
 
-TEST_F(KernelImplicitArgTests, givenKernelWithoutImplicitArgsWhenPatchingImplicitArgsThenNothingHappens) {
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
-
-    auto kernel = std::make_unique<MockKernel>(module.get());
-
-    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernel->initialize(&kernelDesc);
-    EXPECT_EQ(nullptr, kernel->getImplicitArgs());
-
-    uint8_t initData[64]{};
-    uint8_t data[64]{};
-    int pattern = 0xcd;
-    memset(data, pattern, 64);
-    memset(initData, pattern, 64);
-
-    EXPECT_EQ(0u, kernel->getSizeForImplicitArgsPatching());
-    void *dataPtr = data;
-    kernel->patchImplicitArgs(dataPtr);
-
-    EXPECT_EQ(dataPtr, data);
-
-    EXPECT_EQ(0, memcmp(data, initData, 64));
-}
-
 using MultiTileModuleTest = Test<MultiTileModuleFixture>;
 
 HWTEST2_F(MultiTileModuleTest, GivenMultiTileDeviceWhenSettingKernelArgAndSurfaceStateThenMultiTileFlagsAreSetCorrectly, IsXeHpCore) {

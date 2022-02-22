@@ -1013,44 +1013,4 @@ uint32_t KernelImp::getSchedulingHintExp() {
     }
     return this->schedulingHintExpFlag;
 }
-
-uint32_t KernelImp::getSizeForImplicitArgsPatching() const {
-    if (!pImplicitArgs) {
-        return 0;
-    }
-    auto implicitArgsSize = static_cast<uint32_t>(sizeof(NEO::ImplicitArgs));
-    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
-    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
-    auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize, this->module->getDevice()->getHwInfo().capabilityTable.grfSize);
-    Vec3<size_t> groupSize{this->groupSize[0], this->groupSize[1], this->groupSize[2]};
-    auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
-    uint32_t localIdsSizeNeeded =
-        alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                    simdSize, grfSize, 3u, itemsInGroup)),
-                MemoryConstants::cacheLineSize);
-    return implicitArgsSize + localIdsSizeNeeded;
-}
-
-void KernelImp::patchImplicitArgs(void *&pOut) const {
-    if (!pImplicitArgs) {
-        return;
-    }
-    const auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
-    auto simdSize = kernelAttributes.simdSize;
-    auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize, this->module->getDevice()->getHwInfo().capabilityTable.grfSize);
-    auto dimensionOrder = NEO::ImplicitArgsHelper::getDimensionOrderForLocalIds(kernelAttributes.workgroupDimensionsOrder, kernelRequiresGenerationOfLocalIdsByRuntime, requiredWorkgroupOrder);
-
-    NEO::generateLocalIDs(
-        pOut,
-        simdSize,
-        std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSize[0]),
-                                 static_cast<uint16_t>(groupSize[1]),
-                                 static_cast<uint16_t>(groupSize[2])}},
-        dimensionOrder,
-        false, grfSize);
-    auto sizeForLocalIdsProgramming = getSizeForImplicitArgsPatching() - sizeof(NEO::ImplicitArgs);
-    pOut = ptrOffset(pOut, sizeForLocalIdsProgramming);
-    memcpy_s(pOut, sizeof(NEO::ImplicitArgs), pImplicitArgs.get(), sizeof(NEO::ImplicitArgs));
-    pOut = ptrOffset(pOut, sizeof(NEO::ImplicitArgs));
-}
 } // namespace L0

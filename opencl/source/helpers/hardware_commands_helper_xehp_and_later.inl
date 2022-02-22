@@ -101,9 +101,32 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        auto implicitArgsSize = static_cast<uint32_t>(sizeof(ImplicitArgs));
-        dest = static_cast<char *>(indirectHeap.getSpace(implicitArgsSize));
-        memcpy_s(dest, implicitArgsSize, pImplicitArgs, implicitArgsSize);
+        pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
+
+        const auto &kernelDescriptor = kernel.getDescriptor();
+        const auto &hwInfo = kernel.getHardwareInfo();
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
+
+        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
+        offsetCrossThreadData += sizeForLocalIdsProgramming;
+
+        auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
+
+        const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
+        uint32_t requiredWalkOrder = 0u;
+        size_t localWorkSize[3] = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
+        auto generationOfLocalIdsByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+            3,
+            localWorkSize,
+            std::array<uint8_t, 3>{
+                {kernelAttributes.workgroupWalkOrder[0],
+                 kernelAttributes.workgroupWalkOrder[1],
+                 kernelAttributes.workgroupWalkOrder[2]}},
+            kernelAttributes.flags.requiresWorkgroupWalkOrder,
+            requiredWalkOrder,
+            kernelDescriptor.kernelAttributes.simdSize);
+
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, hwInfo, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder));
     }
 
     using InlineData = typename GfxFamily::INLINE_DATA;

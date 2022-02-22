@@ -117,9 +117,18 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        auto implicitArgsSize = static_cast<uint32_t>(sizeof(ImplicitArgs));
-        pDest = static_cast<char *>(indirectHeap.getSpace(implicitArgsSize));
-        memcpy_s(pDest, implicitArgsSize, pImplicitArgs, implicitArgsSize);
+        pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
+
+        const auto &kernelDescriptor = kernel.getDescriptor();
+        const auto &hwInfo = kernel.getHardwareInfo();
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
+
+        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
+        offsetCrossThreadData += sizeForLocalIdsProgramming;
+
+        auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
+
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, hwInfo, {});
     }
 
     pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));

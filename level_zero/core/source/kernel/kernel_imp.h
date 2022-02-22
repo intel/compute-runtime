@@ -154,8 +154,6 @@ struct KernelImp : Kernel {
     uint32_t getSchedulingHintExp();
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
-    uint32_t getSizeForImplicitArgsPatching() const override;
-    void patchImplicitArgs(void *&pOut) const override;
 
   protected:
     KernelImp() = default;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,6 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     }
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return nullptr; }
-    uint32_t getSizeForImplicitArgsPatching() const override { return 0; }
-    void patchImplicitArgs(void *&pOut) const override {}
 
     MockGraphicsAllocation mockAllocation{};
     static constexpr uint32_t crossThreadSize = 0x40;
