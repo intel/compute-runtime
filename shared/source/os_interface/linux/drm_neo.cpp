@@ -34,8 +34,6 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
 
-#include "drm_query_flags.h"
-
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
@@ -1007,7 +1005,7 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 
 bool Drm::querySystemInfo() {
     auto request = ioctlHelper->getHwConfigIoctlVal();
-    auto deviceBlobQuery = this->query(request, DrmQueryItemFlags::empty);
+    auto deviceBlobQuery = this->query(request, 0);
     if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
         return false;
@@ -1017,7 +1015,7 @@ bool Drm::querySystemInfo() {
 }
 
 std::vector<uint8_t> Drm::getMemoryRegions() {
-    return this->query(ioctlHelper->getMemRegionsIoctlVal(), DrmQueryItemFlags::empty);
+    return this->query(ioctlHelper->getMemRegionsIoctlVal(), 0);
 }
 
 bool Drm::queryMemoryInfo() {
@@ -1031,7 +1029,7 @@ bool Drm::queryMemoryInfo() {
 }
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), DrmQueryItemFlags::empty);
+    auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), 0);
     if (enginesQuery.empty()) {
         return false;
     }
@@ -1186,7 +1184,7 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
 
     // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
 
-    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, DrmQueryItemFlags::topology);
+    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, 0);
     if (dataQuery.empty()) {
         return false;
     }

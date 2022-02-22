@@ -724,8 +724,6 @@ include_directories(${NEO_SOURCE_DIR}/opencl/source/mem_obj/definitions${BRANCH_
 include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${BRANCH_DIR_SUFFIX})
 if(MSVC)
   include_directories(${NEO_SOURCE_DIR}/opencl/source/sharings/gl/windows/include)
-else()
-  include_directories(${NEO_SHARED_DIRECTORY}/os_interface/linux/flags${BRANCH_DIR_SUFFIX})
 endif()
 
 macro(macro_for_each_core_type)
