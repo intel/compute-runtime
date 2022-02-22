@@ -8,6 +8,7 @@
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "device_ids_configs.h"
 #include "hw_cmds.h"
 #include "platforms.h"
 
@@ -49,6 +50,7 @@ struct DeviceProduct {
 struct DeviceMapping {
     PRODUCT_CONFIG config;
     const NEO::HardwareInfo *hwInfo;
+    const std::vector<unsigned short> *deviceIds;
     void (*setupHardwareInfo)(NEO::HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     unsigned int revId;
 
@@ -109,7 +111,7 @@ class OclocArgHelper {
     void setDeviceInfoForFatbinaryTarget(const DeviceMapping &device);
     void setHwInfoForFatbinaryTarget(NEO::HardwareInfo &hwInfo);
     std::vector<PRODUCT_CONFIG> getAllSupportedProductConfigs();
-    std::vector<DeviceMapping> getAllSupportedDeviceConfigs();
+    std::vector<DeviceMapping> &getAllSupportedDeviceConfigs();
     std::vector<uint32_t> getMajorMinorRevision(const std::string &device);
     uint32_t getProductConfig(std::vector<uint32_t> &numeration);
     uint32_t getMaskForConfig(std::vector<uint32_t> &numeration);

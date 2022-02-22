@@ -489,6 +489,28 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenPassedValuesAreOutOfRangeT
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
+TEST_F(OfflineCompilerTests, givenInitHardwareInfowhenDeviceConfigContainsDeviceIdsThenSetFirstDeviceId) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::vector<unsigned short> deviceIdsForTests = {0xfffd, 0xfffe, 0xffff};
+
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            mockOfflineCompiler.deviceName = mockOfflineCompiler.argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+            deviceMapConfig.deviceIds = &deviceIdsForTests;
+            break;
+        }
+    }
+
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.eProductFamily, productFamily);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceIdsForTests.front());
+}
+
 TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenInvalidDeviceIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
