@@ -1,14 +1,23 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_ENGINE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}os_engine_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.h
 )
+
+if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND L0_SRCS_TOOLS_SYSMAN_ENGINE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp_prelim.cpp
+  )
+else()
+  list(APPEND L0_SRCS_TOOLS_SYSMAN_ENGINE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/os_engine_imp.cpp
+  )
+endif()
 
 if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
