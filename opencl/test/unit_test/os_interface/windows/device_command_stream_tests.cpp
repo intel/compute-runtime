@@ -781,7 +781,8 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     graphicsAllocation->updateTaskCount(1, csr->getOsContext().getContextId());
     graphicsAllocation2->updateTaskCount(100, csr->getOsContext().getContextId());
 
-    csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
+    const auto firstWaitResult = csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(WaitStatus::Ready, firstWaitResult);
     // graphicsAllocation2 still lives
     EXPECT_EQ(host_ptr2, graphicsAllocation2->getUnderlyingBuffer());
 
@@ -797,8 +798,10 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
 
     auto fragment2 = hostPtrManager->getFragment({alignedPtr, csr->getRootDeviceIndex()});
     EXPECT_EQ(nullptr, fragment2);
+
     // destroy remaining allocation
-    csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);
+    const auto secondWaitResult = csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);
+    EXPECT_EQ(WaitStatus::Ready, secondWaitResult);
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledForResidencyAllocations) {

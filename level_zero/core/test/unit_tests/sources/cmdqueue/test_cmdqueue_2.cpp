@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"

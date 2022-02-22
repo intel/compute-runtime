@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -38,14 +39,14 @@ class AsyncEventsHandlerTests : public ::testing::Test {
             this->updateTaskCount(taskCount, 0);
         }
 
-        bool wait(bool blocking, bool quickKmdSleep) override {
+        WaitStatus wait(bool blocking, bool quickKmdSleep) override {
             waitCalled++;
             handler->allowAsyncProcess.store(false);
             return waitResult;
         }
 
         uint32_t waitCalled = 0u;
-        bool waitResult = true;
+        WaitStatus waitResult = WaitStatus::Ready;
         std::unique_ptr<MockHandler> handler;
     };
 

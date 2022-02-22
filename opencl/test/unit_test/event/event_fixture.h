@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -67,7 +68,7 @@ struct InternalsEventTest
 };
 
 struct MyUserEvent : public VirtualEvent {
-    bool wait(bool blocking, bool quickKmdSleep) override {
+    WaitStatus wait(bool blocking, bool quickKmdSleep) override {
         return VirtualEvent::wait(blocking, quickKmdSleep);
     };
     uint32_t getTaskLevel() override {

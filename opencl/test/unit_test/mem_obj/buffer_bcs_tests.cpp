@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -47,10 +48,12 @@ struct BcsBufferTests : public ::testing::Test {
             return WaitStatus::Ready;
         }
 
-        void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
+        WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
             EXPECT_EQ(1u, waitForTaskCountWithKmdNotifyFallbackCalled);
             EXPECT_EQ(this->latestFlushedTaskCount, requiredTaskCount);
             waitForTaskCountAndCleanAllocationListCalled++;
+
+            return WaitStatus::Ready;
         }
 
         uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;

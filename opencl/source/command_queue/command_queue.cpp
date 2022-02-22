@@ -229,8 +229,10 @@ bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState
     return false;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
+WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) {
     WAIT_ENTER()
+
+    WaitStatus waitStatus{WaitStatus::Ready};
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
@@ -238,10 +240,14 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEn
     if (!skipWait) {
         bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-        getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
-                                                                              flushStampToWait,
-                                                                              useQuickKmdSleep,
-                                                                              forcePowerSavingMode);
+        waitStatus = getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
+                                                                                           flushStampToWait,
+                                                                                           useQuickKmdSleep,
+                                                                                           forcePowerSavingMode);
+        if (waitStatus == WaitStatus::GpuHang) {
+            return WaitStatus::GpuHang;
+        }
+
         DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
         if (gtpinIsGTPinInitialized()) {
@@ -251,17 +257,25 @@ void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEn
 
     for (const CopyEngineState &copyEngine : copyEnginesToWait) {
         auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
-        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
+
+        waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+        if (waitStatus == WaitStatus::GpuHang) {
+            return WaitStatus::GpuHang;
+        }
+
+        waitStatus = bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
+        if (waitStatus == WaitStatus::GpuHang) {
+            return WaitStatus::GpuHang;
+        }
     }
 
-    if (cleanTemporaryAllocationList) {
-        getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
-    } else {
-        getGpgpuCommandStreamReceiver().waitForTaskCount(gpgpuTaskCountToWait);
-    }
+    waitStatus = cleanTemporaryAllocationList
+                     ? getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait)
+                     : getGpgpuCommandStreamReceiver().waitForTaskCount(gpgpuTaskCountToWait);
 
     WAIT_LEAVE()
+
+    return waitStatus;
 }
 
 bool CommandQueue::isQueueBlocked() {

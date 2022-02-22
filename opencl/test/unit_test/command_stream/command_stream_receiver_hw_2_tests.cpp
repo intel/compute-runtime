@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"

@@ -165,24 +165,29 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     makeResident(*gfxAllocation);
 }
 
-void CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
+WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
     if (address) {
-        baseWaitFunction(address, false, 0, requiredTaskCount);
+        return baseWaitFunction(address, false, 0, requiredTaskCount);
     }
+
+    return WaitStatus::Ready;
 }
 
-void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+    WaitStatus waitStatus{WaitStatus::Ready};
     auto &list = allocationUsage == TEMPORARY_ALLOCATION ? internalAllocationStorage->getTemporaryAllocations() : internalAllocationStorage->getAllocationsForReuse();
     if (!list.peekIsEmpty()) {
-        this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
+        waitStatus = this->CommandStreamReceiver::waitForTaskCount(requiredTaskCount);
     }
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
+
+    return waitStatus;
 }
 
-void CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) {
-    waitForTaskCountAndCleanAllocationList(requiredTaskCount, TEMPORARY_ALLOCATION);
-};
+WaitStatus CommandStreamReceiver::waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) {
+    return waitForTaskCountAndCleanAllocationList(requiredTaskCount, TEMPORARY_ALLOCATION);
+}
 
 void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) {
     if (commandStream.getAvailableSpace() >= minimumRequiredSize) {

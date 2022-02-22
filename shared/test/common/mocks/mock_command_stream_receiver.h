@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/flush_stamp.h"

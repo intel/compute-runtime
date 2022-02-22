@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class UserEvent : public Event {
 
     ~UserEvent() override = default;
 
-    bool wait(bool blocking, bool useQuickKmdSleep) override;
+    WaitStatus wait(bool blocking, bool useQuickKmdSleep) override;
 
     void updateExecutionStatus() override;
 
@@ -33,7 +33,7 @@ class VirtualEvent : public Event {
 
     ~VirtualEvent() override = default;
 
-    bool wait(bool blocking, bool useQuickKmdSleep) override;
+    WaitStatus wait(bool blocking, bool useQuickKmdSleep) override;
 
     bool setStatus(cl_int status) override;
 

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -131,7 +132,7 @@ TEST(UserEvent, GivenInitialUserEventStateWhenCheckingReadyForSubmissionThenFals
 TEST(UserEvent, GivenUserEventWhenGettingTaskLevelThenZeroIsReturned) {
     MyUserEvent uEvent;
     EXPECT_EQ(0U, uEvent.getTaskLevel());
-    EXPECT_FALSE(uEvent.wait(false, false));
+    EXPECT_EQ(WaitStatus::NotReady, uEvent.wait(false, false));
 }
 
 TEST(UserEvent, WhenSettingStatusThenReadyForSubmissionisTrue) {
@@ -952,7 +953,7 @@ TEST_F(EventTests, WhenWaitingForEventsThenTemporaryAllocationsAreDestroyed) {
 TEST_F(EventTest, WhenUserEventIsCreatedThenWaitIsNonBlocking) {
     UserEvent event;
     auto result = event.wait(false, false);
-    EXPECT_FALSE(result);
+    EXPECT_EQ(WaitStatus::NotReady, result);
 }
 
 TEST_F(EventTest, GivenSingleUserEventWhenWaitingForEventsThenSuccessIsReturned) {

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -409,7 +410,7 @@ TEST_F(EventTest, GivenInvalidEventWhenGettingEventInfoThenInvalidValueErrorIsRe
 TEST_F(EventTest, GivenNonBlockingEventWhenWaitingThenFalseIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, CompletionStamp::notReady);
     auto result = event.wait(false, false);
-    EXPECT_FALSE(result);
+    EXPECT_EQ(WaitStatus::NotReady, result);
 }
 
 struct UpdateEventTest : public ::testing::Test {
@@ -803,6 +804,38 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
     EXPECT_EQ(start, refStartTime);
 
     event.timeStampNode = nullptr;
+}
+
+TEST_F(InternalsEventTest, givenGpuHangWhenEventWaitReportsHangThenWaititingIsAbortedAndUnfinishedEventsHaveExecutionStatusEqualsToAbortedDueToGpuHang) {
+    MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
+
+    MockEvent<Event> passingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    passingEvent.waitReturnValue = WaitStatus::Ready;
+
+    MockEvent<Event> hangingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    hangingEvent.waitReturnValue = WaitStatus::GpuHang;
+
+    cl_event eventWaitlist[] = {&passingEvent, &hangingEvent};
+
+    const auto result = Event::waitForEvents(2, eventWaitlist);
+    EXPECT_EQ(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST, result);
+
+    EXPECT_NE(Event::executionAbortedDueToGpuHang, passingEvent.peekExecutionStatus());
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, hangingEvent.peekExecutionStatus());
+}
+
+TEST_F(InternalsEventTest, givenPassingEventWhenWaitingForEventsThenWaititingIsSuccessfulAndEventIsNotAborted) {
+    MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
+
+    MockEvent<Event> passingEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    passingEvent.waitReturnValue = WaitStatus::Ready;
+
+    cl_event eventWaitlist[] = {&passingEvent};
+
+    const auto result = Event::waitForEvents(1, eventWaitlist);
+    EXPECT_EQ(CL_SUCCESS, result);
+
+    EXPECT_NE(Event::executionAbortedDueToGpuHang, passingEvent.peekExecutionStatus());
 }
 
 TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
@@ -1520,7 +1553,9 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     event.updateCompletionStamp(1u, 0, 1u, 1u);
 
-    event.wait(true, true);
+    const auto result = event.wait(true, true);
+    EXPECT_EQ(WaitStatus::Ready, result);
+
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
@@ -1541,9 +1576,23 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     event.updateCompletionStamp(1u, 0, 1u, 1u);
 
-    event.wait(true, false);
+    const auto result = event.wait(true, false);
+    EXPECT_EQ(WaitStatus::Ready, result);
+
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+}
+
+HWTEST_F(EventTest, givenGpuHangWhenWaitIsCalledThenPassRequestToWaitingFunctionAndReturnGpuHang) {
+    auto csr = new TestEventCsr<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    csr->waitForCompletionWithTimeoutResult = WaitStatus::GpuHang;
+    pDevice->resetCommandStreamReceiver(csr);
+
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    const auto waitStatus = event.wait(true, false);
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
 }
 
 HWTEST_F(InternalsEventTest, givenCommandWhenSubmitCalledThenUpdateFlushStamp) {

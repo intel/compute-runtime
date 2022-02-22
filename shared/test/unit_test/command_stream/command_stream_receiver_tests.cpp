@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -23,6 +24,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/matchers.h"
@@ -263,6 +265,55 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndNoGpuHangWhen
 
     const auto waitStatus = csr.waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
     EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    volatile std::uint32_t tasksCount[16] = {};
+    csr.tagAddress = tasksCount;
+
+    constexpr auto taskCountToWait = 1;
+    const auto waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCallingWaitForTaskCountAndCleanAllocationListThenWaitIsCalledAndGpuHangIsReturned) {
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+    csr.activePartitions = 1;
+    csr.gpuHangCheckPeriod = 0us;
+
+    volatile std::uint32_t tasksCount[16] = {};
+    csr.tagAddress = tasksCount;
+
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    size_t size = 100;
+
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    temporaryAllocation->updateTaskCount(0u, 0u);
+    csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
+
+    constexpr auto taskCountToWait = 1;
+    constexpr auto allocationUsage = TEMPORARY_ALLOCATION;
+    const auto waitStatus = csr.waitForTaskCountAndCleanAllocationList(taskCountToWait, allocationUsage);
+
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {
@@ -1237,8 +1288,10 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
     CpuIntrinsicsTests::pauseOffset = csr.getPostSyncWriteOffset();
 
     CpuIntrinsicsTests::pauseCounter = 0;
-    csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
+
+    const auto waitStatus = csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
+    EXPECT_EQ(WaitStatus::Ready, waitStatus);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
 }
@@ -1261,8 +1314,10 @@ TEST(CommandStreamReceiverSimpleTest, givenEmptyTemporaryAllocationListWhenWaiti
     CpuIntrinsicsTests::pauseValue = 3u;
 
     CpuIntrinsicsTests::pauseCounter = 0;
-    csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
+
+    const auto waitStatus = csr.waitForTaskCountAndCleanTemporaryAllocationList(3u);
     EXPECT_EQ(0u, CpuIntrinsicsTests::pauseCounter);
+    EXPECT_EQ(WaitStatus::Ready, waitStatus);
 
     CpuIntrinsicsTests::pauseAddress = nullptr;
 }

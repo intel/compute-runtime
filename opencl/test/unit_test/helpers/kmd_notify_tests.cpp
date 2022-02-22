@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -127,6 +128,7 @@ struct KmdNotifyTests : public ::testing::Test {
 
 HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTryCpuPolling) {
     auto csr = createMockCsr<FamilyType>();
+
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
@@ -137,6 +139,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTr
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
     overrideKmdNotifyParams(false, 0, false, 0, false, 0, false, 0);
     auto csr = createMockCsr<FamilyType>();
+
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
     EXPECT_EQ(0u, csr->waitForFlushStampCalled);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
@@ -274,6 +277,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCal
     auto csr = createMockCsr<FamilyType>();
 
     cmdQ->throttle = QueueThrottle::LOW;
+
     cmdQ->waitUntilComplete(1, {}, 1, false);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
@@ -285,6 +289,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButTher
     auto csr = createMockCsr<FamilyType>();
 
     cmdQ->throttle = QueueThrottle::LOW;
+
     cmdQ->waitUntilComplete(1, {}, 0, false);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);

@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/common_types.h"
@@ -64,12 +65,6 @@ enum class DispatchMode {
     BatchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
-enum class WaitStatus {
-    NotReady = 0,
-    Ready = 1,
-    GpuHang = 2,
-};
-
 class CommandStreamReceiver {
   public:
     enum class SamplerCacheFlushState {
@@ -114,9 +109,9 @@ class CommandStreamReceiver {
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
 
-    MOCKABLE_VIRTUAL void waitForTaskCount(uint32_t requiredTaskCount);
-    void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
-    MOCKABLE_VIRTUAL void waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
+    MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(uint32_t requiredTaskCount);
+    WaitStatus waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
+    MOCKABLE_VIRTUAL WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;

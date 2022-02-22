@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,13 +24,13 @@ void UserEvent::updateExecutionStatus() {
     return;
 }
 
-bool UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
+WaitStatus UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
-            return false;
+            return WaitStatus::NotReady;
         }
     }
-    return true;
+    return WaitStatus::Ready;
 }
 
 uint32_t UserEvent::getTaskLevel() {
@@ -53,16 +53,15 @@ VirtualEvent::VirtualEvent(CommandQueue *cmdQ, Context *ctx)
 }
 
 void VirtualEvent::updateExecutionStatus() {
-    ;
 }
 
-bool VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
+WaitStatus VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
-            return false;
+            return WaitStatus::NotReady;
         }
     }
-    return true;
+    return WaitStatus::Ready;
 }
 
 uint32_t VirtualEvent::getTaskLevel() {

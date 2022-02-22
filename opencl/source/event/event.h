@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/performance_counters.h"
@@ -80,6 +81,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     };
 
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
+    static constexpr cl_int executionAbortedDueToGpuHang = -777;
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);
@@ -206,9 +208,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // adds a callback (execution state change listener) to this event's list of callbacks
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
 
-    //returns true on success
-    //if(blocking==false), will return with false instead of blocking while waiting for completion
-    virtual bool wait(bool blocking, bool useQuickKmdSleep);
+    //if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
+    virtual WaitStatus wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {
         return (CL_COMMAND_USER == cmdType);
@@ -346,6 +347,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     IFRefList<Event, true, true> childEventsToNotify;
     void unblockEventsBlockedByThis(int32_t transitionStatus);
     void submitCommand(bool abortBlockedTasks);
+
+    static void setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last);
 
     bool currentCmdQVirtualEvent;
     std::atomic<Command *> cmdToSubmit;

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/array_count.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -60,9 +61,9 @@ TEST_F(clEnqueueWaitForEventsTests, GivenProperParamsWhenClEnqueueWaitForEventsI
         MyEvent(Context *context)
             : UserEvent(context) {
         }
-        bool wait(bool blocking, bool quickKmdSleep) override {
+        WaitStatus wait(bool blocking, bool quickKmdSleep) override {
             wasWaitCalled = true;
-            return true;
+            return WaitStatus::Ready;
         };
         bool wasWaitCalled = false;
     };

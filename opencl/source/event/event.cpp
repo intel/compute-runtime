@@ -27,6 +27,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 Event::Event(
@@ -417,15 +419,18 @@ void Event::getBoundaryTimestampValues(TimestampPacketContainer *timestampContai
     }
 }
 
-inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
+inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     while (this->taskCount == CompletionStamp::notReady) {
         if (blocking == false) {
-            return false;
+            return WaitStatus::NotReady;
         }
     }
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
+    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
+    if (waitStatus == WaitStatus::GpuHang) {
+        return WaitStatus::GpuHang;
+    }
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
@@ -433,7 +438,7 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
     auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
 
-    return true;
+    return WaitStatus::Ready;
 }
 
 void Event::updateExecutionStatus() {
@@ -630,16 +635,23 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     // pointers to workerLists - for fast swap operations
     WorkerListT *currentlyPendingEvents = &workerList1;
     WorkerListT *pendingEventsLeft = &workerList2;
+    WaitStatus eventWaitStatus = WaitStatus::NotReady;
 
     while (currentlyPendingEvents->size() > 0) {
-        for (auto &e : *currentlyPendingEvents) {
-            Event *event = castToObjectOrAbort<Event>(e);
+        for (auto current = currentlyPendingEvents->begin(), end = currentlyPendingEvents->end(); current != end; ++current) {
+            Event *event = castToObjectOrAbort<Event>(*current);
             if (event->peekExecutionStatus() < CL_COMPLETE) {
                 return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             }
 
-            if (event->wait(false, false) == false) {
+            eventWaitStatus = event->wait(false, false);
+            if (eventWaitStatus == WaitStatus::NotReady) {
                 pendingEventsLeft->push_back(event);
+            } else if (eventWaitStatus == WaitStatus::GpuHang) {
+                setExecutionStatusToAbortedDueToGpuHang(pendingEventsLeft->begin(), pendingEventsLeft->end());
+                setExecutionStatusToAbortedDueToGpuHang(current, end);
+
+                return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             }
         }
 
@@ -648,6 +660,13 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     }
 
     return CL_SUCCESS;
+}
+
+inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last) {
+    std::for_each(first, last, [](cl_event &e) {
+        Event *event = castToObjectOrAbort<Event>(e);
+        event->transitionExecutionStatus(executionAbortedDueToGpuHang);
+    });
 }
 
 uint32_t Event::getTaskLevel() {
