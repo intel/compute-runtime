@@ -30,60 +30,7 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         builtinName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
         break;
-    case Builtin::CopyBufferRectBytes2d:
-        builtinName = "CopyBufferRectBytes2d";
-        builtin = NEO::EBuiltInOps::CopyBufferRect;
-        break;
-    case Builtin::CopyBufferRectBytes3d:
-        builtinName = "CopyBufferRectBytes3d";
-        builtin = NEO::EBuiltInOps::CopyBufferRect;
-        break;
-    case Builtin::CopyBufferToBufferMiddle:
-        builtinName = "CopyBufferToBufferMiddleRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-        break;
-    case Builtin::CopyBufferToBufferSide:
-        builtinName = "CopyBufferToBufferSideRegion";
-        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
-        break;
-    case Builtin::FillBufferImmediate:
-        builtinName = "FillBufferImmediate";
-        builtin = NEO::EBuiltInOps::FillBuffer;
-        break;
-    case Builtin::FillBufferSSHOffset:
-        builtinName = "FillBufferSSHOffset";
-        builtin = NEO::EBuiltInOps::FillBuffer;
-        break;
-    case Builtin::FillBufferMiddle:
-        builtinName = "FillBufferMiddle";
-        builtin = NEO::EBuiltInOps::FillBuffer;
-        break;
-    case Builtin::FillBufferRightLeftover:
-        builtinName = "FillBufferRightLeftover";
-        builtin = NEO::EBuiltInOps::FillBuffer;
-        break;
-    case Builtin::QueryKernelTimestamps:
-        builtinName = "QueryKernelTimestamps";
-        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
-        break;
-    case Builtin::QueryKernelTimestampsWithOffsets:
-        builtinName = "QueryKernelTimestampsWithOffsets";
-        builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
-        break;
-    default:
-        UNRECOVERABLE_IF(true);
-    };
-
-    auto builtId = static_cast<uint32_t>(func);
-    builtins[builtId] = loadBuiltIn(builtin, builtinName);
-}
-
-void BuiltinFunctionsLibImpl::initStatelessBuiltinKernel(Builtin func) {
-    const char *builtinName = nullptr;
-    NEO::EBuiltInOps::Type builtin;
-
-    switch (func) {
-    case Builtin::CopyBufferBytes:
+    case Builtin::CopyBufferBytesStateless:
         builtinName = "copyBufferToBufferBytesSingle";
         builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
         break;
@@ -97,25 +44,49 @@ void BuiltinFunctionsLibImpl::initStatelessBuiltinKernel(Builtin func) {
         break;
     case Builtin::CopyBufferToBufferMiddle:
         builtinName = "CopyBufferToBufferMiddleRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        break;
+    case Builtin::CopyBufferToBufferMiddleStateless:
+        builtinName = "CopyBufferToBufferMiddleRegion";
         builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
         break;
     case Builtin::CopyBufferToBufferSide:
+        builtinName = "CopyBufferToBufferSideRegion";
+        builtin = NEO::EBuiltInOps::CopyBufferToBuffer;
+        break;
+    case Builtin::CopyBufferToBufferSideStateless:
         builtinName = "CopyBufferToBufferSideRegion";
         builtin = NEO::EBuiltInOps::CopyBufferToBufferStateless;
         break;
     case Builtin::FillBufferImmediate:
         builtinName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferImmediateStateless:
+        builtinName = "FillBufferImmediate";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
     case Builtin::FillBufferSSHOffset:
+        builtinName = "FillBufferSSHOffset";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferSSHOffsetStateless:
         builtinName = "FillBufferSSHOffset";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
     case Builtin::FillBufferMiddle:
         builtinName = "FillBufferMiddle";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferMiddleStateless:
+        builtinName = "FillBufferMiddle";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
     case Builtin::FillBufferRightLeftover:
+        builtinName = "FillBufferRightLeftover";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferRightLeftoverStateless:
         builtinName = "FillBufferRightLeftover";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
@@ -202,15 +173,6 @@ Kernel *BuiltinFunctionsLibImpl::getFunction(Builtin func) {
     return builtins[builtId]->func.get();
 }
 
-Kernel *BuiltinFunctionsLibImpl::getStatelessFunction(Builtin func) {
-    auto builtId = static_cast<uint32_t>(func);
-
-    if (builtins[builtId].get() == nullptr) {
-        initStatelessBuiltinKernel(func);
-    }
-
-    return builtins[builtId]->func.get();
-}
 Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
     auto builtId = static_cast<uint32_t>(func);
 

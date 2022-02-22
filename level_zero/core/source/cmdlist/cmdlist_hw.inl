@@ -849,11 +849,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
 
     Kernel *builtinFunction = nullptr;
 
-    if (isStateless) {
-        builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(builtin);
-    } else {
-        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
-    }
+    builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
     uint32_t groupSizeX = builtinFunction->getImmutableData()
                               ->getDescriptor()
@@ -1099,6 +1095,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendEventForProfilingAllWalkers(hSignalEvent, true);
 
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
+        Builtin func = Builtin::CopyBufferToBufferSide;
+        if (isStateless) {
+            func = Builtin::CopyBufferToBufferSideStateless;
+        }
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
@@ -1108,12 +1108,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
                                                           srcAllocationStruct.alloc, srcAllocationStruct.offset,
                                                           leftSize, 1UL,
-                                                          Builtin::CopyBufferToBufferSide,
+                                                          func,
                                                           hSignalEvent,
                                                           isStateless);
     }
 
     if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
+        Builtin func = Builtin::CopyBufferToBufferMiddle;
+        if (isStateless) {
+            func = Builtin::CopyBufferToBufferMiddleStateless;
+        }
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
@@ -1124,12 +1128,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
                                                           middleSizeBytes,
                                                           middleElSize,
-                                                          Builtin::CopyBufferToBufferMiddle,
+                                                          func,
                                                           hSignalEvent,
                                                           isStateless);
     }
 
     if (ret == ZE_RESULT_SUCCESS && rightSize) {
+        Builtin func = Builtin::CopyBufferToBufferSide;
+        if (isStateless) {
+            func = Builtin::CopyBufferToBufferSideStateless;
+        }
         ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                                   dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
                                                   srcAllocationStruct.alignedAllocationPtr,
@@ -1139,7 +1147,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
                                                           srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
                                                           rightSize, 1UL,
-                                                          Builtin::CopyBufferToBufferSide,
+                                                          func,
                                                           hSignalEvent,
                                                           isStateless);
     }
@@ -1450,7 +1458,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         Kernel *builtinFunction = nullptr;
 
         if (isStateless) {
-            builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferImmediate);
+            builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediateStateless);
         } else {
             builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferImmediate);
         }
@@ -1495,7 +1503,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         Kernel *builtinFunction = nullptr;
         if (isStateless) {
-            builtinFunction = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferMiddle);
+            builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddleStateless);
         } else {
             builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferMiddle);
         }
@@ -1555,7 +1563,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
             Kernel *builtinFunctionRemainder;
             if (isStateless) {
-                builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getStatelessFunction(Builtin::FillBufferRightLeftover);
+                builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftoverStateless);
             } else {
                 builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,17 +40,11 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         };
     }
 
-    void initStatelessBuiltinKernel(Builtin func) override {
-    }
     void initBuiltinImageKernel(ImageBuiltin func) override {
     }
 
     Kernel *getFunction(Builtin func) override {
         return func == Builtin::QueryKernelTimestampsWithOffsets ? builtins[1]->func.get() : builtins[0]->func.get();
-    }
-
-    Kernel *getStatelessFunction(Builtin func) override {
-        return nullptr;
     }
 
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {

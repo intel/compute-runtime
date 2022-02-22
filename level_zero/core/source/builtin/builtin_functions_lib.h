@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,21 @@ struct Kernel;
 
 enum class Builtin : uint32_t {
     CopyBufferBytes = 0u,
+    CopyBufferBytesStateless,
     CopyBufferRectBytes2d,
     CopyBufferRectBytes3d,
     CopyBufferToBufferMiddle,
+    CopyBufferToBufferMiddleStateless,
     CopyBufferToBufferSide,
+    CopyBufferToBufferSideStateless,
     FillBufferImmediate,
+    FillBufferImmediateStateless,
     FillBufferSSHOffset,
+    FillBufferSSHOffsetStateless,
     FillBufferMiddle,
+    FillBufferMiddleStateless,
     FillBufferRightLeftover,
+    FillBufferRightLeftoverStateless,
     QueryKernelTimestamps,
     QueryKernelTimestampsWithOffsets,
     COUNT
@@ -55,10 +62,8 @@ struct BuiltinFunctionsLib {
                                                        NEO::BuiltIns *builtins);
 
     virtual Kernel *getFunction(Builtin func) = 0;
-    virtual Kernel *getStatelessFunction(Builtin func) = 0;
     virtual Kernel *getImageFunction(ImageBuiltin func) = 0;
     virtual void initBuiltinKernel(Builtin builtId) = 0;
-    virtual void initStatelessBuiltinKernel(Builtin builtId) = 0;
     virtual void initBuiltinImageKernel(ImageBuiltin func) = 0;
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
