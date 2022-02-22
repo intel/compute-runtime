@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ const std::string minValFreqFile("gt/gt0/rps_RPn_freq_mhz");
 
 const std::string minFreqFileLegacy("gt_min_freq_mhz");
 const std::string maxFreqFileLegacy("gt_max_freq_mhz");
-const std::string requestFreqFileLegacy("punit_req_freq_mhz");
+const std::string requestFreqFileLegacy("gt_cur_freq_mhz");
 const std::string tdpFreqFileLegacy("rapl_PL1_freq_mhz");
 const std::string actualFreqFileLegacy("gt_act_freq_mhz");
 const std::string efficientFreqFileLegacy("gt_RP1_freq_mhz");

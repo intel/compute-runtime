@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,7 +298,7 @@ void LinuxFrequencyImp::init() {
     } else {
         minFreqFile = "gt_min_freq_mhz";
         maxFreqFile = "gt_max_freq_mhz";
-        requestFreqFile = "punit_req_freq_mhz";
+        requestFreqFile = "gt_cur_freq_mhz";
         tdpFreqFile = "rapl_PL1_freq_mhz";
         actualFreqFile = "gt_act_freq_mhz";
         efficientFreqFile = "gt_RP1_freq_mhz";
