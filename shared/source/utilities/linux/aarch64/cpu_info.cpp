@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,9 @@
 namespace NEO {
 
 void cpuid_linux_wrapper(int cpuInfo[4], int functionId) {
-    // TODO: need aarch64 implementation
 }
 
 void cpuidex_linux_wrapper(int *cpuInfo, int functionId, int subfunctionId) {
-    // TODO: need aarch64 implementation
 }
 
 void get_cpu_flags_linux(std::string &cpuFlags) {
