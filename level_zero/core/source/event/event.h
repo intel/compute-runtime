@@ -197,8 +197,9 @@ struct EventPool : _ze_event_pool_handle_t {
     virtual void setEventAlignment(uint32_t) = 0;
 
     bool isEventPoolTimestampFlagSet() {
-        if (NEO::DebugManager.flags.DisableTimestampEvents.get()) {
-            return false;
+        if (NEO::DebugManager.flags.OverrideTimestampEvents.get() != -1) {
+            auto timestampOverride = !!NEO::DebugManager.flags.OverrideTimestampEvents.get();
+            return timestampOverride;
         }
         if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             return true;

@@ -66,7 +66,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableMultiGpuAtomicsOptimization, true, "Enable mu
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForHeaps, false, "When set driver will not cache heaps in L3/L1.")
 DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "false: disable (default), true: enable. If set then global sequencer flash is added for blitter")
 DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use IMM data write mode as post sync operation in Compute Walker")
-DECLARE_DEBUG_VARIABLE(bool, DisableTimestampEvents, false, "Timestamp info will not be reported and events will only perform regular synchronization functions")
 DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging in GMM")
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "true: driver stops freeing resources")
 DECLARE_DEBUG_VARIABLE(bool, AllowMixingRegularAndCooperativeKernels, false, "true: driver allows mixing regular and cooperative kernels in a single command list and in a single execute")
@@ -192,6 +191,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabl
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularites - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndex, -1, "-1: default, >=0: PatIndex to override")
 DECLARE_DEBUG_VARIABLE(int32_t, UseTileMemoryBankInVirtualMemoryCreation, -1, "-1: default - on, 0: do not assign tile memory bank to virtual memory space, 1: assign tile memory bank to virtual memory space")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampEvents, -1, "-1: default (based on user settings), 0: Force disable timestamp events (no timestamps will be reported), 1: Force enable timestamp events")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

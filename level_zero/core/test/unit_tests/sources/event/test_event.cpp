@@ -182,9 +182,9 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithNoTimestampFlagThenHasTimestamp
     EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
 }
 
-TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndDisableTimestampEventsFlagThenHasTimestampEventsReturnsFalse) {
+TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsFalse) {
     DebugManagerStateRestore restore;
-    NEO::DebugManager.flags.DisableTimestampEvents.set(1);
+    NEO::DebugManager.flags.OverrideTimestampEvents.set(0);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -196,6 +196,22 @@ TEST_F(EventPoolCreate, givenEventPoolCreatedWithTimestampFlagAndDisableTimestam
     ASSERT_NE(nullptr, eventPool);
     EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
     EXPECT_FALSE(eventPoolImp->isEventPoolTimestampFlagSet());
+}
+
+TEST_F(EventPoolCreate, givenEventPoolCreatedWithoutTimestampFlagAndOverrideTimestampEventsFlagThenHasTimestampEventsReturnsTrue) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideTimestampEvents.set(1);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+    EventPoolImp *eventPoolImp = static_cast<EventPoolImp *>(eventPool.get());
+    EXPECT_TRUE(eventPoolImp->isEventPoolTimestampFlagSet());
 }
 
 TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
