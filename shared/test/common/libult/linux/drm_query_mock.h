@@ -38,12 +38,12 @@ class DrmQueryMock : public DrmMock {
     }
 
     DrmMockPrelimContext context{
-        .hwInfo = nullptr,
-        .rootDeviceEnvironment = rootDeviceEnvironment,
-        .cacheInfo = getCacheInfo(),
-        .failRetTopology = failRetTopology,
-        .supportedCopyEnginesMask = supportedCopyEnginesMask,
-        .contextDebugSupported = contextDebugSupported,
+        nullptr,
+        rootDeviceEnvironment,
+        getCacheInfo(),
+        failRetTopology,
+        supportedCopyEnginesMask,
+        contextDebugSupported,
     };
 
     static constexpr uint32_t maxEngineCount{9};

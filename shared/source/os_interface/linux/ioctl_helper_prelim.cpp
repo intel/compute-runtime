@@ -485,8 +485,8 @@ UuidRegisterResult IoctlHelperPrelim20::registerUuid(Drm *drm, const std::string
     const auto retVal = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_UUID_REGISTER, &uuidControl);
 
     return {
-        .retVal = retVal,
-        .handle = uuidControl.handle,
+        retVal,
+        uuidControl.handle,
     };
 }
 
