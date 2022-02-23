@@ -7,6 +7,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "patchtokens_tests.h"
@@ -1209,4 +1210,28 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
     EXPECT_TRUE(decodedProgram.unhandledTokens.empty());
     EXPECT_EQ(2U, decodedProgram.header->NumberOfKernels);
     EXPECT_EQ(1U, decodedProgram.kernels.size());
+}
+
+TEST(ProgramDecoder, givenPatchTokenInterfaceDescriptorDataWhenFlagPrintDebugMessagesAndDecodeTokenThenRightMessagePrinted) {
+    using namespace iOpenCL;
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    std::vector<uint8_t> storage;
+    storage.reserve(512);
+    auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
+    pushBackToken<SPatchInterfaceDescriptorData>(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, storage);
+
+    auto kernelHeader = reinterpret_cast<iOpenCL::SKernelBinaryHeaderCommon *>(storage.data());
+    kernelHeader->PatchListSize = static_cast<uint32_t>(storage.size() - patchListOffset);
+    NEO::PatchTokenBinary::KernelFromPatchtokens decodedKernel;
+    testing::internal::CaptureStderr();
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeKernelFromPatchtokensBlob(storage, decodedKernel);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(decodeSuccess);
+    EXPECT_EQ(NEO::DecodeError::Success, decodedKernel.decodeStatus);
+    EXPECT_EQ("Ignored kernel-scope Patch Token: 21\n", output);
 }

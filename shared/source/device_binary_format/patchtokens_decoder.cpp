@@ -317,6 +317,9 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         out.unhandledTokens.push_back(token);
         break;
     }
+    case PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA:
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Ignored kernel-scope Patch Token: %d\n", token->Token);
+        break;
     case PATCH_TOKEN_SAMPLER_STATE_ARRAY:
         assignToken(out.tokens.samplerStateArray, token);
         break;
