@@ -4792,6 +4792,19 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWithoutLocalMemoryAndCpuPtrWhe
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenNullDefaultAllocWhenCreateGraphicsAllocationFromExistingStorageThenDoNotImportHandle) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+    mock->ioctl_expected.primeFdToHandle = 0;
+
+    MockAllocationProperties properties(0u, 1u);
+    MultiGraphicsAllocation allocation(0u);
+    auto alloc = memoryManager.createGraphicsAllocationFromExistingStorage(properties, nullptr, allocation);
+
+    EXPECT_NE(alloc, nullptr);
+
+    memoryManager.freeGraphicsMemory(alloc);
+}
+
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

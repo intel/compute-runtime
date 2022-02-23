@@ -826,7 +826,7 @@ void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) {
     auto defaultAlloc = multiGraphicsAllocation.getDefaultGraphicsAllocation();
-    if (static_cast<DrmAllocation *>(defaultAlloc)->getMmapPtr()) {
+    if (defaultAlloc && static_cast<DrmAllocation *>(defaultAlloc)->getMmapPtr()) {
         properties.size = defaultAlloc->getUnderlyingBufferSize();
         properties.gpuAddress = castToUint64(ptr);
 

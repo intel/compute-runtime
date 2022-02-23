@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,7 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 /* cl_mem_properties_intel */
 #define CL_MEM_ALLOC_FLAGS_INTEL 0x4195
+#define CL_MEM_ALLOC_USE_HOST_PTR_INTEL 0x1000F
 
 /* cl_mem_alloc_flags_intel - bitfield */
 #define CL_MEM_ALLOC_DEFAULT_INTEL 0

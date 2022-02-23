@@ -147,9 +147,7 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
     return allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), sizeWithPadding, AllocationType::INTERNAL_HOST_MEMORY, systemMemoryBitfield});
 }
 
-void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
-    void *ptr = nullptr;
-
+void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr) {
     properties.flags.forceSystemMemory = true;
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         if (multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)) {
@@ -528,7 +526,8 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.flags.shareable || allocationData.flags.isUSMDeviceMemory) {
         return allocateMemoryByKMD(allocationData);
     }
-    if (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex) || isNonSvmBuffer(allocationData.hostPtr, allocationData.type, allocationData.rootDeviceIndex)) {
+    if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&
+        (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex) || isNonSvmBuffer(allocationData.hostPtr, allocationData.type, allocationData.rootDeviceIndex))) {
         auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
         if (allocation) {
             allocation->setFlushL3Required(allocationData.flags.flushL3);
