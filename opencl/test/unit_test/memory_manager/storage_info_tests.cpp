@@ -439,7 +439,7 @@ TEST_F(MultiDeviceStorageInfoTest, givenGpuTimestampAllocationWhenUsingSingleTil
                                     singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
-    EXPECT_FALSE(storageInfo.cloningOfPageTables);
+    EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_FALSE(storageInfo.tileInstanced);
     EXPECT_EQ(singleTileMask, storageInfo.pageTablesVisibility);
 }

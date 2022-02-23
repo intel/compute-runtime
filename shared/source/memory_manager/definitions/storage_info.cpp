@@ -102,11 +102,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         }
         break;
     case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
-        if (properties.flags.multiOsContextCapable) {
-            storageInfo.cloningOfPageTables = true;
-        } else {
+        storageInfo.cloningOfPageTables = true;
+        if (!properties.flags.multiOsContextCapable) {
             storageInfo.pageTablesVisibility = preferredTile;
-            storageInfo.cloningOfPageTables = false;
         }
         break;
     case AllocationType::BUFFER:
