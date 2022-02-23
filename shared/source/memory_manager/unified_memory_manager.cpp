@@ -73,7 +73,7 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
 void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
                                                                   ResidencyContainer &residencyContainer,
                                                                   uint32_t requestedTypesMask) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (rootDeviceIndex >= allocation.second.gpuAllocations.getGraphicsAllocations().size()) {
             continue;
@@ -90,7 +90,7 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
 }
 
 void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (allocation.second.memoryType & requestedTypesMask) {
             auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
@@ -163,7 +163,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(this->allocationsCounter++);
 
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
 
     return usmPtr;
@@ -227,7 +227,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(this->allocationsCounter++);
 
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
 }
@@ -309,7 +309,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(this->allocationsCounter++);
 
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return allocationGpu->getUnderlyingBuffer();
 }
@@ -320,17 +320,17 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
 }
 
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::shared_lock<std::shared_mutex> lock(mtx);
     return SVMAllocs.get(ptr);
 }
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     SVMAllocs.insert(svmAllocData);
 }
 
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     SVMAllocs.remove(svmAllocData);
 }
 
@@ -355,7 +355,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
         if (pageFaultManager) {
             pageFaultManager->removeAllocation(ptr);
         }
-        std::unique_lock<SpinLock> lock(mtx);
+        std::unique_lock<std::shared_mutex> lock(mtx);
         if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
             freeZeroCopySvmAllocation(svmData);
         } else {
@@ -396,7 +396,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     }
     allocData.size = size;
 
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return usmPtr;
 }
@@ -460,7 +460,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.size = size;
     allocData.setAllocId(this->allocationsCounter++);
 
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return svmPtr;
 }
@@ -485,7 +485,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
 }
 
 bool SVMAllocsManager::hasHostAllocations() {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::shared_lock<std::shared_mutex> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (allocation.second.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
             return true;
@@ -495,7 +495,7 @@ bool SVMAllocsManager::hasHostAllocations() {
 }
 
 void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     bool parseAllAllocations = false;
     auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);
 
@@ -527,7 +527,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
 }
 
 void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     if (this->indirectAllocationsResidency.size() > 0u) {
         for (auto &internalAllocationsHandling : this->indirectAllocationsResidency) {
             auto commandStreamReceiver = internalAllocationsHandling.first;
@@ -543,7 +543,7 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
 }
 
 SvmMapOperation *SVMAllocsManager::getSvmMapOperation(const void *ptr) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::shared_lock<std::shared_mutex> lock(mtx);
     return svmMapOperations.get(ptr);
 }
 
@@ -554,12 +554,12 @@ void SVMAllocsManager::insertSvmMapOperation(void *regionSvmPtr, size_t regionSi
     svmMapOperation.offset = offset;
     svmMapOperation.regionSize = regionSize;
     svmMapOperation.readOnlyMap = readOnlyMap;
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     svmMapOperations.insert(svmMapOperation);
 }
 
 void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
-    std::unique_lock<SpinLock> lock(mtx);
+    std::unique_lock<std::shared_mutex> lock(mtx);
     svmMapOperations.remove(regionSvmPtr);
 }
 

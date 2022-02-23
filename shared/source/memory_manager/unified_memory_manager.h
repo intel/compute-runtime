@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <set>
+#include <shared_mutex>
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -172,7 +173,7 @@ class SVMAllocsManager {
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;
     MemoryManager *memoryManager;
-    SpinLock mtx;
+    std::shared_mutex mtx;
     bool multiOsContextSupport;
 };
 } // namespace NEO
