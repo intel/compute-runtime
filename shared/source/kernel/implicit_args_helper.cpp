@@ -45,15 +45,20 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         return 0;
     }
     auto implicitArgsSize = static_cast<uint32_t>(sizeof(NEO::ImplicitArgs));
-    auto simdSize = pImplicitArgs->simdWidth;
-    auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize, hardwareInfo.capabilityTable.grfSize);
-    Vec3<size_t> localWorkSize = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
-    auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
-    uint32_t localIdsSizeNeeded =
-        alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                    simdSize, grfSize, 3u, itemsInGroup)),
-                MemoryConstants::cacheLineSize);
-    return implicitArgsSize + localIdsSizeNeeded;
+    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    if (patchImplicitArgsBufferInCrossThread) {
+        return alignUp(implicitArgsSize, MemoryConstants::cacheLineSize);
+    } else {
+        auto simdSize = pImplicitArgs->simdWidth;
+        auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize, hardwareInfo.capabilityTable.grfSize);
+        Vec3<size_t> localWorkSize = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
+        auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
+        uint32_t localIdsSizeNeeded =
+            alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
+                        simdSize, grfSize, 3u, itemsInGroup)),
+                    MemoryConstants::cacheLineSize);
+        return implicitArgsSize + localIdsSizeNeeded;
+    }
 }
 
 void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hardwareInfo, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams) {
@@ -61,21 +66,23 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
     auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hardwareInfo);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
 
-    const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
-    auto simdSize = kernelAttributes.simdSize;
-    auto grfSize = getGrfSize(simdSize, hardwareInfo.capabilityTable.grfSize);
-    auto dimensionOrder = getDimensionOrderForLocalIds(kernelAttributes.workgroupDimensionsOrder, hwGenerationOfLocalIdsParams);
+    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    if (!patchImplicitArgsBufferInCrossThread) {
+        auto simdSize = implicitArgs.simdWidth;
+        auto grfSize = getGrfSize(simdSize, hardwareInfo.capabilityTable.grfSize);
+        auto dimensionOrder = getDimensionOrderForLocalIds(kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, hwGenerationOfLocalIdsParams);
 
-    NEO::generateLocalIDs(
-        ptrToPatch,
-        simdSize,
-        std::array<uint16_t, 3>{{static_cast<uint16_t>(implicitArgs.localSizeX),
-                                 static_cast<uint16_t>(implicitArgs.localSizeY),
-                                 static_cast<uint16_t>(implicitArgs.localSizeZ)}},
-        dimensionOrder,
-        false, grfSize);
-    auto sizeForLocalIdsProgramming = totalSizeToProgram - sizeof(NEO::ImplicitArgs);
-    ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
+        NEO::generateLocalIDs(
+            ptrToPatch,
+            simdSize,
+            std::array<uint16_t, 3>{{static_cast<uint16_t>(implicitArgs.localSizeX),
+                                     static_cast<uint16_t>(implicitArgs.localSizeY),
+                                     static_cast<uint16_t>(implicitArgs.localSizeZ)}},
+            dimensionOrder,
+            false, grfSize);
+        auto sizeForLocalIdsProgramming = totalSizeToProgram - sizeof(NEO::ImplicitArgs);
+        ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
+    }
     memcpy_s(ptrToPatch, sizeof(NEO::ImplicitArgs), &implicitArgs, sizeof(NEO::ImplicitArgs));
 
     return retVal;

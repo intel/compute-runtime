@@ -60,10 +60,12 @@ TEST(ImplicitArgsHelperTest, givenNoImplicitArgsWhenGettingSizeForImplicitArgsPr
     EXPECT_EQ(0u, ImplicitArgsHelper::getSizeForImplicitArgsPatching(nullptr, kernelDescriptor, hwInfo));
 }
 
-TEST(ImplicitArgsHelperTest, givenImplicitArgsWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
+TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
     ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
 
     KernelDescriptor kernelDescriptor{};
+
+    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
     const auto &hwInfo = *defaultHwInfo;
 
     implicitArgs.simdWidth = 32;
@@ -75,4 +77,104 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWhenGettingSizeForImplicitArgsProg
 
     auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, hwInfo.capabilityTable.grfSize, 3u, totalWorkgroupSize), MemoryConstants::cacheLineSize);
     EXPECT_EQ(localIdsSize + implicitArgs.structSize, ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hwInfo));
+}
+
+TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenGettingSizeForImplicitArgsProgrammingThenCorrectSizeIsReturned) {
+    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0x10;
+    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    const auto &hwInfo = *defaultHwInfo;
+
+    implicitArgs.simdWidth = 32;
+    implicitArgs.localSizeX = 2;
+    implicitArgs.localSizeY = 3;
+    implicitArgs.localSizeZ = 4;
+
+    EXPECT_EQ(alignUp(implicitArgs.structSize, MemoryConstants::cacheLineSize), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hwInfo));
+}
+
+TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
+    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
+    kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
+    kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 2;
+
+    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    const auto &hwInfo = *defaultHwInfo;
+
+    implicitArgs.simdWidth = 1;
+    implicitArgs.localSizeX = 2;
+    implicitArgs.localSizeY = 3;
+    implicitArgs.localSizeZ = 4;
+
+    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hwInfo);
+
+    auto totalWorkgroupSize = implicitArgs.localSizeX * implicitArgs.localSizeY * implicitArgs.localSizeZ;
+    auto localIdsPatchingSize = totalWorkgroupSize * 3 * sizeof(uint16_t);
+
+    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
+
+    uint8_t pattern = 0xcd;
+
+    memset(memoryToPatch.get(), pattern, totalSizeForPatching);
+
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, hwInfo, {});
+
+    EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+
+    uint32_t offset = 0;
+
+    for (; offset < localIdsPatchingSize; offset++) {
+        EXPECT_NE(pattern, memoryToPatch.get()[offset]) << offset;
+    }
+
+    for (; offset < totalSizeForPatching - sizeof(implicitArgs); offset++) {
+        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
+    }
+
+    for (; offset < totalSizeForPatching; offset++) {
+        EXPECT_NE(pattern, memoryToPatch.get()[offset]);
+    }
+}
+
+TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
+    ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
+
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0x10;
+    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    const auto &hwInfo = *defaultHwInfo;
+
+    implicitArgs.simdWidth = 32;
+    implicitArgs.localSizeX = 2;
+    implicitArgs.localSizeY = 3;
+    implicitArgs.localSizeZ = 4;
+
+    auto totalSizeForPatching = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hwInfo);
+
+    EXPECT_EQ(0x80u, totalSizeForPatching);
+
+    auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
+
+    uint8_t pattern = 0xcd;
+
+    memset(memoryToPatch.get(), pattern, totalSizeForPatching);
+
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, hwInfo, {});
+
+    EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+
+    uint32_t offset = 0;
+
+    for (; offset < sizeof(implicitArgs); offset++) {
+        EXPECT_NE(pattern, memoryToPatch.get()[offset]);
+    }
+
+    for (; offset < totalSizeForPatching; offset++) {
+        EXPECT_EQ(pattern, memoryToPatch.get()[offset]);
+    }
 }

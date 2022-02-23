@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
@@ -59,4 +60,10 @@ inline bool UnitTestHelper<GfxFamily>::getPipeControlHdcPipelineFlush(const type
 
 template <typename GfxFamily>
 inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush) {}
+
+template <typename GfxFamily>
+inline void UnitTestHelper<GfxFamily>::adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor) {
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0u;
+}
 } // namespace NEO

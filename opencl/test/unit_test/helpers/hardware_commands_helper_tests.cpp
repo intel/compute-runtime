@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -1240,7 +1241,7 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
 
         auto pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = expectedImplicitArgs.simdWidth;
-        pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+        UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(pKernelInfo->kernelDescriptor);
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
         pKernelInfo->kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = workgroupDimOrder[2];
@@ -1253,6 +1254,8 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         auto pImplicitArgs = kernel.getImplicitArgs();
 
         ASSERT_NE(nullptr, pImplicitArgs);
+
+        kernel.setCrossThreadData(nullptr, sizeof(uint64_t));
 
         kernel.setWorkDim(expectedImplicitArgs.numWorkDim);
         kernel.setLocalWorkSizeValues(expectedImplicitArgs.localSizeX, expectedImplicitArgs.localSizeY, expectedImplicitArgs.localSizeZ);
@@ -1272,7 +1275,9 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
 
         EXPECT_LE(implicitArgsProgrammingSize, indirectHeap.getUsed());
 
-        expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();
+        if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();
+        }
     }
 
     ImplicitArgs expectedImplicitArgs = {sizeof(ImplicitArgs)};
@@ -1281,12 +1286,24 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
     uint32_t implicitArgsProgrammingSize = 0u;
 };
 
-HWTEST_F(HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsWhenSendingCrossThreadDataThenImplicitArgsAreSetAtTheBeginningOfIndirectData) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenXeHpAndLaterPlatformWhenSendingIndirectStateForKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithLocalIds) {
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - sizeof(ImplicitArgs);
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsImplicitArgsTests, givenPreXeHpPlatformWhenSendingIndirectStateForKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
+    dispatchKernelWithImplicitArgs<FamilyType>();
+
+    auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+
+    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), 0x80);
+
+    auto programmedImplicitArgsGpuVA = reinterpret_cast<uint64_t *>(crossThreadDataInIndirectData)[0];
+    EXPECT_EQ(indirectHeapAllocation->getGpuAddress(), programmedImplicitArgsGpuVA);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithImplicitArgsAndRuntimeLocalIdsGenerationWhenSendingIndirectStateThenLocalIdsAreGeneratedAndCorrectlyProgrammedInCrossThreadData) {

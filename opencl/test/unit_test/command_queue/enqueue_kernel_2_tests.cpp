@@ -633,6 +633,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = true;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};
 
@@ -678,7 +679,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     mockKernel.kernelInfo.addToPrintfStringsMap(0, testString);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesStringMapForPrintf = false;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};

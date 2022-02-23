@@ -112,24 +112,21 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     uint32_t &sizeCrossThreadData) {
     indirectHeap.align(WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 
-    auto offsetCrossThreadData = indirectHeap.getUsed();
-    char *pDest = nullptr;
-
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
-
         const auto &kernelDescriptor = kernel.getDescriptor();
         const auto &hwInfo = kernel.getHardwareInfo();
         auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
 
-        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
-        offsetCrossThreadData += sizeForLocalIdsProgramming;
-
+        auto implicitArgsGpuVA = indirectHeap.getGraphicsAllocation()->getGpuAddress() + indirectHeap.getUsed();
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
-
         ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, hwInfo, {});
+
+        auto implicitArgsCrossThreadPtr = ptrOffset(reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()), kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+        *implicitArgsCrossThreadPtr = implicitArgsGpuVA;
     }
+    auto offsetCrossThreadData = indirectHeap.getUsed();
+    char *pDest = nullptr;
 
     pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);

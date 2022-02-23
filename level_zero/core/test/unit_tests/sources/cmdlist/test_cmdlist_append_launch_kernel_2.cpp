@@ -11,6 +11,7 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -937,6 +938,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         expectedImplicitArgs.groupCountZ = 3;
     }
 
+    template <typename FamilyType>
     void dispatchKernelWithImplicitArgs() {
         expectedImplicitArgs.globalSizeX = expectedImplicitArgs.localSizeX * expectedImplicitArgs.groupCountX;
         expectedImplicitArgs.globalSizeY = expectedImplicitArgs.localSizeY * expectedImplicitArgs.groupCountY;
@@ -944,7 +946,8 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
 
         std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
         auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
-        kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+
+        UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernelDescriptor);
         kernelDescriptor->kernelAttributes.simdSize = expectedImplicitArgs.simdWidth;
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
@@ -957,6 +960,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         kernel->initialize(&kernelDesc);
         kernel->kernelRequiresGenerationOfLocalIdsByRuntime = kernelRequiresGenerationOfLocalIdsByRuntime;
         kernel->requiredWorkgroupOrder = requiredWorkgroupOrder;
+        kernel->setCrossThreadData(sizeof(uint64_t));
 
         EXPECT_TRUE(kernel->getKernelDescriptor().kernelAttributes.flags.requiresImplicitArgs);
         ASSERT_NE(nullptr, kernel->getImplicitArgs());
@@ -982,7 +986,9 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
         EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize);
 
-        expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();
+        if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();
+        }
         expectedImplicitArgs.printfBufferPtr = kernel->getPrintfBufferAllocation()->getGpuAddress();
     }
     std::unique_ptr<L0::CommandList> commandList;
@@ -994,7 +1000,8 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
     uint32_t requiredWorkgroupOrder = 0;
 };
-HWTEST_F(CmdlistAppendLaunchKernelWithImplicitArgsTests, givenKernelWithImplicitArgsWhenAppendLaunchKernelThenImplicitArgsAreSentToIndirectHeap) {
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenXeHpAndLaterPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithLocalIds) {
     std::array<uint16_t, 3> localSize{2, 3, 4};
     size_t totalLocalSize = localSize[0] * localSize[1] * localSize[2];
 
@@ -1002,7 +1009,7 @@ HWTEST_F(CmdlistAppendLaunchKernelWithImplicitArgsTests, givenKernelWithImplicit
     expectedImplicitArgs.localSizeY = localSize[1];
     expectedImplicitArgs.localSizeZ = localSize[2];
 
-    dispatchKernelWithImplicitArgs();
+    dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth, sizeof(typename FamilyType::GRF));
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
@@ -1017,7 +1024,20 @@ HWTEST_F(CmdlistAppendLaunchKernelWithImplicitArgsTests, givenKernelWithImplicit
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
 }
-HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenKernelWithImplicitArgsAndHwGeneratedLocalIdsWhenAppendLaunchKernelThenImplicitArgsLocalIdsRespectWalkOrder) {
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenPreXeHpPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
+    dispatchKernelWithImplicitArgs<FamilyType>();
+
+    auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
+
+    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), 0x80);
+
+    auto programmedImplicitArgsGpuVA = reinterpret_cast<uint64_t *>(crossThreadDataInIndirectData)[0];
+    EXPECT_EQ(indirectHeapAllocation->getGpuAddress(), programmedImplicitArgsGpuVA);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenXeHpAndLaterPlatformAndHwGeneratedLocalIdsWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsLocalIdsRespectWalkOrder) {
     workgroupDimOrder[0] = 2;
     workgroupDimOrder[1] = 1;
     workgroupDimOrder[2] = 0;
@@ -1034,7 +1054,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     expectedImplicitArgs.localSizeY = localSize[1];
     expectedImplicitArgs.localSizeZ = localSize[2];
 
-    dispatchKernelWithImplicitArgs();
+    dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth, sizeof(typename FamilyType::GRF));
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - sizeof(ImplicitArgs), MemoryConstants::cacheLineSize);
@@ -1050,7 +1070,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, sizeof(ImplicitArgs)));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenKernelWithImplicitArgsWhenAppendLaunchKernelWithSimd1ThenLocalIdsAreGeneratedCorrectly) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenXeHpAndLaterPlatformWhenAppendLaunchKernelWithImplicitArgsAndSimd1ThenLocalIdsAreGeneratedCorrectly) {
     workgroupDimOrder[0] = 2;
     workgroupDimOrder[1] = 1;
     workgroupDimOrder[2] = 0;
@@ -1060,7 +1080,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     expectedImplicitArgs.localSizeY = 2;
     expectedImplicitArgs.localSizeZ = 1;
 
-    dispatchKernelWithImplicitArgs();
+    dispatchKernelWithImplicitArgs<FamilyType>();
 
     uint16_t expectedLocalIds[][3] = {{0, 0, 0},
                                       {0, 1, 0},

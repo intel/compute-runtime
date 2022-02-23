@@ -660,7 +660,20 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelS
     EXPECT_EQ(1u, event->getPacketsInUse());
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhenAppendingThenMiMathCommandsForWorkGroupCountAndGlobalWorkSizeAndWorkDimAreProgrammed) {
+struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKernel {
+
+    template <typename FamilyType>
+    uint64_t getIndirectHeapOffsetForImplicitArgsBuffer(const Mock<::L0::Kernel> &kernel) {
+        if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), neoDevice->getHardwareInfo());
+            return implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+        } else {
+            return 0u;
+        }
+    }
+};
+
+HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWithImplicitArgsWhenAppendingThenMiMathCommandsForWorkGroupCountAndGlobalWorkSizeAndWorkDimAreProgrammed) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -669,11 +682,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
+    kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);
     kernel.pImplicitArgs.reset(new ImplicitArgs());
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel.immutableData.kernelDescriptor);
 
     kernel.setGroupSize(1, 1, 1);
-
-    auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), neoDevice->getHardwareInfo());
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -688,7 +701,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWithImplicitArgsWhe
                                                      nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto heap = commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT);
-    uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + implicitArgsProgrammingSize - sizeof(ImplicitArgs);
+    uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + getIndirectHeapOffsetForImplicitArgsBuffer<FamilyType>(kernel);
+
     auto workDimStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     workDimStoreRegisterMemCmd.setRegisterAddress(CS_GPR_R0);
     workDimStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA);

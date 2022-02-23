@@ -69,6 +69,8 @@ struct UnitTestHelper {
     static uint64_t getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl);
     static bool getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl);
     static void setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush);
+
+    static void adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor);
 };
 
 } // namespace NEO

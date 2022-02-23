@@ -141,9 +141,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         UNRECOVERABLE_IF(!(ptr));
         offsetThreadData = heapIndirect->getHeapGpuStartOffset() + static_cast<uint64_t>(heapIndirect->getUsed() - sizeThreadData);
 
+        uint64_t implicitArgsGpuVA = 0u;
         if (pImplicitArgs) {
-            offsetThreadData -= sizeof(ImplicitArgs);
-            pImplicitArgs->localIdTablePtr = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - iohRequiredSize;
+            implicitArgsGpuVA = heapIndirect->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heapIndirect->getUsed() - iohRequiredSize);
+            auto implicitArgsCrossThreadPtr = ptrOffset(const_cast<uint64_t *>(reinterpret_cast<const uint64_t *>(args.dispatchInterface->getCrossThreadData())), kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+            *implicitArgsCrossThreadPtr = implicitArgsGpuVA;
+
             ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, hwInfo, {});
         }
 
@@ -151,12 +154,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                  args.dispatchInterface->getCrossThreadData(), sizeCrossThreadData);
 
         if (args.isIndirect) {
-            auto gpuPtr = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - sizeThreadData;
-            uint64_t implicitArgsGpuPtr = 0u;
-            if (pImplicitArgs) {
-                implicitArgsGpuPtr = gpuPtr - sizeof(ImplicitArgs);
-            }
-            EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
+            auto crossThreadDataGpuVA = heapIndirect->getGraphicsAllocation()->getGpuAddress() + heapIndirect->getUsed() - sizeThreadData;
+            EncodeIndirectParams<Family>::encode(container, crossThreadDataGpuVA, args.dispatchInterface, implicitArgsGpuVA);
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);
