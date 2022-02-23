@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -664,6 +664,16 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
     return true;
 }
 
+template <>
+inline bool YamlParser::readValueChecked<std::string>(const Node &node, std::string &outValue) const {
+    const auto &token = tokens[node.value];
+    if (Token::Type::LiteralString != token.traits.type) {
+        return false;
+    }
+    outValue.resize(token.len);
+    std::copy(token.pos, token.pos + token.len, outValue.begin());
+    return true;
+}
 } // namespace Yaml
 
 } // namespace NEO

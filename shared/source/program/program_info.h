@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -39,6 +40,7 @@ struct ProgramInfo {
     GlobalSurfaceInfo globalVariables;
     GlobalSurfaceInfo globalStrings;
     std::unique_ptr<LinkerInput> linkerInput;
+    std::unordered_map<std::string, std::string> globalsDeviceToHostNameMap;
 
     std::vector<KernelInfo *> kernelInfos;
     Elf::Elf<Elf::EI_CLASS_64> decodedElf;

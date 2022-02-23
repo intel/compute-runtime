@@ -2095,6 +2095,75 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInput
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(ModuleTest, givenModuleWithGlobalSymbolMapWhenGettingGlobalPointerByHostSymbolNameExistingInMapThenCorrectPointerAndSuccessIsReturned) {
+    std::unordered_map<std::string, std::string> mapping;
+    mapping["devSymbolOne"] = "hostSymbolOne";
+    mapping["devSymbolTwo"] = "hostSymbolTwo";
+
+    size_t symbolsSize = 1024u;
+    uint64_t globalVarGpuAddress = 0x12345000;
+    NEO::SymbolInfo globalVariablesSymbolInfo{0, static_cast<uint32_t>(symbolsSize), SegmentType::GlobalVariables};
+    NEO::Linker::RelocatedSymbol globalVariablesRelocatedSymbol{globalVariablesSymbolInfo, globalVarGpuAddress};
+
+    uint64_t globalConstGpuAddress = 0x12347000;
+    NEO::SymbolInfo globalConstantsSymbolInfo{0, static_cast<uint32_t>(symbolsSize), SegmentType::GlobalConstants};
+    NEO::Linker::RelocatedSymbol globalConstansRelocatedSymbol{globalConstantsSymbolInfo, globalConstGpuAddress};
+
+    auto module0 = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    module0->symbols["devSymbolOne"] = globalVariablesRelocatedSymbol;
+    module0->symbols["devSymbolTwo"] = globalConstansRelocatedSymbol;
+
+    auto success = module0->populateHostGlobalSymbolsMap(mapping);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(module0->getTranslationUnit()->buildLog.empty());
+
+    size_t size = 0;
+    void *ptr = nullptr;
+    auto result = module0->getGlobalPointer("hostSymbolOne", &size, &ptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(symbolsSize, size);
+    EXPECT_EQ(globalVarGpuAddress, reinterpret_cast<uint64_t>(ptr));
+
+    result = module0->getGlobalPointer("hostSymbolTwo", &size, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(symbolsSize, size);
+    EXPECT_EQ(globalConstGpuAddress, reinterpret_cast<uint64_t>(ptr));
+}
+
+TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolNotFoundInRelocatedSymbolsMapThenPrintErrorStringAndReturnFalse) {
+    std::unordered_map<std::string, std::string> mapping;
+    std::string notFoundDevSymbolName = "anotherDevSymbolOne";
+    mapping[notFoundDevSymbolName] = "anotherHostSymbolOne";
+
+    auto module0 = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    EXPECT_EQ(0u, module0->symbols.count(notFoundDevSymbolName));
+
+    auto result = module0->populateHostGlobalSymbolsMap(mapping);
+    EXPECT_FALSE(result);
+    std::string expectedErrorOutput = "Error: No symbol found with given device name: " + notFoundDevSymbolName + ".\n";
+    EXPECT_STREQ(expectedErrorOutput.c_str(), module0->getTranslationUnit()->buildLog.c_str());
+}
+
+TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolFromIncorrectSegmentThenPrintErrorStringAndReturnFalse) {
+    std::unordered_map<std::string, std::string> mapping;
+    std::string incorrectDevSymbolName = "incorrectSegmentDevSymbolOne";
+    mapping[incorrectDevSymbolName] = "incorrectSegmentHostSymbolOne";
+
+    size_t symbolSize = 1024u;
+    uint64_t gpuAddress = 0x12345000;
+    NEO::SymbolInfo symbolInfo{0, static_cast<uint32_t>(symbolSize), SegmentType::Instructions};
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    auto module0 = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
+    module0->symbols[incorrectDevSymbolName] = relocatedSymbol;
+
+    auto result = module0->populateHostGlobalSymbolsMap(mapping);
+    EXPECT_FALSE(result);
+    std::string expectedErrorOutput = "Error: Symbol with given device name: " + incorrectDevSymbolName + " is not in globals* segment.\n";
+    EXPECT_STREQ(expectedErrorOutput.c_str(), module0->getTranslationUnit()->buildLog.c_str());
+}
+
 using ModuleTests = Test<DeviceFixture>;
 TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTbxAndAub) {
     auto pModule = std::make_unique<Module>(device, nullptr, ModuleType::User);

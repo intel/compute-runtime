@@ -645,6 +645,28 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser
     return validBuffer ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
+DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                            ZeInfoGlobalHostAccessTables &outDeviceNameToHostTable,
+                                            ConstStringRef context,
+                                            std::string &outErrReason, std::string &outWarning) {
+    bool validTable = true;
+    for (const auto &globalHostAccessNameNd : parser.createChildrenRange(node)) {
+        outDeviceNameToHostTable.resize(outDeviceNameToHostTable.size() + 1);
+        for (const auto &globalHostAccessNameMemberNd : parser.createChildrenRange(globalHostAccessNameNd)) {
+            auto &globalHostAccessMetadata = *outDeviceNameToHostTable.rbegin();
+            auto key = parser.readKey(globalHostAccessNameMemberNd);
+            if (NEO::Elf::ZebinKernelMetadata::Tags::GlobalHostAccessTable::deviceName == key) {
+                validTable &= readZeInfoValueChecked(parser, globalHostAccessNameMemberNd, globalHostAccessMetadata.deviceName, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::GlobalHostAccessTable::hostName == key) {
+                validTable &= readZeInfoValueChecked(parser, globalHostAccessNameMemberNd, globalHostAccessMetadata.hostName, context, outErrReason);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
+            }
+        }
+    }
+    return validTable ? DecodeError::Success : DecodeError::InvalidBinary;
+}
+
 template <typename ElSize, size_t Len>
 bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSize, CrossThreadDataOffset baseOffset) {
     switch (vecSize) {
@@ -1276,6 +1298,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
 
     UniqueNode kernelsSectionNodes;
     UniqueNode versionSectionNodes;
+    UniqueNode globalHostAccessTableNodes;
     for (const auto &globalScopeNd : yamlParser.createChildrenRange(*yamlParser.getRoot())) {
         auto key = yamlParser.readKey(globalScopeNd);
         if (NEO::Elf::ZebinKernelMetadata::Tags::kernels == key) {
@@ -1284,8 +1307,12 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::version == key) {
             versionSectionNodes.push_back(&globalScopeNd);
             continue;
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::globalHostAccessTable == key) {
+            globalHostAccessTableNodes.push_back(&globalScopeNd);
+            continue;
+        } else {
+            outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + yamlParser.readKey(globalScopeNd).str() + "\" in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + "\n");
         }
-        outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + yamlParser.readKey(globalScopeNd).str() + "\" in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + "\n");
     }
 
     if (versionSectionNodes.size() > 1U) {
@@ -1327,6 +1354,17 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
         auto zeInfoErr = populateKernelDescriptor(dst, elf, zebinSections, yamlParser, kernelNd, outErrReason, outWarning);
         if (DecodeError::Success != zeInfoErr) {
             return zeInfoErr;
+        }
+    }
+
+    if (false == globalHostAccessTableNodes.empty()) {
+        ZeInfoGlobalHostAccessTables globalHostAccessMapping;
+        auto zeInfoErr = readZeInfoGlobalHostAceessTable(yamlParser, *globalHostAccessTableNodes[0], globalHostAccessMapping, "globalHostAccessTable", outErrReason, outWarning);
+        if (DecodeError::Success != zeInfoErr) {
+            return zeInfoErr;
+        }
+        for (auto it = globalHostAccessMapping.begin(); it != globalHostAccessMapping.end(); it++) {
+            dst.globalsDeviceToHostNameMap[it->deviceName] = it->hostName;
         }
     }
 

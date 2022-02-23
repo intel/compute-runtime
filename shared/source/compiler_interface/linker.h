@@ -242,5 +242,8 @@ std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &
 constexpr bool shouldIgnoreRelocation(const LinkerInput::RelocationInfo &relocation) {
     return LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset == relocation.type;
 }
+inline bool isDataSegment(const SegmentType &segment) {
+    return segment == SegmentType::GlobalConstants || segment == SegmentType::GlobalVariables;
+}
 
 } // namespace NEO

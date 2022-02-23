@@ -543,6 +543,9 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
     success = this->linkBinary();
 
+    success &= populateHostGlobalSymbolsMap(this->translationUnit->programInfo.globalsDeviceToHostNameMap);
+    this->updateBuildLog(neoDevice);
+
     if (debugEnabled) {
         passDebugData();
     }
@@ -815,15 +818,25 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 }
 
 ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, void **pPtr) {
-    auto symbolIt = symbols.find(pGlobalName);
-    if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
+    uint64_t address;
+    size_t size;
+    if (hostGlobalSymbolsMap.count(pGlobalName) == 1) {
+        address = hostGlobalSymbolsMap[pGlobalName].address;
+        size = hostGlobalSymbolsMap[pGlobalName].size;
+    } else if (symbols.count(pGlobalName) == 1) {
+        if (symbols[pGlobalName].symbol.segment == NEO::SegmentType::Instructions) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        address = symbols[pGlobalName].gpuAddress;
+        size = symbols[pGlobalName].symbol.size;
+    } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     if (pPtr) {
-        *pPtr = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
+        *pPtr = reinterpret_cast<void *>(address);
     }
     if (pSize) {
-        *pSize = symbolIt->second.symbol.size;
+        *pSize = size;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -990,6 +1003,29 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         moduleId->isFullyLinked = true;
     }
     return ZE_RESULT_SUCCESS;
+}
+
+bool ModuleImp::populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping) {
+    bool retVal = true;
+    for (auto &[devName, hostName] : devToHostNameMapping) {
+        auto findSymbolRes = symbols.find(devName);
+        if (findSymbolRes != symbols.end()) {
+            auto symbol = findSymbolRes->second;
+            if (isDataSegment(symbol.symbol.segment)) {
+                GlobalSymbol hostSymbol;
+                hostSymbol.address = symbol.gpuAddress;
+                hostSymbol.size = symbol.symbol.size;
+                hostGlobalSymbolsMap[hostName] = hostSymbol;
+            } else {
+                translationUnit->buildLog.append("Error: Symbol with given device name: " + devName + " is not in globals* segment.\n");
+                retVal = false;
+            }
+        } else {
+            translationUnit->buildLog.append("Error: No symbol found with given device name: " + devName + ".\n");
+            retVal = false;
+        }
+    }
+    return retVal;
 }
 
 void ModuleImp::registerElfInDebuggerL0() {

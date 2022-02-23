@@ -147,6 +147,7 @@ struct ModuleImp : public Module {
     void passDebugData();
     void createDebugZebin();
     void registerElfInDebuggerL0();
+    bool populateHostGlobalSymbolsMap(std::unordered_map<std::string, std::string> &devToHostNameMapping);
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
@@ -156,6 +157,14 @@ struct ModuleImp : public Module {
     uint32_t maxGroupSize = 0U;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
+
+    struct GlobalSymbol {
+        uintptr_t address = std::numeric_limits<uintptr_t>::max();
+        size_t size = 0U;
+    };
+
+    std::unordered_map<std::string, GlobalSymbol> hostGlobalSymbolsMap;
+
     bool debugEnabled = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;

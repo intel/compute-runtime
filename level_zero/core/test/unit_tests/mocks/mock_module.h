@@ -76,6 +76,8 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::debugEnabled;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::kernelImmDatas;
+    using ModuleImp::populateHostGlobalSymbolsMap;
+    using ModuleImp::symbols;
     using ModuleImp::translationUnit;
 
     MockModule(L0::Device *device,

@@ -5146,3 +5146,99 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndI
 
     EXPECT_FALSE(validateTargetDevice(elf, targetDevice));
 }
+
+TEST(PopulateGlobalDeviceHostNameMapping, givenValidZebinWithGlobalHostAccessTableSectionThenPopulateHostDeviceNameMapCorrectly) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+        global_host_access_table:
+            - device_name:     int_var
+              host_name:       IntVarName
+            - device_name:     bool_var
+              host_name:       BoolVarName
+    )===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeinfo.data(), zeinfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+
+    EXPECT_EQ(2u, programInfo.globalsDeviceToHostNameMap.size());
+    EXPECT_STREQ("IntVarName", programInfo.globalsDeviceToHostNameMap["int_var"].c_str());
+    EXPECT_STREQ("BoolVarName", programInfo.globalsDeviceToHostNameMap["bool_var"].c_str());
+}
+
+TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSectionAndInvalidValuesThenReturnInvalidBinaryError) {
+    std::vector<NEO::ConstStringRef> invalidZeInfos{R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+        global_host_access_table:
+            - device_name:     2
+              host_name:       HostSymboName
+    )===",
+                                                    R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+        global_host_access_table:
+            - device_name:     DeviceSymbolName
+              host_name:       0xddd
+    )==="};
+    for (auto &zeInfo : invalidZeInfos) {
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+        zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    }
+}
+
+TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSectionAndUnrecognizableKeyThenEmitWarning) {
+    NEO::ConstStringRef yaml = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+        global_host_access_table:
+            - device_name:     int_var
+              host_name:       IntVarName
+              banana_type:     slight_curve
+    )===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &tableNode = *parser.findNodeWithKeyDfs("global_host_access_table");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoGlobalHostAccessTables tables;
+    auto err = NEO::readZeInfoGlobalHostAceessTable(parser, tableNode, tables, "global_host_access_table", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    std::string expectedWarning("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"banana_type\" for payload argument in context of global_host_access_table\n");
+    EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
+}

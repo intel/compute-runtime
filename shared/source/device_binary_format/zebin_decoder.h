@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,6 +100,11 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser
                                              ZeInfoPerThreadMemoryBuffers &outPerThreadMemoryBuffers,
                                              ConstStringRef context,
                                              std::string &outErrReason, std::string &outWarning);
+using ZeInfoGlobalHostAccessTables = StackVec<NEO::Elf::ZebinKernelMetadata::Types::GlobalHostAccessTable::globalHostAccessTableT, 32>;
+DecodeError readZeInfoGlobalHostAceessTable(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                            ZeInfoGlobalHostAccessTables &outDeviceNameToHostTable,
+                                            ConstStringRef context,
+                                            std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst, const uint32_t grfSize,
                                        std::string &outErrReason, std::string &outWarning);

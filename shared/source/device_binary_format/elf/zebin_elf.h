@@ -157,6 +157,7 @@ namespace ZebinKernelMetadata {
 namespace Tags {
 static constexpr ConstStringRef kernels("kernels");
 static constexpr ConstStringRef version("version");
+static constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
 namespace Kernel {
 static constexpr ConstStringRef name("name");
 static constexpr ConstStringRef executionEnv("execution_env");
@@ -278,6 +279,10 @@ static constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store")
 static constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
 } // namespace ExperimentalProperties
 } // namespace Kernel
+namespace GlobalHostAccessTable {
+static constexpr ConstStringRef deviceName("device_name");
+static constexpr ConstStringRef hostName("host_name");
+} // namespace GlobalHostAccessTable
 } // namespace Tags
 
 namespace Types {
@@ -529,6 +534,12 @@ struct PerThreadMemoryBufferBaseT {
 
 } // namespace Kernel
 
+namespace GlobalHostAccessTable {
+struct globalHostAccessTableT {
+    std::string deviceName;
+    std::string hostName;
+};
+} // namespace GlobalHostAccessTable
 } // namespace Types
 
 } // namespace ZebinKernelMetadata
