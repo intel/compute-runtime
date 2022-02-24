@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -229,6 +229,18 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterBiggerByMo
 
     EXPECT_FALSE(euThread.verifyStopped(8));
     EXPECT_TRUE(euThread.isRunning());
+}
+
+TEST(EuThread, GivenEuThreadWhenGettingLastCounterThenCorrectValueIsReturned) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    EXPECT_EQ(0u, euThread.getLastCounter());
+    euThread.verifyStopped(1);
+    EXPECT_EQ(1u, euThread.getLastCounter());
+    euThread.verifyStopped(9);
+    EXPECT_EQ(9u, euThread.getLastCounter());
 }
 
 } // namespace ult
