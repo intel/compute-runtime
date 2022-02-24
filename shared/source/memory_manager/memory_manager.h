@@ -236,6 +236,26 @@ class MemoryManager {
         return false;
     }
 
+    bool isKernelBinaryReuseEnabled() {
+        auto reuseBinaries = false;
+
+        if (DebugManager.flags.ReuseKernelBinaries.get() != -1) {
+            reuseBinaries = DebugManager.flags.ReuseKernelBinaries.get();
+        }
+
+        return reuseBinaries;
+    }
+
+    struct KernelAllocationInfo {
+        KernelAllocationInfo(GraphicsAllocation *allocation, uint32_t reuseCounter) : kernelAllocation(allocation), reuseCounter(reuseCounter) {}
+
+        GraphicsAllocation *kernelAllocation;
+        uint32_t reuseCounter;
+    };
+
+    std::unordered_map<std::string, KernelAllocationInfo> &getKernelAllocationMap() { return this->kernelAllocationMap; };
+    std::unique_lock<std::mutex> lockKernelAllocationMap() { return std::unique_lock<std::mutex>(this->kernelAllocationMutex); };
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
@@ -298,6 +318,8 @@ class MemoryManager {
     AlignmentSelector alignmentSelector = {};
     std::unique_ptr<std::once_flag[]> checkIsaPlacementOnceFlags;
     std::vector<bool> isaInLocalMemory;
+    std::unordered_map<std::string, KernelAllocationInfo> kernelAllocationMap;
+    std::mutex kernelAllocationMutex;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

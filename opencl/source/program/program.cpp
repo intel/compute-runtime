@@ -307,7 +307,21 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
                 }
             }
 
-            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+            if (executionEnvironment.memoryManager->isKernelBinaryReuseEnabled()) {
+                auto lock = executionEnvironment.memoryManager->lockKernelAllocationMap();
+                auto kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+                auto &storedBinaries = executionEnvironment.memoryManager->getKernelAllocationMap();
+                auto kernelAllocations = storedBinaries.find(kernelName);
+                if (kernelAllocations != storedBinaries.end()) {
+                    kernelAllocations->second.reuseCounter--;
+                    if (kernelAllocations->second.reuseCounter == 0) {
+                        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelAllocations->second.kernelAllocation);
+                        storedBinaries.erase(kernelAllocations);
+                    }
+                }
+            } else {
+                this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+            }
         }
         delete kernelInfo;
     }

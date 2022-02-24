@@ -100,6 +100,34 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     EXPECT_FALSE(retVal);
 }
 
+TEST(KernelInfoTest, givenReuseKernelBinariesWhenCreateKernelAllocationThenReuseAllocationFromMap) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ReuseKernelBinaries.set(1);
+
+    auto factory = UltDeviceFactory{1, 0};
+    auto device = factory.rootDevices[0];
+    const size_t heapSize = 0x40;
+    char heap[heapSize];
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.pKernelHeap = &heap;
+    KernelInfo kernelInfo2;
+    kernelInfo2.heapInfo.KernelHeapSize = heapSize;
+    kernelInfo2.heapInfo.pKernelHeap = &heap;
+
+    EXPECT_EQ(0u, device->getMemoryManager()->getKernelAllocationMap().size());
+
+    auto retVal = kernelInfo.createKernelAllocation(*device, true);
+    EXPECT_EQ(1u, device->getMemoryManager()->getKernelAllocationMap().size());
+    EXPECT_TRUE(retVal);
+
+    retVal = kernelInfo2.createKernelAllocation(*device, true);
+    EXPECT_EQ(1u, device->getMemoryManager()->getKernelAllocationMap().size());
+    EXPECT_TRUE(retVal);
+
+    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo.kernelAllocation);
+}
+
 using KernelInfoMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(KernelInfoMultiRootDeviceTests, WhenCreatingKernelAllocationThenItHasCorrectRootDeviceIndex) {

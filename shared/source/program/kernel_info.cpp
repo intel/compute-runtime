@@ -115,11 +115,33 @@ int32_t KernelInfo::getArgNumByName(const char *name) const {
     return -1;
 }
 
-bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
+bool KernelInfo::createKernelAllocation(Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.KernelHeapSize;
     const auto allocType = internalIsa ? AllocationType::KERNEL_ISA_INTERNAL : AllocationType::KERNEL_ISA;
-    kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
+
+    if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {
+        auto lock = device.getMemoryManager()->lockKernelAllocationMap();
+        auto kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
+        auto &storedAllocations = device.getMemoryManager()->getKernelAllocationMap();
+        auto kernelAllocations = storedAllocations.find(kernelName);
+        if (kernelAllocations != storedAllocations.end()) {
+            kernelAllocation = kernelAllocations->second.kernelAllocation;
+            kernelAllocations->second.reuseCounter++;
+            auto &hwInfo = device.getHardwareInfo();
+            auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+            return MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+                                                                    device, kernelAllocation, 0, heapInfo.pKernelHeap,
+                                                                    static_cast<size_t>(kernelIsaSize));
+        } else {
+            kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
+            storedAllocations.insert(std::make_pair(kernelName, MemoryManager::KernelAllocationInfo(kernelAllocation, 1u)));
+        }
+    } else {
+        kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
+    }
+
     if (!kernelAllocation) {
         return false;
     }

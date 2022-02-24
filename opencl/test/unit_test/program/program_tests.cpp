@@ -620,6 +620,41 @@ TEST_F(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelA
     EXPECT_EQ(0u, pProgram->getNumKernels());
 }
 
+TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfoThenDecreaseAllocationReuseCounter) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ReuseKernelBinaries.set(1);
+
+    pProgram->build(pProgram->getDevices(), nullptr, true);
+    auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
+    auto kernelName = pProgram->buildInfos[0].kernelInfoArray[0]->kernelDescriptor.kernelMetadata.kernelName;
+    auto kernelAllocations = kernelAllocMap.find(kernelName);
+    kernelAllocations->second.reuseCounter = 2u;
+
+    EXPECT_EQ(1u, pProgram->getNumKernels());
+    for (auto i = 0u; i < pProgram->buildInfos.size(); i++) {
+        pProgram->cleanCurrentKernelInfo(i);
+    }
+    EXPECT_EQ(0u, pProgram->getNumKernels());
+    EXPECT_EQ(1u, kernelAllocations->second.reuseCounter);
+
+    pProgram->peekExecutionEnvironment().memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelAllocations->second.kernelAllocation);
+}
+
+TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfoAndCounterEqualsZeroThenFreeAllocation) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ReuseKernelBinaries.set(1);
+
+    pProgram->build(pProgram->getDevices(), nullptr, true);
+    auto &kernelAllocMap = pProgram->peekExecutionEnvironment().memoryManager->getKernelAllocationMap();
+
+    EXPECT_EQ(1u, pProgram->getNumKernels());
+    for (auto i = 0u; i < pProgram->buildInfos.size(); i++) {
+        pProgram->cleanCurrentKernelInfo(i);
+    }
+    EXPECT_EQ(0u, pProgram->getNumKernels());
+    EXPECT_EQ(0u, kernelAllocMap.size());
+}
+
 HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
