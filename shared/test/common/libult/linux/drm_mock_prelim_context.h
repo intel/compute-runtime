@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 
 #include <optional>
+#include <vector>
 
 using namespace NEO;
 
@@ -23,6 +24,17 @@ struct UuidControl {
     uint32_t handle{0};
     uint32_t flags{0};
     uint64_t extensions{0};
+};
+
+struct CreateGemExt {
+    uint64_t size{0};
+    uint32_t handle{0};
+
+    struct MemoryClassInstance {
+        uint16_t memoryClass{0};
+        uint16_t memoryInstance{0};
+    };
+    std::vector<MemoryClassInstance> memoryRegions{};
 };
 
 struct DrmMockPrelimContext {
@@ -50,11 +62,15 @@ struct DrmMockPrelimContext {
     int hasPageFaultQueryValue{0};
     int hasPageFaultQueryReturn{0};
 
+    uint32_t queryMemoryRegionInfoSuccessCount{std::numeric_limits<uint32_t>::max()};
+
     uint32_t uuidHandle{1};
     std::optional<UuidControl> receivedRegisterUuid{};
     std::optional<UuidControl> receivedUnregisterUuid{};
 
     int uuidControlReturn{0};
+
+    std::optional<CreateGemExt> receivedCreateGemExt{};
 
     bool failDistanceInfoQuery{false};
     bool disableCcsSupport{false};

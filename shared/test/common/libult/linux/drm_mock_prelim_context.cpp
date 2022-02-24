@@ -94,6 +94,45 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         vmUnbindCalled++;
         return vmUnbindReturn;
     } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {
+        auto createExt = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
+        if (createExt->size == 0) {
+            return EINVAL;
+        }
+
+        constexpr uint32_t createExtHandle{1u};
+        createExt->handle = createExtHandle;
+        receivedCreateGemExt = CreateGemExt{createExt->size, createExtHandle};
+
+        auto extension = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(createExt->extensions);
+        if (!extension) {
+            return EINVAL;
+        }
+
+        if (extension->base.name != PRELIM_I915_GEM_CREATE_EXT_SETPARAM) {
+            return EINVAL;
+        }
+
+        if ((extension->param.size == 0) ||
+            (extension->param.param != (PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS))) {
+            return EINVAL;
+        }
+
+        auto data = reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(extension->param.data);
+        if (!data) {
+            return EINVAL;
+        }
+
+        receivedCreateGemExt->memoryRegions.clear();
+        for (uint32_t i = 0; i < extension->param.size; i++) {
+            receivedCreateGemExt->memoryRegions.push_back({data[i].memory_class, data[i].memory_instance});
+        }
+
+        const auto firstMemoryRegion = receivedCreateGemExt->memoryRegions[0];
+        if ((firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
+            return EINVAL;
+        }
+    } break;
     case PRELIM_DRM_IOCTL_I915_UUID_REGISTER: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
 
@@ -177,6 +216,13 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     }
 
     case PRELIM_DRM_I915_QUERY_MEMORY_REGIONS: {
+        if (queryMemoryRegionInfoSuccessCount == 0) {
+            queryItem->length = -EINVAL;
+            return true;
+        } else {
+            queryMemoryRegionInfoSuccessCount--;
+        }
+
         auto numberOfLocalMemories = gtSystemInfo.MultiTileArchInfo.IsValid ? gtSystemInfo.MultiTileArchInfo.TileCount : 0u;
         auto numberOfRegions = 1u + numberOfLocalMemories;
 
