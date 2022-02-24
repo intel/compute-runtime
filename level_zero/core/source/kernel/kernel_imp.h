@@ -210,7 +210,7 @@ struct KernelImp : Kernel {
 
     bool kernelHasIndirectAccess = true;
 
-    uint32_t schedulingHintExpFlag = 0u;
+    uint32_t schedulingHintExpFlag = std::numeric_limits<uint32_t>::max();
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 };
 

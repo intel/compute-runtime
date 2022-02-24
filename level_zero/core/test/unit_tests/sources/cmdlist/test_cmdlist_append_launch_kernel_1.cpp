@@ -57,6 +57,30 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAll
     ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
 }
 
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithOldestFirstThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
+    createKernel();
+    ze_scheduling_hint_exp_desc_t pHint{};
+    pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
+    kernel->setSchedulingHintExp(&pHint);
+    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::AgeBased);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
+    createKernel();
+    ze_scheduling_hint_exp_desc_t pHint{};
+    pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
+    kernel->setSchedulingHintExp(&pHint);
+    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::RoundRobin);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
+    createKernel();
+    ze_scheduling_hint_exp_desc_t pHint{};
+    pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
+    kernel->setSchedulingHintExp(&pHint);
+    ASSERT_EQ(kernel->getSchedulingHintExp(), NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency);
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {
     createKernel();
     ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
@@ -70,7 +94,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(commandList->threadArbitrationPolicy, pHint->flags);
+    ASSERT_EQ(commandList->threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobin);
     delete (pHint);
 }
 

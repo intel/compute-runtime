@@ -754,7 +754,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
 
-    this->schedulingHintExpFlag = hwHelper.getDefaultThreadArbitrationPolicy();
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
@@ -1003,7 +1002,14 @@ NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
 }
 
 ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) {
-    this->schedulingHintExpFlag = pHint->flags;
+
+    if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST) {
+        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::AgeBased;
+    } else if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN) {
+        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::RoundRobin;
+    } else {
+        this->schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
