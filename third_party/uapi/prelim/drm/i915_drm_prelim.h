@@ -6,7 +6,7 @@
 #ifndef __I915_DRM_PRELIM_H__
 #define __I915_DRM_PRELIM_H__
 
-#include "drm.h"
+#include "i915_drm.h"
 
 /*
  * Modifications to structs/values defined here are subject to
@@ -420,21 +420,6 @@ struct prelim_drm_i915_query_item {
 };
 
 /*
- * Number of BB in execbuf2 IOCTL - 1, used to submit more than BB in a single
- * execbuf2 IOCTL.
- *
- * Return -EINVAL if more than 1 BB (value 0) is specified if
- * PRELIM_I915_CONTEXT_ENGINES_EXT_PARALLEL_SUBMIT hasn't been called on the gem
- * context first. Also returns -EINVAL if gem context has been setup with
- * I915_PARALLEL_BB_PREEMPT_BOUNDARY and the number BBs not equal to the total
- * number hardware contexts in the gem context.
- */
-#define PRELIM_I915_EXEC_NUMBER_BB_LSB		(48)
-#define PRELIM_I915_EXEC_NUMBER_BB_MASK		(0x3full << PRELIM_I915_EXEC_NUMBER_BB_LSB)
-#define PRELIM_I915_EXEC_NUMBER_BB_MSB		(54)
-#define PRELIM_I915_EXEC_NUMBER_BB_MASK_MSB	(1ull << PRELIM_I915_EXEC_NUMBER_BB_MSB)
-
-/*
  * In XEHPSDV total number of engines can be more than the maximum supported
  * engines by I915_EXEC_RING_MASK.
  * PRELIM_I915_EXEC_ENGINE_MASK expands the total number of engines from 64 to 256.
@@ -488,7 +473,7 @@ enum prelim_drm_i915_oa_format {
 	PRELIM_I915_OAC_FORMAT_A24u64_B8_C8,
 	PRELIM_I915_OA_FORMAT_A38u64_R2u64_B8_C8,
 	PRELIM_I915_OAM_FORMAT_A2u64_R2u64_B8_C8,
-	PRELIM_I915_OAC_FORMAT_A24u22_B8_C8,
+	PRELIM_I915_OAC_FORMAT_A22u32_R2u32_B8_C8,
 
 	PRELIM_I915_OA_FORMAT_MAX	/* non-ABI */
 };
@@ -1228,18 +1213,19 @@ struct prelim_drm_i915_vm_bind_ext_sync_fence {
 	__u64 val;
 };
 
+struct prelim_drm_i915_gem_vm_control {
+#define PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH	(1 << 16)
+#define PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT	(1 << 17)
+#define PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND		(1 << 18)
+#define PRELIM_I915_VM_CREATE_FLAGS_UNKNOWN		(~(GENMASK(18, 16)))
+};
+
 struct prelim_drm_i915_gem_vm_region_ext {
 #define PRELIM_I915_GEM_VM_CONTROL_EXT_REGION	(PRELIM_I915_USER_EXT | 0)
 	struct i915_user_extension base;
 	/* memory region: to find gt to create vm on */
 	struct prelim_drm_i915_gem_memory_class_instance region;
 	__u32 pad;
-};
-
-struct prelim_drm_i915_gem_vm_control {
-#define PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH	(1 << 16)
-#define PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT	(1 << 17)
-#define PRELIM_I915_VM_CREATE_FLAGS_UNKNOWN		(~(GENMASK(17, 16)))
 };
 
 struct prelim_drm_i915_vm_bind_ext_set_pat {
@@ -1293,7 +1279,7 @@ struct prelim_drm_i915_gem_clos_free {
  */
 struct prelim_drm_i915_gem_cache_reserve {
 	__u16 clos_index;
-	__u16 cache_level; // e.g. 3 for L3
+	__u16 cache_level; /* e.g. 3 for L3 */
 	__u16 num_ways;
 	__u16 pad16;
 };
