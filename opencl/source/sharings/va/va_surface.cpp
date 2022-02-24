@@ -154,10 +154,12 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 }
 
 void VASurface::synchronizeObject(UpdateData &updateData) {
-    if (!interopUserSync) {
-        sharingFunctions->syncSurface(*surfaceId);
-    }
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+    if (!interopUserSync) {
+        if (sharingFunctions->syncSurface(*surfaceId) != VA_STATUS_SUCCESS) {
+            updateData.synchronizationStatus = SYNCHRONIZE_ERROR;
+        }
+    }
 }
 
 void VASurface::getMemObjectInfo(size_t &paramValueSize, void *&paramValue) {

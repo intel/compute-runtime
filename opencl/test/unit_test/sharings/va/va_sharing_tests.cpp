@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -513,8 +513,9 @@ TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSync
     auto memObj = castToObject<MemObj>(sharedClMem);
 
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
-    memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
+    auto ret = memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(vaSharing->sharingFunctions.syncSurfaceCalled);
+    EXPECT_EQ(CL_SUCCESS, ret);
 }
 
 TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyncSurface) {
@@ -525,6 +526,14 @@ TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyn
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
     sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
+}
+
+TEST_F(VaSharingTests, whenSyncSurfaceFailedThenReturnOutOfResource) {
+    vaSharing->sharingFunctions.syncSurfaceReturnStatus = VA_STATUS_ERROR_INVALID_SURFACE;
+    createMediaSurface();
+
+    auto ret = sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, ret);
 }
 
 TEST_F(VaSharingTests, givenYuvPlaneWhenCreateIsCalledThenChangeWidthAndHeight) {
