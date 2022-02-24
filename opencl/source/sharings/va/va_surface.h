@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,13 @@ class VASurface : VASharing {
   protected:
     VASurface(VASharingFunctions *sharingFunctions, VAImageID imageId,
               cl_uint plane, VASurfaceID *surfaceId, bool interopUserSync)
-        : VASharing(sharingFunctions, imageId), plane(plane), surfaceId(surfaceId), interopUserSync(interopUserSync){};
+        : VASharing(sharingFunctions, imageId), plane(plane), surfaceId(*surfaceId), interopUserSync(interopUserSync) {
+        surfaceIdPtr = &this->surfaceId;
+    };
 
     cl_uint plane;
-    VASurfaceID *surfaceId;
+    VASurfaceID surfaceId;
+    VASurfaceID *surfaceIdPtr;
     bool interopUserSync;
 };
 } // namespace NEO

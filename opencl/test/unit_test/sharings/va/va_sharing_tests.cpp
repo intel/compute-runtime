@@ -438,16 +438,18 @@ TEST_F(VaSharingTests, givenHwCommandQueueWhenAcquireAndReleaseCallsAreMadeWithE
 }
 
 TEST_F(VaSharingTests, givenVaMediaSurfaceWhenGetMemObjectInfoIsCalledThenSurfaceIdIsReturned) {
+    vaSurfaceId = 1u;
     createMediaSurface();
 
     VASurfaceID *retVaSurfaceId = nullptr;
     size_t retSize = 0;
+    vaSurfaceId = 0;
     errCode = clGetMemObjectInfo(sharedClMem, CL_MEM_VA_API_MEDIA_SURFACE_INTEL,
                                  sizeof(VASurfaceID *), &retVaSurfaceId, &retSize);
 
     EXPECT_EQ(CL_SUCCESS, errCode);
     EXPECT_EQ(sizeof(VASurfaceID *), retSize);
-    EXPECT_EQ(vaSurfaceId, *retVaSurfaceId);
+    EXPECT_EQ(1u, *retVaSurfaceId);
 }
 
 TEST_F(VaSharingTests, givenVaMediaSurfaceWhenGetImageInfoIsCalledThenPlaneIsReturned) {
@@ -507,8 +509,9 @@ TEST_F(VaSharingTests, givenSimpleParamsWhenCreateSurfaceIsCalledThenSetImgObjec
 
 TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSyncSurface) {
     context.setInteropUserSyncEnabled(false);
-
+    vaSurfaceId = 1u;
     createMediaSurface();
+    vaSurfaceId = 0u;
 
     auto memObj = castToObject<MemObj>(sharedClMem);
 
@@ -516,6 +519,7 @@ TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSync
     auto ret = memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(vaSharing->sharingFunctions.syncSurfaceCalled);
     EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_EQ(1u, vaSharing->sharingFunctions.syncedSurfaceID);
 }
 
 TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyncSurface) {

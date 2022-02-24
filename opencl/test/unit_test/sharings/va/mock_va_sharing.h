@@ -35,7 +35,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
     bool syncSurfaceCalled = false;
     bool extGetSurfaceHandleCalled = false;
     bool exportSurfaceHandleCalled = false;
-
+    VASurfaceID syncedSurfaceID = 0;
     osHandle acquiredVaHandle = 0;
 
     bool haveExportSurfaceHandle = false;
@@ -110,6 +110,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
 
     VAStatus syncSurface(VASurfaceID vaSurface) override {
         syncSurfaceCalled = true;
+        syncedSurfaceID = vaSurface;
         return syncSurfaceReturnStatus;
     }
 
