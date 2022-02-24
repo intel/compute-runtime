@@ -303,7 +303,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_EXECUTION_MASK:
     case DATA_PARAMETER_VME_IMAGE_TYPE:
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
-    case DATA_PARAMETER_LOCAL_ID_BUFFER:
         // ignored intentionally
         break;
     }

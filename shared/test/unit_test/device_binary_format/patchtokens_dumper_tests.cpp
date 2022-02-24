@@ -2094,7 +2094,7 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
     auto kernelDataParamToken = static_cast<iOpenCL::SPatchDataParameterBuffer *>(kernelToken);
     *kernelDataParamToken = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
     kernelDataParamToken->Size = maxTokenSize;
-    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 39, 40, 41, iOpenCL::DATA_PARAMETER_LOCAL_ID_BUFFER};
+    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 39, 40, 41};
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
         if (dataParamTokensPasslist.count(i) != 0) {
             continue;
