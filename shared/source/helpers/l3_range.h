@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,7 @@ struct L3Range {
     }
 
     static L3Range fromAddressSize(uint64_t address, uint64_t size) {
-        L3Range ret;
+        L3Range ret{};
         ret.setAddress(address);
         ret.setMask(getMaskFromSize(size));
         return ret;
@@ -84,7 +84,7 @@ struct L3Range {
         return ret;
     }
     static L3Range fromAddressMask(uint64_t address, uint64_t mask) {
-        L3Range ret;
+        L3Range ret{};
         ret.setAddress(address);
         ret.setMask(mask);
         return ret;
