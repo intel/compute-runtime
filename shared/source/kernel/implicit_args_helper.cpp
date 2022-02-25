@@ -45,7 +45,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         return 0;
     }
     auto implicitArgsSize = static_cast<uint32_t>(sizeof(NEO::ImplicitArgs));
-    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     if (patchImplicitArgsBufferInCrossThread) {
         return alignUp(implicitArgsSize, MemoryConstants::cacheLineSize);
     } else {
@@ -66,7 +66,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
     auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, hardwareInfo);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
 
-    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     if (!patchImplicitArgsBufferInCrossThread) {
         auto simdSize = implicitArgs.simdWidth;
         auto grfSize = getGrfSize(simdSize, hardwareInfo.capabilityTable.grfSize);

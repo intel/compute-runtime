@@ -1595,6 +1595,6 @@ TEST(KernelDescriptorFromPatchtokens, givenDataParameterImplArgBufferTokenWhenPo
 
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 8);
 
-    EXPECT_EQ(offset, kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    EXPECT_EQ(offset, kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }

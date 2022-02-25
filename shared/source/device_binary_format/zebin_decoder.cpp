@@ -907,7 +907,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         break;
     }
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeImplicitArgBuffer: {
-        dst.payloadMappings.implicitArgs.implcitArgsBuffer = src.offset;
+        dst.payloadMappings.implicitArgs.implicitArgsBuffer = src.offset;
         dst.kernelAttributes.flags.requiresImplicitArgs = true;
         break;
     }

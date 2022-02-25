@@ -4919,7 +4919,7 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_EQ(4u, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+    EXPECT_EQ(4u, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
     EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 

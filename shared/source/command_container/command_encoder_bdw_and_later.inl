@@ -144,7 +144,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         uint64_t implicitArgsGpuVA = 0u;
         if (pImplicitArgs) {
             implicitArgsGpuVA = heapIndirect->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heapIndirect->getUsed() - iohRequiredSize);
-            auto implicitArgsCrossThreadPtr = ptrOffset(const_cast<uint64_t *>(reinterpret_cast<const uint64_t *>(args.dispatchInterface->getCrossThreadData())), kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer);
+            auto implicitArgsCrossThreadPtr = ptrOffset(const_cast<uint64_t *>(reinterpret_cast<const uint64_t *>(args.dispatchInterface->getCrossThreadData())), kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
             *implicitArgsCrossThreadPtr = implicitArgsGpuVA;
 
             ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, hwInfo, {});

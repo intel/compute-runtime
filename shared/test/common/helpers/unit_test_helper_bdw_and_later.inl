@@ -64,6 +64,6 @@ inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename G
 template <typename GfxFamily>
 inline void UnitTestHelper<GfxFamily>::adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor) {
     kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
-    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0u;
+    kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0u;
 }
 } // namespace NEO

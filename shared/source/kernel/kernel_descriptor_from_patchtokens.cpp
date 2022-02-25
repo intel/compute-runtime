@@ -510,7 +510,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     dst.payloadMappings.implicitArgs.privateMemorySize = getOffset(src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowSize = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize);
     dst.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = getOffset(src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress);
-    dst.payloadMappings.implicitArgs.implcitArgsBuffer = getOffset(src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset);
+    dst.payloadMappings.implicitArgs.implicitArgsBuffer = getOffset(src.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset);
 
     if (src.tokens.gtpinInfo) {
         dst.external.igcInfoForGtpin = (src.tokens.gtpinInfo + 1);

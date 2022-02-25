@@ -65,7 +65,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     KernelDescriptor kernelDescriptor{};
 
-    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
     const auto &hwInfo = *defaultHwInfo;
 
     implicitArgs.simdWidth = 32;
@@ -83,8 +83,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
 
     KernelDescriptor kernelDescriptor{};
-    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0x10;
-    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
+    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
     const auto &hwInfo = *defaultHwInfo;
 
     implicitArgs.simdWidth = 32;
@@ -103,7 +103,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2] = 2;
 
-    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    EXPECT_TRUE(isUndefinedOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
     const auto &hwInfo = *defaultHwInfo;
 
     implicitArgs.simdWidth = 1;
@@ -145,8 +145,8 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
     ImplicitArgs implicitArgs{sizeof(ImplicitArgs)};
 
     KernelDescriptor kernelDescriptor{};
-    kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer = 0x10;
-    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implcitArgsBuffer));
+    kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
+    EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
     const auto &hwInfo = *defaultHwInfo;
 
     implicitArgs.simdWidth = 32;
