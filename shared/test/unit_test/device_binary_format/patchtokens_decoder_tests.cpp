@@ -63,7 +63,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.crossThreadPayloadArgs.localMemoryStatelessWindowSize;
     empty &= nullptr == toks.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress;
     empty &= nullptr == toks.crossThreadPayloadArgs.preferredWorkgroupMultiple;
-    empty &= toks.crossThreadPayloadArgs.childBlockSimdSize.empty();
     return empty;
 }
 
@@ -576,9 +575,6 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     auto localMemoryStatelessWindowStartAddrOff = pushBackDataParameterToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS, storage);
     auto parentEventOff = pushBackDataParameterToken(DATA_PARAMETER_PARENT_EVENT, storage);
     auto preferredWorkgroupMultipleOff = pushBackDataParameterToken(DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE, storage);
-    auto childBlockSimdSize0Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
-    auto childBlockSimdSize1Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
-    auto childBlockSimdSize2Off = pushBackDataParameterToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, storage);
     auto implictArgBufferOffset = pushBackDataParameterToken(DATA_PARAMETER_IMPL_ARG_BUFFER, storage);
 
     ASSERT_EQ(storage.data(), kernelToEncode.blobs.kernelInfo.begin());
@@ -618,10 +614,6 @@ TEST(KernelDecoder, GivenKernelWithValidNonArgCrossThreadDataPatchtokensThenDeco
     EXPECT_TRUE(tokenOffsetMatched(base, localMemoryStatelessWindowStartAddrOff, decodedKernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress));
     EXPECT_TRUE(tokenOffsetMatched(base, parentEventOff, decodedKernel.tokens.crossThreadPayloadArgs.parentEvent));
     EXPECT_TRUE(tokenOffsetMatched(base, preferredWorkgroupMultipleOff, decodedKernel.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple));
-    ASSERT_EQ(3U, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.size());
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize0Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[0]));
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize1Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[1]));
-    EXPECT_TRUE(tokenOffsetMatched(base, childBlockSimdSize2Off, decodedKernel.tokens.crossThreadPayloadArgs.childBlockSimdSize[2]));
     EXPECT_TRUE(tokenOffsetMatched(base, implictArgBufferOffset, decodedKernel.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset));
 }
 

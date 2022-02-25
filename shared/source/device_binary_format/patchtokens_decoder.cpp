@@ -284,9 +284,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_PARENT_EVENT:
         crossthread.parentEvent = token;
         break;
-    case DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE:
-        crossthread.childBlockSimdSize.push_back(token);
-        break;
     case DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE:
         crossthread.preferredWorkgroupMultiple = token;
         break;
@@ -303,6 +300,7 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_EXECUTION_MASK:
     case DATA_PARAMETER_VME_IMAGE_TYPE:
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
+    case DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE:
         // ignored intentionally
         break;
     }

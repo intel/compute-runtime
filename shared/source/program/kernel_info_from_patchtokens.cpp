@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,10 +37,6 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     }
 
     dst.systemKernelOffset = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;
-
-    for (auto &childSimdSize : src.tokens.crossThreadPayloadArgs.childBlockSimdSize) {
-        dst.childrenKernelsIdOffset.push_back({childSimdSize->ArgumentNumber, childSimdSize->Offset});
-    }
 
     if (src.tokens.gtpinInfo) {
         dst.igcInfoForGtpin = reinterpret_cast<const gtpin::igc_info_t *>(src.tokens.gtpinInfo + 1);

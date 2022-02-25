@@ -156,7 +156,6 @@ struct KernelFromPatchtokens {
             const SPatchDataParameterBuffer *localMemoryStatelessWindowSize = nullptr;
             const SPatchDataParameterBuffer *localMemoryStatelessWindowStartAddress = nullptr;
             const SPatchDataParameterBuffer *preferredWorkgroupMultiple = nullptr;
-            StackVec<const SPatchDataParameterBuffer *, 4> childBlockSimdSize;
             const SPatchDataParameterBuffer *implicitArgsBufferOffset = nullptr;
         } crossThreadPayloadArgs;
     } tokens;

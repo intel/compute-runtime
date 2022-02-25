@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,31 +135,4 @@ TEST_F(KernelDataTest, GIVENdataParameterObjectIdWHENdecodeTokensTHENoffsetLocat
     EXPECT_TRUE(pKernelInfo->getArgDescriptorAt(argNum).getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor);
     auto deviceSideEnqueueDesc = reinterpret_cast<NEO::ArgDescriptorDeviceSideEnqueue *>(pKernelInfo->kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors[argNum].get());
     EXPECT_EQ(offsetObjectId, deviceSideEnqueueDesc->objectId);
-}
-
-TEST_F(KernelDataTest, GIVENdataParameterChildSimdSizeWHENdecodeTokensTHENchildsIdsStoredInKernelInfoWithOffset) {
-    SPatchDataParameterBuffer patchList[3];
-    uint32_t childrenKernelIds[3] = {7, 14, 21};
-    uint32_t childrenSimdSizeOffsets[3] = {0x77, 0xAB, 0xCD};
-
-    for (int i = 0; i < 3; i++) {
-        patchList[i].Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
-        patchList[i].Size = sizeof(SPatchDataParameterBuffer);
-        patchList[i].Type = DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE;
-        patchList[i].ArgumentNumber = childrenKernelIds[i];
-        patchList[i].Offset = childrenSimdSizeOffsets[i];
-        patchList[i].DataSize = sizeof(uint32_t);
-        patchList[i].SourceOffset = 0;
-    }
-
-    pPatchList = patchList;
-    patchListSize = sizeof(patchList);
-
-    buildAndDecode();
-
-    ASSERT_GE(pKernelInfo->childrenKernelsIdOffset.size(), size_t(3u));
-    for (int i = 0; i < 3; i++) {
-        EXPECT_EQ(pKernelInfo->childrenKernelsIdOffset[i].first, childrenKernelIds[i]);
-        EXPECT_EQ(pKernelInfo->childrenKernelsIdOffset[i].second, childrenSimdSizeOffsets[i]);
-    }
 }

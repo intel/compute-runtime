@@ -764,9 +764,7 @@ std::string asString(const KernelFromPatchtokens &kern) {
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple, "", stream, indentLevel1);
-    dumpVecIfNotEmpty(kern.tokens.crossThreadPayloadArgs.childBlockSimdSize, "Child block simd size(s)", stream, indentLevel1);
     dumpOrNull(kern.tokens.crossThreadPayloadArgs.implicitArgsBufferOffset, "", stream, indentLevel1);
-
     if (kern.tokens.kernelArgs.size() != 0) {
         stream << "Kernel arguments [" << kern.tokens.kernelArgs.size() << "] :\n";
         for (size_t i = 0; i < kern.tokens.kernelArgs.size(); ++i) {

@@ -905,8 +905,6 @@ TEST(KernelDumper, GivenKernelWithNonArgCrossThreadDataPatchtokensThenProperlyCr
     auto localMemoryStatelessWindowSize = initDataParameterBufferToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE);
     auto localMemoryStatelessWindowStartAddress = initDataParameterBufferToken(DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS);
     auto preferredWorkgroupMultiple = initDataParameterBufferToken(DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE);
-    SPatchDataParameterBuffer childBlockSimdSize[2] = {initDataParameterBufferToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE),
-                                                       initDataParameterBufferToken(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE, 2U)};
     auto unknownToken0 = initDataParameterBufferToken(NUM_DATA_PARAMETER_TOKENS);
     auto unknownToken1 = initDataParameterBufferToken(NUM_DATA_PARAMETER_TOKENS);
 
@@ -936,8 +934,6 @@ TEST(KernelDumper, GivenKernelWithNonArgCrossThreadDataPatchtokensThenProperlyCr
     kernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize = &localMemoryStatelessWindowSize;
     kernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress = &localMemoryStatelessWindowStartAddress;
     kernel.tokens.crossThreadPayloadArgs.preferredWorkgroupMultiple = &preferredWorkgroupMultiple;
-    kernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlockSimdSize[0]);
-    kernel.tokens.crossThreadPayloadArgs.childBlockSimdSize.push_back(&childBlockSimdSize[1]);
     kernel.unhandledTokens.push_back(&unknownToken0);
     kernel.unhandledTokens.push_back(&unknownToken1);
 
@@ -1334,35 +1330,6 @@ Kernel-scope tokens section size : )==="
       uint32_t   LocationIndex2;// = 0
       uint32_t   IsEmulationArgument;// = 0
   }
-  Child block simd size(s) [2] :
-   + [0]:
-   |  struct SPatchDataParameterBuffer :
-   |         SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << tokenSize << R"===()
-   |  {
-   |      uint32_t   Type;// = 38(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE)
-   |      uint32_t   ArgumentNumber;// = 0
-   |      uint32_t   Offset;// = 0
-   |      uint32_t   DataSize;// = 0
-   |      uint32_t   SourceOffset;// = 0
-   |      uint32_t   LocationIndex;// = 0
-   |      uint32_t   LocationIndex2;// = 0
-   |      uint32_t   IsEmulationArgument;// = 0
-   |  }
-   + [1]:
-   |  struct SPatchDataParameterBuffer :
-   |         SPatchItemHeader (Token=17(PATCH_TOKEN_DATA_PARAMETER_BUFFER), Size=)==="
-             << tokenSize << R"===()
-   |  {
-   |      uint32_t   Type;// = 38(DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE)
-   |      uint32_t   ArgumentNumber;// = 0
-   |      uint32_t   Offset;// = 0
-   |      uint32_t   DataSize;// = 0
-   |      uint32_t   SourceOffset;// = 8
-   |      uint32_t   LocationIndex;// = 0
-   |      uint32_t   LocationIndex2;// = 0
-   |      uint32_t   IsEmulationArgument;// = 0
-   |  }
 )===";
     EXPECT_STREQ(expected.str().c_str(), generated.c_str());
 }
@@ -2094,7 +2061,9 @@ TEST(PatchTokenDumper, GivenAnyTokenThenDumpingIsHandled) {
     auto kernelDataParamToken = static_cast<iOpenCL::SPatchDataParameterBuffer *>(kernelToken);
     *kernelDataParamToken = PatchTokensTestData::initDataParameterBufferToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET);
     kernelDataParamToken->Size = maxTokenSize;
-    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 39, 40, 41};
+
+    std::unordered_set<int> dataParamTokensPasslist{6, 7, 17, 19, 36, 37, 38, 39, 40, 41};
+
     for (int i = 0; i < iOpenCL::NUM_DATA_PARAMETER_TOKENS; ++i) {
         if (dataParamTokensPasslist.count(i) != 0) {
             continue;
