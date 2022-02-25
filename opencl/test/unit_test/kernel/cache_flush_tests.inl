@@ -240,7 +240,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
 
         mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
+        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation, 0u);
 
         cmdQ->getUltCommandStreamReceiver().timestampPacketWriteEnabled = false;
 
@@ -295,7 +295,7 @@ class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequires
 
         mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
+        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation, 0);
 
         cmdQ->enqueueKernel(mockKernel, 1, nullptr, StatickSize3<16, 1, 1>(), StatickSize3<16, 1, 1>(), 0, nullptr, nullptr);
 
@@ -353,7 +353,7 @@ class GivenCacheFlushAfterWalkerDisabledAndProperSteppingIsSetWhenAllocationRequ
 
         mockKernel.kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties(pDevice->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP));
         mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
-        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation);
+        mockKernel.mockKernel->setArgSvmAlloc(0, svm, svmAllocation, 0u);
 
         cmdQ->enqueueKernel(mockKernel, 1, nullptr, StatickSize3<16, 1, 1>(), StatickSize3<16, 1, 1>(), 0, nullptr, nullptr);
 

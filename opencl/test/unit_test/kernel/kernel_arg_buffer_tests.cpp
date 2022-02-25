@@ -381,7 +381,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
 
-        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());
@@ -397,7 +397,7 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStateless
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
 
-        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+        auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(!pureStatefulBufferAccess, pKernel->hasDirectStatelessAccessToHostMemory());
@@ -557,7 +557,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
     MockGraphicsAllocation gfxAllocation(ptr, 128);
     gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(pKernel->hasDirectStatelessAccessToHostMemory());
@@ -577,7 +577,7 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAcce
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(pKernel->hasDirectStatelessAccessToHostMemory());

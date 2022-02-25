@@ -67,6 +67,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         cl_mem_flags svmFlags;
         bool isPatched = false;
         bool isStatelessUncacheable = false;
+        uint32_t allocId;
     };
 
     enum class TunningStatus {
@@ -146,7 +147,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     // API entry points
     cl_int setArgument(uint32_t argIndex, size_t argSize, const void *argVal) { return setArg(argIndex, argSize, argVal); }
     cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
-    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
+    MOCKABLE_VIRTUAL cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId);
 
     void setSvmKernelExecInfo(GraphicsAllocation *argValue);
     void clearSvmKernelExecInfo();

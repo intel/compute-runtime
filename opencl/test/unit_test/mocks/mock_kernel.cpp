@@ -44,4 +44,9 @@ bool MockKernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) con
 
     return false;
 }
+
+cl_int MockKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId) {
+    ++setArgSvmAllocCalls;
+    return Kernel::setArgSvmAlloc(argIndex, svmPtr, svmAlloc, allocId);
+}
 } // namespace NEO

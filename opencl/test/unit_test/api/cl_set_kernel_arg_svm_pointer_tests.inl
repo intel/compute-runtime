@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -202,6 +202,33 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSet
             (char *)ptrSvm + offset // const void *arg_value
         );
         EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
+
+        clSVMFree(pContext, ptrSvm);
+    }
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKernelArgTwiceThenSetArgSvmAllocCalledOnlyFirstTime) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        EXPECT_EQ(0u, pMockKernel->setArgSvmAllocCalls);
+        void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, ptrSvm);
+
+        auto retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            ptrSvm                  // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, pMockKernel->setArgSvmAllocCalls);
+
+        retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            ptrSvm                  // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(1u, pMockKernel->setArgSvmAllocCalls);
 
         clSVMFree(pContext, ptrSvm);
     }

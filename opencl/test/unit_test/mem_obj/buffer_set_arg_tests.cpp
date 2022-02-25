@@ -273,7 +273,8 @@ TEST_F(BufferSetArgTest, GivenSvmPointerWhenSettingKernelArgThenAddressToPatchIs
     retVal = pKernel->setArgSvmAlloc(
         0,
         ptrSVM,
-        pSvmAlloc);
+        pSvmAlloc,
+        0u);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +

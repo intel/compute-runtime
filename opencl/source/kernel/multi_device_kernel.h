@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     const ClDeviceVector &getDevices() const;
     size_t getKernelArgsNumber() const;
     Context &getContext() const;
-    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs);
+    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs, uint32_t allocId);
     bool getHasIndirectAccess() const;
     void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
     void setSvmKernelExecInfo(const MultiGraphicsAllocation &argValue);

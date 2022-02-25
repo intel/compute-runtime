@@ -532,7 +532,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
         MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
 
         auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
-        mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation);
+        mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation, 0u);
 
         gmm.reset(gfxAllocation->getDefaultGmm());
     }

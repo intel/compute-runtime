@@ -245,8 +245,11 @@ class MockKernel : public Kernel {
 
     bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const override;
 
+    cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId) override;
+
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
+    uint32_t setArgSvmAllocCalls = 0;
 
     bool canKernelTransformImages = true;
     bool isPatchedOverride = true;

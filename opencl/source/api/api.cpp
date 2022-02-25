@@ -4903,6 +4903,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     }
 
     MultiGraphicsAllocation *pSvmAllocs = nullptr;
+    uint32_t allocId = 0u;
     if (argValue != nullptr) {
         auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
         auto svmData = svmManager->getSVMAlloc(argValue);
@@ -4915,11 +4916,17 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 }
             }
         } else {
+            if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
+                pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                return CL_SUCCESS;
+            }
             pSvmAllocs = &svmData->gpuAllocations;
+            allocId = svmData->getAllocId();
         }
     }
 
-    retVal = pMultiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAllocs);
+    retVal = pMultiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAllocs, allocId);
     TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
     return retVal;
 }

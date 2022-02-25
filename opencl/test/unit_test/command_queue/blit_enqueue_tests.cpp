@@ -140,7 +140,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         for (uint32_t i = 0; i < allocs.size(); i++) {
             auto alloc = allocs[i];
             auto ptr = reinterpret_cast<void *>(alloc->getGpuAddressToPatch());
-            mockKernel->mockKernel->setArgSvmAlloc(i, ptr, alloc);
+            mockKernel->mockKernel->setArgSvmAlloc(i, ptr, alloc, 0u);
         }
     }
 

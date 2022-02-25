@@ -367,7 +367,8 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
             break;
         case SVM_ALLOC_OBJ:
             setArgSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                           (GraphicsAllocation *)pSourceKernel->getKernelArgInfo(i).object);
+                           (GraphicsAllocation *)pSourceKernel->getKernelArgInfo(i).object,
+                           pSourceKernel->getKernelArgInfo(i).allocId);
             break;
         default:
             setArg(i, pSourceKernel->getKernelArgInfo(i).size, pSourceKernel->getKernelArgInfo(i).value);
@@ -885,7 +886,7 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
     return CL_SUCCESS;
 }
 
-cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) {
+cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId) {
     DBG_LOG_INPUTS("setArgBuffer svm_alloc", svmAlloc);
 
     const auto &argAsPtr = getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescPointer>();
@@ -928,6 +929,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     }
 
     storeKernelArg(argIndex, SVM_ALLOC_OBJ, svmAlloc, svmPtr, sizeof(uintptr_t));
+    kernelArguments[argIndex].allocId = allocId;
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;

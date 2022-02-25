@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,7 @@ TEST_F(KernelArgSvmTest, GivenValidSvmAllocWhenSettingKernelArgThenArgumentsAreS
 
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
@@ -126,7 +126,7 @@ TEST_F(KernelArgSvmTest, GivenSvmAllocWithUncacheableWhenSettingKernelArgThenKer
     MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
     svmAlloc.setUncacheable(true);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(pKernel->hasUncacheableStatelessArgs());
@@ -138,13 +138,13 @@ TEST_F(KernelArgSvmTest, GivenSvmAllocWithoutUncacheableAndKenelWithUncachebleAr
     MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
     svmAlloc.setUncacheable(true);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(pKernel->hasUncacheableStatelessArgs());
 
     svmAlloc.setUncacheable(false);
     pKernel->kernelArguments[0].isStatelessUncacheable = true;
-    retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc);
+    retVal = pKernel->setArgSvmAlloc(0, svmPtr.get(), &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(pKernel->hasUncacheableStatelessArgs());
 }
@@ -155,7 +155,7 @@ HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArg
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
     pKernelInfo->argAsPtr(0).bindful = 0;
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
@@ -179,7 +179,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThen
     MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
 
     pKernelInfo->argAsPtr(0).bindful = 0;
-    pKernel->setArgSvmAlloc(0, offsetedPtr, &svmAlloc);
+    pKernel->setArgSvmAlloc(0, offsetedPtr, &svmAlloc, 0u);
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -196,7 +196,7 @@ HWTEST_F(KernelArgSvmTest, givenDeviceSupportingSharedSystemAllocationsWhenSetAr
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
     pKernelInfo->argAsPtr(0).bindful = 0;
-    pKernel->setArgSvmAlloc(0, systemPointer, nullptr);
+    pKernel->setArgSvmAlloc(0, systemPointer, nullptr, 0u);
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
@@ -329,7 +329,7 @@ struct SetArgHandlerSetArgSvm {
 
 struct SetArgHandlerSetArgSvmAlloc {
     static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, GraphicsAllocation &alloc) {
-        kernel.setArgSvmAlloc(argNum, ptrToPatch, &alloc);
+        kernel.setArgSvmAlloc(argNum, ptrToPatch, &alloc, 0u);
     }
 
     static constexpr bool supportsOffsets() {
@@ -420,7 +420,7 @@ TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingAsArgThenDoNotExpe
     svmAlloc.setMemObjectsAllocationWithWritableFlags(true);
     svmAlloc.setFlushL3Required(false);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 
@@ -435,7 +435,7 @@ TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingAsArgThenExpectA
     svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
     svmAlloc.setFlushL3Required(true);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(&svmAlloc, pKernel->kernelArgRequiresCacheFlush[0]);
 
@@ -450,7 +450,7 @@ TEST_F(KernelArgSvmTest, givenNoCacheFlushSvmAllocationWhenSettingAsArgThenNotEx
     svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
     svmAlloc.setFlushL3Required(false);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 
@@ -506,7 +506,7 @@ TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvm
 
     MockGraphicsAllocation svmAlloc(nullptr, reinterpret_cast<uint64_t>(svmPtr), 256);
 
-    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +

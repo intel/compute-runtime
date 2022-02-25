@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ cl_int MultiDeviceKernel::cloneKernel(MultiDeviceKernel *pSourceMultiDeviceKerne
     }
     return CL_SUCCESS;
 }
-cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs) {
+cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiGraphicsAllocation *svmAllocs, uint32_t allocId) {
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {
         auto pKernel = getKernel(rootDeviceIndex);
         if (pKernel) {
@@ -73,7 +73,7 @@ cl_int MultiDeviceKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, MultiG
                 continue;
             }
             auto svmAlloc = svmAllocs ? svmAllocs->getGraphicsAllocation(rootDeviceIndex) : nullptr;
-            pKernel->setArgSvmAlloc(argIndex, svmPtr, svmAlloc);
+            pKernel->setArgSvmAlloc(argIndex, svmPtr, svmAlloc, allocId);
         }
     }
     return CL_SUCCESS;

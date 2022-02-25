@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class DispatchInfoBuilder {
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc) {
         for (auto &dispatchInfo : dispatchInfos) {
             if (dispatchInfo.getKernel()) {
-                dispatchInfo.getKernel()->setArgSvmAlloc(argIndex, svmPtr, svmAlloc);
+                dispatchInfo.getKernel()->setArgSvmAlloc(argIndex, svmPtr, svmAlloc, 0u);
             }
         }
         return CL_SUCCESS;

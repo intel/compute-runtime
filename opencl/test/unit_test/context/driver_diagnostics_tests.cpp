@@ -476,7 +476,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
-    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
     testing::internal::CaptureStdout();
     KernelObjsForAuxTranslation kernelObjects;
@@ -579,7 +579,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
-    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
     testing::internal::CaptureStdout();
 
@@ -606,7 +606,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->auxTranslationRequired = true;
-    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation);
+    mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
     testing::internal::CaptureStdout();
 
@@ -627,7 +627,7 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
 
     mockKernel.mockKernel->initialize();
-    mockKernel.mockKernel->setArgSvmAlloc(0, nullptr, nullptr);
+    mockKernel.mockKernel->setArgSvmAlloc(0, nullptr, nullptr, 0u);
 
     testing::internal::CaptureStdout();
 
