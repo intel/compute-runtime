@@ -21,10 +21,5 @@ void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &
     coherencyFlag = false;
 }
 
-template <>
-bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
 template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO
