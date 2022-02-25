@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info_impl.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 
@@ -46,13 +45,6 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             vmBindQueryCalled++;
             *gp->value = vmBindQueryValue;
             return vmBindQueryReturn;
-        }
-    } break;
-    case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM: {
-        auto gp = static_cast<drm_i915_gem_context_param *>(arg);
-        if (gp->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
-            gp->value = contextDebugSupported ? PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 : 0;
-            return 0;
         }
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
@@ -93,41 +85,6 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
     case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
         vmUnbindCalled++;
         return vmUnbindReturn;
-    } break;
-    case PRELIM_DRM_IOCTL_I915_UUID_REGISTER: {
-        auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
-
-        if (uuidControl->uuid_class != uint32_t(PRELIM_I915_UUID_CLASS_STRING) && uuidControl->uuid_class > uuidHandle) {
-            return -1;
-        }
-
-        uuidControl->handle = uuidHandle++;
-
-        receivedRegisterUuid = UuidControl{
-            {},
-            uuidControl->uuid_class,
-            reinterpret_cast<void *>(uuidControl->ptr),
-            uuidControl->size,
-            uuidControl->handle,
-            uuidControl->flags,
-            uuidControl->extensions,
-        };
-        memcpy_s(receivedRegisterUuid->uuid, sizeof(receivedRegisterUuid->uuid), uuidControl->uuid, sizeof(uuidControl->uuid));
-        return uuidControlReturn;
-    } break;
-    case PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER: {
-        auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
-        receivedUnregisterUuid = UuidControl{
-            {},
-            uuidControl->uuid_class,
-            reinterpret_cast<void *>(uuidControl->ptr),
-            uuidControl->size,
-            uuidControl->handle,
-            uuidControl->flags,
-            uuidControl->extensions,
-        };
-        memcpy_s(receivedUnregisterUuid->uuid, sizeof(receivedUnregisterUuid->uuid), uuidControl->uuid, sizeof(uuidControl->uuid));
-        return uuidControlReturn;
     } break;
 
     default:
@@ -299,8 +256,4 @@ uint32_t DrmPrelimHelper::getDistanceInfoQueryId() {
 
 uint32_t DrmPrelimHelper::getComputeEngineClass() {
     return PRELIM_I915_ENGINE_CLASS_COMPUTE;
-}
-
-uint32_t DrmPrelimHelper::getStringUuidClass() {
-    return PRELIM_I915_UUID_CLASS_STRING;
 }

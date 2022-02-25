@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
@@ -320,7 +319,6 @@ int32_t IoctlHelperPrelim20::getComputeEngineClass() {
 std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
-
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
     properties[0] = PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
     properties[1] = dssBufferSize;
@@ -474,52 +472,4 @@ int IoctlHelperPrelim20::vmUnbind(Drm *drm, const VmBindParams &vmBindParams) {
     auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
     return IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND, &prelimVmBind);
 }
-
-UuidRegisterResult IoctlHelperPrelim20::registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
-    prelim_drm_i915_uuid_control uuidControl = {};
-    memcpy_s(uuidControl.uuid, sizeof(uuidControl.uuid), uuid.c_str(), uuid.size());
-    uuidControl.uuid_class = uuidClass;
-    uuidControl.ptr = ptr;
-    uuidControl.size = size;
-
-    const auto retVal = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_UUID_REGISTER, &uuidControl);
-
-    return {
-        retVal,
-        uuidControl.handle,
-    };
-}
-
-UuidRegisterResult IoctlHelperPrelim20::registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) {
-    return registerUuid(drm, uuid, PRELIM_I915_UUID_CLASS_STRING, ptr, size);
-}
-
-int IoctlHelperPrelim20::unregisterUuid(Drm *drm, uint32_t handle) {
-    prelim_drm_i915_uuid_control uuidControl = {};
-    uuidControl.handle = handle;
-
-    return IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER, &uuidControl);
-}
-
-bool IoctlHelperPrelim20::isContextDebugSupported(Drm *drm) {
-    drm_i915_gem_context_param ctxParam = {};
-    ctxParam.size = 0;
-    ctxParam.param = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS;
-    ctxParam.ctx_id = 0;
-    ctxParam.value = 0;
-
-    const auto retVal = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &ctxParam);
-    return retVal == 0 && ctxParam.value == (PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32);
-}
-
-int IoctlHelperPrelim20::setContextDebugFlag(Drm *drm, uint32_t drmContextId) {
-    drm_i915_gem_context_param ctxParam = {};
-    ctxParam.size = 0;
-    ctxParam.param = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS;
-    ctxParam.ctx_id = drmContextId;
-    ctxParam.value = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 | PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP;
-
-    return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &ctxParam);
-}
-
 } // namespace NEO

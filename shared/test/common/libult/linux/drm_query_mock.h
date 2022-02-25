@@ -43,7 +43,6 @@ class DrmQueryMock : public DrmMock {
         getCacheInfo(),
         failRetTopology,
         supportedCopyEnginesMask,
-        contextDebugSupported,
     };
 
     static constexpr uint32_t maxEngineCount{9};

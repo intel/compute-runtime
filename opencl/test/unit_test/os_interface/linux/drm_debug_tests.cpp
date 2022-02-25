@@ -12,29 +12,18 @@
 
 using namespace NEO;
 
-struct DrmDebugTest : public ::testing::Test {
-  public:
-    void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    }
-
-    void TearDown() override {
-    }
-
-  protected:
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-};
-
-TEST_F(DrmDebugTest, whenRegisterResourceClassesCalledThenTrueIsReturned) {
+TEST(DrmTest, whenRegisterResourceClassesCalledThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drmMock.registerResourceClasses();
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
-TEST_F(DrmDebugTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
+TEST(DrmTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto handle = drmMock.registerResource(Drm::ResourceClass::MaxSize, nullptr, 0);
@@ -43,7 +32,9 @@ TEST_F(DrmDebugTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }
 
-TEST_F(DrmDebugTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
+TEST(DrmTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     const uint32_t isaHandle = 2;
@@ -52,7 +43,9 @@ TEST_F(DrmDebugTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }
 
-TEST_F(DrmDebugTest, whenCheckingContextDebugSupportThenNoIoctlIsCalled) {
+TEST(DrmTest, whenCheckingContextDebugSupportThenNoIoctlIsCalled) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drmMock.checkContextDebugSupport();
     EXPECT_FALSE(drmMock.isContextDebugSupported());
@@ -60,7 +53,9 @@ TEST_F(DrmDebugTest, whenCheckingContextDebugSupportThenNoIoctlIsCalled) {
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }
 
-TEST_F(DrmDebugTest, whenNotifyCommandQueueCreateDestroyAreCalledThenImplementationsAreEmpty) {
+TEST(DrmTest, whenNotifyCommandQueueCreateDestroyAreCalledThenImplementationsAreEmpty) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto handle = drmMock.notifyFirstCommandQueueCreated();
