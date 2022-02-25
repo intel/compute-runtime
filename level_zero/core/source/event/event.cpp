@@ -85,7 +85,7 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, Context *context, uin
         useDeviceAlloc = false;
     }
 
-    if (useDeviceAlloc && !isEventPoolTimestampFlagSet()) {
+    if (useDeviceAlloc) {
         allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
     }
 

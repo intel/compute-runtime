@@ -935,6 +935,42 @@ TEST_F(TimestampEventCreate, givenEventWithStaticPartitionOffThenQueryTimestampE
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
+class TimestampDeviceEventCreate : public Test<DeviceFixture> {
+  public:
+    void SetUp() override {
+        DeviceFixture::SetUp();
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = 0;
+        eventDesc.wait = 0;
+
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+        event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device)));
+        ASSERT_NE(nullptr, event);
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+
+    std::unique_ptr<L0::EventPool> eventPool;
+    std::unique_ptr<L0::EventImp<uint32_t>> event;
+};
+
+TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfGpuDeviceTimestampType) {
+    auto allocation = &eventPool->getAllocation();
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
+}
+
 using EventQueryTimestampExpWithSubDevice = Test<MultiDeviceFixture>;
 
 TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithSubDeviceThenReturnsCorrectValueReturned) {
