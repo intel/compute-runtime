@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ using XeHPHwInfoTest = ::testing::Test;
 XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
-    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
@@ -30,7 +29,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
-    EXPECT_FALSE(workaroundTable.flags.waDefaultTile4);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
@@ -45,7 +43,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
     EXPECT_FALSE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
-    EXPECT_FALSE(workaroundTable.flags.waDefaultTile4);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
@@ -60,7 +57,6 @@ XEHPTEST_F(XeHPHwInfoTest, whenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrF
     EXPECT_TRUE(featureTable.flags.ftrMultiTileArch);
     EXPECT_TRUE(featureTable.flags.ftrCCSMultiInstance);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
-    EXPECT_FALSE(workaroundTable.flags.waDefaultTile4);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);

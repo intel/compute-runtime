@@ -64,7 +64,6 @@ class SkuInfoTransfer {
         TRANSFER_WA_TO_GMM(AuxTable16KGranular);
         TRANSFER_WA_TO_GMM(Limit128BMediaCompr);
         TRANSFER_WA_TO_GMM(UntypedBufferCompression);
-        TRANSFER_WA_TO_GMM(DefaultTile4);
         TRANSFER_WA_TO_GMM(AuxTable64KGranular);
 
 #undef TRANSFER_WA_TO_GMM

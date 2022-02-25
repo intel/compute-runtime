@@ -60,7 +60,6 @@ struct SkuInfoBaseReference {
         refWaTable.WaLimit128BMediaCompr = 1;
         refWaTable.WaUntypedBufferCompression = 1;
         refWaTable.WaAuxTable16KGranular = 1;
-        refWaTable.WaDefaultTile4 = 1;
         refWaTable.WaAuxTable64KGranular = 1;
     }
 
@@ -167,7 +166,6 @@ struct SkuInfoBaseReference {
         refWaTable.flags.waUntypedBufferCompression = true;
         refWaTable.flags.waAuxTable16KGranular = true;
         refWaTable.flags.waDisableFusedThreadScheduling = true;
-        refWaTable.flags.waDefaultTile4 = true;
         refWaTable.flags.waAuxTable64KGranular = true;
     }
 }; // namespace SkuInfoBaseReference

@@ -124,9 +124,8 @@ struct WorkaroundTableBase {
         uint32_t waUntypedBufferCompression : 1;
         uint32_t waAuxTable16KGranular : 1;
         uint32_t waDisableFusedThreadScheduling : 1;
-        uint32_t waDefaultTile4 : 1;
         uint32_t waAuxTable64KGranular : 1;
-        uint32_t reserved : 6;
+        uint32_t reserved : 7;
     };
 
     union {
