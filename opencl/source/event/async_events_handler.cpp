@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/event/async_events_handler.h"
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_thread.h"
 
@@ -62,6 +63,7 @@ void *AsyncEventsHandler::asyncProcess(void *arg) {
     auto self = reinterpret_cast<AsyncEventsHandler *>(arg);
     std::unique_lock<std::mutex> lock(self->asyncMtx, std::defer_lock);
     Event *sleepCandidate = nullptr;
+    WaitStatus waitStatus{};
 
     while (true) {
         lock.lock();
@@ -78,7 +80,10 @@ void *AsyncEventsHandler::asyncProcess(void *arg) {
 
         sleepCandidate = self->processList();
         if (sleepCandidate) {
-            sleepCandidate->wait(true, true);
+            waitStatus = sleepCandidate->wait(true, true);
+            if (waitStatus == WaitStatus::GpuHang) {
+                sleepCandidate->abortExecutionDueToGpuHang();
+            }
         }
         std::this_thread::yield();
     }

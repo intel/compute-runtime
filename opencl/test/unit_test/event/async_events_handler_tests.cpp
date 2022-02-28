@@ -347,7 +347,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontR
     event2->setStatus(CL_COMPLETE);
 }
 
-TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
+TEST_F(AsyncEventsHandlerTests, givenNoGpuHangAndSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
     event1->setTaskStamp(0, 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
     event1->handler->registerEvent(event1.get());
@@ -355,8 +355,25 @@ TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWith
 
     MockHandler::asyncProcess(event1->handler.get());
 
-    event1->setStatus(CL_COMPLETE);
     EXPECT_EQ(1u, event1->waitCalled);
+    EXPECT_NE(Event::executionAbortedDueToGpuHang, event1->peekExecutionStatus());
+
+    event1->setStatus(CL_COMPLETE);
+}
+
+TEST_F(AsyncEventsHandlerTests, givenSleepCandidateAndGpuHangWhenProcessedThenCallWaitAndSetExecutionStatusToAbortedDueToGpuHang) {
+    event1->setTaskStamp(0, 1);
+    event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
+    event1->handler->registerEvent(event1.get());
+    event1->handler->allowAsyncProcess.store(true);
+    event1->waitResult = WaitStatus::GpuHang;
+
+    MockHandler::asyncProcess(event1->handler.get());
+
+    EXPECT_EQ(1u, event1->waitCalled);
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, event1->peekExecutionStatus());
+
+    event1->setStatus(CL_COMPLETE);
 }
 
 TEST_F(AsyncEventsHandlerTests, WhenReturningThenAsyncProcessWillCallProcessList) {

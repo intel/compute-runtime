@@ -665,7 +665,7 @@ cl_int Event::waitForEvents(cl_uint numEvents,
 inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last) {
     std::for_each(first, last, [](cl_event &e) {
         Event *event = castToObjectOrAbort<Event>(e);
-        event->transitionExecutionStatus(executionAbortedDueToGpuHang);
+        event->abortExecutionDueToGpuHang();
     });
 }
 

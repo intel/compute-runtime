@@ -125,6 +125,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->perfCountersEnabled = perfCountersEnabled;
     }
 
+    void abortExecutionDueToGpuHang() {
+        this->transitionExecutionStatus(executionAbortedDueToGpuHang);
+    }
+
     TagNodeBase *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
