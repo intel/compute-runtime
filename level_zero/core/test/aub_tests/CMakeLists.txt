@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -55,6 +55,7 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
                $<TARGET_OBJECTS:neo_aub_tests_config>
+               $<TARGET_OBJECTS:l0_libult>
 )
 if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
   target_sources(${TARGET_NAME} PRIVATE

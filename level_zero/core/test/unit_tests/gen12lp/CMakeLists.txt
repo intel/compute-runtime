@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,6 @@
 if(TESTS_GEN12LP)
   target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/enable_l0_mocks_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cache_flush.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_gen12lp.cpp

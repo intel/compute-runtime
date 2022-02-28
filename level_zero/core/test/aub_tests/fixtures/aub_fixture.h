@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class AUBFixtureL0 {
     AUBFixtureL0();
     virtual ~AUBFixtureL0();
     void SetUp();
-    void SetUp(const NEO::HardwareInfo *hardwareInfo);
+    void SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled);
     void TearDown();
     static void prepareCopyEngines(NEO::MockDevice &device, const std::string &filename);
 

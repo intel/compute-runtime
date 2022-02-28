@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,6 +112,20 @@ class AUBFixture : public CommandQueueHwFixture {
         CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
         if (csrSimulated) {
             csrSimulated->writeMMIO(offset, value);
+        }
+    }
+
+    template <typename FamilyType>
+    void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+        CommandStreamReceiver *csrtemp = csr;
+        if (testMode == TestMode::AubTestsWithTbx) {
+            csrtemp = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get();
+        }
+
+        if (csrtemp) {
+            // Write our pseudo-op to the AUB file
+            auto aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csrtemp);
+            aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
 

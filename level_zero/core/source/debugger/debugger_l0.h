@@ -129,10 +129,10 @@ class DebuggerL0Hw : public DebuggerL0 {
     DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};
 };
 
-template <uint32_t productFamily, typename GfxFamily>
+template <uint32_t coreFamily, typename GfxFamily>
 struct DebuggerL0PopulateFactory {
     DebuggerL0PopulateFactory() {
-        debuggerL0Factory[productFamily] = DebuggerL0Hw<GfxFamily>::allocate;
+        debuggerL0Factory[coreFamily] = DebuggerL0Hw<GfxFamily>::allocate;
     }
 };
 
