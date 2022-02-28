@@ -120,6 +120,7 @@ uint32_t IoctlHelperUpstream::getComputeSlicesIoctlVal() {
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
     return {};
 }
+
 uint64_t IoctlHelperUpstream::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
     return 0u;
 }
@@ -151,7 +152,7 @@ int32_t IoctlHelperUpstream::getComputeEngineClass() {
 
 uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
     return 0;
-};
+}
 
 int IoctlHelperUpstream::execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
     return ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
@@ -164,6 +165,7 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(const HardwareInfo &
 std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
+
 bool IoctlHelperUpstream::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
     return false;
 }
@@ -183,17 +185,21 @@ uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enab
 uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
     return EINVAL;
 }
+
 uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
     return EINVAL;
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtSetPat() {
     return {};
-};
+}
+
 void IoctlHelperUpstream::fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {}
+
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtSyncFence() {
     return {};
 }
+
 void IoctlHelperUpstream::fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {}
 
 std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturatePCIECapability() {
@@ -207,7 +213,29 @@ std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturateLinkCapability(
 int IoctlHelperUpstream::vmBind(Drm *drm, const VmBindParams &vmBindParams) {
     return 0;
 }
+
 int IoctlHelperUpstream::vmUnbind(Drm *drm, const VmBindParams &vmBindParams) {
     return 0;
 }
+
+UuidRegisterResult IoctlHelperUpstream::registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
+    return {0, 0};
+}
+
+UuidRegisterResult IoctlHelperUpstream::registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) {
+    return {0, 0};
+}
+
+int IoctlHelperUpstream::unregisterUuid(Drm *drm, uint32_t handle) {
+    return 0;
+}
+
+bool IoctlHelperUpstream::isContextDebugSupported(Drm *drm) {
+    return false;
+}
+
+int IoctlHelperUpstream::setContextDebugFlag(Drm *drm, uint32_t drmContextId) {
+    return 0;
+}
+
 } // namespace NEO

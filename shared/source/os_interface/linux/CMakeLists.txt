@@ -24,7 +24,8 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_debug.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.cpp
