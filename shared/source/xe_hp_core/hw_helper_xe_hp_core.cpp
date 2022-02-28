@@ -95,6 +95,8 @@ std::string HwHelperHw<Family>::getExtensions() const {
     std::string extensions;
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
+    extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
 
     return extensions;
 }

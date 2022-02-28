@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,8 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREWhenDeviceCapsInitialized
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_dot_accumulate")));
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 }
 
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {

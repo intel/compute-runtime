@@ -273,6 +273,8 @@ std::string HwHelperHw<Family>::getExtensions() const {
     extensions += "cl_intel_subgroup_matrix_multiply_accumulate_for_PVC ";
     extensions += "cl_khr_subgroup_named_barrier ";
     extensions += "cl_intel_subgroup_extended_block_read ";
+    extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
 
     return extensions;
 }
