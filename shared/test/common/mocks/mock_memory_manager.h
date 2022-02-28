@@ -371,4 +371,16 @@ class MockMemoryManagerFailFirstAllocation : public MockMemoryManager {
     }
 };
 
+class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
+  public:
+    MockMemoryManagerOsAgnosticContext(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
+    OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
+                                          const EngineDescriptor &engineDescriptor) override {
+        auto osContext = new OsContext(0, engineDescriptor);
+        osContext->incRefInternal();
+        registeredEngines.emplace_back(commandStreamReceiver, osContext);
+        return osContext;
+    }
+};
+
 } // namespace NEO

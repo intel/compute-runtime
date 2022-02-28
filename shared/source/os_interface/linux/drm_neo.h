@@ -91,6 +91,7 @@ class Drm : public DriverModel {
     unsigned int getDeviceHandle() const override {
         return 0;
     }
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
     int getDeviceRevID(int &revId);
     int getExecSoftPin(int &execSoftPin);
     int enableTurboBoost();

@@ -83,4 +83,16 @@ TEST_F(WddmTests, whenCreatingContextWithPowerHintSuccessIsReturned) {
     EXPECT_TRUE(wddm->createContext(*newContext));
 }
 
+TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = Wddm::createWddm(nullptr, rootDeviceEnvironment);
+    wddm->init();
+    auto speedInfo = wddm->getPciSpeedInfo();
+
+    EXPECT_EQ(-1, speedInfo.genVersion);
+    EXPECT_EQ(-1, speedInfo.width);
+    EXPECT_EQ(-1, speedInfo.maxBandwidth);
+}
+
 } // namespace NEO

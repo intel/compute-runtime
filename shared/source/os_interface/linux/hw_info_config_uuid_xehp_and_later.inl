@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 namespace UuidUtil {
-static inline bool UuidGetRootPciPath(Drm *pDrm, std::string &rootPciPath);
 static inline bool UuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString,
                                      const uint64_t offset, const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
 } // namespace UuidUtil
@@ -20,13 +19,13 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
     }
 
     auto pDrm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>();
-    std::string rootPciPath;
-    if (!UuidUtil::UuidGetRootPciPath(pDrm, rootPciPath)) {
+    std::optional<std::string> rootPciPath = getPciRootPath(pDrm->getFileDescriptor());
+    if (!rootPciPath.has_value()) {
         return false;
     }
 
     std::map<uint32_t, std::string> telemPciPath;
-    PmtUtil::getTelemNodesInPciPath(rootPciPath, telemPciPath);
+    PmtUtil::getTelemNodesInPciPath(rootPciPath.value(), telemPciPath);
 
     // number of telem nodes must be same as subdevice count + 1(root device)
     if (telemPciPath.size() < device->getRootDevice()->getNumSubDevices() + 1) {
@@ -52,21 +51,6 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
 }
 
 namespace UuidUtil {
-bool UuidGetRootPciPath(Drm *pDrm, std::string &rootPciPath) {
-
-    auto pciLinkPath = NEO::getPciLinkPath(pDrm->getFileDescriptor());
-    // pciLinkPath = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128/",
-    // then root path = "/pci0000:37/0000:37:01.0"
-    if (pciLinkPath == std::nullopt) {
-        return false;
-    }
-
-    auto startPos = pciLinkPath->find("/pci");
-    auto endPos = pciLinkPath->find("/", startPos + 1);
-    endPos = pciLinkPath->find("/", endPos + 1);
-    rootPciPath = pciLinkPath->substr(startPos, endPos - startPos);
-    return true;
-}
 
 bool UuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, const uint64_t offset,
                        const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {

@@ -366,6 +366,7 @@ class UnknownDriverModel : public DriverModel {
         PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
         return pciBusInfo;
     }
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
 
     bool isGpuHangDetected(OsContext &osContext) override {
         return false;

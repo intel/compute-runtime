@@ -42,6 +42,8 @@ struct MockDriverModel : NEO::DriverModel {
     bool isGpuHangDetected(NEO::OsContext &osContext) override {
         return false;
     }
+
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
 };
 
 struct MockDriverModelWDDM : NEO::DriverModel {
@@ -55,6 +57,7 @@ struct MockDriverModelWDDM : NEO::DriverModel {
     size_t getMaxMemAllocSize() const override {
         return maxAllocSize;
     }
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
 
     bool isGpuHangDetected(NEO::OsContext &osContext) override {
         return false;
@@ -72,6 +75,7 @@ struct MockDriverModelDRM : NEO::DriverModel {
     size_t getMaxMemAllocSize() const override {
         return maxAllocSize;
     }
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
 
     bool isGpuHangDetected(NEO::OsContext &osContext) override {
         return false;

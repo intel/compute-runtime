@@ -17,6 +17,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_special_heap_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_pci_speed_info_tests.cpp
 )
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)

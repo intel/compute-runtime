@@ -1078,4 +1078,9 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
     return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
 }
 
+PhyicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
+    PhyicalDevicePciSpeedInfo speedInfo{};
+    return speedInfo;
+}
+
 } // namespace NEO

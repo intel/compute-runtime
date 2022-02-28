@@ -203,6 +203,8 @@ class Wddm : public DriverModel {
         return adapterBDF;
     }
 
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
+
   protected:
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     D3DKMT_HANDLE device = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ using namespace NEO;
 HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsReceived, IsXEHP) {
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/crashlog1", "../../devices/pci0000:6a/0000:6a:03.1/intel-dvsec-4.4.auto/intel_pmt/crashlog1/"},
             {"/sys/class/intel_pmt/crashlog2", "../../devices/pci0000:6a/0000:6a:03.1/intel-dvsec-4.4.auto/intel_pmt/crashlog2/"},
             {"/sys/class/intel_pmt/crashlog3", "../../devices/pci0000:e8/0000:e8:03.1/intel-dvsec-4.8.auto/intel_pmt/crashlog3/"},
@@ -116,7 +116,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             if (supportedFiles[fd].second == "dummy") {
                 uint64_t data = 0xFEEDBEADDEABDEEF;
                 memcpy(buf, &data, sizeof(data));
@@ -154,7 +154,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/crashlog1", "../../devices/pci0000:6a/0000:6a:03.1/intel-dvsec-4.4.auto/intel_pmt/crashlog1/"},
             {"/sys/class/intel_pmt/crashlog2", "../../devices/pci0000:6a/0000:6a:03.1/intel-dvsec-4.4.auto/intel_pmt/crashlog2/"},
             {"/sys/class/intel_pmt/crashlog3", "../../devices/pci0000:e8/0000:e8:03.1/intel-dvsec-4.8.auto/intel_pmt/crashlog3/"},
@@ -208,7 +208,7 @@ HWTEST2_F(MultipleDeviceUuidTest, whenRetrievingDeviceUuidThenCorrectUuidIsRecei
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             if (supportedFiles[fd].second == "dummy") {
                 uint64_t data = 0xFEEDBEADDEABDEEF;
                 memcpy(buf, &data, sizeof(data));
@@ -260,7 +260,7 @@ HWTEST2_F(MultipleDeviceUuidTest, givenTelemDirectoriesAreLessThanExpectedWhenRe
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
         };
@@ -294,7 +294,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingGuidWhenRetrievingUuidForSubDevice
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -330,7 +330,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingGuidWhenRetrievingUuidForSubDevice
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             if (supportedFiles[fd].second == "dummy") {
                 uint64_t data = 0xFEEDBEADDEABDEEF;
                 memcpy(buf, &data, sizeof(data));
@@ -356,7 +356,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidWhenRetrievingUuidForSubDevi
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -402,7 +402,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingOffsetWhenRetrievingUuidForSubDevi
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -437,7 +437,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingOffsetWhenRetrievingUuidForSubDevi
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return supportedFiles[fd].second.size();
         }
@@ -458,7 +458,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectOffsetWhenRetrievingUuidForSubDe
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -493,7 +493,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectOffsetWhenRetrievingUuidForSubDe
         };
 
         fd -= 1;
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return supportedFiles[fd].second.size();
         }
@@ -513,7 +513,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingTelemNodeWhenRetrievingUuidThenFai
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -548,7 +548,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenMissingTelemNodeWhenRetrievingUuidThenFai
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return supportedFiles[fd].second.size();
         }
@@ -564,7 +564,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectTelemNodeWhenRetrievingUuidThenF
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -600,7 +600,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectTelemNodeWhenRetrievingUuidThenF
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return supportedFiles[fd].second.size();
         }
@@ -616,7 +616,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidValueWhenRetrievingUuidThenF
 
     VariableBackup<decltype(SysCalls::sysCallsReadlink)> mockReadLink(&SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -653,7 +653,7 @@ HWTEST2_F(MultipleDeviceUuidTest, GivenIncorrectGuidValueWhenRetrievingUuidThenF
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
             return supportedFiles[fd].second.size();
         }

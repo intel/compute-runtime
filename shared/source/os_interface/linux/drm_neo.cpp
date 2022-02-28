@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
+#include <map>
 
 namespace NEO {
 
@@ -1496,5 +1497,89 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
                          memoryBank, memoryInfo != nullptr, ret);
     }
     return ret;
+}
+
+PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
+
+    PhyicalDevicePciSpeedInfo pciSpeedInfo = {};
+
+    std::string pathPrefix{};
+    bool isIntegratedDevice = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    // If integrated device, read properties from the specific device path.
+    // If discrete device, read properties from the root path of the pci device.
+    if (isIntegratedDevice) {
+        auto devicePath = NEO::getPciLinkPath(getFileDescriptor());
+        if (!devicePath.has_value()) {
+            return pciSpeedInfo;
+        }
+        pathPrefix = "/sys/class/drm/" + devicePath.value() + "/device/";
+    } else {
+        auto rootPath = NEO::getPciRootPath(getFileDescriptor());
+        if (!rootPath.has_value()) {
+            return pciSpeedInfo;
+        }
+        pathPrefix += "/sys/devices" + rootPath.value();
+    }
+
+    std::array<char, 32> readString = {'\0'};
+
+    errno = 0;
+
+    auto readFile = [](const std::string fileName, const std::string_view pathPrefix, std::array<char, 32> &readString) {
+        std::ostringstream linkWidthStream{};
+        linkWidthStream << pathPrefix << fileName;
+
+        int fd = NEO::SysCalls::open(linkWidthStream.str().c_str(), O_RDONLY);
+        ssize_t bytesRead = NEO::SysCalls::pread(fd, readString.data(), readString.size() - 1, 0);
+        NEO::SysCalls::close(fd);
+        if (bytesRead <= 0) {
+            return false;
+        }
+        std::replace(readString.begin(), readString.end(), '\n', '\0');
+        return true;
+    };
+
+    // read max link width
+    if (readFile("/max_link_width", pathPrefix, readString) != true) {
+        return pciSpeedInfo;
+    }
+
+    char *endPtr = nullptr;
+    uint32_t linkWidth = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
+    if ((endPtr == readString.data()) || (errno != 0)) {
+        return pciSpeedInfo;
+    }
+    pciSpeedInfo.width = linkWidth;
+
+    // read max link speed
+    if (readFile("/max_link_speed", pathPrefix, readString) != true) {
+        return pciSpeedInfo;
+    }
+
+    endPtr = nullptr;
+    const auto maxSpeed = strtod(readString.data(), &endPtr);
+    if ((endPtr == readString.data()) || (errno != 0)) {
+        return pciSpeedInfo;
+    }
+
+    double gen3EncodingLossFactor = 128.0 / 130.0;
+    std::map<double, std::pair<int32_t, double>> maxSpeedToGenAndEncodingLossMapping{
+        //{max link speed,  {pci generation,    encoding loss factor}}
+        {2.5, {1, 0.2}},
+        {5.0, {2, 0.2}},
+        {8.0, {3, gen3EncodingLossFactor}},
+        {16.0, {4, gen3EncodingLossFactor}},
+        {32.0, {5, gen3EncodingLossFactor}}};
+
+    if (maxSpeedToGenAndEncodingLossMapping.find(maxSpeed) == maxSpeedToGenAndEncodingLossMapping.end()) {
+        return pciSpeedInfo;
+    }
+    pciSpeedInfo.genVersion = maxSpeedToGenAndEncodingLossMapping[maxSpeed].first;
+
+    constexpr double gigaBitsPerSecondToBytesPerSecondMultiplier = 125000000;
+    const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * maxSpeedToGenAndEncodingLossMapping[maxSpeed].second;
+    pciSpeedInfo.maxBandwidth = maxSpeedWithEncodingLoss * pciSpeedInfo.width;
+
+    return pciSpeedInfo;
 }
 } // namespace NEO

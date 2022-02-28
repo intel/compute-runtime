@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,13 @@ struct PhysicalDevicePciBusInfo {
     uint32_t pciBus = InvalidValue;
     uint32_t pciDevice = InvalidValue;
     uint32_t pciFunction = InvalidValue;
+};
+
+struct PhyicalDevicePciSpeedInfo {
+    static constexpr int32_t Unknown = -1;
+    int32_t genVersion = Unknown;
+    int32_t width = Unknown;
+    int64_t maxBandwidth = Unknown;
 };
 
 class DriverInfo {

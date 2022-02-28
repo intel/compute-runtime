@@ -113,6 +113,7 @@ struct DeviceImp : public Device {
     std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
     CommandList *pageFaultCommandList = nullptr;
+    ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
 
     bool resourcesReleased = false;
     void releaseResources();

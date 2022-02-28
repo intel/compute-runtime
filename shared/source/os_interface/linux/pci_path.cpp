@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,8 @@ std::optional<std::string> getPciLinkPath(int deviceFd) {
 
     int readLinkSize = 0;
     char devicePath[256] = {0};
-    readLinkSize = SysCalls::readlink(path, devicePath, pathlen);
+    size_t devicePathLength = 256;
+    readLinkSize = SysCalls::readlink(path, devicePath, devicePathLength);
 
     if (readLinkSize == -1) {
         return std::nullopt;
@@ -46,4 +47,32 @@ std::optional<std::string> getPciPath(int deviceFd) {
 
     return deviceLinkPath->substr(deviceLinkPath->find("/drm/render") - 12u, 12u);
 }
+
+std::optional<std::string> getPciRootPath(int deviceFd) {
+
+    auto pciLinkPath = NEO::getPciLinkPath(deviceFd);
+    // pciLinkPath = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128/",
+    // Then root path = "/pci0000:37/0000:37:01.0/0000:38:00.0/"
+    if (pciLinkPath == std::nullopt) {
+        return std::nullopt;
+    }
+
+    auto startPos = pciLinkPath->find("/pci");
+    if (startPos == std::string::npos) {
+        return std::nullopt;
+    }
+
+    // Root PCI path is at 2 levels up from drm/renderD128
+    uint32_t rootPciDepth = 4;
+    auto endPos = std::string::npos;
+    while (rootPciDepth--) {
+        endPos = pciLinkPath->rfind('/', endPos - 1);
+        if (endPos == std::string::npos) {
+            return std::nullopt;
+        }
+    }
+
+    return pciLinkPath->substr(startPos, endPos - startPos);
+}
+
 } // namespace NEO

@@ -35,6 +35,8 @@ class MockDriverModel : public NEO::DriverModel {
         return isGpuHangDetectedToReturn;
     }
 
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
+
     NEO::PhysicalDevicePciBusInfo pciBusInfo{};
     bool isGpuHangDetectedToReturn{};
     std::function<void()> isGpuHangDetectedSideEffect{};

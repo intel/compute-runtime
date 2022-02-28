@@ -33,7 +33,7 @@ HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDe
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
-            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/i915-spi.2.auto/mtd/mtd0/mtd3/"},
+            {"/sys/dev/char/226:128", "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128"},
             {"/sys/class/intel_pmt/telem3", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem3/"},
             {"/sys/class/intel_pmt/telem1", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem1/"},
             {"/sys/class/intel_pmt/telem2", "./../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:02.0/0000:3c:00.1/intel-dvsec-2.1.auto/intel_pmt/telem2/"},
@@ -71,7 +71,7 @@ HWTEST2_F(TestDeviceUuid, GivenCorrectTelemetryNodesAreAvailableWhenRetrievingDe
 
         fd -= 1;
 
-        if ((fd) < static_cast<int>(supportedFiles.size())) {
+        if ((fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
             if (supportedFiles[fd].second == "dummy") {
                 uint64_t data = 0xFEEDBEADDEABDEEF;
                 memcpy(buf, &data, sizeof(data));

@@ -334,7 +334,7 @@ ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties)
     }
     pPciProperties->address = {pciBusInfo.pciDomain, pciBusInfo.pciBus,
                                pciBusInfo.pciDevice, pciBusInfo.pciFunction};
-    pPciProperties->maxSpeed = {-1, -1, -1};
+    pPciProperties->maxSpeed = pciMaxSpeed;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -904,6 +904,13 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->pageFaultCommandList =
             CommandList::createImmediate(
                 device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, NEO::EngineGroupType::Copy, resultValue);
+    }
+
+    if (osInterface) {
+        auto pciSpeedInfo = osInterface->getDriverModel()->getPciSpeedInfo();
+        device->pciMaxSpeed.genVersion = pciSpeedInfo.genVersion;
+        device->pciMaxSpeed.maxBandwidth = pciSpeedInfo.maxBandwidth;
+        device->pciMaxSpeed.width = pciSpeedInfo.width;
     }
 
     if (device->getSourceLevelDebugger()) {
