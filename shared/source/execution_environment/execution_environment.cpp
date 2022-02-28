@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,6 +95,10 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
 DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionController() {
     auto initializeDirectSubmissionController = DirectSubmissionController::isSupported();
+
+    if (DebugManager.flags.SetCommandStreamReceiver.get() > 0) {
+        initializeDirectSubmissionController = false;
+    }
 
     if (DebugManager.flags.EnableDirectSubmissionController.get() != -1) {
         initializeDirectSubmissionController = DebugManager.flags.EnableDirectSubmissionController.get();

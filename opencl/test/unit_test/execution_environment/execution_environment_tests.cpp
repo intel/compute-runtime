@@ -172,6 +172,15 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializ
     EXPECT_NE(controller, nullptr);
 }
 
+TEST(ExecutionEnvironment, givenSetCsrFlagSetWhenInitializeDirectSubmissionControllerThenNull) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
+
+    EXPECT_EQ(controller, nullptr);
+}
+
 TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenInitializeDirectSubmissionControllerThenNull) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDirectSubmissionController.set(0);
