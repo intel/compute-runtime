@@ -121,6 +121,10 @@ class DrmMock : public Drm {
         queryPageFaultSupportCalled = true;
     }
 
+    bool hasPageFaultSupport() const override {
+        return pageFaultSupported;
+    }
+
     uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) override {
         capturedCooperativeContextRequest = isCooperativeContextRequested;
         if (callBaseCreateDrmContext) {

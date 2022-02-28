@@ -372,14 +372,12 @@ TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaulta
 }
 
 TEST(DrmQueryTest, givenRecoverablePageFaultsEnabledWhenCallingHasPageFaultSupportThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     for (bool hasPageFaultSupport : {false, true}) {
-        DebugManager.flags.EnableRecoverablePageFaults.set(hasPageFaultSupport);
+        drm.pageFaultSupported = hasPageFaultSupport;
 
         EXPECT_EQ(hasPageFaultSupport, drm.hasPageFaultSupport());
     }

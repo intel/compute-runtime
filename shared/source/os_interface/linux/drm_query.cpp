@@ -13,4 +13,8 @@ bool Drm::isDebugAttachAvailable() {
     return false;
 }
 
+bool Drm::hasPageFaultSupport() const {
+    return false;
+}
+
 } // namespace NEO
