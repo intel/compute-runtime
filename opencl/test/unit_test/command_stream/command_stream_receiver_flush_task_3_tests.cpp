@@ -1079,7 +1079,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     mockCsr->taskCount.store(10);
     mockCsr->latestFlushedTaskCount.store(5);
 
-    commandQueue.waitForAllEngines(false, nullptr);
+    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
+    EXPECT_EQ(WaitStatus::Ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1110,7 +1111,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
     mockCsr->taskCount.store(10);
     mockCsr->latestFlushedTaskCount.store(5);
 
-    commandQueue.waitForAllEngines(false, nullptr);
+    const auto waitStatus = commandQueue.waitForAllEngines(false, nullptr);
+    EXPECT_EQ(WaitStatus::Ready, waitStatus);
 
     parseCommands<FamilyType>(mockCsr->getCS(4096u));
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());

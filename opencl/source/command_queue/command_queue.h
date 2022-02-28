@@ -213,9 +213,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
         return this->waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true, false);
     }
-    MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList);
-    MOCKABLE_VIRTUAL void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
-        this->waitForAllEngines(blockedQueue, printfHandler, true);
+    MOCKABLE_VIRTUAL WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList);
+    MOCKABLE_VIRTUAL WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) {
+        return this->waitForAllEngines(blockedQueue, printfHandler, true);
     }
 
     static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,

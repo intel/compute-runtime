@@ -13,6 +13,8 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 
+#include <optional>
+
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
@@ -340,6 +342,16 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
+    WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) override {
+        waitForAllEnginesCalledCount++;
+
+        if (waitForAllEnginesReturnValue.has_value()) {
+            return *waitForAllEnginesReturnValue;
+        }
+
+        return BaseClass::waitForAllEngines(blockedQueue, printfHandler);
+    }
+
     bool isCacheFlushForBcsRequired() const override {
         if (overrideIsCacheFlushForBcsRequired.enabled) {
             return overrideIsCacheFlushForBcsRequired.returnValue;
@@ -373,6 +385,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     BuiltinOpParams kernelParams;
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
     bool flushCalled = false;
+    std::optional<WaitStatus> waitForAllEnginesReturnValue{};
+    int waitForAllEnginesCalledCount{0};
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

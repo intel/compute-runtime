@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -220,13 +221,16 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
         using CommandQueueHw<FamilyType>::CommandQueueHw;
         using CommandQueueHw<FamilyType>::enqueueKernel;
 
-        void waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
+        WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
             waitCalled = true;
             printfHandlerUsedForWait = printfHandler;
+
+            return waitForAllEnginesReturnValue;
         }
 
         bool waitCalled = false;
         PrintfHandler *printfHandlerUsedForWait = nullptr;
+        WaitStatus waitForAllEnginesReturnValue = WaitStatus::Ready;
     };
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

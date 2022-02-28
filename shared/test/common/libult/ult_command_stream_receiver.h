@@ -232,6 +232,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
             return false;
         }
 
+        if (shouldFlushBatchedSubmissionsReturnSuccess) {
+            return true;
+        }
+
         return CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
     }
     void initProgrammingFlags() override {
@@ -341,6 +345,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool callBaseIsMultiOsContextCapable = false;
     bool callBaseWaitForCompletionWithTimeout = true;
     bool shouldFailFlushBatchedSubmissions = false;
+    bool shouldFlushBatchedSubmissionsReturnSuccess = false;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
 };
 } // namespace NEO

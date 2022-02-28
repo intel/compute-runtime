@@ -995,7 +995,7 @@ bool CommandQueue::isWaitForTimestampsEnabled() {
     return enabled;
 }
 
-void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
+WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) {
     if (blockedQueue) {
         while (isQueueBlocked()) {
         }
@@ -1014,11 +1014,14 @@ void CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *printfHan
             activeBcsStates.push_back(state);
         }
     }
-    waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
+
+    const auto waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     if (printfHandler) {
         printfHandler->printEnqueueOutput();
     }
+
+    return waitStatus;
 }
 
 void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType engineType, TimestampPacketDependencies &timestampPacketDependencies) {

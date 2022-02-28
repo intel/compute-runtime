@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -1495,6 +1496,28 @@ HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErro
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.finish();
     EXPECT_EQ(CL_OUT_OF_RESOURCES, errorCode);
+}
+
+HWTEST_F(CommandQueueHwTest, givenGpuHangWhenFinishingCommandQueueHwThenWaitForEnginesIsCalledAndOutOfResourcesIsReturned) {
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
+
+    const auto finishResult = mockCmdQueueHw.finish();
+    EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, finishResult);
+}
+
+HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitForEnginesIsCalledAndSuccessIsReturned) {
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    mockCmdQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+    mockCmdQueueHw.getUltCommandStreamReceiver().shouldFlushBatchedSubmissionsReturnSuccess = true;
+
+    const auto finishResult = mockCmdQueueHw.finish();
+    EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
+    EXPECT_EQ(CL_SUCCESS, finishResult);
 }
 
 HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsThenGpgpuCommandStreamIsNotObtained) {
