@@ -37,6 +37,17 @@ TEST_F(LinearStreamTest, GivenSizeUint32WhenGettingSpaceUsedThenNonNullPointerIs
     EXPECT_NE(nullptr, linearStream.getSpace(sizeof(uint32_t)));
 }
 
+TEST_F(LinearStreamTest, GivenNullBufferWhenGettingSpaceThenAssert) {
+    linearStream.replaceBuffer(nullptr, 100);
+    EXPECT_THROW(linearStream.getSpace(1), std::exception);
+}
+
+TEST_F(LinearStreamTest, GivenBadBufferPtrWhenGettingSpaceThenAssert) {
+    int64_t ptr = -1;
+    linearStream.replaceBuffer(reinterpret_cast<void *>(ptr), 100);
+    EXPECT_THROW(linearStream.getSpace(1), std::exception);
+}
+
 TEST_F(LinearStreamTest, WhenAllocatingMultipleTimesThenPointersIncrementedCorrectly) {
     size_t allocSize = 1;
     auto ptr1 = linearStream.getSpace(allocSize);
