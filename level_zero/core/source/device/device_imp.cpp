@@ -179,7 +179,11 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     if (desc->ordinal >= engineGroups.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW) {
+
+    auto &hwHelper = NEO::HwHelper::get(platform.eRenderCoreFamily);
+    bool isCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
+
+    if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
         getCsrForLowPriority(&csr);
     } else {
         auto ret = getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
@@ -189,9 +193,6 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     }
 
     UNRECOVERABLE_IF(csr == nullptr);
-
-    auto &hwHelper = NEO::HwHelper::get(platform.eRenderCoreFamily);
-    bool isCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, false, returnValue);

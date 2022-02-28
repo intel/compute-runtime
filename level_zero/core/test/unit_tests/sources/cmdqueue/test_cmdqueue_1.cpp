@@ -1050,6 +1050,75 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
     commandQueue->destroy();
 }
 
+TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithLowPriorityDescIsCalledThenCopyCsrIsAssigned) {
+    auto copyCsr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    EngineDescriptor copyEngineDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false, false);
+    auto copyOsContext = neoDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(copyCsr.get(), copyEngineDescriptor);
+    copyCsr->setupContext(*copyOsContext);
+
+    auto computeCsr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    EngineDescriptor computeEngineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::LowPriority}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false, false);
+    auto computeOsContext = neoDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(computeCsr.get(), computeEngineDescriptor);
+    computeCsr->setupContext(*computeOsContext);
+
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
+    engineGroups.clear();
+
+    auto &allEngines = const_cast<std::vector<NEO::EngineControl> &>(neoDevice->getAllEngines());
+    allEngines.clear();
+
+    engineGroups.push_back(NEO::Device::EngineGroupT{});
+    engineGroups.back().engineGroupType = EngineGroupType::Copy;
+    engineGroups.back().engines.resize(1);
+    engineGroups.back().engines[0].commandStreamReceiver = copyCsr.get();
+    EngineControl copyEngine{copyCsr.get(), copyOsContext};
+    allEngines.push_back(copyEngine);
+
+    engineGroups.push_back(NEO::Device::EngineGroupT{});
+    engineGroups.back().engineGroupType = EngineGroupType::Compute;
+    engineGroups.back().engines.resize(1);
+    engineGroups.back().engines[0].commandStreamReceiver = computeCsr.get();
+    EngineControl computeEngine{computeCsr.get(), computeOsContext};
+    allEngines.push_back(computeEngine);
+
+    uint32_t count = 0u;
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT(count, 0u);
+
+    std::vector<ze_command_queue_group_properties_t> properties(count);
+    res = device->getCommandQueueGroupProperties(&count, properties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t ordinal = 0u;
+    for (ordinal = 0u; ordinal < count; ordinal++) {
+        if ((properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) &&
+            !(properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE)) {
+            if (properties[ordinal].numQueues == 0)
+                continue;
+            break;
+        }
+    }
+    EXPECT_LT(ordinal, count);
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = ordinal;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    EXPECT_NE(commandQueue, nullptr);
+    EXPECT_EQ(copyCsr.get(), commandQueue->getCsr());
+    commandQueue->destroy();
+
+    engineGroups.clear();
+    allEngines.clear();
+}
+
 struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommandQueueTest {
     void SetUp() override {
         DebugManager.flags.DeferOsContextInitialization.set(1);
