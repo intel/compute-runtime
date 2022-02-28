@@ -480,7 +480,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
                     internalBuildOptions = internalBuildOptions + tmpInternalBuildOptions;
                 }
             }
-            //If the user passed in only 1 SPIRV, then fallback to standard build
+            // If the user passed in only 1 SPIRV, then fallback to standard build
             if (inputSpirVs.size() > 1) {
                 success = this->translationUnit->staticLinkSpirV(inputSpirVs,
                                                                  inputModuleSizes,
@@ -774,7 +774,8 @@ bool ModuleImp::linkBinary() {
                                   globalsForPatching, constantsForPatching,
                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
                                   translationUnit->programInfo.globalConstants.initData,
-                                  translationUnit->programInfo.globalVariables.initData, kernelDescriptors);
+                                  translationUnit->programInfo.globalVariables.initData,
+                                  kernelDescriptors, translationUnit->programInfo.externalFunctions);
     this->symbols = linker.extractRelocatedSymbols();
     if (LinkingStatus::LinkedFully != linkStatus) {
         if (moduleBuildLog) {
@@ -885,7 +886,7 @@ void ModuleImp::verifyDebugCapabilities() {
     bool debugCapabilities = device->getNEODevice()->getDebugger() != nullptr;
 
     if (debugCapabilities) {
-        //verify all kernels are debuggable
+        // verify all kernels are debuggable
         for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             bool systemThreadSurfaceAvailable = NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful) ||
                                                 NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindless);
@@ -1001,6 +1002,39 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         }
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
         moduleId->isFullyLinked = true;
+    }
+
+    {
+        NEO::ExternalFunctionInfosT externalFunctionInfos;
+        NEO::FunctionDependenciesT extFuncDependencies;
+        NEO::KernelDependenciesT kernelDependencies;
+        NEO::KernelDescriptorMapT nameToKernelDescriptor;
+        for (auto i = 0u; i < numModules; i++) {
+            auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+            auto &programInfo = moduleId->translationUnit->programInfo;
+
+            auto toPtrVec = [](auto &inVec, auto &outPtrVec) {
+                auto pos = outPtrVec.size();
+                outPtrVec.resize(pos + inVec.size());
+                for (size_t i = 0; i < inVec.size(); i++) {
+                    outPtrVec[pos + i] = &inVec[i];
+                }
+            };
+            toPtrVec(programInfo.externalFunctions, externalFunctionInfos);
+            if (programInfo.linkerInput) {
+                toPtrVec(programInfo.linkerInput->getFunctionDependencies(), extFuncDependencies);
+                toPtrVec(programInfo.linkerInput->getKernelDependencies(), kernelDependencies);
+            }
+
+            for (auto &kernelInfo : programInfo.kernelInfos) {
+                auto &kd = kernelInfo->kernelDescriptor;
+                nameToKernelDescriptor[kd.kernelMetadata.kernelName] = &kd;
+            }
+        }
+        auto error = NEO::resolveBarrierCount(externalFunctionInfos, kernelDependencies, extFuncDependencies, nameToKernelDescriptor);
+        if (error != NEO::RESOLVE_SUCCESS) {
+            return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
+        }
     }
     return ZE_RESULT_SUCCESS;
 }

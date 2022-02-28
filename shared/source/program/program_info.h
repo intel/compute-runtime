@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
 
 #include <cstddef>
@@ -42,6 +43,7 @@ struct ProgramInfo {
     std::unique_ptr<LinkerInput> linkerInput;
     std::unordered_map<std::string, std::string> globalsDeviceToHostNameMap;
 
+    std::vector<ExternalFunctionInfo> externalFunctions;
     std::vector<KernelInfo *> kernelInfos;
     Elf::Elf<Elf::EI_CLASS_64> decodedElf;
     uint32_t grfSize = 32U;

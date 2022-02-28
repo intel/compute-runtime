@@ -189,6 +189,7 @@ class MockProgram : public Program {
         wasCreateDebugZebinCalled = true;
     }
 
+    std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
     static int getInternalOptionsCalled;

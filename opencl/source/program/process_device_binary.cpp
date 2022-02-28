@@ -55,7 +55,8 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal, uint32_t rootDeviceInde
     return kernelInfoArray[ordinal];
 }
 
-cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData, const ProgramInfo::GlobalSurfaceInfo &stringsInfo) {
+cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData,
+                           const ProgramInfo::GlobalSurfaceInfo &stringsInfo, std::vector<NEO::ExternalFunctionInfo> &extFuncInfos) {
     auto linkerInput = getLinkerInput(pDevice->getRootDeviceIndex());
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
@@ -108,7 +109,8 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions, strings,
                                                                  globalsForPatching, constantsForPatching,
                                                                  isaSegmentsForPatching, unresolvedExternalsInfo,
-                                                                 pDevice, constantsInitData, variablesInitData, kernelDescriptors);
+                                                                 pDevice, constantsInitData, variablesInitData,
+                                                                 kernelDescriptors, extFuncInfos);
     setSymbols(rootDeviceIndex, linker.extractRelocatedSymbols());
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
@@ -238,7 +240,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData, src.globalStrings);
+    return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalVariables.initData, src.globalStrings, src.externalFunctions);
 }
 
 void Program::processDebugData(uint32_t rootDeviceIndex) {

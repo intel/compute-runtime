@@ -2745,6 +2745,108 @@ kernels:
     EXPECT_EQ(DeviceBinaryFormat::Zebin, programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.binaryFormat);
 }
 
+TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndExternalFunctionsMetadataThenPopulatesExternalFunctionMetadataProperly) {
+    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : some_kernel
+      execution_env :
+        simd_size : 8
+functions:
+    - name: fun1
+      execution_env:
+        grf_count: 128
+        simd_size: 8
+        barrier_count: 1
+)===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+
+    ASSERT_EQ(1U, programInfo.externalFunctions.size());
+    auto &funInfo = programInfo.externalFunctions[0];
+    EXPECT_STREQ("fun1", funInfo.functionName.c_str());
+    EXPECT_EQ(128U, funInfo.numGrfRequired);
+    EXPECT_EQ(8U, funInfo.simdSize);
+    EXPECT_EQ(1U, funInfo.barrierCount);
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndInvalidExternalFunctionsMetadataThenFail) {
+    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : some_kernel
+      execution_env :
+        simd_size : 8
+functions:
+    - name: fun
+      execution_env:
+        grf_count: abc
+        simd_size: defgas
+)===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    const std::string expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [defgas] in context of : external functions\n";
+    EXPECT_STREQ(expectedError.c_str(), decodeErrors.c_str());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, GivenZeInfoWithTwoExternalFunctionsEntriesThenFail) {
+    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : some_kernel
+      execution_env :
+        simd_size : 8
+functions:
+    - name: fun
+      execution_env:
+        grf_count: 128
+        simd_size: 8
+functions:
+    - name: fun
+      execution_env:
+        grf_count: 128
+        simd_size: 8 
+)===";
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    const std::string expectedError = "DeviceBinaryFormat::Zebin::.ze_info : Expected at most one functions entry in global scope of .ze_info, got : 2\n";
+    EXPECT_STREQ(expectedError.c_str(), decodeErrors.c_str());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+}
+
 TEST(PopulateKernelDescriptor, GivenMinimalExecutionEnvThenPopulateKernelDescriptorWithDefaults) {
     std::string zeinfo = R"===(
     kernels:
@@ -5241,4 +5343,125 @@ TEST(PopulateGlobalDeviceHostNameMapping, givenZebinWithGlobalHostAccessTableSec
 
     std::string expectedWarning("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"banana_type\" for payload argument in context of global_host_access_table\n");
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
+}
+
+TEST(PopulateZeInfoExternalFunctionsMetadata, GivenValidExternalFunctionsMetadataThenParsesItProperly) {
+    {
+        NEO::ConstStringRef yaml = R"===(---
+functions:
+  - name: fun0
+    execution_env:
+      grf_count:       128
+      simd_size:       8
+      barrier_count:   1
+  - name: fun1
+    execution_env:
+      grf_count:       128
+      simd_size:       8
+...
+)===";
+
+        std::string parserErrors;
+        std::string parserWarnings;
+        Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &functionsNode = *parser.findNodeWithKeyDfs(Elf::ZebinKernelMetadata::Tags::functions);
+        std::string errors;
+        std::string warnings;
+        ProgramInfo programInfo;
+        for (const auto &functionNd : parser.createChildrenRange(functionsNode)) {
+            auto err = populateExternalFunctionsMetadata(programInfo, parser, functionNd, errors, warnings);
+            EXPECT_EQ(DecodeError::Success, err);
+            EXPECT_TRUE(errors.empty()) << errors;
+            EXPECT_TRUE(warnings.empty()) << warnings;
+        }
+
+        ASSERT_EQ(2U, programInfo.externalFunctions.size());
+        auto &fun0Info = programInfo.externalFunctions[0];
+        EXPECT_STREQ("fun0", fun0Info.functionName.c_str());
+        EXPECT_EQ(128U, fun0Info.numGrfRequired);
+        EXPECT_EQ(8U, fun0Info.simdSize);
+        EXPECT_EQ(1U, fun0Info.barrierCount);
+
+        auto &fun1Info = programInfo.externalFunctions[1];
+        EXPECT_STREQ("fun1", fun1Info.functionName.c_str());
+        EXPECT_EQ(128U, fun1Info.numGrfRequired);
+        EXPECT_EQ(8U, fun1Info.simdSize);
+        EXPECT_EQ(0U, fun1Info.barrierCount);
+    }
+}
+
+TEST(PopulateZeInfoExternalFunctionsMetadata, GivenValidExternalFunctionsMetadataWithUnknownEntriesThenParsesItProperly) {
+    NEO::ConstStringRef yaml = R"===(---
+functions:
+  - name: fun0
+    execution_env:
+      grf_count:       128
+      simd_size:       8
+      barrier_count:   1
+    unknown: 12345
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+    EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+    ASSERT_TRUE(success);
+
+    auto &functionsNode = *parser.findNodeWithKeyDfs(Elf::ZebinKernelMetadata::Tags::functions);
+    auto &functionNode = *parser.createChildrenRange(functionsNode).begin();
+    std::string errors;
+    std::string warnings;
+    ProgramInfo programInfo;
+    auto err = populateExternalFunctionsMetadata(programInfo, parser, functionNode, errors, warnings);
+    EXPECT_EQ(DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    const auto expectedWarning = "DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"unknown\" in context of : external functions\n";
+    EXPECT_STREQ(expectedWarning, warnings.c_str());
+
+    ASSERT_EQ(1U, programInfo.externalFunctions.size());
+    auto &fun0Info = programInfo.externalFunctions[0];
+    EXPECT_STREQ("fun0", fun0Info.functionName.c_str());
+    EXPECT_EQ(128U, fun0Info.numGrfRequired);
+    EXPECT_EQ(8U, fun0Info.simdSize);
+    EXPECT_EQ(1U, fun0Info.barrierCount);
+}
+
+TEST(PopulateZeInfoExternalFunctionsMetadata, GivenInvalidExternalFunctionsMetadataThenFail) {
+    NEO::ConstStringRef yaml = R"===(---
+functions:
+  - name: fun0
+    execution_env:
+      grf_count:       abc
+      simd_size:       def
+      barrier_count:   ghi
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+    EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+    ASSERT_TRUE(success);
+
+    auto &functionsNode = *parser.findNodeWithKeyDfs(Elf::ZebinKernelMetadata::Tags::functions);
+    auto &functionNode = *parser.createChildrenRange(functionsNode).begin();
+    std::string errors;
+    std::string warnings;
+    ProgramInfo programInfo;
+    auto err = populateExternalFunctionsMetadata(programInfo, parser, functionNode, errors, warnings);
+    EXPECT_EQ(DecodeError::InvalidBinary, err);
+    EXPECT_EQ(0U, programInfo.externalFunctions.size());
+    const auto expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [def] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read barrier_count from : [ghi] in context of : external functions\n";
+    EXPECT_STREQ(expectedError, errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
 }

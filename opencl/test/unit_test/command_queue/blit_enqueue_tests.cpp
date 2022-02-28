@@ -2074,13 +2074,14 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAc
     ASSERT_NE(nullptr, kernelInfo.kernelAllocation);
     EXPECT_TRUE(kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool());
 
+    std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     program.getKernelInfoArray(device->getRootDeviceIndex()).push_back(&kernelInfo);
     program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
 
     auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
 
-    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {});
+    auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, externalFunctions);
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());

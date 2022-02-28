@@ -55,6 +55,7 @@ static constexpr ConstStringRef zeInfo = ".ze_info";
 static constexpr ConstStringRef gtpinInfo = ".gtpin_info";
 static constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
 static constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
+static constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
 } // namespace SectionsNamesZebin
 
 static constexpr ConstStringRef IntelGtNoteOwnerName = "IntelGT";
@@ -158,6 +159,8 @@ namespace Tags {
 static constexpr ConstStringRef kernels("kernels");
 static constexpr ConstStringRef version("version");
 static constexpr ConstStringRef globalHostAccessTable("global_host_access_table");
+static constexpr ConstStringRef functions("functions");
+
 namespace Kernel {
 static constexpr ConstStringRef name("name");
 static constexpr ConstStringRef executionEnv("execution_env");
@@ -279,10 +282,18 @@ static constexpr ConstStringRef hasNonKernelArgStore("has_non_kernel_arg_store")
 static constexpr ConstStringRef hasNonKernelArgAtomic("has_non_kernel_arg_atomic");
 } // namespace ExperimentalProperties
 } // namespace Kernel
+
 namespace GlobalHostAccessTable {
 static constexpr ConstStringRef deviceName("device_name");
 static constexpr ConstStringRef hostName("host_name");
 } // namespace GlobalHostAccessTable
+
+namespace Function {
+static constexpr ConstStringRef name("name");
+static constexpr ConstStringRef executionEnv("execution_env");
+using namespace Kernel::ExecutionEnv;
+} // namespace Function
+
 } // namespace Tags
 
 namespace Types {
@@ -540,6 +551,12 @@ struct globalHostAccessTableT {
     std::string hostName;
 };
 } // namespace GlobalHostAccessTable
+
+namespace Function {
+namespace ExecutionEnv {
+using namespace Kernel::ExecutionEnv;
+}
+} // namespace Function
 } // namespace Types
 
 } // namespace ZebinKernelMetadata

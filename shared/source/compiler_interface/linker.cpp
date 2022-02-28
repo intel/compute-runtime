@@ -19,10 +19,12 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/program/program_info.h"
 
 #include "RelocationInfo.h"
 
 #include <sstream>
+#include <unordered_map>
 
 namespace NEO {
 
@@ -169,55 +171,24 @@ void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uin
 }
 
 void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> &elf, const SectionNameToSegmentIdMap &nameToSegmentId) {
-    for (auto &reloc : elf.getRelocations()) {
-        NEO::LinkerInput::RelocationInfo relocationInfo;
-        relocationInfo.offset = reloc.offset;
-        relocationInfo.symbolName = reloc.symbolName;
-
-        switch (reloc.relocType) {
-        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_64):
-            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-            break;
-        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_32):
-            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
-            break;
-        default: // Zebin relocation type
-            relocationInfo.type = reloc.relocType < uint32_t(NEO::LinkerInput::RelocationInfo::Type::RelocTypeMax)
-                                      ? static_cast<NEO::LinkerInput::RelocationInfo::Type>(reloc.relocType)
-                                      : NEO::LinkerInput::RelocationInfo::Type::Unknown;
-            break;
-        }
-        auto name = elf.getSectionName(reloc.targetSectionIndex);
-        ConstStringRef nameRef(name);
-
-        if (nameRef.startsWith(NEO::Elf::SectionsNamesZebin::textPrefix.data())) {
-            auto kernelName = name.substr(static_cast<int>(NEO::Elf::SectionsNamesZebin::textPrefix.length()));
-            auto segmentIdIter = nameToSegmentId.find(kernelName);
-            if (segmentIdIter != nameToSegmentId.end()) {
-                this->addElfTextSegmentRelocation(relocationInfo, segmentIdIter->second);
-            }
-        } else if (nameRef.startsWith(NEO::Elf::SpecialSectionNames::data.data())) {
-            auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
-            auto symbolSegment = getSegmentForSection(symbolSectionName);
-            auto relocationSegment = getSegmentForSection(nameRef);
-            if (symbolSegment != NEO::SegmentType::Unknown &&
-                (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables)) {
-                relocationInfo.relocationSegment = relocationSegment;
-                this->addDataRelocationInfo(relocationInfo);
-            }
-        }
-    }
-
     symbols.reserve(elf.getSymbols().size());
-
     for (auto &symbol : elf.getSymbols()) {
         auto bind = elf.extractSymbolBind(symbol);
+        auto type = elf.extractSymbolType(symbol);
+
+        if (type == Elf::SYMBOL_TABLE_TYPE::STT_FUNC) {
+            SymbolInfo symbolInfo;
+            symbolInfo.offset = static_cast<uint32_t>(symbol.value);
+            symbolInfo.size = static_cast<uint32_t>(symbol.size);
+            symbolInfo.bind = static_cast<SymbolBind>(bind);
+
+            extFuncSymbols.push_back({elf.getSymbolName(symbol.name), symbolInfo});
+        }
 
         if (bind == Elf::SYMBOL_TABLE_BIND::STB_GLOBAL) {
             SymbolInfo symbolInfo;
             symbolInfo.offset = static_cast<uint32_t>(symbol.value);
             symbolInfo.size = static_cast<uint32_t>(symbol.size);
-            auto type = elf.extractSymbolType(symbol);
 
             auto symbolSectionName = elf.getSectionName(symbol.shndx);
             auto symbolSegment = getSegmentForSection(symbolSectionName);
@@ -245,6 +216,67 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
             } break;
             }
             symbols.insert({elf.getSymbolName(symbol.name), symbolInfo});
+        }
+    }
+
+    for (auto &reloc : elf.getRelocations()) {
+        NEO::LinkerInput::RelocationInfo relocationInfo;
+        relocationInfo.offset = reloc.offset;
+        relocationInfo.symbolName = reloc.symbolName;
+
+        switch (reloc.relocType) {
+        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_64):
+            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+            break;
+        case uint32_t(Elf::RELOCATION_X8664_TYPE::R_X8664_32):
+            relocationInfo.type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
+            break;
+        default: // Zebin relocation type
+            relocationInfo.type = reloc.relocType < uint32_t(NEO::LinkerInput::RelocationInfo::Type::RelocTypeMax)
+                                      ? static_cast<NEO::LinkerInput::RelocationInfo::Type>(reloc.relocType)
+                                      : NEO::LinkerInput::RelocationInfo::Type::Unknown;
+            break;
+        }
+        auto name = elf.getSectionName(reloc.targetSectionIndex);
+        ConstStringRef nameRef(name);
+
+        if (nameRef.startsWith(NEO::Elf::SectionsNamesZebin::textPrefix.data())) {
+            auto kernelName = name.substr(static_cast<int>(NEO::Elf::SectionsNamesZebin::textPrefix.length()));
+            auto segmentIdIter = nameToSegmentId.find(kernelName);
+            if (segmentIdIter != nameToSegmentId.end()) {
+                this->addElfTextSegmentRelocation(relocationInfo, segmentIdIter->second);
+                parseRelocationForExtFuncUsage(relocationInfo, kernelName);
+            }
+        } else if (nameRef.startsWith(NEO::Elf::SpecialSectionNames::data.data())) {
+            auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
+            auto symbolSegment = getSegmentForSection(symbolSectionName);
+            auto relocationSegment = getSegmentForSection(nameRef);
+            if (symbolSegment != NEO::SegmentType::Unknown &&
+                (relocationSegment == NEO::SegmentType::GlobalConstants || relocationSegment == NEO::SegmentType::GlobalVariables)) {
+                relocationInfo.relocationSegment = relocationSegment;
+                this->addDataRelocationInfo(relocationInfo);
+            }
+        }
+    }
+}
+
+void LinkerInput::parseRelocationForExtFuncUsage(RelocationInfo relocInfo, std::string kernelName) {
+    auto extFuncSymIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
+        return pair.first == relocInfo.symbolName;
+    });
+    if (extFuncSymIt != extFuncSymbols.end()) {
+        if (kernelName == Elf::SectionsNamesZebin::externalFunctions.str()) {
+            auto callerIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
+                auto &symbol = pair.second;
+                return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
+            });
+            if (callerIt == extFuncSymbols.end()) {
+                this->valid = false;
+                return;
+            }
+            extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
+        } else {
+            kernelDependencies.push_back({relocInfo.symbolName, kernelName});
         }
     }
 }
@@ -469,6 +501,29 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
             *reinterpret_cast<uint32_t *>(relocLocation) = static_cast<uint32_t>(symbolAddress & uint32_t(-1));
         }
     }
+}
+
+bool Linker::resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions) {
+    ExternalFunctionInfosT externalFunctionsPtrs;
+    FunctionDependenciesT functionDependenciesPtrs;
+    KernelDependenciesT kernelDependenciesPtrs;
+    KernelDescriptorMapT nameToKernelDescriptor;
+
+    auto toPtrVec = [](auto &inVec, auto &outPtrVec) {
+        outPtrVec.resize(inVec.size());
+        for (size_t i = 0; i < inVec.size(); i++) {
+            outPtrVec[i] = &inVec[i];
+        }
+    };
+    toPtrVec(externalFunctions, externalFunctionsPtrs);
+    toPtrVec(data.getFunctionDependencies(), functionDependenciesPtrs);
+    toPtrVec(data.getKernelDependencies(), kernelDependenciesPtrs);
+    for (auto &kd : kernelDescriptors) {
+        nameToKernelDescriptor[kd->kernelMetadata.kernelName] = kd;
+    }
+
+    auto error = NEO::resolveBarrierCount(externalFunctionsPtrs, kernelDependenciesPtrs, functionDependenciesPtrs, nameToKernelDescriptor);
+    return (error == RESOLVE_SUCCESS) ? true : false;
 }
 
 void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice) {

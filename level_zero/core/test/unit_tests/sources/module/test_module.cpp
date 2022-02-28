@@ -1380,6 +1380,44 @@ TEST_F(ModuleDynamicLinkTests, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaA
     EXPECT_FALSE(module->isFullyLinked);
 }
 
+TEST_F(ModuleDynamicLinkTests, givenModuleWithFunctionDependenciesWhenOtherModuleDefinesThisFunctionThenBarrierCountIsProperlyResolved) {
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+
+    auto linkerInput = new ::WhiteBox<NEO::LinkerInput>();
+    linkerInput->extFunDependencies.push_back({"funMod1", "funMod0"});
+    linkerInput->kernelDependencies.push_back({"funMod1", "kernel"});
+    module0->translationUnit->programInfo.linkerInput.reset(linkerInput);
+
+    module0->translationUnit->programInfo.externalFunctions.push_back({"funMod0", 1U, 128U, 8U});
+    KernelInfo *ki = new KernelInfo();
+    ki->kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    module0->translationUnit->programInfo.kernelInfos.push_back(ki);
+
+    module1->translationUnit->programInfo.externalFunctions.push_back({"funMod1", 3U, 128U, 8U});
+
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(3U, module0->translationUnit->programInfo.externalFunctions[0].barrierCount);
+    EXPECT_EQ(3U, ki->kernelDescriptor.kernelAttributes.barrierCount);
+}
+
+TEST_F(ModuleDynamicLinkTests, givenModuleWithFunctionDependenciesWhenOtherModuleDoesNotDefineThisFunctionThenLinkFailureIsReturned) {
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+
+    auto linkerInput = new ::WhiteBox<NEO::LinkerInput>();
+    linkerInput->extFunDependencies.push_back({"funMod1", "funMod0"});
+    linkerInput->kernelDependencies.push_back({"funMod1", "kernel"});
+    module0->translationUnit->programInfo.linkerInput.reset(linkerInput);
+
+    module0->translationUnit->programInfo.externalFunctions.push_back({"funMod0", 1U, 128U, 8U});
+    KernelInfo *ki = new KernelInfo();
+    ki->kernelDescriptor.kernelMetadata.kernelName = "kernel";
+    module0->translationUnit->programInfo.kernelInfos.push_back(ki);
+
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
+}
+
 class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
   public:
     void SetUp() override {
@@ -2407,5 +2445,25 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
     EXPECT_EQ(retCode, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
+    ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
+    zebin.setProductFamily(static_cast<uint16_t>(device->getHwInfo().platform.eProductFamily));
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = zebin.storage.data();
+    moduleDesc.inputSize = zebin.storage.size();
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+    auto moduleInitSuccess = module->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_TRUE(moduleInitSuccess);
+
+    const auto &kernImmData = module->getKernelImmutableData("kernel");
+    ASSERT_NE(nullptr, kernImmData);
+    EXPECT_EQ(zebin.barrierCount, kernImmData->getDescriptor().kernelAttributes.barrierCount);
+}
 } // namespace ult
 } // namespace L0

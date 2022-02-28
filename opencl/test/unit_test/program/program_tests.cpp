@@ -1201,13 +1201,13 @@ TEST_F(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccess
     const char *sources[1] = {pSourceBuffer.get()};
     EXPECT_NE(nullptr, pSourceBuffer);
 
-    //According to spec: If lengths is NULL, all strings in the strings argument are considered null-terminated.
+    // According to spec: If lengths is NULL, all strings in the strings argument are considered null-terminated.
     p = Program::create(pContext, 1, sources, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p);
     delete p;
 
-    //According to spec: If an element in lengths is zero, its accompanying string is null-terminated.
+    // According to spec: If an element in lengths is zero, its accompanying string is null-terminated.
     p = Program::create(pContext, 1, sources, &sourceSize, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p);
@@ -1406,7 +1406,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     auto &residencyVector = pCommandStreamReceiver->getResidencyAllocations();
 
-    //we expect kernel ISA here and constant allocation
+    // we expect kernel ISA here and constant allocation
     auto kernelIsa = pKernel->getKernelInfo().getGraphicsAllocation();
     auto constantAllocation = pProgram->getConstantSurface(pDevice->getRootDeviceIndex());
 
@@ -3215,4 +3215,18 @@ TEST(ProgramTest, givenLockedProgramWhenReleasingForKernelIsCalledForEachRetainT
     EXPECT_TRUE(program.isLocked());
     program.releaseForKernel();
     EXPECT_FALSE(program.isLocked());
+}
+
+TEST_F(ProgramTests, givenValidZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
+    ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
+
+    auto program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*pClDevice));
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(zebin.storage.data(), zebin.storage.size());
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = zebin.storage.size();
+
+    auto retVal = program->processGenBinary(*pClDevice);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(2U, program->buildInfos[rootDeviceIndex].kernelInfoArray.size());
+    auto &kernelInfo = program->buildInfos[rootDeviceIndex].kernelInfoArray[0];
+    EXPECT_EQ(zebin.barrierCount, kernelInfo->kernelDescriptor.kernelAttributes.barrierCount);
 }

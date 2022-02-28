@@ -1238,6 +1238,38 @@ NEO::DecodeError populateZeInfoVersion(NEO::Elf::ZebinKernelMetadata::Types::Ver
     return NEO::DecodeError::Success;
 }
 
+NEO::DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &functionNd, std::string &outErrReason, std::string &outWarning) {
+    ConstStringRef functionName;
+    NEO::Elf::ZebinKernelMetadata::Types::Function::ExecutionEnv::ExecutionEnvBaseT execEnv = {};
+    bool isValid = true;
+
+    for (const auto &functionMetadataNd : yamlParser.createChildrenRange(functionNd)) {
+        auto key = yamlParser.readKey(functionMetadataNd);
+        if (NEO::Elf::ZebinKernelMetadata::Tags::Function::name == key) {
+            functionName = yamlParser.readValueNoQuotes(functionMetadataNd);
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Function::executionEnv == key) {
+            auto execEnvErr = readZeInfoExecutionEnvironment(yamlParser, functionMetadataNd, execEnv, "external functions", outErrReason, outWarning);
+            if (execEnvErr != DecodeError::Success) {
+                isValid = false;
+            }
+        } else {
+            outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + yamlParser.readKey(functionMetadataNd).str() + "\" in context of : external functions\n");
+        }
+    }
+
+    if (isValid) {
+        NEO::ExternalFunctionInfo extFunInfo;
+        extFunInfo.functionName = functionName.str();
+        extFunInfo.barrierCount = static_cast<uint8_t>(execEnv.barrierCount);
+        extFunInfo.numGrfRequired = static_cast<uint16_t>(execEnv.grfCount);
+        extFunInfo.simdSize = static_cast<uint8_t>(execEnv.simdSize);
+        dst.externalFunctions.push_back(extFunInfo);
+        return DecodeError::Success;
+    } else {
+        return DecodeError::InvalidBinary;
+    }
+}
+
 template <>
 DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
     auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(src.deviceBinary, outErrReason, outWarning);
@@ -1299,17 +1331,17 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     UniqueNode kernelsSectionNodes;
     UniqueNode versionSectionNodes;
     UniqueNode globalHostAccessTableNodes;
+    UniqueNode functionsSectionNodes;
     for (const auto &globalScopeNd : yamlParser.createChildrenRange(*yamlParser.getRoot())) {
         auto key = yamlParser.readKey(globalScopeNd);
         if (NEO::Elf::ZebinKernelMetadata::Tags::kernels == key) {
             kernelsSectionNodes.push_back(&globalScopeNd);
-            continue;
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::version == key) {
             versionSectionNodes.push_back(&globalScopeNd);
-            continue;
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::globalHostAccessTable == key) {
             globalHostAccessTableNodes.push_back(&globalScopeNd);
-            continue;
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::functions == key) {
+            functionsSectionNodes.push_back(&globalScopeNd);
         } else {
             outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + yamlParser.readKey(globalScopeNd).str() + "\" in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + "\n");
         }
@@ -1365,6 +1397,20 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
         }
         for (auto it = globalHostAccessMapping.begin(); it != globalHostAccessMapping.end(); it++) {
             dst.globalsDeviceToHostNameMap[it->deviceName] = it->hostName;
+        }
+    }
+
+    if (functionsSectionNodes.size() > 1U) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Expected at most one " + NEO::Elf::ZebinKernelMetadata::Tags::functions.str() + " entry in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + ", got : " + std::to_string(functionsSectionNodes.size()) + "\n");
+        return DecodeError::InvalidBinary;
+    }
+
+    if (false == functionsSectionNodes.empty()) {
+        for (const auto &functionNd : yamlParser.createChildrenRange(*functionsSectionNodes[0])) {
+            auto zeInfoErr = populateExternalFunctionsMetadata(dst, yamlParser, functionNd, outErrReason, outWarning);
+            if (DecodeError::Success != zeInfoErr) {
+                return zeInfoErr;
+            }
         }
     }
 

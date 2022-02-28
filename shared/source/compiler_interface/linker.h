@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 
 #include <cstdint>
@@ -34,6 +35,10 @@ enum class LinkingStatus : uint32_t {
     LinkedFully,
     LinkedPartially
 };
+enum class SymbolBind : uint8_t {
+    Local,
+    Global
+};
 
 inline const char *asString(SegmentType segment) {
     switch (segment) {
@@ -52,6 +57,7 @@ struct SymbolInfo {
     uint32_t offset = std::numeric_limits<uint32_t>::max();
     uint32_t size = std::numeric_limits<uint32_t>::max();
     SegmentType segment = SegmentType::Unknown;
+    SymbolBind bind = SymbolBind::Local;
 };
 
 struct LinkerInput {
@@ -91,6 +97,7 @@ struct LinkerInput {
         Type type = Type::Unknown;
         SegmentType relocationSegment = SegmentType::Unknown;
     };
+
     using SectionNameToSegmentIdMap = std::unordered_map<std::string, uint32_t>;
     using Relocations = std::vector<RelocationInfo>;
     using SymbolMap = std::unordered_map<std::string, SymbolInfo>;
@@ -142,12 +149,25 @@ struct LinkerInput {
 
     bool undefinedSymbolsAllowed = false;
 
+    const std::vector<ExternalFunctionUsageKernel> &getKernelDependencies() const {
+        return kernelDependencies;
+    }
+
+    const std::vector<ExternalFunctionUsageExtFunc> &getFunctionDependencies() const {
+        return extFunDependencies;
+    }
+
   protected:
+    void parseRelocationForExtFuncUsage(RelocationInfo relocInfo, std::string kernelName);
+
     Traits traits;
     SymbolMap symbols;
     RelocationsPerInstSegment relocations;
     Relocations dataRelocations;
+    std::vector<std::pair<std::string, SymbolInfo>> extFuncSymbols;
     int32_t exportedFunctionsSegmentId = -1;
+    std::vector<ExternalFunctionUsageKernel> kernelDependencies;
+    std::vector<ExternalFunctionUsageExtFunc> extFunDependencies;
     bool valid = true;
 };
 
@@ -181,6 +201,7 @@ struct Linker {
     using PatchableSegments = std::vector<PatchableSegment>;
     using UnresolvedExternals = std::vector<UnresolvedExternal>;
     using KernelDescriptorsT = std::vector<KernelDescriptor *>;
+    using ExternalFunctionsT = std::vector<ExternalFunctionInfo>;
 
     Linker(const LinkerInput &data)
         : data(data) {
@@ -188,7 +209,8 @@ struct Linker {
 
     LinkingStatus link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo, const SegmentInfo &globalStringsSegInfo,
                        GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg, const PatchableSegments &instructionsSegments,
-                       UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData, const KernelDescriptorsT &kernelDescriptors) {
+                       UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData,
+                       const KernelDescriptorsT &kernelDescriptors, ExternalFunctionsT &externalFunctions) {
         bool success = data.isValid();
         auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
         success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo);
@@ -202,6 +224,10 @@ struct Linker {
         resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
         if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
             return LinkingStatus::LinkedPartially;
+        }
+        success = resolveExternalFunctions(kernelDescriptors, externalFunctions);
+        if (!success) {
+            return LinkingStatus::Error;
         }
         return LinkingStatus::LinkedFully;
     }
@@ -228,6 +254,7 @@ struct Linker {
                            std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                            const void *constantsInitData, const void *variablesInitData);
 
+    bool resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions);
     void resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
     void resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments);
 
