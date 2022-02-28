@@ -90,6 +90,10 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
     }
 
     if (internalUsage) {
+        if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+            return DebugManager.flags.ForceBCSForInternalCopyEngine.get() == 0 ? aub_stream::EngineType::ENGINE_BCS
+                                                                               : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + DebugManager.flags.ForceBCSForInternalCopyEngine.get() - 1);
+        }
         return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
     }
 
@@ -161,9 +165,40 @@ aub_stream::EngineType selectLinkCopyEngine(const HardwareInfo &hwInfo, const De
 
     if (enableCmdQRoundRobindBcsEngineAssign) {
         aub_stream::EngineType engineType;
+
+        auto bcsRoundRobinLimit = EngineHelpers::numLinkedCopyEngines;
+        auto engineOffset = 0u;
+        auto mainCE = false;
+
+        if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get() != -1) {
+            engineOffset = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignStartingValue.get();
+            mainCE = engineOffset == 0;
+        }
+
+        if (mainCE) {
+            bcsRoundRobinLimit++;
+        }
+
+        if (DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get() != -1) {
+            bcsRoundRobinLimit = DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.get();
+        }
+
         do {
-            engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + (selectorCopyEngine.fetch_add(1u) % EngineHelpers::numLinkedCopyEngines));
-        } while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
+            auto selectEngineValue = (selectorCopyEngine.fetch_add(1u) % bcsRoundRobinLimit) + engineOffset;
+
+            if (mainCE) {
+                if (selectEngineValue == 0u) {
+                    engineType = aub_stream::EngineType::ENGINE_BCS;
+                } else {
+                    engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue - 1);
+                }
+            } else {
+                engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + selectEngineValue);
+            }
+
+        } while (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSubDeviceEngineSupported(hwInfo, deviceBitfield, engineType) || !hwInfo.featureTable.ftrBcsInfo.test(engineType == aub_stream::EngineType::ENGINE_BCS
+                                                                                                                                                                              ? 0
+                                                                                                                                                                              : engineType - aub_stream::EngineType::ENGINE_BCS1 + 1));
 
         return engineType;
     }
