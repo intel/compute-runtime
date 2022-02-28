@@ -56,6 +56,8 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_product_config_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_product_config_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
