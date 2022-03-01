@@ -256,6 +256,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideUseKmdWaitFunction, -1, "-1: default (L0
 DECLARE_DEBUG_VARIABLE(int32_t, ResolveDependenciesViaPipeControls, -1, "-1: default , 0: disabled, 1: enabled. If enabled, instead of programming semaphores, dependencies are resolved using task levels")
 DECLARE_DEBUG_VARIABLE(int32_t, MakeIndirectAllocationsResidentAsPack, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver handles all indirect allocations as one pack instead of making them resident individually.")
 DECLARE_DEBUG_VARIABLE(int32_t, MakeEachAllocationResident, -1, "-1: default, 0: disabled, 1: bind every allocation at creation time, 2: bind all created allocations in flush")
+DECLARE_DEBUG_VARIABLE(int32_t, AssignBCSAtEnqueue, -1, "-1: default, 0:disabled, 1: enabled.")
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 
 /*DIRECT SUBMISSION FLAGS*/

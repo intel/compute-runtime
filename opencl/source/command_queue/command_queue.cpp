@@ -179,8 +179,17 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     case TransferDirection::HostToLocal:
     case TransferDirection::LocalToHost: {
         preferBcs = true;
-        preferredBcsEngineType = EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(),
-                                                                 device->getSelectorCopyEngine(), false);
+
+        auto preferredBCSType = true;
+
+        if (DebugManager.flags.AssignBCSAtEnqueue.get() != -1) {
+            preferredBCSType = DebugManager.flags.AssignBCSAtEnqueue.get();
+        }
+
+        if (preferredBCSType) {
+            preferredBcsEngineType = EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(),
+                                                                     device->getSelectorCopyEngine(), false);
+        }
         break;
     }
     default:
@@ -189,7 +198,16 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
 
     CommandStreamReceiver *selectedCsr = nullptr;
     if (preferBcs) {
-        selectedCsr = getBcsCommandStreamReceiver(preferredBcsEngineType);
+        auto assignBCS = true;
+
+        if (DebugManager.flags.AssignBCSAtEnqueue.get() != -1) {
+            assignBCS = DebugManager.flags.AssignBCSAtEnqueue.get();
+        }
+
+        if (assignBCS) {
+            selectedCsr = getBcsCommandStreamReceiver(preferredBcsEngineType);
+        }
+
         if (selectedCsr == nullptr && !bcsEngineTypes.empty()) {
             selectedCsr = getBcsCommandStreamReceiver(bcsEngineTypes[0]);
         }

@@ -1780,6 +1780,27 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWh
     EXPECT_ANY_THROW(queue->selectCsrForBuiltinOperation(args));
 }
 
+TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnqueueSetToFalseWhenSelectCsrThenDefaultBcsReturned) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    DebugManager.flags.AssignBCSAtEnqueue.set(0);
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+
+    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+    args.direction = TransferDirection::LocalToHost;
+
+    auto &csr = queue->selectCsrForBuiltinOperation(args);
+
+    EXPECT_EQ(&csr, queue->getBcsCommandStreamReceiver(queue->bcsEngineTypes[0]));
+}
+
 TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesWhenSelectingBlitterThenSelectBlitter) {
     DebugManagerStateRestore restore{};
 

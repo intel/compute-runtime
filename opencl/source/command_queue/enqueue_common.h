@@ -1069,6 +1069,7 @@ template <typename GfxFamily>
 template <uint32_t cmdType>
 void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
     auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1154,6 +1155,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
 
     queueOwnership.unlock();
+    bcsCommandStreamReceiverOwnership.unlock();
     commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
