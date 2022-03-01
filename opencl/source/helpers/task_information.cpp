@@ -112,15 +112,12 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     return completionStamp;
 }
 
-CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
+CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> surfaces,
                                            bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
-    : Command(commandQueue, kernelOperation), flushDC(flushDC), slmUsed(usesSLM),
+    : Command(commandQueue, kernelOperation), surfaces(std::move(surfaces)), flushDC(flushDC), slmUsed(usesSLM),
       commandType(commandType), printfHandler(std::move(printfHandler)), kernel(kernel),
       kernelCount(kernelCount), preemptionMode(preemptionMode) {
-    for (auto surface : surfaces) {
-        this->surfaces.push_back(surface);
-    }
     UNRECOVERABLE_IF(nullptr == this->kernel);
     kernel->incRefInternal();
 }

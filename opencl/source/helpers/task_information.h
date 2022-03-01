@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ class CommandMapUnmap : public Command {
 
 class CommandComputeKernel : public Command {
   public:
-    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
+    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> surfaces,
                          bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
                          PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount);
 

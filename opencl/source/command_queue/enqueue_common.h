@@ -893,6 +893,8 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             }
             kernel->getResidency(allSurfaces);
         }
+
+        allSurfaces.reserve(allSurfaces.size() + surfaceCount);
         for (auto &surface : CreateRange(surfaces, surfaceCount)) {
             allSurfaces.push_back(surface->duplicate());
         }
@@ -901,7 +903,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         bool slmUsed = multiDispatchInfo.usesSlm();
         command = std::make_unique<CommandComputeKernel>(*this,
                                                          blockedCommandsData,
-                                                         allSurfaces,
+                                                         std::move(allSurfaces),
                                                          shouldFlushDC(commandType, printfHandler.get()),
                                                          slmUsed,
                                                          commandType,
