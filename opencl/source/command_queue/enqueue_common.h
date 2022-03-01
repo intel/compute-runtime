@@ -1068,8 +1068,8 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 template <typename GfxFamily>
 template <uint32_t cmdType>
 void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
-    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1108,35 +1108,40 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     }
     processBarrierTimestampForBcsEngine(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
 
-    if (isCacheFlushForBcsRequired() && isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies)) {
+    auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies);
+    if (isCacheFlushForBcsRequired() && gpgpuSubmission) {
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
 
     obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, bcsCsr);
     csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
 
-    LinearStream *gpgpuCommandStream = {};
-    size_t gpgpuCommandStreamStart = {};
-    if (isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies)) {
-        gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
-        gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
-    }
-
     if (eventBuilder.getEvent()) {
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
     }
-
-    blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                    eventsRequest, gpgpuCommandStream, cmdType, blockQueue));
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
 
     const EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
 
+    LinearStream *gpgpuCommandStream = {};
+    size_t gpgpuCommandStreamStart = {};
+    if (gpgpuSubmission) {
+        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+        gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
+        gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
+    }
+
+    blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
+                                                                    eventsRequest, gpgpuCommandStream, cmdType, blockQueue));
+
     if (!blockQueue) {
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,
                                                       enqueueProperties, timestampPacketDependencies, eventsRequest,
                                                       eventBuilder, taskLevel, csrDeps, &bcsCsr);
+        if (gpgpuSubmission) {
+            commandStreamReceiverOwnership.unlock();
+        }
 
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
@@ -1156,7 +1161,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
     queueOwnership.unlock();
     bcsCommandStreamReceiverOwnership.unlock();
-    commandStreamReceiverOwnership.unlock();
 
     if (blocking) {
         waitForAllEngines(blockQueue, nullptr);
