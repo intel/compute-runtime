@@ -115,7 +115,7 @@ int32_t KernelInfo::getArgNumByName(const char *name) const {
     return -1;
 }
 
-bool KernelInfo::createKernelAllocation(Device &device, bool internalIsa) {
+bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.KernelHeapSize;
     const auto allocType = internalIsa ? AllocationType::KERNEL_ISA_INTERNAL : AllocationType::KERNEL_ISA;

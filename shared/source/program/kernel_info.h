@@ -109,7 +109,7 @@ struct KernelInfo {
     uint32_t getConstantBufferSize() const;
     int32_t getArgNumByName(const char *name) const;
 
-    bool createKernelAllocation(Device &device, bool internalIsa);
+    bool createKernelAllocation(const Device &device, bool internalIsa);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
     HeapInfo heapInfo = {};
