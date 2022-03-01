@@ -777,18 +777,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
         case ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION:
             flags.device_preferred_location = 0;
             break;
-        case ZE_MEMORY_ADVICE_SET_NON_ATOMIC_MOSTLY:
-            flags.non_atomic = 1;
-            break;
-        case ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY:
-            flags.non_atomic = 0;
-            break;
         case ZE_MEMORY_ADVICE_BIAS_CACHED:
             flags.cached_memory = 1;
             break;
         case ZE_MEMORY_ADVICE_BIAS_UNCACHED:
             flags.cached_memory = 0;
             break;
+        case ZE_MEMORY_ADVICE_SET_NON_ATOMIC_MOSTLY:
+        case ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY:
         default:
             break;
         }
