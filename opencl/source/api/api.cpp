@@ -4917,7 +4917,8 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             }
         } else {
             if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
-                pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+                pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId() &&
+                pMultiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
                 TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
                 return CL_SUCCESS;
             }
