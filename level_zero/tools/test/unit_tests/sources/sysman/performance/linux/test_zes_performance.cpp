@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::SetUp();
-        pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+        pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
         if (subDeviceCount == 0) {
