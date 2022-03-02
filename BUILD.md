@@ -30,13 +30,7 @@ Neo requires:
 - [Intel(R) Graphics Compiler for OpenCL(TM)](https://github.com/intel/intel-graphics-compiler)
 - [Intel(R) Graphics Memory Management](https://github.com/intel/gmmlib)
 
-Please visit their repositories for building and instalation instructions or use prebuilt packages:
-- Ubuntu: [launchpad repository](https://launchpad.net/~intel-opencl/+archive/ubuntu/intel-opencl)
-  - libigc-dev
-  - libigdgmm-dev
-- CentOS: [copr repository](https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl)
-  - intel-igc-opencl-devel
-  - intel-gmmlib-devel
+Please visit their repositories for building and instalation instructions.
 
 Use versions compatible with selected [Neo release](https://github.com/intel/compute-runtime/releases).
 
