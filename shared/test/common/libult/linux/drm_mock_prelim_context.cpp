@@ -55,6 +55,15 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return 0;
         }
     } break;
+    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT: {
+        auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
+        auto setParam = reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
+        if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_ACC) {
+            const auto paramAcc = reinterpret_cast<prelim_drm_i915_gem_context_param_acc *>(setParam->param.value);
+            receivedContextParamAcc = GemContextParamAcc{paramAcc->trigger, paramAcc->notify, paramAcc->granularity};
+        }
+        return 0;
+    } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closIndex++;
@@ -62,6 +71,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
         closReserveArg->clos_index = closIndex;
+        return 0;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE: {
         auto closFreeArg = static_cast<prelim_drm_i915_gem_clos_free *>(arg);
@@ -69,6 +79,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
         closIndex--;
+        return 0;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE: {
         auto cacheReserveArg = static_cast<prelim_drm_i915_gem_cache_reserve *>(arg);
@@ -85,13 +96,25 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
         allocNumWays += cacheReserveArg->num_ways;
+        return 0;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_VM_BIND: {
         vmBindCalled++;
+        const auto vmBind = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg);
+        receivedVmBind = VmBindParams{
+            vmBind->vm_id,
+            vmBind->handle,
+            vmBind->start,
+            vmBind->offset,
+            vmBind->length,
+            vmBind->flags,
+            vmBind->extensions,
+        };
         return vmBindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
         vmUnbindCalled++;
+        vmUnbindHandle = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg)->handle;
         return vmUnbindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {
@@ -132,6 +155,22 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         if ((firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
+        return 0;
+    } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE: {
+        waitUserFenceCalled++;
+        const auto wait = reinterpret_cast<prelim_drm_i915_gem_wait_user_fence *>(arg);
+        receivedWaitUserFence = WaitUserFence{
+            wait->extensions,
+            wait->addr,
+            wait->ctx_id,
+            wait->op,
+            wait->flags,
+            wait->value,
+            wait->mask,
+            wait->timeout,
+        };
+        return 0;
     } break;
     case PRELIM_DRM_IOCTL_I915_UUID_REGISTER: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
@@ -349,4 +388,48 @@ uint32_t DrmPrelimHelper::getComputeEngineClass() {
 
 uint32_t DrmPrelimHelper::getStringUuidClass() {
     return PRELIM_I915_UUID_CLASS_STRING;
+}
+
+uint32_t DrmPrelimHelper::getULLSContextCreateFlag() {
+    return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
+}
+
+uint32_t DrmPrelimHelper::getRunAloneContextParam() {
+    return PRELIM_I915_CONTEXT_PARAM_RUNALONE;
+}
+
+uint32_t DrmPrelimHelper::getAccContextParam() {
+    return PRELIM_I915_CONTEXT_PARAM_ACC;
+}
+
+uint32_t DrmPrelimHelper::getAccContextParamSize() {
+    return sizeof(prelim_drm_i915_gem_context_param_acc);
+}
+
+std::array<uint32_t, 4> DrmPrelimHelper::getContextAcgValues() {
+    return {PRELIM_I915_CONTEXT_ACG_128K, PRELIM_I915_CONTEXT_ACG_2M, PRELIM_I915_CONTEXT_ACG_16M, PRELIM_I915_CONTEXT_ACG_64M};
+}
+
+uint32_t DrmPrelimHelper::getEnablePageFaultVmCreateFlag() {
+    return PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT;
+}
+
+uint32_t DrmPrelimHelper::getDisableScratchVmCreateFlag() {
+    return PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH;
+}
+
+uint64_t DrmPrelimHelper::getU8WaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_U8;
+}
+
+uint64_t DrmPrelimHelper::getU16WaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_U16;
+}
+
+uint64_t DrmPrelimHelper::getCaptureVmBindFlag() {
+    return PRELIM_I915_GEM_VM_BIND_CAPTURE;
+}
+
+uint64_t DrmPrelimHelper::getImmediateVmBindFlag() {
+    return PRELIM_I915_GEM_VM_BIND_IMMEDIATE;
 }

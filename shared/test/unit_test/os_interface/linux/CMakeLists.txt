@@ -24,6 +24,7 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_cache_info_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_with_prelim_tests.cpp

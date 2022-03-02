@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <optional>
 #include <vector>
@@ -37,6 +38,23 @@ struct CreateGemExt {
     std::vector<MemoryClassInstance> memoryRegions{};
 };
 
+struct GemContextParamAcc {
+    uint16_t trigger{0};
+    uint16_t notify{0};
+    uint8_t granularity{0};
+};
+
+struct WaitUserFence {
+    uint64_t extensions{0};
+    uint64_t addr{0};
+    uint32_t ctxId{0};
+    uint16_t op{0};
+    uint16_t flags{0};
+    uint64_t value{0};
+    uint64_t mask{0};
+    int64_t timeout{0};
+};
+
 struct DrmMockPrelimContext {
     const HardwareInfo *hwInfo;
     const RootDeviceEnvironment &rootDeviceEnvironment;
@@ -54,15 +72,20 @@ struct DrmMockPrelimContext {
     int vmBindQueryReturn{0};
 
     size_t vmBindCalled{0};
+    std::optional<VmBindParams> receivedVmBind{};
     int vmBindReturn{0};
 
     size_t vmUnbindCalled{0};
+    std::optional<uint32_t> vmUnbindHandle{};
     int vmUnbindReturn{0};
 
     int hasPageFaultQueryValue{0};
     int hasPageFaultQueryReturn{0};
 
     uint32_t queryMemoryRegionInfoSuccessCount{std::numeric_limits<uint32_t>::max()};
+
+    size_t waitUserFenceCalled{0};
+    std::optional<WaitUserFence> receivedWaitUserFence{};
 
     uint32_t uuidHandle{1};
     std::optional<UuidControl> receivedRegisterUuid{};
@@ -71,6 +94,7 @@ struct DrmMockPrelimContext {
     int uuidControlReturn{0};
 
     std::optional<CreateGemExt> receivedCreateGemExt{};
+    std::optional<GemContextParamAcc> receivedContextParamAcc{};
 
     bool failDistanceInfoQuery{false};
     bool disableCcsSupport{false};
@@ -84,4 +108,15 @@ uint32_t getQueryComputeSlicesIoctl();
 uint32_t getDistanceInfoQueryId();
 uint32_t getComputeEngineClass();
 uint32_t getStringUuidClass();
+uint32_t getULLSContextCreateFlag();
+uint32_t getRunAloneContextParam();
+uint32_t getAccContextParam();
+uint32_t getAccContextParamSize();
+std::array<uint32_t, 4> getContextAcgValues();
+uint32_t getEnablePageFaultVmCreateFlag();
+uint32_t getDisableScratchVmCreateFlag();
+uint64_t getU8WaitUserFenceFlag();
+uint64_t getU16WaitUserFenceFlag();
+uint64_t getCaptureVmBindFlag();
+uint64_t getImmediateVmBindFlag();
 }; // namespace DrmPrelimHelper
