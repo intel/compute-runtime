@@ -152,7 +152,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     void createModuleFromBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(
@@ -206,7 +206,7 @@ struct ModuleFixture : public DeviceFixture {
 
     void createModuleFromBinary(ModuleType type = ModuleType::User) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(
@@ -254,7 +254,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
 
     void createModuleFromBinary(uint32_t rootDeviceIndex) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(testFile.c_str(), size);

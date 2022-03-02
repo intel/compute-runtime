@@ -4,11 +4,11 @@
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_generate_kernels target_list platform_name suffix options)
+function(level_zero_generate_kernels target_list platform_name suffix revision_id options)
 
   list(APPEND results copy_compiler_files)
 
-  set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
+  set(outputdir "${TargetDir}/level_zero/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
 
   foreach(filepath ${ARGN})
     get_filename_component(filename ${filepath} NAME)
@@ -26,9 +26,9 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
       )
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -51,11 +51,11 @@ function(level_zero_generate_kernels target_list platform_name suffix options)
   set(${target_list} ${${target_list}} PARENT_SCOPE)
 endfunction()
 
-function(level_zero_generate_kernels_with_internal_options target_list platform_name suffix prefix options internal_options)
+function(level_zero_generate_kernels_with_internal_options target_list platform_name suffix prefix revision_id options internal_options)
 
   list(APPEND results copy_compiler_files)
 
-  set(outputdir "${TargetDir}/level_zero/${suffix}/test_files/${NEO_ARCH}/")
+  set(outputdir "${TargetDir}/level_zero/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
 
   foreach(filepath ${ARGN})
     get_filename_component(filename ${filepath} NAME)
@@ -78,9 +78,9 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
              string(CONCAT internal_options \" ${internal_options} \" )
 
              add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options ${internal_options} , workdir is ${workdir}
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -options ${options} -internal_options ${internal_options}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options ${internal_options}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )

@@ -329,17 +329,19 @@ int main(int argc, char **argv) {
     binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
-    std::string testBinaryFilesNoRev = testBinaryFiles;
-    testBinaryFilesNoRev.append("/level_zero/");
+    std::string testBinaryFilesApiSpecific = testBinaryFiles;
+    testBinaryFilesApiSpecific.append("/level_zero/");
     testBinaryFiles.append("/" + binaryNameSuffix + "/");
-    testBinaryFilesNoRev.append(binaryNameSuffix + "/");
+    testBinaryFilesApiSpecific.append(binaryNameSuffix + "/");
 
     testBinaryFiles.append(std::to_string(revId));
     testBinaryFiles.append("/");
     testBinaryFiles.append(testFiles);
-    testBinaryFilesNoRev.append(testFiles);
+    testBinaryFilesApiSpecific.append(std::to_string(revId));
+    testBinaryFilesApiSpecific.append("/");
+    testBinaryFilesApiSpecific.append(testFilesApiSpecific);
     testFiles = testBinaryFiles;
-    testFilesNoRev = testBinaryFilesNoRev;
+    testFilesApiSpecific = testBinaryFilesApiSpecific;
 
     std::string executionDirectory(hardwarePrefix[productFamily]);
     executionDirectory += NEO::executionDirectorySuffix; //_aub for aub_tests, empty otherwise

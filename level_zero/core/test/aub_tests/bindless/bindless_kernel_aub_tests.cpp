@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
 
     void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, fileName + "_", ".bin");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(

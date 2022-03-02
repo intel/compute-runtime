@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "config.h"
 
 std::string testFiles("test_files/" NEO_ARCH "/");
-std::string testFilesNoRev("test_files/" NEO_ARCH "/");
+std::string testFilesApiSpecific("test_files/" NEO_ARCH "/");
 std::string clFiles("test_files/");
 std::string binaryNameSuffix("");
 
@@ -32,12 +32,12 @@ void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string
     }
 }
 
-void retrieveBinaryKernelFilenameNoRevision(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options) {
+void retrieveBinaryKernelFilenameApiSpecific(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options) {
     if (outputFilename.length() > 0) {
         outputFilename.clear();
     }
-    outputFilename.reserve(2 * testFilesNoRev.length());
-    outputFilename.append(testFilesNoRev);
+    outputFilename.reserve(2 * testFilesApiSpecific.length());
+    outputFilename.append(testFilesApiSpecific);
     outputFilename.append(kernelName);
     outputFilename.append(binaryNameSuffix);
     outputFilename.append(extension);

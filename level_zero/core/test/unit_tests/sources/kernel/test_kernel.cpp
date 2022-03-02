@@ -498,7 +498,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(
@@ -554,7 +554,7 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
 
 TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMemoryThenPrivateMemoryIsNotAllocated) {
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(

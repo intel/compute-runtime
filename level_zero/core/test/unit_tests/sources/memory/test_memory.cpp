@@ -1594,7 +1594,7 @@ TEST_F(MultipleDevicePeerAllocationFailTest,
 struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     void createModuleFromBinary(L0::Device *device, ModuleType type = ModuleType::User) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(

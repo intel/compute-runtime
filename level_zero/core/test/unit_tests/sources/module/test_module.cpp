@@ -498,7 +498,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
 
     void runTest() {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
         size_t size = 0;
         auto src = loadDataFromFile(testFile.c_str(), size);
@@ -537,7 +537,7 @@ struct ModuleSpecConstantsFixture : public DeviceFixture {
 
     void runTestStatic() {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
         size_t sizeModule1, sizeModule2 = 0;
         auto srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
@@ -627,7 +627,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -660,7 +660,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
 
 TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenUserPassTooMuchConstsIdsThenModuleInitFails) {
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -718,7 +718,7 @@ TEST_F(ModuleSpecConstantsLongTests, givenSpecializationConstantsSetWhenCompiler
     auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
     size_t sizeModule1, sizeModule2 = 0;
     auto srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
@@ -779,7 +779,7 @@ struct ModuleStaticLinkFixture : public DeviceFixture {
 
     void loadModules(bool multiple) {
         std::string testFile;
-        retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
+        retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".spv");
 
         srcModule1 = loadDataFromFile(testFile.c_str(), sizeModule1);
         if (multiple) {
@@ -1344,7 +1344,7 @@ TEST_F(ModuleDynamicLinkTests, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaA
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1492,7 +1492,7 @@ using ContextModuleCreateTest = Test<ContextFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1540,7 +1540,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".gen");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".gen");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1568,7 +1568,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1596,7 +1596,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1634,7 +1634,7 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNative
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -1854,7 +1854,7 @@ using PrintfModuleTest = Test<DeviceFixture>;
 
 HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAllocationIsPlacedInResidencyContainer) {
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".gen");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".gen");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);

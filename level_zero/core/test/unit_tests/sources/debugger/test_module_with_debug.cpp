@@ -700,7 +700,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -742,7 +742,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -796,7 +796,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
 
     std::string testFile;
-    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".bin");
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
