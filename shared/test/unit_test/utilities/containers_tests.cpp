@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1250,6 +1250,75 @@ TEST(StackVec, WhenPushingBackThenContentsAreCorrect) {
     }
 
     ASSERT_FALSE(contains(&v, &*v.begin()));
+}
+
+TEST(StackVec, whenSwapThenContentsAreExchanged) {
+    using Type = uint32_t;
+    StackVec<Type, 5> vector1;
+    StackVec<Type, 5> vector2;
+
+    for (uint32_t i = 0; i < 3; ++i) {
+        vector1.push_back(i);
+    }
+
+    for (uint32_t i = 0; i < 5; ++i) {
+        vector2.push_back(i);
+    }
+
+    vector1.swap(vector2);
+    EXPECT_EQ(5u, vector1.size());
+    EXPECT_EQ(3u, vector2.size());
+    EXPECT_EQ(4u, vector1.at(4u));
+
+    vector1.swap(vector2);
+    EXPECT_EQ(3u, vector1.size());
+    EXPECT_EQ(5u, vector2.size());
+}
+
+TEST(StackVec, whenDynamicStorageSwapThenContentsAreExchanged) {
+    using Type = uint32_t;
+    StackVec<Type, 1> vector1;
+    StackVec<Type, 1> vector2;
+
+    for (uint32_t i = 0; i < 3; ++i) {
+        vector1.push_back(i);
+    }
+
+    for (uint32_t i = 0; i < 5; ++i) {
+        vector2.push_back(i);
+    }
+
+    vector1.swap(vector2);
+    EXPECT_EQ(5u, vector1.size());
+    EXPECT_EQ(3u, vector2.size());
+    EXPECT_EQ(4u, vector1.at(4u));
+
+    vector1.swap(vector2);
+    EXPECT_EQ(3u, vector1.size());
+    EXPECT_EQ(5u, vector2.size());
+}
+
+TEST(StackVec, whenDynamicToNonDynamicStorageSwapThenContentsAreExchanged) {
+    using Type = uint32_t;
+    StackVec<Type, 1> vector1;
+    StackVec<Type, 5> vector2;
+
+    for (uint32_t i = 0; i < 3; ++i) {
+        vector1.push_back(i);
+    }
+
+    for (uint32_t i = 0; i < 5; ++i) {
+        vector2.push_back(i);
+    }
+
+    vector1.swap(vector2);
+    EXPECT_EQ(5u, vector1.size());
+    EXPECT_EQ(3u, vector2.size());
+    EXPECT_EQ(4u, vector1.at(4u));
+
+    vector1.swap(vector2);
+    EXPECT_EQ(3u, vector1.size());
+    EXPECT_EQ(5u, vector2.size());
 }
 
 TEST(StackVecPopBack, GivenNonEmptyStackVecThenRemoveSingleElementFromTheEnd) {

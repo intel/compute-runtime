@@ -87,7 +87,7 @@ class TimestampPacketContainer : public NonCopyableClass {
     TimestampPacketContainer &operator=(TimestampPacketContainer &&) = default;
     MOCKABLE_VIRTUAL ~TimestampPacketContainer();
 
-    const std::vector<TagNodeBase *> &peekNodes() const { return timestampPacketNodes; }
+    const StackVec<TagNodeBase *, 32u> &peekNodes() const { return timestampPacketNodes; }
     void add(TagNodeBase *timestampPacketNode);
     void swapNodes(TimestampPacketContainer &timestampPacketContainer);
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
@@ -95,7 +95,7 @@ class TimestampPacketContainer : public NonCopyableClass {
     void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
 
   protected:
-    std::vector<TagNodeBase *> timestampPacketNodes;
+    StackVec<TagNodeBase *, 32u> timestampPacketNodes;
 };
 
 struct TimestampPacketDependencies : public NonCopyableClass {

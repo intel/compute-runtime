@@ -757,7 +757,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
         EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().back()->getGpuAddress());
+        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(0u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
     }
 
@@ -765,7 +765,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
         EXPECT_EQ(2u, deferredTimestampPackets->peekNodes().size());
-        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().back()->getGpuAddress());
+        EXPECT_EQ(latestNode, deferredTimestampPackets->peekNodes().at(1u)->getGpuAddress());
         latestNode = timestampPacketContainer->peekNodes()[0]->getGpuAddress();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,6 +158,32 @@ class StackVec {
         return *this;
     }
 
+    template <typename RhsT>
+    void swap(RhsT &rhs) {
+        if (this->usesDynamicMem() && rhs.usesDynamicMem()) {
+            this->dynamicMem->swap(*rhs.dynamicMem);
+            return;
+        }
+        size_t smallerSize = this->size() < rhs.size() ? this->size() : rhs.size();
+        size_t i = 0;
+        for (; i < smallerSize; ++i) {
+            std::swap((*this)[i], rhs[i]);
+        }
+        if (this->size() == smallerSize) {
+            auto biggerSize = rhs.size();
+            for (; i < biggerSize; ++i) {
+                this->push_back(std::move(rhs[i]));
+            }
+            rhs.resize(smallerSize);
+        } else {
+            auto biggerSize = this->size();
+            for (; i < biggerSize; ++i) {
+                rhs.push_back(std::move((*this)[i]));
+            }
+            this->resize(smallerSize);
+        }
+    }
+
     ~StackVec() {
         if (usesDynamicMem()) {
             delete dynamicMem;
@@ -231,6 +257,10 @@ class StackVec {
         }
         return *(reinterpret_cast<DataType *>(onStackMemRawBytes) + idx);
     }
+
+    DataType &at(std::size_t idx) { return this->operator[](idx); }
+
+    const DataType &at(std::size_t idx) const { return this->operator[](idx); }
 
     const DataType &operator[](std::size_t idx) const {
         if (usesDynamicMem()) {
@@ -307,6 +337,8 @@ class StackVec {
     }
 
   private:
+    template <typename RhsDataType, size_t RhsOnStackCapacity, typename RhsStackSizeT>
+    friend class StackVec;
     void setUsesDynamicMem() {
         this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();
     }
