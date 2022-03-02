@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -907,48 +907,6 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenCallWaitUti
 
     EXPECT_EQ(2u, CpuIntrinsicsTests::pauseCounter);
     EXPECT_TRUE(device->getUltCommandStreamReceiver<FamilyType>().downloadAllocationCalled);
-
-    cmdQ.reset();
-}
-
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitAndNonGpuKernelEnqueueWhenFinishThenDoNotCallWaitUtils) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
-
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
-
-    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
-    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
-
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
-    cmdQ->flush();
-
-    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
-    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
-
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
-    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
-    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-
-    deferredTimestampPackets->peekNodes()[0]->setPacketsUsed(1u);
-    timestampPacketContainer->peekNodes()[0]->setPacketsUsed(1u);
-
-    CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile uint32_t *>(const_cast<void *>(timestampPacketContainer->peekNodes()[0]->getContextEndAddress(0u)));
-    CpuIntrinsicsTests::pauseValue = 2u;
-    CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        CpuIntrinsicsTests::pauseAddress = reinterpret_cast<volatile uint32_t *>(const_cast<void *>(deferredTimestampPackets->peekNodes()[0]->getContextEndAddress(0u)));
-    };
-    CpuIntrinsicsTests::pauseCounter = 0u;
-
-    cmdQ->finish();
-
-    EXPECT_EQ(0u, CpuIntrinsicsTests::pauseCounter);
 
     cmdQ.reset();
 }
