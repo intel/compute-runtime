@@ -187,6 +187,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     const auto &hwInfo = peekHwInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     bool updateTag = false;
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -195,7 +197,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             levelClosed = true;
             //if we guard with ppc, flush dc as well to speed up completion latency
             if (dispatchFlags.guardCommandBufferWithPipeControl) {
-                dispatchFlags.dcFlush = true;
+                const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+                if (hwInfoConfig.isDcFlushAllowed()) {
+                    dispatchFlags.dcFlush = true;
+                }
             }
         }
 
@@ -254,8 +259,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto isSpecialPipelineSelectModeChanged = PreambleHelper<GfxFamily>::isSpecialPipelineSelectModeChanged(lastSpecialPipelineSelectMode,
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             hwInfo);
-
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
 
     if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
         if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.value != -1) {

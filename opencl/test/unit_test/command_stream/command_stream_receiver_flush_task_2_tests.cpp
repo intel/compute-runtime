@@ -80,6 +80,50 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     buffer->release();
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenNonBlockingCallIsMadeThenNoPipeControlInsertedOnDevicesWithoutDCFlushRequirements) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3u);
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    MockContext ctx(pClDevice);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
+    CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
+    size_t tempBuffer[] = {0, 1, 2};
+    size_t dstBuffer[] = {0, 1, 2};
+    cl_int retVal = 0;
+
+    auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
+
+    commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0u, nullptr, 0);
+
+    auto &commandStreamTask = *commandStreamReceiver.lastFlushedCommandStream;
+
+    cmdList.clear();
+    // Parse command list
+    parseCommands<FamilyType>(commandStreamTask, 0);
+
+    auto pipeControlExpected = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    if (pipeControlExpected) {
+        EXPECT_NE(cmdList.end(), itorPC);
+        if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+            itorPC++;
+            itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+            EXPECT_NE(cmdList.end(), itorPC);
+        }
+
+        // Verify that the dcFlushEnabled bit is set in PC
+        auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pCmdWA->getDcFlushEnable());
+    } else {
+        EXPECT_EQ(cmdList.end(), itorPC);
+    }
+
+    buffer->release();
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenTaskCsPassedAsCommandStreamParamWhenFlushingTaskThenCompletionStampIsCorrect) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
