@@ -930,6 +930,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
 
     storeKernelArg(argIndex, SVM_ALLOC_OBJ, svmAlloc, svmPtr, sizeof(uintptr_t));
     kernelArguments[argIndex].allocId = allocId;
+    kernelArguments[argIndex].allocIdMemoryManagerCounter = allocId ? this->getContext().getSVMAllocsManager()->allocationsCounter.load() : 0u;
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;

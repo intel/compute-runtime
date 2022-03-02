@@ -4866,12 +4866,40 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     auto retVal = validateObjects(WithCastToInternal(kernel, &pMultiDeviceKernel));
     API_ENTER(&retVal);
 
-    DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argValue", argValue);
-
     if (CL_SUCCESS != retVal) {
         TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
         return retVal;
     }
+
+    if (argIndex >= pMultiDeviceKernel->getKernelArgsNumber()) {
+        retVal = CL_INVALID_ARG_INDEX;
+        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+        return retVal;
+    }
+
+    auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
+
+    if (argValue != nullptr) {
+        if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
+            pMultiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
+            bool reuseFromCache = false;
+
+            if (svmManager->allocationsCounter == pMultiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
+                reuseFromCache = true;
+            } else {
+                auto svmData = svmManager->getSVMAlloc(argValue);
+                if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+                    reuseFromCache = true;
+                }
+            }
+            if (reuseFromCache) {
+                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                return CL_SUCCESS;
+            }
+        }
+    }
+
+    DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argValue", argValue);
 
     for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
         const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
@@ -4880,12 +4908,6 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
             return retVal;
         }
-    }
-
-    if (argIndex >= pMultiDeviceKernel->getKernelArgsNumber()) {
-        retVal = CL_INVALID_ARG_INDEX;
-        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-        return retVal;
     }
 
     for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
@@ -4905,7 +4927,6 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     MultiGraphicsAllocation *pSvmAllocs = nullptr;
     uint32_t allocId = 0u;
     if (argValue != nullptr) {
-        auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
             for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
@@ -4916,12 +4937,6 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 }
             }
         } else {
-            if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
-                pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId() &&
-                pMultiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
-                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-                return CL_SUCCESS;
-            }
             pSvmAllocs = &svmData->gpuAllocations;
             allocId = svmData->getAllocId();
         }

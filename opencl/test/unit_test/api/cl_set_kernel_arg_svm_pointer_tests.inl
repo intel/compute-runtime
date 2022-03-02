@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -84,7 +85,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
 
     auto retVal = clSetKernelArgSVMPointer(
         pMultiDeviceKernel.get(), // cl_kernel kernel
-        (cl_uint)-1,              // cl_uint arg_index
+        0,                        // cl_uint arg_index
         nullptr                   // const void *arg_value
     );
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
@@ -209,6 +210,8 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSet
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKernelArgThenSetArgSvmAllocCalledOnlyWhenNeeded) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    auto mockSvmManager = reinterpret_cast<MockSVMAllocsManager *>(pMockKernel->getContext().getSVMAllocsManager());
+
     if (devInfo.svmCapabilities != 0) {
         EXPECT_EQ(0u, pMockKernel->setArgSvmAllocCalls);
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -231,6 +234,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(callCounter, pMockKernel->setArgSvmAllocCalls);
+        ++mockSvmManager->allocationsCounter;
 
         // different pointer - called
         void *nextPtrSvm = static_cast<char *>(ptrSvm) + 1;
@@ -241,6 +245,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
+        ++mockSvmManager->allocationsCounter;
 
         // different allocId - called
         pMockKernel->kernelArguments[0].allocId = 1;
@@ -251,6 +256,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
+        ++mockSvmManager->allocationsCounter;
 
         // allocId = 0 - called
         pMockKernel->kernelArguments[0].allocId = 0;
@@ -261,6 +267,7 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
+        ++mockSvmManager->allocationsCounter;
 
         // same values - not called
         retVal = clSetKernelArgSVMPointer(

@@ -68,6 +68,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         bool isPatched = false;
         bool isStatelessUncacheable = false;
         uint32_t allocId;
+        uint32_t allocIdMemoryManagerCounter;
     };
 
     enum class TunningStatus {
