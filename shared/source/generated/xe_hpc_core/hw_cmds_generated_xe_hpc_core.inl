@@ -4115,6 +4115,7 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setDestinationSurfaceHeight(const uint32_t value) {
+        UNRECOVERABLE_IF(value - 1 > 0x3fff);
         TheStructure.Common.DestinationSurfaceHeight = value - 1;
     }
 
@@ -4123,6 +4124,7 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setDestinationSurfaceWidth(const uint32_t value) {
+        UNRECOVERABLE_IF(value - 1 > 0x3fff);
         TheStructure.Common.DestinationSurfaceWidth = value - 1;
     }
 
@@ -4155,11 +4157,12 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setDestinationSurfaceDepth(const uint32_t value) {
-        TheStructure.Common.DestinationSurfaceDepth = value;
+        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        TheStructure.Common.DestinationSurfaceDepth = value - 1;
     }
 
     inline uint32_t getDestinationSurfaceDepth() const {
-        return (TheStructure.Common.DestinationSurfaceDepth);
+        return (TheStructure.Common.DestinationSurfaceDepth + 1);
     }
 
     inline void setDestinationHorizontalAlign(const uint32_t value) {
@@ -4211,6 +4214,7 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setSourceSurfaceHeight(const uint32_t value) {
+        UNRECOVERABLE_IF(value - 1 > 0x3fff);
         TheStructure.Common.SourceSurfaceHeight = value - 1;
     }
 
@@ -4219,6 +4223,7 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setSourceSurfaceWidth(const uint32_t value) {
+        UNRECOVERABLE_IF(value - 1 > 0x3fff);
         TheStructure.Common.SourceSurfaceWidth = value - 1;
     }
 
@@ -4251,6 +4256,7 @@ struct XY_BLOCK_COPY_BLT {
     }
 
     inline void setSourceSurfaceDepth(const uint32_t value) {
+        UNRECOVERABLE_IF(value - 1 > 0x7ff);
         TheStructure.Common.SourceSurfaceDepth = value - 1;
     }
 

@@ -562,6 +562,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenBufferWhenProgrammingBltCommandAndRe
 XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagSetWhenCompressionIsUsedThenForceCompressionEnableFields) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto blitCmd = FamilyType::cmdInitXyCopyBlt;
+    blitCmd.setDestinationX2CoordinateRight(1);
+    blitCmd.setDestinationY2CoordinateBottom(1);
 
     auto gmm = std::make_unique<MockGmm>(clDevice->getGmmClientContext());
     gmm->isCompressionEnabled = true;
@@ -604,6 +606,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagForClearColorNotSetWhenProg
     DebugManagerStateRestore restore;
     DebugManager.flags.UseClearColorAllocationForBlitter.set(false);
     auto blitCmd = FamilyType::cmdInitXyCopyBlt;
+    blitCmd.setDestinationX2CoordinateRight(1);
+    blitCmd.setDestinationY2CoordinateBottom(1);
 
     MockGraphicsAllocation mockAllocation;
     BlitProperties properties = {};
@@ -627,6 +631,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagForClearColorSetWhenProgram
     DebugManagerStateRestore restore;
     DebugManager.flags.UseClearColorAllocationForBlitter.set(true);
     auto blitCmd = FamilyType::cmdInitXyCopyBlt;
+    blitCmd.setDestinationX2CoordinateRight(1);
+    blitCmd.setDestinationY2CoordinateBottom(1);
 
     MockGraphicsAllocation mockAllocation;
     BlitProperties properties = {};
@@ -656,6 +662,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagForClearColorNotSetWhenProg
 
     MockGraphicsAllocation mockAllocation;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.srcAllocation = &mockAllocation;
     properties.dstAllocation = &mockAllocation;
     properties.clearColorAllocation = &mockAllocation;
@@ -681,6 +689,8 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagForClearColorSetWhenProgram
 
     MockGraphicsAllocation mockAllocation;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.srcAllocation = &mockAllocation;
     properties.dstAllocation = &mockAllocation;
     properties.clearColorAllocation = &mockAllocation;

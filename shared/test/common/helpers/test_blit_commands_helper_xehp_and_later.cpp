@@ -431,6 +431,8 @@ HWTEST2_F(BlitTests, givenTiled4SrcAndDestinationAppendImageCommandsThenCorrectT
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.srcAllocation = &mockAllocationSrc;
     properties.dstAllocation = &mockAllocationDst;
     properties.clearColorAllocation = &mockClearColor;
@@ -457,6 +459,8 @@ HWTEST2_F(BlitTests, givenNotTiled64SrcAndDestinationAppendImageCommandsThenCorr
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.srcAllocation = &mockAllocationSrc;
     properties.dstAllocation = &mockAllocationDst;
     properties.clearColorAllocation = &mockClearColor;
@@ -483,6 +487,8 @@ HWTEST2_F(BlitTests, givenNotTiledSrcAndDestinationAppendImageCommandsThenCorrec
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.srcAllocation = &mockAllocationSrc;
     properties.dstAllocation = &mockAllocationDst;
     properties.clearColorAllocation = &mockClearColor;
@@ -665,6 +671,8 @@ HWTEST2_F(BlitTests, givenResourceWithoutGmmWhenAppendImageCommandsThenPitchEqua
 
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.dstRowPitch = 0x100;
     properties.srcRowPitch = 0x100;
     properties.srcAllocation = &mockAllocationSrc;
@@ -731,6 +739,8 @@ HWTEST2_F(BlitTests, givenResourceInfoWithZeroPitchWhenAppendImageCommandsThenPi
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.dstRowPitch = 0x100;
     properties.srcRowPitch = 0x100;
 
@@ -764,6 +774,8 @@ HWTEST2_F(BlitTests, givenTiledAllocationWhenAppendBlitCommandsForImagesThenBlit
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.dstRowPitch = 0x1000;
     properties.srcRowPitch = 0x1000;
 
@@ -831,6 +843,8 @@ HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageComma
     mockAllocationDst.setGmm(gmm.get(), 0);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
     BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
     properties.dstRowPitch = 0x1000;
     properties.srcRowPitch = 0x1000;
 
