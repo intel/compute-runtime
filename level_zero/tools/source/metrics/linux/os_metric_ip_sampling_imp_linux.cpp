@@ -81,7 +81,17 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
     std::array<uint64_t, 10u> properties;
-    if (!ioctlHelper->getEuStallProperties(properties, maxDssBufferSize, samplingUnit, defaultPollPeriodNs, deviceImp.getPhysicalSubDeviceId())) {
+    auto engineInfo = drm->getEngineInfo();
+    if (engineInfo == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    auto classInstance = engineInfo->getEngineInstance(deviceImp.getPhysicalSubDeviceId(), aub_stream::ENGINE_CCS);
+    if (classInstance == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    if (!ioctlHelper->getEuStallProperties(properties, maxDssBufferSize, samplingUnit, defaultPollPeriodNs,
+                                           classInstance->engineInstance)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -107,18 +117,22 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 
-    int32_t ret = NEO::SysCalls::close(stream);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "close() failed errno = %d | ret = %d \n",
-                       errno, ret);
+    int32_t disableStatus = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_DISABLE, 0);
+    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
+                       "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
+
+    int32_t closeStatus = NEO::SysCalls::close(stream);
+    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
+                       "close() failed errno = %d | ret = %d \n", errno, closeStatus);
     stream = -1;
 
-    return (ret == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+    return ((closeStatus == 0) && (disableStatus == 0)) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
 
-    ssize_t ret = NEO::SysCalls::pread(stream, pRawData, *pRawDataSize, 0u);
-    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "pread() failed errno = %d | ret = %d \n",
+    ssize_t ret = NEO::SysCalls::read(stream, pRawData, *pRawDataSize);
+    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() failed errno = %d | ret = %d \n",
                        errno, ret);
 
     if (ret >= 0) {
@@ -127,6 +141,12 @@ ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDa
     }
 
     *pRawDataSize = 0;
+
+    // If read needs to try again, do not return error
+    if (errno == EINTR || errno == EAGAIN || errno == EBUSY) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 

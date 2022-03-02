@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,5 +28,6 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off);
 int munmap(void *addr, size_t size);
+ssize_t read(int fd, void *buf, size_t count);
 } // namespace SysCalls
 } // namespace NEO

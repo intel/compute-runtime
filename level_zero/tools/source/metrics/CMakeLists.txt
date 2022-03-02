@@ -20,6 +20,8 @@ list(APPEND L0_SRCS_TOOLS_METRICS
      ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_ip_sampling.h
      ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_source.h
      ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_source.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.cpp
 )
 
 if(UNIX)

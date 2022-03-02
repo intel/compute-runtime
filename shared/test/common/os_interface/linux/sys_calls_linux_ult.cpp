@@ -49,6 +49,7 @@ ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullpt
 int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
 int (*sysCallsIoctl)(int fileDescriptor, unsigned long int request, void *arg) = nullptr;
 int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) = nullptr;
+ssize_t (*sysCallsRead)(int fd, void *buf, size_t count) = nullptr;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -193,6 +194,13 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
 
 int munmap(void *addr, size_t size) {
     munmapFuncCalled++;
+    return 0;
+}
+
+ssize_t read(int fd, void *buf, size_t count) {
+    if (sysCallsRead != nullptr) {
+        return sysCallsRead(fd, buf, count);
+    }
     return 0;
 }
 

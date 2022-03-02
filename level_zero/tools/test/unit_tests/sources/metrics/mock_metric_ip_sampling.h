@@ -19,7 +19,7 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     ze_result_t startMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t stopMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t readDataReturn = ZE_RESULT_SUCCESS;
-    uint32_t getRequiredBufferSizeReturn = ZE_RESULT_SUCCESS;
+    uint32_t getRequiredBufferSizeReturn = 100;
     uint32_t getUnitReportSizeReturn = 64;
     bool isNReportsAvailableReturn = true;
     bool isDependencyAvailableReturn = true;

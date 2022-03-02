@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,5 +82,10 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
 int munmap(void *addr, size_t size) {
     return ::munmap(addr, size);
 }
+
+ssize_t read(int fd, void *buf, size_t count) {
+    return ::read(fd, buf, count);
+}
+
 } // namespace SysCalls
 } // namespace NEO

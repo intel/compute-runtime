@@ -14,6 +14,7 @@ namespace L0 {
 
 struct IpSamplingMetricImp;
 struct IpSamplingMetricGroupImp;
+struct IpSamplingMetricStreamerImp;
 
 class IpSamplingMetricSourceImp : public MetricSource {
 
@@ -26,10 +27,13 @@ class IpSamplingMetricSourceImp : public MetricSource {
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList) override;
     void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
+    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricOsInterface.get(); }
+    IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
 
   protected:
     void cacheMetricGroup();
     bool isEnabled = false;
+
     const MetricDeviceContext &metricDeviceContext;
     std::unique_ptr<MetricIpSamplingOsInterface> metricOsInterface = nullptr;
     std::unique_ptr<IpSamplingMetricGroupImp> cachedMetricGroup = nullptr;

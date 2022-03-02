@@ -9,6 +9,7 @@
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
 #include <level_zero/zet_api.h>
 
@@ -17,45 +18,7 @@ extern _ze_driver_handle_t *GlobalDriverHandle;
 
 namespace ult {
 
-class MetricIpSamplingEnumerationTest : public MultiDeviceFixture,
-                                        public ::testing::Test {
-  public:
-    void SetUp() override {
-        MultiDeviceFixture::numRootDevices = 1;
-        MultiDeviceFixture::numSubDevices = 2;
-        MultiDeviceFixture::SetUp();
-        testDevices.reserve(MultiDeviceFixture::numRootDevices +
-                            (MultiDeviceFixture::numRootDevices *
-                             MultiDeviceFixture::numSubDevices));
-        for (auto device : driverHandle->devices) {
-            testDevices.push_back(device);
-            auto &deviceImp = *static_cast<DeviceImp *>(device);
-            const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
-            for (uint32_t i = 0; i < subDeviceCount; i++) {
-                testDevices.push_back(deviceImp.subDevices[i]);
-            }
-        }
-
-        osInterfaceVector.reserve(testDevices.size());
-        for (auto device : testDevices) {
-            auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
-            osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
-            std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
-            auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
-            metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
-
-            auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-            metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        }
-        GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
-    }
-
-    void TearDown() override {
-        MultiDeviceFixture::TearDown();
-    }
-    std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
-    std::vector<L0::Device *> testDevices = {};
-};
+using MetricIpSamplingEnumerationTest = MetricIpSamplingFixture;
 
 TEST_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenInititializingThenSuccessIsReturned) {
 
@@ -295,25 +258,6 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQueryPoo
         poolDesc.count = 1;
         poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
         EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), device, metricGroups[0], &poolDesc, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
-TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenStreamerOpenIsCalledThenUnsupportedFeatureIsReturned) {
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
-    for (auto device : testDevices) {
-
-        uint32_t metricGroupCount = 0;
-        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
-        std::vector<zet_metric_group_handle_t> metricGroups;
-        metricGroups.resize(metricGroupCount);
-        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
-        ASSERT_NE(metricGroups[0], nullptr);
-        zet_metric_group_properties_t metricGroupProperties;
-        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
-
-        EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroups[0], nullptr, nullptr, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
 }
 

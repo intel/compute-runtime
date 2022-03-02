@@ -160,23 +160,15 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_
 }
 
 bool IpSamplingMetricGroupImp::activate() {
-    return false;
+    // There is no hardware specific activation, since metric collection starts in streamer open
+    return true;
 }
 
 bool IpSamplingMetricGroupImp::deactivate() {
-    return false;
+    return true;
 }
 zet_metric_group_handle_t IpSamplingMetricGroupImp::getMetricGroupForSubDevice(const uint32_t subDeviceIndex) {
     return toHandle();
-}
-
-ze_result_t IpSamplingMetricGroupImp::streamerOpen(
-    zet_context_handle_t hContext,
-    zet_device_handle_t hDevice,
-    zet_metric_streamer_desc_t *desc,
-    ze_event_handle_t hNotificationEvent,
-    zet_metric_streamer_handle_t *phMetricStreamer) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t IpSamplingMetricGroupImp::metricQueryPoolCreate(
