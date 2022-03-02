@@ -54,6 +54,7 @@ void MultiDeviceKernel::clearUnifiedMemoryExecInfo() { callOnEachKernel(&Kernel:
 int MultiDeviceKernel::setKernelThreadArbitrationPolicy(uint32_t propertyValue) { return getResultFromEachKernel(&Kernel::setKernelThreadArbitrationPolicy, propertyValue); }
 cl_int MultiDeviceKernel::setKernelExecutionType(cl_execution_info_kernel_type_intel executionType) { return getResultFromEachKernel(&Kernel::setKernelExecutionType, executionType); }
 int32_t MultiDeviceKernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue) { return getResultFromEachKernel(&Kernel::setAdditionalKernelExecInfoWithParam, paramName, paramValueSize, paramValue); }
+void MultiDeviceKernel::storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter) { defaultKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, allocIdMemoryManagerCounter); };
 
 cl_int MultiDeviceKernel::cloneKernel(MultiDeviceKernel *pSourceMultiDeviceKernel) {
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < kernels.size(); rootDeviceIndex++) {

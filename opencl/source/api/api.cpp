@@ -4890,6 +4890,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 auto svmData = svmManager->getSVMAlloc(argValue);
                 if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
                     reuseFromCache = true;
+                    pMultiDeviceKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, svmManager->allocationsCounter);
                 }
             }
             if (reuseFromCache) {

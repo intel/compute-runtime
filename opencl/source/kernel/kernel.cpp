@@ -951,6 +951,10 @@ void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, void *argO
     kernelArguments[argIndex].svmFlags = argSvmFlags;
 }
 
+void Kernel::storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter) {
+    kernelArguments[argIndex].allocIdMemoryManagerCounter = allocIdMemoryManagerCounter;
+}
+
 const void *Kernel::getKernelArg(uint32_t argIndex) const {
     return kernelArguments[argIndex].object;
 }

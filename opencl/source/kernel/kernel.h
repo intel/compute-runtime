@@ -278,6 +278,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                         size_t argSize,
                         GraphicsAllocation *argSvmAlloc = nullptr,
                         cl_mem_flags argSvmFlags = 0);
+    void storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter);
     const void *getKernelArg(uint32_t argIndex) const;
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
