@@ -502,17 +502,10 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     pDeviceProperties->flags = 0u;
 
     std::array<uint8_t, NEO::HwInfoConfig::uuidSize> deviceUuid;
-    if (this->neoDevice->getUuid(deviceUuid)) {
-        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pDeviceProperties->uuid.id));
-    } else {
-
-        uint32_t rootDeviceIndex = this->neoDevice->getRootDeviceIndex();
-
-        memset(pDeviceProperties->uuid.id, 0, ZE_MAX_DEVICE_UUID_SIZE);
-        memcpy_s(pDeviceProperties->uuid.id, sizeof(uint32_t), &deviceInfo.vendorId, sizeof(deviceInfo.vendorId));
-        memcpy_s(pDeviceProperties->uuid.id + sizeof(uint32_t), sizeof(uint32_t), &hardwareInfo.platform.usDeviceID, sizeof(hardwareInfo.platform.usDeviceID));
-        memcpy_s(pDeviceProperties->uuid.id + (2 * sizeof(uint32_t)), sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+    if (this->neoDevice->getUuid(deviceUuid) == false) {
+        this->neoDevice->generateUuid(deviceUuid);
     }
+    std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pDeviceProperties->uuid.id));
 
     pDeviceProperties->subdeviceId = isSubdevice ? static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex() : 0;
 

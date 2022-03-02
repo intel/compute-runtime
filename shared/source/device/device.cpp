@@ -704,4 +704,13 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
     return false;
 }
 
+void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+    const auto &deviceInfo = getDeviceInfo();
+    const auto &hardwareInfo = getHardwareInfo();
+    uint32_t rootDeviceIndex = getRootDeviceIndex();
+    uuid.fill(0);
+    memcpy_s(&uuid[0], sizeof(uint32_t), &deviceInfo.vendorId, sizeof(deviceInfo.vendorId));
+    memcpy_s(&uuid[4], sizeof(uint32_t), &hardwareInfo.platform.usDeviceID, sizeof(hardwareInfo.platform.usDeviceID));
+    memcpy_s(&uuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+}
 } // namespace NEO

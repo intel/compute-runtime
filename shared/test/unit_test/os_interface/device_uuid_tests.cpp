@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -219,4 +220,20 @@ HWTEST2_F(DeviceUuidEnablementTest, GivenEnableChipsetUniqueUUIDIsDisabledWhenDe
     EXPECT_FALSE(0 == std::memcmp(uuid.data(), expectedUuid.data(), 16));
 }
 
+using DeviceTest = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet, MatchAny) {
+
+    std::array<uint8_t, NEO::HwInfoConfig::uuidSize> uuid, expectedUuid;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->generateUuid(uuid);
+    uint32_t rootDeviceIndex = device->getRootDeviceIndex();
+
+    expectedUuid.fill(0);
+    memcpy_s(&expectedUuid[0], sizeof(uint32_t), &device->getDeviceInfo().vendorId, sizeof(device->getDeviceInfo().vendorId));
+    memcpy_s(&expectedUuid[4], sizeof(uint32_t), &device->getHardwareInfo().platform.usDeviceID, sizeof(device->getHardwareInfo().platform.usDeviceID));
+    memcpy_s(&expectedUuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, NEO::HwInfoConfig::uuidSize), 0);
+}
 } // namespace NEO

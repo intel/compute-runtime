@@ -134,6 +134,7 @@ class Device : public ReferenceTrackedObject<Device> {
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
     bool getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
+    void generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
 
   protected:
     Device() = delete;
