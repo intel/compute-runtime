@@ -187,6 +187,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForBcs, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualBcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualCcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateContextWithAccessCounters, -1, "-1: default, 0: ignore, 1: create context with Access Counter programming")
+DECLARE_DEBUG_VARIABLE(int32_t, AppendMemoryPrefetchForKmdMigratedSharedAllocations, -1, "-1: default, 0: ignore, 1: allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabled, 0: disabled, >= 0: triggering thresholds")
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularites - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndex, -1, "-1: default, >=0: PatIndex to override")

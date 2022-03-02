@@ -252,6 +252,24 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {
+    MockBufferObject bo(drm.get(), 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    drm->ioctlRetVal = 0;
+    EXPECT_TRUE(allocation.setMemPrefetch(drm.get()));
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenReturnFalse) {
+    MockBufferObject bo(drm.get(), 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    drm->ioctlRetVal = EINVAL;
+    EXPECT_FALSE(allocation.setMemPrefetch(drm.get()));
+}
+
 TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl) {
     DebugManagerStateRestore stateRestore;
     uint32_t vmId = 0u;

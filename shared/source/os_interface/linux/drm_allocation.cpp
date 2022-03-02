@@ -291,6 +291,20 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return success;
 }
 
+bool DrmAllocation::setMemPrefetch(Drm *drm) {
+    bool success = true;
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    for (auto bo : bufferObjects) {
+        if (bo != nullptr) {
+            auto region = static_cast<uint32_t>((I915_MEMORY_CLASS_DEVICE << 16u) | 0u);
+            success &= ioctlHelper->setVmPrefetch(drm, bo->peekAddress(), bo->peekSize(), region);
+        }
+    }
+
+    return success;
+}
+
 void DrmAllocation::registerMemoryToUnmap(void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction) {
     this->memoryToUnmap.push_back({pointer, size, unmapFunction});
 }

@@ -169,6 +169,15 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmBoAdviseThenReturnTrue) {
     EXPECT_TRUE(ioctlHelper->setVmBoAdvise(drm.get(), 0, 0, nullptr));
 }
 
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    EXPECT_TRUE(ioctlHelper->setVmPrefetch(drm.get(), 0, 0, 0));
+}
+
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenDirectSubmissionEnabledThenNoFlagsAdded) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DirectSubmissionDrmContext.set(1);

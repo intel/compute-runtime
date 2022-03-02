@@ -101,6 +101,10 @@ bool IoctlHelperUpstream::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attri
     return true;
 }
 
+bool IoctlHelperUpstream::setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) {
+    return true;
+}
+
 uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
     return 0u;
 }

@@ -31,6 +31,20 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    auto allowPrefetchingKmdMigratedSharedAllocation = false;
+    if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() != -1) {
+        allowPrefetchingKmdMigratedSharedAllocation = !!NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get();
+    }
+
+    if (allowPrefetchingKmdMigratedSharedAllocation) {
+        auto memoryManager = device->getDriverHandle()->getMemoryManager();
+        if (memoryManager->isKmdMigrationAvailable(device->getRootDeviceIndex()) &&
+            (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
+            auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+            memoryManager->setMemPrefetch(alloc, device->getRootDeviceIndex());
+        }
+    }
+
     if (NEO::DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
         return ZE_RESULT_SUCCESS;
     }

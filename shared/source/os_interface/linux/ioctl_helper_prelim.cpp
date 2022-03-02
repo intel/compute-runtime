@@ -198,6 +198,23 @@ bool IoctlHelperPrelim20::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attri
     return true;
 }
 
+bool IoctlHelperPrelim20::setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) {
+    prelim_drm_i915_gem_vm_prefetch vmPrefetch{};
+
+    vmPrefetch.length = length;
+    vmPrefetch.region = region;
+    vmPrefetch.start = start;
+
+    int ret = IoctlHelper::ioctl(drm, PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH, &vmPrefetch);
+    if (ret != 0) {
+        int err = errno;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_PREFETCH) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+    return true;
+}
+
 uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
     return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
 }

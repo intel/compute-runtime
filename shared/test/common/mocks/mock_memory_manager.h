@@ -149,6 +149,18 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
+    bool setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t rootDeviceIndex) override {
+        setMemPrefetchCalled = true;
+        return MemoryManager::setMemPrefetch(gfxAllocation, rootDeviceIndex);
+    }
+
+    bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
+        if (DebugManager.flags.UseKmdMigration.get() != -1) {
+            return !!DebugManager.flags.UseKmdMigration.get();
+        }
+        return false;
+    }
+
     struct CopyMemoryToAllocationBanksParams {
         GraphicsAllocation *graphicsAllocation = nullptr;
         size_t destinationOffset = 0u;
@@ -221,6 +233,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
     bool failSetMemAdvise = false;
+    bool setMemPrefetchCalled = false;
     bool cpuCopyRequired = false;
     bool forceCompressed = false;
     bool forceFailureInPrimaryAllocation = false;

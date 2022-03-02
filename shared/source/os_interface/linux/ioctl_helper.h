@@ -92,6 +92,7 @@ class IoctlHelper {
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
+    virtual bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual int32_t getMemRegionsIoctlVal() = 0;
     virtual int32_t getEngineInfoIoctlVal() = 0;
@@ -142,6 +143,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
@@ -205,6 +207,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
     int32_t getEngineInfoIoctlVal() override;
