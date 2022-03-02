@@ -195,6 +195,10 @@ void MemoryManager::freeSystemMemory(void *ptr) {
 }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
+    return freeGraphicsMemory(gfxAllocation, false);
+}
+
+void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) {
     if (!gfxAllocation) {
         return;
     }
@@ -213,7 +217,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     }
 
     getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), gfxAllocation->getRootDeviceIndex())->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
-    freeGraphicsMemoryImpl(gfxAllocation);
+    freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
 //if not in use destroy in place
 //if in use pass to temporary allocation list that is cleaned on blocking calls

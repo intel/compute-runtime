@@ -33,6 +33,7 @@ class DrmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override;
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;

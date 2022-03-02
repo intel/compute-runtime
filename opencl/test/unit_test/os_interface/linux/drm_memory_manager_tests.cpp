@@ -4891,6 +4891,36 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenFreeingImportedMemoryThenCloseSharedHandleIsNotCalled) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), AllocationType::BUFFER, device->getDeviceBitfield()});
+    ASSERT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation, true);
+
+    EXPECT_EQ(memoryManager->callsToCloseSharedHandle, 0u);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenFreeingNonImportedMemoryThenCloseSharedHandleIsCalled) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), AllocationType::BUFFER, device->getDeviceBitfield()});
+    ASSERT_NE(nullptr, allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    EXPECT_EQ(memoryManager->callsToCloseSharedHandle, 1u);
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
     EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize(rootDeviceIndex, 0xF));
 }

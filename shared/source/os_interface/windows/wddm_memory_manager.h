@@ -41,6 +41,7 @@ class WddmMemoryManager : public MemoryManager {
     WddmMemoryManager &operator=(const WddmMemoryManager &) = delete;
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override;
     void handleFenceCompletion(GraphicsAllocation *allocation) override;
 
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;

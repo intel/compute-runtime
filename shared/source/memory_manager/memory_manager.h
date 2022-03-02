@@ -128,7 +128,9 @@ class MemoryManager {
     void freeSystemMemory(void *ptr);
 
     virtual void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) = 0;
+    virtual void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) = 0;
     MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
+    MOCKABLE_VIRTUAL void freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool isImportedAllocation);
     virtual void handleFenceCompletion(GraphicsAllocation *allocation){};
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);

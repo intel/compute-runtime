@@ -73,6 +73,10 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         BaseClass::freeGraphicsMemoryImpl(gfxAllocation);
     }
 
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {
+        BaseClass::freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
+    }
+
     GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress) override {
         allocateHugeGraphicsMemoryCalled = true;
         return BaseClass::allocateHugeGraphicsMemory(allocationData, sharedVirtualAddress);

@@ -477,12 +477,13 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {
     auto graphicsAllocations = svmData->gpuAllocations.getGraphicsAllocations();
     GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
+    bool isImportedAllocation = svmData->isImportedAllocation;
     SVMAllocs.remove(*svmData);
 
     for (auto gpuAllocation : graphicsAllocations) {
-        memoryManager->freeGraphicsMemory(gpuAllocation);
+        memoryManager->freeGraphicsMemory(gpuAllocation, isImportedAllocation);
     }
-    memoryManager->freeGraphicsMemory(cpuAllocation);
+    memoryManager->freeGraphicsMemory(cpuAllocation, isImportedAllocation);
 }
 
 bool SVMAllocsManager::hasHostAllocations() {

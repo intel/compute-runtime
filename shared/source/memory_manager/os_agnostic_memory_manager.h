@@ -75,6 +75,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;

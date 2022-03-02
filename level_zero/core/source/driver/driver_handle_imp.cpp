@@ -439,6 +439,7 @@ void *DriverHandleImp::importFdHandle(ze_device_handle_t hDevice, ze_ipc_memory_
     allocData.size = alloc->getUnderlyingBufferSize();
     allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = neoDevice;
+    allocData.isImportedAllocation = true;
     if (flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) {
         allocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }

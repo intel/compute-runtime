@@ -508,6 +508,10 @@ void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsA
     }
 }
 
+void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) {
+    return freeGraphicsMemoryImpl(gfxAllocation);
+}
+
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
     DEBUG_BREAK_IF(!validateAllocation(input));

@@ -383,6 +383,22 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedAndImportedAllocationIsFalseThenAlignedGraphicsAllocationIsFreed) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
+    auto size = 13u;
+    auto hostPtr = reinterpret_cast<const void *>(0x10001);
+
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = hostPtr;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
+    memoryManager->freeGraphicsMemoryImpl(allocation, false);
+}
+
 TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
     char hostPtr[64];
     memoryManager->setDeferredDeleter(nullptr);

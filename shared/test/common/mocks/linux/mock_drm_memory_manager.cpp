@@ -78,6 +78,13 @@ DrmAllocation *TestedDrmMemoryManager::allocate32BitGraphicsMemory(uint32_t root
     bool useLocalMemory = !allocationData.flags.useSystemMemory && this->localMemorySupported[rootDeviceIndex];
     return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMemory);
 }
+
+void TestedDrmMemoryManager::closeSharedHandle(GraphicsAllocation *gfxAllocation) {
+    std::unique_lock<std::mutex> lock(callsToCloseSharedHandleMtx);
+    DrmMemoryManager::closeSharedHandle(gfxAllocation);
+    callsToCloseSharedHandle++;
+}
+
 TestedDrmMemoryManager::~TestedDrmMemoryManager() {
     DrmMemoryManager::commonCleanup();
 }

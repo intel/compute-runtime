@@ -255,6 +255,7 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
         AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override { return AllocationStatus::Success; };
         void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override{};
         void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
+        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override{};
         uint64_t getSystemSharedMemory(uint32_t rootDeviceIndex) override {
             return 0;
         };

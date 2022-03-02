@@ -149,12 +149,15 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         alignedFreeWrapperCalled++;
         DrmMemoryManager::alignedFreeWrapper(ptr);
     }
+    void closeSharedHandle(GraphicsAllocation *gfxAllocation) override;
     uint32_t alignedFreeWrapperCalled = 0u;
+    uint32_t callsToCloseSharedHandle = 0;
 
   protected:
     std::mutex unreferenceMtx;
     std::mutex releaseGpuRangeMtx;
     std::mutex alignedFreeWrapperMtx;
+    std::mutex callsToCloseSharedHandleMtx;
 };
 
 struct MockDrmGemCloseWorker : DrmGemCloseWorker {

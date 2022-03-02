@@ -774,6 +774,10 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    return freeGraphicsMemoryImpl(gfxAllocation, false);
+}
+
+void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImported) {
     if (DebugManager.flags.DoNotFreeResources.get()) {
         return;
     }
@@ -800,7 +804,9 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
         for (auto bo : bos) {
             unreference(bo, bo && bo->peekIsReusableAllocation() ? false : true);
         }
-        closeSharedHandle(gfxAllocation);
+        if (isImported == false) {
+            closeSharedHandle(gfxAllocation);
+        }
     }
 
     releaseGpuRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());

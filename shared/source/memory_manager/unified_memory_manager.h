@@ -36,6 +36,7 @@ struct SvmAllocationData {
         this->memoryType = svmAllocData.memoryType;
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
+        this->isImportedAllocation = svmAllocData.isImportedAllocation;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -50,6 +51,7 @@ struct SvmAllocationData {
     InternalMemoryType memoryType = InternalMemoryType::SVM;
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
+    bool isImportedAllocation = false;
     void setAllocId(uint32_t id) {
         allocId = id;
     }
