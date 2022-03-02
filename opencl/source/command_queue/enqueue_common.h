@@ -127,7 +127,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TagNodeBase *hwTimeStamps = nullptr;
     CommandStreamReceiver &computeCommandStreamReceiver = getGpgpuCommandStreamReceiver();
-    auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
 
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
@@ -137,6 +136,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+    auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
 
     auto blockQueue = false;
     auto taskLevel = 0u;

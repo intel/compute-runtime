@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+
+#include <future>
 
 using namespace NEO;
 
@@ -89,4 +91,76 @@ TEST_F(OOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsRet
 
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(OOQTaskTestsMt, givenBlitterWhenEnqueueCopyAndKernelUsingMultipleThreadsThenSuccessReturned) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
+
+    constexpr uint32_t numThreads = 32;
+    std::atomic_uint32_t barrier = numThreads;
+    std::array<std::future<void>, numThreads> threads;
+
+    auto device = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex);
+    MockClDevice clDevice(device);
+    auto cmdQ = createCommandQueue(&clDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    EXPECT_EQ(cmdQ->taskCount, 0u);
+    EXPECT_EQ(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
+    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), 0u);
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+
+    for (auto &thread : threads) {
+        thread = std::async(std::launch::async, [&]() {
+            auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
+            barrier.fetch_sub(1u);
+            while (barrier.load() != 0u) {
+                std::this_thread::yield();
+            }
+
+            auto retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(cmdQ,
+                                                                         buffer.get(),
+                                                                         CL_TRUE,
+                                                                         0,
+                                                                         BufferDefaults::sizeInBytes,
+                                                                         alignedReadPtr,
+                                                                         nullptr,
+                                                                         0,
+                                                                         nullptr,
+                                                                         nullptr);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+
+            size_t workSize[] = {64};
+            retVal = EnqueueKernelHelper<>::enqueueKernel(cmdQ, KernelFixture::pKernel, 1, nullptr, workSize, workSize, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+
+            retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(cmdQ,
+                                                                  buffer.get(),
+                                                                  CL_TRUE,
+                                                                  0,
+                                                                  BufferDefaults::sizeInBytes,
+                                                                  alignedReadPtr,
+                                                                  nullptr,
+                                                                  0,
+                                                                  nullptr,
+                                                                  nullptr);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+
+            alignedFree(alignedReadPtr);
+        });
+    }
+    for (auto &thread : threads) {
+        thread.get();
+    }
+
+    EXPECT_NE(cmdQ->taskCount, 0u);
+    EXPECT_NE(cmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), 0u);
+    EXPECT_EQ(cmdQ->peekBcsTaskCount(aub_stream::EngineType::ENGINE_BCS), 2 * numThreads);
+
+    clReleaseCommandQueue(cmdQ);
 }
