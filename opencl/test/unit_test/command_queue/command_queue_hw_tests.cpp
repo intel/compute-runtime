@@ -1550,10 +1550,11 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsTh
     EXPECT_EQ(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
 }
 
-HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterKernelThenGpgpuCommandStreamIsObtained) {
+HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterNotFlushedKernelThenGpgpuCommandStreamIsObtained) {
     auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
     auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     size_t offset = 0;
@@ -1574,6 +1575,35 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterKernelTh
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(ensureCommandBufferAllocationCalledAfterKernel, gpgpuCsr.ensureCommandBufferAllocationCalled);
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterFlushedKernelThenGpgpuCommandStreamIsNotObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    size_t offset = 0;
+    size_t size = 1;
+    cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+    const auto ensureCommandBufferAllocationCalledAfterKernel = gpgpuCsr.ensureCommandBufferAllocationCalled;
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ensureCommandBufferAllocationCalledAfterKernel, gpgpuCsr.ensureCommandBufferAllocationCalled);
 }
 
 HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandThenWaitForBarrierOnBlit) {

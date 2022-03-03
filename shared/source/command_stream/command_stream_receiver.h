@@ -192,6 +192,10 @@ class CommandStreamReceiver {
 
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
+    bool isLatestTaskCountFlushed() {
+        return this->peekLatestFlushedTaskCount() == this->peekTaskCount();
+    }
+
     size_t defaultSshSize = 0u;
     bool canUse4GbHeaps = true;
 
