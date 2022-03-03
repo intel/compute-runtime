@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,4 +298,16 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
     EXPECT_EQ(reinterpret_cast<void *>(relocationTableBTokenStorage.data() + sizeof(iOpenCL::SPatchFunctionTableInfo)), receivedData[1]);
     EXPECT_EQ(0U, receivedSegmentIds[0]);
     EXPECT_EQ(1U, receivedSegmentIds[1]);
+}
+
+TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithHostAccessTableGThenPopulateDeviceHostNameMapCorrectly) {
+    PatchTokensTestData::ValidProgramWithHostAccessTable programTokens;
+    NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programTokens.blobs.programInfo, decodedProgram);
+    EXPECT_TRUE(decodeSuccess);
+    NEO::ProgramInfo programInfo;
+    NEO::populateProgramInfo(programInfo, decodedProgram);
+    EXPECT_EQ(2u, programInfo.globalsDeviceToHostNameMap.size());
+    EXPECT_STREQ("hostNameOne", programInfo.globalsDeviceToHostNameMap["deviceNameOne"].c_str());
+    EXPECT_STREQ("hostNameTwo", programInfo.globalsDeviceToHostNameMap["deviceNameTwo"].c_str());
 }

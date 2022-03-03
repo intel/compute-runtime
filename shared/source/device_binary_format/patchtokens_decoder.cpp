@@ -440,6 +440,9 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
     case PATCH_TOKEN_PROGRAM_SYMBOL_TABLE:
         assignToken(progTok.symbolTable, token);
         break;
+    case _PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
+        assignToken(progTok.hostAccessTable, token);
+        break;
     }
     return true;
 }
