@@ -759,10 +759,14 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             }
 
             //make sure we flush DC if needed
-            if (epiloguePipeControlLocation) {
-                bool flushDcInEpilogue = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(
-                    !DebugManager.flags.DisableDcFlushInEpilogue.get(), hwInfo);
-                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(flushDcInEpilogue);
+            if (epiloguePipeControlLocation && MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
+
+                auto emitDcFlush = true;
+                if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
+                    emitDcFlush = false;
+                }
+
+                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(emitDcFlush);
             }
 
             primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
