@@ -127,7 +127,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TagNodeBase *hwTimeStamps = nullptr;
     CommandStreamReceiver &computeCommandStreamReceiver = getGpgpuCommandStreamReceiver();
-    auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
 
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
@@ -137,6 +136,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+    auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
 
     auto blockQueue = false;
     auto taskLevel = 0u;
@@ -353,8 +353,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
     }
 
-    queueOwnership.unlock();
     commandStreamReceiverOwnership.unlock();
+    queueOwnership.unlock();
 
     if (blocking) {
         auto &builtinOpParams = multiDispatchInfo.peekBuiltinOpParams();
@@ -950,7 +950,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false, timestampPacketDependencies)) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && commandStream == nullptr) {
         flushGpgpuCsr = false;
     } else {
         csrDeps.makeResident(getGpgpuCommandStreamReceiver());
@@ -1155,6 +1155,10 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
     if (blockQueue) {
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr, &bcsCsr);
+
+        if (gpgpuSubmission) {
+            commandStreamReceiverOwnership.unlock();
+        }
     }
 
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
