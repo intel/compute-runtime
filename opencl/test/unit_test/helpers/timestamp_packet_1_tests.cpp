@@ -775,6 +775,62 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
+HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThenEventHasCorrectTimestampsToCheckForCompletion) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    DebugManager.flags.EnableTimestampWait.set(1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    *csr.getTagAddress() = 0u;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cl_event clEvent1;
+    cl_event clEvent2;
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent1);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent2);
+    cmdQ->flush();
+
+    Event &event1 = static_cast<Event &>(*clEvent1);
+    Event &event2 = static_cast<Event &>(*clEvent2);
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    EXPECT_FALSE(event1.isCompleted());
+    EXPECT_FALSE(event2.isCompleted());
+
+    typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+    for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
+        deferredTimestampPackets->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
+    }
+
+    EXPECT_TRUE(event1.isCompleted());
+    EXPECT_FALSE(event2.isCompleted());
+
+    for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
+        timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
+    }
+
+    EXPECT_TRUE(event1.isCompleted());
+    EXPECT_TRUE(event2.isCompleted());
+
+    cmdQ->finish();
+
+    EXPECT_TRUE(event1.isCompleted());
+    EXPECT_TRUE(event2.isCompleted());
+    EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
+
+    clReleaseEvent(clEvent1);
+    clReleaseEvent(clEvent2);
+    *csr.getTagAddress() = csr.peekTaskCount();
+}
+
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueThenDoNotWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);

@@ -987,7 +987,7 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-bool CommandQueue::isWaitForTimestampsEnabled() {
+bool CommandQueue::isWaitForTimestampsEnabled() const {
     auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
     enabled &= hwHelper.isTimestampWaitSupported();

@@ -161,9 +161,8 @@ bool CommandQueueHw<Family>::waitForTimestamps(uint32_t taskCount) {
 
     if (isWaitForTimestampsEnabled()) {
         waited = waitForTimestampsWithinContainer<TSPacketType>(timestampPacketContainer.get(), getGpgpuCommandStreamReceiver());
-
         if (isOOQEnabled()) {
-            waited |= waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get(), getGpgpuCommandStreamReceiver());
+            waitForTimestampsWithinContainer<TSPacketType>(deferredTimestampPackets.get(), getGpgpuCommandStreamReceiver());
         }
     }
 

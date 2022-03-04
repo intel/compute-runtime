@@ -467,7 +467,7 @@ void Event::updateExecutionStatus() {
         // Note : Intentional fallthrough (no return) to check for CL_COMPLETE
     }
 
-    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp(), this->bcsState))) {
+    if ((cmdQueue != nullptr) && this->isCompleted()) {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);
@@ -674,6 +674,26 @@ inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_e
         Event *event = castToObjectOrAbort<Event>(e);
         event->abortExecutionDueToGpuHang();
     });
+}
+
+bool Event::isCompleted() {
+    return cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted();
+}
+
+bool Event::areTimestampsCompleted() {
+    if (this->timestampPacketContainer.get()) {
+        if (this->cmdQueue->isWaitForTimestampsEnabled()) {
+            for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
+                for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                    if (timestamp->getContextEndValue(i) == 1) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 uint32_t Event::getTaskLevel() {

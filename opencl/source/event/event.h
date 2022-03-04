@@ -190,6 +190,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     bool updateStatusAndCheckCompletion();
+    bool isCompleted();
 
     // Note from OCL spec :
     //      "A negative integer value causes all enqueued commands that wait on this user event
@@ -353,6 +354,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     void submitCommand(bool abortBlockedTasks);
 
     static void setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last);
+
+    bool areTimestampsCompleted();
 
     bool currentCmdQVirtualEvent;
     std::atomic<Command *> cmdToSubmit;
