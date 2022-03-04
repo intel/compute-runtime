@@ -55,6 +55,16 @@ struct WaitUserFence {
     int64_t timeout{0};
 };
 
+struct SyncFenceVmBindExt {
+    uint64_t addr;
+    uint64_t val;
+};
+
+struct UuidVmBindExt {
+    uint32_t handle;
+    uint64_t nextExtension;
+};
+
 struct DrmMockPrelimContext {
     const HardwareInfo *hwInfo;
     const RootDeviceEnvironment &rootDeviceEnvironment;
@@ -67,16 +77,22 @@ struct DrmMockPrelimContext {
     uint16_t maxNumWays{32};
     uint32_t allocNumWays{0};
 
+    uint64_t receivedSetContextParamValue{0};
+    uint64_t receivedSetContextParamCtxId{0};
+    uint64_t receivedContextCreateExtSetParamRunaloneCount{0};
+
     size_t vmBindQueryCalled{0};
     int vmBindQueryValue{0};
     int vmBindQueryReturn{0};
 
     size_t vmBindCalled{0};
     std::optional<VmBindParams> receivedVmBind{};
+    std::optional<SyncFenceVmBindExt> receivedVmBindSyncFence{};
+    std::optional<UuidVmBindExt> receivedVmBindUuidExt[2]{};
     int vmBindReturn{0};
 
     size_t vmUnbindCalled{0};
-    std::optional<uint32_t> vmUnbindHandle{};
+    std::optional<VmBindParams> receivedVmUnbind{};
     int vmUnbindReturn{0};
 
     int hasPageFaultQueryValue{0};
@@ -101,6 +117,7 @@ struct DrmMockPrelimContext {
 
     int handlePrelimRequest(unsigned long request, void *arg);
     bool handlePrelimQueryItem(void *arg);
+    void storeVmBindExtensions(uint64_t ptr);
 };
 
 namespace DrmPrelimHelper {
@@ -119,4 +136,6 @@ uint64_t getU8WaitUserFenceFlag();
 uint64_t getU16WaitUserFenceFlag();
 uint64_t getCaptureVmBindFlag();
 uint64_t getImmediateVmBindFlag();
+uint64_t getMakeResidentVmBindFlag();
+uint64_t getSIPContextParamDebugFlag();
 }; // namespace DrmPrelimHelper

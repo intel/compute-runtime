@@ -6,7 +6,11 @@
  */
 
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -233,4 +237,143 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
 
     EXPECT_FALSE(drm->isContextDebugSupported());
     EXPECT_EQ(prevIoctls + 1u, drm->ioctlCallsCount);
+}
+
+TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.addBindExtHandle(4);
+    bo.addBindExtHandle(5);
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    bo.bind(&osContext, 0);
+
+    EXPECT_NE(0u, drm.context.receivedVmBind->extensions);
+
+    EXPECT_EQ(4u, drm.context.receivedVmBindUuidExt[0]->handle);
+    EXPECT_NE(0u, drm.context.receivedVmBindUuidExt[0]->nextExtension);
+
+    EXPECT_EQ(5u, drm.context.receivedVmBindUuidExt[1]->handle);
+    EXPECT_EQ(0u, drm.context.receivedVmBindUuidExt[1]->nextExtension);
+}
+
+TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternalContextThenExtensionsAreNotPassedToVmBindIoctl) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.addBindExtHandle(4);
+    bo.addBindExtHandle(5);
+
+    OsContextLinux osContext(drm, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    osContext.ensureContextInitialized();
+    bo.bind(&osContext, 0);
+
+    EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
+}
+
+TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngineContextThenExtensionsAreNotPassedToVmBindIoctl) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.addBindExtHandle(4);
+    bo.addBindExtHandle(5);
+
+    drm.context.receivedVmBindUuidExt[0].reset();
+
+    OsContextLinux osContext(drm, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/, false /* isEngineInstanced*/});
+    osContext.ensureContextInitialized();
+    bo.bind(&osContext, 0);
+
+    EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
+}
+
+HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtensionsAreNotSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    bo.addBindExtHandle(4);
+    bo.addBindExtHandle(5);
+
+    OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+    bo.bind(&osContext, 0);
+    EXPECT_NE(0u, drm.context.receivedVmBind->extensions);
+
+    drm.context.receivedVmUnbind->extensions = 0;
+
+    bo.unbind(&osContext, 0);
+    if (HwHelperHw<FamilyType>::get().getNumCacheRegions() > 0) {
+        EXPECT_NE(0u, drm.context.receivedVmUnbind->extensions);
+    } else {
+        EXPECT_EQ(0u, drm.context.receivedVmUnbind->extensions);
+    }
+    EXPECT_EQ(1u, drm.context.vmUnbindCalled);
+}
+
+TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenDebugFlagSipParamIsSet) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmQueryMock *drm = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->contextDebugSupported = true;
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+
+    EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);
+    // drmMock returns ctxId == 0
+    EXPECT_EQ(0u, drm->context.receivedSetContextParamCtxId);
+    EXPECT_EQ(0u, drm->passedContextDebugId);
+}
+
+TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWhenCreatingContextThenContextRunaloneIsSetOnlyIfCCSEnginesArePresent) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    DrmQueryMock *drm = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->contextDebugSupported = true;
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+
+    EXPECT_EQ(DrmPrelimHelper::getSIPContextParamDebugFlag() << 32 | DrmPrelimHelper::getSIPContextParamDebugFlag(), drm->context.receivedSetContextParamValue);
+    // drmMock returns ctxId == 0
+    EXPECT_EQ(0u, drm->context.receivedSetContextParamCtxId);
+    EXPECT_EQ(0u, drm->passedContextDebugId);
+
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
+        EXPECT_EQ(4u, drm->receivedContextParamRequestCount);
+        EXPECT_EQ(1u, drm->context.receivedContextCreateExtSetParamRunaloneCount);
+    } else {
+        EXPECT_EQ(3u, drm->receivedContextParamRequestCount);
+        EXPECT_EQ(0u, drm->context.receivedContextCreateExtSetParamRunaloneCount);
+    }
 }

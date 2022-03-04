@@ -61,6 +61,8 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_ACC) {
             const auto paramAcc = reinterpret_cast<prelim_drm_i915_gem_context_param_acc *>(setParam->param.value);
             receivedContextParamAcc = GemContextParamAcc{paramAcc->trigger, paramAcc->notify, paramAcc->granularity};
+        } else if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_RUNALONE) {
+            receivedContextCreateExtSetParamRunaloneCount++;
         }
         return 0;
     } break;
@@ -110,11 +112,21 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             vmBind->flags,
             vmBind->extensions,
         };
+        storeVmBindExtensions(vmBind->extensions);
         return vmBindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
         vmUnbindCalled++;
-        vmUnbindHandle = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg)->handle;
+        const auto vmBind = reinterpret_cast<prelim_drm_i915_gem_vm_bind *>(arg);
+        receivedVmUnbind = VmBindParams{
+            vmBind->vm_id,
+            vmBind->handle,
+            vmBind->start,
+            vmBind->offset,
+            vmBind->length,
+            vmBind->flags,
+            vmBind->extensions,
+        };
         return vmUnbindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {
@@ -171,6 +183,15 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             wait->timeout,
         };
         return 0;
+    } break;
+    case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM: {
+        const auto req = reinterpret_cast<drm_i915_gem_context_param *>(arg);
+        if (req->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
+            receivedSetContextParamValue = req->value;
+            receivedSetContextParamCtxId = req->ctx_id;
+        }
+
+        return !contextDebugSupported ? EINVAL : 0;
     } break;
     case PRELIM_DRM_IOCTL_I915_UUID_REGISTER: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
@@ -374,6 +395,26 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     return true;
 }
 
+void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr) {
+    if (ptr == 0) {
+        return;
+    }
+
+    size_t uuidIndex{0};
+    auto baseExt = reinterpret_cast<i915_user_extension *>(ptr);
+    while (baseExt) {
+        if (baseExt->name == PRELIM_I915_VM_BIND_EXT_SYNC_FENCE) {
+            const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_sync_fence *>(baseExt);
+            receivedVmBindSyncFence = {ext->addr, ext->val};
+        } else if (baseExt->name == PRELIM_I915_VM_BIND_EXT_UUID) {
+            const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_uuid *>(baseExt);
+            receivedVmBindUuidExt[uuidIndex++] = UuidVmBindExt{ext->uuid_handle, ext->base.next_extension};
+        }
+
+        baseExt = reinterpret_cast<i915_user_extension *>(baseExt->next_extension);
+    }
+}
+
 uint32_t DrmPrelimHelper::getQueryComputeSlicesIoctl() {
     return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
 }
@@ -432,4 +473,12 @@ uint64_t DrmPrelimHelper::getCaptureVmBindFlag() {
 
 uint64_t DrmPrelimHelper::getImmediateVmBindFlag() {
     return PRELIM_I915_GEM_VM_BIND_IMMEDIATE;
+}
+
+uint64_t DrmPrelimHelper::getMakeResidentVmBindFlag() {
+    return PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT;
+}
+
+uint64_t DrmPrelimHelper::getSIPContextParamDebugFlag() {
+    return PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP;
 }
