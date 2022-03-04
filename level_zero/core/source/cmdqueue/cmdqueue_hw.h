@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,8 @@ struct CommandQueueHw : public CommandQueueImp {
 
     MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool isFrontEndStateDirty, uint32_t numCommandLists,
                                                                            ze_command_list_handle_t *phCommandLists);
+    MOCKABLE_VIRTUAL size_t estimateStateComputeModeCmdSizeForMultipleCommandLists(uint32_t numCommandLists,
+                                                                                   ze_command_list_handle_t *phCommandLists);
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();
     void programPipelineSelect(NEO::LinearStream &commandStream);

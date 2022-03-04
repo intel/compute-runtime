@@ -21,6 +21,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "test_traits_common.h"
 
@@ -930,6 +931,132 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
         EXPECT_EQ(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState.getMaximumNumberOfThreads());
         EXPECT_EQ(destinationCfeStates[i].getScratchSpaceBuffer(), sourceCfeState.getScratchSpaceBuffer());
     }
+}
+
+using CommandQueueExecuteTest = Test<DeviceFixture>;
+HWTEST2_F(CommandQueueExecuteTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfScmCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeHpCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    DebugManagerStateRestore restorer;
+
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_NE(nullptr, csr);
+
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
+    commandQueue->initialize(false, false);
+
+    Mock<::L0::Kernel> kernelA;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernelA.module = pMockModule1.get();
+    kernelA.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+
+    Mock<::L0::Kernel> kernelB;
+    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernelB.module = pMockModule2.get();
+    kernelB.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto commandListA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListA->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListA->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListBB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBB->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListBB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+    commandListBB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListAB->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListAB->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+    commandListAB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListBA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBA->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListBA->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+    commandListBA->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListBAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBAB->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListBAB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+    commandListBAB->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+    commandListBAB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListAAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListAAB->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandListAAB->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+    commandListAAB->appendLaunchKernelWithParams(&kernelA, &threadGroupDimensions, nullptr, false, false, false);
+    commandListAAB->appendLaunchKernelWithParams(&kernelB, &threadGroupDimensions, nullptr, false, false, false);
+
+    auto commandListEmpty = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListEmpty->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    auto getScmCommandsCount = [](MockCommandQueueHw<gfxCoreFamily> &queue, size_t streamOffset) -> size_t {
+        GenCmdList cmdList;
+        FamilyType::PARSE::parseCommandBuffer(
+            cmdList, ptrOffset(queue.commandStream->getCpuBase(), streamOffset), queue.commandStream->getUsed());
+        return findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end()).size();
+    };
+
+    size_t singleScmCmdSize = NEO::EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(*defaultHwInfo, false, true);
+    EXPECT_EQ(-1, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListA->toHandle(), commandListAB->toHandle(),
+                                                   commandListBA->toHandle(), commandListA->toHandle()};
+        EXPECT_EQ(1 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(4, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(4, commandLists, nullptr, false);
+        EXPECT_EQ(1u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(0, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListAAB->toHandle(), commandListBAB->toHandle(), commandListA->toHandle()};
+        EXPECT_EQ(1 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(3, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(3, commandLists, nullptr, false);
+        EXPECT_EQ(1u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(0, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListEmpty->toHandle(), commandListA->toHandle()};
+        EXPECT_EQ(0 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(2, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(2, commandLists, nullptr, false);
+        EXPECT_EQ(0u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(0, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListBB->toHandle()};
+        EXPECT_EQ(1 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(1, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+        EXPECT_EQ(1u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(1, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListA->toHandle()};
+        EXPECT_EQ(1 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(1, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+        EXPECT_EQ(1u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(0, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListAB->toHandle(), commandListAB->toHandle(),
+                                                   commandListAB->toHandle(), commandListAB->toHandle()};
+        EXPECT_EQ(3 * singleScmCmdSize, commandQueue->estimateStateComputeModeCmdSizeForMultipleCommandLists(4, commandLists));
+
+        auto commandsOffset = commandQueue->commandStream->getUsed();
+        commandQueue->executeCommandLists(4, commandLists, nullptr, false);
+        EXPECT_EQ(3u, getScmCommandsCount(*commandQueue, commandsOffset));
+    }
+    EXPECT_EQ(1, csr->getStreamProperties().stateComputeMode.largeGrfMode.value);
+    commandQueue->destroy();
 }
 
 } // namespace ult
