@@ -928,6 +928,29 @@ TEST_F(InternalsEventTest, GivenUnMapOperationNonZeroCopyBufferWhenSubmittingCom
     buffer->decRefInternal();
 }
 
+class MockCommand : public Command {
+  public:
+    using Command::Command;
+
+    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override {
+        return completionStamp;
+    }
+};
+
+TEST_F(InternalsEventTest, GivenHangingCommandWhenSubmittingItThenTaskIsAborted) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    auto cmdQ = std::make_unique<MockCommandQueue>(mockContext, pClDevice, props, false);
+
+    auto command = std::make_unique<MockCommand>(*cmdQ);
+    command->completionStamp.taskCount = CompletionStamp::gpuHang;
+
+    MockEvent<Event> event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    event.setCommand(std::move(command));
+    event.submitCommand(false);
+
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, event.peekExecutionStatus());
+}
+
 HWTEST_F(InternalsEventTest, givenCpuProfilingPathWhenEnqueuedMarkerThenDontUseTimeStampNode) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     MockCommandQueue *pCmdQ = new MockCommandQueue(mockContext, pClDevice, props, false);

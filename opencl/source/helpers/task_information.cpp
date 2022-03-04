@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/string.h"
@@ -38,9 +39,10 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj,
 }
 
 CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
+    DecRefInternalAtScopeEnd decRefInternalAtScopeEnd{memObj};
+
     if (terminated) {
         this->terminated = true;
-        memObj.decRefInternal();
         return completionStamp;
     }
 
@@ -98,7 +100,12 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::DependencyResolveOnGpu);
 
     if (!memObj.isMemObjZeroCopy()) {
-        commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
+        const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
+        if (waitStatus == WaitStatus::GpuHang) {
+            completionStamp.taskCount = CompletionStamp::gpuHang;
+            return completionStamp;
+        }
+
         if (operationType == MAP) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
@@ -106,8 +113,6 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
             memObj.transferDataFromHostPtr(copySize, copyOffset);
         }
     }
-
-    memObj.decRefInternal();
 
     return completionStamp;
 }

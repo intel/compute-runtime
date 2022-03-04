@@ -83,10 +83,34 @@ class MockBuffer : public MockBufferStorage, public Buffer {
             this->multiGraphicsAllocation.removeAllocation(0u);
         }
     }
+
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) override {
         Buffer::setSurfaceState(this->device.get(), memory, forceNonAuxMode, disableL3, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0, false, false);
     }
+
+    void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override {
+        ++transferDataToHostPtrCalledCount;
+
+        if (callBaseTransferDataToHostPtr) {
+            Buffer::transferDataToHostPtr(copySize, copyOffset);
+        }
+    }
+
+    void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override {
+        ++transferDataFromHostPtrCalledCount;
+
+        if (callBaseTransferDataFromHostPtr) {
+            Buffer::transferDataFromHostPtr(copySize, copyOffset);
+        }
+    }
+
     GraphicsAllocation *externalAlloc = nullptr;
+
+    bool callBaseTransferDataToHostPtr{true};
+    bool callBaseTransferDataFromHostPtr{true};
+
+    int transferDataToHostPtrCalledCount{0};
+    int transferDataFromHostPtrCalledCount{0};
 };
 
 class AlignedBuffer : public MockBufferStorage, public Buffer {

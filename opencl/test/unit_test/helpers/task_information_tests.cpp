@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
+#include <array>
 #include <memory>
 
 using namespace NEO;
@@ -87,6 +88,65 @@ TEST(CommandTest, GivenTerminateFlagWhenSubmittingMarkerThenFlushIsAborted) {
 
     auto expectedTaskCount = 0u;
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
+}
+
+TEST(CommandTest, GivenGpuHangWhenSubmittingMapUnmapCommandsThenReturnedCompletionStampIndicatesGpuHang) {
+    for (const auto operationType : {MapOperationType::MAP, MapOperationType::UNMAP}) {
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+        std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr, false));
+        cmdQ->waitUntilCompleteReturnValue = WaitStatus::GpuHang;
+
+        MemObjSizeArray size = {{1, 1, 1}};
+        MemObjOffsetArray offset = {{0, 0, 0}};
+
+        MockBuffer buffer;
+        buffer.isZeroCopy = false;
+        buffer.callBaseTransferDataToHostPtr = false;
+        buffer.callBaseTransferDataFromHostPtr = false;
+
+        std::unique_ptr<Command> command(new CommandMapUnmap(operationType, buffer, size, offset, false, *cmdQ));
+        CompletionStamp completionStamp = command->submit(20, false);
+
+        EXPECT_EQ(1, cmdQ->waitUntilCompleteCalledCount);
+        EXPECT_EQ(CompletionStamp::gpuHang, completionStamp.taskCount);
+
+        EXPECT_EQ(0, buffer.transferDataToHostPtrCalledCount);
+        EXPECT_EQ(0, buffer.transferDataFromHostPtrCalledCount);
+    }
+}
+
+TEST(CommandTest, GivenNoGpuHangWhenSubmittingMapUnmapCommandsThenReturnedCompletionStampDoesNotIndicateGpuHang) {
+    constexpr size_t operationTypesCount{2};
+    constexpr static std::array<MapOperationType, operationTypesCount> operationTypes{MapOperationType::MAP, MapOperationType::UNMAP};
+    constexpr static std::array<std::pair<int, int>, operationTypesCount> expectedCallsCounts = {
+        std::pair{1, 0}, std::pair{0, 1}};
+
+    for (auto i = 0u; i < operationTypesCount; ++i) {
+        const auto operationType = operationTypes[i];
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+        std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr, false));
+        cmdQ->waitUntilCompleteReturnValue = WaitStatus::Ready;
+
+        MemObjSizeArray size = {{1, 1, 1}};
+        MemObjOffsetArray offset = {{0, 0, 0}};
+
+        MockBuffer buffer;
+        buffer.isZeroCopy = false;
+        buffer.callBaseTransferDataToHostPtr = false;
+        buffer.callBaseTransferDataFromHostPtr = false;
+
+        std::unique_ptr<Command> command(new CommandMapUnmap(operationType, buffer, size, offset, false, *cmdQ));
+        CompletionStamp completionStamp = command->submit(20, false);
+
+        EXPECT_EQ(1, cmdQ->waitUntilCompleteCalledCount);
+        EXPECT_NE(CompletionStamp::gpuHang, completionStamp.taskCount);
+
+        const auto &[expectedTransferDataToHostPtrCalledCount, expectedTransferDataFromHostPtrCalledCount] = expectedCallsCounts[i];
+        EXPECT_EQ(expectedTransferDataToHostPtrCalledCount, buffer.transferDataToHostPtrCalledCount);
+        EXPECT_EQ(expectedTransferDataFromHostPtrCalledCount, buffer.transferDataFromHostPtrCalledCount);
+    }
 }
 
 TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeLocalCopyOfWaitlist) {

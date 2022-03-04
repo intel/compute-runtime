@@ -587,10 +587,17 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
             }
         }
+
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
         if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }
+
+        if (complStamp.taskCount == CompletionStamp::gpuHang) {
+            abortExecutionDueToGpuHang();
+            return;
+        }
+
         updateTaskCount(complStamp.taskCount, peekBcsTaskCountFromCommandQueue());
         flushStamp->setStamp(complStamp.flushStamp);
         submittedCmd.exchange(cmdToProcess.release());

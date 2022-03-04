@@ -96,6 +96,12 @@ class MockCommandQueue : public CommandQueue {
 
     WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
+
+        waitUntilCompleteCalledCount++;
+        if (waitUntilCompleteReturnValue.has_value()) {
+            return *waitUntilCompleteReturnValue;
+        }
+
         return CommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
@@ -219,6 +225,8 @@ class MockCommandQueue : public CommandQueue {
     size_t requestedCmdStreamSize = 0;
     GraphicsAllocation *writeMapAllocation = nullptr;
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    std::optional<WaitStatus> waitUntilCompleteReturnValue{};
+    int waitUntilCompleteCalledCount{0};
 };
 
 template <typename GfxFamily>
