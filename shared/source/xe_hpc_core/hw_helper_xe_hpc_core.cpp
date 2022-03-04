@@ -235,9 +235,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
     if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
         allocationData.flags.useSystemMemory = false;
     }
-    if (properties.allocationType == AllocationType::COMMAND_BUFFER && properties.subDevicesBitfield.count() == 1) {
-        allocationData.flags.useSystemMemory = true;
-    }
+
     allocationData.cacheRegion = properties.cacheRegion;
 
     if (allocationData.flags.requiresCpuAccess && !allocationData.flags.useSystemMemory &&

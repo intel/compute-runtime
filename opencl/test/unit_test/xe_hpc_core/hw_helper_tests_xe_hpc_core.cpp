@@ -35,14 +35,14 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperwhenAskingForDcFlushThenR
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
@@ -75,7 +75,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpe
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::System4KBPages);
+    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInLocalMemoryPool) {
@@ -87,6 +87,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpec
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
     DebugManager.flags.EnableLocalMemory.set(true);
+    DebugManager.flags.OverrideLeastOccupiedBank.set(0u);
     initPlatform();
 
     auto clDevice = platform()->getClDevice(0);
@@ -140,7 +141,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     auto commandBufferAllocation = heap.getGraphicsAllocation();
     EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
     EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::System4KBPages);
+    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenPvcWhenAskedForMinimialSimdThen16IsReturned) {
@@ -1016,7 +1017,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExt
     allocData.flags.useSystemMemory = false;
 
     hwHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
 
     hwHelper.setExtraAllocationData(allocData, allTilesAllocProperties, hwInfo);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
