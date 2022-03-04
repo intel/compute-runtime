@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@ bool CompilerHwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerHwInfoConfigHw<gfxProduct>::isStatelessToStatefulBufferOffsetSupported() const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerHwInfoConfigHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
 }
 
 } // namespace NEO

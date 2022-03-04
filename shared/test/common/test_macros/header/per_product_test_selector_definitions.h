@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,9 +50,9 @@
 #define XEHPG_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_XE_HPC_CORE
-#define PVC_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily>();
-#define PVC_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
+#define XEHPC_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily>();
+#define XEHPC_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
-#define PVC_TYPED_TEST(method)
-#define PVC_SUPPORTED_TEST(cmdSetBase) false
+#define XEHPC_TYPED_TEST(method)
+#define XEHPC_SUPPORTED_TEST(cmdSetBase) false
 #endif

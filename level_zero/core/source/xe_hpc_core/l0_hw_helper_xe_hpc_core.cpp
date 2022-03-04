@@ -24,7 +24,6 @@ void populateFactoryTable<L0HwHelperHw<Family>>() {
 
 template <>
 bool L0HwHelperHw<Family>::isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const {
-
     if (hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[0] ||
         hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[1] ||
         hwInfo.platform.usDeviceID == NEO::XE_HPC_CORE::pvcXtDeviceIds[2] ||

@@ -2445,7 +2445,7 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
     EXPECT_EQ(retCode, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
+HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpdateKernelsBarrierCount) {
     ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
     zebin.setProductFamily(static_cast<uint16_t>(device->getHwInfo().platform.eProductFamily));
 

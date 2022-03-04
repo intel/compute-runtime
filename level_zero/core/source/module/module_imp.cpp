@@ -17,6 +17,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
@@ -240,7 +241,10 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
-    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(device->getNEODevice()->getHardwareInfo());
+    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+    const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily);
+    compilerHwInfoConfig.adjustHwInfoForIgc(copyHwInfo);
+    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(copyHwInfo);
     std::string decodeErrors;
     std::string decodeWarnings;
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);

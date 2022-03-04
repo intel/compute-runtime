@@ -20,7 +20,7 @@ XE_HP_CORE_TEST_F(XeHpCoreAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCoreAubMemDumpTests, whenAubCsrIsCreatedThenCreateHardwareContext) {
+XE_HP_CORE_TEST_F(XeHpCoreAubMemDumpTests, whenAubCsrIsCreatedThenCreateHardwareContext) {
     DebugManagerStateRestore restore;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;

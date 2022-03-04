@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForXE_HP_COREThenClSuccessIsReturned, IGFX_PVC);
+HWTEST_EXCLUDE_PRODUCT(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForXE_HP_COREThenClSuccessIsReturned, IGFX_XE_HPC_CORE);
 
 PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForPVCThenClSuccessIsReturned) {
     std::vector<TestParams> params = {

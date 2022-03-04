@@ -873,7 +873,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPop
     setIgcDebugVars(prevDebugVars);
 }
 
-TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
+HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
     auto device = this->pDevice;
     auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);

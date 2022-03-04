@@ -262,6 +262,11 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest, whenEnqueueKernel
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
+
+    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     unsigned short revisions[] = {0x0, 0x3};
     for (auto revision : revisions) {
         revisionId = revision;

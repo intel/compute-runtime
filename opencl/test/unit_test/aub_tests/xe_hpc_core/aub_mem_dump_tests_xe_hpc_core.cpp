@@ -11,5 +11,10 @@
 using XeHpcCoreAubMemDumpTests = Test<NEO::ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(XeHpcCoreAubMemDumpTests, GivenCcsThenExpectationsAreMet) {
+
+    if (NEO::defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_CCS);
 }

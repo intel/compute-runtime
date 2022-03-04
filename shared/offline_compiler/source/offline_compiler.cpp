@@ -601,8 +601,15 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFtrWa == nullptr)) {
         return OUT_OF_HOST_MEMORY;
     }
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
+
+    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto copyHwInfo = hwInfo;
+    if (compilerHwInfoConfig) {
+        compilerHwInfoConfig->adjustHwInfoForIgc(copyHwInfo);
+    }
+
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), copyHwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
     // populate with features
 
     igcFtrWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
@@ -611,7 +618,6 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
     igcFtrWa.get()->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
 
-    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (compilerHwInfoConfig) {
         igcFtrWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
     }

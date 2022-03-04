@@ -434,6 +434,11 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, whenSizeForEncodeSystemMemoryFenceQ
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialModeRequiredThenDontReprogramPipelineSelect) {
     bool requiresUncachedMocs = false;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
@@ -464,6 +469,11 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialMo
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndAdjustPipelineSelectCalledThenDontEnableSystolicMode) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
 

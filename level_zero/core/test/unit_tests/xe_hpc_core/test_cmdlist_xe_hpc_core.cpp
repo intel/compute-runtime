@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,6 +163,10 @@ using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
+
+    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);

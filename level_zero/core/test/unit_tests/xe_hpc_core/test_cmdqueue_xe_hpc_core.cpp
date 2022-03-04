@@ -168,6 +168,10 @@ HWTEST2_F(CommandQueueCommandsPvc, whenExecuteCommandListsIsCalledThenAdditional
         GTEST_SKIP();
     }
 
+    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restorer;
     DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
     DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);

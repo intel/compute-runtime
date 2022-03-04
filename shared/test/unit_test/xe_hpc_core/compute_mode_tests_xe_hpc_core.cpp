@@ -14,14 +14,14 @@
 
 using namespace NEO;
 
-using ThreadArbitrationPvc = ::testing::Test;
-PVCTEST_F(ThreadArbitrationPvc, givenPvcWhenCallgetDefaultThreadArbitrationPolicyThenAgeBasedisReturned) {
+using ThreadArbitrationXeHpc = ::testing::Test;
+HWTEST2_F(ThreadArbitrationXeHpc, givenXeHpcWhenCallgetDefaultThreadArbitrationPolicyThenAgeBasedisReturned, IsXeHpcCore) {
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
-using PvcComputeModeRequirements = ComputeModeRequirements;
+using XeHpcComputeModeRequirements = ComputeModeRequirements;
 
-PVCTEST_F(PvcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -49,7 +49,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhe
     EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)))->getEuThreadSchedulingModeOverride());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlreadySetWhenComputeModeIsProgrammedThenStateComputeIsNotProgrammedAgain) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlreadySetWhenComputeModeIsProgrammedThenStateComputeIsNotProgrammedAgain, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 
@@ -70,7 +70,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlread
     EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsXeHpcCore) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -87,7 +87,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComm
     EXPECT_EQ(cmdsSize, retSize);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsXeHpcCore) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -103,7 +103,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSizeI
     EXPECT_EQ(sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL), getCsrHw<FamilyType>()->getCmdSizeForComputeMode());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeDoesntChangeButRequiredThreadArbitrationPolicyIsNewThenSCMIsReloaded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeDoesntChangeButRequiredThreadArbitrationPolicyIsNewThenSCMIsReloaded, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -117,7 +117,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     EXPECT_EQ(cmdsSize, stream.getUsed());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangedThenSCMIsReloadedAndLargeGrfModeProgrammed) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangedThenSCMIsReloadedAndLargeGrfModeProgrammed, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -134,7 +134,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     EXPECT_TRUE(static_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)))->getLargeGrfMode());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfRequiredChangedButValueIsDefaultThenSCMIsReloadedButLargeGrfModeNotProgrammed) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfRequiredChangedButValueIsDefaultThenSCMIsReloadedButLargeGrfModeNotProgrammed, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -150,7 +150,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfReq
     EXPECT_FALSE(static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getLargeGrfMode());
 }
 
-PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged) {
+HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -205,7 +205,7 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -242,7 +242,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComp
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -287,7 +287,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompute
     EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd, sizeof(PIPE_CONTROL)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -326,7 +326,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfMod
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -350,7 +350,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRF
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingThenCorrectCommandsAreAdded, IsXeHpcCore) {
     SetUpImpl<FamilyType>();
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -392,7 +392,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenComputeModeProgrammingThenCorrectComm
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonPipelinedStateCommandEnabledThenCorrectCommandsAreAdded, IsXeHpcCore) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(true);
 
@@ -440,7 +440,7 @@ PVCTEST_F(PvcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNonP
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-PVCTEST_F(PvcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommandsAreAdded) {
+HWTEST2_F(XeHpcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommandsAreAdded, IsXeHpcCore) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 

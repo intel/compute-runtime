@@ -19,13 +19,17 @@ namespace ult {
 
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IGFX_XE_HPC_CORE);
 
-using DeviceTestPVC = Test<DeviceFixture>;
+using DeviceTestXeHpc = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceTestPVC, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsXeHpcCore) {
+HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsXeHpcCore) {
     uint32_t count = 0;
     ze_result_t res = device->getMemoryProperties(&count, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
+
+    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     ze_device_memory_properties_t memProperties = {};
     res = device->getMemoryProperties(&count, &memProperties);
@@ -37,7 +41,7 @@ HWTEST2_F(DeviceTestPVC, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropert
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 
-HWTEST2_F(DeviceTestPVC, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevisionIsNotA0ThenmaxClockRateReturnedIsZero, IsXeHpcCore) {
+HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevisionIsNotA0ThenmaxClockRateReturnedIsZero, IsXeHpcCore) {
     uint32_t count = 0;
     auto device = driverHandle->devices[0];
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -55,7 +59,7 @@ HWTEST2_F(DeviceTestPVC, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevisi
     EXPECT_EQ(memProperties.maxClockRate, 0u);
 }
 
-HWTEST2_F(DeviceTestPVC, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled, IsXeHpcCore) {
+HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
@@ -64,6 +68,10 @@ HWTEST2_F(DeviceTestPVC, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImpli
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
     hwInfo.platform.usRevId = 0x3;
+
+    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
@@ -75,7 +83,7 @@ HWTEST2_F(DeviceTestPVC, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImpli
     delete device;
 }
 
-HWTEST2_F(DeviceTestPVC, givenPvcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
+HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     DebugManager.flags.EnableImplicitScaling.set(1);
@@ -96,7 +104,7 @@ HWTEST2_F(DeviceTestPVC, givenPvcAStepAndDebugFlagOverridesWhenCreatingMultiTile
     delete device;
 }
 
-HWTEST2_F(DeviceTestPVC, givenPvcBStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
+HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
@@ -201,7 +209,7 @@ HWTEST2_F(DeviceCopyQueueGroupTest,
     }
 }
 
-HWTEST2_F(DeviceTestPVC, givenReturnedDevicePropertiesThenExpectedPropertyFlagsSet, IsPVC) {
+HWTEST2_F(DeviceTestXeHpc, givenReturnedDevicePropertiesThenExpectedPropertyFlagsSet, IsXeHpcCore) {
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
     device->getProperties(&deviceProps);

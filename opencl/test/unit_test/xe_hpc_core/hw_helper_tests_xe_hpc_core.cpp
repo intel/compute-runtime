@@ -156,6 +156,11 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZe
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDeviceIdThenProperMaxThreadsForWorkgroupIsReturned) {
     auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+
+    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     hardwareInfo.platform.usDeviceID = FamilyType::pvcXlDeviceId;
     EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
     auto xtDevicesCount = 3;
@@ -174,6 +179,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyType
         REVISION_D,
         CommonConstants::invalidStepping,
     };
+
+    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
@@ -615,6 +624,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskedIfFenceAllocatio
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
@@ -622,6 +635,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDebugMemorySynchronizationCommand
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
@@ -667,6 +684,11 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhen
 
     DebugManagerStateRestore debugRestorer;
     auto hardwareInfo = *defaultHwInfo;
+
+    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     uint8_t buffer[128] = {};
     uint64_t gpuAddress = 0x12345678;
@@ -1031,6 +1053,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsed
     auto &helper = HwHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.EUCount *= 2;
+
+    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
 

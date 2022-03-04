@@ -38,6 +38,10 @@ struct XE_HPC_CORE {
     static constexpr bool supportsSampler = false;
     static constexpr bool isUsingGenericMediaStateClear = true;
 
+    static bool isPvc(const HardwareInfo &hwInfo) {
+        return hwInfo.platform.eProductFamily == IGFX_PVC;
+    }
+
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;
         return (revId < 0x3) && !isXtTemporary(hwInfo);
@@ -49,7 +53,7 @@ struct XE_HPC_CORE {
     }
 
     static bool isXtTemporary(const HardwareInfo &hwInfo) {
-        return hwInfo.platform.usDeviceID == pvcXtTemporaryDeviceId;
+        return (hwInfo.platform.usDeviceID == pvcXtTemporaryDeviceId) || !isPvc(hwInfo);
     }
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {

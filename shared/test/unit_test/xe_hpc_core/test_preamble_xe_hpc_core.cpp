@@ -15,9 +15,15 @@
 using namespace NEO;
 
 using PreambleCfeState = PreambleFixture;
-XE_HPC_CORETEST_F(PreambleCfeState, givenPvcAndKernelExecutionTypeAndRevisionWhenCallingProgramVFEStateThenCFEStateParamsAreCorrectlySet) {
+
+XE_HPC_CORETEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCallingProgramVFEStateThenCFEStateParamsAreCorrectlySet) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo->platform.eProductFamily);
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
@@ -51,6 +57,10 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenPvcXtTemporaryAndKernelExecutionTypeCon
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usDeviceID = 0x0BE5;
+    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
@@ -150,6 +160,10 @@ using PreamblePipelineSelectState = PreambleFixture;
 XE_HPC_CORETEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramPipelineSelectThenSystolicModeDisabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
 
     PipelineSelectArgs pipelineArgs;
     pipelineArgs.specialPipelineSelectMode = true;

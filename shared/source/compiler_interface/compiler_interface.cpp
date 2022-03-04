@@ -435,8 +435,13 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
+
+    auto copyHwInfo = *hwInfo;
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily);
+    compilerHwInfoConfig.adjustHwInfoForIgc(copyHwInfo);
+
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, copyHwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, copyHwInfo.gtSystemInfo);
 
     igcFtrWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
     igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);

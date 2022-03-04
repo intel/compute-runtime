@@ -14,7 +14,7 @@ using namespace NEO;
 using HwHelperXeHpcCoreTest = ::testing::Test;
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorrectValues) {
-    ComputeSlmTestInput computeSlmValuesPvcAndLaterTestsInput[] = {
+    ComputeSlmTestInput computeSlmValuesXeHpcTestsInput[] = {
         {0, 0 * KB},
         {1, 0 * KB + 1},
         {1, 1 * KB},
@@ -42,7 +42,7 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturnCorre
     auto hwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    for (auto &testInput : computeSlmValuesPvcAndLaterTestsInput) {
+    for (auto &testInput : computeSlmValuesXeHpcTestsInput) {
         EXPECT_EQ(testInput.expected, hwHelper.computeSlmValues(hwInfo, testInput.slmSize));
     }
 

@@ -16,6 +16,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -161,6 +162,10 @@ cl_int Program::createProgramFromBinary(
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
+
+        auto copyHwInfo = *hwInfo;
+        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily);
+        compilerHwInfoConfig.adjustHwInfoForIgc(copyHwInfo);
 
         TargetDevice targetDevice = targetDeviceFromHwInfo(*hwInfo);
         std::string decodeErrors;

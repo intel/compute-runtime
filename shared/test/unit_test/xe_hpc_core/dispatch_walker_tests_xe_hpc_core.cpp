@@ -35,6 +35,10 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, whenEncodeAdditionalWalkerFields
     auto &postSyncData = walkerCmd.getPostSync();
     auto hwInfo = *defaultHwInfo;
 
+    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     for (auto &testInput : testInputs) {
         hwInfo.platform.usRevId = testInput.revisionId;
         DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
@@ -70,6 +74,11 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenPvcXtTemporaryWhenEncodeAdd
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usDeviceID = 0x0BE5;
+
+    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
+        GTEST_SKIP();
+    }
+
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     {
