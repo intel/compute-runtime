@@ -4877,25 +4877,27 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
+    const auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
 
     if (argValue != nullptr) {
         if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
             pMultiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
             bool reuseFromCache = false;
-
-            if (svmManager->allocationsCounter == pMultiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
-                reuseFromCache = true;
-            } else {
-                auto svmData = svmManager->getSVMAlloc(argValue);
-                if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+            const auto allocationsCounter = svmManager->allocationsCounter.load();
+            if (allocationsCounter > 0) {
+                if (allocationsCounter == pMultiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
                     reuseFromCache = true;
-                    pMultiDeviceKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, svmManager->allocationsCounter);
+                } else {
+                    const auto svmData = svmManager->getSVMAlloc(argValue);
+                    if (svmData && pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+                        reuseFromCache = true;
+                        pMultiDeviceKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, allocationsCounter);
+                    }
                 }
-            }
-            if (reuseFromCache) {
-                TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
-                return CL_SUCCESS;
+                if (reuseFromCache) {
+                    TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                    return CL_SUCCESS;
+                }
             }
         }
     }
