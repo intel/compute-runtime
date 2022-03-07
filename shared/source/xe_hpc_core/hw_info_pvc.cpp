@@ -39,6 +39,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
         {aub_stream::ENGINE_CCS1, {true, false, true, true}},
         {aub_stream::ENGINE_CCS2, {true, false, true, true}},
         {aub_stream::ENGINE_CCS3, {true, false, true, true}},
+        {aub_stream::ENGINE_BCS, {true, false, true, true}},
         {aub_stream::ENGINE_BCS1, {true, false, true, true}},
         {aub_stream::ENGINE_BCS2, {true, false, true, true}},
         {aub_stream::ENGINE_BCS3, {true, false, true, true}},
