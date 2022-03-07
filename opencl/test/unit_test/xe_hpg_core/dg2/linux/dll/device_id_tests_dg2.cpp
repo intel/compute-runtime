@@ -10,7 +10,7 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenDg2SupportedDeviceIdThenDeviceDescriptorTableExists) {
-    std::array<DeviceDescriptor, 18> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 20> expectedDescriptors = {{
         {0x4F80, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
         {0x4F81, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
         {0x4F82, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
@@ -29,6 +29,8 @@ TEST_F(DeviceIdTests, GivenDg2SupportedDeviceIdThenDeviceDescriptorTableExists) 
         {0x56A2, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
         {0x56A5, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
         {0x56A6, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
+        {0x56C0, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
+        {0x56C1, &DG2_CONFIG::hwInfo, &DG2_CONFIG::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);
