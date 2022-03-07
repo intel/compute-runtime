@@ -9,20 +9,16 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/mocks/mock_command_container.h"
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
 
 class CommandEncodeStatesFixture : public DeviceFixture {
   public:
-    class MyMockCommandContainer : public CommandContainer {
-      public:
-        using CommandContainer::dirtyHeaps;
-    };
-
     void SetUp() {
         DeviceFixture::SetUp();
-        cmdContainer = std::make_unique<MyMockCommandContainer>();
+        cmdContainer = std::make_unique<MockCommandContainer>();
         cmdContainer->initialize(pDevice, nullptr);
         cmdContainer->setDirtyStateForAllHeaps(false);
     }
@@ -30,7 +26,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         cmdContainer.reset();
         DeviceFixture::TearDown();
     }
-    std::unique_ptr<MyMockCommandContainer> cmdContainer;
+    std::unique_ptr<MockCommandContainer> cmdContainer;
     KernelDescriptor descriptor;
 
     EncodeDispatchKernelArgs createDefaultDispatchKernelArgs(Device *device,

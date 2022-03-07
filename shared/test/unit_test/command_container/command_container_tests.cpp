@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_command_container.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
@@ -27,18 +28,17 @@ class CommandContainerTest : public DeviceFixture,
         DeviceFixture::SetUp();
     }
     void TearDown() override {
+        allocList.freeAllGraphicsAllocations(pDevice);
+
         DeviceFixture::TearDown();
         ::testing::Test::TearDown();
     }
+
+    AllocationsList allocList;
 };
 
 struct CommandContainerHeapStateTests : public ::testing::Test {
-    class MyMockCommandContainer : public CommandContainer {
-      public:
-        using CommandContainer::dirtyHeaps;
-    };
-
-    MyMockCommandContainer myCommandContainer;
+    MockCommandContainer myCommandContainer;
 };
 
 TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForAllThenValuesAreCorrect) {
@@ -173,7 +173,6 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemor
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
-    AllocationsList allocList;
     auto cmdContainer = std::make_unique<CommandContainer>();
     cmdContainer->initialize(pDevice, &allocList);
     auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
@@ -203,7 +202,6 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     cmdContainer.reset();
     EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 3u);
     EXPECT_FALSE(allocList.peekIsEmpty());
-    allocList.freeAllGraphicsAllocations(pDevice);
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemoryFailsThenErrorIsReturned) {
@@ -728,4 +726,49 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     cmdContainer.closeAndAllocateNextCommandBuffer();
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
+}
+
+TEST_F(CommandContainerTest, givenFlushTaskCmdContainerWithAllocationListWhenNewCmdBufferAllocatedThenOldCmdBufferIsStored) {
+    auto cmdContainer = std::make_unique<MockCommandContainer>();
+    cmdContainer->isFlushTaskUsedForImmediate = true;
+    cmdContainer->initialize(pDevice, &allocList);
+
+    auto &cmdBufferAllocs = cmdContainer->cmdBufferAllocations;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(1u, cmdBufferAllocs.size());
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    GraphicsAllocation *oldAllocation = cmdContainer->getCommandStream()->getGraphicsAllocation();
+
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(1u, cmdBufferAllocs.size());
+
+    auto cmdBuffer0 = cmdBufferAllocs[0];
+    EXPECT_EQ(cmdBuffer0, cmdContainer->getCommandStream()->getGraphicsAllocation());
+    EXPECT_NE(cmdBuffer0, oldAllocation);
+
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_FALSE(allocList.peekIsEmpty());
+}
+
+TEST_F(CommandContainerTest, givenFlushTaskCmdContainerWithoutAllocationListWhenNewCmdBufferAllocatedThenOldCmdBufferIsFreed) {
+    auto cmdContainer = std::make_unique<MockCommandContainer>();
+    cmdContainer->isFlushTaskUsedForImmediate = true;
+    cmdContainer->initialize(pDevice, nullptr);
+
+    auto &cmdBufferAllocs = cmdContainer->cmdBufferAllocations;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(1u, cmdBufferAllocs.size());
+    GraphicsAllocation *oldAllocation = cmdContainer->getCommandStream()->getGraphicsAllocation();
+
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(1u, cmdBufferAllocs.size());
+
+    auto cmdBuffer0 = cmdBufferAllocs[0];
+    EXPECT_EQ(cmdBuffer0, cmdContainer->getCommandStream()->getGraphicsAllocation());
+    EXPECT_NE(cmdBuffer0, oldAllocation);
+
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }

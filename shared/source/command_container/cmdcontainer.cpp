@@ -229,12 +229,16 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
 
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
-        if (this->reusableAllocationList) {
-            this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
-            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
-        } else {
-            this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
-        }
+        handleCmdBufferAllocation(cmdBufferAllocations[i]);
+    }
+}
+
+void CommandContainer::handleCmdBufferAllocation(GraphicsAllocation *allocation) {
+    if (this->reusableAllocationList) {
+        this->device->getMemoryManager()->handleFenceCompletion(allocation);
+        reusableAllocationList->pushFrontOne(*allocation);
+    } else {
+        this->device->getMemoryManager()->freeGraphicsMemory(allocation);
     }
 }
 
@@ -264,6 +268,11 @@ void CommandContainer::allocateNextCommandBuffer() {
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
     UNRECOVERABLE_IF(!cmdBufferAllocation);
 
+    if (getFlushTaskUsedForImmediate()) {
+        NEO::GraphicsAllocation *oldCmdBuffer = cmdBufferAllocations.back();
+        handleCmdBufferAllocation(oldCmdBuffer);
+        cmdBufferAllocations.pop_back();
+    }
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
