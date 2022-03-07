@@ -22,10 +22,10 @@ enum ExternalFunctionResolveError : uint32_t {
 };
 
 struct ExternalFunctionInfo {
-    std::string functionName;
-    uint8_t barrierCount;
-    uint16_t numGrfRequired;
-    uint8_t simdSize;
+    std::string functionName = "";
+    uint8_t barrierCount = 0U;
+    uint16_t numGrfRequired = 0U;
+    uint8_t simdSize = 0U;
 };
 
 struct ExternalFunctionUsageKernel {

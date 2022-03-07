@@ -2357,10 +2357,28 @@ TEST(LinkerTests, givenDependencyOnMissingExternalFunctionWhenLinkingThenFail) {
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
-    NEO::Linker::ExternalFunctionsT externalFunctions;
+    NEO::Linker::ExternalFunctionsT externalFunctions = {{"fun1", 0U, 128U, 8U}};
     auto linkResult = linker.link(
         globalVar, globalConst, exportedFunc, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
         unresolvedExternals, nullptr, nullptr, nullptr, kernelDescriptors, externalFunctions);
     EXPECT_EQ(LinkingStatus::Error, linkResult);
+}
+
+TEST(LinkerTests, givenDependencyOnMissingExternalFunctionAndNoExternalFunctionInfosWhenLinkingThenDoNotResolveDependenciesAndReturnSuccess) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.extFunDependencies.push_back({"fun0", "fun1"});
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
+    NEO::Linker::PatchableSegments patchableInstructionSegments;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    auto linkResult = linker.link(
+        globalVar, globalConst, exportedFunc, {},
+        patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
+        unresolvedExternals, nullptr, nullptr, nullptr, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(LinkingStatus::LinkedFully, linkResult);
 }

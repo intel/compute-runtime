@@ -504,6 +504,10 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
 }
 
 bool Linker::resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions) {
+    if (externalFunctions.size() == 0U) {
+        return true;
+    }
+
     ExternalFunctionInfosT externalFunctionsPtrs;
     FunctionDependenciesT functionDependenciesPtrs;
     KernelDependenciesT kernelDependenciesPtrs;
