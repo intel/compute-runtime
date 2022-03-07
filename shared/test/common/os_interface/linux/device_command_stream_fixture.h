@@ -151,7 +151,7 @@ class DrmMockCustom : public Drm {
         ioctl_res_ext = &NONE;
     }
 
-    virtual void execBufferExtensions(drm_i915_gem_execbuffer2 *execbuf) {
+    virtual void execBufferExtensions(void *execbuf) {
     }
 
     Ioctls ioctl_cnt;

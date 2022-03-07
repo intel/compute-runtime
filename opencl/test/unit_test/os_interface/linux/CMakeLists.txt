@@ -38,6 +38,15 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
 
+if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_prelim.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests_prelim.cpp
+  )
+endif()
+
 if(NEO__LIBVA_FOUND)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_va_sharing_tests.cpp
