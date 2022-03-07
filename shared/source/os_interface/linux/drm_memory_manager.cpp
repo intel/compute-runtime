@@ -774,7 +774,7 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
-    return freeGraphicsMemoryImpl(gfxAllocation, false);
+    freeGraphicsMemoryImpl(gfxAllocation, false);
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImported) {
