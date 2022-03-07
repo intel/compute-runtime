@@ -456,7 +456,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
                 reinterpret_cast<ze_scheduling_hint_exp_properties_t *>(extendedProperties);
             auto supportedThreadArbitrationPolicies = hwInfoConfig.getKernelSupportedThreadArbitrationPolicies();
             hintProperties->schedulingHintFlags = 0;
-            for (uint32_t &p : supportedThreadArbitrationPolicies) {
+            for (auto &p : supportedThreadArbitrationPolicies) {
                 switch (p) {
                 case NEO::ThreadArbitrationPolicy::AgeBased:
                     hintProperties->schedulingHintFlags |= ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;

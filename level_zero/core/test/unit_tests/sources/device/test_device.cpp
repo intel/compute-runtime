@@ -785,7 +785,7 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
 
     EXPECT_NE(ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32, schedulingHintProperties.schedulingHintFlags);
     auto supportedThreadArbitrationPolicies = NEO::PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
-    for (uint32_t &p : supportedThreadArbitrationPolicies) {
+    for (auto &p : supportedThreadArbitrationPolicies) {
         switch (p) {
         case ThreadArbitrationPolicy::AgeBased:
             EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
@@ -807,10 +807,10 @@ HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenProper
 
 HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
     struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
-        std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
+        std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override {
             return threadArbPolicies;
         }
-        std::vector<uint32_t> threadArbPolicies;
+        std::vector<int32_t> threadArbPolicies;
     };
 
     const uint32_t rootDeviceIndex = 0u;
@@ -847,10 +847,10 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
 
 HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoneIsReturned, MatchAny) {
     struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
-        std::vector<uint32_t> getKernelSupportedThreadArbitrationPolicies() override {
+        std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override {
             return threadArbPolicies;
         }
-        std::vector<uint32_t> threadArbPolicies;
+        std::vector<int32_t> threadArbPolicies;
     };
 
     const uint32_t rootDeviceIndex = 0u;

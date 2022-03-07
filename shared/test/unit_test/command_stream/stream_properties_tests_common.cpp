@@ -61,9 +61,9 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
 TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     DebugManagerStateRestore restorer;
 
-    uint32_t threadArbitrationPolicyValues[] = {
+    int32_t threadArbitrationPolicyValues[] = {
         ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin,
-        ThreadArbitrationPolicy::RoundRobinAfterDependency, ThreadArbitrationPolicy::NotPresent};
+        ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
     StreamProperties properties;
     for (auto requiresCoherency : ::testing::Bool()) {
@@ -74,7 +74,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
                 EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                 EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
                 EXPECT_EQ(-1, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
-                EXPECT_EQ(threadArbitrationPolicy, static_cast<uint32_t>(properties.stateComputeMode.threadArbitrationPolicy.value));
+                EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
             }
         }
     }
@@ -94,7 +94,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
         properties.stateComputeMode.setProperties(false, 0u, 0u);
-        EXPECT_EQ(threadArbitrationPolicy, static_cast<uint32_t>(properties.stateComputeMode.threadArbitrationPolicy.value));
+        EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
     }
 }
 

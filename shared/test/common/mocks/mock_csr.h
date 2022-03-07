@@ -44,7 +44,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         madeNonResidentGfxAllocations.push_back(&gfxAllocation);
     }
 
-    uint32_t peekThreadArbitrationPolicy() { return static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value); }
+    int32_t peekThreadArbitrationPolicy() { return this->streamProperties.stateComputeMode.threadArbitrationPolicy.value; }
 
     bool isMadeResident(GraphicsAllocation *gfxAllocation) {
         for (GraphicsAllocation *gfxAlloc : madeResidentGfxAllocations) {

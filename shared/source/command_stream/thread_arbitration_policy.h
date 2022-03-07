@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 namespace NEO {
 namespace ThreadArbitrationPolicy {
 
-enum : uint32_t {
-    AgeBased = 0x0u,
-    RoundRobin = 0x1u,
-    RoundRobinAfterDependency = 0x2u,
-    NotPresent = 0xffffu
+enum : int32_t {
+    AgeBased = 0,
+    RoundRobin = 1,
+    RoundRobinAfterDependency = 2,
+    NotPresent = -1
 };
 
 } // namespace ThreadArbitrationPolicy

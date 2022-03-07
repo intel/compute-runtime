@@ -263,7 +263,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
         if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.value != -1) {
             // Reuse previous programming
-            dispatchFlags.threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+            dispatchFlags.threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
         } else {
             // Pick default if this is first submit
             dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
@@ -350,7 +350,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
     if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty) {
-        auto threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+        auto threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
         PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, threadArbitrationPolicy);
     }
 
@@ -925,7 +925,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        auto threadArbitrationPolicy = static_cast<uint32_t>(this->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+        auto threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
         PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, threadArbitrationPolicy, this->preemptionAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;

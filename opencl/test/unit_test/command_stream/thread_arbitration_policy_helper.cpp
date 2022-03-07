@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <stdint.h>
 namespace NEO {
-uint32_t getNewKernelArbitrationPolicy(uint32_t policy) {
+int32_t getNewKernelArbitrationPolicy(uint32_t policy) {
     if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL) {
         return ThreadArbitrationPolicy::RoundRobin;
     } else if (policy == CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_OLDEST_FIRST_INTEL) {

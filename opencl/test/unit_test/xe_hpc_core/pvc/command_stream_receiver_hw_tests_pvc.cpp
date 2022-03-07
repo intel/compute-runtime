@@ -48,7 +48,7 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitration
 
     flushTask(commandStreamReceiver);
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
-              static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+              commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
@@ -58,12 +58,12 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushin
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    uint32_t notExistPolicy = -2;
+    int32_t notExistPolicy = -2;
     flushTaskFlags.threadArbitrationPolicy = notExistPolicy;
 
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(notExistPolicy, static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+    EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSpecialPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {

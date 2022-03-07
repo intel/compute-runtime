@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ bool ClHwHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { re
 
 template <>
 std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
-    return std::vector<uint32_t>{};
+    return {};
 }
 
 template <>

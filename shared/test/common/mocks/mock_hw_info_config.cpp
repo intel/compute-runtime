@@ -174,8 +174,8 @@ LocalMemoryAccessMode HwInfoConfigHw<IGFX_UNKNOWN>::getLocalMemoryAccessMode(con
 }
 
 template <>
-std::vector<uint32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
-    return std::vector<uint32_t>();
+std::vector<int32_t> HwInfoConfigHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbitrationPolicies() {
+    return {};
 }
 
 template <>

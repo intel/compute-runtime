@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
     MockDevice device;
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(device));
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getThreadArbitrationCommandsSize());
-    EXPECT_EQ(0u, HwHelperHw<BDWFamily>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<BDWFamily>::get().getDefaultThreadArbitrationPolicy());
 }
 
 BDWTEST_F(ThreadArbitrationGen8, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {

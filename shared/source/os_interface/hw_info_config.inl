@@ -30,7 +30,7 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::vector<uint32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> HwInfoConfigHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
     return PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies();
 }

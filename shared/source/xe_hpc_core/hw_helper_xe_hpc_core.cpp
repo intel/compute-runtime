@@ -347,7 +347,7 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::AgeBased;
 }
 

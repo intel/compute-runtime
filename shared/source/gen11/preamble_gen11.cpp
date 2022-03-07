@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
+void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy) {
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
@@ -84,11 +84,11 @@ size_t PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <>
-std::vector<uint32_t> PreambleHelper<ICLFamily>::getSupportedThreadArbitrationPolicies() {
-    std::vector<uint32_t> retVal;
-    size_t policySize = sizeof(RowChickenReg4::regDataForArbitrationPolicy) /
-                        sizeof(RowChickenReg4::regDataForArbitrationPolicy[0]);
-    for (uint32_t i = 0u; i < policySize; i++) {
+std::vector<int32_t> PreambleHelper<ICLFamily>::getSupportedThreadArbitrationPolicies() {
+    std::vector<int32_t> retVal;
+    int32_t policySize = sizeof(RowChickenReg4::regDataForArbitrationPolicy) /
+                         sizeof(RowChickenReg4::regDataForArbitrationPolicy[0]);
+    for (int32_t i = 0; i < policySize; i++) {
         retVal.push_back(i);
     }
     return retVal;

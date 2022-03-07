@@ -423,7 +423,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected) {
     auto pCommandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
-    EXPECT_EQ(static_cast<uint32_t>(-1), pCommandStreamReceiver->peekThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::NotPresent, pCommandStreamReceiver->peekThreadArbitrationPolicy());
 
     flushTask(*pCommandStreamReceiver);
     EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), pCommandStreamReceiver->peekThreadArbitrationPolicy());

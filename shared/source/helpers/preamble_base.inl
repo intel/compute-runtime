@@ -21,7 +21,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
+void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy) {
 }
 
 template <typename GfxFamily>
@@ -30,8 +30,8 @@ size_t PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <typename GfxFamily>
-std::vector<uint32_t> PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies() {
-    return std::vector<uint32_t>();
+std::vector<int32_t> PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies() {
+    return {};
 }
 
 template <typename GfxFamily>
@@ -75,7 +75,7 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
+                                                int32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
     programPreemption(pCommandStream, device, preemptionCsr);
     if (device.isDebuggerActive()) {

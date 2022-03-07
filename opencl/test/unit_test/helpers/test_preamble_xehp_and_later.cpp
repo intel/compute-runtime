@@ -29,7 +29,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ThreadArbitrationXeHPAndLater, givenPolicyWhenThrea
     PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
 
     EXPECT_EQ(0u, cs.getUsed());
-    EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;

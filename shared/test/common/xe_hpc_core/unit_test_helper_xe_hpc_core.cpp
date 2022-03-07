@@ -28,7 +28,7 @@ template <>
 const uint32_t UnitTestHelper<Family>::smallestTestableSimdSize = 16;
 
 template <>
-uint32_t UnitTestHelper<Family>::getAppropriateThreadArbitrationPolicy(uint32_t policy) {
+uint32_t UnitTestHelper<Family>::getAppropriateThreadArbitrationPolicy(int32_t policy) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     switch (policy) {
     case ThreadArbitrationPolicy::RoundRobin:

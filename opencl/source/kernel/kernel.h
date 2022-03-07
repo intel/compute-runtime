@@ -309,7 +309,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     bool isBuiltIn = false;
 
-    uint32_t getThreadArbitrationPolicy() const {
+    int32_t getThreadArbitrationPolicy() const {
         return threadArbitrationPolicy;
     }
     KernelExecutionType getExecutionType() const {
@@ -352,7 +352,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool areStatelessWritesUsed() { return containsStatelessWrites; }
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
-    void setThreadArbitrationPolicy(uint32_t policy) {
+    void setThreadArbitrationPolicy(int32_t policy) {
         this->threadArbitrationPolicy = policy;
     }
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
@@ -455,7 +455,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t statelessUncacheableArgsCount = 0;
-    uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     KernelExecutionType executionType = KernelExecutionType::Default;
 
     std::vector<PatchInfoData> patchInfoDataList;

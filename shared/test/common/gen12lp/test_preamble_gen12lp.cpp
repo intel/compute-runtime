@@ -186,7 +186,7 @@ GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgramm
     PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
 
     EXPECT_EQ(0u, cs.getUsed());
-    EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {

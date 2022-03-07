@@ -114,7 +114,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(commandList->threadArbitrationPolicy, 0u);
+    ASSERT_EQ(0, commandList->threadArbitrationPolicy);
     delete (pHint);
 }
 

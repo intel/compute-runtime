@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
+void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy) {
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
@@ -84,9 +84,9 @@ size_t PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <>
-std::vector<uint32_t> PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies() {
-    std::vector<uint32_t> retVal;
-    for (const uint32_t &p : DebugControlReg2::supportedArbitrationPolicy) {
+std::vector<int32_t> PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies() {
+    std::vector<int32_t> retVal;
+    for (const int32_t &p : DebugControlReg2::supportedArbitrationPolicy) {
         retVal.push_back(p);
     }
     return retVal;

@@ -77,7 +77,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPoli
 
     flushTask(commandStreamReceiver);
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
-              static_cast<uint32_t>(commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+              commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsIncremented) {
@@ -1315,7 +1315,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, static_cast<uint32_t>(mockCsr->streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+    EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, mockCsr->streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
 class CommandStreamReceiverFlushTaskMemoryCompressionTests : public UltCommandStreamReceiverTest,

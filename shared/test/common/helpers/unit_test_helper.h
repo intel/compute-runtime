@@ -31,7 +31,7 @@ struct UnitTestHelper {
 
     static uint32_t getDefaultSshUsage();
 
-    static uint32_t getAppropriateThreadArbitrationPolicy(uint32_t policy);
+    static uint32_t getAppropriateThreadArbitrationPolicy(int32_t policy);
 
     static auto getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType);
 

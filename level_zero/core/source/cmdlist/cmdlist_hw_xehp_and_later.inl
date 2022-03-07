@@ -211,7 +211,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
-    if (kernelImp->getSchedulingHintExp() != std::numeric_limits<uint32_t>::max()) {
+    if (kernelImp->getSchedulingHintExp() != NEO::ThreadArbitrationPolicy::NotPresent) {
         this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
     }
 

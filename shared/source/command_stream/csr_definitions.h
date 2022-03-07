@@ -51,7 +51,7 @@ struct DispatchFlags {
     DispatchFlags() = delete;
     DispatchFlags(CsrDependencies csrDependenciesP, TimestampPacketContainer *barrierTimestampPacketNodesP, PipelineSelectArgs pipelineSelectArgsP,
                   FlushStampTrackingObj *flushStampReferenceP, QueueThrottle throttleP, PreemptionMode preemptionModeP, uint32_t numGrfRequiredP,
-                  uint32_t l3CacheSettingsP, uint32_t threadArbitrationPolicyP, uint32_t additionalKernelExecInfoP,
+                  uint32_t l3CacheSettingsP, int32_t threadArbitrationPolicyP, uint32_t additionalKernelExecInfoP,
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool requiresCoherencyP, bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
@@ -93,7 +93,7 @@ struct DispatchFlags {
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     uint32_t l3CacheSettings = L3CachingSettings::l3CacheOn;
-    uint32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    int32_t threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
     uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
     KernelExecutionType kernelExecutionType = KernelExecutionType::NotApplicable;
     MemoryCompressionState memoryCompressionState = MemoryCompressionState::NotApplicable;

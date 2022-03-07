@@ -760,7 +760,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr);
     pCommandQueue->flush();
     EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
-              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpNotRequired.mockKernel,
@@ -773,7 +773,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr);
     pCommandQueue->flush();
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased,
-              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     pCommandQueue->enqueueKernel(
         mockKernelWithInternalsWithIfpRequired.mockKernel,
@@ -786,7 +786,7 @@ HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThr
         nullptr);
     pCommandQueue->flush();
     EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(),
-              static_cast<uint32_t>(csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value));
+              csr.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;

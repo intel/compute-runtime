@@ -582,7 +582,7 @@ bool HwHelperHw<GfxFamily>::isBankOverrideRequired(const HardwareInfo &hwInfo) c
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
+int32_t HwHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
     return 0;
 }
 

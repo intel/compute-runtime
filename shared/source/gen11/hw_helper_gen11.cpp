@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 

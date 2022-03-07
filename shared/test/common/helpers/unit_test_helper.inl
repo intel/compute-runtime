@@ -13,8 +13,8 @@ bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-inline uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(uint32_t policy) {
-    return policy;
+inline uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(int32_t policy) {
+    return static_cast<uint32_t>(policy);
 }
 
 template <typename GfxFamily>

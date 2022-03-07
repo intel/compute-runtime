@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
@@ -151,7 +152,7 @@ struct KernelImp : Kernel {
     }
 
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
-    uint32_t getSchedulingHintExp();
+    int32_t getSchedulingHintExp();
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
 
@@ -210,7 +211,7 @@ struct KernelImp : Kernel {
 
     bool kernelHasIndirectAccess = true;
 
-    uint32_t schedulingHintExpFlag = std::numeric_limits<uint32_t>::max();
+    int32_t schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::NotPresent;
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 };
 

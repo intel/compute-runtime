@@ -104,7 +104,7 @@ class HwHelper {
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const = 0;
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
-    virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
+    virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
@@ -318,7 +318,7 @@ class HwHelperHw : public HwHelper {
 
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 
-    uint32_t getDefaultThreadArbitrationPolicy() const override;
+    int32_t getDefaultThreadArbitrationPolicy() const override;
 
     bool useOnlyGlobalTimestamps() const override;
 

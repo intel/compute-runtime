@@ -670,19 +670,19 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPoli
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrThreadArbitrationPolicy = commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value;
 
-    uint32_t sentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+    int32_t sentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
 
     flushTaskFlags.threadArbitrationPolicy = sentThreadArbitrationPolicy;
 
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(static_cast<uint32_t>(csrThreadArbitrationPolicy), sentThreadArbitrationPolicy);
+    EXPECT_EQ(csrThreadArbitrationPolicy, sentThreadArbitrationPolicy);
 
     flushTaskFlags.threadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(static_cast<uint32_t>(csrThreadArbitrationPolicy), sentThreadArbitrationPolicy);
+    EXPECT_EQ(csrThreadArbitrationPolicy, sentThreadArbitrationPolicy);
 }
 
 struct PreambleThreadArbitrationMatcher {
