@@ -16,7 +16,7 @@ struct StateComputeModeProperties {
     StreamProperty pixelAsyncComputeThreadLimit{};
     StreamProperty threadArbitrationPolicy{};
 
-    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
+    void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);
     void setProperties(const StateComputeModeProperties &properties);
     bool isDirty() const;
     void clearIsDirty();

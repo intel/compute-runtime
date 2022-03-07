@@ -260,23 +260,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             hwInfo);
 
-    if (dispatchFlags.threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
-        if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.value != -1) {
-            // Reuse previous programming
-            dispatchFlags.threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
-        } else {
-            // Pick default if this is first submit
-            dispatchFlags.threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
-        }
-    }
-
     if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
         dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
     }
 
     auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
-                                                          dispatchFlags.threadArbitrationPolicy);
+                                                          dispatchFlags.threadArbitrationPolicy, hwInfo);
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;

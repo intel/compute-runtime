@@ -1014,9 +1014,6 @@ ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint
 }
 
 int32_t KernelImp::getSchedulingHintExp() {
-    if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        this->schedulingHintExpFlag = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
-    }
     return this->schedulingHintExpFlag;
 }
 } // namespace L0

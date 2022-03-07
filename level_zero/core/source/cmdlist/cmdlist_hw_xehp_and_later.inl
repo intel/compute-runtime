@@ -210,14 +210,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
     }
 
-    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
-    if (kernelImp->getSchedulingHintExp() != NEO::ThreadArbitrationPolicy::NotPresent) {
-        this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
-    }
-
     auto isMultiOsContextCapable = (this->partitionCount > 1) && !isCooperative;
     updateStreamProperties(*kernel, isMultiOsContextCapable, isCooperative);
 
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 

@@ -188,10 +188,6 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPreemptionMode;
     }
 
-    int32_t getThreadArbitrationPolicy() const {
-        return threadArbitrationPolicy;
-    }
-
     UnifiedMemoryControls getUnifiedMemoryControls() const {
         return unifiedMemoryControls;
     }
@@ -256,7 +252,6 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
     uint32_t commandListPerThreadScratchSize = 0u;
     uint32_t commandListPerThreadPrivateScratchSize = 0u;
-    int32_t threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
     uint32_t partitionCount = 1;
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;

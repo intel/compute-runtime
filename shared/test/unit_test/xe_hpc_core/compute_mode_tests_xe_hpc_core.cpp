@@ -191,7 +191,7 @@ PVCTEST_F(PvcComputeModeRequirements, giventhreadArbitrationPolicyWithoutSharedH
     };
 
     getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setProperties(flags.requiresCoherency, flags.numGrfRequired,
-                                                                            flags.threadArbitrationPolicy);
+                                                                            flags.threadArbitrationPolicy, *defaultHwInfo);
 
     flushTask(true);
     findCmd(true); // first time

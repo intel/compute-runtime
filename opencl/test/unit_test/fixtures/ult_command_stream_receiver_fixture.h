@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              hwHelper.getDefaultThreadArbitrationPolicy());
+                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), *defaultHwInfo);
     }
 
     template <typename GfxFamily>

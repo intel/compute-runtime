@@ -73,7 +73,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     cmdContainer->lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u);
+    streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

@@ -74,7 +74,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device *device) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto &hwHelper = NEO::HwHelper::get(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-    threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
     if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
     }
@@ -2240,6 +2240,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
         finalStreamState = requiredStreamState;
+        requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), hwInfo);
         containsAnyKernel = true;
     }
 
@@ -2252,10 +2253,10 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
     }
 
-    auto &neoDevice = *device->getNEODevice();
-    finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, this->threadArbitrationPolicy);
+    finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), hwInfo);
 
     if (finalStreamState.stateComputeMode.isDirty()) {
+        auto &neoDevice = *device->getNEODevice();
         NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), true);
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*commandContainer.getCommandStream(), finalStreamState.stateComputeMode, hwInfo);
         NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), false);

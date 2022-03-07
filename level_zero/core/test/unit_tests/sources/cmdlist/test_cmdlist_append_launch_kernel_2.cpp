@@ -1234,6 +1234,37 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+
+    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto defaultThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto nonDefaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy + 1;
+
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // initial kernel with no policy preference
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+
+    // policy changed to non-default state
+    pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value = nonDefaultThreadArbitrationPolicy;
+    // another kernel with no policy preference - do not update policy
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_EQ(nonDefaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+
+    // another kernel with no policy preference, this time with debug toggle set - update policy back to default value
+    DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
+    pCommandList->updateStreamProperties(kernel, false, false);
+    EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
+}
+
 struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : public MultiDeviceModuleFixture {
     void SetUp() {
         DebugManager.flags.EnableImplicitScaling.set(1);

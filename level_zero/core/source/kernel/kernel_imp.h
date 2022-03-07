@@ -152,7 +152,7 @@ struct KernelImp : Kernel {
     }
 
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
-    int32_t getSchedulingHintExp();
+    int32_t getSchedulingHintExp() override;
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
 

@@ -69,7 +69,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     for (auto requiresCoherency : ::testing::Bool()) {
         for (auto largeGrf : ::testing::Bool()) {
             for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-                properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy);
+                properties.stateComputeMode.setProperties(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, *defaultHwInfo);
                 EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
                 EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                 EXPECT_EQ(-1, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
@@ -81,19 +81,19 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
-        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, *defaultHwInfo);
         EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
     }
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
-        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, *defaultHwInfo);
         EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
     }
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
-        properties.stateComputeMode.setProperties(false, 0u, 0u);
+        properties.stateComputeMode.setProperties(false, 0u, 0u, *defaultHwInfo);
         EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
     }
 }

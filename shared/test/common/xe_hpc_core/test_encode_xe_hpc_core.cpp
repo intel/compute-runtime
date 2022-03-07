@@ -273,25 +273,25 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     StreamProperties properties{};
 
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased);
+    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, pScm->getEuThreadSchedulingModeOverride());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobin);
+    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobin, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobinAfterDependency);
+    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::RoundRobinAfterDependency, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::NotPresent);
+    properties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::NotPresent, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, *defaultHwInfo);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());

@@ -22,7 +22,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     cmdContainer->lastSentNumGrfRequired = 0;
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, cmdContainer->lastSentNumGrfRequired + 1, 0u);
+    streamProperties.stateComputeMode.setProperties(false, cmdContainer->lastSentNumGrfRequired + 1, 0u, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     GenCmdList commands;
@@ -58,7 +58,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeProgrammedThenExpectedComman
 
     NEO::EncodeComputeMode<GfxFamily>::adjustPipelineSelect(*cmdContainer, descriptor);
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, 256u, 0u);
+    streamProperties.stateComputeMode.setProperties(false, 256u, 0u, *defaultHwInfo);
     NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     auto usedSpaceAfter = cmdContainer->getCommandStream()->getUsed();

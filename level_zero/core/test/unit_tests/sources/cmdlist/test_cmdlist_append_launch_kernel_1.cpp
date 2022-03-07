@@ -94,7 +94,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(commandList->threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobin);
+    ASSERT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, commandList->getFinalStreamState().stateComputeMode.threadArbitrationPolicy.value);
     delete (pHint);
 }
 
@@ -114,7 +114,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_EQ(0, commandList->threadArbitrationPolicy);
+    ASSERT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, commandList->getFinalStreamState().stateComputeMode.threadArbitrationPolicy.value);
     delete (pHint);
 }
 

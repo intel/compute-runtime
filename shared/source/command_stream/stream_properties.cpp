@@ -7,11 +7,13 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/grf_config.h"
 
 using namespace NEO;
 
-void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy) {
+void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy,
+                                               const HardwareInfo &hwInfo) {
     clearIsDirty();
 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
@@ -32,8 +34,15 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     }
     this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
 
+    bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
+                                             (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
+                                              (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
+    if (setDefaultThreadArbitrationPolicy) {
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    }
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = static_cast<uint32_t>(DebugManager.flags.OverrideThreadArbitrationPolicy.get());
+        threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
     this->threadArbitrationPolicy.set(threadArbitrationPolicy);
 }

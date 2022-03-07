@@ -112,8 +112,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     NEO::Device *neoDevice = device->getNEODevice();
 
-    this->threadArbitrationPolicy = kernelImp->getSchedulingHintExp();
-
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
