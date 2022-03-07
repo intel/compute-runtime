@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -347,7 +347,7 @@ HWTEST2_F(CommandListCreate, GivenComputeModePropertiesWhenUpdateStreamPropertie
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     pCommandList->updateStreamProperties(kernel, false, false);
     EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
-    EXPECT_TRUE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
+    EXPECT_FALSE(pCommandList->finalStreamState.stateComputeMode.isCoherencyRequired.isDirty);
 }
 struct ProgramDirtyFieldsInComputeMode {
     template <PRODUCT_FAMILY productFamily>

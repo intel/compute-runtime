@@ -292,4 +292,10 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
+    return false;
+}
+
 } // namespace NEO

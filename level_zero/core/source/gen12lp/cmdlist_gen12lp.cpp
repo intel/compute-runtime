@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,6 @@
 #include "cmdlist_extended.inl"
 
 namespace L0 {
-template <>
-void CommandListCoreFamily<IGFX_GEN12LP_CORE>::clearComputeModePropertiesIfNeeded(bool requiresCoherency, uint32_t numGrfRequired, uint32_t threadArbitrationPolicy) {
-    finalStreamState.stateComputeMode = {};
-    finalStreamState.stateComputeMode.setProperties(false, numGrfRequired, threadArbitrationPolicy);
-}
 
 template struct CommandListCoreFamily<IGFX_GEN12LP_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_GEN12LP_CORE>;

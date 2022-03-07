@@ -73,16 +73,14 @@ void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const
     using STATE_COMPUTE_MODE = typename XE_HPG_COREFamily::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
-    if (properties.isCoherencyRequired.isDirty) {
-        STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
-        FORCE_NON_COHERENT coherencyValue = !properties.isCoherencyRequired.value ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
-                                                                                  : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
-        stateComputeMode.setForceNonCoherent(coherencyValue);
+    STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
+    FORCE_NON_COHERENT coherencyValue = (properties.isCoherencyRequired.value == 1) ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED
+                                                                                    : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
+    stateComputeMode.setForceNonCoherent(coherencyValue);
 
-        auto mask = stateComputeMode.getMaskBits();
-        mask |= XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask;
-        stateComputeMode.setMaskBits(mask);
-    }
+    auto mask = stateComputeMode.getMaskBits();
+    mask |= XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask;
+    stateComputeMode.setMaskBits(mask);
 }
 
 template <>
@@ -170,5 +168,10 @@ void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &tim
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+    return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
     return true;
 }

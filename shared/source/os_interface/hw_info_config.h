@@ -85,6 +85,7 @@ class HwInfoConfig {
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
     virtual bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const = 0;
     virtual bool isFlushTaskAllowed() const = 0;
+    virtual bool programAllStateComputeCommandFields() const = 0;
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
   protected:
@@ -154,6 +155,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
     bool getUuid(Device *device, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) const override;
     bool isFlushTaskAllowed() const override;
+    bool programAllStateComputeCommandFields() const override;
 
   protected:
     HwInfoConfigHw() = default;

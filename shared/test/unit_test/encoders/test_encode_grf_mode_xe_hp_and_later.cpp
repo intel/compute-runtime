@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeProgrammedThenExpectedComman
 HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommandsAreAdded, IsXeHpCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
     auto usedSpaceBefore = cmdContainer->getCommandStream()->getUsed();
@@ -98,7 +99,8 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
-    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeLargeGrfModeMask);
+    expectedScmCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
+    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask);
 
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), (usedSpaceBefore + sizeof(PIPELINE_SELECT))));
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);

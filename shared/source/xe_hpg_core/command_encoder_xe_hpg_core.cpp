@@ -127,24 +127,31 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    if (properties.zPassAsyncComputeThreadLimit.isDirty) {
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    bool ignoreIsDirty = hwInfoConfig.programAllStateComputeCommandFields();
+
+    if (properties.zPassAsyncComputeThreadLimit.isDirty ||
+        (ignoreIsDirty && (properties.zPassAsyncComputeThreadLimit.value != -1))) {
         auto limitValue = static_cast<Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT>(properties.zPassAsyncComputeThreadLimit.value);
         stateComputeMode.setZPassAsyncComputeThreadLimit(limitValue);
         maskBits |= Family::stateComputeModeZPassAsyncComputeThreadLimitMask;
     }
 
-    if (properties.pixelAsyncComputeThreadLimit.isDirty) {
+    if (properties.pixelAsyncComputeThreadLimit.isDirty ||
+        (ignoreIsDirty && (properties.pixelAsyncComputeThreadLimit.value != -1))) {
         auto limitValue = static_cast<PIXEL_ASYNC_COMPUTE_THREAD_LIMIT>(properties.pixelAsyncComputeThreadLimit.value);
         stateComputeMode.setPixelAsyncComputeThreadLimit(limitValue);
         maskBits |= Family::stateComputeModePixelAsyncComputeThreadLimitMask;
     }
 
-    if (properties.largeGrfMode.isDirty) {
-        stateComputeMode.setLargeGrfMode(properties.largeGrfMode.value);
+    if (properties.largeGrfMode.isDirty || ignoreIsDirty) {
+        stateComputeMode.setLargeGrfMode(properties.largeGrfMode.value == 1);
         maskBits |= Family::stateComputeModeLargeGrfModeMask;
     }
 
     stateComputeMode.setMaskBits(maskBits);
+
+    hwInfoConfig.setForceNonCoherent(&stateComputeMode, properties);
 
     HwInfoConfig::get(hwInfo.platform.eProductFamily)->setForceNonCoherent(&stateComputeMode, properties);
 

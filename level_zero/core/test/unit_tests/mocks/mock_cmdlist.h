@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
-    using BaseClass::clearComputeModePropertiesIfNeeded;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;

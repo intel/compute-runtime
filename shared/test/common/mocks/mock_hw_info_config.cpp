@@ -282,4 +282,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isFlushTaskAllowed() const {
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::programAllStateComputeCommandFields() const {
+    return false;
+}
+
 } //namespace NEO

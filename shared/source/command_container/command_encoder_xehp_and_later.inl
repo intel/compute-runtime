@@ -514,17 +514,13 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
     auto maskBits = stateComputeMode.getMaskBits();
 
-    if (properties.isCoherencyRequired.isDirty) {
-        FORCE_NON_COHERENT coherencyValue = !properties.isCoherencyRequired.value ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
-                                                                                  : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
-        stateComputeMode.setForceNonCoherent(coherencyValue);
-        maskBits |= Family::stateComputeModeForceNonCoherentMask;
-    }
+    FORCE_NON_COHERENT coherencyValue = (properties.isCoherencyRequired.value == 1) ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED
+                                                                                    : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
+    stateComputeMode.setForceNonCoherent(coherencyValue);
+    maskBits |= Family::stateComputeModeForceNonCoherentMask;
 
-    if (properties.largeGrfMode.isDirty) {
-        stateComputeMode.setLargeGrfMode(properties.largeGrfMode.value);
-        maskBits |= Family::stateComputeModeLargeGrfModeMask;
-    }
+    stateComputeMode.setLargeGrfMode(properties.largeGrfMode.value == 1);
+    maskBits |= Family::stateComputeModeLargeGrfModeMask;
 
     if (DebugManager.flags.ForceMultiGpuAtomics.get() != -1) {
         stateComputeMode.setForceDisableSupportForMultiGpuAtomics(!!DebugManager.flags.ForceMultiGpuAtomics.get());
