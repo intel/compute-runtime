@@ -119,6 +119,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc);
     }
     this->ownedPrivateAllocations.clear();
+    cmdListCurrentStartOffset = 0;
     return ZE_RESULT_SUCCESS;
 }
 

@@ -19,7 +19,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace() {
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < maxImmediateCommandSize) {
         this->commandContainer.allocateNextCommandBuffer();
-        cmdListBBEndOffset = 0;
+        this->cmdListCurrentStartOffset = 0;
     }
 }
 
@@ -61,7 +61,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     this->commandContainer.removeDuplicatesFromResidencyContainer();
 
     auto commandStream = this->commandContainer.getCommandStream();
-    size_t commandStreamStart = cmdListBBEndOffset;
+    size_t commandStreamStart = this->cmdListCurrentStartOffset;
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
@@ -99,7 +99,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         this->csr->getInternalAllocationStorage()->cleanAllocationList(completionStamp.taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
-    cmdListBBEndOffset = commandStream->getUsed();
+    this->cmdListCurrentStartOffset = commandStream->getUsed();
 
     this->commandContainer.getResidencyContainer().clear();
 
@@ -116,14 +116,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(hKernel, pThreadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -136,14 +129,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(hKernel, pDispatchArgumentsBuffer,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -167,13 +153,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
             checkAvailableSpace();
         }
         ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents);
-        if (ret == ZE_RESULT_SUCCESS) {
-            if (this->isFlushTaskSubmissionEnabled) {
-                executeCommandListImmediateWithFlushTask(true);
-            } else {
-                executeCommandListImmediate(true);
-            }
-        }
+        return flushImmediate(ret, true);
     } else {
         ret = CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents);
         if (!hSignalEvent) {
@@ -204,14 +184,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
                                                                       numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -234,14 +207,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(dstPtr, dstRegion, dstPitch, dstSlicePitch,
                                                                             srcPtr, srcRegion, srcPitch, srcSlicePitch,
                                                                             hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -255,14 +221,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -277,13 +236,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
             checkAvailableSpace();
         }
         ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
-        if (ret == ZE_RESULT_SUCCESS) {
-            if (this->isFlushTaskSubmissionEnabled) {
-                executeCommandListImmediateWithFlushTask(true);
-            } else {
-                executeCommandListImmediate(true);
-            }
-        }
+        return flushImmediate(ret, true);
     } else {
         const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
@@ -309,13 +262,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
             checkAvailableSpace();
         }
         ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hSignalEvent);
-        if (ret == ZE_RESULT_SUCCESS) {
-            if (this->isFlushTaskSubmissionEnabled) {
-                executeCommandListImmediateWithFlushTask(true);
-            } else {
-                executeCommandListImmediate(true);
-            }
-        }
+        return flushImmediate(ret, true);
     } else {
         const auto &hwInfo = this->device->getHwInfo();
         NEO::PipeControlArgs args;
@@ -339,14 +286,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(false);
-        } else {
-            executeCommandListImmediate(false);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -365,13 +305,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
             checkAvailableSpace();
         }
         ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
-        if (ret == ZE_RESULT_SUCCESS) {
-            if (this->isFlushTaskSubmissionEnabled) {
-                executeCommandListImmediateWithFlushTask(true);
-            } else {
-                executeCommandListImmediate(true);
-            }
-        }
+        return flushImmediate(ret, true);
     } else {
         bool dcFlushRequired = false;
         const auto &hwInfo = this->device->getHwInfo();
@@ -403,14 +337,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTime
         checkAvailableSpace();
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -446,14 +373,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent,
                                                                            numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -470,14 +390,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
                                                                                numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
-        } else {
-            executeCommandListImmediate(true);
-        }
-    }
-    return ret;
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -494,14 +407,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     }
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
                                                                              numWaitEvents, phWaitEvents);
-    if (ret == ZE_RESULT_SUCCESS) {
+    return flushImmediate(ret, true);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration) {
+    if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
-            executeCommandListImmediateWithFlushTask(true);
+            inputRet = executeCommandListImmediateWithFlushTask(performMigration);
         } else {
-            executeCommandListImmediate(true);
+            inputRet = executeCommandListImmediate(performMigration);
         }
     }
-    return ret;
+    return inputRet;
 }
 
 } // namespace L0

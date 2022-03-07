@@ -249,6 +249,7 @@ struct CommandListCoreFamily : CommandListImp {
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
+    size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;
 };
 

@@ -104,7 +104,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     }
     HeapContainer sshAllocations;
 
-    bool getFlushTaskUsedForImmediate() { return isFlushTaskUsedForImmediate; }
+    bool getFlushTaskUsedForImmediate() const { return isFlushTaskUsedForImmediate; }
     void setFlushTaskUsedForImmediate(bool flushTaskUsedForImmediate) { isFlushTaskUsedForImmediate = flushTaskUsedForImmediate; }
 
   protected:

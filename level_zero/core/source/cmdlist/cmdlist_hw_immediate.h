@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,8 +110,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     void checkAvailableSpace();
 
-  protected:
-    size_t cmdListBBEndOffset = 0;
+    ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration);
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
