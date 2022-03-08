@@ -18,15 +18,6 @@ typedef ICLFamily Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    if (this->streamProperties.stateComputeMode.isCoherencyRequired.isDirty) {
-        EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
-            stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
-            hasSharedHandles(), hwInfo, isRcs());
-    }
-}
-
-template <>
 void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, DispatchFlags &dispatchFlags) {
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 

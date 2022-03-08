@@ -12,14 +12,11 @@
 namespace NEO {
 
 template <typename Family>
-size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
-    return 0u;
-}
-
-template <typename Family>
 inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
     bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs) {
+
+    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo);
 }
 
 template <typename Family>

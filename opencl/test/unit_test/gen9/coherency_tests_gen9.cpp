@@ -22,14 +22,10 @@ GEN9TEST_F(Gen9CoherencyRequirements, WhenMemoryManagerIsInitializedThenNoCohere
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
 
-    auto retSize = csr.getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
     csr.programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
     flags.requiresCoherency = true;
-    retSize = csr.getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
     csr.programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 }

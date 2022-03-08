@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ using Family = NEO::BDWFamily;
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
 
 namespace NEO {
+
 template <>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState) {
 }
@@ -30,6 +31,16 @@ void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *su
     if (gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
         surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
+}
+
+template <typename Family>
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+    return 0u;
+}
+
+template <typename Family>
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
+                                                          const HardwareInfo &hwInfo) {
 }
 
 template struct EncodeDispatchKernel<Family>;

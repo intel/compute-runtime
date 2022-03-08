@@ -13,7 +13,9 @@
 #include "shared/test/common/fixtures/front_window_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "test_traits_common.h"
 
@@ -358,11 +360,69 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsC
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
 }
 
-HWTEST2_F(CommandEncodeStatesTest, whenAdjustStateComputeModeIsCalledThenNothingHappens, IsAtMostGen11) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThenThreadArbitrationPolicyIsProgrammed, IsAtMostGen11) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto initialUsed = cmdContainer->getCommandStream()->getUsed();
-    StreamProperties emptyProperties{};
+    auto expectedSize = sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+    StreamProperties streamProperties{};
+    streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
+    streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
-                                                                  emptyProperties.stateComputeMode, *defaultHwInfo);
-    EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
+                                                                  streamProperties.stateComputeMode, *defaultHwInfo);
+
+    if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsThreadArbitrationPolicy) {
+        GenCmdList commands;
+        CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), initialUsed), cmdContainer->getCommandStream()->getUsed());
+
+        auto cmdCount = findAll<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end()).size();
+        EXPECT_EQ(1u, cmdCount);
+        cmdCount = findAll<PIPE_CONTROL *>(commands.begin(), commands.end()).size();
+        EXPECT_EQ(1u, cmdCount);
+        EXPECT_EQ(initialUsed + expectedSize, cmdContainer->getCommandStream()->getUsed());
+    } else {
+        EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTest, whenProgramComputeModeCommandModeIsCalledThenNonCoherentIsProgrammed, IsAtMostGen11) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto initialUsed = cmdContainer->getCommandStream()->getUsed();
+    [[maybe_unused]] auto expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
+    StreamProperties streamProperties{};
+    streamProperties.stateComputeMode.threadArbitrationPolicy.value = ThreadArbitrationPolicy::AgeBased;
+    streamProperties.stateComputeMode.isCoherencyRequired.isDirty = true;
+    NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(),
+                                                                  streamProperties.stateComputeMode, *defaultHwInfo);
+
+    if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
+        GenCmdList commands;
+        CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), initialUsed), cmdContainer->getCommandStream()->getUsed());
+
+        auto cmdCount = findAll<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end()).size();
+        EXPECT_EQ(1u, cmdCount);
+        EXPECT_EQ(initialUsed + expectedSize, cmdContainer->getCommandStream()->getUsed());
+    } else {
+        EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());
+    }
+}
+
+HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueIsReturned, IsAtMostGen11) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto expectedScmSize = 0u;
+
+    if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsThreadArbitrationPolicy) {
+        expectedScmSize += sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+    }
+    if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
+        expectedScmSize += sizeof(MI_LOAD_REGISTER_IMM);
+    }
+    EXPECT_EQ(expectedScmSize, EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(*defaultHwInfo, false, false));
+
+    UltDeviceFactory deviceFactory{1, 0};
+    auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
+    csr.streamProperties.stateComputeMode.setProperties(false, 0, ThreadArbitrationPolicy::AgeBased, *defaultHwInfo);
+    EXPECT_EQ(expectedScmSize, csr.getCmdSizeForComputeMode());
 }

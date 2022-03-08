@@ -44,7 +44,6 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 };
 
 GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenProgrammingIsCorrect) {
-    auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     overrideCoherencyRequest(false, false);
     EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
@@ -52,14 +51,10 @@ GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenP
     EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(true, true);
-    auto retSize = csr->getCmdSizeForComputeMode();
     EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(lriSize, retSize);
 
     overrideCoherencyRequest(true, false);
-    retSize = csr->getCmdSizeForComputeMode();
     EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(lriSize, retSize);
 }
 
 GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenHdcModeCmdValuesAreCorrect) {
@@ -73,14 +68,14 @@ GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenH
 
     overrideCoherencyRequest(true, false);
     csr->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(csr->getCmdSizeForComputeMode(), stream.getUsed());
+    EXPECT_EQ(lriSize, stream.getUsed());
 
     auto cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedCmd, cmd, lriSize) == 0);
 
     overrideCoherencyRequest(true, true);
     csr->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(csr->getCmdSizeForComputeMode() * 2, stream.getUsed());
+    EXPECT_EQ(lriSize * 2, stream.getUsed());
 
     cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream.getCpuBase(), lriSize));
     expectedCmd.setDataDword(DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, false));

@@ -21,15 +21,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy) {
-}
-
-template <typename GfxFamily>
-size_t PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize() {
-    return 0;
-}
-
-template <typename GfxFamily>
 std::vector<int32_t> PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies() {
     return {};
 }

@@ -23,12 +23,8 @@
 using namespace NEO;
 
 using ThreadArbitrationXeHPAndLater = PreambleFixture;
-HWCMDTEST_F(IGFX_XE_HP_CORE, ThreadArbitrationXeHPAndLater, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
-    LinearStream &cs = linearStream;
-
-    PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
-
-    EXPECT_EQ(0u, cs.getUsed());
+using Platforms = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned, Platforms) {
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 

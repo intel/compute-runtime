@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,29 @@ template <>
 void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
     if (gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
         surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    }
+}
+template <typename Family>
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+    return sizeof(typename Family::PIPE_CONTROL) + sizeof(typename Family::MI_LOAD_REGISTER_IMM);
+}
+
+template <typename Family>
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
+                                                          const HardwareInfo &hwInfo) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+    UNRECOVERABLE_IF(properties.threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent);
+
+    if (properties.threadArbitrationPolicy.isDirty) {
+        auto pipeControl = csr.getSpaceForCmd<PIPE_CONTROL>();
+        PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
+        cmd.setCommandStreamerStallEnable(true);
+        *pipeControl = cmd;
+
+        LriHelper<SKLFamily>::program(&csr,
+                                      DebugControlReg2::address,
+                                      DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
+                                      false);
     }
 }
 

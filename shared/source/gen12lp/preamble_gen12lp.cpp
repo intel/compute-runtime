@@ -11,8 +11,6 @@
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "reg_configs_common.h"
-
 namespace NEO {
 
 template <>

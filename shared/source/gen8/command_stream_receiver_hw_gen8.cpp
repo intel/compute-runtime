@@ -16,10 +16,6 @@ typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;

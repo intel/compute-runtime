@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,6 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
 
     MockDevice device;
     EXPECT_EQ(0u, PreambleHelper<ICLFamily>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize());
 }
 
 GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenCorrectValuesAreSet) {
@@ -147,7 +146,9 @@ GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenC
     typedef ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     MockDevice mockDevice;
-    PreambleHelper<FamilyType>::programThreadArbitration(&linearStream, ThreadArbitrationPolicy::RoundRobin);
+    StreamProperties streamProperties{};
+    streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, *defaultHwInfo);
 
     parseCommands<FamilyType>(cs);
 
@@ -161,7 +162,6 @@ GEN11TEST_F(ThreadArbitrationGen11, whenThreadArbitrationPolicyIsProgrammedThenC
 
     MockDevice device;
     EXPECT_EQ(0u, PreambleHelper<ICLFamily>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize());
 }
 
 GEN11TEST_F(ThreadArbitrationGen11, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {

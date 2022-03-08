@@ -64,26 +64,6 @@ void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy) {
-    UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
-
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    *pipeControl = cmd;
-
-    LriHelper<SKLFamily>::program(pCommandStream,
-                                  DebugControlReg2::address,
-                                  DebugControlReg2::getRegData(requiredThreadArbitrationPolicy),
-                                  false);
-}
-
-template <>
-size_t PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize() {
-    return sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
-}
-
-template <>
 std::vector<int32_t> PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies() {
     std::vector<int32_t> retVal;
     for (const int32_t &p : DebugControlReg2::supportedArbitrationPolicy) {

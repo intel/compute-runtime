@@ -153,8 +153,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     hwInfoConfig.setForceNonCoherent(&stateComputeMode, properties);
 
-    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setForceNonCoherent(&stateComputeMode, properties);
-
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
 }

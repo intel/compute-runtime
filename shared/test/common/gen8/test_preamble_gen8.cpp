@@ -74,13 +74,14 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
     typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<BDWFamily>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
+    StreamProperties streamProperties{};
+    streamProperties.stateComputeMode.threadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+    EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, *defaultHwInfo);
 
     EXPECT_EQ(0u, cs.getUsed());
 
     MockDevice device;
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(device));
-    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getThreadArbitrationCommandsSize());
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<BDWFamily>::get().getDefaultThreadArbitrationPolicy());
 }
 

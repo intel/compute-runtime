@@ -340,11 +340,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
 
-    if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty) {
-        auto threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
-        PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, threadArbitrationPolicy);
-    }
-
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
 
     programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
@@ -655,6 +650,15 @@ void CommandStreamReceiverHw<GfxFamily>::forcePipeControl(NEO::LinearStream &com
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
+    if (this->streamProperties.stateComputeMode.isDirty()) {
+        EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
+            stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
+            hasSharedHandles(), hwInfo, isRcs());
+    }
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
     stallingCommandsOnNextFlushRequired = false;
 
@@ -828,10 +832,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
     size += TimestampPacketHelper::getRequiredCmdStreamSizeForTaskCountContainer<GfxFamily>(dispatchFlags.csrDependencies);
-
-    if (this->streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty) {
-        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
-    }
 
     if (stallingCommandsOnNextFlushRequired) {
         size += getCmdSizeForStallingCommands(dispatchFlags);

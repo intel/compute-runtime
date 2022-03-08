@@ -12,14 +12,6 @@
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    if (this->streamProperties.stateComputeMode.isDirty()) {
-        EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
-            stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
-            hasSharedHandles(), hwInfo, isRcs());
-    }
-}
 
 template <>
 inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {

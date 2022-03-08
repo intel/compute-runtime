@@ -38,7 +38,6 @@ struct PreambleHelper {
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const HardwareInfo &hwInfo);
     static void appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo);
-    static void programThreadArbitration(LinearStream *pCommandStream, int32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
     static void appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd);
@@ -63,7 +62,6 @@ struct PreambleHelper {
     static bool isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
                                                    const HardwareInfo &hwInfo);
     static size_t getAdditionalCommandsSize(const Device &device);
-    static size_t getThreadArbitrationCommandsSize();
     static std::vector<int32_t> getSupportedThreadArbitrationPolicies();
     static size_t getVFECommandsSize();
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);

@@ -78,7 +78,10 @@ void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device
     if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
     }
-    NEO::PreambleHelper<GfxFamily>::programThreadArbitration(commandContainer.getCommandStream(), threadArbitrationPolicy);
+    NEO::StreamProperties streamProperties{};
+    streamProperties.stateComputeMode.threadArbitrationPolicy.set(threadArbitrationPolicy);
+    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*commandContainer.getCommandStream(), streamProperties.stateComputeMode,
+                                                                 this->device->getHwInfo());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -180,12 +180,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionWhenProgramAdditionalFiel
 }
 
 typedef PreambleFixture ThreadArbitrationGen12Lp;
-GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
-    LinearStream &cs = linearStream;
-
-    PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
-
-    EXPECT_EQ(0u, cs.getUsed());
+GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetDefaultThreadArbitrationPolicyIsCalledThenCorrectPolicyIsReturned) {
     EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
