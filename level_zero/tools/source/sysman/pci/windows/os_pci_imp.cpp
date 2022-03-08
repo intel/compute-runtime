@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ ze_result_t WddmPciImp::getProperties(zes_pci_properties_t *properties) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t WddmPciImp::getPciBdf(std::string &bdf) {
+ze_result_t WddmPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     uint32_t valueSmall = 0;
     uint32_t domain = 0, bus = 0, dev = 0, func = 0;
     std::vector<KmdSysman::RequestProperty> vRequests = {};
@@ -65,7 +65,10 @@ ze_result_t WddmPciImp::getPciBdf(std::string &bdf) {
         func = valueSmall;
     }
 
-    bdf = std::to_string(domain) + std::string(":") + std::to_string(bus) + std::string(":") + std::to_string(dev) + std::string(".") + std::to_string(func);
+    pciProperties.address.domain = domain;
+    pciProperties.address.bus = bus;
+    pciProperties.address.device = dev;
+    pciProperties.address.function = func;
 
     return ZE_RESULT_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace L0 {
 class KmdSysManager;
 class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t getPciBdf(std::string &bdf) override;
+    ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
     ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;
     ze_result_t getMaxLinkWidth(int32_t &maxLinkwidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;

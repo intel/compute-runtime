@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
+
+#include "shared/source/utilities/directory.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
@@ -27,14 +29,21 @@ ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *properties) {
     properties->haveReplayCounters = false;
     return ZE_RESULT_SUCCESS;
 }
-ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
+ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
     const auto loc = bdfDir.find_last_of('/');
-    bdf = bdfDir.substr(loc + 1);
+    std::string bdf = bdfDir.substr(loc + 1);
+    uint16_t domain = 0;
+    uint8_t bus = 0, device = 0, function = 0;
+    NEO::parseBdfString(bdf.c_str(), domain, bus, device, function);
+    pciProperties.address.domain = static_cast<uint32_t>(domain);
+    pciProperties.address.bus = static_cast<uint32_t>(bus);
+    pciProperties.address.device = static_cast<uint32_t>(device);
+    pciProperties.address.function = static_cast<uint32_t>(function);
     return ZE_RESULT_SUCCESS;
 }
 

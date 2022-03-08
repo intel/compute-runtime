@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,6 +114,14 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    ze_result_t getValStringSymLinkEmpty(const std::string file, std::string &val) {
+        if (file.compare(deviceDir) == 0) {
+            val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/";
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     ze_result_t getValStringSymLink(const std::string file, std::string &val) {
         if (file.compare(deviceDir) == 0) {
             val = mockBdf;
@@ -121,6 +129,7 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
+
     ze_result_t getValStringRealPath(const std::string file, std::string &val) {
         if (file.compare(deviceDir) == 0) {
             val = mockRealPath;

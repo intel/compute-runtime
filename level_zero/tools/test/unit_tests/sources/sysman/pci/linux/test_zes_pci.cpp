@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,6 +272,20 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetS
     EXPECT_NE(properties.maxSpeed.gen, propertiesBefore.maxSpeed.gen);
     EXPECT_NE(properties.maxSpeed.width, propertiesBefore.maxSpeed.width);
     EXPECT_NE(properties.maxSpeed.maxBandwidth, propertiesBefore.maxSpeed.maxBandwidth);
+}
+
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesAndBdfStringIsEmptyThenVerifyApiCallSucceeds) {
+    zes_pci_properties_t properties;
+    ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLinkEmpty));
+    pPciImp->init();
+
+    ze_result_t result = zesDevicePciGetProperties(device, &properties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.address.bus, 0u);
+    EXPECT_EQ(properties.address.device, 0u);
+    EXPECT_EQ(properties.address.function, 0u);
 }
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenGettingPCIWidthThenZeroWidthIsReturnedIfSystemProvidesInvalidValue) {

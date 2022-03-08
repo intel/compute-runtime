@@ -125,22 +125,7 @@ void PciImp::pciGetStaticFields() {
     pOsPci->getProperties(&pciProperties);
     resizableBarSupported = pOsPci->resizableBarSupported();
     std::string bdf;
-    pOsPci->getPciBdf(bdf);
-    if (bdf.empty()) {
-        pciProperties.address.domain = 0;
-        pciProperties.address.bus = 0;
-        pciProperties.address.device = 0;
-        pciProperties.address.function = 0;
-    } else {
-        uint16_t domain = -1;
-        uint8_t bus = -1, device = -1, function = -1;
-        NEO::parseBdfString(bdf.c_str(), domain, bus, device, function);
-        pciProperties.address.domain = static_cast<uint32_t>(domain);
-        pciProperties.address.bus = static_cast<uint32_t>(bus);
-        pciProperties.address.device = static_cast<uint32_t>(device);
-        pciProperties.address.function = static_cast<uint32_t>(function);
-    }
-
+    pOsPci->getPciBdf(pciProperties);
     int32_t maxLinkWidth = -1;
     int64_t maxBandWidth = -1;
     double maxLinkSpeed = 0;
