@@ -35,7 +35,6 @@ void populateSingleKernelInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramF
 
     if (decodedKernel.tokens.programSymbolTable) {
         dst.prepareLinkerInputStorage();
-        dst.linkerInput->undefinedSymbolsAllowed = dst.levelZeroDynamicLinkProgram;
         dst.linkerInput->decodeExportedFunctionsSymbolTable(decodedKernel.tokens.programSymbolTable + 1, decodedKernel.tokens.programSymbolTable->NumEntries, kernelNum);
     }
 

@@ -147,8 +147,6 @@ struct LinkerInput {
         return valid;
     }
 
-    bool undefinedSymbolsAllowed = false;
-
     const std::vector<ExternalFunctionUsageKernel> &getKernelDependencies() const {
         return kernelDependencies;
     }

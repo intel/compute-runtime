@@ -82,14 +82,8 @@ bool LinkerInput::decodeExportedFunctionsSymbolTable(const void *data, uint32_t 
             this->valid = false;
             return false;
         case vISA::S_UNDEF:
-            if (this->undefinedSymbolsAllowed) {
-                symbols.erase(symbolEntryIt->s_name);
-                break;
-            } else {
-                DEBUG_BREAK_IF(true);
-                this->valid = false;
-                return false;
-            }
+            symbols.erase(symbolEntryIt->s_name);
+            break;
         case vISA::S_GLOBAL_VAR:
             symbolInfo.segment = SegmentType::GlobalVariables;
             traits.exportsGlobalVariables = true;
@@ -195,8 +189,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
 
             switch (type) {
             default:
-                this->valid &= this->undefinedSymbolsAllowed;
-                DEBUG_BREAK_IF(false == this->undefinedSymbolsAllowed);
+                DEBUG_BREAK_IF(type != Elf::SYMBOL_TABLE_TYPE::STT_NOTYPE);
                 continue;
             case Elf::SYMBOL_TABLE_TYPE::STT_OBJECT:
                 symbolInfo.segment = symbolSegment;

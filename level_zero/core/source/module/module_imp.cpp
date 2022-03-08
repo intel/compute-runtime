@@ -300,7 +300,6 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
 
     NEO::DecodeError decodeError;
     NEO::DeviceBinaryFormat singleDeviceBinaryFormat;
-    programInfo.levelZeroDynamicLinkProgram = true;
     std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings);
     if (decodeWarnings.empty() == false) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
@@ -320,7 +319,6 @@ bool ModuleTranslationUnit::processUnpackedBinary() {
             id++;
         }
         programInfo.prepareLinkerInputStorage();
-        programInfo.linkerInput->undefinedSymbolsAllowed = programInfo.levelZeroDynamicLinkProgram;
         programInfo.linkerInput->decodeElfSymbolTableAndRelocations(programInfo.decodedElf, nameToKernelId);
     }
 
