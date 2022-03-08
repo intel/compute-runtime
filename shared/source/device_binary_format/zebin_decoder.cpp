@@ -25,7 +25,7 @@ namespace NEO {
 bool validateTargetDevice(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
-    Elf::ZebinTargetMetadata targetMetadata = {};
+    Elf::ZebinTargetFlags targetMetadata = {};
     auto intelGTNotes = getIntelGTNotes(elf);
     for (const auto &intelGTNote : intelGTNotes) {
         switch (intelGTNote->type) {

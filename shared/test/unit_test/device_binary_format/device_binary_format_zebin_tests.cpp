@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -332,7 +332,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
     notes[1].type = NEO::Elf::IntelGTSectionType::GfxCore;
     notes[1].desc = targetDevice.coreFamily;
 
-    NEO::Elf::ZebinTargetMetadata targetMetadata;
+    NEO::Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = targetDevice.stepping - 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 1;

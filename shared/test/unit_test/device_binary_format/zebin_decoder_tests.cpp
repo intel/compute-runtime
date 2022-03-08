@@ -5107,7 +5107,7 @@ TEST_F(IntelGTNotesFixture, WhenGettingIntelGTNotesGivenValidIntelGTNotesSection
     notes[1].type = Elf::IntelGTSectionType::GfxCore;
     notes[1].desc = IGFX_GEN9_CORE;
 
-    Elf::ZebinTargetMetadata targetMetadata;
+    Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = 5;
     targetMetadata.maxHwRevisionId = 7;
@@ -5170,7 +5170,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenValidTargetDeviceAndV
     notes[1].type = Elf::IntelGTSectionType::GfxCore;
     notes[1].desc = targetDevice.coreFamily;
 
-    Elf::ZebinTargetMetadata targetMetadata;
+    Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = targetDevice.stepping - 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 1;
@@ -5214,7 +5214,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidTargetDeviceAn
     notes[1].type = Elf::IntelGTSectionType::GfxCore;
     notes[1].desc = targetDevice.coreFamily + 2;
 
-    Elf::ZebinTargetMetadata targetMetadata;
+    Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.minHwRevisionId = targetDevice.stepping + 1;
     targetMetadata.maxHwRevisionId = targetDevice.stepping + 3;
