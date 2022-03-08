@@ -285,8 +285,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIn
         dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
-        EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
     }
 }
 
@@ -383,12 +382,11 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenOneBcsEngineInQueueWhenSelectin
         dstGraphicsAllocation.memoryPool = MemoryPool::LocalMemory;
         CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(linkBcsType), &selectedCsr);
-        EXPECT_EQ(linkBcsType, selectedCsr.getOsContext().getEngineType());
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
     }
 }
 
-HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelectingCsrForLocalToLocalOperationThenSelectProperBcsCsr, IsAtLeastXeHpcCore) {
+HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelectingCsrForLocalToLocalOperationThenSelectProperGpGpuCsr, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
@@ -416,8 +414,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
             aub_stream::ENGINE_BCS8,
         });
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS), &selectedCsr);
-        EXPECT_EQ(aub_stream::ENGINE_BCS, selectedCsr.getOsContext().getEngineType());
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
     }
     {
         auto queue = createQueueWithEngines({
@@ -427,8 +424,7 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
             aub_stream::ENGINE_BCS8,
         });
         CommandStreamReceiver &selectedCsr = queue->selectCsrForBuiltinOperation(args);
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS5), &selectedCsr);
-        EXPECT_EQ(aub_stream::ENGINE_BCS5, selectedCsr.getOsContext().getEngineType());
+        EXPECT_EQ(&queue->getGpgpuCommandStreamReceiver(), &selectedCsr);
     }
 }
 

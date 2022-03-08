@@ -919,8 +919,8 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) 
     EXPECT_FALSE(HwHelper::get(renderCoreFamily).isSipWANeeded(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnTrue) {
-    EXPECT_TRUE(ClHwHelper::get(renderCoreFamily).preferBlitterForLocalToLocalTransfers());
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitterForLocalToLocalTransfersThenReturnFalse) {
+    EXPECT_FALSE(ClHwHelper::get(renderCoreFamily).preferBlitterForLocalToLocalTransfers());
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
