@@ -47,8 +47,9 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_base.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_base.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}stream_properties.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}stream_properties_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_property.h
     ${CMAKE_CURRENT_SOURCE_DIR}/submission_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp

@@ -19,7 +19,14 @@ struct StateComputeModeProperties {
     void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const HardwareInfo &hwInfo);
     void setProperties(const StateComputeModeProperties &properties);
     bool isDirty() const;
+
+  protected:
     void clearIsDirty();
+
+    bool isDirtyExtra() const;
+    void setPropertiesExtra();
+    void setPropertiesExtra(const StateComputeModeProperties &properties);
+    void clearIsDirtyExtra();
 };
 
 struct FrontEndProperties {
@@ -28,9 +35,12 @@ struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
 
-    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
+    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice,
+                       const HardwareInfo &hwInfo);
     void setProperties(const FrontEndProperties &properties);
     bool isDirty() const;
+
+  protected:
     void clearIsDirty();
 };
 

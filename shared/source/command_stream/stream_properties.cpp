@@ -45,6 +45,8 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
     this->threadArbitrationPolicy.set(threadArbitrationPolicy);
+
+    setPropertiesExtra();
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {
@@ -55,11 +57,13 @@ void StateComputeModeProperties::setProperties(const StateComputeModeProperties 
     zPassAsyncComputeThreadLimit.set(properties.zPassAsyncComputeThreadLimit.value);
     pixelAsyncComputeThreadLimit.set(properties.pixelAsyncComputeThreadLimit.value);
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
+
+    setPropertiesExtra(properties);
 }
 
 bool StateComputeModeProperties::isDirty() const {
     return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
-           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty;
+           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty || isDirtyExtra();
 }
 
 void StateComputeModeProperties::clearIsDirty() {
@@ -68,10 +72,12 @@ void StateComputeModeProperties::clearIsDirty() {
     zPassAsyncComputeThreadLimit.isDirty = false;
     pixelAsyncComputeThreadLimit.isDirty = false;
     threadArbitrationPolicy.isDirty = false;
+
+    clearIsDirtyExtra();
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice,
-                                       const HardwareInfo &hwInfo) {
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch,
+                                       int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
     clearIsDirty();
 
     this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
@@ -90,7 +96,8 @@ void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
 }
 
 bool FrontEndProperties::isDirty() const {
-    return disableOverdispatch.isDirty || disableEUFusion.isDirty || singleSliceDispatchCcsMode.isDirty || computeDispatchAllWalkerEnable.isDirty;
+    return disableOverdispatch.isDirty || disableEUFusion.isDirty || singleSliceDispatchCcsMode.isDirty ||
+           computeDispatchAllWalkerEnable.isDirty;
 }
 
 void FrontEndProperties::clearIsDirty() {
