@@ -68,6 +68,17 @@ inline int getParamValue(int argc, char *argv[], const char *shortName, const ch
     return defaultValue;
 }
 
+inline bool isCircularDepTest(int argc, char *argv[]) {
+    bool enabled = isParamEnabled(argc, argv, "-c", "--circular");
+    if (enabled == false) {
+        return false;
+    }
+
+    std::cerr << "Circular Dependency Test mode detected" << std::endl;
+
+    return true;
+}
+
 inline bool isVerbose(int argc, char *argv[]) {
     bool enabled = isParamEnabled(argc, argv, "-v", "--verbose");
     if (enabled == false) {

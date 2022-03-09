@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,13 +40,62 @@ int lib_func_sub(int x, int y) {
 }
 )===";
 
+const char *importModuleSrcCircDep = R"===(
+int lib_func_add(int x, int y);
+int lib_func_mult(int x, int y);
+int lib_func_sub(int x, int y);
+
+kernel void call_library_funcs(__global int* result) {
+    int add_result = lib_func_add(1,2);
+    int mult_result = lib_func_mult(add_result,2);
+    result[0] = lib_func_sub(mult_result, 1);
+}
+
+int lib_func_add2(int x) {
+    return x+2;
+}
+)===";
+
+const char *exportModuleSrcCircDep = R"===(
+int lib_func_add2(int x);
+int lib_func_add5(int x);
+
+int lib_func_add(int x, int y) {
+    return lib_func_add5(lib_func_add2(x + y));
+}
+
+int lib_func_mult(int x, int y) {
+    return x*y;
+}
+
+int lib_func_sub(int x, int y) {
+    return x-y;
+}
+)===";
+
+const char *exportModuleSrc2CircDep = R"===(
+int lib_func_add5(int x) {
+    return x+5;
+}
+)===";
+
 extern bool verbose;
 bool verbose = false;
 
 int main(int argc, char *argv[]) {
     bool outputValidationSuccessful = true;
     verbose = isVerbose(argc, argv);
+    bool circularDep = isCircularDepTest(argc, argv);
+    int numModules = 2;
 
+    char *exportModuleSrcValue = const_cast<char *>(exportModuleSrc);
+    char *importModuleSrcValue = const_cast<char *>(importModuleSrc);
+    ze_module_handle_t exportModule2 = {};
+    if (circularDep) {
+        exportModuleSrcValue = const_cast<char *>(exportModuleSrcCircDep);
+        importModuleSrcValue = const_cast<char *>(importModuleSrcCircDep);
+        numModules = 3;
+    }
     // Setup
     SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
@@ -93,7 +142,7 @@ int main(int argc, char *argv[]) {
         std::cout << "reading export module for spirv\n";
     }
     std::string buildLog;
-    auto exportBinaryModule = compileToSpirV(exportModuleSrc, "", buildLog);
+    auto exportBinaryModule = compileToSpirV(const_cast<const char *>(exportModuleSrcValue), "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -114,10 +163,35 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &exportModuleDesc, &exportModule, nullptr));
 
+    if (circularDep) {
+        if (verbose) {
+            std::cout << "reading export module2 for spirv\n";
+        }
+        auto exportBinaryModule2 = compileToSpirV(exportModuleSrc2CircDep, "", buildLog);
+        if (buildLog.size() > 0) {
+            std::cout << "Build log " << buildLog;
+        }
+        SUCCESS_OR_TERMINATE((0 == exportBinaryModule2.size()));
+
+        ze_module_desc_t exportModuleDesc2 = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+        exportModuleDesc2.format = ZE_MODULE_FORMAT_IL_SPIRV;
+        exportModuleDesc2.pInputModule = reinterpret_cast<const uint8_t *>(exportBinaryModule2.data());
+        exportModuleDesc2.inputSize = exportBinaryModule2.size();
+
+        // -library-compliation is required for the non-kernel functions to be listed as exported by the Intel Graphics Compiler
+        exportModuleDesc2.pBuildFlags = "-library-compilation";
+
+        if (verbose) {
+            std::cout << "building export module\n";
+        }
+
+        SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &exportModuleDesc2, &exportModule2, nullptr));
+    }
+
     if (verbose) {
         std::cout << "reading import module for spirv\n";
     }
-    auto importBinaryModule = compileToSpirV(importModuleSrc, "", buildLog);
+    auto importBinaryModule = compileToSpirV(const_cast<const char *>(importModuleSrcValue), "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -128,13 +202,13 @@ int main(int argc, char *argv[]) {
     importModuleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     importModuleDesc.pInputModule = reinterpret_cast<const uint8_t *>(importBinaryModule.data());
     importModuleDesc.inputSize = importBinaryModule.size();
-
+    if (circularDep) {
+        importModuleDesc.pBuildFlags = "-library-compilation";
+    }
     if (verbose) {
         std::cout << "building import module\n";
     }
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &importModuleDesc, &importModule, nullptr));
-
-    ze_module_handle_t modulesToLink[] = {importModule, exportModule};
 
     // Dynamically linking the two Modules to resolve the symbols
 
@@ -144,7 +218,13 @@ int main(int argc, char *argv[]) {
 
     ze_module_build_log_handle_t dynLinkLog;
 
-    SUCCESS_OR_TERMINATE(zeModuleDynamicLink(2, modulesToLink, &dynLinkLog));
+    if (circularDep) {
+        ze_module_handle_t modulesToLink[] = {importModule, exportModule, exportModule2};
+        SUCCESS_OR_TERMINATE(zeModuleDynamicLink(numModules, modulesToLink, &dynLinkLog));
+    } else {
+        ze_module_handle_t modulesToLink[] = {importModule, exportModule};
+        SUCCESS_OR_TERMINATE(zeModuleDynamicLink(numModules, modulesToLink, &dynLinkLog));
+    }
 
     size_t buildLogSize;
     SUCCESS_OR_TERMINATE(zeModuleBuildLogGetString(dynLinkLog, &buildLogSize, nullptr));
@@ -202,8 +282,10 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
 
     // Validate results
-
     int expectedResult = (((1 + 2) * 2) - 1);
+    if (circularDep) {
+        expectedResult = (((((1 + 2) + 2) + 5) * 2) - 1);
+    }
 
     if (expectedResult != *(int *)resultBuffer) {
         std::cout << "Result:" << *(int *)resultBuffer << " invalid\n";
@@ -223,6 +305,9 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeKernelDestroy(importKernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(importModule));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(exportModule));
+    if (circularDep) {
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(exportModule2));
+    }
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Dynamic Link Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
     return 0;

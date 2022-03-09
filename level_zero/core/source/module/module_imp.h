@@ -17,6 +17,7 @@
 
 #include "igfxfmid.h"
 
+#include <list>
 #include <memory>
 #include <string>
 
@@ -138,6 +139,8 @@ struct ModuleImp : public Module {
     ModuleTranslationUnit *getTranslationUnit() {
         return this->translationUnit.get();
     }
+
+    void moduleDependencyWalker(std::map<void *, std::map<void *, void *>> inDeps, void *moduleHandle, std::list<ModuleImp *> *outDeps);
 
   protected:
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);

@@ -35,6 +35,7 @@
 #include "compiler_options.h"
 #include "program_debug_data.h"
 
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -928,9 +929,23 @@ ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
+void ModuleImp::moduleDependencyWalker(std::map<void *, std::map<void *, void *>> inDeps, void *moduleHandle, std::list<ModuleImp *> *outDeps) {
+    std::map<void *, std::map<void *, void *>>::iterator it;
+    it = inDeps.find(moduleHandle);
+    if (it != inDeps.end()) {
+        std::map<void *, void *> dependencies = it->second;
+        inDeps.erase(it);
+        for (auto const &dependency : dependencies) {
+            moduleDependencyWalker(inDeps, dependency.first, outDeps);
+            outDeps->push_back(static_cast<ModuleImp *>(dependency.first));
+        }
+    }
+}
+
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
+    std::map<void *, std::map<void *, void *>> dependencies;
     ModuleBuildLog *moduleLinkLog = nullptr;
     if (phLinkLog) {
         moduleLinkLog = ModuleBuildLog::create();
@@ -941,6 +956,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         if (moduleId->isFullyLinked) {
             continue;
         }
+        std::map<void *, void *> moduleDeps;
         NEO::Linker::PatchableSegments isaSegmentsForPatching;
         std::vector<std::vector<char>> patchedIsaTempStorage;
         uint32_t numPatchedSymbols = 0u;
@@ -970,6 +986,11 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                         NEO::Linker::patchAddress(relocAddress, symbolIt->second, unresolvedExternal.unresolvedRelocation);
                         numPatchedSymbols++;
                         moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
+                        std::map<void *, void *>::iterator it;
+                        it = moduleDeps.find(moduleHandle);
+                        if ((it == moduleDeps.end()) && (nullptr != moduleHandle->exportedFunctionsSurface)) {
+                            moduleDeps.insert(std::pair<void *, void *>(moduleHandle, moduleHandle));
+                        }
 
                         if (moduleLinkLog) {
                             std::stringstream logMessage;
@@ -977,18 +998,6 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                             unresolvedSymbolLogMessages.back().append(logMessage.str());
                         }
 
-                        // Apply the exported functions surface state from the export module to the import module if it exists.
-                        // Enables import modules to access the exported functions during kernel execution.
-                        for (auto &kernImmData : moduleId->kernelImmDatas) {
-                            kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
-                                                                         ((moduleHandle->exportedFunctionsSurface != nullptr) ? 1 : 0) + moduleId->importedSymbolAllocations.size());
-
-                            if (nullptr != moduleHandle->exportedFunctionsSurface) {
-                                kernImmData->getResidencyContainer().push_back(moduleHandle->exportedFunctionsSurface);
-                            }
-                            kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), moduleId->importedSymbolAllocations.begin(),
-                                                                        moduleId->importedSymbolAllocations.end());
-                        }
                         break;
                     }
                 }
@@ -1002,8 +1011,37 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
+        dependencies.insert(std::pair<void *, std::map<void *, void *>>(moduleId, moduleDeps));
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
         moduleId->isFullyLinked = true;
+    }
+
+    for (auto i = 0u; i < numModules; i++) {
+        static std::mutex depWalkMutex;
+        std::lock_guard<std::mutex> autolock(depWalkMutex);
+
+        auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+        std::map<void *, std::map<void *, void *>>::iterator it;
+        std::list<ModuleImp *> dependentModules;
+
+        // Walk the dependencies for each Module and dependent Module to determine
+        // the dependency exportedFunctionsSurfaces that must be resident for a given Module's kernels
+        // to execute on the device using Dynamic Module Linking.
+        it = dependencies.find(moduleId);
+        if (it != dependencies.end()) {
+            moduleDependencyWalker(dependencies, moduleId, &dependentModules);
+            // Apply the exported functions surface state from the export module(s) to the import module if it exists.
+            // Enables import modules to access the exported function(s) during kernel execution.
+            for (auto &kernImmData : moduleId->kernelImmDatas) {
+                for (auto const &dependency : dependentModules) {
+                    kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
+                                                                 1 + moduleId->importedSymbolAllocations.size());
+                    kernImmData->getResidencyContainer().push_back(dependency->exportedFunctionsSurface);
+                }
+                kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), moduleId->importedSymbolAllocations.begin(),
+                                                            moduleId->importedSymbolAllocations.end());
+            }
+        }
     }
 
     {
