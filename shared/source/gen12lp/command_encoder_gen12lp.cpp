@@ -52,11 +52,13 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 }
 
 template <>
-void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {
-    if (device.getDefaultEngine().commandStreamReceiver->isRcs()) {
-        PipelineSelectArgs args;
-        args.is3DPipelineRequired = is3DPipeline;
-        PreambleHelper<Family>::programPipelineSelect(&stream, args, device.getHardwareInfo());
+void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args,
+                                                      bool is3DPipeline, const HardwareInfo &hwInfo, bool isRcs) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs) {
+        PipelineSelectArgs pipelineSelectArgs = args;
+        pipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
+        PreambleHelper<Family>::programPipelineSelect(&stream, pipelineSelectArgs, hwInfo);
     }
 }
 

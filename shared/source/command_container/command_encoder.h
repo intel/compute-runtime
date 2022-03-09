@@ -10,6 +10,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/vec.h"
@@ -280,6 +281,10 @@ struct EncodeSurfaceState {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
+    static size_t getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs);
+    static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
+                                                             const PipelineSelectArgs &args, bool hasSharedHandles,
+                                                             const HardwareInfo &hwInfo, bool isRcs);
     static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo);
 
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
@@ -287,8 +292,13 @@ struct EncodeComputeMode {
 
 template <typename GfxFamily>
 struct EncodeWA {
-    static void encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline);
+    static void encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
+                                               const HardwareInfo &hwInfo, bool isRcs);
     static size_t getAdditionalPipelineSelectSize(Device &device);
+
+    static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
+                                                              const HardwareInfo &hwInfo, bool isRcs);
+    static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
 };
 
 template <typename GfxFamily>

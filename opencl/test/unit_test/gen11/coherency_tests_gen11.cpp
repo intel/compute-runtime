@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,19 +46,19 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenProgrammingIsCorrect) {
     auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     overrideCoherencyRequest(false, false);
-    auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(false, true);
-    retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(true, true);
-    retSize = csr->getCmdSizeForComputeMode();
+    auto retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(lriSize, retSize);
 
     overrideCoherencyRequest(true, false);
     retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(lriSize, retSize);
 }
 

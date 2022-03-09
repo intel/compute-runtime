@@ -32,19 +32,19 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutShare
     }
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     overrideComputeModeRequest<FamilyType>(false, true, false);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     overrideComputeModeRequest<FamilyType>(true, true, false);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, false);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -56,27 +56,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
-    auto cmdsSize = 0u;
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     overrideComputeModeRequest<FamilyType>(false, true, true);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
-    cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     if (isBasicWARequired) {
         cmdsSize += +sizeof(PIPE_CONTROL);
     }
 
     overrideComputeModeRequest<FamilyType>(true, true, true);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -340,27 +339,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto cmdSize = 0u;
-
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(cmdSize, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(*defaultHwInfo, csr->isRcs());
     std::ignore = isExtendedWARequired;
 
-    cmdSize = sizeof(STATE_COMPUTE_MODE);
+    auto cmdSize = sizeof(STATE_COMPUTE_MODE);
     if (isBasicWARequired) {
         cmdSize += +sizeof(PIPE_CONTROL);
     }
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, 256u);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdSize, retSize);
 }
 
@@ -423,8 +421,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeProgrammin
     LinearStream stream(buff, 1024);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 256u);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(0u, stream.getUsed());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 }
 
 HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, ForceNonCoherentSupportedMatcher) {

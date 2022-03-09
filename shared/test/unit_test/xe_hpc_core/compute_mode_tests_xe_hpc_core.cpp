@@ -79,11 +79,11 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true);
-    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -96,10 +96,11 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSiz
     auto numGrfRequired = 128u;
     auto numGrfRequiredChanged = false;
     overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
-    EXPECT_EQ(0u, getCsrHw<FamilyType>()->getCmdSizeForComputeMode());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
 
     numGrfRequiredChanged = true;
     overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
+    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
     EXPECT_EQ(sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL), getCsrHw<FamilyType>()->getCmdSizeForComputeMode());
 }
 

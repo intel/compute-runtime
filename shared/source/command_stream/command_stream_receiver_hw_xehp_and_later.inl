@@ -45,36 +45,6 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { return 0; }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
-    if (!csrSizeRequestFlags.hasSharedHandles) {
-        for (const auto &allocation : this->getResidencyAllocations()) {
-            if (allocation->peekSharedHandle()) {
-                csrSizeRequestFlags.hasSharedHandles = true;
-                break;
-            }
-        }
-    }
-
-    size_t size = 0;
-    auto &hwInfo = peekHwInfo();
-    if (isComputeModeNeeded()) {
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        std::ignore = isExtendedWARequired;
-        const auto isWARequired = isBasicWARequired;
-
-        if (isWARequired) {
-            size += sizeof(typename GfxFamily::PIPE_CONTROL);
-        }
-        size += sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
-        if (csrSizeRequestFlags.hasSharedHandles) {
-            size += sizeof(typename GfxFamily::PIPE_CONTROL);
-        }
-    }
-    return size;
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
     if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.specialPipelineSelectModeChanged || !isPreambleSent) {
         PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
@@ -165,32 +135,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args) {
-    auto &hwInfo = peekHwInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-
-    if (isExtendedWARequired) {
-        args.textureCacheInvalidationEnable = true;
-        args.hdcPipelineFlush = true;
-        args.amfsFlushEnable = true;
-        args.instructionCacheInvalidateEnable = true;
-        args.constantCacheInvalidationEnable = true;
-        args.stateCacheInvalidationEnable = true;
-
-        args.dcFlushEnable = false;
-
-        setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
-    } else if (isBasicWARequired) {
-        args.hdcPipelineFlush = true;
-
-        setPipeControlPriorToNonPipelinedStateCommandExtraProperties(args);
-    }
-
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
-}
-
-template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -202,7 +146,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
     std::ignore = isExtendedWARequired;
 
     if (isBasicWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
-        addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
+        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
     }
 }
 

@@ -644,11 +644,37 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
 }
 
 template <typename Family>
-inline void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {}
+inline void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
+                                                             const HardwareInfo &hwInfo, bool isRcs) {}
 
 template <typename Family>
 inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
     return 0u;
+}
+template <typename Family>
+inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
+                                                                            const HardwareInfo &hwInfo, bool isRcs) {
+    auto &hwInfoConfig = (*HwInfoConfig::get(hwInfo.platform.eProductFamily));
+    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+    if (isExtendedWARequired) {
+        args.textureCacheInvalidationEnable = true;
+        args.hdcPipelineFlush = true;
+        args.amfsFlushEnable = true;
+        args.instructionCacheInvalidateEnable = true;
+        args.constantCacheInvalidationEnable = true;
+        args.stateCacheInvalidationEnable = true;
+
+        args.dcFlushEnable = false;
+
+        NEO::EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(args);
+    } else if (isBasicWARequired) {
+        args.hdcPipelineFlush = true;
+
+        NEO::EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(args);
+    }
+
+    MemorySynchronizationCommands<Family>::addPipeControl(commandStream, args);
 }
 
 template <typename Family>

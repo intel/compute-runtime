@@ -30,4 +30,9 @@ void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &co
     *commandStream.getSpaceForCmd<typename GfxFamily::_3DSTATE_BTD>() = cmd;
 }
 
+template <>
+inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {
+    args.unTypedDataPortCacheFlush = true;
+}
+
 } // namespace NEO

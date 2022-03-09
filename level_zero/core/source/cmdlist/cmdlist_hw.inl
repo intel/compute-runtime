@@ -2256,10 +2256,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), hwInfo);
 
     if (finalStreamState.stateComputeMode.isDirty()) {
-        auto &neoDevice = *device->getNEODevice();
-        NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), true);
-        NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*commandContainer.getCommandStream(), finalStreamState.stateComputeMode, hwInfo);
-        NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(neoDevice, *commandContainer.getCommandStream(), false);
+        bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
+        NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
+            *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, {}, false, hwInfo, isRcs);
     }
 }
 

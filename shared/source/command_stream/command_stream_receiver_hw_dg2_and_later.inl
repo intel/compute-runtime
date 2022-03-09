@@ -16,11 +16,6 @@ using _3DSTATE_BTD = typename Family::_3DSTATE_BTD;
 using _3DSTATE_BTD_BODY = typename Family::_3DSTATE_BTD_BODY;
 using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args) {
-    args.unTypedDataPortCacheFlush = true;
-}
-
 template <>
 void CommandStreamReceiverHw<Family>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
     if (dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
@@ -64,7 +59,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     if (isExtendedWARequired && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
 
-        addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
+        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
     }
 }
 

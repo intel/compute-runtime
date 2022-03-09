@@ -42,7 +42,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, pcArgs);
 
     NEO::Device *neoDevice = device->getNEODevice();
-    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*neoDevice, commandStream, true);
+    bool isRcs = this->getCsr()->isRcs();
+    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, hwInfo, isRcs);
 
     auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     STATE_BASE_ADDRESS sbaCmd;
@@ -89,7 +90,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         device->getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
     }
 
-    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*device->getNEODevice(), commandStream, false);
+    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, false, hwInfo, isRcs);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

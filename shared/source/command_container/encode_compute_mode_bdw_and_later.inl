@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,18 @@
 #include "shared/source/command_stream/linear_stream.h"
 
 namespace NEO {
+
+template <typename Family>
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+    return 0u;
+}
+
+template <typename Family>
+inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
+    LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
+    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs) {
+}
+
 template <typename Family>
 inline void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
 }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -17,21 +18,17 @@ typedef ICLFamily Family;
 static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    if (this->streamProperties.stateComputeMode.isDirty()) {
-        return sizeof(typename Family::MI_LOAD_REGISTER_IMM);
+void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
+    if (this->isComputeModeNeeded()) {
+        EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
+            stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
+            hasSharedHandles(), hwInfo, isRcs());
     }
-    return 0;
 }
 
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    if (this->streamProperties.stateComputeMode.isDirty()) {
-        LriHelper<Family>::program(&stream,
-                                   gen11HdcModeRegister::address,
-                                   DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !dispatchFlags.requiresCoherency),
-                                   false);
-    }
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
+    return this->streamProperties.stateComputeMode.isCoherencyRequired.isDirty;
 }
 
 template <>

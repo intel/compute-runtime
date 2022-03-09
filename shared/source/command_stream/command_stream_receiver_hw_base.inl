@@ -400,7 +400,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     //Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
         addPipeControlBeforeStateBaseAddress(commandStreamCSR);
-        programAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true);
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, hwInfo, isRcs());
 
         uint64_t newGSHbase = 0;
         GSBAFor32BitProgrammed = false;
@@ -447,7 +447,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             bindingTableBaseAddressRequired = false;
         }
 
-        programAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false);
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, hwInfo, isRcs());
         addPipeControlBeforeStateSip(commandStreamCSR, device);
         programStateSip(commandStreamCSR, device);
 
@@ -809,7 +809,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
-    size += getCmdSizeForComputeMode();
+    if (isComputeModeNeeded()) {
+        size += getCmdSizeForComputeMode();
+    }
     size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
@@ -1361,22 +1363,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
-    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs()) {
-        auto localPipelineSelectArgs = pipelineSelectArgs;
-        localPipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
-        PreambleHelper<GfxFamily>::programPipelineSelect(&csr, localPipelineSelectArgs, peekHwInfo());
-    }
-}
-
-template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalStateBaseAddress(LinearStream &csr, typename GfxFamily::STATE_BASE_ADDRESS &cmd, Device &device) {}
-
-template <typename GfxFamily>
-inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
-    return false;
-}
 
 template <typename GfxFamily>
 inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
@@ -1500,6 +1487,24 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfigFlus
     if (csrSizeRequestFlags.activePartitionsChanged) {
         programActivePartitionConfig(csr);
     }
+}
+
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::hasSharedHandles() {
+    if (!csrSizeRequestFlags.hasSharedHandles) {
+        for (const auto &allocation : this->getResidencyAllocations()) {
+            if (allocation->peekSharedHandle()) {
+                csrSizeRequestFlags.hasSharedHandles = true;
+                break;
+            }
+        }
+    }
+    return csrSizeRequestFlags.hasSharedHandles;
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
+    return EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(this->peekHwInfo(), hasSharedHandles(), isRcs());
 }
 
 } // namespace NEO

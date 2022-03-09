@@ -148,13 +148,14 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
     auto policyNotChangedFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
 
     commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.isDirty = true;
+    commandStreamReceiver.streamProperties.stateComputeMode.isCoherencyRequired.isDirty = true;
     auto policyChangedPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     auto policyChangedFlush = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
 
     auto actualDifferenceForPreamble = policyChangedPreamble - policyNotChangedPreamble;
     auto actualDifferenceForFlush = policyChangedFlush - policyNotChangedFlush;
     auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() +
-                              commandStreamReceiver.getCmdSizeForComputeMode();
+                              EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(*defaultHwInfo, false, commandStreamReceiver.isRcs());
     EXPECT_EQ(0u, actualDifferenceForPreamble);
     EXPECT_EQ(expectedDifference, actualDifferenceForFlush);
 }

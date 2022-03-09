@@ -23,6 +23,13 @@ struct ComputeModeRequirements : public ::testing::Test {
         myCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
             : UltCommandStreamReceiver<FamilyType>(executionEnvironment, 0, deviceBitfield){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &this->csrSizeRequestFlags; }
+        bool hasSharedHandles() override {
+            if (hasSharedHandlesReturnValue) {
+                return *hasSharedHandlesReturnValue;
+            }
+            return UltCommandStreamReceiver<FamilyType>::hasSharedHandles();
+        };
+        std::optional<bool> hasSharedHandlesReturnValue;
     };
     void makeResidentSharedAlloc() {
         csr->getResidencyAllocations().push_back(alloc);
@@ -48,7 +55,7 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     bool numGrfRequiredChanged,
                                     uint32_t numGrfRequired) {
         auto csrHw = getCsrHw<FamilyType>();
-        csrHw->getCsrRequestFlags()->hasSharedHandles = hasSharedHandles;
+        csrHw->hasSharedHandlesReturnValue = hasSharedHandles;
         csrHw->getCsrRequestFlags()->numGrfRequiredChanged = numGrfRequiredChanged;
         flags.requiresCoherency = requireCoherency;
         flags.numGrfRequired = numGrfRequired;

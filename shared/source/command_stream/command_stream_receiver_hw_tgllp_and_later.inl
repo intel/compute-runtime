@@ -15,37 +15,17 @@
 namespace NEO {
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     if (isComputeModeNeeded()) {
-        programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
-
-        auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
-        std::ignore = isExtendedWARequired;
-
-        if (isBasicWARequired) {
-            PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-            addPipeControlPriorToNonPipelinedStateCommand(stream, args);
-        }
-
-        StreamProperties streamProperties{};
-        streamProperties.stateComputeMode.setProperties(this->streamProperties.stateComputeMode);
-        EncodeComputeMode<GfxFamily>::programComputeModeCommand(stream, streamProperties.stateComputeMode, hwInfo);
-
-        if (csrSizeRequestFlags.hasSharedHandles) {
-            auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
-            *pc = GfxFamily::cmdInitPipeControl;
-        }
-
-        programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, false);
+        EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
+            stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
+            hasSharedHandles(), hwInfo, isRcs());
     }
 }
 
-template <>
-inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
-    return this->streamProperties.stateComputeMode.isDirty() ||
-           StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, false);
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
+    return StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, false) ||
+           this->streamProperties.stateComputeMode.isDirty();
 }
 
 template <>
@@ -55,7 +35,7 @@ inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddres
     args.textureCacheInvalidationEnable = true;
     args.hdcPipelineFlush = true;
 
-    addPipeControlPriorToNonPipelinedStateCommand(commandStream, args);
+    NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, peekHwInfo(), isRcs());
 }
 
 } // namespace NEO

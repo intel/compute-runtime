@@ -65,7 +65,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
-    size_t getCmdSizeForComputeMode();
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
@@ -73,6 +72,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForStallingNoPostSyncCommands() const;
     size_t getCmdSizeForStallingPostSyncCommands() const;
+    size_t getCmdSizeForComputeMode();
+    MOCKABLE_VIRTUAL bool hasSharedHandles();
 
     bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
@@ -148,7 +149,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programL3(LinearStream &csr, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
-    void programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline);
     void programAdditionalStateBaseAddress(LinearStream &csr, typename GfxFamily::STATE_BASE_ADDRESS &cmd, Device &device);
     void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
     void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
@@ -166,13 +166,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
 
-    void setPipeControlPriorToNonPipelinedStateCommandExtraProperties(PipeControlArgs &args);
-
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
     void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
-    void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args);
     size_t getSshHeapSize();
     bool are4GbHeapsAvailable() const;
 

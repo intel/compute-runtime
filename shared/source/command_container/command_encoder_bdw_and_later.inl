@@ -355,11 +355,14 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd, uint32_t statelessMocsIndex, bool useGlobalAtomics, bool multiOsContextCapable) {
+    auto &device = *container.getDevice();
+    auto &hwInfo = device.getHardwareInfo();
+    auto isRcs = device.getDefaultEngine().commandStreamReceiver->isRcs();
     if (container.isAnyHeapDirty()) {
-        EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
+        EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getCommandStream(), {}, true, hwInfo, isRcs);
     }
 
-    auto gmmHelper = container.getDevice()->getGmmHelper();
+    auto gmmHelper = device.getGmmHelper();
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(
         &sbaCmd,
@@ -383,7 +386,7 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
     auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = sbaCmd;
 
-    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getCommandStream(), {}, false, hwInfo, isRcs);
 }
 
 template <typename Family>
@@ -410,11 +413,18 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
 }
 
 template <typename GfxFamily>
-inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {}
+inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
+                                                                const HardwareInfo &hwInfo, bool isRcs) {}
 
 template <typename GfxFamily>
 inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &device) {
     return 0;
+}
+
+template <typename GfxFamily>
+inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
+                                                                               const HardwareInfo &hwInfo, bool isRcs) {
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 }
 
 template <typename GfxFamily>

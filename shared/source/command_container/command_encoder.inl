@@ -848,4 +848,7 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
 template <typename GfxFamily>
 void EncodeEnableRayTracing<GfxFamily>::append3dStateBtd(void *ptr3dStateBtd) {}
 
+template <typename GfxFamily>
+inline void EncodeWA<GfxFamily>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {}
+
 } // namespace NEO

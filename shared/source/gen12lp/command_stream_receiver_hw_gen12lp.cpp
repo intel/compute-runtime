@@ -28,33 +28,6 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForL3Config() const {
 }
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    if (!csrSizeRequestFlags.hasSharedHandles) {
-        for (const auto &allocation : this->getResidencyAllocations()) {
-            if (allocation->peekSharedHandle()) {
-                csrSizeRequestFlags.hasSharedHandles = true;
-                break;
-            }
-        }
-    }
-
-    size_t size = 0;
-    if (this->streamProperties.stateComputeMode.isDirty() || csrSizeRequestFlags.numGrfRequiredChanged) {
-        size += sizeof(typename Family::STATE_COMPUTE_MODE);
-        if (csrSizeRequestFlags.hasSharedHandles) {
-            size += sizeof(typename Family::PIPE_CONTROL);
-        }
-
-        const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
-        if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs()) {
-            size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(peekHwInfo()));
-        }
-    }
-
-    return size;
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;

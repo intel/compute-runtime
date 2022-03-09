@@ -16,12 +16,12 @@ typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
-    return 0;
+void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
 }
 
-template <>
-void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
+    return false;
 }
 
 template <>

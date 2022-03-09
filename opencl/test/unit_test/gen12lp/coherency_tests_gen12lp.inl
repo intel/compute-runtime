@@ -72,19 +72,19 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSi
     }
 
     overrideCoherencyRequest(false, false, false);
-    auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(false, true, false);
-    retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(true, true, false);
-    retSize = csr->getCmdSizeForComputeMode();
+    auto retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideCoherencyRequest(true, false, false);
     retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -99,19 +99,19 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSize
     }
 
     overrideCoherencyRequest(false, false, true);
-    auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(false, true, true);
-    retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_EQ(0u, retSize);
+    EXPECT_FALSE(csr->isComputeModeNeeded());
 
     overrideCoherencyRequest(true, true, true);
-    retSize = csr->getCmdSizeForComputeMode();
+    auto retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideCoherencyRequest(true, false, true);
     retSize = csr->getCmdSizeForComputeMode();
+    EXPECT_TRUE(csr->isComputeModeNeeded());
     EXPECT_EQ(cmdsSize, retSize);
 }
 

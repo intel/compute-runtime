@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,21 @@ using Family = NEO::ICLFamily;
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
 
 namespace NEO {
+
+template <>
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+    return sizeof(typename Family::MI_LOAD_REGISTER_IMM);
+}
+
+template <>
+void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
+    LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
+    bool hasSharedHandles, const HardwareInfo &hwInfo, bool isRcs) {
+    LriHelper<Family>::program(&csr,
+                               gen11HdcModeRegister::address,
+                               DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !properties.isCoherencyRequired.value),
+                               false);
+}
 
 template <>
 bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
