@@ -546,6 +546,33 @@ ze_result_t KernelImp::setArgUnknown(uint32_t argIndex, size_t argSize, const vo
 }
 
 ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const void *argVal) {
+    const auto device = static_cast<DeviceImp *>(this->module->getDevice());
+    const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    const auto svmAllocsManager = driverHandle->getSvmAllocsManager();
+    const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
+    NEO::SvmAllocationData *allocData = nullptr;
+    if (argVal != nullptr) {
+        const auto &argInfo = this->kernelArgInfos[argIndex];
+        const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
+        if (argInfo.allocId > 0 && requestedAddress == argInfo.value) {
+            bool reuseFromCache = false;
+            if (allocationsCounter > 0) {
+                if (allocationsCounter == argInfo.allocIdMemoryManagerCounter) {
+                    reuseFromCache = true;
+                } else {
+                    allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
+                    if (allocData && allocData->getAllocId() == argInfo.allocId) {
+                        reuseFromCache = true;
+                        this->kernelArgInfos[argIndex].allocIdMemoryManagerCounter = allocationsCounter;
+                    }
+                }
+                if (reuseFromCache) {
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
+        }
+    }
+
     const auto &allArgs = kernelImmData->getDescriptor().payloadMappings.explicitArgs;
     const auto &currArg = allArgs[argIndex];
     if (currArg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
@@ -578,16 +605,15 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, nullBufferValue);
         return ZE_RESULT_SUCCESS;
     }
-
-    auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
+    const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
     uintptr_t gpuAddress = 0u;
-    NEO::GraphicsAllocation *alloc = module->getDevice()->getDriverHandle()->getDriverSystemMemoryAllocation(requestedAddress,
-                                                                                                             1u,
-                                                                                                             module->getDevice()->getRootDeviceIndex(),
-                                                                                                             &gpuAddress);
-    DeviceImp *device = static_cast<DeviceImp *>(this->module->getDevice());
-    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
-    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(requestedAddress);
+    NEO::GraphicsAllocation *alloc = driverHandle->getDriverSystemMemoryAllocation(requestedAddress,
+                                                                                   1u,
+                                                                                   module->getDevice()->getRootDeviceIndex(),
+                                                                                   &gpuAddress);
+    if (allocData == nullptr) {
+        allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
+    }
     if (driverHandle->isRemoteResourceNeeded(requestedAddress, alloc, allocData, device)) {
         if (allocData == nullptr) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -602,6 +628,9 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         }
         gpuAddress += offset;
     }
+
+    const uint32_t allocId = allocData ? allocData->getAllocId() : 0u;
+    kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter};
 
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }
@@ -786,7 +815,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     slmArgSizes.resize(this->kernelArgHandlers.size(), 0);
-
+    kernelArgInfos.resize(this->kernelArgHandlers.size(), {});
     isArgUncached.resize(this->kernelArgHandlers.size(), 0);
 
     if (kernelImmData->getSurfaceStateHeapSize() > 0) {

@@ -67,6 +67,70 @@ TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
     EXPECT_EQ(mockKernel.setArgUnknown(0, 0, nullptr), ZE_RESULT_SUCCESS);
 }
 
+struct MockKernelWithCallTracking : Mock<::L0::Kernel> {
+    using ::L0::KernelImp::kernelArgInfos;
+
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
+        ++setArgBufferWithAllocCalled;
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation);
+    }
+    size_t setArgBufferWithAllocCalled = 0u;
+};
+
+using SetKernelArgCacheTest = Test<ModuleFixture>;
+
+TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSetArgBufferWithAllocOnlyCalledIfNeeded) {
+    MockKernelWithCallTracking mockKernel;
+    mockKernel.module = module.get();
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernel.initialize(&desc);
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
+    auto svmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
+
+    size_t callCounter = 0u;
+
+    //first setArg - called
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    //same setArg but allocationCounter == 0 - called
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    //same setArg - not called and argInfo.allocationCounter is updated
+    ++svmAllocsManager->allocationsCounter;
+    EXPECT_EQ(0u, mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_EQ(svmAllocsManager->allocationsCounter, mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter);
+
+    //same setArg and allocationCounter - not called
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    //same setArg but different allocId - called
+    svmAllocsManager->getSVMAlloc(svmAllocation)->setAllocId(1u);
+    ++svmAllocsManager->allocationsCounter;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    //different value - called
+    auto secondSvmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    //same value but no svmData - ZE_RESULT_ERROR_INVALID_ARGUMENT
+    svmAllocsManager->freeSVMAlloc(secondSvmAllocation);
+    ++svmAllocsManager->allocationsCounter;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
+    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+
+    svmAllocsManager->freeSVMAlloc(svmAllocation);
+}
+
 using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
 
 TEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
