@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -249,6 +250,10 @@ bool CommandStreamReceiver::skipResourceCleanup() const {
 }
 
 bool CommandStreamReceiver::isGpuHangDetected() const {
+    if (DebugManager.flags.DisableGpuHangDetection.get()) {
+        return false;
+    }
+
     return this->osContext && this->getOSInterface() && this->getOSInterface()->getDriverModel() && this->getOSInterface()->getDriverModel()->isGpuHangDetected(*osContext);
 }
 

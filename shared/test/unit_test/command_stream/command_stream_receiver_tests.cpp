@@ -174,6 +174,22 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
     EXPECT_EQ(csr.peekTaskCount(), allocation->getTaskCount(csr.getOsContext().getContextId()));
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenDisableGpuHangDetectionFlagWhenCheckingGpuHangThenDriverModelIsNotCalledAndFalseIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.DisableGpuHangDetection.set(true);
+
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    driverModelMock->isGpuHangDetectedToReturn = true;
+
+    auto osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
+
+    EXPECT_FALSE(csr.isGpuHangDetected());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTimeoutThenGpuHangIsReturned) {
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = true;
