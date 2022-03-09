@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -955,4 +955,27 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DirectSubmissionTest,
     directSubmission.dispatchPartitionRegisterConfiguration();
     size_t usedSizeAfter = directSubmission.ringCommandStream.getUsed();
     EXPECT_EQ(expectedSize, usedSizeAfter - usedSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionTest, givenDebugFlagSetWhenDispatchingPrefetcherThenSetCorrectValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForcePreParserEnabledForMiArbCheck.set(1);
+
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice, *osContext.get());
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+
+    directSubmission.dispatchDisablePrefetcher(true);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    MI_ARB_CHECK *arbCheck = hwParse.getCommand<MI_ARB_CHECK>();
+    ASSERT_NE(nullptr, arbCheck);
+
+    EXPECT_EQ(0u, arbCheck->getPreParserDisable());
 }

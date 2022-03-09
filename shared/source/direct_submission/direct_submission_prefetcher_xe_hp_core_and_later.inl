@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,9 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher
 
     MI_ARB_CHECK arbCheck = GfxFamily::cmdInitArbCheck;
     arbCheck.setPreFetchDisable(disable);
+
+    EncodeMiArbCheck<GfxFamily>::adjust(arbCheck);
+
     MI_ARB_CHECK *arbCheckSpace = ringCommandStream.getSpaceForCmd<MI_ARB_CHECK>();
     *arbCheckSpace = arbCheck;
 }

@@ -672,4 +672,11 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
     *cmdBuffer = storeDataImmediate;
 }
 
+template <typename Family>
+inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
+    if (DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
+        miArbCheck.setPreParserDisable(!DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get());
+    }
+}
+
 } // namespace NEO

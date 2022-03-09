@@ -472,4 +472,8 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
     *cmdBuffer = storeDataImmediate;
 }
 
+template <typename Family>
+inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
+}
+
 } // namespace NEO

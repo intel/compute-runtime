@@ -378,6 +378,7 @@ struct EncodeMiArbCheck {
     using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
     static void program(LinearStream &commandStream);
+    static void adjust(MI_ARB_CHECK &miArbCheck);
     static size_t getCommandSize();
 };
 

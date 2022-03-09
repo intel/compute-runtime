@@ -5690,6 +5690,17 @@ typedef struct tagMI_ARB_CHECK {
     inline uint32_t getPreFetchDisable() const {
         return TheStructure.Common.Pre_FetchDisable;
     }
+
+    // patched for easier templates usage
+    inline void setPreParserDisable(const uint32_t value) {
+        setPreFetchDisable(value);
+    }
+
+    // patched for easier templates usage
+    inline uint32_t getPreParserDisable() const {
+        return getPreFetchDisable();
+    }
+
     inline void setMaskBits(const uint32_t value) {
         DEBUG_BREAK_IF(value > 0xff00);
         TheStructure.Common.MaskBits = value;

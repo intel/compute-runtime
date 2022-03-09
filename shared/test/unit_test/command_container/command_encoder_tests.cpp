@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/test.h"
@@ -111,4 +112,25 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, whenAppendParamsForImageFromBuf
     EncodeSurfaceState<FamilyType>::appendParamsForImageFromBuffer(&surfaceState);
 
     EXPECT_EQ(0, memcmp(&expectedState, &surfaceState, sizeof(surfaceState)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammingMiArbThenSetPreparserDisabledValue) {
+    DebugManagerStateRestore restore;
+
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+
+    for (int32_t value : {-1, 0, 1}) {
+        DebugManager.flags.ForcePreParserEnabledForMiArbCheck.set(value);
+
+        MI_ARB_CHECK buffer[2] = {};
+        LinearStream linearStream(buffer, sizeof(buffer));
+
+        EncodeMiArbCheck<FamilyType>::program(linearStream);
+
+        if (value == 0) {
+            EXPECT_TRUE(buffer[0].getPreParserDisable());
+        } else {
+            EXPECT_FALSE(buffer[0].getPreParserDisable());
+        }
+    }
 }

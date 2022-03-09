@@ -798,8 +798,12 @@ inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
+    MI_ARB_CHECK cmd = Family::cmdInitArbCheck;
+
+    EncodeMiArbCheck<Family>::adjust(cmd);
+
     auto miArbCheckStream = commandStream.getSpaceForCmd<MI_ARB_CHECK>();
-    *miArbCheckStream = Family::cmdInitArbCheck;
+    *miArbCheckStream = cmd;
 }
 
 template <typename Family>
