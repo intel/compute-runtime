@@ -62,6 +62,8 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     static void handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     static void handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     void selectGpuDomainHandler();
+    inline void migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData);
+    inline void migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData);
 
     decltype(&handleGpuDomainTransferForHw) gpuDomainHandler = &handleGpuDomainTransferForHw;
 

@@ -164,6 +164,9 @@ class SVMAllocsManager {
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
+    using NonGpuDomainAllocsContainer = std::vector<void *>;
+    NonGpuDomainAllocsContainer nonGpuDomainAllocs;
+
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const std::set<uint32_t> &rootDeviceIndices,
