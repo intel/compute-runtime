@@ -115,6 +115,13 @@ void LinuxEngineImp::init() {
     fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
+bool LinuxEngineImp::isEngineModuleSupported() {
+    if (fd < 0) {
+        return false;
+    }
+    return true;
+}
+
 LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();

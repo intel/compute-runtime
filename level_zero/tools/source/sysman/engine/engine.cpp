@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,11 @@ EngineHandleContext::~EngineHandleContext() {
 
 void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {
     Engine *pEngine = new EngineImp(pOsSysman, engineType, engineInstance, subDeviceId);
-    handleList.push_back(pEngine);
+    if (pEngine->initSuccess == true) {
+        handleList.push_back(pEngine);
+    } else {
+        delete pEngine;
+    }
 }
 
 void EngineHandleContext::init() {

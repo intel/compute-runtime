@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class Engine : _zes_engine_handle_t {
         return static_cast<Engine *>(handle);
     }
     inline zes_engine_handle_t toHandle() { return this; }
+    bool initSuccess = false;
 };
 
 struct EngineHandleContext {
