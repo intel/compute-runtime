@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,9 @@ struct PVC : public XE_HPC_COREFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile);
     static void adjustHardwareInfo(HardwareInfo *hwInfo);
+    static bool isXlA0(const HardwareInfo &hwInfo);
+    static bool isAtMostXtA0(const HardwareInfo &hwInfo);
+    static bool isXtTemporary(const HardwareInfo &hwInfo);
 };
 
 class PVC_CONFIG : public PVC {

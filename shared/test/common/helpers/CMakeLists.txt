@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_traits.h
     ${CMAKE_CURRENT_SOURCE_DIR}/test_traits_platforms.h
     ${CMAKE_CURRENT_SOURCE_DIR}/includes${BRANCH_DIR_SUFFIX}test_traits_common.h

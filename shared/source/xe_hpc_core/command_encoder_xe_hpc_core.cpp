@@ -175,7 +175,9 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = !Family::isXlA0(hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(hwInfo);
+
     if (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     }
@@ -188,7 +190,7 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareIn
         walkerCmd.setL3PrefetchDisable(!DebugManager.flags.ForceL3PrefetchForComputeWalker.get());
     }
 
-    auto programComputeDispatchAllWalkerEnableInComputeWalker = Family::isXtTemporary(hwInfo);
+    auto programComputeDispatchAllWalkerEnableInComputeWalker = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
     if (programComputeDispatchAllWalkerEnableInComputeWalker) {
         if (kernelExecutionType == KernelExecutionType::Concurrent) {
             walkerCmd.setComputeDispatchAllWalkerEnable(true);
@@ -240,7 +242,9 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
         }
     }
 
-    if ((slmSize == 0) && (Family::isXlA0(hwInfo))) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    if ((slmSize == 0) && (hwInfoConfig.isAdjustProgrammableIdPreferredSlmSizeRequired(hwInfo))) {
         programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K;
     }
 

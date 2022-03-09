@@ -5,10 +5,12 @@
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
+
 using Family = NEO::XE_HPC_COREFamily;
 
 namespace NEO {
@@ -54,7 +56,8 @@ bool UnitTestHelper<Family>::isAdditionalSynchronizationRequired() {
 
 template <>
 bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !Family::isXlA0(hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }

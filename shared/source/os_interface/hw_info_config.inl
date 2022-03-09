@@ -298,4 +298,44 @@ bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isThreaEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

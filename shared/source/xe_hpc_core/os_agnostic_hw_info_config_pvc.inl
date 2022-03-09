@@ -121,3 +121,43 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
+    return PVC::isAtMostXtA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
+    return PVC::isAtMostXtA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return !PVC::isXlA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return PVC::isXtTemporary(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+    return !PVC::isXlA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
+    return PVC::isXlA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isThreaEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
+    return !PVC::isXtTemporary(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+    return !PVC::isXtTemporary(hwInfo);
+}

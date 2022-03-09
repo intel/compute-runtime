@@ -16,68 +16,6 @@ using namespace NEO;
 
 using PreambleCfeState = PreambleFixture;
 
-XE_HPC_CORETEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCallingProgramVFEStateThenCFEStateParamsAreCorrectlySet) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-
-    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *hwInfo, EngineGroupType::RenderCompute);
-    StreamProperties streamProperties{};
-    std::array<std::pair<uint32_t, bool>, 4> revisions = {
-        {{REVISION_A0, false},
-         {REVISION_A0, true},
-         {REVISION_B, false},
-         {REVISION_B, true}}};
-
-    for (const auto &[revision, kernelExecutionType] : revisions) {
-        hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *hwInfo);
-        streamProperties.frontEndState.setProperties(kernelExecutionType, false, false, false, *hwInfo);
-
-        PreambleHelper<FamilyType>::programVfeState(pVfeCmd, *hwInfo, 0u, 0, 0, streamProperties);
-        parseCommands<FamilyType>(linearStream);
-        auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), cfeStateIt);
-        auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
-
-        auto expectedValue = (HwInfoConfig::get(hwInfo->platform.eProductFamily)->getSteppingFromHwRevId(*hwInfo) >= REVISION_B) &&
-                             (!XE_HPC_CORE::isXtTemporary(*defaultHwInfo)) &&
-                             kernelExecutionType;
-        EXPECT_EQ(expectedValue, cfeState->getComputeDispatchAllWalkerEnable());
-        EXPECT_EQ(expectedValue, cfeState->getSingleSliceDispatchCcsMode());
-        EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
-    }
-}
-
-XE_HPC_CORETEST_F(PreambleCfeState, givenPvcXtTemporaryAndKernelExecutionTypeConcurrentAndRevisionBWhenCallingProgramVFEStateThenAllWalkerIsDisabled) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.usDeviceID = 0x0BE5;
-    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-
-    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
-    StreamProperties streamProperties{};
-    streamProperties.frontEndState.setProperties(true, false, false, false, hwInfo);
-
-    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
-    parseCommands<FamilyType>(linearStream);
-    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), cfeStateIt);
-    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
-
-    EXPECT_FALSE(cfeState->getComputeDispatchAllWalkerEnable());
-    EXPECT_FALSE(cfeState->getSingleSliceDispatchCcsMode());
-}
-
 XE_HPC_CORETEST_F(PreambleCfeState, givenXeHpcCoreAndSetDebugFlagWhenPreambleCfeStateIsProgrammedThenCFEStateParamsHaveSetValue) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
     DebugManagerStateRestore dbgRestore;
@@ -154,41 +92,4 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenSetDebugFlagWhenPreambleCfeStateIsProgr
     EXPECT_EQ(expectedValue1, cfeState->getLargeGRFThreadAdjustDisable());
     EXPECT_EQ(expectedValue2, cfeState->getNumberOfWalkers());
     EXPECT_EQ(expectedValue2, cfeState->getMaximumNumberOfThreads());
-}
-
-using PreamblePipelineSelectState = PreambleFixture;
-XE_HPC_CORETEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramPipelineSelectThenSystolicModeDisabled) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-
-    if (hwInfo->platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    PipelineSelectArgs pipelineArgs;
-    pipelineArgs.specialPipelineSelectMode = true;
-
-    struct {
-        unsigned short revId;
-        bool expectedValue;
-    } testInputs[] = {
-        {0x0, true},
-        {0x1, true},
-        {0x3, true},
-        {0x5, false},
-        {0x6, false},
-        {0x7, false},
-    };
-    for (auto &testInput : testInputs) {
-        LinearStream linearStream(&gfxAllocation);
-        hwInfo->platform.usRevId = testInput.revId;
-        PreambleHelper<FamilyType>::programPipelineSelect(&linearStream, pipelineArgs, *hwInfo);
-        parseCommands<FamilyType>(linearStream);
-
-        auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(itorCmd, cmdList.end());
-
-        auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
-        EXPECT_EQ(testInput.expectedValue, cmd->getSystolicModeEnable());
-    }
 }

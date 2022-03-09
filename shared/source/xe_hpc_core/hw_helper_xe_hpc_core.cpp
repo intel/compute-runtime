@@ -172,7 +172,8 @@ size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !Family::isXlA0(hwInfo);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -188,7 +189,9 @@ template <>
 void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = !Family::isXlA0(hwInfo);
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -410,8 +413,9 @@ uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *p
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
+    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
     auto revId = pHwInfo->platform.usRevId & Family::pvcSteppingBits;
-    uint32_t threadEuRatio = ((0x3 <= revId) && !Family::isXtTemporary(*pHwInfo)) ? 16 : 8;
+    uint32_t threadEuRatio = ((0x3 <= revId) && hwInfoConfig.isThreaEuRatio16ForScratchRequired(*pHwInfo)) ? 16 : 8;
 
     return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
 }
