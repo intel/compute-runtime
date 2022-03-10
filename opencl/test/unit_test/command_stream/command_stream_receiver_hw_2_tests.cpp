@@ -1405,7 +1405,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     MI_BATCH_BUFFER_START *bbStart = hwParser.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
     EXPECT_EQ(csr.latestFlushedBatchBuffer.endCmdPtr, bbStart);
-    EXPECT_EQ(0ull, bbStart->getBatchBufferStartAddress());
+    EXPECT_NE(0ull, bbStart->getBatchBufferStartAddress());
 }
 
 HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatchBufferStartIsProgrammed) {

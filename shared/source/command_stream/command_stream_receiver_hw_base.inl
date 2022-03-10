@@ -94,9 +94,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, Device &device, void **patchLocation, bool directSubmissionEnabled) {
     if (directSubmissionEnabled) {
-        uint64_t startAddress = 0;
-        if (DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 1) {
-            startAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
+        uint64_t startAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
+        if (DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
+            startAddress = 0;
         }
 
         *patchLocation = commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
