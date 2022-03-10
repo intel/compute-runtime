@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -36,7 +36,7 @@ function(dependency_detect COMPONENT_NAME DLL_NAME VAR_NAME REL_LOCATION IS_THIR
     if(NEO__${VAR_NAME}_FOUND)
       if(DEFINED __tmp_LIBDIR)
         if(NOT NEO__${VAR_NAME}_INCLUDE_DIRS STREQUAL "")
-          string(REPLACE "${NEO__${VAR_NAME}_INCLUDEDIR}" "${LIBRARY_DIR}/include/${DLL_NAME}" NEO__${VAR_NAME}_INCLUDE_DIRS "${NEO__${VAR_NAME}_INCLUDE_DIRS}")
+          string(REPLACE "${NEO__${VAR_NAME}_INCLUDEDIR}" "${LIBRARY_DIR}/include" NEO__${VAR_NAME}_INCLUDE_DIRS "${NEO__${VAR_NAME}_INCLUDE_DIRS}")
         else()
           set(NEO__${VAR_NAME}_INCLUDE_DIRS "${LIBRARY_DIR}/include")
         endif()
@@ -71,9 +71,13 @@ endfunction()
 
 # Metrics Library Detection
 dependency_detect("Metrics Library" libigdml METRICS_LIBRARY "../metrics/library" TRUE)
-include_directories("${NEO__METRICS_LIBRARY_INCLUDE_DIR}")
+if(NOT NEO__METRICS_LIBRARY_INCLUDE_DIR STREQUAL "")
+  include_directories("${NEO__METRICS_LIBRARY_INCLUDE_DIR}")
+endif()
 
 # Metrics Discovery Detection
 dependency_detect("Metrics Discovery" libmd METRICS_DISCOVERY "../metrics/discovery" TRUE)
-include_directories("${NEO__METRICS_DISCOVERY_INCLUDE_DIR}")
+if(NOT NEO__METRICS_DISCOVERY_INCLUDE_DIR STREQUAL "")
+  include_directories("${NEO__METRICS_DISCOVERY_INCLUDE_DIR}")
+endif()
 
