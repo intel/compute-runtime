@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,12 @@
 #include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
+constexpr static auto gfxProduct = IGFX_GEMINILAKE;
+
+#include "shared/source/gen9/glk/os_agnostic_hw_info_config_glk.inl"
 
 template <>
-int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     if (nullptr == osIface) {
         return 0;
     }
@@ -62,5 +65,5 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_GEMINILAKE>;
+template class HwInfoConfigHw<gfxProduct>;
 } // namespace NEO

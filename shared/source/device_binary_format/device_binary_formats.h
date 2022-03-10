@@ -7,8 +7,11 @@
 
 #pragma once
 
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
+
+#include "platforms.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -57,6 +60,7 @@ inline const char *asString(DecodeError err) {
 struct TargetDevice {
     GFXCORE_FAMILY coreFamily = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
+    PRODUCT_CONFIG productConfig = UNKNOWN_ISA;
     uint32_t stepping = 0U;
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;

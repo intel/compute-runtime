@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,14 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
     case REVISION_B:
         return 0x1;
     case REVISION_C:
-        return 0x4;
+        return 0x3;
     }
     return CommonConstants::invalidStepping;
+}
+
+template <>
+PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return PRODUCT_CONFIG::TGL;
 }
 
 template <>
@@ -25,15 +30,25 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
         return REVISION_A0;
     case 0x1:
         return REVISION_B;
-    case 0x4:
+    case 0x3:
         return REVISION_C;
     }
     return CommonConstants::invalidStepping;
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+}
+
+template <>
 bool HwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo);
+    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>

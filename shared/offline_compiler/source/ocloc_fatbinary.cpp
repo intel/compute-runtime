@@ -14,6 +14,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 
 #include "igfxfmid.h"
 
@@ -311,8 +312,6 @@ std::vector<DeviceMapping> getTargetConfigsForFatbinary(ConstStringRef deviceArg
 
 int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig) {
-    std::string product = hardwarePrefix[pCompiler->getHardwareInfo().platform.eProductFamily];
-    auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
 
     if (retVal == 0) {
         retVal = buildWithSafetyGuard(pCompiler);
@@ -334,7 +333,7 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
     if (retVal) {
         return retVal;
     }
-    fatbinary.appendFileEntry(pointerSize + "." + product + "." + std::to_string(stepping), pCompiler->getPackedDeviceBinaryOutput());
+    fatbinary.appendFileEntry(pointerSize + "." + deviceConfig, pCompiler->getPackedDeviceBinaryOutput());
     return retVal;
 }
 
@@ -426,7 +425,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
                 return retVal;
             }
 
-            auto targetConfigStr = argHelper->parseProductConfigFromValue(targetConfig.config);
+            auto targetConfigStr = ProductConfigHelper::parseMajorMinorRevisionValue(targetConfig.config);
             retVal = buildFatBinaryForTarget(retVal, argsCopy, pointerSizeInBits, fatbinary, pCompiler.get(), argHelper, targetConfigStr);
             if (retVal) {
                 return retVal;

@@ -737,13 +737,25 @@ if(MSVC)
   include_directories(${NEO_SOURCE_DIR}/opencl/source/sharings/gl/windows/include)
 endif()
 
+macro(macro_for_each_platform)
+  string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
+  foreach(PLATFORM_DIRECTORY ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+    if(EXISTS ${PLATFORM_DIRECTORY})
+      include_directories(${PLATFORM_DIRECTORY})
+    endif()
+  endforeach()
+endmacro()
+
 macro(macro_for_each_core_type)
   foreach(PLATFORM_DIRECTORY ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX} ${NEO_SOURCE_DIR}/opencl/source/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
     if(EXISTS ${PLATFORM_DIRECTORY})
       include_directories(${PLATFORM_DIRECTORY})
     endif()
   endforeach()
+
+  apply_macro_for_each_platform()
 endmacro()
+
 apply_macro_for_each_core_type("SUPPORTED")
 
 # Define where to put binaries

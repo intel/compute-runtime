@@ -14,6 +14,7 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/product_config_helper.h"
 
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
@@ -41,8 +42,8 @@ std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
         return {};
     }
 
-    const auto cfg1 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[0].config);
-    const auto cfg2 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[1].config);
+    const auto cfg1 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
+    const auto cfg2 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[1].config);
 
     return cfg1 + "," + cfg2;
 }
@@ -106,7 +107,7 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgToFatBinaryWhenConfigMatche
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
     auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
 
-    std::string configNum0 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2].config);
+    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2].config);
     auto major_pos = configNum0.find(".");
     auto cutMinorAndRevision = configNum0.substr(0, major_pos);
     auto matchedConfigs = getAllMatchedConfigs(cutMinorAndRevision, argHelper.get());
@@ -124,7 +125,7 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgAsSingleProductConfigThenFa
     auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
 
     for (auto &deviceConfig : allEnabledDeviceConfigs) {
-        std::string configStr = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        std::string configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
         const char *singleConfig[] = {"ocloc", "-device", configStr.c_str()};
         EXPECT_FALSE(NEO::requestedFatBinary(3, singleConfig, argHelper.get()));
     }
@@ -156,9 +157,9 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenDifferentDeviceArgWhenCh
     ConstStringRef platformName1(hardwarePrefix[platform1], strlen(hardwarePrefix[platform1]));
 
     auto deviceMapConfig0 = allEnabledDeviceConfigs[0];
-    auto configNumConvention0 = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig0.config);
+    auto configNumConvention0 = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig0.config);
     auto deviceMapConfig1 = allEnabledDeviceConfigs[1];
-    auto configNumConvention1 = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig1.config);
+    auto configNumConvention1 = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig1.config);
 
     auto twoPlatforms = platformName0.str() + "," + platformName1.str();
     auto configsRange = configNumConvention0 + "-" + configNumConvention1;
@@ -217,7 +218,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
     }
 
     auto deviceMapConfig0 = allEnabledDeviceConfigs[0];
-    auto config0Str = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig0.config);
+    auto config0Str = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig0.config);
 
     auto got = NEO::getTargetConfigsForFatbinary("1.2-" + config0Str, oclocArgHelperWithoutInput.get());
     EXPECT_TRUE(got.empty());
@@ -578,9 +579,9 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenClosedRangeTooExtensiveW
     if (allEnabledDeviceConfigs.size() < 4) {
         GTEST_SKIP();
     }
-    std::string configNum0 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[0].config);
-    std::string configNum1 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[1].config);
-    std::string configNum2 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[2].config);
+    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
+    std::string configNum1 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[1].config);
+    std::string configNum2 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[2].config);
 
     std::stringstream configString;
     configString << configNum0 << "-" << configNum1 << "-" << configNum2;
@@ -871,8 +872,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryB
     auto config0 = allEnabledDeviceConfigs[0];
     auto config1 = allEnabledDeviceConfigs[1];
 
-    auto configStr0 = argHelper->parseProductConfigFromValue(config0.config);
-    auto configStr1 = argHelper->parseProductConfigFromValue(config1.config);
+    auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0.config);
+    auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1.config);
 
     std::vector<std::string> targets{configStr0, configStr1};
     std::vector<DeviceMapping> expected;
@@ -910,7 +911,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryB
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
         resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
@@ -924,7 +925,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFr
         GTEST_SKIP();
     }
     auto deviceMapConfig = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2];
-    auto configNumConvention = argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+    auto configNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
 
     std::vector<DeviceMapping> expected;
     auto configFrom = std::find_if(allEnabledDeviceConfigs.begin(),
@@ -955,7 +956,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFr
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
         resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
@@ -970,7 +971,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeTo
     }
 
     auto deviceMapConfig = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2];
-    auto configNumConvention = argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+    auto configNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
 
     std::vector<DeviceMapping> expected;
     for (auto &deviceConfig : allEnabledDeviceConfigs) {
@@ -1000,7 +1001,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeTo
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
         resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
@@ -1016,8 +1017,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
 
     auto deviceMapConfigFrom = allEnabledDeviceConfigs[1];
     auto deviceMapConfigTo = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() - 2];
-    auto configFromNumConvention = argHelper->parseProductConfigFromValue(deviceMapConfigFrom.config);
-    auto configToNumConvention = argHelper->parseProductConfigFromValue(deviceMapConfigTo.config);
+    auto configFromNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfigFrom.config);
+    auto configToNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfigTo.config);
 
     std::vector<DeviceMapping> expected;
 
@@ -1053,7 +1054,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
     for (auto deviceConfig : expected) {
-        auto targetConfig = argHelper->parseProductConfigFromValue(deviceConfig.config);
+        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
         resString << "Build succeeded for : " << targetConfig + ".\n";
     }
 
@@ -1066,7 +1067,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNum
         GTEST_SKIP();
     }
 
-    std::string configNum0 = oclocArgHelperWithoutInput->parseProductConfigFromValue(allEnabledDeviceConfigs[0].config);
+    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
     auto major_pos = configNum0.find(".");
     auto minor_pos = configNum0.find(".", ++major_pos);
     auto cutRevision = configNum0.substr(0, minor_pos);
@@ -1081,7 +1082,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNum
         GTEST_SKIP();
     }
 
-    std::string configNum0 = oclocArgHelperWithoutInput->parseProductConfigFromValue(allEnabledDeviceConfigs[0].config);
+    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
     auto major_pos = configNum0.find(".");
     auto cutMinorAndRevision = configNum0.substr(0, major_pos);
 

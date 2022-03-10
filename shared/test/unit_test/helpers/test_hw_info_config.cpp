@@ -47,3 +47,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetThreadEuRatioForScratchThen8I
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(8u, hwInfoConfig.getThreadEuRatioForScratch(*defaultHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_NE(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), UNKNOWN_ISA);
+}

@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -20,8 +21,11 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
 
 TargetDevice targetDeviceFromHwInfo(const HardwareInfo &hwInfo) {
     TargetDevice targetDevice = {};
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;
+    targetDevice.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;

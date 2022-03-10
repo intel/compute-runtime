@@ -9,6 +9,8 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}product_config_tests_dg2.cpp
   )
+  add_subdirectories()
 endif()
 

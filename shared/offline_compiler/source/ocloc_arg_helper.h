@@ -105,7 +105,6 @@ class OclocArgHelper {
     };
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
     int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);
-    const std::string parseProductConfigFromValue(PRODUCT_CONFIG config);
     bool getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo);
     void getProductConfigsForGfxCoreFamily(GFXCORE_FAMILY core, std::vector<DeviceMapping> &out);
     void setDeviceInfoForFatbinaryTarget(const DeviceMapping &device);

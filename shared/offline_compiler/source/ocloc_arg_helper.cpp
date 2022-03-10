@@ -246,16 +246,6 @@ std::vector<DeviceMapping> &OclocArgHelper::getAllSupportedDeviceConfigs() {
     return deviceMap;
 }
 
-const std::string OclocArgHelper::parseProductConfigFromValue(PRODUCT_CONFIG config) {
-    auto configValue = static_cast<uint32_t>(config);
-    std::stringstream stringConfig;
-    uint32_t major = (configValue & 0xff0000) >> 16;
-    uint32_t minor = (configValue & 0x00ff00) >> 8;
-    uint32_t revision = configValue & 0x0000ff;
-    stringConfig << major << "." << minor << "." << revision;
-    return stringConfig.str();
-}
-
 std::vector<PRODUCT_CONFIG> OclocArgHelper::getAllSupportedProductConfigs() {
     std::vector<PRODUCT_CONFIG> allConfigs;
     for (auto &deviceConfig : deviceMap) {

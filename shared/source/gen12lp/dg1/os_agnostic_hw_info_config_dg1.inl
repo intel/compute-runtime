@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,13 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
         return 0x0;
     case REVISION_B:
         return 0x1;
-    case REVISION_C:
-        return 0x3;
     }
     return CommonConstants::invalidStepping;
+}
+
+template <>
+PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return PRODUCT_CONFIG::DG1;
 }
 
 template <>
@@ -25,8 +28,6 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
         return REVISION_A0;
     case 0x1:
         return REVISION_B;
-    case 0x3:
-        return REVISION_C;
     }
     return CommonConstants::invalidStepping;
 }
@@ -47,6 +48,21 @@ bool HwInfoConfigHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const Hardwar
 }
 
 template <>
+bool HwInfoConfigHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool HwInfoConfigHw<gfxProduct>::is3DPipelineSelectWARequired() const {
+    return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+    return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
     return true;
 }

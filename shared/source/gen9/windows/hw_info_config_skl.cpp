@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,10 @@
 #include "shared/source/os_interface/hw_info_config_bdw_and_later.inl"
 
 namespace NEO {
+constexpr static auto gfxProduct = IGFX_SKYLAKE;
 
-template class HwInfoConfigHw<IGFX_SKYLAKE>;
+#include "shared/source/gen9/skl/os_agnostic_hw_info_config_skl.inl"
+
+template class HwInfoConfigHw<gfxProduct>;
 
 } // namespace NEO

@@ -53,6 +53,32 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
 }
 
 template <>
+PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
+    if (stepping == CommonConstants::invalidStepping) {
+        return PRODUCT_CONFIG::UNKNOWN_ISA;
+    }
+
+    if (PVC::isXl(hwInfo)) {
+        switch (hwInfo.platform.usRevId) {
+        case 0x0:
+            return PRODUCT_CONFIG::PVC_XL_A0;
+        default:
+        case 0x1:
+            return PRODUCT_CONFIG::PVC_XL_B0;
+        }
+    } else {
+        switch (stepping) {
+        case REVISION_A0:
+            return PRODUCT_CONFIG::PVC_XT_A0;
+        default:
+        case REVISION_B:
+            return PRODUCT_CONFIG::PVC_XT_B0;
+        }
+    }
+}
+
+template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
     bool isBaseDieA0 = (hwInfo->platform.usRevId & XE_HPC_COREFamily::pvcBaseDieRevMask) == XE_HPC_COREFamily::pvcBaseDieA0Masked;
     if (isBaseDieA0) {

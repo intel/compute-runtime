@@ -10,6 +10,14 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
 namespace NEO {
+void searchForBinary(Ar::Ar &archiveData, const ConstStringRef filter, Ar::ArFileEntryHeaderAndData *&matched) {
+    for (auto &file : archiveData.files) {
+        if (file.fileName.startsWith(filter.str().c_str())) {
+            matched = &file;
+            return;
+        }
+    }
+}
 
 template <>
 bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Archive>(const ArrayRef<const uint8_t> binary) {
@@ -25,29 +33,24 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
     }
 
     std::string pointerSize = ((requestedTargetDevice.maxPointerSizeInBytes == 8) ? "64" : "32");
+    std::string filterPointerSizeAndMajorMinorRevision = pointerSize + "." + NEO::ProductConfigHelper::parseMajorMinorRevisionValue(requestedTargetDevice.productConfig);
+    std::string filterPointerSizeAndMajorMinor = pointerSize + "." + NEO::ProductConfigHelper::parseMajorMinorValue(requestedTargetDevice.productConfig);
     std::string filterPointerSizeAndPlatform = pointerSize + "." + requestedProductAbbreviation.str();
     std::string filterPointerSizeAndPlatformAndStepping = filterPointerSizeAndPlatform + "." + std::to_string(requestedTargetDevice.stepping);
-    ConstStringRef genericIrFileName{"generic_ir"};
+    ConstStringRef filterGenericIrFileName{"generic_ir"};
 
-    Ar::ArFileEntryHeaderAndData *matchedFiles[3] = {};
-    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatformAndStepping = matchedFiles[0]; // best match
-    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatform = matchedFiles[1];
-    Ar::ArFileEntryHeaderAndData *&matchedGenericIr = matchedFiles[2];
+    Ar::ArFileEntryHeaderAndData *matchedFiles[5] = {};
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinorRevision = matchedFiles[0];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatformAndStepping = matchedFiles[1];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndMajorMinor = matchedFiles[2];
+    Ar::ArFileEntryHeaderAndData *&matchedPointerSizeAndPlatform = matchedFiles[3];
+    Ar::ArFileEntryHeaderAndData *&matchedGenericIr = matchedFiles[4];
 
-    for (auto &file : archiveData.files) {
-        const auto &filename = file.fileName;
-        constexpr std::string::size_type zeroIndex{0};
-
-        if (filename.size() >= filterPointerSizeAndPlatformAndStepping.size() &&
-            filename.substr(zeroIndex, filterPointerSizeAndPlatformAndStepping.size()) == filterPointerSizeAndPlatformAndStepping) {
-            matchedPointerSizeAndPlatformAndStepping = &file;
-        } else if (filename.size() >= filterPointerSizeAndPlatform.size() &&
-                   filename.substr(zeroIndex, filterPointerSizeAndPlatform.size()) == filterPointerSizeAndPlatform) {
-            matchedPointerSizeAndPlatform = &file;
-        } else if (file.fileName == genericIrFileName) {
-            matchedGenericIr = &file;
-        }
-    }
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinorRevision), matchedPointerSizeAndMajorMinorRevision);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatformAndStepping), matchedPointerSizeAndPlatformAndStepping);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndMajorMinor), matchedPointerSizeAndMajorMinor);
+    searchForBinary(archiveData, ConstStringRef(filterPointerSizeAndPlatform), matchedPointerSizeAndPlatform);
+    searchForBinary(archiveData, filterGenericIrFileName, matchedGenericIr);
 
     std::string unpackErrors;
     std::string unpackWarnings;
@@ -58,10 +61,9 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
         }
         auto unpacked = unpackSingleDeviceBinary(matchedFile->fileData, requestedProductAbbreviation, requestedTargetDevice, unpackErrors, unpackWarnings);
         if (false == unpacked.deviceBinary.empty()) {
-            if (matchedFile != matchedPointerSizeAndPlatformAndStepping) {
-                outWarning = "Couldn't find perfectly matched binary (right stepping) in AR, using best usable";
+            if ((matchedFile != matchedPointerSizeAndPlatformAndStepping) && (matchedFile != matchedPointerSizeAndMajorMinorRevision)) {
+                outWarning = "Couldn't find perfectly matched binary in AR, using best usable";
             }
-
             if (unpacked.intermediateRepresentation.empty() && matchedGenericIr) {
                 auto unpackedGenericIr = unpackSingleDeviceBinary(matchedGenericIr->fileData, requestedProductAbbreviation, requestedTargetDevice, unpackErrors, unpackWarnings);
                 if (!unpackedGenericIr.intermediateRepresentation.empty()) {

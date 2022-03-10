@@ -12,6 +12,7 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "igfxfmid.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -52,6 +53,7 @@ class HwInfoConfig {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
@@ -132,6 +134,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     bool overrideGfxPartitionLayoutForWsl() const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
+    PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     void setAdditionalPipelineSelectFields(void *pipelineSelectCmd, const PipelineSelectArgs &pipelineSelectArgs, const HardwareInfo &hwInfo) override;

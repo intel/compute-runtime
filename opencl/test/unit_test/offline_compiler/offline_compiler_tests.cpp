@@ -15,6 +15,7 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -193,7 +194,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
     std::string configStr;
     for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+            configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
             break;
         }
     }
@@ -529,7 +530,7 @@ TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenResetGtS
     auto expectedRevId = 0u;
     for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            mockOfflineCompiler.deviceName = mockOfflineCompiler.argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+            mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
             expectedRevId = deviceMapConfig.revId;
         }
     }
@@ -872,7 +873,7 @@ TEST_F(OfflineCompilerTests, givenInitHardwareInfowhenDeviceConfigContainsDevice
 
     for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            mockOfflineCompiler.deviceName = mockOfflineCompiler.argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+            mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
             deviceMapConfig.deviceIds = &deviceIdsForTests;
             break;
         }
@@ -1265,7 +1266,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     std::string configStr;
     for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            configStr = oclocArgHelperWithoutInput->parseProductConfigFromValue(deviceMapConfig.config);
+            configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
             break;
         }
     }

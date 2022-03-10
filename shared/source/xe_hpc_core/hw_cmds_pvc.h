@@ -34,18 +34,12 @@ struct PVC : public XE_HPC_COREFamily {
 
     static bool isXl(const HardwareInfo &hwInfo) {
         auto it = std::find(PVC_XL_IDS.begin(), PVC_XL_IDS.end(), hwInfo.platform.usDeviceID);
-        if (it != PVC_XL_IDS.end()) {
-            return true;
-        }
-        return false;
+        return it != PVC_XL_IDS.end();
     }
 
     static bool isXt(const HardwareInfo &hwInfo) {
         auto it = std::find(PVC_XT_IDS.begin(), PVC_XT_IDS.end(), hwInfo.platform.usDeviceID);
-        if (it != PVC_XT_IDS.end()) {
-            return true;
-        }
-        return false;
+        return it != PVC_XT_IDS.end();
     }
 
     static constexpr uint32_t pvcSteppingBits = 0b111;

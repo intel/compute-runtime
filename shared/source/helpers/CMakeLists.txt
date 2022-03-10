@@ -103,6 +103,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ray_tracing_helper.cpp

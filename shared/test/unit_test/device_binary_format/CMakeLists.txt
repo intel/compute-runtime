@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,4 +24,16 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_debug_binary_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_tests.h
 )
+
+if(TESTS_PVC)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_pvc.cpp
+  )
+endif()
+
+if(TESTS_DG2)
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_dg2.cpp
+  )
+endif()
 

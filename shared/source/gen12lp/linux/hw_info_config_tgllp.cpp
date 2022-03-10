@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ namespace NEO {
 constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
-#include "shared/source/gen12lp/os_agnostic_hw_info_config_tgllp.inl"
+#include "shared/source/gen12lp/tgllp/os_agnostic_hw_info_config_tgllp.inl"
 
 template <>
 int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {

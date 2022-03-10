@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
+#include "shared/source/helpers/product_config_helper.h"
+
 namespace NEO {
 TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThenCorrectValuesAreSet) {
     auto deviceId = 0u;
@@ -23,7 +25,7 @@ TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThen
         }
     }
 
-    mockOfflineCompiler->deviceName = mockOfflineCompiler->argHelper->parseProductConfigFromValue(productConfig);
+    mockOfflineCompiler->deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
     mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
 
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.eProductFamily, productFamily);

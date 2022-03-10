@@ -21,6 +21,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -881,16 +882,11 @@ std::string OfflineCompiler::getDevicesConfigs() {
     std::list<std::string> configNum;
     auto allSupportedConfigs = argHelper->getAllSupportedProductConfigs();
 
-    for (auto &config : allSupportedConfigs) {
-        auto numeration = argHelper->parseProductConfigFromValue(config);
-        configNum.push_back(numeration);
-    }
-
     std::ostringstream os;
-    for (auto it = configNum.begin(); it != configNum.end(); it++) {
-        if (it != configNum.begin())
+    for (auto it = allSupportedConfigs.begin(); it != allSupportedConfigs.end(); it++) {
+        if (it != allSupportedConfigs.begin())
             os << ", ";
-        os << *it;
+        os << ProductConfigHelper::parseMajorMinorRevisionValue(*it);
     }
 
     return os.str();

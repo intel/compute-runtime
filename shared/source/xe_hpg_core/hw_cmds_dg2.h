@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,16 @@ struct DG2 : public XE_HPG_COREFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+
+    static bool isG10(const HardwareInfo &hwInfo) {
+        auto it = std::find(DG2_G10_IDS.begin(), DG2_G10_IDS.end(), hwInfo.platform.usDeviceID);
+        return it != DG2_G10_IDS.end();
+    }
+
+    static bool isG11(const HardwareInfo &hwInfo) {
+        auto it = std::find(DG2_G11_IDS.begin(), DG2_G11_IDS.end(), hwInfo.platform.usDeviceID);
+        return it != DG2_G11_IDS.end();
+    }
 };
 
 class DG2_CONFIG : public DG2 {
