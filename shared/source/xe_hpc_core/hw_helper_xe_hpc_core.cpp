@@ -350,7 +350,7 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 
 template <>
 int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
-    return ThreadArbitrationPolicy::AgeBased;
+    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
 template <>
