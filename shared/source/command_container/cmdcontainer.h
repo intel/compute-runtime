@@ -88,7 +88,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void closeAndAllocateNextCommandBuffer();
 
     void handleCmdBufferAllocations(size_t startIndex);
-    void handleCmdBufferAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *obtainNextCommandBufferAllocation();
 
     void reset();

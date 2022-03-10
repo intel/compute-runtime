@@ -18,7 +18,6 @@
 #include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_command_container.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
@@ -364,7 +363,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
-        cmdContainer.reset(new MockCommandContainer());
+        cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
@@ -395,7 +394,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(0);
-        cmdContainer.reset(new MockCommandContainer());
+        cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
@@ -417,7 +416,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(1);
-        cmdContainer.reset(new MockCommandContainer());
+        cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr);
 
         bool requiresUncachedMocs = false;
