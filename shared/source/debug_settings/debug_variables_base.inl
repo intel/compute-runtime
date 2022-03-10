@@ -195,6 +195,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndex, -1, "-1: default, >=0: PatInde
 DECLARE_DEBUG_VARIABLE(int32_t, UseTileMemoryBankInVirtualMemoryCreation, -1, "-1: default - on, 0: do not assign tile memory bank to virtual memory space, 1: assign tile memory bank to virtual memory space")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampEvents, -1, "-1: default (based on user settings), 0: Force disable timestamp events (no timestamps will be reported), 1: Force enable timestamp events")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreParserEnabledForMiArbCheck, -1, "-1: default , 0: PreParser disabled, 1: PreParser enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, BatchBufferStartPrepatchingWaEnabled, -1, "-1: default , 0: disabled, 1: enabled. WA applies valid VA pointing to 'self' instead of 0x0. This mitigates incorrect VA preparsing.")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

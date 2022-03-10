@@ -617,6 +617,46 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     EXPECT_EQ(expectedSize, mockCsr->getCmdSizeForEpilogue(dispatchFlags));
 }
 
+HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThenUseNonZeroBatchBufferStart) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(1);
+
+    MockGraphicsAllocation mockAllocation;
+
+    int32_t executionStamp = 0;
+    std::unique_ptr<MockCsr<FamilyType>> mockCsr = std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment,
+                                                                                         pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    mockCsr->setupContext(*osContext);
+    mockCsr->directSubmissionAvailable = true;
+    bool ret = mockCsr->isDirectSubmissionEnabled();
+    EXPECT_TRUE(ret);
+
+    void *location = nullptr;
+    uint8_t buffer[128];
+    mockCsr->commandStream.replaceBuffer(&buffer[0], 128u);
+    mockCsr->commandStream.replaceGraphicsAllocation(&mockAllocation);
+    auto &device = *pDevice;
+    mockCsr->programEndingCmd(mockCsr->commandStream, device, &location, ret);
+    EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), mockCsr->commandStream.getUsed());
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.epilogueRequired = true;
+    size_t expectedSize = sizeof(MI_BATCH_BUFFER_START) +
+                          mockCsr->getCmdSizeForEpilogueCommands(dispatchFlags);
+    expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
+    EXPECT_EQ(expectedSize, mockCsr->getCmdSizeForEpilogue(dispatchFlags));
+
+    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(mockCsr->commandStream.getCpuBase());
+
+    EXPECT_EQ(mockCsr->commandStream.getGraphicsAllocation()->getGpuAddress(), bbStartCmd->getBatchBufferStartAddress());
+
+    mockCsr->commandStream.replaceGraphicsAllocation(nullptr);
+}
+
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDiagnosticNotAvailableWhenDiagnosticRegistryIsUsedThenDoNotEnableDiagnostic) {
     using Dispatcher = RenderDispatcher<FamilyType>;

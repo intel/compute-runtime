@@ -94,13 +94,21 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &commandStream, Device &device, void **patchLocation, bool directSubmissionEnabled) {
     if (directSubmissionEnabled) {
+        uint64_t startAddress = 0;
+        if (DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 1) {
+            startAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed();
+        }
+
         *patchLocation = commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
         auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*patchLocation);
         MI_BATCH_BUFFER_START cmd = {};
-        addBatchBufferStart(&cmd, 0ull, false);
+
+        addBatchBufferStart(&cmd, startAddress, false);
         *bbStart = cmd;
     } else {
-        PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, device);
+        if (!EngineHelpers::isBcs(osContext->getEngineType())) {
+            PreemptionHelper::programStateSipEndWa<GfxFamily>(commandStream, device);
+        }
         this->addBatchBufferEnd(commandStream, patchLocation);
     }
 }
@@ -1091,16 +1099,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
     }
 
     void *endingCmdPtr = nullptr;
-    if (blitterDirectSubmission) {
-        endingCmdPtr = commandStream.getSpace(0);
-        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream,
-                                                                        0ull,
-                                                                        false);
-    } else {
-        auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(
-            commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
-        *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
-    }
+    programEndingCmd(commandStream, device, &endingCmdPtr, blitterDirectSubmission);
 
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStream);
 
