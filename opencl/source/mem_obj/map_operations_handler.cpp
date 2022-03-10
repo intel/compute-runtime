@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,8 @@ bool MapOperationsHandler::find(void *mappedPtr, MapInfo &outMapInfo) {
 }
 
 bool NEO::MapOperationsHandler::findInfoForHostPtr(const void *ptr, size_t size, MapInfo &outMapInfo) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     for (auto &mapInfo : mappedPointers) {
         void *ptrStart = mapInfo.ptr;
         void *ptrEnd = ptrOffset(mapInfo.ptr, mapInfo.ptrLength);
