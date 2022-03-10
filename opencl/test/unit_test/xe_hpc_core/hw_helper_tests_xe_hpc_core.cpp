@@ -1069,7 +1069,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsed
         {0x3, 16},
         {0x5, 16},
         {0x6, 16},
-        {0x7, 8},
+        {0x7, 16},
     };
 
     for (auto &testInput : testInputs) {
