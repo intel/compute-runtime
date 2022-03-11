@@ -873,6 +873,27 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
     }
 }
 
+TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceAllResourcesUncached.set(true);
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, *defaultHwInfo);
+        auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+
+        if (allocationType == AllocationType::PREEMPTION) {
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+
+        } else if ((allocationType == AllocationType::INTERNAL_HEAP) || (allocationType == AllocationType::LINEAR_STREAM)) {
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+        }
+
+        EXPECT_EQ(expectedUsage, usage);
+    }
+}
+
 TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForHeaps.set(true);

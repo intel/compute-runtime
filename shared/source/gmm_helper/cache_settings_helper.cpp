@@ -15,7 +15,7 @@
 namespace NEO {
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const HardwareInfo &hwInfo) {
-    if (forceUncached) {
+    if (forceUncached || DebugManager.flags.ForceAllResourcesUncached.get()) {
         return getDefaultUsageTypeWithCachingDisabled(allocationType);
     } else {
         return getDefaultUsageTypeWithCachingEnabled(allocationType, hwInfo);
