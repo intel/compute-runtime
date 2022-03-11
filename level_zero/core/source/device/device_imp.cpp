@@ -374,12 +374,23 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     pMemAccessProperties->hostAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getHostMemCapabilities(&hwInfo));
+
     pMemAccessProperties->deviceAllocCapabilities =
-        ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC;
+        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getDeviceMemCapabilities());
+
     pMemAccessProperties->sharedSingleDeviceAllocCapabilities =
-        ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC;
-    pMemAccessProperties->sharedCrossDeviceAllocCapabilities = 0;
-    pMemAccessProperties->sharedSystemAllocCapabilities = 0;
+        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getSingleDeviceSharedMemCapabilities());
+
+    pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
+    if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
+        pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
+        if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
+            pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
+        }
+    }
+
+    pMemAccessProperties->sharedSystemAllocCapabilities =
+        static_cast<ze_memory_access_cap_flags_t>(hwInfoConfig.getSharedSystemMemCapabilities(&hwInfo));
 
     return ZE_RESULT_SUCCESS;
 }
