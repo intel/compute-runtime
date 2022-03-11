@@ -222,23 +222,22 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         }
     }
 
+    std::vector<NEO::MemoryRegion> deviceRegions;
     auto memRegions = pDrm->getMemoryRegions();
     if (memRegions.empty()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    prelim_drm_i915_query_memory_regions *data = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(memRegions.data());
-
-    std::vector<prelim_drm_i915_memory_region_info> deviceRegions;
-    for (uint32_t regionIndex = 0; regionIndex < data->num_regions; regionIndex++) {
-        if (data->regions[regionIndex].region.memory_class == PRELIM_I915_MEMORY_CLASS_DEVICE) {
-            deviceRegions.push_back(data->regions[regionIndex]);
+    auto regions = pDrm->getIoctlHelper()->translateToMemoryRegions(memRegions);
+    for (auto region : regions) {
+        if (region.region.memoryClass == I915_MEMORY_CLASS_DEVICE) {
+            deviceRegions.push_back(region);
         }
     }
 
     UNRECOVERABLE_IF(deviceRegions.size() <= subdeviceId);
 
-    pState->free = deviceRegions[subdeviceId].unallocated_size;
-    pState->size = deviceRegions[subdeviceId].probed_size;
+    pState->free = deviceRegions[subdeviceId].unallocatedSize;
+    pState->size = deviceRegions[subdeviceId].probedSize;
 
     return ZE_RESULT_SUCCESS;
 }
