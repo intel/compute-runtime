@@ -40,19 +40,12 @@ void createImmediateCommandList(ze_device_handle_t &device,
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
 }
 
-void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &validRet) {
+void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, int32_t copyQueueGroup, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *hostBuffer = nullptr;
     void *deviceBuffer = nullptr;
     char *stackBuffer = new char[allocSize];
     ze_command_list_handle_t cmdList;
-
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
-        std::cout << "No Copy queue group found. Skipping test run\n";
-        validRet = true;
-        return;
-    }
 
     createImmediateCommandList(device, context, copyQueueGroup, syncMode, cmdList);
 
@@ -275,15 +268,68 @@ int main(int argc, char *argv[]) {
         std::cout << "\nTest case: Async mode compute queue with Kernel launch \n";
         executeGpuKernelAndValidate(context, device, false, outputValidationSuccessful);
     }
-    if (outputValidationSuccessful) {
-        //Sync mode with Copy queue
-        std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
-        testCopyBetweenHostMemAndDeviceMem(context, device, true, outputValidationSuccessful);
+
+    // Find copy queue in root device, if not found, try subdevices
+    int32_t copyQueueGroup = 0;
+    bool copyQueueFound = false;
+    auto copyQueueDev = devices[0];
+    for (auto &rd : devices) {
+        copyQueueGroup = getCopyOnlyCommandQueueOrdinal(rd);
+        if (copyQueueGroup >= 0) {
+            copyQueueFound = true;
+            copyQueueDev = rd;
+            if (verbose) {
+                std::cout << "\nCopy queue group found in root device\n";
+            }
+            break;
+        }
     }
-    if (outputValidationSuccessful) {
-        //Async mode with Copy queue
-        std::cout << "\nTest case: Async mode copy queue for memory copy\n";
-        testCopyBetweenHostMemAndDeviceMem(context, device, false, outputValidationSuccessful);
+
+    if (!copyQueueFound) {
+        if (verbose) {
+            std::cout << "\nNo Copy queue group found in root device. Checking subdevices now...\n";
+        }
+        copyQueueGroup = 0;
+        for (auto &rd : devices) {
+            int subDevCount = 0;
+            auto subdevs = zelloGetSubDevices(rd, subDevCount);
+
+            if (!subDevCount) {
+                continue;
+            }
+
+            // Find subdev that has a copy engine. If not skip tests
+            for (auto &sd : subdevs) {
+                copyQueueGroup = getCopyOnlyCommandQueueOrdinal(sd);
+                if (copyQueueGroup >= 0) {
+                    copyQueueFound = true;
+                    copyQueueDev = sd;
+                    break;
+                }
+            }
+
+            if (copyQueueFound) {
+                if (verbose) {
+                    std::cout << "\nCopy queue group found in sub device\n";
+                }
+                break;
+            }
+        }
+    }
+
+    if (!copyQueueFound) {
+        std::cout << "No Copy queue group found. Skipping further test runs\n";
+    } else {
+        if (outputValidationSuccessful) {
+            //Sync mode with Copy queue
+            std::cout << "\nTest case: Sync mode copy queue for memory copy\n";
+            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, true, copyQueueGroup, outputValidationSuccessful);
+        }
+        if (outputValidationSuccessful) {
+            //Async mode with Copy queue
+            std::cout << "\nTest case: Async mode copy queue for memory copy\n";
+            testCopyBetweenHostMemAndDeviceMem(context, copyQueueDev, false, copyQueueGroup, outputValidationSuccessful);
+        }
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

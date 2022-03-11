@@ -194,6 +194,21 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
     }
 }
 
+std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, int &subDevCount) {
+    uint32_t deviceCount = 0;
+    std::vector<ze_device_handle_t> subdevs(deviceCount, nullptr);
+    SUCCESS_OR_TERMINATE(zeDeviceGetSubDevices(device, &deviceCount, nullptr));
+    if (deviceCount == 0) {
+        std::cout << "No sub device found!\n";
+        subDevCount = 0;
+        return subdevs;
+    }
+    subDevCount = deviceCount;
+    subdevs.resize(deviceCount);
+    SUCCESS_OR_TERMINATE(zeDeviceGetSubDevices(device, &deviceCount, subdevs.data()));
+    return subdevs;
+}
+
 std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_t &context, ze_driver_handle_t &driverHandle) {
     SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
