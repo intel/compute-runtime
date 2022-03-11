@@ -184,6 +184,9 @@ class Device : public ReferenceTrackedObject<Device> {
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
+    std::bitset<8> availableEnginesForCommandQueueusRoundRobin = 0;
+    uint32_t queuesPerEngineCount = 1;
+    void initializeEngineRoundRobinControls();
     bool hasGenericSubDevices = false;
     bool engineInstanced = false;
     bool rootCsrCreated = false;

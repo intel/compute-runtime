@@ -577,6 +577,8 @@ EngineControl &Device::getInternalEngine() {
 }
 
 EngineControl &Device::getNextEngineForCommandQueue() {
+    this->initializeEngineRoundRobinControls();
+
     const auto &defaultEngine = this->getDefaultEngine();
 
     const auto &hardwareInfo = this->getHardwareInfo();
@@ -586,7 +588,10 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto &engineGroup = this->getRegularEngineGroups()[defaultEngineGroupIndex];
 
-    const auto engineIndex = this->regularCommandQueuesCreatedWithinDeviceCount++ % engineGroup.engines.size();
+    auto engineIndex = 0u;
+    do {
+        engineIndex = (this->regularCommandQueuesCreatedWithinDeviceCount++ / this->queuesPerEngineCount) % engineGroup.engines.size();
+    } while (!this->availableEnginesForCommandQueueusRoundRobin.test(engineIndex));
     return engineGroup.engines[engineIndex];
 }
 
@@ -646,6 +651,28 @@ void Device::finalizeRayTracing() {
         getMemoryManager()->freeGraphicsMemory(rtDispatchGlobals[i]);
         rtDispatchGlobals[i] = nullptr;
     }
+}
+
+void Device::initializeEngineRoundRobinControls() {
+    if (this->availableEnginesForCommandQueueusRoundRobin.any()) {
+        return;
+    }
+
+    uint32_t queuesPerEngine = 1u;
+
+    if (DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.get() != -1) {
+        queuesPerEngine = DebugManager.flags.CmdQRoundRobindEngineAssignNTo1.get();
+    }
+
+    this->queuesPerEngineCount = queuesPerEngine;
+
+    std::bitset<8> availableEngines = std::numeric_limits<uint8_t>::max();
+
+    if (DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.get() != -1) {
+        availableEngines = DebugManager.flags.CmdQRoundRobindEngineAssignBitfield.get();
+    }
+
+    this->availableEnginesForCommandQueueusRoundRobin = availableEngines;
 }
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
