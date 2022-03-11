@@ -501,4 +501,7 @@ template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getProfilingMmioCmdsSize() {
     return 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
 }
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, uint32_t &sliceIndex, const bool isSource) {}
 } // namespace NEO
