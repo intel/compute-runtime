@@ -1971,6 +1971,90 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandQueue1->destroy();
 }
 
+HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdListThenSetNonZeroBatchBufferStartAddress) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList->setCommandListPerThreadPrivateScratchSize(0u);
+    auto commandListHandle = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_EQ(2u, bbStartCmds.size());
+
+    for (auto &cmd : bbStartCmds) {
+        auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);
+
+        EXPECT_NE(0u, bbStart->getBatchBufferStartAddress());
+    }
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhenExecutingCmdListThenSetZeroBatchBufferStartAddress) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.set(0);
+
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    ze_result_t returnValue;
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList->setCommandListPerThreadPrivateScratchSize(0u);
+    auto commandListHandle = commandList->toHandle();
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+
+    EXPECT_EQ(2u, bbStartCmds.size());
+
+    for (auto &cmd : bbStartCmds) {
+        auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);
+        if (cmd == bbStartCmds.back()) {
+            EXPECT_EQ(0u, bbStart->getBatchBufferStartAddress());
+        } else {
+            EXPECT_NE(0u, bbStart->getBatchBufferStartAddress());
+        }
+    }
+
+    commandQueue->destroy();
+}
+
 TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToDefaultWhenCommandQueueIsCreatedWithSynchronousModeThenDefaultModeIsSelected) {
     DebugManagerStateRestore restore;
     NEO::DebugManager.flags.OverrideCmdQueueSynchronousMode.set(0);

@@ -449,8 +449,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     csr->makeResident(*csr->getTagAllocation());
     void *endingCmd = nullptr;
     if (directSubmissionEnabled) {
+        auto offset = ptrDiff(child.getCpuBase(), commandStream->getCpuBase()) + child.getUsed();
+        uint64_t startAddress = commandStream->getGraphicsAllocation()->getGpuAddress() + offset;
+        if (NEO::DebugManager.flags.BatchBufferStartPrepatchingWaEnabled.get() == 0) {
+            startAddress = 0;
+        }
+
         endingCmd = child.getSpace(0);
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, 0ull, false);
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, startAddress, false);
     } else {
         MI_BATCH_BUFFER_END cmd = GfxFamily::cmdInitBatchBufferEnd;
         auto buffer = child.getSpaceForCmd<MI_BATCH_BUFFER_END>();
