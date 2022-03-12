@@ -772,8 +772,10 @@ endif()
 
 if(UNIX)
   # prelim headers detection
-  if((NOT DEFINED NEO_ENABLE_i915_PRELIM_DETECTION) OR NOT ("${BRANCH_TYPE}" STREQUAL ""))
+  if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
     set(NEO_ENABLE_i915_PRELIM_DETECTION TRUE)
+  elseif(NOT DEFINED NEO_ENABLE_i915_PRELIM_DETECTION)
+    set(NEO_ENABLE_i915_PRELIM_DETECTION FALSE)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
 endif()
