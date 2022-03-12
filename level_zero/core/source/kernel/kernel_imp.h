@@ -17,12 +17,6 @@
 
 namespace L0 {
 
-struct KernelArgInfo {
-    const void *value;
-    uint32_t allocId;
-    uint32_t allocIdMemoryManagerCounter;
-};
-
 struct KernelImp : Kernel {
     KernelImp(Module *module);
 
@@ -178,7 +172,6 @@ struct KernelImp : Kernel {
     Module *module = nullptr;
 
     typedef ze_result_t (KernelImp::*KernelArgHandler)(uint32_t argIndex, size_t argSize, const void *argVal);
-    std::vector<KernelArgInfo> kernelArgInfos;
     std::vector<KernelImp::KernelArgHandler> kernelArgHandlers;
     std::vector<NEO::GraphicsAllocation *> residencyContainer;
 
