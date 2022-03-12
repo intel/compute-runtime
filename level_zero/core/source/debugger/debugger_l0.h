@@ -40,15 +40,23 @@ struct SbaTrackedAddresses {
 
 struct DebugAreaHeader {
     char magic[8] = "dbgarea";
-    uint64_t reserved1;
-    uint8_t version;
-    uint8_t pgsize;
-    uint8_t size;
-    uint8_t reserved2;
-    uint16_t scratchBegin;
-    uint16_t scratchEnd;
-    uint64_t isShared : 1;
+    uint64_t reserved1 = 0;
+    uint8_t version = 0;
+    uint8_t pgsize = 0;
+    uint8_t size = 0;
+    uint8_t reserved2 = 0;
+    uint16_t scratchBegin = 0;
+    uint16_t scratchEnd = 0;
+    union {
+        uint64_t isSharedBitfield = 0;
+        struct {
+            uint64_t isShared : 1;
+            uint64_t reserved3 : 63;
+        };
+    };
 };
+static_assert(sizeof(DebugAreaHeader) == 32u * sizeof(uint8_t));
+
 struct alignas(4) DebuggerVersion {
     uint8_t major;
     uint8_t minor;

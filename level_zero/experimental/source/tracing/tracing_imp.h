@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,8 +65,8 @@ struct APITracerImp : APITracer {
     ze_result_t setEpilogues(zet_core_callbacks_t *pCoreCbs) override;
     ze_result_t enableTracer(ze_bool_t enable) override;
 
-    tracer_array_entry_t tracerFunctions;
-    tracingState_t tracingState;
+    tracer_array_entry_t tracerFunctions{};
+    tracingState_t tracingState = disabledState;
 
   private:
 };
