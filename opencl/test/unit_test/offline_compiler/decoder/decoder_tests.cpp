@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/array_count.h"
+#include "shared/test/common/helpers/test_files.h"
 
+#include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
 #include "gtest/gtest.h"
@@ -41,32 +43,6 @@ TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
 
     MockDecoder decoder;
     EXPECT_EQ(0, decoder.validateInput(args));
-}
-
-TEST(DecoderTests, WhenMissingParametersThenValidateInputReturnsErrorCode) {
-    std::vector<std::string> args = {
-        "ocloc",
-        "decoder",
-        "-patch",
-        "test_files"};
-
-    MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(args));
-}
-
-TEST(DecoderTests, GivenWrongParametersWhenParsingParametersThenValidateInputReturnsErrorCode) {
-    std::vector<std::string> args = {
-        "cloc",
-        "decoder",
-        "-file",
-        "test_files/no_extension",
-        "-patch",
-        "test_files",
-        "-dump",
-        "test_files/created"};
-
-    MockDecoder decoder;
-    EXPECT_NE(0, decoder.validateInput(args));
 }
 
 TEST(DecoderTests, GivenValidSizeStringWhenGettingSizeThenProperOutcomeIsExpectedAndExceptionIsNotThrown) {
@@ -300,5 +276,29 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     EXPECT_EQ(expectedOutput, ptmFile.str());
     EXPECT_TRUE(decoder.getMockIga()->disasmWasCalled);
     EXPECT_FALSE(decoder.getMockIga()->asmWasCalled);
+}
+
+TEST(DecoderTests, givenNonPatchtokensBinaryFormatWhenTryingToGetDevBinaryFormatThenDoNotReturnRawData) {
+    MockDecoder decoder;
+    std::map<std::string, std::string> files;
+    auto mockArgHelper = std::make_unique<MockOclocArgHelper>(files);
+    decoder.argHelper = mockArgHelper.get();
+    files["mockgen.gen"] = "NOTMAGIC\n\n\n\n\n\n\n";
+    decoder.binaryFile = "mockgen.gen";
+    auto data = decoder.getDevBinary();
+    EXPECT_EQ(nullptr, data);
+}
+
+TEST(DecoderTests, givenPatchtokensBinaryFormatWhenTryingToGetDevBinaryThenRawDataIsReturned) {
+    MockDecoder decoder;
+    std::map<std::string, std::string> files;
+    auto mockArgHelper = std::make_unique<MockOclocArgHelper>(files);
+    decoder.argHelper = mockArgHelper.get();
+    size_t dataSize = 11u;
+    files["mockgen.gen"] = "CTNI\n\n\n\n\n\n\n";
+    decoder.binaryFile = "mockgen.gen";
+    auto data = decoder.getDevBinary();
+    std::string dataString(static_cast<const char *>(data), dataSize);
+    EXPECT_STREQ("CTNI\n\n\n\n\n\n\n", dataString.c_str());
 }
 } // namespace NEO

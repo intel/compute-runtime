@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
@@ -78,9 +79,21 @@ void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std:
     binaryPtr = ptrOffset(binaryPtr, field.size);
 }
 
+template <typename ContainerT>
+bool isPatchtokensBinary(const ContainerT &data) {
+    static constexpr NEO::ConstStringRef intcMagic = "CTNI";
+    auto binaryMagicLen = std::min(intcMagic.size(), data.size());
+    NEO::ConstStringRef binaryMagic(reinterpret_cast<const char *>(&*data.begin()), binaryMagicLen);
+    return intcMagic == binaryMagic;
+}
+
 const void *BinaryDecoder::getDevBinary() {
     binary = argHelper->readBinaryFile(binaryFile);
     const void *data = nullptr;
+    if (isPatchtokensBinary(binary)) {
+        return binary.data();
+    }
+
     std::string decoderErrors;
     std::string decoderWarnings;
     auto input = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
@@ -528,10 +541,6 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
             return -1;
         }
-    }
-    if (binaryFile.find(".bin") == std::string::npos) {
-        argHelper->printf(".bin extension is expected for binary file.\n");
-        return -1;
     }
     if (false == iga->isKnownPlatform()) {
         argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");

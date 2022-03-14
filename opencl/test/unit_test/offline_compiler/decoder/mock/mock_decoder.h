@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,10 @@ struct MockDecoder : public BinaryDecoder {
         argHelper = oclocArgHelperWithoutInput.get();
         argHelper->getPrinterRef() = MessagePrinter(true);
     };
+    using BinaryDecoder::argHelper;
     using BinaryDecoder::binaryFile;
     using BinaryDecoder::decode;
+    using BinaryDecoder::getDevBinary;
     using BinaryDecoder::getSize;
     using BinaryDecoder::iga;
     using BinaryDecoder::kernelHeader;
