@@ -17,6 +17,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
@@ -594,7 +595,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     Linker::UnresolvedExternals expectedUnresolvedExternals;
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
     auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.kernelDescriptor.kernelMetadata.kernelName});
-    EXPECT_THAT(buildLog.c_str(), ::testing::HasSubstr(expectedError));
+    EXPECT_TRUE(hasSubstr(buildLog, expectedError));
 }
 
 TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {

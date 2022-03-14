@@ -24,6 +24,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "driver_version.h"
+#include "gtest/gtest.h"
 #include "sys_calls.h"
 
 #include <fstream>

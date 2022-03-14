@@ -23,8 +23,6 @@
 
 #include <bitset>
 
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 

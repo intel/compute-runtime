@@ -9,12 +9,13 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -71,7 +72,7 @@ XEHPTEST_F(XeHPHwInfoConfig, givenDebugVariableSetWhenConfiguringThenEnableRcs) 
 XEHPTEST_F(XeHPHwInfoConfig, givenXeHpWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     auto deviceMemoryName = hwInfoConfig->getDeviceMemoryName();
-    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("HBM")));
+    EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("HBM")));
 }
 
 XEHPTEST_F(XeHPHwInfoConfig, givenA0OrA1SteppingWhenAskingIfExtraParametersAreInvalidThenReturnTrue) {

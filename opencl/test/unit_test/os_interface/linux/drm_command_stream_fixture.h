@@ -21,7 +21,7 @@
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <algorithm>
 

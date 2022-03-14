@@ -9,6 +9,7 @@
 
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
@@ -266,7 +267,7 @@ TEST(FileLogger, GivenLoggerWithDebugFunctionalityWhenGetMemObjectsIsCalledThenC
     EXPECT_NE(0u, memObjectString.size());
     std::stringstream output;
     output << "cl_mem " << clMem << ", MemObj " << memoryObject;
-    EXPECT_THAT(memObjectString, ::testing::HasSubstr(output.str()));
+    EXPECT_TRUE(hasSubstr(memObjectString, output.str()));
 }
 
 TEST(FileLogger, GivenDebugFunctionalityWhenGetMemObjectsIsCalledWithNullptrThenStringIsEmpty) {

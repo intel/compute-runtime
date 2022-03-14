@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,6 @@
 
 namespace L0 {
 namespace ult {
-
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::Return;
 
 class CommandListMemoryExtensionFixture : public DeviceFixture {
   public:

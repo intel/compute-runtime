@@ -23,13 +23,13 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "os_inc.h"
 
@@ -550,7 +550,7 @@ TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     std::string errStr = ::testing::internal::GetCapturedStderr();
-    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: 0000")));
+    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: 0000")));
     ::testing::internal::GetCapturedStdout();
 }
 
@@ -769,7 +769,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     ::testing::internal::GetCapturedStdout();
     std::string errStr = ::testing::internal::GetCapturedStderr();
 
-    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("WARNING: Debugging not supported\n")));
+    EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Debugging not supported\n")));
 }
 
 TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {
@@ -790,8 +790,7 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
 
     std::string errStr = ::testing::internal::GetCapturedStderr();
     if (!drm->isPerContextVMRequired()) {
-
-        EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
+        EXPECT_TRUE(hasSubstr(errStr, std::string("INFO: Device doesn't support GEM Virtual Memory")));
     }
     ::testing::internal::GetCapturedStdout();
 }

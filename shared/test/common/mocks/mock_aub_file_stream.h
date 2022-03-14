@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <vector>
 

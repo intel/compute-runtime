@@ -27,12 +27,12 @@
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <chrono>
 #include <functional>
@@ -1243,7 +1243,7 @@ TEST(CommandStreamReceiverSimpleTest, givenPrintfTagAllocationAddressFlagEnabled
     char expectedStr[128];
     snprintf(expectedStr, 128, "\nCreated tag allocation %p for engine %u\n", csr.getTagAddress(), csr.getOsContext().getEngineType());
 
-    EXPECT_THAT(output, testing::HasSubstr(std::string(expectedStr)));
+    EXPECT_TRUE(hasSubstr(output, std::string(expectedStr)));
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhenGpuIsIdleThenReturnFalse) {
@@ -1466,7 +1466,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
-    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
+    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), memory, size));
 
     allocation->updateTaskCount(commandStreamReceiver->peekLatestFlushedTaskCount(), commandStreamReceiver->getOsContext().getContextId());
 

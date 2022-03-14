@@ -20,10 +20,11 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "compiler_options.h"
 #include "environment.h"
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "hw_cmds.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
@@ -545,7 +546,7 @@ TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKern
     mockOfflineCompiler->initialize(argv.size(), argv);
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr("-cl-kernel-debug-enable"));
+    EXPECT_TRUE(hasSubstr(internalOptions, "-cl-kernel-debug-enable"));
 }
 
 TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenInternalOptionsShouldNotContainKernelDebugEnable) {
@@ -564,7 +565,7 @@ TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenI
     mockOfflineCompiler->initialize(argv.size(), argv);
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr("-cl-kernel-debug-enable")));
+    EXPECT_FALSE(hasSubstr(internalOptions, "-cl-kernel-debug-enable"));
 }
 
 TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerformedThenIrExcludeFlagsShouldBeUnified) {
@@ -673,30 +674,30 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
 
         std::string internalOptions = mockOfflineCompiler->internalOptions;
         std::string oclVersionOption = getOclVersionCompilerInternalOption(mockOfflineCompiler->hwInfo.capabilityTable.clVersionSupport);
-        EXPECT_THAT(internalOptions, ::testing::HasSubstr(oclVersionOption));
+        EXPECT_TRUE(hasSubstr(internalOptions, oclVersionOption));
 
         if (clStdOptionValue == "-cl-std=CL2.0") {
             auto expectedRegex = std::string{"cl_khr_3d_image_writes"};
             if (mockOfflineCompiler->hwInfo.capabilityTable.supportsImages) {
                 expectedRegex += ".+" + std::string{"cl_khr_3d_image_writes"};
             }
-            EXPECT_THAT(internalOptions, ::testing::ContainsRegex(expectedRegex));
+            EXPECT_TRUE(containsRegex(internalOptions, expectedRegex));
         }
 
         OpenClCFeaturesContainer openclCFeatures;
         getOpenclCFeaturesList(mockOfflineCompiler->hwInfo, openclCFeatures);
         for (auto &feature : openclCFeatures) {
             if (clStdOptionValue == "-cl-std=CL3.0") {
-                EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string{feature.name}));
+                EXPECT_TRUE(hasSubstr(internalOptions, std::string{feature.name}));
             } else {
-                EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(std::string{feature.name})));
+                EXPECT_FALSE(hasSubstr(internalOptions, std::string{feature.name}));
             }
         }
 
         if (mockOfflineCompiler->hwInfo.capabilityTable.supportsImages) {
-            EXPECT_THAT(internalOptions, ::testing::HasSubstr(CompilerOptions::enableImageSupport.data()));
+            EXPECT_TRUE(hasSubstr(internalOptions, CompilerOptions::enableImageSupport.data()));
         } else {
-            EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(CompilerOptions::enableImageSupport.data())));
+            EXPECT_FALSE(hasSubstr(internalOptions, CompilerOptions::enableImageSupport.data()));
         }
     }
 }
@@ -1504,7 +1505,7 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
     EXPECT_NE(0u, output.size());
 
     std::string internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("myInternalOptions")));
+    EXPECT_TRUE(hasSubstr(internalOptions, std::string("myInternalOptions")));
 }
 
 TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
@@ -1958,10 +1959,10 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
 
             if (c.expectedWarning.empty()) {
                 for (auto &w : allWarnings) {
-                    EXPECT_THAT(log.c_str(), testing::Not(testing::HasSubstr(w.c_str()))) << " Case : " << caseNum;
+                    EXPECT_FALSE(hasSubstr(log, w)) << " Case : " << caseNum;
                 }
             } else {
-                EXPECT_THAT(log.c_str(), testing::HasSubstr(c.expectedWarning.c_str())) << " Case : " << caseNum;
+                EXPECT_TRUE(hasSubstr(log, c.expectedWarning)) << " Case : " << caseNum;
                 EXPECT_STREQ(log.c_str(), output.c_str());
             }
             caseNum++;
@@ -1983,7 +1984,7 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -D__IMAGE_SUPPORT__=1"));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -D__IMAGE_SUPPORT__=1"));
 }
 
 TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
@@ -2006,7 +2007,7 @@ TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenIn
     EXPECT_EQ(0, retVal);
     std::string regexToMatch = "\\-ocl\\-version=" + std::to_string(ocloc.hwInfo.capabilityTable.clVersionSupport) +
                                "0  \\-cl\\-ext=\\-all.* \\-cl\\-ext=\\+custom_param";
-    EXPECT_THAT(ocloc.internalOptions, ::testing::ContainsRegex(regexToMatch));
+    EXPECT_TRUE(containsRegex(ocloc.internalOptions, regexToMatch));
 }
 
 TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenInternalOptionsAreSetCorrectly) {
@@ -2025,7 +2026,7 @@ TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThen
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_THAT(ocloc.internalOptions.c_str(), testing::HasSubstr("-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, "-ocl-version=300 -cl-ext=-all,+cl_khr_3d_image_writes -cl-ext=+custom_param"));
 }
 TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsReturnedAsItIs) {
     MockOfflineCompiler ocloc;

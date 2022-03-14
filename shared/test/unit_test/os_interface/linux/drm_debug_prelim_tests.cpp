@@ -11,8 +11,8 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"
 
@@ -49,7 +49,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
         handle++;
     }
     ASSERT_TRUE(drm.context.receivedRegisterUuid);
-    EXPECT_THAT(drm.context.receivedRegisterUuid->uuid, testing::HasSubstr(classNamesToUuid[classNamesToUuid.size() - 1].second));
+    EXPECT_TRUE(hasSubstr(std::string(drm.context.receivedRegisterUuid->uuid), classNamesToUuid[classNamesToUuid.size() - 1].second));
 }
 
 TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClassesThenErrorIsReturnedAndClassHandlesAreEmpty) {
@@ -89,7 +89,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
 
     EXPECT_EQ(nullptr, receivedUuid->ptr);
     EXPECT_EQ(0u, receivedUuid->size);
-    EXPECT_THAT(receivedUuid->uuid, testing::HasSubstr(std::string("00000000-0000-0000")));
+    EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
     EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(Drm::ResourceClass::Isa)], receivedUuid->uuidClass);
 }
 
@@ -112,7 +112,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUU
 
     EXPECT_EQ(&data, receivedUuid->ptr);
     EXPECT_EQ(sizeof(uint64_t), receivedUuid->size);
-    EXPECT_THAT(receivedUuid->uuid, testing::HasSubstr(std::string("00000000-0000-0000")));
+    EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
     EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(Drm::ResourceClass::Isa)], receivedUuid->uuidClass);
     EXPECT_EQ(0u, receivedUuid->flags);
     EXPECT_EQ(0u, receivedUuid->extensions);

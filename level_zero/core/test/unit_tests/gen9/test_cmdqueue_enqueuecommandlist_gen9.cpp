@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,6 @@
 
 namespace L0 {
 namespace ult {
-
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::Return;
 
 using CommandQueueExecuteCommandListsGen9 = Test<DeviceFixture>;
 

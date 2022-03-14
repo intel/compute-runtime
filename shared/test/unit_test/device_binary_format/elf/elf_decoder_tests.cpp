@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,9 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO::Elf;
 
@@ -524,7 +525,7 @@ TEST(ElfDecoder, WhenElfContainsInvalidRelocationSectionHeaderThenDecodingFailsA
         EXPECT_TRUE(elf64.programHeaders.empty());
         EXPECT_TRUE(elf64.sectionHeaders.empty());
         ASSERT_FALSE(decodeErrors.empty());
-        EXPECT_THAT(decodeErrors.c_str(), testing::HasSubstr(errors[i]));
+        EXPECT_TRUE(hasSubstr(decodeErrors, errors[i]));
         EXPECT_TRUE(decodeWarnings.empty());
     }
 }

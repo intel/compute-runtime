@@ -30,7 +30,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <memory>
 

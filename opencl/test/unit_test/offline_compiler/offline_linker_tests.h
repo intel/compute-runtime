@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_linker.h"
 

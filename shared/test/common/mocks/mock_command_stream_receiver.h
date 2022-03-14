@@ -18,7 +18,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <optional>
 #include <vector>

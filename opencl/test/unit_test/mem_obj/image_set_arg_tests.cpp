@@ -26,7 +26,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 using namespace ::testing;

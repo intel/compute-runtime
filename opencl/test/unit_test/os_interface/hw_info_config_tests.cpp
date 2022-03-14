@@ -12,13 +12,14 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -255,7 +256,7 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedForDefaultEngineTypeAdjustm
 HWTEST_F(HwInfoConfigTest, whenCallingGetDeviceMemoryNameThenDdrIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     auto deviceMemoryName = hwInfoConfig.getDeviceMemoryName();
-    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("DDR")));
+    EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("DDR")));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwInfoConfigTest, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {

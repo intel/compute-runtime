@@ -11,6 +11,7 @@
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -18,7 +19,7 @@
 #include "opencl/test/unit_test/program/program_tests.h"
 
 #include "compiler_options.h"
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <memory>
@@ -107,7 +108,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-g"));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), "-g"));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsCompiledThenOptionsIncludeClOptDisableFlag) {
@@ -118,7 +119,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), CompilerOptions::optDisable.data()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOptDisableIsTrueFromDebuggerThenOptDisableIsNotAdded) {
@@ -132,7 +133,7 @@ TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOp
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::HasSubstr(CompilerOptions::optDisable.data())));
+    EXPECT_FALSE(hasSubstr(pProgram->getOptions(), CompilerOptions::optDisable.data()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOptDisableIsFalseFromDebuggerThenOptDisableIsAdded) {
@@ -146,7 +147,7 @@ TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOpt
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), CompilerOptions::optDisable.data()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenOptionsStartsWithDashSFilename) {
@@ -157,7 +158,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     cl_int retVal = pProgram->compile(pProgram->getDevices(), nullptr,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::StartsWith("-s debugFileName"));
+    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s debugFileName"));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledWithCmCOptionThenDashSFilenameIsNotPrepended) {
@@ -169,8 +170,8 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     cl_int retVal = pProgram->compile(pProgram->getDevices(), options,
                                       0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::StartsWith("-s debugFileName")));
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+    EXPECT_FALSE(startsWith(pProgram->getOptions(), "-s debugFileName"));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), CompilerOptions::optDisable.data()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
@@ -190,7 +191,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag) {
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-g"));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), "-g"));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsBuiltThenOptionsIncludeClOptDisableFlag) {
@@ -200,7 +201,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr(CompilerOptions::optDisable.data()));
+    EXPECT_TRUE(hasSubstr(pProgram->getOptions(), CompilerOptions::optDisable.data()));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsStartsWithDashSFilename) {
@@ -210,7 +211,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 
     cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::StartsWith("-s debugFileName"));
+    EXPECT_TRUE(startsWith(pProgram->getOptions(), "-s debugFileName"));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltWithCmCOptionThenDashSFilenameIsNotPrepended) {
@@ -221,7 +222,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     char options[] = "-cmc -cl-opt-disable";
     cl_int retVal = pProgram->build(pProgram->getDevices(), options, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getOptions(), ::testing::Not(::testing::StartsWith("-s debugFileName")));
+    EXPECT_FALSE(startsWith(pProgram->getOptions(), "-s debugFileName"));
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended) {

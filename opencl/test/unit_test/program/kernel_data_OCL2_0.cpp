@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
+
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
 
 #include "patch_g7.h"
 

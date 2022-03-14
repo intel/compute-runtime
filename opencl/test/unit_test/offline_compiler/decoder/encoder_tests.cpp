@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/test_files.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "mock/mock_encoder.h"
 
 #include <fstream>

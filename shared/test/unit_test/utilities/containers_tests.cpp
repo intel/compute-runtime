@@ -12,7 +12,6 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cinttypes>

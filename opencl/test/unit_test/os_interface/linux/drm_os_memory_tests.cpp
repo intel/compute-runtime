@@ -10,10 +10,7 @@
 #include "shared/source/os_interface/linux/os_memory_linux.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-using ::testing::_;
 
 namespace NEO {
 

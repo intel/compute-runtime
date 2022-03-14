@@ -15,7 +15,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
-#include "shared/test/common/test_macros/matchers.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -129,7 +129,7 @@ HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
     mem = ptrOffset(mem, stateSaveAreaHeader.size());
     auto size = dbgSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
-    EXPECT_THAT(mem, MemoryZeroed(size));
+    EXPECT_TRUE(memoryZeroed(mem, size));
 }
 
 HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotReturnSSAHDoNotCopyIt) {

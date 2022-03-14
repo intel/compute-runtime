@@ -37,8 +37,6 @@
 
 #include <memory>
 
-using ::testing::Return;
-
 namespace NEO {
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 } // namespace NEO
@@ -1594,7 +1592,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
         }
 
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerMultiDevice>(*executionEnvironment);
+        memoryManager = new MockMemoryManagerMultiDevice(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
 
@@ -1797,7 +1795,7 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice1;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfo(&hardwareInfo);
 
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerMultiDevice>(*executionEnvironment);
+        memoryManager = new MockMemoryManagerMultiDevice(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
 

@@ -23,7 +23,6 @@
 #include "opencl/test/unit_test/program/program_with_source.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "program_tests.h"
 

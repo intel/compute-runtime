@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "mock/mock_decoder.h"
 
 #include <fstream>

@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "test_api_tracing_common.h"
-
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {

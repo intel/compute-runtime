@@ -27,6 +27,7 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
+#include "gtest/gtest.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;

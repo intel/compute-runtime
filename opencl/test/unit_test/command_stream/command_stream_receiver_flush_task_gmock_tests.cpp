@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,9 +46,6 @@
 #include "test_traits_common.h"
 
 using namespace NEO;
-
-using ::testing::_;
-using ::testing::Invoke;
 
 using CommandStreamReceiverFlushTaskGmockTests = UltCommandStreamReceiverTest;
 

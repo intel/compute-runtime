@@ -37,8 +37,8 @@
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -49,7 +49,6 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <iostream>
@@ -4639,7 +4638,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemory
     mem = ptrOffset(mem, stateSaveAreaHeader.size());
     auto size = debugSurface->getUnderlyingBufferSize() - stateSaveAreaHeader.size();
 
-    EXPECT_THAT(mem, MemoryZeroed(size));
+    EXPECT_TRUE(memoryZeroed(mem, size));
 
     memoryManager->freeGraphicsMemory(debugSurface);
 }

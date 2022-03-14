@@ -11,7 +11,7 @@
 #include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_preemption_fixture.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {

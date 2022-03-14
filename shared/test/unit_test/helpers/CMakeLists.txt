@@ -18,6 +18,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl

@@ -19,9 +19,9 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "RelocationInfo.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "linker_mock.h"
 
@@ -1780,38 +1780,39 @@ TEST(LinkerErrorMessageTests, givenListOfUnresolvedExternalsThenSymbolNameOrSymb
     unresolvedExternal.unresolvedRelocation.relocationSegment = NEO::SegmentType::Instructions;
     unresolvedExternals.push_back(unresolvedExternal);
     auto err = NEO::constructLinkerErrorMessage(unresolvedExternals, segmentsNames);
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(unresolvedExternal.unresolvedRelocation.symbolName.c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(segmentsNames[unresolvedExternal.instructionsSegmentId].c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::Not(::testing::HasSubstr("internal error")));
+
+    EXPECT_TRUE(hasSubstr(err, unresolvedExternal.unresolvedRelocation.symbolName));
+    EXPECT_TRUE(hasSubstr(err, segmentsNames[unresolvedExternal.instructionsSegmentId]));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
+    EXPECT_FALSE(hasSubstr(err, "internal error"));
 
     unresolvedExternals[0].internalError = true;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, segmentsNames);
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(unresolvedExternal.unresolvedRelocation.symbolName.c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(segmentsNames[unresolvedExternal.instructionsSegmentId].c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr("internal linker error"));
+    EXPECT_TRUE(hasSubstr(err, unresolvedExternal.unresolvedRelocation.symbolName));
+    EXPECT_TRUE(hasSubstr(err, segmentsNames[unresolvedExternal.instructionsSegmentId]));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
+    EXPECT_TRUE(hasSubstr(err, "internal linker error"));
 
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(unresolvedExternal.unresolvedRelocation.symbolName.c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::Not(::testing::HasSubstr(segmentsNames[unresolvedExternal.instructionsSegmentId].c_str())));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr("internal linker error"));
+    EXPECT_TRUE(hasSubstr(err, unresolvedExternal.unresolvedRelocation.symbolName));
+    EXPECT_FALSE(hasSubstr(err, segmentsNames[unresolvedExternal.instructionsSegmentId]));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
+    EXPECT_TRUE(hasSubstr(err, "internal linker error"));
 
     unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::GlobalConstants;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(NEO::asString(NEO::SegmentType::GlobalConstants)));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::GlobalConstants)));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 
     unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::GlobalVariables;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(NEO::asString(NEO::SegmentType::GlobalVariables)));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::GlobalVariables)));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 
     unresolvedExternals[0].unresolvedRelocation.relocationSegment = NEO::SegmentType::Unknown;
     err = NEO::constructLinkerErrorMessage(unresolvedExternals, {});
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(NEO::asString(NEO::SegmentType::Unknown)));
-    EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
+    EXPECT_TRUE(hasSubstr(err, NEO::asString(NEO::SegmentType::Unknown)));
+    EXPECT_TRUE(hasSubstr(err, std::to_string(unresolvedExternal.unresolvedRelocation.offset)));
 }
 
 TEST(RelocationsDebugMessageTests, givenEmptyListOfRelocatedSymbolsThenReturnsEmptyString) {

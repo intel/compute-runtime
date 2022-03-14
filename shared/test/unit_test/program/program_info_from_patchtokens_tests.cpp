@@ -14,7 +14,6 @@
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "RelocationInfo.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 TEST(PopulateProgramInfoFromPatchtokensTests, WhenRequiresLocalMemoryWindowVAIsCalledThenReturnsTrueOnlyIfAnyOfKernelsRequireLocalMemoryWindowVA) {

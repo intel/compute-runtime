@@ -12,10 +12,6 @@
 namespace L0 {
 namespace ult {
 
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::Return;
-
 using DevicePropertyTest = Test<DeviceFixture>;
 
 HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPropertiesFlagsSet, IsGen9) {

@@ -7,11 +7,11 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
 
 TEST_F(KernelDataTest, GivenKernelNameWhenBuildingThenProgramIsCorrect) {
     kernelName = "myTestKernel";

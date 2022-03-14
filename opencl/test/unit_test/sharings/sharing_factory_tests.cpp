@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
@@ -170,7 +171,7 @@ TEST(SharingFactoryTests, givenFactoryWithSharingWhenAskedForExtensionThenString
 
     auto ext = stateRestore.getExtensions(nullptr);
     EXPECT_LE(TestedSharingBuilderFactory::extension.length(), ext.length());
-    EXPECT_THAT(ext.c_str(), ::testing::HasSubstr(TestedSharingBuilderFactory::extension.c_str()));
+    EXPECT_TRUE(hasSubstr(ext, TestedSharingBuilderFactory::extension));
 }
 
 TEST(SharingFactoryTests, givenFactoryWithSharingWhenDispatchFillRequestedThenMethodsAreInvoked) {
@@ -252,7 +253,7 @@ TEST(SharingFactoryTests, givenDisabledFormatQueryAndFactoryWithSharingWhenAsked
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
     auto extensionsList = sharingFactory.getExtensions(nullptr);
-    EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
+    EXPECT_FALSE(hasSubstr(extensionsList, Extensions::sharingFormatQuery));
 }
 
 TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedForExtensionThenFormatQueryExtensionIsReturned) {
@@ -264,7 +265,7 @@ TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedF
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
     auto extensionsList = sharingFactory.getExtensions(nullptr);
-    EXPECT_THAT(extensionsList, ::testing::HasSubstr(Extensions::sharingFormatQuery));
+    EXPECT_TRUE(hasSubstr(extensionsList, Extensions::sharingFormatQuery));
 }
 
 TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithNoSharingsWhenAskedForExtensionThenNoExtensionIsReturned) {
@@ -276,5 +277,5 @@ TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithNoSharingsWhenAsk
     sharingFactory.clearCurrentState();
 
     auto extensionsList = sharingFactory.getExtensions(nullptr);
-    EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
+    EXPECT_FALSE(hasSubstr(extensionsList, Extensions::sharingFormatQuery));
 }

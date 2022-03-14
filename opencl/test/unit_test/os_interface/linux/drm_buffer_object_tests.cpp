@@ -14,6 +14,7 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 using namespace NEO;
 
@@ -484,7 +485,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
     std::string bindOutput = testing::internal::GetCapturedStderr();
-    EXPECT_THAT(bindOutput.c_str(), testing::HasSubstr("bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
+    EXPECT_TRUE(hasSubstr(bindOutput, "bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
 
     testing::internal::CaptureStderr();
     bo.bindInfo[contextId][0] = true;
@@ -493,7 +494,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
     std::string unbindOutput = testing::internal::GetCapturedStderr();
-    EXPECT_THAT(unbindOutput.c_str(), testing::HasSubstr("unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
+    EXPECT_TRUE(hasSubstr(unbindOutput, "unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
 }
 
 TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {

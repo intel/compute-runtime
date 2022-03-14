@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_ocl_tests.cpp

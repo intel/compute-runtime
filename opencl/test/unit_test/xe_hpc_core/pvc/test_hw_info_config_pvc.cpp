@@ -11,9 +11,10 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "device_ids_configs_pvc.h"
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -36,7 +37,7 @@ PVCTEST_F(PvcHwInfoConfig, givenErrorneousConfigStringThenThrow) {
 PVCTEST_F(PvcHwInfoConfig, givenPvcWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     auto deviceMemoryName = hwInfoConfig->getDeviceMemoryName();
-    EXPECT_THAT(deviceMemoryName, testing::HasSubstr(std::string("HBM")));
+    EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("HBM")));
 }
 
 PVCTEST_F(PvcHwInfoConfig, givenHwInfoConfigWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {

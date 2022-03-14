@@ -12,7 +12,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_elf.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 
@@ -415,7 +414,7 @@ TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenA
     EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
 
     auto isa = kernelImmutableData.getIsaGraphicsAllocation()->getUnderlyingBuffer();
-    EXPECT_THAT(isa, testing::Not(MemCompare(&kernelHeap, sizeof(kernelHeap))));
+    EXPECT_NE(0, memcmp(isa, &kernelHeap, sizeof(kernelHeap)));
 };
 
 HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializingModuleThenRegisterElfWithRelocatedElf) {

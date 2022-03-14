@@ -24,7 +24,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace NEO {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;

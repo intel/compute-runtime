@@ -13,10 +13,6 @@
 namespace L0 {
 namespace ult {
 
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::Return;
-
 using DeviceFixtureGen12LP = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPaWhenGettingMemoryPropertiesThenMemoryNameComesAsDDR, IsGen12LP) {

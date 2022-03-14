@@ -13,7 +13,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_info.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include <string>
 

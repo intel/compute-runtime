@@ -14,7 +14,6 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cstdint>

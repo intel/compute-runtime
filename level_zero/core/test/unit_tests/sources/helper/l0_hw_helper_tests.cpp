@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
@@ -208,7 +208,7 @@ HWTEST_F(L0HwHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBitsAreS
     EXPECT_EQ(1u << 3, data[0]);
     EXPECT_EQ(1u, data[1]);
 
-    EXPECT_THAT(&data[2], MemoryZeroed(size - 2));
+    EXPECT_TRUE(memoryZeroed(&data[2], size - 2));
 }
 
 HWTEST_F(L0HwHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenSingleCorrectThreadReturned) {

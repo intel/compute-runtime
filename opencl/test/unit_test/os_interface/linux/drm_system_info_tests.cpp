@@ -10,10 +10,9 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
-#include "opencl/test/unit_test/helpers/gtest_helpers.h"
-
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -75,7 +74,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
-    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::IsEmpty());
+    EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStdout()));
 }
 
 TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsNonZeros) {
@@ -144,7 +143,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
-    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::HasSubstr("INFO: System Info query failed!\n"));
+    EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStdout(), "INFO: System Info query failed!\n"));
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSystemInfoIsCreatedAndUsedToSetHardwareInfoAttributes) {

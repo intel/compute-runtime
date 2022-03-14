@@ -12,9 +12,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_host_pointer_manager.h"
 
-using ::testing::_;
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 

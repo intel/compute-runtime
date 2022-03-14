@@ -12,7 +12,7 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace L0 {
 namespace ult {

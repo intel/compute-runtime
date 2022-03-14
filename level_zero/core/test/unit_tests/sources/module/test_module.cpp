@@ -27,8 +27,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
-using ::testing::Return;
-
 namespace L0 {
 namespace ult {
 
@@ -2003,7 +2001,7 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
 
     auto module = std::unique_ptr<L0::Module>(Module::create(device, &moduleDesc, nullptr, ModuleType::User));
 
-    auto kernel = std::make_unique<::testing::NiceMock<Mock<Kernel>>>();
+    auto kernel = std::make_unique<Mock<Kernel>>();
     ASSERT_NE(nullptr, kernel);
 
     kernel->module = module.get();

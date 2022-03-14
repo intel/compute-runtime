@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/libult/signal_utils.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "segfault_helper.h"
 
@@ -38,9 +38,9 @@ int main(int argc, char **argv) {
 void captureAndCheckStdOut() {
     std::string callstack = ::testing::internal::GetCapturedStdout();
 
-    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("Callstack")));
-    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("cloc_segfault_test")));
-    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("generateSegfaultWithSafetyGuard")));
+    EXPECT_TRUE(hasSubstr(callstack, std::string("Callstack")));
+    EXPECT_TRUE(hasSubstr(callstack, std::string("cloc_segfault_test")));
+    EXPECT_TRUE(hasSubstr(callstack, std::string("generateSegfaultWithSafetyGuard")));
 }
 
 TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrintedToStdOut) {

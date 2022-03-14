@@ -19,7 +19,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/matchers.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -238,7 +237,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
     void *memoryStorage = buffer->getCpuAddressForMemoryTransfer();
     EXPECT_NE((void *)memory, memoryStorage);
-    EXPECT_THAT(buffer->getCpuAddressForMemoryTransfer(), MemCompare(memory, MemoryConstants::pageSize));
+    EXPECT_EQ(0, memcmp(buffer->getCpuAddressForMemoryTransfer(), memory, MemoryConstants::pageSize));
 
     alignedFree(memory);
 }
@@ -664,7 +663,7 @@ TEST_F(CompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtr
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
 
-    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(&pattern[0], sizeof(pattern)));
+    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), &pattern[0], sizeof(pattern)));
 
     alignedFree(cacheAlignedHostPtr);
 }

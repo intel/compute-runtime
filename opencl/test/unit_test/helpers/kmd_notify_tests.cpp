@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace NEO;
 
@@ -152,8 +152,6 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     auto csr = createMockCsr<FamilyType>();
     *csr->getTagAddress() = taskCountToWait - 1;
 
-    ::testing::InSequence is;
-
     csr->waitForCompletionWithTimeoutResult = WaitStatus::NotReady;
 
     //we have unrecoverable for this case, this will throw.
@@ -174,8 +172,6 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
 
 HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndDontCallKmdWait) {
     auto csr = createMockCsr<FamilyType>();
-
-    ::testing::InSequence is;
 
     cmdQ->waitUntilComplete(taskCountToWait, {}, flushStampToWait, false);
     EXPECT_EQ(0u, csr->waitForFlushStampCalled);

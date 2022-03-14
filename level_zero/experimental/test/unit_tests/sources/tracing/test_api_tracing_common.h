@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,14 +19,10 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 #include <level_zero/zet_api.h>
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <array>
 #include <iostream>
-
-using ::testing::_;
-using ::testing::Return;
 
 namespace L0 {
 
