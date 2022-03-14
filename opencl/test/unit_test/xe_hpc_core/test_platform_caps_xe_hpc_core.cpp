@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct XeHpcCorePlatformCaps : public PlatformFixture, public ::testing::Test {
     }
 };
 
-PVCTEST_F(XeHpcCorePlatformCaps, givenPvcSkusThenItSupportFP64) {
+XE_HPC_CORETEST_F(XeHpcCorePlatformCaps, givenXeHpcSkusThenItSupportFP64) {
     const auto &caps = pPlatform->getPlatformInfo();
 
     EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));

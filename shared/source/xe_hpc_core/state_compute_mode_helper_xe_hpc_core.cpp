@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,13 @@
 
 namespace NEO {
 
+using Family = XE_HPC_COREFamily;
+
 template <>
-bool StateComputeModeHelper<XE_HPC_COREFamily>::isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) {
+bool StateComputeModeHelper<Family>::isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) {
     return csrSizeRequestFlags.numGrfRequiredChanged;
 }
+
+template struct StateComputeModeHelper<Family>;
 
 } // namespace NEO

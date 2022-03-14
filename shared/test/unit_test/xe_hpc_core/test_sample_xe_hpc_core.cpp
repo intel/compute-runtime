@@ -10,12 +10,6 @@
 
 using namespace NEO;
 
-using PvcOnlyTest = Test<DeviceFixture>;
-
-PVCTEST_F(PvcOnlyTest, WhenGettingHardwareInfoThenPvcIsReturned) {
-    EXPECT_EQ(IGFX_PVC, pDevice->getHardwareInfo().platform.eProductFamily);
-}
-
 using XeHpcCoreOnlyTest = Test<DeviceFixture>;
 
 XE_HPC_CORETEST_F(XeHpcCoreOnlyTest, WhenGettingRenderCoreFamilyThenOnlyHpcCoreIsReturned) {
