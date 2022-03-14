@@ -754,7 +754,6 @@ struct TOKSTR__WA_TABLE {
     TokenDword WaMemTypeIsMaxOfPatAndMocs = {TOK_FBD_WA_TABLE__WA_MEM_TYPE_IS_MAX_OF_PAT_AND_MOCS};
     TokenDword WaGttPat0GttWbOverOsIommuEllcOnly = {TOK_FBD_WA_TABLE__WA_GTT_PAT0GTT_WB_OVER_OS_IOMMU_ELLC_ONLY};
     TokenDword WaAddDummyPageForDisplayPrefetch = {TOK_FBD_WA_TABLE__WA_ADD_DUMMY_PAGE_FOR_DISPLAY_PREFETCH};
-    TokenDword WaDefaultTile4 = {TOK_FBD_WA_TABLE__WA_DEFAULT_TILE4};
     TokenDword WaLLCCachingUnsupported = {TOK_FBD_WA_TABLE__WA_LLCCACHING_UNSUPPORTED};
     TokenDword WaDoubleFastClearWidthAlignment = {TOK_FBD_WA_TABLE__WA_DOUBLE_FAST_CLEAR_WIDTH_ALIGNMENT};
     TokenDword WaCompressedResourceRequiresConstVA21 = {TOK_FBD_WA_TABLE__WA_COMPRESSED_RESOURCE_REQUIRES_CONST_VA21};

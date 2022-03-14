@@ -2100,9 +2100,6 @@ struct Demarshaller<TOK_S_WA_TABLE> {
                 case TOK_FBD_WA_TABLE__WA_ADD_DUMMY_PAGE_FOR_DISPLAY_PREFETCH: {
                     dst.WaAddDummyPageForDisplayPrefetch = readTokValue<decltype(dst.WaAddDummyPageForDisplayPrefetch)>(*tok);
                 } break;
-                case TOK_FBD_WA_TABLE__WA_DEFAULT_TILE4: {
-                    dst.WaDefaultTile4 = readTokValue<decltype(dst.WaDefaultTile4)>(*tok);
-                } break;
                 case TOK_FBD_WA_TABLE__WA_LLCCACHING_UNSUPPORTED: {
                     dst.WaLLCCachingUnsupported = readTokValue<decltype(dst.WaLLCCachingUnsupported)>(*tok);
                 } break;
@@ -3295,9 +3292,6 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             } break;
                             case TOK_FBD_WA_TABLE__WA_ADD_DUMMY_PAGE_FOR_DISPLAY_PREFETCH: {
                                 dst.WaTable.WaAddDummyPageForDisplayPrefetch = readTokValue<decltype(dst.WaTable.WaAddDummyPageForDisplayPrefetch)>(*tokWaTable);
-                            } break;
-                            case TOK_FBD_WA_TABLE__WA_DEFAULT_TILE4: {
-                                dst.WaTable.WaDefaultTile4 = readTokValue<decltype(dst.WaTable.WaDefaultTile4)>(*tokWaTable);
                             } break;
                             case TOK_FBD_WA_TABLE__WA_LLCCACHING_UNSUPPORTED: {
                                 dst.WaTable.WaLLCCachingUnsupported = readTokValue<decltype(dst.WaTable.WaLLCCachingUnsupported)>(*tokWaTable);

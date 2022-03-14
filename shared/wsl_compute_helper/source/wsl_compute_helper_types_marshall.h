@@ -1183,7 +1183,6 @@ inline void marshall(TOKSTR__WA_TABLE &dst, const _WA_TABLET &src) {
     dst.WaMemTypeIsMaxOfPatAndMocs.setValue(src.WaMemTypeIsMaxOfPatAndMocs);
     dst.WaGttPat0GttWbOverOsIommuEllcOnly.setValue(src.WaGttPat0GttWbOverOsIommuEllcOnly);
     dst.WaAddDummyPageForDisplayPrefetch.setValue(src.WaAddDummyPageForDisplayPrefetch);
-    dst.WaDefaultTile4.setValue(src.WaDefaultTile4);
     dst.WaLLCCachingUnsupported.setValue(src.WaLLCCachingUnsupported);
     dst.WaDoubleFastClearWidthAlignment.setValue(src.WaDoubleFastClearWidthAlignment);
     dst.WaCompressedResourceRequiresConstVA21.setValue(src.WaCompressedResourceRequiresConstVA21);
@@ -1507,7 +1506,6 @@ inline void marshall(TOKSTR__ADAPTER_INFO &dst, const _ADAPTER_INFOT &src) {
     dst.WaTable.WaMemTypeIsMaxOfPatAndMocs.setValue(src.WaTable.WaMemTypeIsMaxOfPatAndMocs);
     dst.WaTable.WaGttPat0GttWbOverOsIommuEllcOnly.setValue(src.WaTable.WaGttPat0GttWbOverOsIommuEllcOnly);
     dst.WaTable.WaAddDummyPageForDisplayPrefetch.setValue(src.WaTable.WaAddDummyPageForDisplayPrefetch);
-    dst.WaTable.WaDefaultTile4.setValue(src.WaTable.WaDefaultTile4);
     dst.WaTable.WaLLCCachingUnsupported.setValue(src.WaTable.WaLLCCachingUnsupported);
     dst.WaTable.WaDoubleFastClearWidthAlignment.setValue(src.WaTable.WaDoubleFastClearWidthAlignment);
     dst.WaTable.WaCompressedResourceRequiresConstVA21.setValue(src.WaTable.WaCompressedResourceRequiresConstVA21);
