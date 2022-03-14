@@ -46,7 +46,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
     auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();

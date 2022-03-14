@@ -44,7 +44,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                           EncodeDispatchKernelArgs &args) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
-    using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
     using INLINE_DATA = typename Family::INLINE_DATA;
 
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();

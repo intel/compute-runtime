@@ -99,12 +99,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
     void flushTagUpdate() override;
-    void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvent, bool isStartOfDispatch, bool isEndOfDispatch) override;
     void flushMiFlushDW();
-    void flushMiFlushDW(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData);
     void flushPipeControl();
-    void flushPipeControl(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args);
-    void flushSemaphoreWait(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isStartOfDispatch, bool isEndOfDispatch);
     void flushSmallTask(LinearStream &commandStreamTask,
                         size_t commandStreamStartTask);
     void flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);

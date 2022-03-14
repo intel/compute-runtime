@@ -24,7 +24,6 @@ NEO::PipeControlArgs CommandListCoreFamily<IGFX_XE_HPC_CORE>::createBarrierFlags
 
 template <>
 ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const void *ptr, size_t size) {
-    using MI_BATCH_BUFFER_END = GfxFamily::MI_BATCH_BUFFER_END;
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
 
     if (!allocData) {

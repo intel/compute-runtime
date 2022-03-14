@@ -503,7 +503,6 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
 
     void flushTagUpdate() override{};
-    void flushNonKernelTask(GraphicsAllocation *eventAlloc, uint64_t immediateGpuAddress, uint64_t immediateData, PipeControlArgs &args, bool isWaitOnEvents, bool startOfDispatch, bool endOfDispatch) override{};
     void updateTagFromWait() override{};
     bool isUpdateTagFromWaitEnabled() override { return false; };
 

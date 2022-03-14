@@ -441,23 +441,6 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenMiFlushDwIsFlu
     EXPECT_NE(cmdFound, cmdListBcs.end());
 }
 
-HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenNonDefaultBcsWhenFlushNonKernelTaskThenMiFlushDwIsFlushed) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    std::unique_ptr<OsContext> bcs3Context(OsContext::create(nullptr, 1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS3, EngineUsage::Regular}, device->getDeviceBitfield())));
-    bcsCsr->setupContext(*bcs3Context);
-
-    NEO::PipeControlArgs args;
-    bcsCsr->flushNonKernelTask(nullptr, 0, 0, args, false, false, false);
-
-    auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
-
-    auto cmdFound = expectCommand<MI_FLUSH_DW>(cmdListBcs.begin(), cmdListBcs.end());
-    EXPECT_NE(cmdFound, cmdListBcs.end());
-
-    bcsCsr->setupContext(*bcsOsContext);
-}
-
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingCommandBufferThenSynchronizeBcsOutput) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;

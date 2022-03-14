@@ -935,7 +935,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {
     DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -963,6 +963,9 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingSignalEventsThenDeviceLostIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -1016,6 +1019,9 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingEventResetThenDeviceLostIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 

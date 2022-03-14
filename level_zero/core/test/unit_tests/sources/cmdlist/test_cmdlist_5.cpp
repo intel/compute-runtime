@@ -616,6 +616,92 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     EXPECT_NE(cmdList.end(), itor2);
 }
 
+HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithHostScopeThenPipeControlAndSemWaitAreAddedFromCommandList) {
+    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    size_t expectedUsed = 2 * sizeof(SEMAPHORE_WAIT) + sizeof(MI_BATCH_BUFFER_END);
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        expectedUsed += sizeof(PIPE_CONTROL);
+    }
+    expectedUsed = alignUp(expectedUsed, 64);
+
+    auto &commandContainer = commandList->commandContainer;
+    MockEvent event, event2;
+    event.signalScope = 0;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t events[] = {&event, &event2};
+
+    size_t startOffset = commandContainer.getCommandStream()->getUsed();
+    commandList->appendWaitOnEvents(2, events);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), startOffset),
+        expectedUsed));
+
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    EXPECT_EQ(expectedUsed, commandContainer.getCommandStream()->getUsed());
+}
+
+HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithSubdeviceScopeThenSemWaitIsAddedFromCommandList) {
+    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(1u, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    size_t expectedUsed = 2 * sizeof(SEMAPHORE_WAIT) + sizeof(MI_BATCH_BUFFER_END);
+    expectedUsed = alignUp(expectedUsed, 64);
+
+    auto &commandContainer = commandList->commandContainer;
+    MockEvent event, event2;
+    event.signalScope = 0;
+    event.waitScope = 0;
+    event2.waitScope = 0;
+    ze_event_handle_t events[] = {&event, &event2};
+
+    size_t startOffset = commandContainer.getCommandStream()->getUsed();
+    commandList->appendWaitOnEvents(2, events);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), startOffset),
+        expectedUsed));
+
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    EXPECT_EQ(expectedUsed, commandContainer.getCommandStream()->getUsed());
+}
+
 HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAdded) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
