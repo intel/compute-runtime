@@ -19,16 +19,11 @@ static auto gfxCore = IGFX_GEN11_CORE;
 
 template <>
 void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
-    if (this->isComputeModeNeeded()) {
+    if (this->streamProperties.stateComputeMode.isCoherencyRequired.isDirty) {
         EncodeComputeMode<Family>::programComputeModeCommandWithSynchronization(
             stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
             hasSharedHandles(), hwInfo, isRcs());
     }
-}
-
-template <typename GfxFamily>
-inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
-    return this->streamProperties.stateComputeMode.isCoherencyRequired.isDirty;
 }
 
 template <>

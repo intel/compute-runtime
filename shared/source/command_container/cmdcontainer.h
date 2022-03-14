@@ -77,7 +77,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
     uint32_t nextIddInBlock = 0;
-    uint32_t lastSentNumGrfRequired = 0;
     bool lastPipelineSelectModeRequired = false;
     bool lastSentUseGlobalAtomics = false;
 

@@ -19,11 +19,6 @@ template <>
 void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo) {
 }
 
-template <typename GfxFamily>
-inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
-    return false;
-}
-
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];

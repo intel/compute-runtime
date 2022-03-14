@@ -20,9 +20,8 @@ using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenNumGrfRequiredIsDefaultThenLargeGrfModeDisabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    cmdContainer->lastSentNumGrfRequired = 0;
     StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(false, cmdContainer->lastSentNumGrfRequired + 1, 0u, *defaultHwInfo);
+    streamProperties.stateComputeMode.setProperties(false, GrfConfig::DefaultGrfNumber, 0u, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
 
     GenCmdList commands;

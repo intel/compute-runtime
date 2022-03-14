@@ -75,7 +75,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForComputeMode();
     MOCKABLE_VIRTUAL bool hasSharedHandles();
 
-    bool isComputeModeNeeded() const;
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 

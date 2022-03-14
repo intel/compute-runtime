@@ -72,19 +72,19 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSi
     }
 
     overrideCoherencyRequest(false, false, false);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(false, true, false);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(true, true, false);
     auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideCoherencyRequest(true, false, false);
     retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -99,19 +99,19 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSize
     }
 
     overrideCoherencyRequest(false, false, true);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(false, true, true);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(true, true, true);
     auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideCoherencyRequest(true, false, true);
     retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 }
 

@@ -16,7 +16,6 @@ using Family = NEO::XE_HPC_COREFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
-#include "shared/source/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 static auto gfxCore = IGFX_XE_HPC_CORE;

@@ -19,15 +19,15 @@ HWTEST2_F(ComputeModeRequirementsPvcAndLater, givenComputeModeCmdSizeWhenLargeGr
     auto cmdSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, 256u);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdSize, retSize);
 }

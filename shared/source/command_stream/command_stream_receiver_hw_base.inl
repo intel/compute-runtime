@@ -268,10 +268,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                                             dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode,
                                                                                                             hwInfo);
 
-    if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
-        dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
-    }
-
     auto requiresCoherency = hwHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
                                                           dispatchFlags.threadArbitrationPolicy, hwInfo);
@@ -280,9 +276,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     csrSizeRequestFlags.specialPipelineSelectModeChanged = isSpecialPipelineSelectModeChanged;
-
-    csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
-    lastSentNumGrfRequired = dispatchFlags.numGrfRequired;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
 
@@ -809,7 +802,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
-    if (isComputeModeNeeded()) {
+    if (this->streamProperties.stateComputeMode.isDirty()) {
         size += getCmdSizeForComputeMode();
     }
     size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
@@ -1373,7 +1366,7 @@ inline MemoryCompressionState CommandStreamReceiverHw<GfxFamily>::getMemoryCompr
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isPipelineSelectAlreadyProgrammed() const {
     const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
-    return isComputeModeNeeded() && hwInfoConfig.is3DPipelineSelectWARequired() && isRcs();
+    return this->streamProperties.stateComputeMode.isDirty() && hwInfoConfig.is3DPipelineSelectWARequired() && isRcs();
 }
 
 template <typename GfxFamily>

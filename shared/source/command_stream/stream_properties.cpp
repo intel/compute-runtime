@@ -19,8 +19,10 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
     this->isCoherencyRequired.set(isCoherencyRequired);
 
-    int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
-    this->largeGrfMode.set(largeGrfMode);
+    if (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable) {
+        int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
+        this->largeGrfMode.set(largeGrfMode);
+    }
 
     int32_t zPassAsyncComputeThreadLimit = -1;
     if (DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {

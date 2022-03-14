@@ -123,7 +123,6 @@ struct CsrSizeRequestFlags {
     bool preemptionRequestChanged = false;
     bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
-    bool numGrfRequiredChanged = false;
     bool specialPipelineSelectModeChanged = false;
     bool activePartitionsChanged = false;
 };

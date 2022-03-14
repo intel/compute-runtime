@@ -46,19 +46,19 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
 GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenProgrammingIsCorrect) {
     auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     overrideCoherencyRequest(false, false);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(false, true);
-    EXPECT_FALSE(csr->isComputeModeNeeded());
+    EXPECT_FALSE(csr->streamProperties.stateComputeMode.isDirty());
 
     overrideCoherencyRequest(true, true);
     auto retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(lriSize, retSize);
 
     overrideCoherencyRequest(true, false);
     retSize = csr->getCmdSizeForComputeMode();
-    EXPECT_TRUE(csr->isComputeModeNeeded());
+    EXPECT_TRUE(csr->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(lriSize, retSize);
 }
 

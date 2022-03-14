@@ -173,18 +173,18 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     overrideComputeModeRequest<FamilyType>(false, true, false);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     overrideComputeModeRequest<FamilyType>(true, true, false);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, false);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 }

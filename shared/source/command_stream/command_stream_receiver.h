@@ -384,7 +384,6 @@ class CommandStreamReceiver {
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = 0;
-    uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
     uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;
 
     uint32_t requiredScratchSize = 0;

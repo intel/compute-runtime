@@ -56,9 +56,7 @@ struct ComputeModeRequirements : public ::testing::Test {
                                     uint32_t numGrfRequired) {
         auto csrHw = getCsrHw<FamilyType>();
         csrHw->hasSharedHandlesReturnValue = hasSharedHandles;
-        csrHw->getCsrRequestFlags()->numGrfRequiredChanged = numGrfRequiredChanged;
         flags.requiresCoherency = requireCoherency;
-        flags.numGrfRequired = numGrfRequired;
         csrHw->streamProperties.stateComputeMode.isCoherencyRequired.value = requireCoherency;
         csrHw->streamProperties.stateComputeMode.isCoherencyRequired.isDirty = coherencyRequestChanged;
         csrHw->streamProperties.stateComputeMode.largeGrfMode.value = (numGrfRequired == GrfConfig::LargeGrfNumber);

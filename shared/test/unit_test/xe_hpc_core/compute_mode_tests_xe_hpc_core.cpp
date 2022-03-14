@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/state_compute_mode_helper.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -79,11 +78,11 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, false);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
 }
 
@@ -96,11 +95,11 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNumGrfRequiredChangedWhenCommandSiz
     auto numGrfRequired = 128u;
     auto numGrfRequiredChanged = false;
     overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     numGrfRequiredChanged = true;
     overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL), getCsrHw<FamilyType>()->getCmdSizeForComputeMode());
 }
 

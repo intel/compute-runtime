@@ -33,7 +33,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         nullptr,                                                                  //flushStampReference
         NEO::QueueThrottle::MEDIUM,                                               //throttle
         this->getCommandListPreemptionMode(),                                     //preemptionMode
-        this->commandContainer.lastSentNumGrfRequired,                            //numGrfRequired
+        GrfConfig::NotApplicable,                                                 //numGrfRequired
         NEO::L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
         this->requiredStreamState.stateComputeMode.threadArbitrationPolicy.value, //threadArbitrationPolicy
         NEO::AdditionalKernelExecInfo::NotApplicable,                             //additionalKernelExecInfo

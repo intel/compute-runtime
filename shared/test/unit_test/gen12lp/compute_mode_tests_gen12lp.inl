@@ -19,14 +19,14 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenComm
 
     overrideComputeModeRequest<FamilyType>(false, false, true);
 
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
     stream.replaceBuffer(buff, 1024);
     overrideComputeModeRequest<FamilyType>(false, true, true);
 
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
@@ -34,7 +34,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenComm
     overrideComputeModeRequest<FamilyType>(true, true, true);
 
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -43,7 +43,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenComm
     overrideComputeModeRequest<FamilyType>(true, false, true);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -52,7 +52,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenComm
     overrideComputeModeRequest<FamilyType>(false, false, true, true, 127u);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -70,7 +70,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenC
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
 
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
@@ -78,7 +78,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenC
     overrideComputeModeRequest<FamilyType>(true, true, false);
 
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -87,7 +87,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenC
     overrideComputeModeRequest<FamilyType>(true, false, false);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -96,7 +96,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenC
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -116,7 +116,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCa
 
     overrideComputeModeRequest<FamilyType>(false, false, false);
 
-    EXPECT_FALSE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(0u, stream.getUsed());
 
@@ -124,7 +124,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCa
     overrideComputeModeRequest<FamilyType>(true, true, false);
 
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -133,7 +133,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCa
     overrideComputeModeRequest<FamilyType>(true, false, false);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -142,7 +142,7 @@ HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCa
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u);
 
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->isComputeModeNeeded());
+    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
     EXPECT_EQ(cmdsSize, retSize);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());

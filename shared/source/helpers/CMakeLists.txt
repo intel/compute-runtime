@@ -116,7 +116,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_icllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_skl.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/state_compute_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
     ${CMAKE_CURRENT_SOURCE_DIR}/string.h
     ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
