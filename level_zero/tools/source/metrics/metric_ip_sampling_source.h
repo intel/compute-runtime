@@ -39,6 +39,20 @@ class IpSamplingMetricSourceImp : public MetricSource {
     std::unique_ptr<IpSamplingMetricGroupImp> cachedMetricGroup = nullptr;
 };
 
+typedef struct StallSumIpData {
+    uint64_t activeCount;
+    uint64_t otherCount;
+    uint64_t controlCount;
+    uint64_t pipeStallCount;
+    uint64_t sendCount;
+    uint64_t distAccCount;
+    uint64_t sbidCount;
+    uint64_t syncCount;
+    uint64_t instFetchCount;
+} StallSumIpData_t;
+
+typedef std::map<uint64_t, StallSumIpData_t> StallSumIpDataMap_t;
+
 struct IpSamplingMetricGroupImp : public MetricGroup {
     IpSamplingMetricGroupImp(std::vector<IpSamplingMetricImp> &metrics);
     virtual ~IpSamplingMetricGroupImp() = default;
@@ -71,6 +85,12 @@ struct IpSamplingMetricGroupImp : public MetricGroup {
   private:
     std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
     zet_metric_group_properties_t properties = {};
+    ze_result_t getCalculatedMetricCount(const size_t rawDataSize, uint32_t &metricValueCount);
+    ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
+                                          uint32_t &metricValueCount,
+                                          zet_typed_value_t *pCalculatedData);
+    void stallIpDataMapUpdate(StallSumIpDataMap_t &, const uint8_t *pRawIpData);
+    void stallSumIpDataToTypedValues(uint64_t ip, StallSumIpData_t &sumIpData, std::vector<zet_typed_value_t> &ipDataValues);
 };
 
 struct IpSamplingMetricImp : public Metric {
