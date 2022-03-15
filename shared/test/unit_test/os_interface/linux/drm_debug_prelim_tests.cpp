@@ -315,15 +315,13 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     bo.bind(&osContext, 0);
-    EXPECT_NE(0u, drm.context.receivedVmBind->extensions);
-
-    drm.context.receivedVmUnbind->extensions = 0;
+    EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
 
     bo.unbind(&osContext, 0);
     if (HwHelperHw<FamilyType>::get().getNumCacheRegions() > 0) {
-        EXPECT_NE(0u, drm.context.receivedVmUnbind->extensions);
+        EXPECT_NE(0u, drm.context.receivedVmUnbind.value().extensions);
     } else {
-        EXPECT_EQ(0u, drm.context.receivedVmUnbind->extensions);
+        EXPECT_EQ(0u, drm.context.receivedVmUnbind.value().extensions);
     }
     EXPECT_EQ(1u, drm.context.vmUnbindCalled);
 }
