@@ -744,7 +744,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequ
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);
@@ -776,7 +776,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKerne
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);
@@ -802,7 +802,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledD
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);

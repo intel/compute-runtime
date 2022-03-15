@@ -2375,7 +2375,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
 
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2412,7 +2412,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndDebuggerEnabledWhenLinkingModu
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
 
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2442,7 +2442,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolName, 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
 
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
