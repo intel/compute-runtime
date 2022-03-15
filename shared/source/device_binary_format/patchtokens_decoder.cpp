@@ -390,6 +390,9 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_KERNEL_ARGUMENT_INFO:
         assignArgInfo(out, token);
         break;
+    case _PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
+        assignToken(out.tokens.hostAccessTable, token);
+        break;
 
     case PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT:
     case PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT:
@@ -439,9 +442,6 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
         break;
     case PATCH_TOKEN_PROGRAM_SYMBOL_TABLE:
         assignToken(progTok.symbolTable, token);
-        break;
-    case _PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
-        assignToken(progTok.hostAccessTable, token);
         break;
     }
     return true;

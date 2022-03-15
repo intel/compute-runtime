@@ -43,6 +43,10 @@ void populateSingleKernelInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramF
         dst.linkerInput->decodeRelocationTable(decodedKernel.tokens.programRelocationTable + 1, decodedKernel.tokens.programRelocationTable->NumEntries, kernelNum);
     }
 
+    if (decodedKernel.tokens.hostAccessTable) {
+        parseHostAccessTable(dst, decodedKernel.tokens.hostAccessTable);
+    }
+
     dst.kernelInfos.push_back(kernelInfo.release());
 }
 
@@ -106,10 +110,6 @@ void populateProgramInfo(ProgramInfo &dst, const PatchTokenBinary::ProgramFromPa
     if (src.programScopeTokens.symbolTable != nullptr) {
         const auto patch = src.programScopeTokens.symbolTable;
         dst.linkerInput->decodeGlobalVariablesSymbolTable(patch + 1, patch->NumEntries);
-    }
-
-    if (src.programScopeTokens.hostAccessTable != nullptr) {
-        parseHostAccessTable(dst, src.programScopeTokens.hostAccessTable);
     }
 }
 

@@ -143,6 +143,7 @@ struct KernelFromPatchtokens {
         const SPatchItemHeader *gtpinInfo = nullptr;
         const SPatchFunctionTableInfo *programSymbolTable = nullptr;
         const SPatchFunctionTableInfo *programRelocationTable = nullptr;
+        const SPatchFunctionTableInfo *hostAccessTable = nullptr;
         StackVecKernelArgs kernelArgs;
         StackVecStrings strings;
         struct {
@@ -183,7 +184,6 @@ struct ProgramFromPatchtokens {
         StackVec<const SPatchConstantPointerProgramBinaryInfo *, 4> constantPointer;
         StackVec<const SPatchGlobalPointerProgramBinaryInfo *, 4> globalPointer;
         const SPatchFunctionTableInfo *symbolTable = nullptr;
-        const SPatchFunctionTableInfo *hostAccessTable = nullptr;
     } programScopeTokens;
     StackVec<KernelFromPatchtokens, 2> kernels;
     StackVec<const SPatchItemHeader *, 4> unhandledTokens;

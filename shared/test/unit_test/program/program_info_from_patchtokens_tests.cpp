@@ -300,12 +300,15 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
     EXPECT_EQ(1U, receivedSegmentIds[1]);
 }
 
-TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithHostAccessTableGThenPopulateDeviceHostNameMapCorrectly) {
-    PatchTokensTestData::ValidProgramWithHostAccessTable programTokens;
+TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithKernelWhenKernelHasHostAccessTableThenPopulateDeviceHostNameMapCorrectly) {
+    PatchTokensTestData::ValidProgramWithKernelUsingHostAccessTable programToEncode;
+    programToEncode.headerMutable->NumberOfKernels = 1;
+    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
-    bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programTokens.blobs.programInfo, decodedProgram);
+    bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
-    NEO::ProgramInfo programInfo;
+
+    NEO::ProgramInfo programInfo = {};
     NEO::populateProgramInfo(programInfo, decodedProgram);
     EXPECT_EQ(2u, programInfo.globalsDeviceToHostNameMap.size());
     EXPECT_STREQ("hostNameOne", programInfo.globalsDeviceToHostNameMap["deviceNameOne"].c_str());
