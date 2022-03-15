@@ -1681,6 +1681,180 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 };
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenCallToMPrepareIndirectAllocationForDestructionThenOnlyValidAllocationCountsAreUpdated,
+          IsAtLeastSkl) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    NEO::CommandStreamReceiver *csr0 = nullptr;
+    L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr0);
+    void *ptr1 = nullptr;
+    result = context->allocDeviceMem(device1->toHandle(),
+                                     &deviceDesc,
+                                     size, alignment, &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr1);
+
+    auto allocationData1 = svmManager->getSVMAlloc(ptr1);
+    uint32_t prevPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
+    svmManager->prepareIndirectAllocationForDestruction(allocationData1);
+    uint32_t postPeekTaskCount1 = allocationData1->gpuAllocations.getGraphicsAllocation(1u)->getTaskCount(csr0->getOsContext().getContextId());
+
+    EXPECT_EQ(postPeekTaskCount1, prevPeekTaskCount1);
+
+    ret = context->freeMem(ptr0);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+    ret = context->freeMem(ptr1);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          whenisRemoteResourceNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
+          IsAtLeastSkl) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    NEO::CommandStreamReceiver *csr0 = nullptr;
+    L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr0);
+    void *ptr1 = nullptr;
+    result = context->allocDeviceMem(device1->toHandle(),
+                                     &deviceDesc,
+                                     size, alignment, &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr1);
+
+    auto allocationData0 = svmManager->getSVMAlloc(ptr0);
+    auto allocationData1 = svmManager->getSVMAlloc(ptr1);
+
+    bool isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, nullptr, allocationData1, device0);
+    EXPECT_TRUE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device0);
+    EXPECT_FALSE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(1u), nullptr, device0);
+    EXPECT_TRUE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteResourceNeeded(ptr0, allocationData0->gpuAllocations.getGraphicsAllocation(0u), allocationData0, device1);
+    EXPECT_TRUE(isNeeded);
+
+    ret = context->freeMem(ptr0);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+    ret = context->freeMem(ptr1);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
+          IsAtLeastSkl) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    NEO::CommandStreamReceiver *csr = nullptr;
+    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr0);
+    void *ptr1 = nullptr;
+    result = context->allocDeviceMem(device1->toHandle(),
+                                     &deviceDesc,
+                                     size, alignment, &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr1);
+
+    auto &residentAllocations = csr->getResidencyAllocations();
+    EXPECT_EQ(0u, residentAllocations.size());
+    svmManager->makeIndirectAllocationsResident(*csr, 1u);
+    EXPECT_EQ(1u, residentAllocations.size());
+    EXPECT_EQ(residentAllocations[0]->getGpuAddress(), reinterpret_cast<uint64_t>(ptr1));
+
+    ret = context->freeMem(ptr0);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+    ret = context->freeMem(ptr1);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenCallToMakeInternalAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
+          IsAtLeastSkl) {
+    MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    NEO::CommandStreamReceiver *csr = nullptr;
+    L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *ptr0 = nullptr;
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr0);
+    void *ptr1 = nullptr;
+    result = context->allocDeviceMem(device1->toHandle(),
+                                     &deviceDesc,
+                                     size, alignment, &ptr1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr1);
+
+    auto &residentAllocations = csr->getResidencyAllocations();
+    EXPECT_EQ(0u, residentAllocations.size());
+    svmManager->makeInternalAllocationsResident(*csr, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(1u, residentAllocations.size());
+    EXPECT_EQ(residentAllocations[0]->getGpuAddress(), reinterpret_cast<uint64_t>(ptr1));
+
+    ret = context->freeMem(ptr0);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+    ret = context->freeMem(ptr1);
+    ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned,
           IsAtLeastSkl) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);

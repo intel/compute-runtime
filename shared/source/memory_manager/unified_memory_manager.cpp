@@ -94,7 +94,9 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (allocation.second.memoryType & requestedTypesMask) {
             auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
-            UNRECOVERABLE_IF(nullptr == gpuAllocation);
+            if (gpuAllocation == nullptr) {
+                continue;
+            }
             commandStreamReceiver.makeResident(*gpuAllocation);
         }
     }
@@ -520,7 +522,9 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     if (parseAllAllocations) {
         for (auto &allocation : this->SVMAllocs.allocations) {
             auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
-            UNRECOVERABLE_IF(nullptr == gpuAllocation);
+            if (gpuAllocation == nullptr) {
+                continue;
+            }
             commandStreamReceiver.makeResident(*gpuAllocation);
             gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, commandStreamReceiver.getOsContext().getContextId());
             gpuAllocation->setEvictable(false);
@@ -534,6 +538,9 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
         for (auto &internalAllocationsHandling : this->indirectAllocationsResidency) {
             auto commandStreamReceiver = internalAllocationsHandling.first;
             auto gpuAllocation = allocationData->gpuAllocations.getGraphicsAllocation(commandStreamReceiver->getRootDeviceIndex());
+            if (gpuAllocation == nullptr) {
+                continue;
+            }
             auto desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
             if (gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
                 gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver->getOsContext().getContextId());
