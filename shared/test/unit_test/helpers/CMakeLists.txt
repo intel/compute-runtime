@@ -21,6 +21,7 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config.cpp
 )
 
 target_sources(${TARGET_NAME} PRIVATE ${IGDRCL_SRCS_tests_helpers})
