@@ -28,6 +28,14 @@ using NEO::RootDeviceEnvironment;
 extern const int mockFd;
 extern const char *mockPciPath;
 
+class DrmMockImpl : public Drm {
+  public:
+    using Drm::setupIoctlHelper;
+    DrmMockImpl(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment){};
+
+    MOCK_METHOD2(ioctl, int(unsigned long request, void *arg));
+};
+
 class DrmMockSuccess : public Drm {
   public:
     using Drm::setupIoctlHelper;

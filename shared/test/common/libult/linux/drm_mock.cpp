@@ -20,7 +20,6 @@ const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
 
 int DrmMock::ioctl(unsigned long request, void *arg) {
     ioctlCallsCount++;
-    ioctlRequestCallCount[request]++;
 
     if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
         auto gp = static_cast<drm_i915_getparam_t *>(arg);
@@ -76,8 +75,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
-        auto contextCreate = static_cast<drm_i915_gem_context_create *>(arg);
-        contextCreate->ctx_id = this->storedDrmContextId;
+        this->receivedCreateContextId = create->ctx_id;
         this->receivedContextCreateFlags = create->flags;
         if (create->extensions == 0) {
             return this->storedRetVal;
@@ -151,11 +149,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
         auto execbuf = static_cast<drm_i915_gem_execbuffer2 *>(arg);
-        auto execObjects = reinterpret_cast<const drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr);
-        this->execBuffers.push_back(*execbuf);
-        for (uint32_t i = 0; i < execbuf->buffer_count; i++) {
-            this->receivedBos.push_back(execObjects[i]);
-        }
+        this->execBuffer = *execbuf;
+        this->bbFlags = reinterpret_cast<drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr)[execbuf->buffer_count - 1].flags;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_USERPTR) {
@@ -204,11 +199,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_WAIT) {
-        receivedGemWait = *static_cast<drm_i915_gem_wait *>(arg);
         return 0;
     }
     if (request == DRM_IOCTL_GEM_CLOSE) {
-        return storedRetValForGemClose;
+        return 0;
     }
     if (request == DRM_IOCTL_I915_GET_RESET_STATS && arg != nullptr) {
         auto outResetStats = static_cast<drm_i915_reset_stats *>(arg);
