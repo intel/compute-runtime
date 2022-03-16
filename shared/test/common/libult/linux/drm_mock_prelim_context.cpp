@@ -66,6 +66,11 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         }
         return 0;
     } break;
+    case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
+        auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
+        mmap_arg->offset = 0;
+        return 0;
+    } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closIndex++;
@@ -112,7 +117,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             vmBind->flags,
             vmBind->extensions,
         };
-        storeVmBindExtensions(vmBind->extensions);
+        storeVmBindExtensions(vmBind->extensions, true);
         return vmBindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
@@ -127,6 +132,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             vmBind->flags,
             vmBind->extensions,
         };
+        storeVmBindExtensions(vmBind->extensions, false);
         return vmUnbindReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {
@@ -395,7 +401,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     return true;
 }
 
-void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr) {
+void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr, bool bind) {
     if (ptr == 0) {
         return;
     }
@@ -409,6 +415,13 @@ void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr) {
         } else if (baseExt->name == PRELIM_I915_VM_BIND_EXT_UUID) {
             const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_uuid *>(baseExt);
             receivedVmBindUuidExt[uuidIndex++] = UuidVmBindExt{ext->uuid_handle, ext->base.next_extension};
+        } else if (baseExt->name == PRELIM_I915_VM_BIND_EXT_SET_PAT) {
+            const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_set_pat *>(baseExt);
+            if (bind) {
+                receivedVmBindPatIndex = ext->pat_index;
+            } else {
+                receivedVmUnbindPatIndex = ext->pat_index;
+            }
         }
 
         baseExt = reinterpret_cast<i915_user_extension *>(baseExt->next_extension);

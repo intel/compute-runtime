@@ -89,10 +89,12 @@ struct DrmMockPrelimContext {
     std::optional<VmBindParams> receivedVmBind{};
     std::optional<SyncFenceVmBindExt> receivedVmBindSyncFence{};
     std::optional<UuidVmBindExt> receivedVmBindUuidExt[2]{};
+    std::optional<uint64_t> receivedVmBindPatIndex{};
     int vmBindReturn{0};
 
     size_t vmUnbindCalled{0};
     std::optional<VmBindParams> receivedVmUnbind{};
+    std::optional<uint64_t> receivedVmUnbindPatIndex{};
     int vmUnbindReturn{0};
 
     int hasPageFaultQueryValue{0};
@@ -117,7 +119,7 @@ struct DrmMockPrelimContext {
 
     int handlePrelimRequest(unsigned long request, void *arg);
     bool handlePrelimQueryItem(void *arg);
-    void storeVmBindExtensions(uint64_t ptr);
+    void storeVmBindExtensions(uint64_t ptr, bool bind);
 };
 
 namespace DrmPrelimHelper {

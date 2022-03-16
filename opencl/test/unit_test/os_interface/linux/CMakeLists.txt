@@ -47,6 +47,7 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_prelim_fixtures.h
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_prelim_tests.cpp
   )
 endif()
 
