@@ -20,8 +20,10 @@ const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
 
 int DrmMock::ioctl(unsigned long request, void *arg) {
     ioctlCallsCount++;
+    ioctlCount.total++;
 
     if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
+        ioctlCount.contextGetParam++;
         auto gp = static_cast<drm_i915_getparam_t *>(arg);
         if (gp->param == I915_PARAM_EU_TOTAL) {
             if (0 == this->storedRetValForEUVal) {
@@ -74,8 +76,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {
+        ioctlCount.contextCreate++;
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
-        this->receivedCreateContextId = create->ctx_id;
+        auto contextCreate = static_cast<drm_i915_gem_context_create *>(arg);
+        contextCreate->ctx_id = this->storedDrmContextId;
         this->receivedContextCreateFlags = create->flags;
         if (create->extensions == 0) {
             return this->storedRetVal;
@@ -91,12 +95,14 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {
+        ioctlCount.contextDestroy++;
         auto destroy = static_cast<drm_i915_gem_context_destroy *>(arg);
         this->receivedDestroyContextId = destroy->ctx_id;
         return this->storedRetVal;
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM) && (arg != nullptr)) {
+        ioctlCount.contextSetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PRIORITY) {
@@ -124,6 +130,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
+        ioctlCount.contextGetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_GTT_SIZE) {
@@ -148,18 +155,24 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
 
     if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
+        ioctlCount.execbuffer2++;
         auto execbuf = static_cast<drm_i915_gem_execbuffer2 *>(arg);
-        this->execBuffer = *execbuf;
-        this->bbFlags = reinterpret_cast<drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr)[execbuf->buffer_count - 1].flags;
+        auto execObjects = reinterpret_cast<const drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr);
+        this->execBuffers.push_back(*execbuf);
+        for (uint32_t i = 0; i < execbuf->buffer_count; i++) {
+            this->receivedBos.push_back(execObjects[i]);
+        }
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_USERPTR) {
+        ioctlCount.gemUserptr++;
         auto userPtrParams = static_cast<drm_i915_gem_userptr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_CREATE) {
+        ioctlCount.gemCreate++;
         auto createParams = static_cast<drm_i915_gem_create *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
@@ -169,6 +182,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
+        ioctlCount.gemSetTiling++;
         auto setTilingParams = static_cast<drm_i915_gem_set_tiling *>(arg);
         setTilingMode = setTilingParams->tiling_mode;
         setTilingHandle = setTilingParams->handle;
@@ -176,6 +190,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         return 0;
     }
     if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+        ioctlCount.primeFdToHandle++;
         auto primeToHandleParams = static_cast<drm_prime_handle *>(arg);
         //return BO
         primeToHandleParams->handle = outputHandle;
@@ -183,28 +198,35 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         return fdToHandleRetVal;
     }
     if (request == DRM_IOCTL_PRIME_HANDLE_TO_FD) {
+        ioctlCount.handleToPrimeFd++;
         auto primeToFdParams = static_cast<drm_prime_handle *>(arg);
         primeToFdParams->fd = outputFd;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
+        ioctlCount.gemGetAperture++;
         auto aperture = static_cast<drm_i915_gem_get_aperture *>(arg);
         aperture->aper_available_size = gpuMemSize;
         aperture->aper_size = gpuMemSize;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_MMAP) {
+        ioctlCount.gemMmap++;
         auto mmap_arg = static_cast<drm_i915_gem_mmap *>(arg);
         mmap_arg->addr_ptr = reinterpret_cast<__u64>(lockedPtr);
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_WAIT) {
+        ioctlCount.gemWait++;
+        receivedGemWait = *static_cast<drm_i915_gem_wait *>(arg);
         return 0;
     }
     if (request == DRM_IOCTL_GEM_CLOSE) {
-        return 0;
+        ioctlCount.gemClose++;
+        return storedRetValForGemClose;
     }
     if (request == DRM_IOCTL_I915_GET_RESET_STATS && arg != nullptr) {
+        ioctlCount.gemResetStats++;
         auto outResetStats = static_cast<drm_i915_reset_stats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
             if (resetStats.ctx_id == outResetStats->ctx_id) {
@@ -217,6 +239,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
 
     if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
+        ioctlCount.query++;
         auto queryArg = static_cast<drm_i915_query *>(arg);
         auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(queryArg->items_ptr);
         storedQueryItem = *queryItemArg;
@@ -252,7 +275,6 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     return handleRemainingRequests(request, arg);
 }
-
 int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
     waitUserFenceParams.push_back({ctxIdx, address, value, dataWidth, timeout, flags});
     return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags);

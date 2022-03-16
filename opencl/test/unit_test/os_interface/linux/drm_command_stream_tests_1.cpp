@@ -46,133 +46,76 @@
 
 using namespace NEO;
 
-ACTION_P(copyIoctlParam, dstValue) {
-    *dstValue = *static_cast<decltype(dstValue)>(arg1);
-    return 0;
-};
-
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBoHandle) {
     FlushStamp handleToWait = 123;
     drm_i915_gem_wait expectedWait = {};
-    drm_i915_gem_wait calledWait = {};
     expectedWait.bo_handle = static_cast<uint32_t>(handleToWait);
     expectedWait.timeout_ns = -1;
 
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(copyIoctlParam(&calledWait));
-
     csr->waitForFlushStamp(handleToWait);
-    EXPECT_TRUE(memcmp(&expectedWait, &calledWait, sizeof(drm_i915_gem_wait)) == 0);
+    EXPECT_TRUE(memcmp(&expectedWait, &mock->receivedGemWait, sizeof(drm_i915_gem_wait)) == 0);
+    EXPECT_EQ(1, mock->ioctlCount.gemWait);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(0);
     DrmAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
     csr->makeResident(graphicsAllocation);
+
+    EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 0;
+    mock->ioctlTearDownExpected.gemClose = 0;
+    mock->ioctlTearDownExpects = true;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentTwiceThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(0);
-
     DrmAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation);
+
+    EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 0;
+    mock->ioctlTearDownExpected.gemClose = 0;
+    mock->ioctlTearDownExpects = true;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenSizeZeroWhenMakingResidentTwiceThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(0);
-
     DrmAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 0, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
+
+    EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 0;
+    mock->ioctlTearDownExpected.gemClose = 0;
+    mock->ioctlTearDownExpects = true;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenResizedWhenMakingResidentTwiceThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(0);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(0);
-
     DrmAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
     DrmAllocation graphicsAllocation2(0, AllocationType::UNKNOWN, nullptr, nullptr, 8192, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation2);
-}
 
-// matcher to check batch buffer offset and len on execbuffer2 call
-MATCHER_P2(BoExecFlushEq, batch_start_offset, batch_len, "") {
-    drm_i915_gem_execbuffer2 *exec2 = (drm_i915_gem_execbuffer2 *)arg;
+    EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 
-    return (exec2->batch_start_offset == batch_start_offset) && (exec2->batch_len == batch_len);
-}
-
-// matcher to check DrmContextId
-MATCHER_P2(BoExecFlushContextEq, drmContextId, numExecs, "") {
-    auto execBuff2 = reinterpret_cast<drm_i915_gem_execbuffer2 *>(arg);
-
-    bool allExecsWithTheSameId = (execBuff2->buffer_count == numExecs);
-    allExecsWithTheSameId &= (execBuff2->rsvd1 == drmContextId);
-
-    auto execObjects = reinterpret_cast<drm_i915_gem_exec_object2 *>(execBuff2->buffers_ptr);
-    for (uint32_t i = 0; i < execBuff2->buffer_count - 1; i++) {
-        allExecsWithTheSameId &= (execObjects[i].rsvd1 == drmContextId);
-    }
-
-    return allExecsWithTheSameId;
+    mock->ioctlTearDownExpected.gemWait = 0;
+    mock->ioctlTearDownExpected.gemClose = 0;
+    mock->ioctlTearDownExpects = true;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotChange) {
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
     int boHandle = 123;
-    auto setBoHandle = [&](unsigned long request, void *arg) {
-        auto userptr = static_cast<drm_i915_gem_userptr *>(arg);
-        userptr->handle = boHandle;
-        return 0;
-    };
 
-    ::testing::InSequence inSequence;
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Invoke(setBoHandle))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
+    mock->returnHandle = boHandle;
 
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -188,6 +131,16 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotCh
     EXPECT_EQ(static_cast<uint64_t>(boHandle), csr->obtainCurrentFlushStamp());
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
+
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
@@ -215,28 +168,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
     uint32_t expectedDrmContextId = 321;
     uint32_t numAllocations = 3;
 
-    auto createdContextId = [&expectedDrmContextId](unsigned long request, void *arg) {
-        auto contextCreate = static_cast<drm_i915_gem_context_create *>(arg);
-        contextCreate->ctx_id = expectedDrmContextId;
-        return 0;
-    };
-
     auto allocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
 
-    EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_)).WillRepeatedly(::testing::Return(0)).RetiresOnSaturation();
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Invoke(createdContextId))
-        .RetiresOnSaturation();
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushContextEq(expectedDrmContextId, numAllocations)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
+    mock->storedDrmContextId = expectedDrmContextId;
 
     osContext = std::make_unique<OsContextLinux>(*mock, 1,
                                                  EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
@@ -253,27 +190,20 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
 
     memoryManager->freeGraphicsMemory(allocation1);
     memoryManager->freeGraphicsMemory(allocation2);
+
+    EXPECT_EQ(1, mock->ioctlCount.contextCreate);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    EXPECT_EQ(numAllocations, mock->execBuffers.back().buffer_count);
+    EXPECT_EQ(expectedDrmContextId, mock->execBuffers.back().rsvd1);
+
+    for (uint32_t i = 0; i < mock->receivedBos.size(); i++) {
+        EXPECT_EQ(expectedDrmContextId, mock->receivedBos[i].rsvd1);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThenSucceeds) {
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
-
-    ::testing::InSequence inSequence;
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
 
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -286,24 +216,19 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, true, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_NE(cs.getCpuBase(), nullptr);
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucceeds) {
-    ::testing::InSequence inSequence;
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(0)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, 8u)))
-        .Times(0)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(0)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(0)
-        .RetiresOnSaturation();
-
     //allocate command buffer manually
     char *commandBuffer = new (std::nothrow) char[1024];
     ASSERT_NE(nullptr, commandBuffer);
@@ -315,29 +240,19 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucc
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     delete[] commandBuffer;
+
+    EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 0;
+    mock->ioctlTearDownExpected.gemClose = 0;
+    mock->ioctlTearDownExpects = true;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyBbWhenFlushingThenSucceeds) {
     uint32_t bbUsed = 16 * sizeof(uint32_t);
     auto expectedSize = alignUp(bbUsed + 8, MemoryConstants::cacheLineSize); // bbUsed + bbEnd
 
-    ::testing::InSequence inSequence;
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
-
     auto &cs = csr->getCS();
     cs.getSpace(bbUsed);
 
@@ -345,28 +260,21 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyBbWhenFlushingThenSucceeds
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThenSucceeds) {
     uint32_t bbUsed = 15 * sizeof(uint32_t);
 
-    ::testing::InSequence inSequence;
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, bbUsed + 4)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
-
     auto &cs = csr->getCS();
     cs.getSpace(bbUsed);
 
@@ -374,13 +282,19 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThe
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(bbUsed + 4, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0));
-
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
@@ -388,62 +302,27 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
+    auto expectedBatchStartOffset = (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1);
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
-
-    EXPECT_CALL(*mock, ioctl(
-                           DRM_IOCTL_I915_GEM_EXECBUFFER2,
-                           BoExecFlushEq((reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1), expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-}
 
-ACTION_P(UserptrSetHandle, _set_handle) {
-    struct drm_i915_gem_userptr *userptr = reinterpret_cast<drm_i915_gem_userptr *>(arg1);
-    userptr->handle = _set_handle;
-}
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-MATCHER_P(GemCloseEq, handle, "") {
-    drm_gem_close *gemClose = (drm_gem_close *)arg;
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpects = true;
 
-    return (gemClose->handle == handle);
-}
-
-MATCHER(BoExecFlushCheckFlags, "") {
-    drm_i915_gem_execbuffer2 *exec2 = (drm_i915_gem_execbuffer2 *)arg;
-    drm_i915_gem_exec_object2 *exec_objects = (drm_i915_gem_exec_object2 *)exec2->buffers_ptr;
-
-    for (unsigned int i = 0; i < exec2->buffer_count; i++) {
-        EXPECT_TRUE(exec_objects[i].flags == (EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS));
-    }
-
-    return true;
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckFlagsWhenFlushingThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .WillRepeatedly(::testing::Return(0));
-
     auto &cs = csr->getCS();
-
-    EXPECT_CALL(*mock, ioctl(
-                           DRM_IOCTL_I915_GEM_EXECBUFFER2,
-                           BoExecFlushCheckFlags()))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0));
 
     DrmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, (void *)0x7FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     DrmAllocation allocation2(0, AllocationType::UNKNOWN, nullptr, (void *)0x307FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
@@ -453,12 +332,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckFlagsWhenFlushingThenSucceeds
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::DoAll(UserptrSetHandle(17), ::testing::Return(0)));
+    mock->returnHandle = 17;
 
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -467,17 +346,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
+    auto expectedBatchStartOffset = (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1);
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
-
-    EXPECT_CALL(*mock, ioctl(
-                           DRM_IOCTL_I915_GEM_EXECBUFFER2,
-                           BoExecFlushEq((reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1), expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, GemCloseEq(17u)))
-        .Times(1);
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2);
 
     DrmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
 
@@ -486,6 +356,16 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenGettingDrmThenNonNullPointerIsReturned) {
@@ -497,9 +377,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenGettingDrmThenNonNullPointerIsRetur
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushingThenSucceeds) {
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::DoAll(UserptrSetHandle(17), ::testing::Return(0)));
+    mock->returnHandle = 17;
 
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
@@ -508,18 +386,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
+    auto expectedBatchStartOffset = (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1);
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
 
-    EXPECT_CALL(*mock, ioctl(
-                           DRM_IOCTL_I915_GEM_EXECBUFFER2,
-                           BoExecFlushEq((reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1), expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, GemCloseEq(17u)))
-        .Times(1)
-        .WillOnce(::testing::Return(-1));
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(2);
+    mock->storedRetValForGemClose = -1;
+
     DrmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
 
     csr->makeResident(allocation);
@@ -527,6 +398,16 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
+    EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
+
+    mock->ioctlTearDownExpected.gemClose = 1;
+    mock->ioctlTearDownExpected.gemWait = 2;
+    mock->ioctlTearDownExpects = true;
+
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
 }
 
 class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {

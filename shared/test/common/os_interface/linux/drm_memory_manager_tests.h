@@ -124,7 +124,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
     AllocationData allocationData{};
-    DrmMockCustom::Ioctls additionalDestroyDeviceIoctls{};
+    Ioctls additionalDestroyDeviceIoctls{};
     EnvironmentWithCsrWrapper environmentWrapper;
     DebugManagerStateRestore restore;
 };

@@ -528,10 +528,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
-    EXPECT_EQ(mock->execBuffer.rsvd1, 0u);
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateHostptrThenOnlyBindToSingleVMIsCalled) {
@@ -544,9 +542,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
     EXPECT_EQ(mock->context.vmBindCalled, 1u);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdeviceWhenValidateHostptrThenBindToGivenVm) {
@@ -560,9 +557,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, vmHandleId, 0u);
 
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
     EXPECT_EQ(mock->context.vmBindCalled, 1u);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
     EXPECT_EQ(mock->context.receivedVmBind->vmId, mock->getVirtualMemoryAddressSpace(vmHandleId));
 }
 
@@ -579,9 +575,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     auto ret = pinBB.validateHostPtr(boToPinPtr, 2u, device->getDefaultEngine().osContext, 0u, 0u);
 
     EXPECT_EQ(ret, -1);
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
+
     EXPECT_EQ(mock->context.receivedVmBind->handle, 2u);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenVmBindIsCalledInsteadOfExec) {
@@ -595,10 +591,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenV
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
-    EXPECT_EQ(mock->execBuffer.rsvd1, 0u);
     EXPECT_TRUE(mock->context.vmBindCalled);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHostptrWhenPinBOThenVmBindIsCalledInsteadOfExec) {
@@ -612,10 +606,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHos
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
 
-    EXPECT_EQ(mock->execBuffer.buffers_ptr, 0u);
-    EXPECT_EQ(mock->execBuffer.buffer_count, 0u);
-    EXPECT_EQ(mock->execBuffer.rsvd1, 0u);
     EXPECT_TRUE(mock->context.vmBindCalled);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2);
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOThenAllocIsBound) {

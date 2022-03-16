@@ -10,13 +10,15 @@
 const int mockFd = 33;
 const char *mockPciPath = "";
 
-void DrmMockCustom::Ioctls::reset() {
+void Ioctls::reset() {
     total = 0;
+    query = 0;
     execbuffer2 = 0;
     gemUserptr = 0;
     gemCreate = 0;
     gemSetTiling = 0;
     gemGetTiling = 0;
+    gemGetAperture = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
     gemMmap = 0;
@@ -24,9 +26,11 @@ void DrmMockCustom::Ioctls::reset() {
     gemSetDomain = 0;
     gemWait = 0;
     gemClose = 0;
+    gemResetStats = 0;
     regRead = 0;
     getParam = 0;
     contextGetParam = 0;
+    contextSetParam = 0;
     contextCreate = 0;
     contextDestroy = 0;
 }

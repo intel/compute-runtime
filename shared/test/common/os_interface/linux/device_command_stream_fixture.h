@@ -28,12 +28,34 @@ using NEO::RootDeviceEnvironment;
 extern const int mockFd;
 extern const char *mockPciPath;
 
-class DrmMockImpl : public Drm {
+class Ioctls {
   public:
-    using Drm::setupIoctlHelper;
-    DrmMockImpl(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment){};
-
-    MOCK_METHOD2(ioctl, int(unsigned long request, void *arg));
+    Ioctls() {
+        reset();
+    }
+    void reset();
+    std::atomic<int32_t> total;
+    std::atomic<int32_t> query;
+    std::atomic<int32_t> execbuffer2;
+    std::atomic<int32_t> gemUserptr;
+    std::atomic<int32_t> gemCreate;
+    std::atomic<int32_t> gemSetTiling;
+    std::atomic<int32_t> gemGetTiling;
+    std::atomic<int32_t> gemGetAperture;
+    std::atomic<int32_t> primeFdToHandle;
+    std::atomic<int32_t> handleToPrimeFd;
+    std::atomic<int32_t> gemMmap;
+    std::atomic<int32_t> gemMmapOffset;
+    std::atomic<int32_t> gemSetDomain;
+    std::atomic<int32_t> gemWait;
+    std::atomic<int32_t> gemClose;
+    std::atomic<int32_t> gemResetStats;
+    std::atomic<int32_t> regRead;
+    std::atomic<int32_t> getParam;
+    std::atomic<int32_t> contextGetParam;
+    std::atomic<int32_t> contextSetParam;
+    std::atomic<int32_t> contextCreate;
+    std::atomic<int32_t> contextDestroy;
 };
 
 class DrmMockSuccess : public Drm {
@@ -79,30 +101,6 @@ class DrmMockCustom : public Drm {
         int32_t res;
 
         IoctlResExt(int32_t no, int32_t res) : no(1u, no), res(res) {}
-    };
-
-    class Ioctls {
-      public:
-        void reset();
-
-        std::atomic<int32_t> total;
-        std::atomic<int32_t> execbuffer2;
-        std::atomic<int32_t> gemUserptr;
-        std::atomic<int32_t> gemCreate;
-        std::atomic<int32_t> gemSetTiling;
-        std::atomic<int32_t> gemGetTiling;
-        std::atomic<int32_t> primeFdToHandle;
-        std::atomic<int32_t> handleToPrimeFd;
-        std::atomic<int32_t> gemMmap;
-        std::atomic<int32_t> gemMmapOffset;
-        std::atomic<int32_t> gemSetDomain;
-        std::atomic<int32_t> gemWait;
-        std::atomic<int32_t> gemClose;
-        std::atomic<int32_t> regRead;
-        std::atomic<int32_t> getParam;
-        std::atomic<int32_t> contextGetParam;
-        std::atomic<int32_t> contextCreate;
-        std::atomic<int32_t> contextDestroy;
     };
 
     struct WaitUserFenceCall {
@@ -154,8 +152,8 @@ class DrmMockCustom : public Drm {
     virtual void execBufferExtensions(void *execbuf) {
     }
 
-    Ioctls ioctl_cnt;
-    Ioctls ioctl_expected;
+    Ioctls ioctl_cnt{};
+    Ioctls ioctl_expected{};
 
     IoctlResExt NONE = {-1, 0};
 

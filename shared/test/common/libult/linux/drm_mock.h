@@ -12,6 +12,9 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+
+#include "gtest/gtest.h"
 
 #include <cstdio>
 #include <fstream>
@@ -62,6 +65,12 @@ class DrmMock : public Drm {
         }
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
+
+    ~DrmMock() {
+        if (expectIoctlCallsOnDestruction) {
+            EXPECT_EQ(expectedIoctlCallsOnDestruction, ioctlCallsCount);
+        }
+    }
 
     int ioctl(unsigned long request, void *arg) override;
     int getErrno() override {
@@ -177,7 +186,6 @@ class DrmMock : public Drm {
 
     drm_i915_gem_context_create_ext_setparam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;
-    uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;
     uint32_t ioctlCallsCount = 0;
 
@@ -188,9 +196,8 @@ class DrmMock : public Drm {
     bool queryPageFaultSupportCalled = false;
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
-    drm_i915_gem_execbuffer2 execBuffer = {0};
-    uint64_t bbFlags;
-
+    std::vector<drm_i915_gem_execbuffer2> execBuffers{};
+    std::vector<drm_i915_gem_exec_object2> receivedBos{};
     //DRM_IOCTL_I915_GEM_CREATE
     __u64 createParamsSize = 0;
     __u32 createParamsHandle = 0;
@@ -211,9 +218,22 @@ class DrmMock : public Drm {
     uint64_t lockedPtr[4];
     //DRM_IOCTL_I915_QUERY
     drm_i915_query_item storedQueryItem = {};
+    //DRM_IOCTL_I915_GEM_WAIT
+    drm_i915_gem_wait receivedGemWait = {};
+    //DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT
+    uint32_t storedDrmContextId{};
+    //DRM_IOCTL_GEM_CLOSE
+    int storedRetValForGemClose = 0;
 
     uint64_t storedGTTSize = 1ull << 47;
     uint64_t storedParamSseu = ULONG_MAX;
+
+    Ioctls ioctlCount{};
+    Ioctls ioctlTearDownExpected{};
+    bool ioctlTearDownExpects = false;
+
+    bool expectIoctlCallsOnDestruction = false;
+    uint32_t expectedIoctlCallsOnDestruction = 0u;
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
 
