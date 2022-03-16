@@ -50,9 +50,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
         NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(csr, args, hwInfo, isRcs);
     }
 
-    StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.setProperties(properties);
-    EncodeComputeMode<Family>::programComputeModeCommand(csr, streamProperties.stateComputeMode, hwInfo);
+    EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo);
 
     if (hasSharedHandles) {
         auto pc = csr.getSpaceForCmd<PIPE_CONTROL>();
