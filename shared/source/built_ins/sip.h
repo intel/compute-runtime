@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class SipKernel {
 
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     MOCKABLE_VIRTUAL const std::vector<char> &getStateSaveAreaHeader() const;
-    MOCKABLE_VIRTUAL size_t getStateSaveAreaSize() const;
+    MOCKABLE_VIRTUAL size_t getStateSaveAreaSize(Device *device) const;
 
     static bool initSipKernel(SipKernelType type, Device &device);
     static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
@@ -43,8 +43,6 @@ class SipKernel {
     static const SipKernel &getBindlessDebugSipKernel(Device &device);
     static SipKernelType getSipKernelType(Device &device);
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
-
-    static const size_t maxDbgSurfaceSize;
     static SipClassType classType;
 
     enum class COMMAND : uint32_t {

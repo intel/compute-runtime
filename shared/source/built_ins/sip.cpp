@@ -25,8 +25,6 @@
 
 namespace NEO {
 
-const size_t SipKernel::maxDbgSurfaceSize = 0x1800000; // proper value should be taken from compiler when it's ready
-
 SipClassType SipKernel::classType = SipClassType::Init;
 
 std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
@@ -72,14 +70,17 @@ const std::vector<char> &SipKernel::getStateSaveAreaHeader() const {
     return stateSaveAreaHeader;
 }
 
-size_t SipKernel::getStateSaveAreaSize() const {
+size_t SipKernel::getStateSaveAreaSize(Device *device) const {
+    auto &hwInfo = device->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     if (stateSaveAreaHeader.empty()) {
-        return SipKernel::maxDbgSurfaceSize;
+        return maxDbgSurfaceSize;
     }
 
     if (strcmp(stateSaveAreaHeader.data(), "tssarea")) {
-        return SipKernel::maxDbgSurfaceSize;
+        return maxDbgSurfaceSize;
     }
 
     auto hdr = reinterpret_cast<const SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());

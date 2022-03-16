@@ -114,6 +114,7 @@ class HwHelper {
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                              const HardwareInfo &hwInfo, bool isEngineInstanced) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
+    virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCopyOnlyEngineType(EngineGroupType type) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
@@ -334,6 +335,8 @@ class HwHelperHw : public HwHelper {
                                      const HardwareInfo &hwInfo, bool isEngineInstanced) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
+
+    size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const override;
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
 

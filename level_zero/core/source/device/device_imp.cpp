@@ -836,7 +836,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
-    auto debugSurfaceSize = NEO::SipKernel::maxDbgSurfaceSize;
+    auto debugSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     std::vector<char> stateSaveAreaHeader;
 
     if (neoDevice->getCompilerInterface()) {
@@ -845,7 +845,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             UNRECOVERABLE_IF(!ret);
 
             stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
-            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaSize();
+            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice).getStateSaveAreaSize(neoDevice);
         }
     } else {
         *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;

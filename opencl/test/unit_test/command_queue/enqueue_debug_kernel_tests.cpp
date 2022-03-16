@@ -175,7 +175,9 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithDebugEnabledWhe
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     kernel->initialize();
     std::unique_ptr<MockCommandQueueHwSetupDebugSurface<FamilyType>> mockCmdQ(new MockCommandQueueHwSetupDebugSurface<FamilyType>(context, pClDevice, 0));
-    mockCmdQ->getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    mockCmdQ->getGpgpuCommandStreamReceiver().allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     mockCmdQ->setupDebugSurfaceParamsPassed.clear();
 
     EXPECT_TRUE(isValidOffset(kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful));

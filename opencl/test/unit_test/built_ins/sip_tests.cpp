@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,10 +33,6 @@ TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
 
     SipKernel undefined{SipKernelType::COUNT, nullptr, ssaHeader};
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
-}
-
-TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsReturned) {
-    EXPECT_EQ(0x1800000u, SipKernel::maxDbgSurfaceSize);
 }
 
 TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {

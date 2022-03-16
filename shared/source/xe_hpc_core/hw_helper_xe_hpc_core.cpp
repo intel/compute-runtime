@@ -446,6 +446,11 @@ bool HwHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
     return true;
 }
 
+template <>
+size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
+    return 0x2800000;
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

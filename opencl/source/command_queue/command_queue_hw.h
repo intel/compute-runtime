@@ -85,7 +85,8 @@ class CommandQueueHw : public CommandQueue {
         }
 
         if (device->getDevice().getDebugger() && !getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation()) {
-            auto debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+            auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+            auto debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(maxDbgSurfaceSize);
             memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
 
             auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();

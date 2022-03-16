@@ -318,10 +318,12 @@ HWTEST_F(KernelDebugSurfaceTest, givenDebuggerAndBindfulKernelWhenAppendingKerne
     auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(neoDevice);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
-
+    auto &hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), true,
-         NEO::SipKernel::maxDbgSurfaceSize,
+         maxDbgSurfaceSize,
          NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
          false,
          false,

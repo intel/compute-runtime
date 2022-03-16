@@ -1378,7 +1378,9 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
-    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+    auto &hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     cmdQ.setupDebugSurface(kernel.get());
 
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
@@ -1397,7 +1399,9 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     const auto &systemThreadSurfaceAddress = kernel->getAllocatedKernelInfo()->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful;
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
-    commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    commandStreamReceiver.allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);
 

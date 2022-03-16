@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -338,22 +338,26 @@ using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
 TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
-    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
-    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
-    EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+    EXPECT_EQ(0x3F1000u, SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    EXPECT_EQ(0x1800u * 1 * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize());
+    EXPECT_EQ(0x1800u * 1 * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
