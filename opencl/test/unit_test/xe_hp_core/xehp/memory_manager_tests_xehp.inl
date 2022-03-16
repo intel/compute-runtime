@@ -12,11 +12,6 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateInternalAllocationInDevicePoolThen32BitAllocationIsCreated, IGFX_XE_HP_SDV);
-HWTEST_EXCLUDE_PRODUCT(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateKernelIsaInDevicePoolThenLocalMemoryPoolIsUsed, IGFX_XE_HP_SDV);
-HWTEST_EXCLUDE_PRODUCT(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateInternalHeapInDevicePoolThenLocalMemoryPoolIsUsed, IGFX_XE_HP_SDV);
-HWTEST_EXCLUDE_PRODUCT(MemoryManagerTests, givenEnabledLocalMemoryWhenLinearStreamIsAllocatedInDevicePoolThenLocalMemoryPoolIsUsed, IGFX_XE_HP_SDV);
-
 using MemoryManagerTestsXeHP = ::testing::Test;
 XEHPTEST_F(MemoryManagerTestsXeHP, givenEnabledLocalMemoryWhenLinearStreamIsAllocatedInPreferredPoolThenLocalMemoryPoolIsUsed) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());

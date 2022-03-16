@@ -19,8 +19,6 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/cl_device/cl_device.h"
-
 using namespace NEO;
 
 struct MultiDeviceStorageInfoTest : public ::testing::Test {
