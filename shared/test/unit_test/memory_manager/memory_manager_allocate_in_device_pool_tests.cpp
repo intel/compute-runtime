@@ -628,3 +628,125 @@ TEST(MemoryManagerTest, givenExternalAllocationTypeWhenIsAllocatedInDevicePoolTh
     EXPECT_EQ(0u, memoryManager.externalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
     EXPECT_EQ(0u, memoryManager.internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getOccupiedMemorySizeForBank(0));
 }
+
+struct MemoryManagerDirectSubmissionImplicitScalingTest : public ::testing::Test {
+
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
+        auto allTilesMask = executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask();
+
+        allocationProperties = std::make_unique<AllocationProperties>(mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::UNKNOWN, allTilesMask);
+        allocationProperties->flags.multiOsContextCapable = true;
+
+        constexpr auto enableLocalMemory = true;
+        memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, *executionEnvironment);
+
+        memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(1u, MemoryConstants::pageSize2Mb);
+        EXPECT_NE(0u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+    }
+
+    DebugManagerStateRestore restorer{};
+
+    constexpr static DeviceBitfield firstTileMask{1u};
+    constexpr static auto numSubDevices = 2u;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment{};
+    std::unique_ptr<AllocationProperties> allocationProperties{};
+    std::unique_ptr<MockMemoryManager> memoryManager{};
+};
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenCommandBufferTypeWhenIsAllocatedForMultiOsContextThenMemoryIsPlacedOnFirstAvailableMemoryBankInLocalMemory, IsXeHpcCore) {
+
+    allocationProperties->allocationType = AllocationType::COMMAND_BUFFER;
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenRingBufferTypeWhenIsAllocatedForMultiOsContextThenMemoryIsPlacedOnFirstAvailableMemoryBankInLocalMemory, IsXeHpcCore) {
+
+    allocationProperties->allocationType = AllocationType::RING_BUFFER;
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenSemaphoreBufferTypeWhenIsAllocatedForMultiOsContextThenMemoryIsPlacedOnFirstAvailableMemoryBankInLocalMemory, IsXeHpcCore) {
+
+    allocationProperties->allocationType = AllocationType::SEMAPHORE_BUFFER;
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDisabledWhenAllocatingMemoryForRingOrSemaphoreBufferThenAllocateInSystemMemory, IsXeHpcCore) {
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            allocationProperties->allocationType = allocationType;
+            allocationProperties->flags.multiOsContextCapable = multiTile;
+            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+            EXPECT_NE(nullptr, allocation);
+
+            EXPECT_NE(MemoryPool::LocalMemory, allocation->getMemoryPool());
+            EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
+
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    }
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForMultiTileEsWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTileEngines, IsXeHpcCore) {
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            allocationProperties->allocationType = allocationType;
+            allocationProperties->flags.multiOsContextCapable = multiTile;
+            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+            EXPECT_NE(nullptr, allocation);
+
+            if (multiTile) {
+                EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+                EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+            } else {
+                if (allocationType != AllocationType::COMMAND_BUFFER) {
+                    EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
+                    EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
+                }
+            }
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    }
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsXeHpcCore) {
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            allocationProperties->allocationType = allocationType;
+            allocationProperties->flags.multiOsContextCapable = multiTile;
+            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+            EXPECT_NE(nullptr, allocation);
+
+            EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+            EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    }
+}

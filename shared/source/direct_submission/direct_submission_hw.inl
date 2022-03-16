@@ -66,7 +66,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     const AllocationProperties commandStreamAllocationProperties{device.getRootDeviceIndex(),
                                                                  true, allocationSize,
                                                                  AllocationType::RING_BUFFER,
-                                                                 isMultiOsContextCapable, osContext.getDeviceBitfield()};
+                                                                 isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
     ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     UNRECOVERABLE_IF(ringBuffer == nullptr);
     allocations.push_back(ringBuffer);
@@ -78,7 +78,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     const AllocationProperties semaphoreAllocationProperties{device.getRootDeviceIndex(),
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::SEMAPHORE_BUFFER,
-                                                             isMultiOsContextCapable, osContext.getDeviceBitfield()};
+                                                             isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
     semaphores = memoryManager->allocateGraphicsMemoryWithProperties(semaphoreAllocationProperties);
     UNRECOVERABLE_IF(semaphores == nullptr);
     allocations.push_back(semaphores);

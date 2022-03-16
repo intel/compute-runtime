@@ -160,11 +160,12 @@ TEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenCreatingStorageInfoForL
     EXPECT_FALSE(storageInfo.tileInstanced);
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForCommandBufferThenSingleMemoryBankIsOnAndPageTableClonningIsRequired) {
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTileCsrWhenCreatingStorageInfoForCommandBufferThenFirstAvailableMemoryBankIsOnAndPageTableClonningIsRequired) {
+    const DeviceBitfield firstTileMask{static_cast<uint32_t>(1u)};
     AllocationProperties properties{mockRootDeviceIndex, false, 0u, AllocationType::COMMAND_BUFFER, true, false, singleTileMask};
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
-    EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
+    EXPECT_EQ(firstTileMask, storageInfo.memoryBanks);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
 }
 
@@ -461,4 +462,161 @@ TEST_F(MultiDeviceStorageInfoTest,
     EXPECT_TRUE(storageInfo.cloningOfPageTables);
     EXPECT_FALSE(storageInfo.tileInstanced);
     EXPECT_EQ(allTilesMask, storageInfo.pageTablesVisibility);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForSemaphoreBufferThenProvidedMemoryBankIsSelected) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SEMAPHORE_BUFFER, false, singleTileMask};
+    properties.flags.multiOsContextCapable = false;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForCommandBufferThenProvidedMemoryBankIsSelected) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, false, singleTileMask};
+    properties.flags.multiOsContextCapable = false;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenSingleTileWhenCreatingStorageInfoForRingBufferThenProvidedMemoryBankIsSelected) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::RING_BUFFER, false, singleTileMask};
+    properties.flags.multiOsContextCapable = false;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(singleTileMask, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForSemaphoreBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::SEMAPHORE_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    properties.flags.multiOsContextCapable = true;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForCommandBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    properties.flags.multiOsContextCapable = true;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenMultiTileWhenCreatingStorageInfoForRingBufferThenFirstBankIsSelectedEvenIfOtherTileIsLessOccupied) {
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::RING_BUFFER, false, affinityMaskHelper.getGenericSubDevicesMask()};
+    properties.flags.multiOsContextCapable = true;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageDisabledWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenPreferredBankIsSelected) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(0);
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
+            properties.flags.multiOsContextCapable = multiTile;
+            auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+            EXPECT_NE(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+        }
+    }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForMultiTileEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTileEngines) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(1);
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
+            properties.flags.multiOsContextCapable = multiTile;
+            auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+            if (multiTile) {
+                EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+            } else {
+                EXPECT_NE(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+            }
+        }
+    }
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelected) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
+    constexpr uint32_t firstAvailableTileMask = 2u;
+
+    memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
+    EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
+
+    AffinityMaskHelper affinityMaskHelper{false};
+    affinityMaskHelper.enableGenericSubDevice(1);
+    affinityMaskHelper.enableGenericSubDevice(2);
+    affinityMaskHelper.enableGenericSubDevice(3);
+    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[mockRootDeviceIndex]->deviceAffinityMask = affinityMaskHelper;
+
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
+            properties.flags.multiOsContextCapable = multiTile;
+            auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+            EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+        }
+    }
 }

@@ -153,6 +153,34 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     default:
         break;
     }
+
+    bool forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
+    switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
+    case 0:
+        forceLocalMemoryForDirectSubmission = false;
+        break;
+    case 2:
+        forceLocalMemoryForDirectSubmission = true;
+        break;
+    default:
+        break;
+    }
+
+    if (forceLocalMemoryForDirectSubmission) {
+        if (properties.allocationType == AllocationType::COMMAND_BUFFER ||
+            properties.allocationType == AllocationType::RING_BUFFER ||
+            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
+            storageInfo.memoryBanks = {};
+            for (auto bank = 0u; bank < deviceCount; bank++) {
+                if (allTilesValue.test(bank)) {
+                    storageInfo.memoryBanks.set(bank);
+                    break;
+                }
+            }
+            UNRECOVERABLE_IF(storageInfo.memoryBanks.none());
+        }
+    }
+
     return storageInfo;
 }
 uint32_t StorageInfo::getNumBanks() const {
