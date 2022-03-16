@@ -950,9 +950,6 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     EXPECT_NE(cmdList.end(), itor);
     itor++;
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 }
 

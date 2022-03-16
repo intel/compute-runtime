@@ -239,7 +239,6 @@ struct CommandListCoreFamily : CommandListImp {
     void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
-    void programThreadArbitrationPolicy(Device *device);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();
     void appendMultiTileBarrier(NEO::Device &neoDevice);

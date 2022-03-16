@@ -71,20 +71,6 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device *device) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto &hwHelper = NEO::HwHelper::get(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-    auto threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
-    if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
-    }
-    NEO::StreamProperties streamProperties{};
-    streamProperties.stateComputeMode.threadArbitrationPolicy.set(threadArbitrationPolicy);
-    NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommand(*commandContainer.getCommandStream(), streamProperties.stateComputeMode,
-                                                                 this->device->getHwInfo());
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     printfFunctionContainer.clear();
     removeDeallocationContainerData();
@@ -115,7 +101,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
             programStateBaseAddress(commandContainer, false);
         }
         commandContainer.setDirtyStateForAllHeaps(false);
-        programThreadArbitrationPolicy(device);
     }
 
     for (auto alloc : this->ownedPrivateAllocations) {
@@ -160,7 +145,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
                 }
             }
             commandContainer.setDirtyStateForAllHeaps(false);
-            programThreadArbitrationPolicy(device);
         }
     }
 
