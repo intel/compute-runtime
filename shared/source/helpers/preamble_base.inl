@@ -66,7 +66,7 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                int32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
+                                                GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
     programPreemption(pCommandStream, device, preemptionCsr);
     if (device.isDebuggerActive()) {

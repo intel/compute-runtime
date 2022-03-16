@@ -918,8 +918,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        auto threadArbitrationPolicy = this->streamProperties.stateComputeMode.threadArbitrationPolicy.value;
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, threadArbitrationPolicy, this->preemptionAllocation);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
     }

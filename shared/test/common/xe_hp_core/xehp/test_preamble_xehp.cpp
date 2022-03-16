@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ XEHPTEST_F(XeHPSlm, givenTglWhenPreambleIsBeingProgrammedThenThreadArbitrationPo
     uint32_t l3Config = PreambleHelper<XeHpFamily>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<XeHpFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                                ThreadArbitrationPolicy::RoundRobin,
                                                 nullptr);
 
     parseCommands<XeHpFamily>(cs);

@@ -73,7 +73,6 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
-                                               ThreadArbitrationPolicy::RoundRobin,
                                                nullptr);
 
     parseCommands<SKLFamily>(cs);

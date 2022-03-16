@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,8 +75,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
         uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
         MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
 
-        PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                    ThreadArbitrationPolicy::RoundRobin, &csrSurface);
+        PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, &csrSurface);
 
         PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
 
@@ -145,8 +144,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     StackVec<char, 8192> preambleBuffer(8192);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, nullptr);
+    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(preambleStream);
@@ -159,8 +157,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
 
     StackVec<char, 8192> preambleBuffer2(8192);
     preambleStream.replaceBuffer(&*preambleBuffer2.begin(), preambleBuffer2.size());
-    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, preemptionAllocation);
+    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, preemptionAllocation);
     HardwareParse hwParser2;
     hwParser2.parseCommands<FamilyType>(preambleStream);
     cmdList = hwParser2.getCommandsList<MI_LOAD_REGISTER_IMM>();

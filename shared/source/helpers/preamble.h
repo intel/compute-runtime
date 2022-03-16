@@ -53,7 +53,7 @@ struct PreambleHelper {
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                int32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
+                                GraphicsAllocation *preemptionCsr);
     static void programKernelDebugging(LinearStream *pCommandStream);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
