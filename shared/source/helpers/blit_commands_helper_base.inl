@@ -183,6 +183,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     dispatchPreBlitCommand(linearStream, hwInfo);
+    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+    appendColorDepth(blitProperties, bltCmd);
 
     for (uint64_t slice = 0; slice < blitProperties.copySize.z; slice++) {
         for (uint64_t row = 0; row < blitProperties.copySize.y; row++) {
@@ -199,29 +201,24 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                     height = 1;
                 }
 
-                {
-                    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+                bltCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
+                bltCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
+                bltCmd.setDestinationPitch(static_cast<uint32_t>(width));
+                bltCmd.setSourcePitch(static_cast<uint32_t>(width));
 
-                    bltCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
-                    bltCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
-                    bltCmd.setDestinationPitch(static_cast<uint32_t>(width));
-                    bltCmd.setSourcePitch(static_cast<uint32_t>(width));
+                auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
+                auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
 
-                    auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
-                    auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
+                PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
+                                   "\nBlit command. width: %u, height: %u, srcAddr: %#llx, dstAddr: %#llx ", width, height, srcAddr, dstAddr);
 
-                    PRINT_DEBUG_STRING(DebugManager.flags.PrintBlitDispatchDetails.get(), stdout,
-                                       "\nBlit command. width: %u, height: %u, srcAddr: %#llx, dstAddr: %#llx ", width, height, srcAddr, dstAddr);
+                bltCmd.setDestinationBaseAddress(dstAddr);
+                bltCmd.setSourceBaseAddress(srcAddr);
 
-                    bltCmd.setDestinationBaseAddress(dstAddr);
-                    bltCmd.setSourceBaseAddress(srcAddr);
+                appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
 
-                    appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
-                    appendColorDepth(blitProperties, bltCmd);
-
-                    auto bltStream = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
-                    *bltStream = bltCmd;
-                }
+                auto bltStream = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
+                *bltStream = bltCmd;
 
                 dispatchPostBlitCommand(linearStream, hwInfo);
 
@@ -382,6 +379,11 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     dispatchPreBlitCommand(linearStream, hwInfo);
 
+    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+    bltCmd.setSourcePitch(static_cast<uint32_t>(blitProperties.srcRowPitch));
+    bltCmd.setDestinationPitch(static_cast<uint32_t>(blitProperties.dstRowPitch));
+    appendColorDepth(blitProperties, bltCmd);
+
     for (size_t slice = 0u; slice < blitProperties.copySize.z; ++slice) {
         auto srcAddress = calculateBlitCommandSourceBaseAddressCopyRegion(blitProperties, slice);
         auto dstAddress = calculateBlitCommandDestinationBaseAddressCopyRegion(blitProperties, slice);
@@ -393,17 +395,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
 
             while (widthToCopy > 0) {
                 auto width = static_cast<uint32_t>(std::min(widthToCopy, static_cast<size_t>(maxWidthToCopy)));
-                auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
 
                 bltCmd.setSourceBaseAddress(srcAddress);
                 bltCmd.setDestinationBaseAddress(dstAddress);
                 bltCmd.setDestinationX2CoordinateRight(width);
                 bltCmd.setDestinationY2CoordinateBottom(height);
-                bltCmd.setSourcePitch(static_cast<uint32_t>(blitProperties.srcRowPitch));
-                bltCmd.setDestinationPitch(static_cast<uint32_t>(blitProperties.dstRowPitch));
 
                 appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
-                appendColorDepth(blitProperties, bltCmd);
 
                 auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                 *cmd = bltCmd;
