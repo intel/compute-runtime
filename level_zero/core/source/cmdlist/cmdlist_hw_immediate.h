@@ -109,6 +109,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration);
 
     void checkAvailableSpace();
+    void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration);
 };

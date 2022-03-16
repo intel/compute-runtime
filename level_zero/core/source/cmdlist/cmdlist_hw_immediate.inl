@@ -24,39 +24,57 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags) {
+    const auto &requiredFrontEndState = this->requiredStreamState.frontEndState;
+    dispatchFlags.kernelExecutionType = (requiredFrontEndState.computeDispatchAllWalkerEnable.value == 1)
+                                            ? NEO::KernelExecutionType::Concurrent
+                                            : NEO::KernelExecutionType::Default;
+    dispatchFlags.disableEUFusion = (requiredFrontEndState.disableEUFusion.value == 1);
+    dispatchFlags.additionalKernelExecInfo = (requiredFrontEndState.disableOverdispatch.value == 1)
+                                                 ? NEO::AdditionalKernelExecInfo::DisableOverdispatch
+                                                 : NEO::AdditionalKernelExecInfo::NotSet;
 
+    const auto &requiredStateComputeMode = this->requiredStreamState.stateComputeMode;
+    dispatchFlags.requiresCoherency = (requiredStateComputeMode.isCoherencyRequired.value == 1);
+    dispatchFlags.numGrfRequired = (requiredStateComputeMode.largeGrfMode.value == 1) ? GrfConfig::LargeGrfNumber
+                                                                                      : GrfConfig::DefaultGrfNumber;
+    dispatchFlags.threadArbitrationPolicy = requiredStateComputeMode.threadArbitrationPolicy.value;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration) {
     NEO::DispatchFlags dispatchFlags(
-        {},                                                                       //csrDependencies
-        nullptr,                                                                  //barrierTimestampPacketNodes
-        {},                                                                       //pipelineSelectArgs
-        nullptr,                                                                  //flushStampReference
-        NEO::QueueThrottle::MEDIUM,                                               //throttle
-        this->getCommandListPreemptionMode(),                                     //preemptionMode
-        GrfConfig::NotApplicable,                                                 //numGrfRequired
-        NEO::L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
-        this->requiredStreamState.stateComputeMode.threadArbitrationPolicy.value, //threadArbitrationPolicy
-        NEO::AdditionalKernelExecInfo::NotApplicable,                             //additionalKernelExecInfo
-        NEO::KernelExecutionType::NotApplicable,                                  //kernelExecutionType
-        NEO::MemoryCompressionState::NotApplicable,                               //memoryCompressionState
-        NEO::QueueSliceCount::defaultSliceCount,                                  //sliceCount
-        this->isSyncModeQueue,                                                    //blocking
-        this->isSyncModeQueue,                                                    //dcFlush
-        this->getCommandListSLMEnable(),                                          //useSLM
-        this->isSyncModeQueue,                                                    //guardCommandBufferWithPipeControl
-        false,                                                                    //GSBA32BitRequired
-        false,                                                                    //requiresCoherency
-        false,                                                                    //lowPriority
-        true,                                                                     //implicitFlush
-        this->csr->isNTo1SubmissionModelEnabled(),                                //outOfOrderExecutionAllowed
-        false,                                                                    //epilogueRequired
-        false,                                                                    //usePerDssBackedBuffer
-        false,                                                                    //useSingleSubdevice
-        false,                                                                    //useGlobalAtomics
-        this->device->getNEODevice()->getNumGenericSubDevices() > 1,              //areMultipleSubDevicesInContext
-        false,                                                                    //memoryMigrationRequired
-        false                                                                     //textureCacheFlush
+        {},                                                          //csrDependencies
+        nullptr,                                                     //barrierTimestampPacketNodes
+        {},                                                          //pipelineSelectArgs
+        nullptr,                                                     //flushStampReference
+        NEO::QueueThrottle::MEDIUM,                                  //throttle
+        this->getCommandListPreemptionMode(),                        //preemptionMode
+        GrfConfig::NotApplicable,                                    //numGrfRequired
+        NEO::L3CachingSettings::l3CacheOn,                           //l3CacheSettings
+        NEO::ThreadArbitrationPolicy::NotPresent,                    //threadArbitrationPolicy
+        NEO::AdditionalKernelExecInfo::NotApplicable,                //additionalKernelExecInfo
+        NEO::KernelExecutionType::NotApplicable,                     //kernelExecutionType
+        NEO::MemoryCompressionState::NotApplicable,                  //memoryCompressionState
+        NEO::QueueSliceCount::defaultSliceCount,                     //sliceCount
+        this->isSyncModeQueue,                                       //blocking
+        this->isSyncModeQueue,                                       //dcFlush
+        this->getCommandListSLMEnable(),                             //useSLM
+        this->isSyncModeQueue,                                       //guardCommandBufferWithPipeControl
+        false,                                                       //GSBA32BitRequired
+        false,                                                       //requiresCoherency
+        false,                                                       //lowPriority
+        true,                                                        //implicitFlush
+        this->csr->isNTo1SubmissionModelEnabled(),                   //outOfOrderExecutionAllowed
+        false,                                                       //epilogueRequired
+        false,                                                       //usePerDssBackedBuffer
+        false,                                                       //useSingleSubdevice
+        false,                                                       //useGlobalAtomics
+        this->device->getNEODevice()->getNumGenericSubDevices() > 1, //areMultipleSubDevicesInContext
+        false,                                                       //memoryMigrationRequired
+        false                                                        //textureCacheFlush
     );
+    this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
 
     this->commandContainer.removeDuplicatesFromResidencyContainer();
 
@@ -100,6 +118,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     }
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
+    this->containsAnyKernel = false;
 
     this->commandContainer.getResidencyContainer().clear();
 
