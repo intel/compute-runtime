@@ -86,6 +86,12 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 };
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
+    using CommandListCoreFamilyImmediate<gfxCoreFamily>::requiredStreamState;
+    using CommandListCoreFamilyImmediate<gfxCoreFamily>::containsAnyKernel;
+};
+
 template <>
 struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;

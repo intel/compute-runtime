@@ -6,17 +6,15 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl_timestamps.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -24,56 +22,6 @@ namespace L0 {
 namespace ult {
 
 using CommandListCreate = Test<DeviceFixture>;
-
-class MockEvent : public ::L0::Event {
-  public:
-    MockEvent() {
-        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
-                                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                             MemoryPool::System4KBPages));
-        this->timestampSizeInDw = 1;
-        this->contextStartOffset = 0;
-        this->contextEndOffset = 4;
-        this->globalStartOffset = 8;
-        this->globalEndOffset = 12;
-        this->singlePacketSize = 16;
-    }
-    NEO::GraphicsAllocation &getAllocation(L0::Device *device) override {
-        return *mockAllocation.get();
-    }
-
-    uint64_t getGpuAddress(L0::Device *device) override {
-        return mockAllocation.get()->getGpuAddress();
-    }
-
-    ze_result_t destroy() override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t hostSignal() override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t hostSynchronize(uint64_t timeout) override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t queryStatus() override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t reset() override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override {
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
-        return ZE_RESULT_SUCCESS;
-    }
-    uint32_t getPacketsInUse() override { return 1; }
-    void resetPackets() override {}
-    void setPacketsInUse(uint32_t value) override {}
-    uint64_t getPacketAddress(L0::Device *) override { return 0; }
-
-    std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
-};
 
 HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQueryKernelTimestampsThenProperErrorRetruned) {
     ze_result_t returnValue;
@@ -862,28 +810,6 @@ HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenParti
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
-using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true, false>>;
-
-HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsWithinXeGfxFamily) {
-    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
-    EXPECT_EQ(2u, commandList->partitionCount);
-
-    auto returnValue = commandList->reset();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(2u, commandList->partitionCount);
-}
-
-using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true>>;
-
-HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
-    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
-    EXPECT_EQ(1u, commandList->partitionCount);
-
-    auto returnValue = commandList->reset();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, commandList->partitionCount);
-}
-
 HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
@@ -996,69 +922,6 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_NE(nullptr, commandList);
     L0::CommandList::fromHandle(commandList)->destroy();
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
-    using CommandListCoreFamilyImmediate<gfxCoreFamily>::requiredStreamState;
-    using CommandListCoreFamilyImmediate<gfxCoreFamily>::containsAnyKernel;
-};
-
-using CommandListExecuteImmediate = Test<DeviceFixture>;
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto &hwInfoConfig = *NEO::HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    std::unique_ptr<L0::CommandList> commandList;
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
-
-    auto &currentCsrStreamProperties = commandListImmediate.csr->getStreamProperties();
-
-    commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 1;
-    commandListImmediate.requiredStreamState.frontEndState.disableEUFusion.value = 1;
-    commandListImmediate.requiredStreamState.frontEndState.disableOverdispatch.value = 1;
-    commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 1;
-    commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 1;
-    commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::RoundRobin;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false);
-
-    int expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo);
-    bool expectedIsCoherencyRequired = hwHelper.forceNonGpuCoherencyWA(true);
-    EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
-    EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
-    EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    EXPECT_EQ(expectedIsCoherencyRequired, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
-    EXPECT_EQ(1, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
-    EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
-
-    commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 0;
-    commandListImmediate.requiredStreamState.frontEndState.disableEUFusion.value = 0;
-    commandListImmediate.requiredStreamState.frontEndState.disableOverdispatch.value = 0;
-    commandListImmediate.requiredStreamState.stateComputeMode.isCoherencyRequired.value = 0;
-    commandListImmediate.requiredStreamState.stateComputeMode.largeGrfMode.value = 0;
-    commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::AgeBased;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false);
-
-    EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
-    EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
-}
-
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset, IsAtLeastSkl) {
-    std::unique_ptr<L0::CommandList> commandList;
-    const ze_command_queue_desc_t desc = {};
-    ze_result_t returnValue;
-    commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
-
-    commandListImmediate.containsAnyKernel = true;
-    commandListImmediate.executeCommandListImmediateWithFlushTask(false);
-    EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
 } // namespace ult
