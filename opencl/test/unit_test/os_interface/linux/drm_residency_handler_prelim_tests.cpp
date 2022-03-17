@@ -36,19 +36,14 @@ struct MockDrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandlerBin
     using DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind;
     using DrmMemoryOperationsHandlerBind::evictImpl;
 
-    DrmQueryMock *mock;
     bool useBaseEvictUnused = true;
     uint32_t evictUnusedCalled = 0;
+
     void evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
         evictUnusedCalled++;
         if (useBaseEvictUnused) {
             DrmMemoryOperationsHandlerBind::evictUnusedAllocations(waitForCompletion, isLockNeeded);
-        } else {
-            mock->context.vmBindReturn = 0;
         }
-    }
-    void setDrmMock(DrmQueryMock *mock) {
-        this->mock = mock;
     }
 };
 
@@ -145,7 +140,6 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenNoSpaceLeftOnDeviceThenEvictUnuse
     mock->context.vmBindReturn = -1;
     mock->baseErrno = false;
     mock->errnoRetVal = ENOSPC;
-    operationHandler->setDrmMock(mock);
     operationHandler->useBaseEvictUnused = false;
 
     EXPECT_EQ(operationHandler->evictUnusedCalled, 0u);
