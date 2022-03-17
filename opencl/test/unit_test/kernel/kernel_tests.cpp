@@ -315,6 +315,10 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPrefferedWorkGro
     kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
     MockKernel kernel(pProgram, kernelInfo, *pClDevice);
 
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
+    auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
+
     cl_kernel_info paramName = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
     size_t paramValue;
     size_t paramValueSize = sizeof(paramValue);
@@ -328,9 +332,35 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPrefferedWorkGro
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 
-    EXPECT_EQ(kernelInfo.getMaxSimdSize(), paramValue);
+    EXPECT_EQ(expectedValue, paramValue);
+}
 
-    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = false;
+TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPrefferedWorkGroupSizeMultipleThenCorectValueIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.CFEFusedEUDispatch.set(0);
+
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion = true;
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
+    auto expectedValue = kernelInfo.getMaxSimdSize() * (fusedDispatchEnabled ? 2 : 1);
+
+    cl_kernel_info paramName = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
+    size_t paramValue;
+    size_t paramValueSize = sizeof(paramValue);
+    size_t paramValueSizeRet = 0;
+
+    retVal = kernel.getWorkGroupInfo(
+        paramName,
+        paramValueSize,
+        &paramValue,
+        &paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(paramValueSize, paramValueSizeRet);
+
+    EXPECT_EQ(expectedValue, paramValue);
 }
 
 TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValueErrorIsReturned) {

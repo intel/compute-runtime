@@ -374,6 +374,27 @@ HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThe
     EXPECT_TRUE(cfeState->getFusedEuDispatch());
 }
 
+HWTEST2_F(PreambleCfeState, givenXehpEnabledFusedEuAndDisableFusedDispatchFromKernelWhenCfeStateProgrammedThenFusedEuDispatchSetToFalse, IsXeHpgCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.CFEFusedEUDispatch.set(0);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.fusedEuEnabled = true;
+
+    auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
+    StreamProperties streamProperties{};
+    streamProperties.frontEndState.setProperties(false, true, false, false, hwInfo);
+    PreambleHelper<FamilyType>::programVfeState(pVfeCmd, hwInfo, 0u, 0, 0, streamProperties);
+    parseCommands<FamilyType>(linearStream);
+    auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cfeStateIt);
+    auto cfeState = reinterpret_cast<CFE_STATE *>(*cfeStateIt);
+
+    EXPECT_FALSE(cfeState->getFusedEuDispatch());
+}
+
 HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThenFusedEuDispatchSetToFalse, IsXeHpgCore) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 

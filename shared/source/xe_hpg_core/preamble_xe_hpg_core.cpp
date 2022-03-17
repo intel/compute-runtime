@@ -29,7 +29,7 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     }
 
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo) || streamProperties.frontEndState.disableEUFusion.value == 1) {
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1)) {
         command->setFusedEuDispatch(true);
     }
 

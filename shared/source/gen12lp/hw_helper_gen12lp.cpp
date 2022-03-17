@@ -21,6 +21,20 @@ using Family = NEO::TGLLPFamily;
 namespace NEO {
 
 template <>
+inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
+    auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
+    fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
+
+    if (disableEUFusionForKernel)
+        fusedEuDispatchEnabled = false;
+
+    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
+        fusedEuDispatchEnabled = (DebugManager.flags.CFEFusedEUDispatch.get() == 0);
+    }
+    return fusedEuDispatchEnabled;
+}
+
+template <>
 size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
     return 2048;
 }

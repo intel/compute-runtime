@@ -396,7 +396,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.preferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(hwInfo)
+    deviceInfo.preferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(hwInfo, false)
                                                     ? CommonConstants::maximalSimdSize * 2
                                                     : CommonConstants::maximalSimdSize;
 

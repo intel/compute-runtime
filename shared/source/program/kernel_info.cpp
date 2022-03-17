@@ -53,6 +53,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
         }
     }
 }
+
 void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
@@ -65,10 +66,11 @@ void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableE
     }
 
     const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo) && !disableEUFusion) {
+    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo, disableEUFusion)) {
         minWorkGroupSize *= 2;
     }
 }
+
 void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
     if (slmTotalSize > 0) {
         useRatio = true;

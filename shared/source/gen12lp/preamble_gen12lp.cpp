@@ -83,7 +83,7 @@ uint32_t PreambleHelper<TGLLPFamily>::getUrbEntryAllocationSize() {
 template <>
 void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo) || disableEUFusion) {
+    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
     if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {

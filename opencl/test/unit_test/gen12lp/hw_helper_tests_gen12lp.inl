@@ -195,7 +195,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalle
     for (auto &[expectedResult, wa, debugKey] : testParams) {
         waTable.flags.waDisableFusedThreadScheduling = wa;
         DebugManager.flags.CFEFusedEUDispatch.set(debugKey);
-        EXPECT_EQ(expectedResult, helper.isFusedEuDispatchEnabled(hardwareInfo));
+        EXPECT_EQ(expectedResult, helper.isFusedEuDispatchEnabled(hardwareInfo, false));
     }
 }
 

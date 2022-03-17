@@ -1061,7 +1061,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledTh
         GTEST_SKIP();
     }
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isFusedEuDispatchEnabled(hardwareInfo));
+    EXPECT_FALSE(helper.isFusedEuDispatchEnabled(hardwareInfo, false));
 }
 
 HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForCacheFlushThenReturnCorrectValue) {

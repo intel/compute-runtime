@@ -23,6 +23,20 @@ template <>
 const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
+inline bool HwHelperHw<Family>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
+    auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
+    fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
+
+    if (disableEUFusionForKernel)
+        fusedEuDispatchEnabled = false;
+
+    if (DebugManager.flags.CFEFusedEUDispatch.get() != -1) {
+        fusedEuDispatchEnabled = (DebugManager.flags.CFEFusedEUDispatch.get() == 0);
+    }
+    return fusedEuDispatchEnabled;
+}
+
+template <>
 uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPG);
 }

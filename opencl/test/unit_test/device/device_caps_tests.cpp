@@ -242,7 +242,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
     EXPECT_TRUE(caps.nonUniformWorkGroupSupport);
 
-    auto expectedPreferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo)
+    auto expectedPreferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, false)
                                                       ? CommonConstants::maximalSimdSize * 2
                                                       : CommonConstants::maximalSimdSize;
     EXPECT_EQ(expectedPreferredWorkGroupSizeMultiple, caps.preferredWorkGroupSizeMultiple);

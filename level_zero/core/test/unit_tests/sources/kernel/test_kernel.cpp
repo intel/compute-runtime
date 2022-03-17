@@ -1093,7 +1093,7 @@ TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetProperties
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     auto &hwHelper = NEO::HwHelper::get(module->getDevice()->getHwInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(module->getDevice()->getHwInfo())) {
+    if (hwHelper.isFusedEuDispatchEnabled(module->getDevice()->getHwInfo(), false)) {
         EXPECT_EQ(preferredGroupProperties.preferredMultiple, static_cast<uint32_t>(kernel->getImmutableData()->getKernelInfo()->getMaxSimdSize()) * 2);
     } else {
         EXPECT_EQ(preferredGroupProperties.preferredMultiple, static_cast<uint32_t>(kernel->getImmutableData()->getKernelInfo()->getMaxSimdSize()));
