@@ -33,7 +33,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                 void *phCommands,
                                 ze_fence_handle_t hFence) override;
 
-    void dispatchTaskCountWrite(NEO::LinearStream &commandStream, bool flushDataCache) override;
+    void dispatchTaskCountPostSync(NEO::LinearStream &commandStream, const NEO::HardwareInfo &hwInfo);
+    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence) const;
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed);
     size_t estimateStateBaseAddressCmdSize();

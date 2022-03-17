@@ -50,7 +50,6 @@ struct Mock<CommandQueue> : public CommandQueue {
     ADDMETHOD_NOBASE(executeCommandLists, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, ze_fence_handle_t hFence, bool performMigration));
     ADDMETHOD_NOBASE(executeCommands, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t numCommands, void *phCommands, ze_fence_handle_t hFence));
     ADDMETHOD_NOBASE(synchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
-    ADDMETHOD_NOBASE_VOIDRETURN(dispatchTaskCountWrite, (NEO::LinearStream & commandStream, bool flushDataCache));
     ADDMETHOD_NOBASE(getPreemptionCmdProgramming, bool, false, ());
 };
 

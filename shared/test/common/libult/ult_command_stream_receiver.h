@@ -119,6 +119,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;
+    using BaseClass::CommandStreamReceiver::useNotifyEnableForPostSync;
     using BaseClass::CommandStreamReceiver::userPauseConfirmation;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 

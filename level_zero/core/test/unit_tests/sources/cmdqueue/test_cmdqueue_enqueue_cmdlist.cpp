@@ -270,17 +270,17 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
                                           ptrOffset(commandQueue->commandStream->getCpuBase(), 0),
                                           usedSpaceAfter));
 
-    //on some platforms Fence update requires more than single PIPE_CONTROL, Fence tag update should be in the third to last command in SKL
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    //we require at least one PIPE_CONTROL
-    ASSERT_LE(1u, pipeControls.size());
-    PIPE_CONTROL *fenceUpdate = genCmdCast<PIPE_CONTROL *>(*pipeControls[pipeControls.size() - 3]);
-
-    EXPECT_EQ(commandQueue->getCsr()->getTagAllocation()->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*fenceUpdate));
-
-    EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, fenceUpdate->getPostSyncOperation());
-
-    EXPECT_EQ(fence->taskCount, fenceUpdate->getImmediateData());
+    size_t pipeControlsPostSyncNumber = 0u;
+    for (size_t i = 0; i < pipeControls.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(commandQueue->getCsr()->getTagAllocation()->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+            EXPECT_EQ(fence->taskCount, pipeControl->getImmediateData());
+            pipeControlsPostSyncNumber++;
+        }
+    }
+    EXPECT_EQ(1u, pipeControlsPostSyncNumber);
 
     fence->destroy();
     commandQueue->destroy();
@@ -923,6 +923,10 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using PARSE = typename FamilyType::PARSE;
 
+    auto neoDevice = device->getNEODevice();
+    auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    csr->useNotifyEnableForPostSync = true;
+
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
     desc.index = 0u;
@@ -933,7 +937,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
                                                            device,
-                                                           device->getNEODevice()->getDefaultEngine().commandStreamReceiver,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
                                                            &desc,
                                                            false,
                                                            false,
@@ -943,7 +947,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto &commandStreamReceiver = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+    if (neoDevice->getPreemptionMode() == PreemptionMode::MidThread || neoDevice->isDebuggerActive()) {
         commandStreamReceiver->createPreemptionAllocation();
     }
 
@@ -1001,9 +1005,61 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
             foundPostSyncPipeControl++;
+            EXPECT_TRUE(pipeControl->getNotifyEnable());
         }
     }
-    EXPECT_EQ(2u, foundPostSyncPipeControl);
+    EXPECT_EQ(1u, foundPostSyncPipeControl);
+
+    fence->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopyCommandListWithFenceThenExpectSingleCopyPostSyncCommand) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using PARSE = typename FamilyType::PARSE;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    csr->useNotifyEnableForPostSync = true;
+
+    const ze_command_queue_desc_t desc{};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           true,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_fence_desc_t fenceDesc{};
+    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(nullptr, fence);
+    ze_fence_handle_t fenceHandle = fence->toHandle();
+
+    zet_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+
+    uint32_t foundPostSyncMiFlush = 0u;
+    auto miFlushList = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    for (auto cmdIt : miFlushList) {
+        auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*cmdIt);
+
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            foundPostSyncMiFlush++;
+            EXPECT_TRUE(miFlush->getNotifyEnable());
+        }
+    }
+    EXPECT_EQ(1u, foundPostSyncMiFlush);
 
     fence->destroy();
     commandQueue->destroy();

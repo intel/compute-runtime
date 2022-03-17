@@ -80,7 +80,6 @@ struct CommandQueueImp : public CommandQueue {
 
     void reserveLinearStreamSize(size_t size);
     ze_command_queue_mode_t getSynchronousMode() const;
-    virtual void dispatchTaskCountWrite(NEO::LinearStream &commandStream, bool flushDataCache) = 0;
     virtual bool getPreemptionCmdProgramming() = 0;
 
   protected:
