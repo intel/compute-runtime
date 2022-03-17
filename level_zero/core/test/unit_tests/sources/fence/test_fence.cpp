@@ -22,6 +22,14 @@
 
 using namespace std::chrono_literals;
 
+namespace CpuIntrinsicsTests {
+extern std::atomic<uint32_t> pauseCounter;
+extern volatile uint32_t *pauseAddress;
+extern uint32_t pauseValue;
+extern uint32_t pauseOffset;
+extern std::function<void()> setupPauseAddress;
+} // namespace CpuIntrinsicsTests
+
 namespace L0 {
 namespace ult {
 
@@ -190,6 +198,52 @@ TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutNonZeroAn
     fence->taskCount = 1;
     *csr->tagAddress = 1;
     ze_result_t result = fence->hostSynchronize(10);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionThenReturnOnlyAfterAllCsrPartitionsCompleted) {
+    constexpr uint32_t activePartitions = 2;
+    constexpr uint32_t postSyncOffset = 16;
+
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    ASSERT_NE(nullptr, csr->getTagAddress());
+    csr->postSyncWriteOffset = postSyncOffset;
+    csr->activePartitions = activePartitions;
+
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    std::unique_ptr<WhiteBox<L0::Fence>> fence;
+    fence.reset(whitebox_cast(Fence::create(&cmdqueue, &desc)));
+    ASSERT_NE(nullptr, fence);
+
+    fence->taskCount = 1;
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, 0);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = csr->getTagAddress();
+
+    volatile uint32_t *hostAddr = csr->getTagAddress();
+    for (uint32_t i = 0; i < activePartitions; i++) {
+        *hostAddr = 0;
+        hostAddr = ptrOffset(hostAddr, postSyncOffset);
+    }
+
+    CpuIntrinsicsTests::setupPauseAddress = [&]() {
+        if (CpuIntrinsicsTests::pauseCounter > 10) {
+            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            for (uint32_t i = 0; i < activePartitions; i++) {
+                *nextPacket = 1;
+                nextPacket = ptrOffset(nextPacket, postSyncOffset);
+            }
+        }
+    };
+
+    constexpr uint64_t infiniteTimeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = fence->hostSynchronize(infiniteTimeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

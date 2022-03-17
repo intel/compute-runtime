@@ -11,7 +11,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/utilities/wait_util.h"
 
 namespace L0 {
 
@@ -68,8 +67,6 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         if (ret == ZE_RESULT_SUCCESS) {
             return ZE_RESULT_SUCCESS;
         }
-
-        NEO::WaitUtils::waitFunction(nullptr, 0u);
 
         currentTime = std::chrono::high_resolution_clock::now();
         elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);

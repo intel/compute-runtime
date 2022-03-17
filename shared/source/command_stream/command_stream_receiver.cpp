@@ -366,7 +366,15 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
         partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
     }
 
-    return testTaskCountReady(pollAddress, taskCountToWait) ? WaitStatus::Ready : WaitStatus::NotReady;
+    partitionAddress = pollAddress;
+    for (uint32_t i = 0; i < activePartitions; i++) {
+        if (*partitionAddress < taskCountToWait) {
+            return WaitStatus::NotReady;
+        }
+        partitionAddress = ptrOffset(partitionAddress, this->postSyncWriteOffset);
+    }
+
+    return WaitStatus::Ready;
 }
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
@@ -800,7 +808,7 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
 
 bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) {
     for (uint32_t i = 0; i < activePartitions; i++) {
-        if (*pollAddress < taskCountToWait) {
+        if (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
             return false;
         }
 
