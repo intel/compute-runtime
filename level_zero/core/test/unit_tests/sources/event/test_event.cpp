@@ -6,7 +6,6 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -30,11 +29,8 @@
 using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
-extern std::atomic<uint32_t> pauseCounter;
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
-extern uint32_t pauseOffset;
-extern std::function<void()> setupPauseAddress;
+extern std::atomic<uintptr_t> lastClFlushedPtr;
+extern std::atomic<uint32_t> clFlushCounter;
 } // namespace CpuIntrinsicsTests
 
 namespace L0 {
@@ -631,8 +627,8 @@ TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLo
     event->csr = csr.get();
     event->gpuHangCheckPeriod = 0ms;
 
-    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
-    auto result = event->hostSynchronize(timeout);
+    const auto timeout = std::numeric_limits<std::uint32_t>::max();
+    const auto result = event->hostSynchronize(timeout);
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
@@ -644,8 +640,8 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
     event->csr = csr.get();
     event->gpuHangCheckPeriod = 0ms;
 
-    constexpr uint64_t timeoutNanoseconds = 1;
-    auto result = event->hostSynchronize(timeoutNanoseconds);
+    const auto timeoutNanoseconds = 1;
+    const auto result = event->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
@@ -655,8 +651,8 @@ TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhe
     event->csr = csr.get();
     event->gpuHangCheckPeriod = 50000000ms;
 
-    constexpr uint64_t timeoutNanoseconds = 1;
-    auto result = event->hostSynchronize(timeoutNanoseconds);
+    const auto timeoutNanoseconds = 1;
+    const auto result = event->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
@@ -672,87 +668,16 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
 }
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    uint64_t *hostAddr = static_cast<uint64_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
     ze_result_t result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    uint64_t *hostAddr = static_cast<uint64_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
     ze_result_t result = event->hostSynchronize(10);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
-    constexpr uint32_t packetsInUse = 2;
-    event->setPacketsInUse(packetsInUse);
-
-    const size_t eventPacketSize = event->getSinglePacketSize();
-    const size_t eventCompletionOffset = event->getContextStartOffset();
-
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
-    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
-    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-    CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-
-    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-    for (uint32_t i = 0; i < packetsInUse; i++) {
-        *hostAddr = Event::STATE_CLEARED;
-        hostAddr = ptrOffset(hostAddr, eventPacketSize);
-    }
-
-    CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
-            for (uint32_t i = 0; i < packetsInUse; i++) {
-                *nextPacket = Event::STATE_SIGNALED;
-                nextPacket = ptrOffset(nextPacket, eventPacketSize);
-            }
-        }
-    };
-
-    constexpr uint64_t infiniteTimeout = std::numeric_limits<std::uint64_t>::max();
-    ze_result_t result = event->hostSynchronize(infiniteTimeout);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
-    constexpr uint32_t packetsInUse = 2;
-    event->setPacketsInUse(packetsInUse);
-    event->setEventTimestampFlag(true);
-
-    const size_t eventPacketSize = event->getSinglePacketSize();
-    const size_t eventCompletionOffset = event->getContextEndOffset();
-
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
-    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
-    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-    CpuIntrinsicsTests::pauseCounter = 0u;
-    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-
-    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
-    for (uint32_t i = 0; i < packetsInUse; i++) {
-        *hostAddr = Event::STATE_CLEARED;
-        hostAddr = ptrOffset(hostAddr, eventPacketSize);
-    }
-
-    CpuIntrinsicsTests::setupPauseAddress = [&]() {
-        if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
-            for (uint32_t i = 0; i < packetsInUse; i++) {
-                *nextPacket = Event::STATE_SIGNALED;
-                nextPacket = ptrOffset(nextPacket, eventPacketSize);
-            }
-        }
-    };
-
-    constexpr uint64_t infiniteTimeout = std::numeric_limits<std::uint64_t>::max();
-    ze_result_t result = event->hostSynchronize(infiniteTimeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
