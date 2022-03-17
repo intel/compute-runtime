@@ -100,7 +100,11 @@ ze_result_t EventImp<TagSizeT>::queryStatusKernelTimestamp() {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
-            if (kernelEventCompletionData[i].getContextEndValue(packetId) == queryVal) {
+            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+                static_cast<TagSizeT const *>(kernelEventCompletionData[i].getContextEndAddress(packetId)),
+                queryVal,
+                std::not_equal_to<TagSizeT>());
+            if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
         }
@@ -116,7 +120,11 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
-            if (kernelEventCompletionData[i].getContextStartValue(packetId) == queryVal) {
+            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
+                static_cast<TagSizeT const *>(kernelEventCompletionData[i].getContextStartAddress(packetId)),
+                queryVal,
+                std::not_equal_to<TagSizeT>());
+            if (!ready) {
                 return ZE_RESULT_NOT_READY;
             }
         }
@@ -221,8 +229,6 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             return ret;
         }
 
-        NEO::WaitUtils::waitFunction(nullptr, 0u);
-
         currentTime = std::chrono::high_resolution_clock::now();
         elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
 
@@ -233,7 +239,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             }
         }
 
-        if (timeout == std::numeric_limits<uint32_t>::max()) {
+        if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
         }
 

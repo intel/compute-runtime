@@ -71,8 +71,8 @@ TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturne
     fence->taskCount = 1;
     fence->gpuHangCheckPeriod = 0ms;
 
-    const auto timeout = std::numeric_limits<std::uint32_t>::max();
-    const auto result = fence->hostSynchronize(timeout);
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = fence->hostSynchronize(timeout);
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
@@ -92,8 +92,8 @@ TEST_F(FenceTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCall
     fence->taskCount = 1;
     fence->gpuHangCheckPeriod = 0ms;
 
-    const auto timeoutNanoseconds = 1;
-    const auto result = fence->hostSynchronize(timeoutNanoseconds);
+    constexpr uint64_t timeoutNanoseconds = 1;
+    auto result = fence->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
@@ -112,8 +112,8 @@ TEST_F(FenceTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchr
     fence->taskCount = 1;
     fence->gpuHangCheckPeriod = 50000000ms;
 
-    const auto timeoutNanoseconds = 1;
-    const auto result = fence->hostSynchronize(timeoutNanoseconds);
+    constexpr uint64_t timeoutNanoseconds = 1;
+    auto result = fence->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
@@ -131,8 +131,8 @@ TEST_F(FenceTest, GivenSuccessfulQueryResultAndNoTimeoutWhenHostSynchronizeIsCal
 
     fence->taskCount = 1;
 
-    const auto timeout = std::numeric_limits<std::uint32_t>::max();
-    const auto result = fence->hostSynchronize(timeout);
+    constexpr uint64_t timeout = std::numeric_limits<std::uint32_t>::max();
+    auto result = fence->hostSynchronize(timeout);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
