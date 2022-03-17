@@ -36,7 +36,7 @@ struct Mock<Fence> : public Fence {
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
     ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(assignTaskCountFromCsr, ze_result_t, ZE_RESULT_SUCCESS, ());
-    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, (bool signaled));
 };
 
 } // namespace ult

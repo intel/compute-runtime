@@ -17,7 +17,7 @@ namespace L0 {
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
     auto fence = new Fence(cmdQueue);
     UNRECOVERABLE_IF(fence == nullptr);
-    fence->reset();
+    fence->reset(!!(desc->flags & ZE_FENCE_FLAG_SIGNALED));
     return fence;
 }
 
@@ -36,8 +36,12 @@ ze_result_t Fence::assignTaskCountFromCsr() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t Fence::reset() {
-    taskCount = std::numeric_limits<uint32_t>::max();
+ze_result_t Fence::reset(bool signaled) {
+    if (signaled) {
+        taskCount = 0;
+    } else {
+        taskCount = std::numeric_limits<uint32_t>::max();
+    }
     return ZE_RESULT_SUCCESS;
 }
 

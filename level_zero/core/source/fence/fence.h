@@ -30,7 +30,7 @@ struct Fence : _ze_fence_handle_t {
     MOCKABLE_VIRTUAL ze_result_t hostSynchronize(uint64_t timeout);
     MOCKABLE_VIRTUAL ze_result_t queryStatus();
     MOCKABLE_VIRTUAL ze_result_t assignTaskCountFromCsr();
-    MOCKABLE_VIRTUAL ze_result_t reset();
+    MOCKABLE_VIRTUAL ze_result_t reset(bool signaled);
 
     static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,5 +38,5 @@ zeFenceQueryStatus(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceReset(
     ze_fence_handle_t hFence) {
-    return L0::Fence::fromHandle(hFence)->reset();
+    return L0::Fence::fromHandle(hFence)->reset(false);
 }

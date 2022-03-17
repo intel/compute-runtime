@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,10 +86,10 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOf
 
 struct {
     ze_command_queue_handle_t hCommandQueue0;
-    ze_fence_desc_t desc0;
+    ze_fence_desc_t desc0{};
     ze_fence_handle_t hFence0;
     ze_command_queue_handle_t hCommandQueue1;
-    ze_fence_desc_t desc1;
+    ze_fence_desc_t desc1{};
     ze_fence_handle_t hFence1;
     ze_fence_handle_t hFenceAPI;
     void *instanceData0;
