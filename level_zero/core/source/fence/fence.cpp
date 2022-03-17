@@ -16,13 +16,13 @@
 namespace L0 {
 
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
-    auto fence = new FenceImp(cmdQueue);
+    auto fence = new Fence(cmdQueue);
     UNRECOVERABLE_IF(fence == nullptr);
     fence->reset();
     return fence;
 }
 
-ze_result_t FenceImp::queryStatus() {
+ze_result_t Fence::queryStatus() {
     auto csr = cmdQueue->getCsr();
     csr->downloadAllocations();
 
@@ -31,18 +31,18 @@ ze_result_t FenceImp::queryStatus() {
     return csr->testTaskCountReady(hostAddr, taskCount) ? ZE_RESULT_SUCCESS : ZE_RESULT_NOT_READY;
 }
 
-ze_result_t FenceImp::assignTaskCountFromCsr() {
+ze_result_t Fence::assignTaskCountFromCsr() {
     auto csr = cmdQueue->getCsr();
     taskCount = csr->peekTaskCount() + 1;
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FenceImp::reset() {
+ze_result_t Fence::reset() {
     taskCount = std::numeric_limits<uint32_t>::max();
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
+ze_result_t Fence::hostSynchronize(uint64_t timeout) {
     std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     uint64_t timeDiff = 0;

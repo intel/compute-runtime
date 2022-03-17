@@ -950,7 +950,6 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     ze_fence_desc_t fenceDesc{};
     auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
-    EXPECT_EQ(1u, fence->partitionCount);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
     //1st execute call initialized pipeline
@@ -970,7 +969,6 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     usedSpaceAfter = commandQueue->commandStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter - usedSpaceBefore;
-    EXPECT_EQ(2u, fence->partitionCount);
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);
@@ -987,7 +985,6 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     usedSpaceAfter = commandQueue->commandStream->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t cmdBufferSizeWithtMmioProgramming = usedSpaceAfter - usedSpaceBefore;
-    EXPECT_EQ(2u, fence->partitionCount);
 
     size_t expectedSizeWithMmioProgramming = cmdBufferSizeWithoutMmioProgramming;
     EXPECT_GE(expectedSizeWithMmioProgramming, cmdBufferSizeWithtMmioProgramming);
