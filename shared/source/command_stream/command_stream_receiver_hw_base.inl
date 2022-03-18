@@ -197,7 +197,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     const auto &hwInfo = peekHwInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    bool updateTag = false;
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
@@ -221,29 +220,20 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         auto address = getTagAllocation()->getGpuAddress();
 
-        updateTag = !isUpdateTagFromWaitEnabled();
-        updateTag |= dispatchFlags.blocking;
-        updateTag |= dispatchFlags.dcFlush;
+        PipeControlArgs args;
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dispatchFlags.dcFlush, hwInfo);
+        args.notifyEnable = isUsedNotifyEnableForPostSync();
+        args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
+        args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
+        args.workloadPartitionOffset = isMultiTileOperationEnabled();
+        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            commandStreamTask,
+            PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            address,
+            taskCount + 1,
+            hwInfo,
+            args);
 
-        if (updateTag) {
-            PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dispatchFlags.dcFlush, hwInfo);
-            args.notifyEnable = isUsedNotifyEnableForPostSync();
-            args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
-            args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
-            args.workloadPartitionOffset = isMultiTileOperationEnabled();
-            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-                commandStreamTask,
-                PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                address,
-                taskCount + 1,
-                hwInfo,
-                args);
-        } else {
-            currentPipeControlForNooping = nullptr;
-        }
-
-        this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
@@ -258,6 +248,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                   PatchInfoAllocationType::Default));
         }
     }
+    this->latestSentTaskCount = taskCount + 1;
 
     if (DebugManager.flags.ForceSLML3Config.get()) {
         dispatchFlags.useSLM = true;
@@ -585,7 +576,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             flushHandler(batchBuffer, this->getResidencyAllocations());
-            if (updateTag) {
+            if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
                 this->latestFlushedTaskCount = this->taskCount + 1;
             }
         } else {
@@ -1327,7 +1318,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchB
 
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
-    bool enabled = false;
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    auto enabled = hwHelper.isUpdateTaskCountFromWaitSupported();
+    enabled &= this->isAnyDirectSubmissionEnabled();
 
     switch (DebugManager.flags.UpdateTaskCountFromWait.get()) {
     case 0:
@@ -1432,6 +1425,9 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
             auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
             if (directSubmissionController) {
                 directSubmissionController->registerDirectSubmission(this);
+            }
+            if (this->isUpdateTagFromWaitEnabled()) {
+                this->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
             }
         }
         osContext.setDirectSubmissionActive();

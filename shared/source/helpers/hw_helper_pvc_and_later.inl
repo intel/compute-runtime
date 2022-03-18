@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,11 @@ bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType en
 
 template <>
 bool HwHelperHw<Family>::isTimestampWaitSupported() const {
+    return true;
+}
+
+template <>
+bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
     return true;
 }
 

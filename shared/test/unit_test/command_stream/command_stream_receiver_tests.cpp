@@ -561,6 +561,21 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckTaskCou
     }
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabledThenCanBeEnabledOnlyWithDirectSubmission) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &hwHelper = HwHelper::get(csr.peekHwInfo().platform.eRenderCoreFamily);
+
+    {
+        csr.directSubmissionAvailable = true;
+        EXPECT_EQ(csr.isUpdateTagFromWaitEnabled(), hwHelper.isUpdateTaskCountFromWaitSupported());
+    }
+
+    {
+        csr.directSubmissionAvailable = false;
+        EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());
+    }
+}
+
 struct InitDirectSubmissionFixture {
     void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);

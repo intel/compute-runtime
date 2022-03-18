@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,12 @@ HWTEST2_F(HwHelperTestPvcAndLater, GivenVariousValuesWhenCallingGetBarriersCount
     EXPECT_EQ(16u, hwHelper.getBarriersCountFromHasBarriers(5u));
     EXPECT_EQ(24u, hwHelper.getBarriersCountFromHasBarriers(6u));
     EXPECT_EQ(32u, hwHelper.getBarriersCountFromHasBarriers(7u));
+}
+
+HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeHpcCore) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    EXPECT_TRUE(hwHelper.isUpdateTaskCountFromWaitSupported());
 }
 
 HWTEST2_F(HwHelperTestPvcAndLater, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsAtLeastXeHpcCore) {

@@ -771,7 +771,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         blocking,                                                                                   //blocking
         shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
         multiDispatchInfo.usesSlm(),                                                                //useSLM
-        true,                                                                                       //guardCommandBufferWithPipeControl
+        !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),                              //guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                                   //GSBA32BitRequired
         requiresCoherency,                                                                          //requiresCoherency
         (QueuePriority::LOW == priority),                                                           //lowPriority
@@ -1008,7 +1008,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             blocking,                                                            //blocking
             false,                                                               //dcFlush
             false,                                                               //useSLM
-            true,                                                                //guardCommandBufferWithPipeControl
+            !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       //guardCommandBufferWithPipeControl
             false,                                                               //GSBA32BitRequired
             false,                                                               //requiresCoherency
             false,                                                               //lowPriority

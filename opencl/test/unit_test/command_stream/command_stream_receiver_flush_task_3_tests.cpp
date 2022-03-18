@@ -1032,7 +1032,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWithOutOfOrd
     EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhenFlushTaskThenThereIsNoPipeControlForUpdateTaskCount) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetAndGuardCommandBufferWithPipeControlWhenFlushTaskThenThereIsPipeControlForUpdateTaskCount) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
 
@@ -1048,6 +1048,37 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
     dispatchFlags.guardCommandBufferWithPipeControl = true;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags,
+                       *pDevice);
+
+    parseCommands<FamilyType>(commandStream);
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    EXPECT_NE(itorPipeControl, cmdList.end());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhenFlushTaskThenThereIsNoPipeControlForUpdateTaskCount) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
     mockCsr->flushTask(commandStream,
                        0,
