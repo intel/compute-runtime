@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,4 +11,6 @@
 template <>
 struct TestTraitsPlatforms<IGFX_DG2> {
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = false;
+    static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = true;
+    static constexpr bool isUnTypedDataPortCacheFlushSupported = true;
 };

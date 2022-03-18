@@ -13,11 +13,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
 
-namespace NEO {
+using Family = NEO::XeHpFamily;
 
-using Family = XeHpFamily;
-}
-
+#include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
 

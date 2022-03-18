@@ -35,14 +35,10 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     const auto &hwInfo = this->device->getHwInfo();
-    NEO::PipeControlArgs pcArgs;
-    pcArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    pcArgs.textureCacheInvalidationEnable = true;
-
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, pcArgs);
-
     NEO::Device *neoDevice = device->getNEODevice();
     bool isRcs = this->getCsr()->isRcs();
+
+    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, hwInfo, isRcs);
 
     auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));

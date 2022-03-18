@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,9 +28,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         NEO::Device *neoDevice = device->getNEODevice();
         auto globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
         auto &hwInfo = neoDevice->getHardwareInfo();
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
+        bool isRcs = this->getCsr()->isRcs();
+
+        NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, hwInfo, isRcs);
         auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS sbaCmd;
         bool multiOsContextCapable = device->isImplicitScalingCapable();

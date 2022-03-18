@@ -91,15 +91,6 @@ bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
-    PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, peekHwInfo());
-    args.textureCacheInvalidationEnable = true;
-
-    NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, peekHwInfo(), isRcs());
-}
-
-template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {}
 
 template <typename GfxFamily>
