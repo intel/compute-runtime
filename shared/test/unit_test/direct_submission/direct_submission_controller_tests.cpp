@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,35 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
+
+    controller.unregisterDirectSubmission(&csr);
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionWithMultiplePartitionsWhenCheckNewSubmissionThenCheckAllPartitions) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(0b11);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.postSyncWriteOffset = 32u;
+    csr.activePartitions = 2;
+    csr.initializeTagAllocation();
+    *csr.tagAddress = 5u;
+    auto nextPartitionTagAddress = ptrOffset(csr.tagAddress, csr.getPostSyncWriteOffset());
+    *nextPartitionTagAddress = 2u;
+    csr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.keepControlling.store(false);
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
+    controller.registerDirectSubmission(&csr);
+
+    controller.checkNewSubmissions();
+
+    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 0u);
 
     controller.unregisterDirectSubmission(&csr);
 }

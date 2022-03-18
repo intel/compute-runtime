@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ void DirectSubmissionController::checkNewSubmissions() {
         auto &state = directSubmission.second;
 
         auto taskCount = csr->peekTaskCount();
-        if (taskCount <= *csr->getTagAddress()) {
+        if (csr->testTaskCountReady(csr->getTagAddress(), taskCount)) {
             if (taskCount == state.taskCount) {
                 if (state.isStopped) {
                     continue;
