@@ -88,6 +88,17 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsRetur
     EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 512u);
 }
 
+HWTEST_F(HwHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPaddingThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restore;
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+
+    auto defaultPadding = hwHelper.getPaddingForISAAllocation();
+    for (int32_t valueToTest : {0, 1, 2, 10}) {
+        DebugManager.flags.ForceExtendedKernelIsaSize.set(valueToTest);
+        EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), defaultPadding + MemoryConstants::pageSize * valueToTest);
+    }
+}
+
 HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;

@@ -74,6 +74,9 @@ size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 
 template <typename Family>
 size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
+    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
+        return 512 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
+    }
     return 512;
 }
 

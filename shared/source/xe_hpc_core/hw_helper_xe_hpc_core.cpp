@@ -167,7 +167,10 @@ uint32_t HwHelperHw<Family>::getMaxNumSamplers() const {
 
 template <>
 size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
-    return 3584;
+    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
+        return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
+    }
+    return 0xE00;
 }
 
 template <>

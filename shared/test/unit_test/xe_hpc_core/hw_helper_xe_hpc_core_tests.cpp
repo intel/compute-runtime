@@ -56,7 +56,7 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredT
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned) {
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 3584u);
+    EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 0xE00u);
 }
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpecificBinaryBuiltinIsRequiredThenTrueIsReturned) {
