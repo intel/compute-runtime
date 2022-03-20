@@ -20,7 +20,7 @@ bool CommandQueue::isAssignEngineRoundRobinEnabled() {
 }
 
 bool CommandQueue::isTimestampWaitEnabled() {
-    return true;
+    return false;
 }
 
 } // namespace NEO
