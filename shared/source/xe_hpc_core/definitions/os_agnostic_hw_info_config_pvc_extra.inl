@@ -11,8 +11,9 @@ bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalker
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isThreadEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
-    return true;
+uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    auto revId = hwInfo.platform.usRevId & XE_HPC_COREFamily::pvcSteppingBits;
+    return (0x3 <= revId) ? 16u : 8u;
 }
 
 template <>

@@ -329,8 +329,8 @@ bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool HwInfoConfigHw<gfxProduct>::isThreadEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
-    return false;
+uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    return 8u;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -92,7 +92,7 @@ class HwInfoConfig {
     virtual bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isThreadEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
@@ -171,7 +171,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const override;
-    bool isThreadEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const override;
+    uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
 
   protected:

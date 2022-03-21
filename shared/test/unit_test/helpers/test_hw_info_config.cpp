@@ -48,7 +48,7 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSystolicModeConfigurabledThenF
     EXPECT_FALSE(hwInfoConfig.isSystolicModeConfigurable(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsThreaEuRatio16ForScratchRequiredThenFalseIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetThreadEuRatioForScratchThen8IsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isThreadEuRatio16ForScratchRequired(*defaultHwInfo));
+    EXPECT_EQ(8u, hwInfoConfig.getThreadEuRatioForScratch(*defaultHwInfo));
 }

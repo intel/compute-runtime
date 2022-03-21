@@ -318,8 +318,8 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isAdjustProgrammableIdPreferredSlmSizeRequire
 }
 
 template <>
-bool HwInfoConfigHw<IGFX_UNKNOWN>::isThreadEuRatio16ForScratchRequired(const HardwareInfo &hwInfo) const {
-    return false;
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    return 8u;
 }
 
 template <>
