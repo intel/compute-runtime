@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <poll.h>
 
 namespace NEO {
 namespace SysCalls {

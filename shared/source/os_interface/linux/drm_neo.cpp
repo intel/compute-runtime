@@ -1578,7 +1578,7 @@ PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
 
     constexpr double gigaBitsPerSecondToBytesPerSecondMultiplier = 125000000;
     const auto maxSpeedWithEncodingLoss = maxSpeed * gigaBitsPerSecondToBytesPerSecondMultiplier * maxSpeedToGenAndEncodingLossMapping[maxSpeed].second;
-    pciSpeedInfo.maxBandwidth = maxSpeedWithEncodingLoss * pciSpeedInfo.width;
+    pciSpeedInfo.maxBandwidth = static_cast<int64_t>(maxSpeedWithEncodingLoss * pciSpeedInfo.width);
 
     return pciSpeedInfo;
 }
