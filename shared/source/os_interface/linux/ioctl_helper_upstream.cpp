@@ -214,6 +214,10 @@ std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturateLinkCapability(
     return std::nullopt;
 }
 
+uint32_t IoctlHelperUpstream::getVmAdviseAtomicAttribute() {
+    return 0;
+}
+
 int IoctlHelperUpstream::vmBind(Drm *drm, const VmBindParams &vmBindParams) {
     return 0;
 }

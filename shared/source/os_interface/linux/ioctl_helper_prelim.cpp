@@ -470,6 +470,17 @@ std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability(
     return PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK;
 }
 
+uint32_t IoctlHelperPrelim20::getVmAdviseAtomicAttribute() {
+    switch (NEO::DebugManager.flags.SetVmAdviseAtomicAttribute.get()) {
+    case 0:
+        return PRELIM_I915_VM_ADVISE_ATOMIC_NONE;
+    case 1:
+        return PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE;
+    default:
+        return PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
+    }
+}
+
 prelim_drm_i915_gem_vm_bind translateVmBindParamsToPrelimStruct(const VmBindParams &vmBindParams) {
     prelim_drm_i915_gem_vm_bind vmBind{};
     vmBind.vm_id = vmBindParams.vmId;

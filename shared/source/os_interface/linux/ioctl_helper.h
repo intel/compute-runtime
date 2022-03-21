@@ -116,6 +116,7 @@ class IoctlHelper {
     virtual void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
+    virtual uint32_t getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(Drm *drm, const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
     virtual bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) = 0;
@@ -167,6 +168,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
@@ -231,6 +233,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
     bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
