@@ -193,6 +193,30 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndPtrCopyAllowedForHostSurfaceW
     cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
 }
 
+HWTEST_F(EnqueueReadImageTest, givenGpuHangAndCommandQueueAndPtrCopyAllowedForHostSurfaceWhenBlockingEnqueueReadImageThenOutOfResourcesIsReturned) {
+    auto csr = std::make_unique<CreateAllocationForHostSurfaceCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    cmdQ->waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    csr->setupContext(*pDevice->getDefaultEngine().osContext);
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    cmdQ->gpgpuEngine->commandStreamReceiver = csr.get();
+    csr->initializeTagAllocation();
+
+    auto retVal = cmdQ->enqueueReadImage(srcImage, CL_TRUE,
+                                         EnqueueReadImageTraits::origin,
+                                         EnqueueReadImageTraits::region,
+                                         EnqueueReadImageTraits::rowPitch,
+                                         EnqueueReadImageTraits::slicePitch,
+                                         EnqueueReadImageTraits::hostPtr,
+                                         EnqueueReadImageTraits::mapAllocation,
+                                         0u,
+                                         nullptr,
+                                         nullptr);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    cmdQ->gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+}
+
 HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageThenKernelRequiresMigration) {
 
     MockDefaultContext context;

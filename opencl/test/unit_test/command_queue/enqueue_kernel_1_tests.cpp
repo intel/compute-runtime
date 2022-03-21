@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -520,6 +521,38 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCommandsAreAdded) {
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
+HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOutOfResourcesIsReported) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    cl_event *eventWaitList = nullptr;
+    cl_int waitListSize = 0;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueKernel(
+        pKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        waitListSize,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
@@ -700,6 +733,24 @@ HWTEST_F(EnqueueKernelTest, givenEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedI
     MockKernelWithInternals mockKernel(*pClDevice);
     auto ret = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
+}
+
+HWTEST_F(EnqueueKernelTest, givenGpuHangAndBlockingCallAndEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedInDimensionThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    size_t gws[3] = {0, 0, 0};
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueKernelIsCalledThenKernelIsRecorded) {

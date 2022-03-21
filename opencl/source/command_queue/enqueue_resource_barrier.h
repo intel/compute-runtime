@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,13 +25,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueResourceBarrier(BarrierCommand *resourc
                                                          const cl_event *eventWaitList,
                                                          cl_event *event) {
     MultiDispatchInfo multiDispatch;
-    enqueueHandler<CL_COMMAND_RESOURCE_BARRIER>(resourceBarrier->surfacePtrs.begin(),
-                                                resourceBarrier->numSurfaces,
-                                                false,
-                                                multiDispatch,
-                                                numEventsInWaitList,
-                                                eventWaitList,
-                                                event);
-    return CL_SUCCESS;
+    return enqueueHandler<CL_COMMAND_RESOURCE_BARRIER>(resourceBarrier->surfacePtrs.begin(),
+                                                       resourceBarrier->numSurfaces,
+                                                       false,
+                                                       multiDispatch,
+                                                       numEventsInWaitList,
+                                                       eventWaitList,
+                                                       event);
 }
+
 } // namespace NEO

@@ -98,6 +98,37 @@ HWTEST_F(EnqueueReadBufferRectTest, GivenValidParamsWhenReadingBufferThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueReadBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWhenReadingBufferThenOutOfResourcesIsReturned) {
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    const auto enqueueResult = clEnqueueReadBufferRect(
+        &mockCommandQueueHw,
+        buffer.get(),
+        CL_TRUE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        10,
+        0,
+        10,
+        0,
+        hostPtr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueReadBufferRectTest, GivenBlockingEnqueueWhenReadingBufferThenTaskLevelIsNotIncremented) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -356,7 +387,6 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEve
         numEventsInWaitList,
         eventWaitList,
         &event);
-    ;
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
@@ -657,7 +687,6 @@ struct EnqueueReadBufferRectHw : public ::testing::Test {
 using EnqueueReadBufferRectStatelessTest = EnqueueReadBufferRectHw;
 
 HWTEST_F(EnqueueReadBufferRectStatelessTest, WhenReadingBufferRectStatelessThenSuccessIsReturned) {
-
     auto pCmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
     srcBuffer.size = static_cast<size_t>(bigSize);

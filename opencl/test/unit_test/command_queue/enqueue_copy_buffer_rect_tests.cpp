@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -15,6 +17,7 @@
 #include "opencl/test/unit_test/command_queue/enqueue_copy_buffer_rect_fixture.h"
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "reg_configs_common.h"
 
@@ -92,6 +95,39 @@ HWTEST_F(EnqueueCopyBufferRectTest, GivenValidParametersWhenCopyingBufferRectThe
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueCopyBufferRectTest, GivenGpuHangAndBlockingCallAndValidParametersWhenCopyingBufferRectThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    size_t srcOrigin[] = {0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    const auto enqueueResult = clEnqueueCopyBufferRect(
+        &mockCommandQueueHw,
+        srcBuffer,
+        dstBuffer,
+        srcOrigin,
+        dstOrigin,
+        region,
+        10,
+        0,
+        10,
+        0,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenTaskCountIsAlignedWithCsr) {

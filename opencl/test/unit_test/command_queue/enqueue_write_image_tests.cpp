@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
@@ -68,6 +69,19 @@ HWTEST_F(EnqueueWriteImageTest, GivenBlockingEnqueueWhenWritingImageThenTaskLeve
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_TRUE);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenGpuHangAndBlockingEnqueueWhenWritingImageThenOutOfResourcesIsReturned) {
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = EnqueueWriteImageHelper<>::enqueueWriteImage(&mockCommandQueueHw, dstImage, CL_TRUE);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueWriteImageTest, GivenNonBlockingEnqueueWhenWritingImageThenTaskLevelIsIncremented) {

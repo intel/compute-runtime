@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -17,6 +18,7 @@
 #include "opencl/test/unit_test/gen_common/gen_commands_common_validation.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "reg_configs_common.h"
 
@@ -317,6 +319,32 @@ HWTEST_F(EnqueueCopyImageToBufferHwStatelessTest, givenBigBufferWhenCopyingImage
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueCopyImageToBufferHwStatelessTest, givenGpuHangAndBlockingCallAndBigBufferWhenCopyingImageToBufferStatelessThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueCopyImageToBuffer(
+        srcImage.get(),
+        &dstBuffer,
+        srcOrigin,
+        region,
+        static_cast<size_t>(bigOffset),
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 using EnqueueCopyImageToBufferStatefulTest = EnqueueCopyImageToBufferHw;

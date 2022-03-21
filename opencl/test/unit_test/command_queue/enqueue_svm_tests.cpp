@@ -100,6 +100,30 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMappingSvmThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMMap(
+        CL_TRUE,     // cl_bool blocking_map
+        CL_MAP_READ, // cl_map_flags map_flags
+        ptrSVM,      // void *svm_ptr
+        256,         // size_t size
+        0,           // cl_uint num_events_in_wait_list
+        nullptr,     // const cL_event *event_wait_list
+        nullptr,     // cl_event *event
+        false);      // bool externalAppCall
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenMappingSvmWithBlockingThenSuccessIsReturned) {
     retVal = this->pCmdQ->enqueueSVMMap(
         CL_TRUE,     // cl_bool blocking_map
@@ -147,6 +171,27 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmThenSuccessIsReturned) {
         nullptr, // cl_event *event
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenUnmappingSvmThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMUnmap(
+        ptrSVM,
+        0,
+        nullptr,
+        nullptr,
+        false);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenUnmappingSvmWithEventsThenSuccessIsReturned) {
@@ -259,6 +304,72 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithBlockingThenSuccessIsRe
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(EnqueueSvmTest, GivenEventAndGpuHangAndBlockingCallAndValidParamsWhenFreeingSvmWithBlockingThenEventIsNotDeletedAndOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const cl_uint numOfSvmPointers = 1;
+    void *svmPtrs[numOfSvmPointers] = {ptrSVM};
+
+    UserEvent uEvent;
+    const cl_uint numOfEvents = 1;
+    cl_event eventWaitList[numOfEvents] = {&uEvent};
+
+    cl_event retEvent = nullptr;
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMFree(
+        numOfSvmPointers,
+        svmPtrs,
+        nullptr,
+        nullptr,
+        numOfEvents,
+        eventWaitList,
+        &retEvent);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+
+    ASSERT_NE(nullptr, retEvent);
+    castToObjectOrAbort<Event>(retEvent)->release();
+}
+
+HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFreeingSvmWithBlockingThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const cl_uint numOfSvmPointers = 1;
+    void *svmPtrs[numOfSvmPointers] = {ptrSVM};
+
+    UserEvent uEvent;
+    const cl_uint numOfEvents = 1;
+    cl_event eventWaitList[numOfEvents] = {&uEvent};
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMFree(
+        numOfSvmPointers,
+        svmPtrs,
+        nullptr,
+        nullptr,
+        numOfEvents,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsReturned) {
@@ -692,6 +803,38 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFillingMemoryWithBlockingThenSuccessI
     uEvent->setStatus(-1);
 }
 
+HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFillingMemoryThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const float pattern[1] = {1.2345f};
+    const size_t patternSize = sizeof(pattern);
+
+    auto uEvent = make_releaseable<UserEvent>();
+    const cl_uint numOfEvents = 1;
+    cl_event eventWaitList[numOfEvents] = {uEvent.get()};
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMMemFill(
+        ptrSVM,
+        pattern,
+        patternSize,
+        256,
+        numOfEvents,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+
+    uEvent->setStatus(-1);
+}
+
 TEST_F(EnqueueSvmTest, GivenRepeatCallsWhenFillingMemoryThenSuccessIsReturnedForEachCall) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
@@ -876,6 +1019,31 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMigratingMemoryThenSuccessIsReturned)
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenMigratingMemoryThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const void *svmPtrs[] = {ptrSVM};
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMMigrateMem(
+        1,       // cl_uint num_svm_pointers
+        svmPtrs, // const void **svm_pointers
+        nullptr, // const size_t *sizes
+        0,       // const cl_mem_migration_flags flags
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr  // cL_event *event
+    );
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueSvmTest, WhenMigratingMemoryThenSvmMigrateMemCommandTypeIsUsed) {
     MockCommandQueueHw<FamilyType> commandQueue{context, pClDevice, nullptr};
     const void *svmPtrs[] = {ptrSVM};
@@ -969,6 +1137,28 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvm
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     EXPECT_FALSE(svmMap->readOnlyMap);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndWriteInvalidateRegionFlagWhenMappingSvmThenOutOfResourcesIsReturned) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+    queue.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+
+    const auto enqueueResult = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE_INVALIDATE_REGION,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr,
+        false);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, queue.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenMapWriteFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsFalse) {
@@ -1140,6 +1330,41 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqueueMapSvmPtrT
     clReleaseEvent(event);
 }
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpuHangOnSecondMapWhenEnqueueMapSvmPtrTwiceThenSecondCallReturnsOutOfresources) {
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+
+    const auto firstMapResult = mockCommandQueueHw.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, firstMapResult);
+
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    const auto secondMapResult = mockCommandQueueHw.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, secondMapResult);
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThenExpectNoUnmapCopyKernel) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
@@ -1164,6 +1389,27 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThe
     EXPECT_EQ(expectedCmd, actualCmd);
 
     clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndGpuHangAndBlockingCallWhenUnmappingThenReturnOutOfResources) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        nullptr,
+        false);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsReadOnlyThenExpectNoUnmapCopyKernel) {
@@ -1212,6 +1458,37 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
     EXPECT_EQ(expectedCmd, actualCmd);
 
     clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryAndBlockingCallAndGpuHangForUnmapWhenUnmapingThenOutOfResourcesIsReturnedFromUnmap) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::Ready;
+
+    const auto enqueueMapResult = mockCommandQueueHw.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_READ,
+        svmPtr,
+        size,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, enqueueMapResult);
+
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    const auto enqueueUnmapResult = mockCommandQueueHw.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueUnmapResult);
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenNonReadOnlyMapWhenUnmappingThenSetAubTbxWritableBeforeUnmapEnqueue) {
@@ -1311,6 +1588,35 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
 
     clReleaseEvent(eventMap);
     clReleaseEvent(eventUnmap);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenGpuHangAndBlockingCallAndEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenUnmapReturnsOutOfResources) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+    queue.waitForAllEnginesReturnValue = WaitStatus::Ready;
+
+    const auto enqueueMapResult = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE,
+        svmPtr,
+        size,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, enqueueMapResult);
+
+    queue.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+    const auto enqueueUnmapResult = queue.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueUnmapResult);
+    EXPECT_EQ(2, queue.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAndNoEventIsUsedIsWritableThenExpectMapAndUnmapCopyKernelAnNo) {

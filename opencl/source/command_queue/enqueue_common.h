@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/local_work_size.h"
@@ -48,17 +49,17 @@ namespace NEO {
 
 template <typename GfxFamily>
 template <uint32_t commandType, size_t surfaceCount>
-void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount],
-                                               bool blocking,
-                                               Kernel *kernel,
-                                               cl_uint workDim,
-                                               const size_t globalOffsets[3],
-                                               const size_t workItems[3],
-                                               const size_t *localWorkSizesIn,
-                                               const size_t *enqueuedWorkSizes,
-                                               cl_uint numEventsInWaitList,
-                                               const cl_event *eventWaitList,
-                                               cl_event *event) {
+cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount],
+                                                 bool blocking,
+                                                 Kernel *kernel,
+                                                 cl_uint workDim,
+                                                 const size_t globalOffsets[3],
+                                                 const size_t workItems[3],
+                                                 const size_t *localWorkSizesIn,
+                                                 const size_t *enqueuedWorkSizes,
+                                                 cl_uint numEventsInWaitList,
+                                                 const cl_event *eventWaitList,
+                                                 cl_event *event) {
     BuiltInOwnershipWrapper builtInLock;
     KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
@@ -92,7 +93,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, enqueuedWorkSizes, globalOffsets);
 
         if (multiDispatchInfo.size() == 0) {
-            return;
+            return CL_SUCCESS;
         }
     }
 
@@ -104,25 +105,29 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         setupBlitAuxTranslation(multiDispatchInfo);
     }
 
-    enqueueHandler<commandType>(surfaces, blocking, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
+    return enqueueHandler<commandType>(surfaces, blocking, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
 }
 
 template <typename GfxFamily>
 template <uint32_t commandType>
-void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
-                                               size_t numSurfaceForResidency,
-                                               bool blocking,
-                                               const MultiDispatchInfo &multiDispatchInfo,
-                                               cl_uint numEventsInWaitList,
-                                               const cl_event *eventWaitList,
-                                               cl_event *event) {
+cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
+                                                 size_t numSurfaceForResidency,
+                                                 bool blocking,
+                                                 const MultiDispatchInfo &multiDispatchInfo,
+                                                 cl_uint numEventsInWaitList,
+                                                 const cl_event *eventWaitList,
+                                                 cl_event *event) {
     if (multiDispatchInfo.empty() && !isCommandWithoutKernel(commandType)) {
-        enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, blocking, multiDispatchInfo,
-                                          numEventsInWaitList, eventWaitList, event);
+        const auto enqueueResult = enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, blocking, multiDispatchInfo,
+                                                                     numEventsInWaitList, eventWaitList, event);
+        if (enqueueResult != CL_SUCCESS) {
+            return enqueueResult;
+        }
+
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(commandType);
         }
-        return;
+        return CL_SUCCESS;
     }
 
     TagNodeBase *hwTimeStamps = nullptr;
@@ -357,22 +362,35 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     queueOwnership.unlock();
 
     if (blocking) {
+        auto waitStatus = WaitStatus::Ready;
         auto &builtinOpParams = multiDispatchInfo.peekBuiltinOpParams();
         if (builtinOpParams.userPtrForPostOperationCpuCopy) {
-            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), false);
+            waitStatus = waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), false);
+            if (waitStatus == WaitStatus::GpuHang) {
+                return CL_OUT_OF_RESOURCES;
+            }
+
             auto hostPtrAlloc = builtinOpParams.transferAllocation;
             UNRECOVERABLE_IF(nullptr == hostPtrAlloc);
             auto size = hostPtrAlloc->getUnderlyingBufferSize();
             [[maybe_unused]] int cpuCopyStatus = memcpy_s(builtinOpParams.userPtrForPostOperationCpuCopy, size, hostPtrAlloc->getUnderlyingBuffer(), size);
             DEBUG_BREAK_IF(cpuCopyStatus != 0);
-            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
+
+            waitStatus = waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
         } else {
-            waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
+            waitStatus = waitForAllEngines(blockQueue, (blockQueue ? nullptr : printfHandler.get()), true);
+        }
+
+        if (waitStatus == WaitStatus::GpuHang) {
+            return CL_OUT_OF_RESOURCES;
         }
     }
+
     if (migratedMemory) {
         computeCommandStreamReceiver.flushBatchedSubmissions();
     }
+
+    return CL_SUCCESS;
 }
 
 template <typename GfxFamily>
@@ -1067,7 +1085,7 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 
 template <typename GfxFamily>
 template <uint32_t cmdType>
-void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
+cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
@@ -1159,17 +1177,22 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     bcsCommandStreamReceiverOwnership.unlock();
 
     if (blocking) {
-        waitForAllEngines(blockQueue, nullptr);
+        const auto waitStatus = waitForAllEngines(blockQueue, nullptr);
+        if (waitStatus == WaitStatus::GpuHang) {
+            return CL_OUT_OF_RESOURCES;
+        }
     }
+
+    return CL_SUCCESS;
 }
 
 template <typename GfxFamily>
 template <uint32_t cmdType, size_t surfaceCount>
-void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
+cl_int CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr) {
     const bool blit = EngineHelpers::isBcs(csr.getOsContext().getEngineType());
 
     if (blit) {
-        enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        return enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking, csr);
     } else {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
                                                                                 this->getClDevice());
@@ -1177,7 +1200,7 @@ void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dis
 
         builder.buildDispatchInfos(dispatchInfo);
 
-        enqueueHandler<cmdType>(
+        return enqueueHandler<cmdType>(
             surfaces,
             blocking,
             dispatchInfo,

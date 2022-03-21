@@ -71,6 +71,22 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenTaskCountIsAlignedWithCsr) {
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
+HWTEST_F(EnqueueCopyImageTest, GivenGpuHangAndBlockingCallWhenCopyingImageThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = EnqueueCopyImageHelper<>::enqueueCopyImage(&mockCommandQueueHw, srcImage, dstImage);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenTaskLevelIsIncremented) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 

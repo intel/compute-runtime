@@ -344,42 +344,42 @@ class CommandQueueHw : public CommandQueue {
     cl_int flush() override;
 
     template <uint32_t enqueueType>
-    void enqueueHandler(Surface **surfacesForResidency,
-                        size_t numSurfaceForResidency,
-                        bool blocking,
-                        const MultiDispatchInfo &dispatchInfo,
-                        cl_uint numEventsInWaitList,
-                        const cl_event *eventWaitList,
-                        cl_event *event);
+    cl_int enqueueHandler(Surface **surfacesForResidency,
+                          size_t numSurfaceForResidency,
+                          bool blocking,
+                          const MultiDispatchInfo &dispatchInfo,
+                          cl_uint numEventsInWaitList,
+                          const cl_event *eventWaitList,
+                          cl_event *event);
 
     template <uint32_t enqueueType, size_t size>
-    void enqueueHandler(Surface *(&surfacesForResidency)[size],
-                        bool blocking,
-                        const MultiDispatchInfo &dispatchInfo,
-                        cl_uint numEventsInWaitList,
-                        const cl_event *eventWaitList,
-                        cl_event *event) {
-        enqueueHandler<enqueueType>(surfacesForResidency, size, blocking, dispatchInfo, numEventsInWaitList, eventWaitList, event);
+    cl_int enqueueHandler(Surface *(&surfacesForResidency)[size],
+                          bool blocking,
+                          const MultiDispatchInfo &dispatchInfo,
+                          cl_uint numEventsInWaitList,
+                          const cl_event *eventWaitList,
+                          cl_event *event) {
+        return enqueueHandler<enqueueType>(surfacesForResidency, size, blocking, dispatchInfo, numEventsInWaitList, eventWaitList, event);
     }
 
     template <uint32_t enqueueType, size_t size>
-    void enqueueHandler(Surface *(&surfacesForResidency)[size],
-                        bool blocking,
-                        Kernel *kernel,
-                        cl_uint workDim,
-                        const size_t globalOffsets[3],
-                        const size_t workItems[3],
-                        const size_t *localWorkSizesIn,
-                        const size_t *enqueuedWorkSizes,
-                        cl_uint numEventsInWaitList,
-                        const cl_event *eventWaitList,
-                        cl_event *event);
+    cl_int enqueueHandler(Surface *(&surfacesForResidency)[size],
+                          bool blocking,
+                          Kernel *kernel,
+                          cl_uint workDim,
+                          const size_t globalOffsets[3],
+                          const size_t workItems[3],
+                          const size_t *localWorkSizesIn,
+                          const size_t *enqueuedWorkSizes,
+                          cl_uint numEventsInWaitList,
+                          const cl_event *eventWaitList,
+                          cl_event *event);
 
     template <uint32_t cmdType, size_t surfaceCount>
-    void dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
+    cl_int dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
 
     template <uint32_t cmdType>
-    void enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr);
+    cl_int enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr);
 
     template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,

@@ -84,26 +84,23 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_SVM_MAP_DOESNT_REQUIRE_COPY_DATA, svmPtr);
         }
 
-        enqueueHandler<CL_COMMAND_SVM_MAP>(surfaces,
-                                           blocking,
-                                           MultiDispatchInfo(),
-                                           numEventsInWaitList,
-                                           eventWaitList,
-                                           event);
-
-        return CL_SUCCESS;
+        return enqueueHandler<CL_COMMAND_SVM_MAP>(surfaces,
+                                                  blocking,
+                                                  MultiDispatchInfo(),
+                                                  numEventsInWaitList,
+                                                  eventWaitList,
+                                                  event);
     } else {
         auto svmOperation = context->getSVMAllocsManager()->getSvmMapOperation(svmPtr);
         if (svmOperation) {
             NullSurface s;
             Surface *surfaces[] = {&s};
-            enqueueHandler<CL_COMMAND_SVM_MAP>(surfaces,
-                                               blocking,
-                                               MultiDispatchInfo(),
-                                               numEventsInWaitList,
-                                               eventWaitList,
-                                               event);
-            return CL_SUCCESS;
+            return enqueueHandler<CL_COMMAND_SVM_MAP>(surfaces,
+                                                      blocking,
+                                                      MultiDispatchInfo(),
+                                                      numEventsInWaitList,
+                                                      eventWaitList,
+                                                      event);
         }
 
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_BUFFER, &svmData->gpuAllocations, {}, device->getRootDeviceIndex(), &size};
@@ -128,7 +125,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
 
         MultiDispatchInfo dispatchInfo(dc);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, blocking, csr);
+        if (dispatchResult != CL_SUCCESS) {
+            return dispatchResult;
+        }
 
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_MAP);
@@ -156,38 +156,36 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
     if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         NullSurface s;
         Surface *surfaces[] = {&s};
-        enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
-                                             false,
-                                             MultiDispatchInfo(),
-                                             numEventsInWaitList,
-                                             eventWaitList,
-                                             event);
-
-        return CL_SUCCESS;
+        return enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
+                                                    false,
+                                                    MultiDispatchInfo(),
+                                                    numEventsInWaitList,
+                                                    eventWaitList,
+                                                    event);
     } else {
         auto svmOperation = context->getSVMAllocsManager()->getSvmMapOperation(svmPtr);
         if (!svmOperation) {
             NullSurface s;
             Surface *surfaces[] = {&s};
-            enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
-                                                 false,
-                                                 MultiDispatchInfo(),
-                                                 numEventsInWaitList,
-                                                 eventWaitList,
-                                                 event);
-            return CL_SUCCESS;
+            return enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
+                                                        false,
+                                                        MultiDispatchInfo(),
+                                                        numEventsInWaitList,
+                                                        eventWaitList,
+                                                        event);
         }
         if (svmOperation->readOnlyMap) {
             NullSurface s;
             Surface *surfaces[] = {&s};
-            enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
-                                                 false,
-                                                 MultiDispatchInfo(),
-                                                 numEventsInWaitList,
-                                                 eventWaitList,
-                                                 event);
+            const auto enqueueResult = enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
+                                                                            false,
+                                                                            MultiDispatchInfo(),
+                                                                            numEventsInWaitList,
+                                                                            eventWaitList,
+                                                                            event);
+
             context->getSVMAllocsManager()->removeSvmMapOperation(svmPtr);
-            return CL_SUCCESS;
+            return enqueueResult;
         }
 
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_BUFFER, {}, &svmData->gpuAllocations, device->getRootDeviceIndex(), &svmOperation->regionSize};
@@ -213,7 +211,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
 
         MultiDispatchInfo dispatchInfo(dc);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, false, csr);
+        const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, EBuiltInOps::CopyBufferToBuffer, numEventsInWaitList, eventWaitList, event, false, csr);
+        if (dispatchResult != CL_SUCCESS) {
+            return dispatchResult;
+        }
 
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_UNMAP);
@@ -249,12 +250,22 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
     NullSurface s;
     Surface *surfaces[] = {&s};
 
-    enqueueHandler<CL_COMMAND_SVM_FREE>(surfaces,
-                                        false,
-                                        MultiDispatchInfo(),
-                                        numEventsInWaitList,
-                                        eventWaitList,
-                                        retEvent);
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_SVM_FREE>(surfaces,
+                                                                   false,
+                                                                   MultiDispatchInfo(),
+                                                                   numEventsInWaitList,
+                                                                   eventWaitList,
+                                                                   retEvent);
+    if (enqueueResult != CL_SUCCESS) {
+        delete pFreeData;
+
+        if (ownsEventDeletion) {
+            castToObjectOrAbort<Event>(*retEvent)->release();
+            retEvent = nullptr;
+        }
+
+        return enqueueResult;
+    }
 
     auto eventObject = castToObjectOrAbort<Event>(*retEvent);
     eventObject->addCallback(freeSvmEventClb, CL_COMPLETE, pFreeData);
@@ -346,6 +357,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     BuiltinOpParams operationParams;
     Surface *surfaces[2];
     cl_command_type cmdType;
+    cl_int dispatchResult = CL_SUCCESS;
 
     if (copyType == SvmToHost) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, srcAllocation, {}, device->getRootDeviceIndex(), &size};
@@ -366,8 +378,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
-
+        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else if (copyType == HostToSvm) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, {}, dstAllocation, device->getRootDeviceIndex(), &size};
         CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
@@ -387,8 +398,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &srcHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
-
+        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else if (copyType == SvmToSvm) {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, srcAllocation, dstAllocation, device->getRootDeviceIndex(), &size};
         CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
@@ -400,8 +410,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstSvmSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
-
+        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_SVM_MEMCPY>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     } else {
         CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
         CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
@@ -423,13 +432,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         surfaces[1] = &dstHostPtrSurf;
 
         dispatchInfo.setBuiltinOpParams(operationParams);
-        dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
+        dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingCopy, csr);
     }
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);
         pEvent->setCmdType(CL_COMMAND_SVM_MEMCPY);
     }
-    return CL_SUCCESS;
+
+    return dispatchResult;
 }
 
 template <typename GfxFamily>
@@ -508,7 +518,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     GeneralSurface s2(patternAllocation);
     Surface *surfaces[] = {&s1, &s2};
 
-    enqueueHandler<CL_COMMAND_SVM_MEMFILL>(
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_SVM_MEMFILL>(
         surfaces,
         false,
         dispatchInfo,
@@ -518,7 +528,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     storageWithAllocations->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
-    return CL_SUCCESS;
+    return enqueueResult;
 }
 
 template <typename GfxFamily>
@@ -532,13 +542,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMigrateMem(cl_uint numSvmPointers,
     NullSurface s;
     Surface *surfaces[] = {&s};
 
-    enqueueHandler<CL_COMMAND_SVM_MIGRATE_MEM>(surfaces,
-                                               false,
-                                               MultiDispatchInfo(),
-                                               numEventsInWaitList,
-                                               eventWaitList,
-                                               event);
-
-    return CL_SUCCESS;
+    return enqueueHandler<CL_COMMAND_SVM_MIGRATE_MEM>(surfaces,
+                                                      false,
+                                                      MultiDispatchInfo(),
+                                                      numEventsInWaitList,
+                                                      eventWaitList,
+                                                      event);
 }
+
 } // namespace NEO

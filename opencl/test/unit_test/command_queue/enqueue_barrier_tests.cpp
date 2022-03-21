@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -119,6 +120,28 @@ HWTEST_F(BarrierTest, GivenEventWhenEnqueingBarrierWithWaitListThenEventIsSetupC
 
         delete pEvent;
     }
+}
+
+HWTEST_F(BarrierTest, GivenGpuHangAndBlockingCallWhenEnqueingBarrierWithWaitListThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    cl_uint numEventsInWaitList = 0;
+    const cl_event *eventWaitList = nullptr;
+
+    const auto enqueueResult = mockCommandQueueHw.enqueueBarrierWithWaitList(
+        numEventsInWaitList,
+        eventWaitList,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(BarrierTest, WhenEnqueingBarrierWithWaitListThenReturnedEventShouldHaveEqualDepth) {

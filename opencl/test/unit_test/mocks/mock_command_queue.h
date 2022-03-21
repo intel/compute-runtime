@@ -350,14 +350,14 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
-    WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler) override {
+    WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
         waitForAllEnginesCalledCount++;
 
         if (waitForAllEnginesReturnValue.has_value()) {
             return *waitForAllEnginesReturnValue;
         }
 
-        return BaseClass::waitForAllEngines(blockedQueue, printfHandler);
+        return BaseClass::waitForAllEngines(blockedQueue, printfHandler, cleanTemporaryAllocationsList);
     }
 
     bool isCacheFlushForBcsRequired() const override {

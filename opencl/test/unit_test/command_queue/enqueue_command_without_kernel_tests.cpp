@@ -396,7 +396,8 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
 
     mockCmdQ->commandRequireCacheFlush = true;
     MultiDispatchInfo multiDispatch;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, nullptr);
+    const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, enqueueResult);
 
     auto requiredCmdStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
                                              pDevice->getHardwareInfo()),
@@ -417,7 +418,9 @@ HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteEnabledAndCommandWithCache
     cl_event event;
 
     MultiDispatchInfo multiDispatch;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, &event);
+    const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, &event);
+    EXPECT_EQ(CL_SUCCESS, enqueueResult);
+
     auto node1 = mockCmdQ->timestampPacketContainer->peekNodes().at(0);
     EXPECT_NE(nullptr, node1);
     clReleaseEvent(event);
@@ -434,7 +437,9 @@ HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteDisabledAndCommandWithCach
     cl_event event;
 
     MultiDispatchInfo multiDispatch;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, &event);
+    const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, &event);
+    EXPECT_EQ(CL_SUCCESS, enqueueResult);
+
     auto container = mockCmdQ->timestampPacketContainer.get();
     EXPECT_EQ(nullptr, container);
     clReleaseEvent(event);

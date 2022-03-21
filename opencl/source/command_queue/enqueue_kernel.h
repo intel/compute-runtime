@@ -135,7 +135,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         return CL_INVALID_WORK_GROUP_SIZE;
     }
 
-    enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
+    return enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
         surfaces,
         false,
         &kernel,
@@ -147,7 +147,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
+
 } // namespace NEO

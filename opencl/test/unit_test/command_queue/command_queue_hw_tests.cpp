@@ -1190,7 +1190,9 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
 
     EXPECT_FALSE(builder.wasBuildDispatchInfosWithBuiltinOpParamsCalled);
     EXPECT_FALSE(builder.wasBuildDispatchInfosWithKernelParamsCalled);
+
     cmdQHw->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(surfaces, false, mockKernelToSend.mockKernel, 1, off, gws, lws, lws, 0, nullptr, nullptr);
+
     EXPECT_FALSE(builder.wasBuildDispatchInfosWithBuiltinOpParamsCalled);
     EXPECT_TRUE(builder.wasBuildDispatchInfosWithKernelParamsCalled);
 

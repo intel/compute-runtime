@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
+    if (dispatchResult != CL_SUCCESS) {
+        return dispatchResult;
+    }
 
     if (context->isProvidingPerformanceHints()) {
         if (!isL3Capable(ptr, hostPtrSize)) {

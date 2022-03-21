@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,14 +47,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
 
     builder.buildDispatchInfos(di);
 
-    enqueueHandler<CL_COMMAND_FILL_IMAGE>(
+    return enqueueHandler<CL_COMMAND_FILL_IMAGE>(
         surfaces,
         false,
         di,
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
 } // namespace NEO

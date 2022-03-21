@@ -74,6 +74,37 @@ HWTEST_F(EnqueueWriteBufferRectTest, GivenValidParamsWhenWritingBufferThenSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueWriteBufferRectTest, GivenGpuHangAndBlockingCallAndValidParamsWhenWritingBufferThenOutOfResourcesIsReturned) {
+    size_t srcOrigin[] = {0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = clEnqueueWriteBufferRect(
+        &mockCommandQueueHw,
+        buffer.get(),
+        CL_TRUE,
+        srcOrigin,
+        dstOrigin,
+        region,
+        10,
+        0,
+        10,
+        0,
+        hostPtr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueWriteBufferRectTest, GivenBlockingEnqueueWhenWritingBufferThenTaskLevelIsNotIncremented) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

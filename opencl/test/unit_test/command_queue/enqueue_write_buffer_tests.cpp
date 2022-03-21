@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,20 @@ HWTEST_F(EnqueueWriteBufferTypeTest, GivenBlockingEnqueueWhenWritingBufferThenTa
     EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
+}
+
+HWTEST_F(EnqueueWriteBufferTypeTest, GivenGpuHangAndBlockingEnqueueWhenWritingBufferThenOutOfResourcesIsReturned) {
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    srcBuffer->forceDisallowCPUCopy = true;
+    const auto enqueueResult = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(&mockCommandQueueHw, srcBuffer.get(), CL_TRUE);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
 }
 
 HWTEST_F(EnqueueWriteBufferTypeTest, GivenNonBlockingEnqueueWhenWritingBufferThenTaskLevelIsIncremented) {

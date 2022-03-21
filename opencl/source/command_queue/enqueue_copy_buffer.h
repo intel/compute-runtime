@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,8 +51,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     MemObjSurface s1(srcBuffer);
     MemObjSurface s2(dstBuffer);
     Surface *surfaces[] = {&s1, &s2};
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER>(dispatchInfo, surfaces, eBuiltInOpsType, numEventsInWaitList, eventWaitList, event, false, csr);
 
-    return CL_SUCCESS;
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER>(dispatchInfo, surfaces, eBuiltInOpsType, numEventsInWaitList, eventWaitList, event, false, csr);
 }
+
 } // namespace NEO

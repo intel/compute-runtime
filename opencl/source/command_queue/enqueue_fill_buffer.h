@@ -81,7 +81,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     GeneralSurface s2(patternAllocation);
     Surface *surfaces[] = {&s1, &s2};
 
-    enqueueHandler<CL_COMMAND_FILL_BUFFER>(
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_FILL_BUFFER>(
         surfaces,
         false,
         dispatchInfo,
@@ -92,6 +92,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
-    return CL_SUCCESS;
+    return enqueueResult;
 }
 } // namespace NEO

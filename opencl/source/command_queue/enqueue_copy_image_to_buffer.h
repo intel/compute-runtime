@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,14 +56,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
     MultiDispatchInfo dispatchInfo(dc);
     builder.buildDispatchInfos(dispatchInfo);
 
-    enqueueHandler<CL_COMMAND_COPY_IMAGE_TO_BUFFER>(
+    return enqueueHandler<CL_COMMAND_COPY_IMAGE_TO_BUFFER>(
         surfaces,
         false,
         dispatchInfo,
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    return CL_SUCCESS;
 }
+
 } // namespace NEO

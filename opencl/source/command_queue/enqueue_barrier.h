@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,12 +24,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBarrierWithWaitList(
     cl_event *event) {
     NullSurface s;
     Surface *surfaces[] = {&s};
-    enqueueHandler<CL_COMMAND_BARRIER>(surfaces,
-                                       false,
-                                       MultiDispatchInfo(),
-                                       numEventsInWaitList,
-                                       eventWaitList,
-                                       event);
-    return CL_SUCCESS;
+    return enqueueHandler<CL_COMMAND_BARRIER>(surfaces,
+                                              false,
+                                              MultiDispatchInfo(),
+                                              numEventsInWaitList,
+                                              eventWaitList,
+                                              event);
 }
+
 } // namespace NEO

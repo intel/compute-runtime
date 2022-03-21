@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.dstSlicePitch = hostSlicePitch;
 
     MultiDispatchInfo dispatchInfo(dc);
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    if (dispatchResult != CL_SUCCESS) {
+        return dispatchResult;
+    }
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);

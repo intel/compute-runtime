@@ -91,13 +91,18 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
     MultiDispatchInfo multiDispatchInfo;
     NullSurface s;
     Surface *surfaces[] = {&s};
-    enqueueHandler<CL_COMMAND_MARKER>(
+    const auto enqueueResult = enqueueHandler<CL_COMMAND_MARKER>(
         surfaces,
         blocking == CL_TRUE,
         multiDispatchInfo,
         numEventsInWaitList,
         eventWaitList,
         event);
+
+    if (enqueueResult != CL_SUCCESS) {
+        return enqueueResult;
+    }
+
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);
         pEvent->setCmdType(commandType);

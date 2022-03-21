@@ -103,6 +103,20 @@ HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenTaskLevelIsIncremented)
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
+HWTEST_F(EnqueueReadBufferTypeTest, GivenGpuHangAndBlockingCallWhenReadingBufferThenOutOfResourcesIsReturned) {
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props{};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    srcBuffer->forceDisallowCPUCopy = true;
+    const auto enqueueResult = EnqueueReadBufferHelper<>::enqueueReadBuffer(&mockCommandQueueHw, srcBuffer.get(), CL_TRUE);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueReadBufferTypeTest, GivenBlockingWhenReadingBufferThenAlignedToCsr) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -398,6 +412,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtr
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
+
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
@@ -418,6 +433,32 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPt
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
+
+HWTEST_F(EnqueueReadBufferTypeTest, givenGpuHangAndBlockingCallAndOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    const auto enqueueResult = mockCommandQueueHw.enqueueReadBuffer(srcBuffer.get(),
+                                                                    CL_TRUE,
+                                                                    0,
+                                                                    MemoryConstants::cacheLineSize,
+                                                                    ptr,
+                                                                    nullptr,
+                                                                    0,
+                                                                    nullptr,
+                                                                    nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);

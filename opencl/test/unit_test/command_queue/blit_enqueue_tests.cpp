@@ -1330,6 +1330,28 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenNonBlockedQueueWhenBlitEnqueuedTh
     EXPECT_EQ(2u, myUltBcsCsr->latestFlushedCounter);
 }
 
+HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangAndBlockingCallAndNonBlockedQueueWhenBlitEnqueuedThenOutOfResourcesIsReturned) {
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    uint32_t flushCounter = 0;
+
+    auto myUltGpgpuCsr = static_cast<MyUltCsr<FamilyType> *>(gpgpuCsr);
+    myUltGpgpuCsr->flushCounter = &flushCounter;
+    auto myUltBcsCsr = static_cast<MyUltCsr<FamilyType> *>(bcsCsr);
+    myUltBcsCsr->flushCounter = &flushCounter;
+
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    mockCommandQueue->waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = mockCommandQueue->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueue->waitForAllEnginesCalledCount);
+}
+
 HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenBlockedQueueWhenBlitEnqueuedThenFlushGpgpuCsrFirst) {
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;

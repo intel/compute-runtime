@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -90,12 +91,30 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenCommandsAreAdded) {
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
+HWTEST_F(EnqueueFillImageTest, GivenGpuHangAndBlockingCallWhenFillingImageThenOutOfResourcesIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.MakeEachEnqueueBlocking.set(true);
+
+    std::unique_ptr<ClDevice> device(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    cl_queue_properties props = {};
+
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::GpuHang;
+
+    const auto enqueueResult = EnqueueFillImageHelper<>::enqueueFillImage(&mockCommandQueueHw, image);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, enqueueResult);
+    EXPECT_EQ(1, mockCommandQueueHw.waitForAllEnginesCalledCount);
+}
+
 HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenIndirectDataGetsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
+    const auto enqueueResult = EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
+    EXPECT_EQ(CL_SUCCESS, enqueueResult);
+
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), nullptr, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
     EXPECT_NE(sshBefore, pSSH->getUsed());
