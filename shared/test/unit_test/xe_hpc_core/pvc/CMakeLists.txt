@@ -7,6 +7,7 @@
 if(TESTS_PVC)
   set(NEO_SHARED_TESTS_PVC
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_pvc.cpp
   )
 

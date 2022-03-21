@@ -154,25 +154,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZe
     EXPECT_EQ(0u, helper.getMaxNumSamplers());
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDeviceIdThenProperMaxThreadsForWorkgroupIsReturned) {
-    auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-
-    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    for (auto &deviceId : PVC_XL_IDS) {
-        hardwareInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
-    }
-
-    for (auto &deviceId : PVC_XT_IDS) {
-        hardwareInfo.platform.usDeviceID = deviceId;
-        uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
-        EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
-    }
-}
-
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,

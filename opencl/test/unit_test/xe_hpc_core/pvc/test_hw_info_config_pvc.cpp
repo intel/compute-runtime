@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "device_ids_configs_pvc.h"
 #include "gmock/gmock.h"
 
 using namespace NEO;
@@ -102,6 +103,22 @@ PVCTEST_F(PvcHwInfo, givenDebugVariableSetWhenConfiguringThenEnableCccs) {
 
     hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.featureTable.flags.ftrRcsNode);
+}
+
+PVCTEST_F(PvcHwInfo, givenDeviceIdThenProperMaxThreadsForWorkgroupIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    for (auto &deviceId : PVC_XL_IDS) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
+    }
+
+    for (auto &deviceId : PVC_XT_IDS) {
+        hwInfo.platform.usDeviceID = deviceId;
+        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
+    }
 }
 
 PVCTEST_F(PvcHwInfo, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
