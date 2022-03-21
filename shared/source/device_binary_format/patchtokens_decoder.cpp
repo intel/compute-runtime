@@ -390,7 +390,7 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_KERNEL_ARGUMENT_INFO:
         assignArgInfo(out, token);
         break;
-    case _PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
+    case PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE:
         assignToken(out.tokens.hostAccessTable, token);
         break;
 

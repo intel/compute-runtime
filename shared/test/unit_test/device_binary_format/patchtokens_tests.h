@@ -338,7 +338,7 @@ struct ValidProgramWithKernelUsingHostAccessTable : ValidProgramWithKernel {
     ValidProgramWithKernelUsingHostAccessTable() {
         hostAccessMutableOffset = storage.size();
         iOpenCL::SPatchFunctionTableInfo hostAccessTok = {};
-        hostAccessTok.Token = NEO::PatchTokenBinary::_PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE;
+        hostAccessTok.Token = iOpenCL::PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE;
         hostAccessTok.NumEntries = 2;
         struct HostAccessTableEntry {
             char deviceName[vISA::MAX_SYMBOL_NAME_LENGTH];

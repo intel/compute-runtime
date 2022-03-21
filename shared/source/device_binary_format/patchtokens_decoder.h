@@ -42,10 +42,6 @@ enum class ArgObjectTypeSpecialized : uint32_t {
     Vme
 };
 
-const uint32_t patchTokenGlobalHostAccessTableUnknownId = 1234;
-constexpr bool hasGlobalHostAccessTable = ((CURRENT_ICBE_VERSION == 1080 && NUM_PATCH_TOKENS == 58) || (CURRENT_ICBE_VERSION == 1082 && NUM_PATCH_TOKENS == 59));
-constexpr uint32_t _PATCH_TOKEN_GLOBAL_HOST_ACCESS_TABLE = hasGlobalHostAccessTable ? 57 : patchTokenGlobalHostAccessTableUnknownId;
-
 using StackVecUnhandledTokens = StackVec<const SPatchItemHeader *, 4>;
 using StackVecByValMap = StackVec<const SPatchDataParameterBuffer *, 8>;
 using StackVecStrings = StackVec<const SPatchString *, 4>;
