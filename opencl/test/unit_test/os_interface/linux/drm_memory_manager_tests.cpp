@@ -4947,7 +4947,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchIsCalledThen
     DrmAllocation drmAllocation(0, AllocationType::UNIFIED_SHARED_MEMORY, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
-    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, rootDeviceIndex));
+    EXPECT_TRUE(memoryManager.setMemPrefetch(&drmAllocation, 0, rootDeviceIndex));
 }
 
 TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {

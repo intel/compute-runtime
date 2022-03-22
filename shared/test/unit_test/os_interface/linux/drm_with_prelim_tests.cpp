@@ -258,7 +258,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThe
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = 0;
-    EXPECT_TRUE(allocation.setMemPrefetch(drm.get()));
+    EXPECT_TRUE(allocation.setMemPrefetch(drm.get(), 0));
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenReturnFalse) {
@@ -267,7 +267,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenRe
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = EINVAL;
-    EXPECT_FALSE(allocation.setMemPrefetch(drm.get()));
+    EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), 0));
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl) {

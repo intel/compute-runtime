@@ -161,6 +161,8 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
     DebugManager.flags.UseKmdMigration.set(1);
 
+    EXPECT_EQ(0b0001u, neoDevice->deviceBitfield.to_ulong());
+
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -180,6 +182,38 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(0u, memoryManager->memPrefetchSubDeviceId);
+
+    context->freeMem(ptr);
+}
+
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiCalledOnUnifiedSharedMemoryThenCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    neoDevice->deviceBitfield = 0b0010;
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto res = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    auto ret = pCommandList->appendMemoryPrefetch(ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
+    EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(1u, memoryManager->memPrefetchSubDeviceId);
 
     context->freeMem(ptr);
 }

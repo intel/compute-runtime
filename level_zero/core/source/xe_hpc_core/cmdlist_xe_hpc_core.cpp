@@ -41,7 +41,8 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
         if (memoryManager->isKmdMigrationAvailable(device->getRootDeviceIndex()) &&
             (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
             auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-            memoryManager->setMemPrefetch(alloc, device->getRootDeviceIndex());
+            auto subDeviceId = static_cast<DeviceImp *>(device)->getPhysicalSubDeviceId();
+            memoryManager->setMemPrefetch(alloc, subDeviceId, device->getRootDeviceIndex());
         }
     }
 

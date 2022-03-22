@@ -231,10 +231,10 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
 
-    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex));
+    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceId);
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex) {

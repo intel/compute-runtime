@@ -85,7 +85,7 @@ class DrmAllocation : public GraphicsAllocation {
     void setCachePolicy(CachePolicy memType);
 
     bool setMemAdvise(Drm *drm, MemAdviseFlags flags);
-    bool setMemPrefetch(Drm *drm);
+    bool setMemPrefetch(Drm *drm, uint32_t subDeviceId);
 
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }

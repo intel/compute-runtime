@@ -291,13 +291,13 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return success;
 }
 
-bool DrmAllocation::setMemPrefetch(Drm *drm) {
+bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
     bool success = true;
     auto ioctlHelper = drm->getIoctlHelper();
 
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
-            auto region = static_cast<uint32_t>((I915_MEMORY_CLASS_DEVICE << 16u) | 0u);
+            auto region = static_cast<uint32_t>((I915_MEMORY_CLASS_DEVICE << 16u) | subDeviceId);
             success &= ioctlHelper->setVmPrefetch(drm, bo->peekAddress(), bo->peekSize(), region);
         }
     }
