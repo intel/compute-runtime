@@ -45,7 +45,6 @@ class DrmPrelimMock : public DrmMock {
         customHwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 64;
         rootDeviceEnvironment.setHwInfo(customHwInfo.get());
         setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
-        recentProperties.fill(255);
         if (invokeQueryEngineInfo) {
             queryEngineInfo();
         }
@@ -105,16 +104,6 @@ class DrmPrelimMock : public DrmMock {
         prelimVersion = "2.0";
     }
 
-    int handleRemainingRequests(unsigned long request, void *arg) override {
-
-        if (request == DRM_IOCTL_I915_PERF_OPEN) {
-            drm_i915_perf_open_param *param = reinterpret_cast<drm_i915_perf_open_param *>(arg);
-            std::memcpy(recentProperties.data(), reinterpret_cast<void *>(param->properties_ptr), param->num_properties * 8 * 2);
-            return ioctli915PerfOpenReturn;
-        }
-        return -1;
-    }
-
     void setIoctlHelperPrelim20Mock() {
         backUpIoctlHelper = std::move(ioctlHelper);
         ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20Mock>());
@@ -126,8 +115,6 @@ class DrmPrelimMock : public DrmMock {
 
     std::unique_ptr<NEO::HardwareInfo> customHwInfo;
     std::unique_ptr<NEO::IoctlHelper> backUpIoctlHelper;
-    int ioctli915PerfOpenReturn = 1;
-    std::array<uint64_t, 10u> recentProperties{};
 };
 
 class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
@@ -170,9 +157,13 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyFailsWhenSt
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenIoctlI915PerfOpenFailsWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
-    VariableBackup<int> backupI915PerfOpenReturn(&drm->ioctli915PerfOpenReturn, -1);
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == DRM_IOCTL_I915_PERF_OPEN) {
+            return -1;
+        }
+        return 0;
+    });
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
 }
 
@@ -345,9 +336,15 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
     auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface().getDriverModel()->as<NEO::Drm>());
     drm->queryEngineInfo();
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == DRM_IOCTL_I915_PERF_OPEN) {
+            drm_i915_perf_open_param *param = reinterpret_cast<drm_i915_perf_open_param *>(arg);
+            uint64_t *values = reinterpret_cast<uint64_t *>(param->properties_ptr);
+            EXPECT_EQ(values[9], 1ull);
+        }
+        return 0;
+    });
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
-    // verifying engine instance is set correctly
-    EXPECT_EQ(drm->recentProperties[9], 1ull);
 }
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWhenStartMeasurementIsCalledForSubDeviceThenInstanceIdIsCorrect, IsPVC) {
@@ -367,13 +364,31 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface().getDriverModel()->as<NEO::Drm>());
     drm->queryEngineInfo();
 
-    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
-    // verifying engine instance is set correctly
-    EXPECT_EQ(drm->recentProperties[9], 2ull);
+    {
+        VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+            if (request == DRM_IOCTL_I915_PERF_OPEN) {
+                drm_i915_perf_open_param *param = reinterpret_cast<drm_i915_perf_open_param *>(arg);
+                uint64_t *values = reinterpret_cast<uint64_t *>(param->properties_ptr);
+                EXPECT_EQ(values[9], 2ull);
+            }
+            return 0;
+        });
 
-    metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*subDevices[1]));
-    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(drm->recentProperties[9], 3ull);
+        EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
+    }
+
+    {
+        metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*subDevices[1]));
+        VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+            if (request == DRM_IOCTL_I915_PERF_OPEN) {
+                drm_i915_perf_open_param *param = reinterpret_cast<drm_i915_perf_open_param *>(arg);
+                uint64_t *values = reinterpret_cast<uint64_t *>(param->properties_ptr);
+                EXPECT_EQ(values[9], 3ull);
+            }
+            return 0;
+        });
+        EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_SUCCESS);
+    }
 }
 
 HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInfoIsNullWhenStartMeasurementIsCalledForRootDeviceThenErrorIsReturned, IsPVC) {

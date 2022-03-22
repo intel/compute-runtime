@@ -103,7 +103,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         .properties_ptr = reinterpret_cast<uintptr_t>(properties.data()),
     };
 
-    stream = drm->ioctl(DRM_IOCTL_I915_PERF_OPEN, &param);
+    stream = NEO::SysCalls::ioctl(drm->getFileDescriptor(), DRM_IOCTL_I915_PERF_OPEN, &param);
     if (stream < 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
