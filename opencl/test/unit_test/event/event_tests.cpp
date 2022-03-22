@@ -450,37 +450,6 @@ TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedTo
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
-class SurfaceMock : public Surface {
-  public:
-    SurfaceMock() {
-        resident = nonResident = 0;
-    };
-    ~SurfaceMock() override{};
-
-    void makeResident(CommandStreamReceiver &csr) override {
-        if (parent) {
-            parent->resident++;
-        } else {
-            resident++;
-        }
-        if (this->graphicsAllocation) {
-            csr.makeResident(*graphicsAllocation);
-        }
-    };
-    Surface *duplicate() override {
-        return new SurfaceMock(this);
-    };
-
-    SurfaceMock *parent = nullptr;
-    std::atomic<uint32_t> resident;
-    std::atomic<uint32_t> nonResident;
-
-    GraphicsAllocation *graphicsAllocation = nullptr;
-
-  protected:
-    SurfaceMock(SurfaceMock *parent) : parent(parent){};
-};
-
 TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefApiCountAndRefInternalGetHandledCorrectly) {
     MockCommandQueue cmdQ(mockContext, pClDevice, nullptr, false);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
