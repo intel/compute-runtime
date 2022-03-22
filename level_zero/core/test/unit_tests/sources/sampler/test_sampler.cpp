@@ -63,6 +63,8 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
 
     sampler->initialize(device, &desc);
 
+    EXPECT_EQ(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL, sampler->samplerState.getLodPreclampMode());
+
     if (isNormalized == static_cast<ze_bool_t>(true)) {
         EXPECT_FALSE(sampler->samplerState.getNonNormalizedCoordinateEnable());
     } else {
