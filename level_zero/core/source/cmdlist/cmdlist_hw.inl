@@ -1482,7 +1482,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 
         uint32_t groups = static_cast<uint32_t>(adjustedSize) / groupSizeX;
-        uint32_t groupRemainderSizeX = static_cast<uint32_t>(size) % groupSizeX;
+        uint32_t remainingBytes = static_cast<uint32_t>((adjustedSize % groupSizeX) * middleElSize +
+                                                        size % middleElSize);
 
         size_t patternAllocationSize = alignUp(patternSize, MemoryConstants::cacheLineSize);
         uint32_t patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / middleElSize);
@@ -1523,7 +1524,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             return res;
         }
 
-        if (groupRemainderSizeX) {
+        if (remainingBytes) {
             uint32_t dstOffsetRemainder = groups * groupSizeX * static_cast<uint32_t>(middleElSize);
             uint64_t patternOffsetRemainder = (groupSizeX * groups & (patternSizeInEls - 1)) * middleElSize;
 
@@ -1534,7 +1535,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                 builtinFunctionRemainder = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferRightLeftover);
             }
 
-            builtinFunctionRemainder->setGroupSize(groupRemainderSizeX, 1u, 1u);
+            builtinFunctionRemainder->setGroupSize(remainingBytes, 1u, 1u);
             ze_group_count_t dispatchFuncArgs{1u, 1u, 1u};
 
             builtinFunctionRemainder->setArgBufferWithAlloc(0,
@@ -1546,7 +1547,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinFunctionRemainder->setArgBufferWithAlloc(2,
                                                             reinterpret_cast<uintptr_t>(patternGfxAllocPtr) + patternOffsetRemainder,
                                                             patternGfxAlloc);
-            builtinFunctionRemainder->setArgumentValue(3, sizeof(patternSizeInEls), &patternSizeInEls);
+            builtinFunctionRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
             res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, hSignalEvent);
             if (res) {
                 return res;

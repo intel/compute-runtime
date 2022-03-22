@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,6 +219,59 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+}
+
+void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+    const size_t allocSize = 10;
+    char pattern[] = {'\001', '\002'};
+    void *zeBuffer = nullptr;
+
+    ze_command_queue_handle_t cmdQueue;
+    ze_command_list_handle_t cmdList;
+
+    cmdQueue = createCommandQueue(context, device, nullptr);
+    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+
+    // Initialize buffers
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceDesc.pNext = nullptr;
+    deviceDesc.ordinal = 0;
+    deviceDesc.flags = 0;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
+    hostDesc.pNext = nullptr;
+    hostDesc.flags = 0;
+
+    SUCCESS_OR_TERMINATE(
+        zeMemAllocShared(context, &deviceDesc, &hostDesc,
+                         allocSize, 1, device, &zeBuffer));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, zeBuffer, &pattern, sizeof(pattern), allocSize,
+                                                       nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+
+    validRet = true;
+    char *zeBufferChar = reinterpret_cast<char *>(zeBuffer);
+    for (size_t i = 0; i < allocSize; ++i) {
+        if (zeBufferChar[i] != pattern[i % sizeof(pattern)]) {
+            validRet = false;
+            if (verbose) {
+                std::cout << "dstBufferChar[" << i << " ] "
+                          << static_cast<unsigned int>(zeBufferChar[i])
+                          << "!= pattern " << pattern[i % sizeof(pattern)] << "\n";
+            }
+            break;
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
@@ -464,6 +517,8 @@ int main(int argc, char *argv[]) {
         testAppendMemoryFillWithSomePattern(context, device, outputValidationSuccessful);
     if (outputValidationSuccessful)
         testAppendMemoryCopy3DRegion(context, device, outputValidationSuccessful);
+    if (outputValidationSuccessful)
+        testMemoryFillWithWordSizedPattern(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
     std::cout << "\nZello Copy Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
