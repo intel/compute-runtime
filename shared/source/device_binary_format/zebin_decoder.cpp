@@ -1395,6 +1395,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
         if (DecodeError::Success != zeInfoErr) {
             return zeInfoErr;
         }
+        dst.globalsDeviceToHostNameMap.reserve(globalHostAccessMapping.size());
         for (auto it = globalHostAccessMapping.begin(); it != globalHostAccessMapping.end(); it++) {
             dst.globalsDeviceToHostNameMap[it->deviceName] = it->hostName;
         }

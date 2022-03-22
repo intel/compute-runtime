@@ -161,12 +161,12 @@ struct ModuleImp : public Module {
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
 
-    struct GlobalSymbol {
+    struct HostGlobalSymbol {
         uintptr_t address = std::numeric_limits<uintptr_t>::max();
         size_t size = 0U;
     };
 
-    std::unordered_map<std::string, GlobalSymbol> hostGlobalSymbolsMap;
+    std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
     bool debugEnabled = false;
     bool isFullyLinked = false;

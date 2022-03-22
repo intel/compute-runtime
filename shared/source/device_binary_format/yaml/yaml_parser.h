@@ -670,8 +670,7 @@ inline bool YamlParser::readValueChecked<std::string>(const Node &node, std::str
     if (Token::Type::LiteralString != token.traits.type) {
         return false;
     }
-    outValue.resize(token.len);
-    std::copy(token.pos, token.pos + token.len, outValue.begin());
+    outValue.assign(token.pos, token.len);
     return true;
 }
 } // namespace Yaml

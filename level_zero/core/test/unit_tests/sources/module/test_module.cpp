@@ -2292,7 +2292,7 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolsMapWhenPopulatingMapWithSymbolFro
 
     auto result = module0->populateHostGlobalSymbolsMap(mapping);
     EXPECT_FALSE(result);
-    std::string expectedErrorOutput = "Error: Symbol with given device name: " + incorrectDevSymbolName + " is not in globals* segment.\n";
+    std::string expectedErrorOutput = "Error: Symbol with given device name: " + incorrectDevSymbolName + " is not in .data segment.\n";
     EXPECT_STREQ(expectedErrorOutput.c_str(), module0->getTranslationUnit()->buildLog.c_str());
 }
 
