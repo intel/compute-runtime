@@ -257,3 +257,12 @@ typedef struct _cl_device_pci_bus_info_khr {
 
 // New query for clGetDeviceInfo:
 #define CL_MEM_COMPRESSED_INTEL 0x417D
+
+/* cl_queue_properties */
+#define CL_QUEUE_MDAPI_PROPERTIES_INTEL 0x425E
+#define CL_QUEUE_MDAPI_CONFIGURATION_INTEL 0x425F
+
+typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
+
+/* cl_command_queue_mdapi_properties_intel - bitfield */
+#define CL_QUEUE_MDAPI_ENABLE_INTEL (1 << 0)

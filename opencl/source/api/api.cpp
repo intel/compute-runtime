@@ -5199,13 +5199,18 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     auto propertiesAddress = properties;
 
     while (tokenValue != 0) {
-        if (tokenValue != CL_QUEUE_PROPERTIES &&
-            tokenValue != CL_QUEUE_SIZE &&
-            tokenValue != CL_QUEUE_PRIORITY_KHR &&
-            tokenValue != CL_QUEUE_THROTTLE_KHR &&
-            tokenValue != CL_QUEUE_SLICE_COUNT_INTEL &&
-            tokenValue != CL_QUEUE_FAMILY_INTEL &&
-            tokenValue != CL_QUEUE_INDEX_INTEL) {
+        switch (tokenValue) {
+        case CL_QUEUE_PROPERTIES:
+        case CL_QUEUE_SIZE:
+        case CL_QUEUE_PRIORITY_KHR:
+        case CL_QUEUE_THROTTLE_KHR:
+        case CL_QUEUE_SLICE_COUNT_INTEL:
+        case CL_QUEUE_FAMILY_INTEL:
+        case CL_QUEUE_INDEX_INTEL:
+        case CL_QUEUE_MDAPI_PROPERTIES_INTEL:
+        case CL_QUEUE_MDAPI_CONFIGURATION_INTEL:
+            break;
+        default:
             err.set(CL_INVALID_VALUE);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
@@ -5281,12 +5286,37 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
+
+    bool mdapiPropertySet = false;
+    bool mdapiConfigurationSet = false;
+    cl_command_queue_mdapi_properties_intel mdapiProperties = getCmdQueueProperties<cl_command_queue_mdapi_properties_intel>(properties, CL_QUEUE_MDAPI_PROPERTIES_INTEL, &mdapiPropertySet);
+    cl_uint mdapiConfiguration = getCmdQueueProperties<cl_uint>(properties, CL_QUEUE_MDAPI_CONFIGURATION_INTEL, &mdapiConfigurationSet);
+
+    if (mdapiConfigurationSet && mdapiConfiguration != 0) {
+        err.set(CL_INVALID_OPERATION);
+        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        return commandQueue;
+    }
+
     commandQueue = CommandQueue::create(
         pContext,
         pDevice,
         properties,
         false,
         retVal);
+
+    if (mdapiPropertySet && (mdapiProperties & CL_QUEUE_MDAPI_ENABLE_INTEL)) {
+        auto commandQueueObj = castToObjectOrAbort<CommandQueue>(commandQueue);
+
+        if (!commandQueueObj->setPerfCountersEnabled()) {
+            clReleaseCommandQueue(commandQueue);
+            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+
+            err.set(CL_OUT_OF_RESOURCES);
+            return nullptr;
+        }
+    }
+
     if (pContext->isProvidingPerformanceHints()) {
         pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, DRIVER_CALLS_INTERNAL_CL_FLUSH);
         if (castToObjectOrAbort<CommandQueue>(commandQueue)->isProfilingEnabled()) {
@@ -5297,8 +5327,9 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         }
     }
 
-    if (!commandQueue)
+    if (!commandQueue) {
         retVal = CL_OUT_OF_HOST_MEMORY;
+    }
 
     DBG_LOG_INPUTS("commandQueue", commandQueue, "properties", static_cast<int>(getCmdQueueProperties<cl_command_queue_properties>(properties)));
 
