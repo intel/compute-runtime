@@ -1062,6 +1062,15 @@ void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType eng
             }
 
             // Save latest timestamp (override previous, if any).
+            if (!bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.peekNodes().empty()) {
+                std::array<uint32_t, 8u> timestampData;
+                timestampData.fill(std::numeric_limits<uint32_t>::max());
+                for (auto &node : bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.peekNodes()) {
+                    for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+                        node->assignDataToAllTimestamps(i, timestampData.data());
+                    }
+                }
+            }
             TimestampPacketContainer newContainer{};
             newContainer.assignAndIncrementNodesRefCounts(timestampPacketDependencies.barrierNodes);
             bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.swapNodes(newContainer);
