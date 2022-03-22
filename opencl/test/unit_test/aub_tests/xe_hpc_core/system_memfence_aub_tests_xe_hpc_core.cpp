@@ -34,7 +34,7 @@ class SystemMemFenceViaMiMemFence : public AUBFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
-XE_HPC_CORETEST_F(SystemMemFenceViaMiMemFence, givenSystemMemFenceWhenGeneratedAsMiMemFenceCommandInCommandStreamThenWritesToSystemMemoryAreGloballyObservable) {
+XE_HPC_CORETEST_F(SystemMemFenceViaMiMemFence, givenSystemMemFenceWhenMiMemFenceInCommandStreamThenWritesToSystemMemoryAreGloballyObservable) {
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
@@ -80,7 +80,7 @@ class SystemMemFenceViaComputeWalker : public AUBFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
-XE_HPC_CORETEST_F(SystemMemFenceViaComputeWalker, givenSystemMemFenceWhenGeneratedAsPostSyncOperationInWalkerThenWritesToSystemMemoryAreGloballyObservable) {
+XE_HPC_CORETEST_F(SystemMemFenceViaComputeWalker, givenSystemMemFenceWhenPostSyncOperationThenWritesToSystemMemoryAreGloballyObservable) {
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
@@ -159,9 +159,9 @@ XE_HPC_CORETEST_F(SystemMemFenceWithBlitter, givenSystemMemFenceWhenGeneratedAsM
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class SystemMemFenceViaKernelInstruction : public ProgramFixture,
-                                           public MulticontextAubFixture,
-                                           public ::testing::Test {
+class SystemMemFenceViaKernel : public ProgramFixture,
+                                public MulticontextAubFixture,
+                                public ::testing::Test {
   public:
     void SetUp() override {
         DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
@@ -180,7 +180,7 @@ class SystemMemFenceViaKernelInstruction : public ProgramFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
-XE_HPC_CORETEST_F(SystemMemFenceViaKernelInstruction, givenSystemMemFenceWhenGeneratedAsKernelInstructionThenWritesToSystemMemoryAreGloballyObservable) {
+XE_HPC_CORETEST_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstructionThenWritesToSystemMemoryAreGloballyObservable) {
     const size_t bufferSize = MemoryConstants::kiloByte;
     std::vector<char> buffer(bufferSize, 0x11);
 
