@@ -9,7 +9,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/test_excludes.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 #include "igfxfmid.h"
