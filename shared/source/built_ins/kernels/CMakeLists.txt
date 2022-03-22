@@ -101,7 +101,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
       list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     else()
       foreach(_file_name "gen" "bin")
-        set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}.${_file_name}")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${REVISION_ID}_${family_name_with_type}.${_file_name}")
         if(EXISTS ${_file_prebuilt})
           add_custom_command(
                              OUTPUT ${BINARY_OUTPUT}.${_file_name}
@@ -110,7 +110,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options mo
           )
         endif()
       endforeach()
-      set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp")
+      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${family_name_with_type}_${REVISION_ID}.cpp")
       if(EXISTS ${_file_prebuilt})
         add_custom_command(
                            OUTPUT ${OUTPUT_FILE_CPP}
@@ -153,7 +153,7 @@ function(generate_cpp_spirv builtin)
     )
     set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
   else()
-    set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.spv")
+    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.spv")
     if(EXISTS ${_file_prebuilt})
       add_custom_command(
                          OUTPUT ${GENERATED_SPV_INPUT}
@@ -161,7 +161,7 @@ function(generate_cpp_spirv builtin)
                          COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
       )
     endif()
-    set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.cpp")
+    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/spirv/${DIR}/${BASENAME}.cpp")
     if(EXISTS ${_file_prebuilt})
       add_custom_command(
                          OUTPUT ${OUTPUT_FILE_CPP}

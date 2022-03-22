@@ -76,7 +76,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options)
     set(BUILTIN_CPP built_ins/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.cpp PARENT_SCOPE)
   else()
     foreach(_file_name "spv" "bin" "gen")
-      set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.${_file_name}")
+      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.${_file_name}")
       if(EXISTS ${_file_prebuilt})
         add_custom_command(
                            OUTPUT ${OUTPUTPATH_BASE}.${_file_name}
@@ -85,7 +85,7 @@ function(compile_builtin core_type platform_type builtin bits builtin_options)
         )
       endif()
     endforeach()
-    set(_file_prebuilt "${NEO_SOURCE_DIR}/../kernels_bin/built_ins/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.cpp")
+    set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${BASENAME}_${family_name_with_type}.cpp")
     if(EXISTS ${_file_prebuilt})
       add_custom_command(
                          OUTPUT ${OUTPUTPATH_BASE}.cpp
