@@ -485,6 +485,14 @@ macro(macro_for_each_core_type)
           neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
         endforeach()
 
+        #compile gen specific kernels if any were found
+        file(GLOB_RECURSE ${CORE_TYPE_LOWER}_TEST_KERNELS test_files/*.${CORE_TYPE_LOWER})
+        if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
+          foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
+            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${REVISION_ID} ${family_name_with_type} ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+          endforeach()
+        endif()
+
         # Compile platform specific kernels if any were found
         file(GLOB_RECURSE ${PLATFORM_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_LOWER})
         if(NOT "${${PLATFORM_LOWER}_TEST_KERNELS}" STREQUAL "")
