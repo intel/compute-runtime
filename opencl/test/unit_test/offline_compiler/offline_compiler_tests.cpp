@@ -314,6 +314,31 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
     delete pMultiCommand;
 }
 
+TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenResetGtSystemInfo) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    auto expectedRevId = 0u;
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            mockOfflineCompiler.deviceName = mockOfflineCompiler.argHelper->parseProductConfigFromValue(deviceMapConfig.config);
+            expectedRevId = deviceMapConfig.revId;
+        }
+    }
+
+    EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
+
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    GT_SYSTEM_INFO expectedGtSystemInfo = {0};
+
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, expectedRevId);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.eProductFamily, productFamily);
+    EXPECT_EQ(memcmp(&mockOfflineCompiler.hwInfo.gtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)), 0);
+}
+
 TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",

@@ -57,9 +57,9 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
 #undef NAMEDDEVICE
                                      {0u, std::string("")}}),
       deviceMap({
-#define DEVICE_CONFIG_IDS_AND_REVISION(product, productConfig, deviceIds, revision_id) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, NEO::productConfig::setupHardwareInfo, revision_id},
-#define DEVICE_CONFIG_IDS(product, productConfig, deviceIds) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, NEO::productConfig::setupHardwareInfo, NEO::productConfig::hwInfo.platform.usRevId},
-#define DEVICE_CONFIG(product, productConfig) {product, &NEO::productConfig::hwInfo, nullptr, NEO::productConfig::setupHardwareInfo, NEO::productConfig::hwInfo.platform.usRevId},
+#define DEVICE_CONFIG_IDS_AND_REVISION(product, productConfig, deviceIds, revision_id) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, NEO::productConfig::setupFeatureAndWorkaroundTable, revision_id},
+#define DEVICE_CONFIG_IDS(product, productConfig, deviceIds) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, NEO::productConfig::setupFeatureAndWorkaroundTable, NEO::productConfig::hwInfo.platform.usRevId},
+#define DEVICE_CONFIG(product, productConfig) {product, &NEO::productConfig::hwInfo, nullptr, NEO::productConfig::setupFeatureAndWorkaroundTable, NEO::productConfig::hwInfo.platform.usRevId},
 #include "product_config.inl"
 #undef DEVICE_CONFIG
 #undef DEVICE_CONFIG_IDS
@@ -165,14 +165,14 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
 
 void OclocArgHelper::setDeviceInfoForFatbinaryTarget(const DeviceMapping &device) {
     deviceForFatbinary.hwInfo = device.hwInfo;
-    deviceForFatbinary.setupHardwareInfo = device.setupHardwareInfo;
+    deviceForFatbinary.setupFeatureAndWorkaroundTable = device.setupFeatureAndWorkaroundTable;
     deviceForFatbinary.revId = device.revId;
     deviceForFatbinary.deviceIds = device.deviceIds;
 }
 
 void OclocArgHelper::setHwInfoForFatbinaryTarget(NEO::HardwareInfo &hwInfo) {
     hwInfo = *deviceForFatbinary.hwInfo;
-    deviceForFatbinary.setupHardwareInfo(&hwInfo, true);
+    deviceForFatbinary.setupFeatureAndWorkaroundTable(&hwInfo);
     hwInfo.platform.usRevId = deviceForFatbinary.revId;
     if (deviceForFatbinary.deviceIds) {
         hwInfo.platform.usDeviceID = deviceForFatbinary.deviceIds->front();
@@ -187,7 +187,7 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInf
     for (auto &deviceConfig : deviceMap) {
         if (deviceConfig.config == config) {
             hwInfo = *deviceConfig.hwInfo;
-            deviceConfig.setupHardwareInfo(&hwInfo, true);
+            deviceConfig.setupFeatureAndWorkaroundTable(&hwInfo);
             hwInfo.platform.usRevId = deviceConfig.revId;
             if (deviceConfig.deviceIds) {
                 hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
