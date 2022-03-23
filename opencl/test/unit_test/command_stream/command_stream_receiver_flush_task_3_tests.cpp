@@ -688,7 +688,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForT
     auto cmdBuffer = cmdBufferList.peekHead();
     EXPECT_EQ(1u, cmdBuffer->taskCount);
 
-    mockCsr->waitForCompletionWithTimeout(false, 1, 1);
+    mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, 1}, 1);
 
     EXPECT_EQ(1u, mockCsr->peekLatestFlushedTaskCount());
 
@@ -1889,5 +1889,5 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
-    EXPECT_EQ(NEO::WaitStatus::NotReady, mockCsr.waitForCompletionWithTimeout(false, 0, 1));
+    EXPECT_EQ(NEO::WaitStatus::NotReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, 0}, 1));
 }

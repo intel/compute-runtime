@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/queue_throttle.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/completion_stamp.h"
 
 #include <atomic>
@@ -39,14 +41,13 @@ class KmdNotifyHelper {
     KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties){};
     MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
-    bool obtainTimeoutParams(int64_t &timeoutValueOutput,
-                             bool quickKmdSleepRequest,
-                             uint32_t currentHwTag,
-                             uint32_t taskCountToWait,
-                             FlushStamp flushStampToWait,
-                             bool forcePowerSavingMode,
-                             bool kmdWaitModeActive,
-                             bool directSubmissionEnabled);
+    WaitParams obtainTimeoutParams(bool quickKmdSleepRequest,
+                                   uint32_t currentHwTag,
+                                   uint32_t taskCountToWait,
+                                   FlushStamp flushStampToWait,
+                                   QueueThrottle throttle,
+                                   bool kmdWaitModeActive,
+                                   bool directSubmissionEnabled);
 
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();

@@ -114,7 +114,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
 
     if (this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-        const auto waitStatus = this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, completionStamp.taskCount);
+        const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, completionStamp.taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
@@ -184,7 +184,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(
             this->csr->flushNonKernelTask(nullptr, 0, 0, args, false, false, false);
             if (this->isSyncModeQueue) {
                 auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-                const auto waitStatus = this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
+                const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
                 if (waitStatus == NEO::WaitStatus::GpuHang) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
@@ -270,7 +270,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_SIGNALED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-            const auto waitStatus = this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
+            const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
             if (waitStatus == NEO::WaitStatus::GpuHang) {
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }
@@ -299,7 +299,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
         this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, false, false, false);
         if (this->isSyncModeQueue) {
             auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-            const auto waitStatus = this->csr->waitForCompletionWithTimeout(false, timeoutMicroseconds, this->csr->peekTaskCount());
+            const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
             if (waitStatus == NEO::WaitStatus::GpuHang) {
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }

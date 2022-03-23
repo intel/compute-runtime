@@ -89,9 +89,9 @@ struct KmdNotifyTests : public ::testing::Test {
         bool waitForFlushStampResult = true;
         StackVec<WaitForFlushStampParams, 1> waitForFlushStampParamsPassed{};
 
-        WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+        WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
             waitForCompletionWithTimeoutCalled++;
-            waitForCompletionWithTimeoutParamsPassed.push_back({enableTimeout, timeoutMs, taskCountToWait});
+            waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
             return waitForCompletionWithTimeoutResult;
         }
 
@@ -226,7 +226,7 @@ HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) 
 
     EXPECT_TRUE(device->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(0u, csr->waitForFlushStampCalled);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(false, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
@@ -242,7 +242,7 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrid
     int64_t timeSinceLastWait = mockKmdNotifyHelper->properties->delayQuickKmdSleepForSporadicWaitsMicroseconds + 1;
 
     mockKmdNotifyHelper->lastWaitForCompletionTimestampUs = mockKmdNotifyHelper->getMicrosecondsSinceEpoch() - timeSinceLastWait;
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
@@ -253,7 +253,7 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsNotSporadicWaitThenOver
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
@@ -262,7 +262,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenPowerSavingModeIsRequestedThe
     overrideKmdNotifyParams(false, 3, false, 2, false, 9999999, false, 0);
     auto csr = createMockCsr<FamilyType>();
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, true);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, QueueThrottle::LOW);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
     EXPECT_EQ(1, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
@@ -298,7 +298,7 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(expectedDelay, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
 }
@@ -309,7 +309,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultipl
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
     EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
@@ -321,7 +321,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountLowerThanHwTagWhenWaitCalledThenDontMulti
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(true, csr->waitForCompletionWithTimeoutParamsPassed[0].enableTimeout);
     EXPECT_EQ(expectedTimeout, csr->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
@@ -334,7 +334,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpda
     EXPECT_NE(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
 
     EXPECT_EQ(1u, mockKmdNotifyHelper->updateLastWaitForCompletionTimestampCalled);
-    csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(2u, mockKmdNotifyHelper->updateLastWaitForCompletionTimestampCalled);
 }
 
@@ -344,7 +344,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWa
     auto csr = createMockCsr<FamilyType>();
     EXPECT_EQ(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
 
-    csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(0u, mockKmdNotifyHelper->updateLastWaitForCompletionTimestampCalled);
 }
 
@@ -366,8 +366,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtain
     EXPECT_TRUE(taskCountToWait - hwTag < KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
-    int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
+    helper.obtainTimeoutParams(false, hwTag, taskCountToWait, 1, QueueThrottle::MEDIUM, true, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -381,8 +380,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
     EXPECT_TRUE(taskCountToWait - hwTag > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
-    int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
+    helper.obtainTimeoutParams(false, hwTag, taskCountToWait, 1, QueueThrottle::MEDIUM, true, false);
 
     EXPECT_EQ(1u, helper.updateAcLineStatusCalled);
 }
@@ -390,11 +388,20 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
 TEST_F(KmdNotifyTests, givenKmdWaitModeNotActiveWhenObtainTimeoutParamsThenFalseIsReturned) {
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
-    int64_t timeout = 0;
-    auto enableTimeout = helper.obtainTimeoutParams(timeout, false, 1, 1, 1, false, false, false);
+    auto params = helper.obtainTimeoutParams(false, 1, 1, 1, QueueThrottle::MEDIUM, false, false);
 
-    EXPECT_FALSE(enableTimeout);
-    EXPECT_FALSE(timeout);
+    EXPECT_FALSE(params.enableTimeout);
+    EXPECT_FALSE(params.waitTimeout);
+}
+
+TEST_F(KmdNotifyTests, givenHighThrottleWhenObtainTimeoutParamsThenIndefinitelyPollSetToTrue) {
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
+
+    auto params = helper.obtainTimeoutParams(false, 1, 1, 1, QueueThrottle::HIGH, false, false);
+
+    EXPECT_FALSE(params.enableTimeout);
+    EXPECT_FALSE(params.waitTimeout);
+    EXPECT_TRUE(params.indefinitelyPoll);
 }
 
 TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabledKmdNotifyWhenObtainingTimeoutPropertiesThenDontCheck) {
@@ -406,8 +413,7 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabl
     EXPECT_TRUE(taskCountToWait - hwTag > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
     EXPECT_EQ(10u, KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine);
 
-    int64_t timeout = 0;
-    helper.obtainTimeoutParams(timeout, false, hwTag, taskCountToWait, 1, false, true, false);
+    helper.obtainTimeoutParams(false, hwTag, taskCountToWait, 1, QueueThrottle::MEDIUM, true, false);
 
     EXPECT_EQ(0u, helper.updateAcLineStatusCalled);
 }
@@ -417,11 +423,10 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedTh
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
-    int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true, false);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, 2, QueueThrottle::MEDIUM, true, false);
 
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine, timeout);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine, params.waitTimeout);
     EXPECT_EQ(10000, KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine);
 }
 
@@ -431,11 +436,10 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThe
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
-    int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false, true, false);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, 2, QueueThrottle::MEDIUM, true, false);
 
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, timeout);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcLineIsDisconnectedThenDontForceEnableTimeout) {
@@ -443,11 +447,10 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, false);
 
-    EXPECT_FALSE(timeoutEnabled);
+    EXPECT_FALSE(params.enableTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
@@ -457,22 +460,20 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetTh
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(1, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, false);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(1, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsRequestedThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
     hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, true, true, false);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(1, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::LOW, true, false);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(1, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAndNoFlushStampProvidedWhenParametersAreObtainedThenFalseIsReturned) {
@@ -482,11 +483,10 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAnd
     MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, false);
-    EXPECT_FALSE(timeoutEnabled);
-    EXPECT_EQ(0, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, false);
+    EXPECT_FALSE(params.enableTimeout);
+    EXPECT_EQ(0, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsEnabledThenSelectDelayTimeoutForDirectSubmission) {
@@ -496,11 +496,10 @@ TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectS
 
     constexpr int64_t expectedTimeout = 20;
     constexpr bool directSubmission = true;
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(expectedTimeout, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, directSubmission);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(expectedTimeout, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsDisabledThenSelectBaseDelayTimeout) {
@@ -510,11 +509,10 @@ TEST_F(KmdNotifyTests, givenEnabledKmdDirectSubmissionNotifyMechanismWhenDirectS
 
     constexpr int64_t expectedTimeout = 150;
     constexpr bool directSubmission = false;
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(expectedTimeout, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, directSubmission);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(expectedTimeout, params.waitTimeout);
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdDirectSubmissionNotifyMechanismWhenDirectSubmissionIsEnabledThenSelectBaseDelayTimeout) {
@@ -524,9 +522,8 @@ TEST_F(KmdNotifyTests, givenDisabledKmdDirectSubmissionNotifyMechanismWhenDirect
 
     constexpr int64_t expectedTimeout = 150;
     constexpr bool directSubmission = true;
-    int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait, false, true, directSubmission);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(expectedTimeout, timeout);
+    auto params = helper.obtainTimeoutParams(false, 1, 2, flushStampToWait, QueueThrottle::MEDIUM, true, directSubmission);
+    EXPECT_TRUE(params.enableTimeout);
+    EXPECT_EQ(expectedTimeout, params.waitTimeout);
 }

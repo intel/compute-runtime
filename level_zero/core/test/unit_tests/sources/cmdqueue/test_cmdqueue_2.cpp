@@ -145,16 +145,16 @@ struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
-    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
-        enableTimeoutSet = enableTimeout;
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+        enableTimeoutSet = params.enableTimeout;
         waitForComplitionCalledTimes++;
         partitionCountSet = this->activePartitions;
         return waitForCompletionWithTimeoutResult;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, NEO::QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCalled++;
-        return NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, forcePowerSavingMode);
+        return NEO::UltCommandStreamReceiver<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, quickKmdSleep, throttle);
     }
 
     static constexpr size_t tagSize = 128;
@@ -407,7 +407,7 @@ struct TestCmdQueueCsr : public NEO::UltCommandStreamReceiver<GfxFamily> {
         : NEO::UltCommandStreamReceiver<GfxFamily>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {
     }
 
-    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    ADDMETHOD_NOBASE(waitForCompletionWithTimeout, NEO::WaitStatus, NEO::WaitStatus::NotReady, (const WaitParams &params, uint32_t taskCountToWait));
 };
 
 HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionFailsThenReturnNotReady) {

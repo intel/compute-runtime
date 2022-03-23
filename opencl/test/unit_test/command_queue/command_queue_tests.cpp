@@ -960,7 +960,7 @@ class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
                                 const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCounter++;
         return waitForTaskCountWithKmdNotifyFallbackReturnValue;
     }

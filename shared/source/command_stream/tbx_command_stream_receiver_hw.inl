@@ -493,15 +493,15 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
 }
 
 template <typename GfxFamily>
-WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
     flushSubmissionsAndDownloadAllocations(taskCountToWait);
-    return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+    return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
 }
 
 template <typename GfxFamily>
-WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+WaitStatus TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {
     flushSubmissionsAndDownloadAllocations(taskCountToWait);
-    return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+    return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
 }
 
 template <typename GfxFamily>

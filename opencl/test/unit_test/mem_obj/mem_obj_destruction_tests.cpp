@@ -31,9 +31,9 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
-    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
-        waitForCompletionWithTimeoutParamsPassed.push_back({enableTimeout, timeoutMs, taskCountToWait});
+        waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
         *this->getTagAddress() = getTagAddressValue;
         return waitForCompletionWithTimeoutResult;
     }

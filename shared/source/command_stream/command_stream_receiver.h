@@ -160,9 +160,9 @@ class CommandStreamReceiver {
     void requestStallingCommandsOnNextFlush() { stallingCommandsOnNextFlushRequired = true; }
     bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
 
-    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
-    virtual WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
-    WaitStatus baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
+    virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait);
+    WaitStatus baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait);
     virtual void downloadAllocations(){};
 

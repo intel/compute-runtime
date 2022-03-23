@@ -174,13 +174,16 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         downloadAllocationCalled = true;
     }
 
-    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         waitForCompletionWithTimeoutTaskCountCalled++;
         if (callBaseWaitForCompletionWithTimeout) {
-            return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
+            return BaseClass::waitForCompletionWithTimeout(params, taskCountToWait);
         }
         return returnWaitForCompletionWithTimeout;
+    }
+    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+        return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }

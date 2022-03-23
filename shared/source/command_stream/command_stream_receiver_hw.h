@@ -78,7 +78,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, const HardwareInfo &hwInfo);
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,

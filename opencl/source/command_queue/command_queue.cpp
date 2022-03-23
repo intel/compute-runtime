@@ -256,12 +256,10 @@ WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
     if (!skipWait) {
-        bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
-
         waitStatus = getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait,
                                                                                            flushStampToWait,
                                                                                            useQuickKmdSleep,
-                                                                                           forcePowerSavingMode);
+                                                                                           this->getThrottle());
         if (waitStatus == WaitStatus::GpuHang) {
             return WaitStatus::GpuHang;
         }
@@ -276,7 +274,7 @@ WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<
     for (const CopyEngineState &copyEngine : copyEnginesToWait) {
         auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
 
-        waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, false);
+        waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, this->getThrottle());
         if (waitStatus == WaitStatus::GpuHang) {
             return WaitStatus::GpuHang;
         }

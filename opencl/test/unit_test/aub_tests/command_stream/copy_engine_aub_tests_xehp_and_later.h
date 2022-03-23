@@ -253,7 +253,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     expectMemoryNotEqual<FamilyType>(getGpuAddress(*srcCompressedBuffer), compressiblePattern.get(), bufferSize, 0, 0);
     expectMemory<FamilyType>(dstHostPtr.get(), compressiblePattern.get(), bufferSize, 0, 0);
@@ -275,7 +275,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     expectMemory<FamilyType>(getGpuAddress(*srcNotCompressedLocalBuffer), compressiblePattern.get(), bufferSize, 0, 0);
     expectMemory<FamilyType>(dstHostPtr.get(), compressiblePattern.get(), bufferSize, 0, 0);
@@ -326,7 +326,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenBufferWithOffsetWhe
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     expectMemoryNotEqual<FamilyType>(dstHostPtr.get(), writePattern.get(), offset, 0, 0);
     expectMemoryNotEqual<FamilyType>(ptrOffset(dstHostPtr.get(), 1), ptrOffset(writePattern.get(), offset), bufferSize - offset - 1, 0, 0);
@@ -409,7 +409,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhe
                                                                                    bcsCsr->getClearColorAllocation());
 
         executeBlitCommand(blitProperties, false);
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
         expectMemory<FamilyType>(getGpuAddress(*buffer), compressiblePattern.get(), bufferSize, 0, 0);
     }
@@ -421,7 +421,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhe
                                                                                    bcsCsr->getClearColorAllocation());
 
         executeBlitCommand(blitProperties, false);
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
         expectMemoryNotEqual<FamilyType>(getGpuAddress(*buffer), compressiblePattern.get(), bufferSize, 0, 0);
     }
@@ -492,7 +492,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenReadBufferRectWithO
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     pSrcMemory = ptrOffset(pSrcMemory, 0);
     int *destGpuAddress = reinterpret_cast<int *>(allocation->getGpuAddress());
@@ -550,7 +550,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenWriteBufferRectWith
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     pSrcMemory = ptrOffset(pSrcMemory, 0);
     int *destGpuAddress = reinterpret_cast<int *>(allocation->getGpuAddress());
@@ -598,7 +598,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithO
 
     executeBlitCommand(blitProperties, false);
 
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     pSrcMemory = ptrOffset(pSrcMemory, 0);
 
@@ -647,7 +647,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCopyBufferRectWithB
                                                                      dstSlicePitch,                                     //dstSlicePitch
                                                                      clearColorAllocation);                             //clearColorAllocation
     executeBlitCommand(blitProperties, false);
-    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, false);
+    bcsCsr->waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
 
     size_t dstOffset = dstOrigin[0] + dstOrigin[1] * dstRowPitch + dstOrigin[2] * dstSlicePitch;
 

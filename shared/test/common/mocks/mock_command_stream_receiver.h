@@ -52,7 +52,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         memset(const_cast<uint32_t *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(uint32_t));
     }
 
-    WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         return waitForCompletionWithTimeoutReturnValue;
     }
@@ -104,7 +104,11 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return true;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
+        return WaitStatus::Ready;
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) {
         return WaitStatus::Ready;
     }
 

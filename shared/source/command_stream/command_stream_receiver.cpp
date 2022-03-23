@@ -169,7 +169,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
     if (address) {
-        return baseWaitFunction(address, false, 0, requiredTaskCount);
+        return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
     }
 
     return WaitStatus::Ready;
@@ -316,7 +316,7 @@ void CommandStreamReceiver::cleanupResources() {
     }
 }
 
-WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {
     uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         if (!this->flushBatchedSubmissions()) {
@@ -325,10 +325,10 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeou
         }
     }
 
-    return baseWaitFunction(getTagAddress(), enableTimeout, timeoutMicroseconds, taskCountToWait);
+    return baseWaitFunction(getTagAddress(), params, taskCountToWait);
 }
 
-WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait) {
     std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     int64_t timeDiff = 0;
@@ -337,14 +337,13 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
     if (latestSentTaskCount < taskCountToWait) {
         this->flushTagUpdate();
     }
-
     volatile uint32_t *partitionAddress = pollAddress;
 
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
     for (uint32_t i = 0; i < activePartitions; i++) {
-        while (*partitionAddress < taskCountToWait && timeDiff <= timeoutMicroseconds) {
-            if (WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
+        while (*partitionAddress < taskCountToWait && timeDiff <= params.waitTimeout) {
+            if (!params.indefinitelyPoll && WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
                 break;
             }
 
@@ -358,7 +357,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
                 }
             }
 
-            if (enableTimeout) {
+            if (params.enableTimeout) {
                 timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
             }
         }

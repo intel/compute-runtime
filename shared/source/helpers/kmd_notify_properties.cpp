@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,25 +13,27 @@
 
 using namespace NEO;
 
-bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
-                                          bool quickKmdSleepRequest,
-                                          uint32_t currentHwTag,
-                                          uint32_t taskCountToWait,
-                                          FlushStamp flushStampToWait,
-                                          bool forcePowerSavingMode,
-                                          bool kmdWaitModeActive,
-                                          bool directSubmissionEnabled) {
+WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
+                                                uint32_t currentHwTag,
+                                                uint32_t taskCountToWait,
+                                                FlushStamp flushStampToWait,
+                                                QueueThrottle throttle,
+                                                bool kmdWaitModeActive,
+                                                bool directSubmissionEnabled) {
+    if (throttle == QueueThrottle::HIGH) {
+        return WaitParams{true};
+    }
+
     if (flushStampToWait == 0) {
-        return false;
+        return WaitParams{};
     }
 
     if (!kmdWaitModeActive) {
-        return false;
+        return WaitParams{};
     }
 
-    if (DebugManager.flags.PowerSavingMode.get() || forcePowerSavingMode) {
-        timeoutValueOutput = 1;
-        return true;
+    if (DebugManager.flags.PowerSavingMode.get() || throttle == QueueThrottle::LOW) {
+        return WaitParams{false, true, 1};
     }
 
     int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
@@ -40,18 +42,21 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
     }
 
     quickKmdSleepRequest |= applyQuickKmdSleepForSporadicWait();
+    WaitParams params;
 
     if (!properties->enableKmdNotify && !acLineConnected) {
-        timeoutValueOutput = KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine;
+        params.waitTimeout = KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine;
     } else if (quickKmdSleepRequest && properties->enableQuickKmdSleep) {
-        timeoutValueOutput = properties->delayQuickKmdSleepMicroseconds;
+        params.waitTimeout = properties->delayQuickKmdSleepMicroseconds;
     } else if (directSubmissionEnabled && properties->enableQuickKmdSleepForDirectSubmission) {
-        timeoutValueOutput = properties->delayQuickKmdSleepForDirectSubmissionMicroseconds;
+        params.waitTimeout = properties->delayQuickKmdSleepForDirectSubmissionMicroseconds;
     } else {
-        timeoutValueOutput = getBaseTimeout(multiplier);
+        params.waitTimeout = getBaseTimeout(multiplier);
     }
 
-    return (properties->enableKmdNotify || !acLineConnected);
+    params.enableTimeout = (properties->enableKmdNotify || !acLineConnected);
+
+    return params;
 }
 
 bool KmdNotifyHelper::applyQuickKmdSleepForSporadicWait() const {

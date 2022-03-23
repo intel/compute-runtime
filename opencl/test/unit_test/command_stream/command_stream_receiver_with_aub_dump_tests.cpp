@@ -248,11 +248,11 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenWait
     csrWithAubDump.aubCSR.reset(mockAubCsr);
 
     EXPECT_FALSE(mockAubCsr->pollForCompletionCalled);
-    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false);
+    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, QueueThrottle::MEDIUM);
     EXPECT_TRUE(mockAubCsr->pollForCompletionCalled);
 
     csrWithAubDump.aubCSR.reset(nullptr);
-    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, false);
+    csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, QueueThrottle::MEDIUM);
 }
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenPollForCompletionCalledThenAubCsrPollForCompletionCalled) {

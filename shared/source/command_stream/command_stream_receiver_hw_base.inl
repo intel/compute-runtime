@@ -861,22 +861,19 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() 
 }
 
 template <typename GfxFamily>
-inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
-    int64_t waitTimeout = 0;
-    bool enableTimeout = false;
-
-    enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, forcePowerSavingMode, this->isKmdWaitModeActive(),
-                                                         this->isAnyDirectSubmissionEnabled());
+inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+    const auto params = kmdNotifyHelper->obtainTimeoutParams(useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, throttle, this->isKmdWaitModeActive(),
+                                                             this->isAnyDirectSubmissionEnabled());
 
     PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
                        "\nWaiting for task count %u at location %p. Current value: %u\n",
                        taskCountToWait, getTagAddress(), *getTagAddress());
 
-    auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
+    auto status = waitForCompletionWithTimeout(params, taskCountToWait);
     if (status == WaitStatus::NotReady) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
-        status = waitForCompletionWithTimeout(false, 0, taskCountToWait);
+        status = waitForCompletionWithTimeout(WaitParams{false, false, 0}, taskCountToWait);
     }
 
     // If GPU hang occured, then propagate it to the caller.
@@ -1120,7 +1117,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
 
     lock.unlock();
     if (blocking) {
-        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
+        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, QueueThrottle::MEDIUM);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
 

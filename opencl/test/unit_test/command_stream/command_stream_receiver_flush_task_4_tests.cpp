@@ -739,6 +739,24 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
     CpuIntrinsicsTests::pauseValue = taskCountToWait;
 
-    const auto ret = mockCsr->waitForCompletionWithTimeout(false, 1, taskCountToWait);
+    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, 1}, taskCountToWait);
     EXPECT_EQ(NEO::WaitStatus::Ready, ret);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    uint32_t taskCountToWait = 2u;
+
+    *mockCsr->tagAddress = 1u;
+
+    CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
+    CpuIntrinsicsTests::pauseValue = taskCountToWait;
+
+    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{true, true, 10}, taskCountToWait);
+    EXPECT_EQ(NEO::WaitStatus::NotReady, ret);
 }

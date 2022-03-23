@@ -607,8 +607,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
 }
 
 template <typename GfxFamily>
-inline WaitStatus AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
-    const auto result = CommandStreamReceiverSimulatedHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+inline WaitStatus AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) {
+    const auto result = CommandStreamReceiverSimulatedHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
     pollForCompletion();
 
     return result;

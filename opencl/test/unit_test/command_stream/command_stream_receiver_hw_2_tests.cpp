@@ -612,12 +612,12 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
         WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                         bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+                                                         bool useQuickKmdSleep, QueueThrottle throttle) override {
             waitForTaskCountWithKmdNotifyFallbackCalled++;
             taskCountToWaitPassed = taskCountToWait;
             flushStampToWaitPassed = flushStampToWait;
             useQuickKmdSleepPassed = useQuickKmdSleep;
-            forcePowerSavingModePassed = forcePowerSavingMode;
+            throttlePassed = throttle;
             return WaitStatus::Ready;
         }
 
@@ -625,7 +625,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
         uint32_t taskCountToWaitPassed = 0;
         uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
         bool useQuickKmdSleepPassed = false;
-        bool forcePowerSavingModePassed = false;
+        QueueThrottle throttlePassed = QueueThrottle::MEDIUM;
     };
 
     auto myMockCsr = std::make_unique<MyMockCsr>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -658,7 +658,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
     EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
-    EXPECT_FALSE(myMockCsr->forcePowerSavingModePassed);
+    EXPECT_EQ(myMockCsr->throttlePassed, QueueThrottle::MEDIUM);
     EXPECT_EQ(1u, myMockCsr->activePartitions);
 }
 

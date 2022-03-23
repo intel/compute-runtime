@@ -164,7 +164,7 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<Grap
                     }
 
                     if (waitForCompletion) {
-                        engine.commandStreamReceiver->waitForCompletionWithTimeout(false, 0, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
+                        engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
                     }
 
                     if (allocation->isUsedByOsContext(engine.osContext->getContextId()) &&
