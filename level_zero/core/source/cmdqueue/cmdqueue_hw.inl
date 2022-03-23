@@ -148,7 +148,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(devicePreemption, commandQueuePreemptionMode);
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
-        debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->getSourceLevelDebugger() != nullptr);
+        if (neoDevice->getSourceLevelDebugger() != nullptr) {
+            debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(true);
+        } else if (device->getL0Debugger()) {
+            debuggerCmdsSize += device->getL0Debugger()->getSbaAddressLoadCommandsSize();
+        }
     }
 
     if (devicePreemption == NEO::PreemptionMode::MidThread) {
@@ -275,7 +279,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t padding = alignedSize - linearStreamSizeEstimate;
     reserveLinearStreamSize(alignedSize);
     NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
-    child.setGpuBase(ptrOffset(commandStream->getGpuBase(), commandStream->getUsed()));
+    child.setGpuBase(ptrOffset(commandStream->getGpuBase(), commandStream->getUsed() - alignedSize));
 
     const auto globalFenceAllocation = csr->getGlobalFenceAllocation();
     if (globalFenceAllocation) {
@@ -307,9 +311,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             programPipelineSelect(child);
         }
 
-        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed && neoDevice->getSourceLevelDebugger()) {
-            NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
-            commandQueueDebugCmdsProgrammed = true;
+        if (NEO::Debugger::isDebugEnabled(internalUsage) && !commandQueueDebugCmdsProgrammed) {
+            if (neoDevice->getSourceLevelDebugger()) {
+                NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
+                commandQueueDebugCmdsProgrammed = true;
+            } else if (device->getL0Debugger()) {
+                device->getL0Debugger()->programSbaAddressLoad(child,
+                                                               device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress());
+                commandQueueDebugCmdsProgrammed = true;
+            }
         }
 
         if (gsbaStateDirty) {

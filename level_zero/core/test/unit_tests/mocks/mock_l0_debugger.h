@@ -20,6 +20,7 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
   public:
     using L0::DebuggerL0::perContextSbaAllocations;
     using L0::DebuggerL0::sbaTrackingGpuVa;
+    using L0::DebuggerL0::singleAddressSpaceSbaTracking;
 
     MockDebuggerL0Hw(NEO::Device *device) : L0::DebuggerL0Hw<GfxFamily>(device) {}
     ~MockDebuggerL0Hw() override = default;

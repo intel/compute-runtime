@@ -24,24 +24,34 @@ DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
 
 DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
     isLegacyMode = false;
+
     initialize();
 }
 
 void DebuggerL0::initialize() {
-    auto &engines = device->getMemoryManager()->getRegisteredEngines();
 
-    sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());
+    if (NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
+        setSingleAddressSpaceSbaTracking(NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get());
+    }
+
+    auto &engines = device->getMemoryManager()->getRegisteredEngines();
 
     NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
                                          NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
                                          false,
                                          device->getDeviceBitfield()};
 
-    properties.gpuAddress = sbaTrackingGpuVa.address;
+    if (!singleAddressSpaceSbaTracking) {
+        sbaTrackingGpuVa = device->getMemoryManager()->reserveGpuAddress(MemoryConstants::pageSize, device->getRootDeviceIndex());
+        properties.gpuAddress = sbaTrackingGpuVa.address;
+    }
+
     SbaTrackedAddresses sbaHeader;
 
     for (auto &engine : engines) {
-        properties.osContext = engine.osContext;
+        if (!singleAddressSpaceSbaTracking) {
+            properties.osContext = engine.osContext;
+        }
         auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         memset(sbaAllocation->getUnderlyingBuffer(), 0, sbaAllocation->getUnderlyingBufferSize());
 
@@ -102,7 +112,9 @@ DebuggerL0 ::~DebuggerL0() {
     for (auto &alloc : perContextSbaAllocations) {
         device->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
-    device->getMemoryManager()->freeGpuAddress(sbaTrackingGpuVa, device->getRootDeviceIndex());
+    if (sbaTrackingGpuVa.size != 0) {
+        device->getMemoryManager()->freeGpuAddress(sbaTrackingGpuVa, device->getRootDeviceIndex());
+    }
     device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
 }
 

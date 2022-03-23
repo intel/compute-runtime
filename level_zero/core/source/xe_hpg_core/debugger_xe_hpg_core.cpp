@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/source/debugger/debugger_l0.inl"
-
-namespace NEO {
-struct XE_HPG_COREFamily;
-using GfxFamily = XE_HPG_COREFamily;
-
-} // namespace NEO
-
+#include "level_zero/core/source/debugger/debugger_l0_tgllp_and_later.inl"
 namespace L0 {
-template class DebuggerL0Hw<NEO::GfxFamily>;
-DebuggerL0PopulateFactory<IGFX_XE_HPG_CORE, NEO::GfxFamily> debuggerXeHpgCore;
+
+using Family = NEO::XE_HPG_COREFamily;
+
+template class DebuggerL0Hw<Family>;
+static DebuggerL0PopulateFactory<IGFX_XE_HPG_CORE, Family> debuggerXeHpgCore;
 } // namespace L0

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
@@ -79,6 +80,18 @@ class AUBFixtureL0 {
 
         if (csrSimulated) {
             csrSimulated->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        }
+    }
+
+    template <typename FamilyType>
+    void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+        NEO::AUBCommandStreamReceiverHw<FamilyType> *aubCsr = static_cast<NEO::AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+        if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
+            aubCsr = static_cast<NEO::AUBCommandStreamReceiverHw<FamilyType> *>(static_cast<NEO::CommandStreamReceiverWithAUBDump<NEO::TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
+        }
+
+        if (aubCsr) {
+            aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
 

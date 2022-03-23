@@ -12,6 +12,7 @@
 
 #include <level_zero/ze_api.h>
 
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 
@@ -99,9 +100,15 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
+    virtual size_t getSbaAddressLoadCommandsSize() = 0;
+    virtual void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) = 0;
 
     MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle);
     MOCKABLE_VIRTUAL bool removeZebinModule(uint32_t moduleHandle);
+
+    void setSingleAddressSpaceSbaTracking(bool value) {
+        singleAddressSpaceSbaTracking = value;
+    }
 
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
@@ -116,10 +123,11 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
-    NEO::AddressRange sbaTrackingGpuVa;
+    NEO::AddressRange sbaTrackingGpuVa{};
     NEO::GraphicsAllocation *moduleDebugArea = nullptr;
     std::atomic<uint32_t> commandQueueCount = 0u;
     uint32_t uuidL0CommandQueueHandle = 0;
+    bool singleAddressSpaceSbaTracking = false;
 };
 
 using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);
@@ -132,6 +140,10 @@ class DebuggerL0Hw : public DebuggerL0 {
 
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override;
     void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override;
+    size_t getSbaAddressLoadCommandsSize() override;
+    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override;
+
+    void programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba);
 
   protected:
     DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};

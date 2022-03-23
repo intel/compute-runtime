@@ -200,9 +200,14 @@ void EncodeMathMMIO<Family>::encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRe
 
 template <typename Family>
 uint32_t *EncodeMath<Family>::commandReserve(CommandContainer &container) {
+    return commandReserve(*container.getCommandStream());
+}
+
+template <typename Family>
+uint32_t *EncodeMath<Family>::commandReserve(LinearStream &cmdStream) {
     size_t size = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * NUM_ALU_INST_FOR_READ_MODIFY_WRITE;
 
-    auto cmd = reinterpret_cast<uint32_t *>(container.getCommandStream()->getSpace(size));
+    auto cmd = reinterpret_cast<uint32_t *>(cmdStream.getSpace(size));
     MI_MATH mathBuffer;
     mathBuffer.DW0.Value = 0x0;
     mathBuffer.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
@@ -260,6 +265,19 @@ void EncodeMath<Family>::addition(CommandContainer &container,
                                   AluRegisters secondOperandRegister,
                                   AluRegisters finalResultRegister) {
     uint32_t *cmd = EncodeMath<Family>::commandReserve(container);
+
+    EncodeMathMMIO<Family>::encodeAluAdd(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd),
+                                         firstOperandRegister,
+                                         secondOperandRegister,
+                                         finalResultRegister);
+}
+
+template <typename Family>
+void EncodeMath<Family>::addition(LinearStream &cmdStream,
+                                  AluRegisters firstOperandRegister,
+                                  AluRegisters secondOperandRegister,
+                                  AluRegisters finalResultRegister) {
+    uint32_t *cmd = EncodeMath<Family>::commandReserve(cmdStream);
 
     EncodeMathMMIO<Family>::encodeAluAdd(reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(cmd),
                                          firstOperandRegister,
