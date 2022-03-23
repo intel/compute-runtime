@@ -54,7 +54,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
-        return NEO::WaitStatus::Ready;
+        return waitForCompletionWithTimeoutReturnValue;
     }
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
@@ -167,6 +167,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool programComputeBarrierCommandCalled = false;
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
+    WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::Ready};
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {
