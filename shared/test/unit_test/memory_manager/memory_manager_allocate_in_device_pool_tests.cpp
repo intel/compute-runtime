@@ -725,7 +725,6 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
             } else {
                 if (allocationType != AllocationType::COMMAND_BUFFER) {
                     EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
-                    EXPECT_NE(firstTileMask, allocation->storageInfo.getMemoryBanks());
                 }
             }
             memoryManager->freeGraphicsMemory(allocation);
@@ -735,6 +734,24 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
 
 HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsXeHpcCore) {
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
+    for (auto &multiTile : ::testing::Bool()) {
+        for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
+            allocationProperties->allocationType = allocationType;
+            allocationProperties->flags.multiOsContextCapable = multiTile;
+            auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(*allocationProperties, nullptr);
+
+            EXPECT_NE(nullptr, allocation);
+
+            EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+            EXPECT_EQ(firstTileMask, allocation->storageInfo.getMemoryBanks());
+
+            memoryManager->freeGraphicsMemory(allocation);
+        }
+    }
+}
+
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDefaultModeWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsXeHpcCore) {
+    DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(-1);
     for (auto &multiTile : ::testing::Bool()) {
         for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
             allocationProperties->allocationType = allocationType;

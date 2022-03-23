@@ -1128,6 +1128,8 @@ static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
     AllocationType::SHARED_RESOURCE_COPY,
     AllocationType::SURFACE_STATE_HEAP,
     AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
+    AllocationType::RING_BUFFER,
+    AllocationType::SEMAPHORE_BUFFER,
 };
 
 static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
@@ -1150,8 +1152,6 @@ static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
     AllocationType::TAG_BUFFER,
     AllocationType::GLOBAL_FENCE,
     AllocationType::WRITE_COMBINED,
-    AllocationType::RING_BUFFER,
-    AllocationType::SEMAPHORE_BUFFER,
     AllocationType::DEBUG_CONTEXT_SAVE_AREA,
 };
 

@@ -239,13 +239,13 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         allocationData.flags.useSystemMemory = false;
     }
 
-    bool forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
+    bool forceLocalMemoryForDirectSubmission = true;
     switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
     case 0:
         forceLocalMemoryForDirectSubmission = false;
         break;
-    case 2:
-        forceLocalMemoryForDirectSubmission = true;
+    case 1:
+        forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
         break;
     default:
         break;
@@ -257,7 +257,6 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
             properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
             allocationData.flags.useSystemMemory = false;
             allocationData.flags.requiresCpuAccess = true;
-            allocationData.flags.resource48Bit = true;
         }
     }
 

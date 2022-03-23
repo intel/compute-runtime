@@ -154,13 +154,13 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     }
 
-    bool forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
+    bool forceLocalMemoryForDirectSubmission = true;
     switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
     case 0:
         forceLocalMemoryForDirectSubmission = false;
         break;
-    case 2:
-        forceLocalMemoryForDirectSubmission = true;
+    case 1:
+        forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
         break;
     default:
         break;
@@ -170,11 +170,13 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         if (properties.allocationType == AllocationType::COMMAND_BUFFER ||
             properties.allocationType == AllocationType::RING_BUFFER ||
             properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
-            storageInfo.memoryBanks = {};
-            for (auto bank = 0u; bank < deviceCount; bank++) {
-                if (allTilesValue.test(bank)) {
-                    storageInfo.memoryBanks.set(bank);
-                    break;
+            if (properties.flags.multiOsContextCapable) {
+                storageInfo.memoryBanks = {};
+                for (auto bank = 0u; bank < deviceCount; bank++) {
+                    if (allTilesValue.test(bank)) {
+                        storageInfo.memoryBanks.set(bank);
+                        break;
+                    }
                 }
             }
             UNRECOVERABLE_IF(storageInfo.memoryBanks.none());

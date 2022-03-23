@@ -596,11 +596,12 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
     }
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelected) {
+TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenCreatingStorageInfoForCommandRingOrSemaphoreBufferThenFirstBankIsSelectedOnlyForMultiTile) {
     DebugManagerStateRestore restorer;
 
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
     constexpr uint32_t firstAvailableTileMask = 2u;
+    constexpr uint32_t leastOccupiedTileMask = 4u;
 
     memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->reserveOnBanks(firstAvailableTileMask, MemoryConstants::pageSize2Mb);
     EXPECT_NE(1u, memoryManager->internalLocalMemoryUsageBankSelector[mockRootDeviceIndex]->getLeastOccupiedBank(allTilesMask));
@@ -616,7 +617,11 @@ TEST_F(MultiDeviceStorageInfoTest, givenDirectSubmissionForceLocalMemoryStorageE
             AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, allocationType, false, affinityMaskHelper.getGenericSubDevicesMask()};
             properties.flags.multiOsContextCapable = multiTile;
             auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-            EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+            if (multiTile) {
+                EXPECT_EQ(DeviceBitfield{firstAvailableTileMask}, storageInfo.memoryBanks);
+            } else {
+                EXPECT_EQ(DeviceBitfield{leastOccupiedTileMask}, storageInfo.memoryBanks);
+            }
         }
     }
 }
