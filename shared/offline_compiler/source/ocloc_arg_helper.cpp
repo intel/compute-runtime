@@ -25,12 +25,18 @@ void Source::toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs
         if (replaceTabs && *file == '\t') {
             line += ' ';
         } else if (*file == '\n') {
-            lines.push_back(line);
-            line = "";
+            if (!line.empty()) {
+                lines.push_back(line);
+                line = "";
+            }
         } else {
             line += *file;
         }
         file++;
+    }
+
+    if (!line.empty()) {
+        lines.push_back(std::move(line));
     }
 }
 

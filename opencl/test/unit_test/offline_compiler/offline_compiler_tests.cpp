@@ -2146,6 +2146,69 @@ TEST(OclocArgHelperTest, GivenOutputSuppressMessagesAndSaveItToFile) {
     delete[] lenOutputs;
 }
 
+TEST(OclocArgHelperTest, GivenValidSourceFileWhenRequestingVectorOfStringsThenLinesAreStored) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    std::vector<std::string> lines{};
+    source.toVectorOfStrings(lines);
+
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+    EXPECT_EQ("Third", lines[2]);
+}
+
+TEST(OclocArgHelperTest, GivenSourceFileWithTabsWhenRequestingVectorOfStringsWithTabsReplacementThenLinesWithSpacesAreStored) {
+    const char input[] = "First\tWord\nSecond\tWord\nThird\tWord";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    constexpr bool replaceTabs{true};
+    std::vector<std::string> lines{};
+    source.toVectorOfStrings(lines, replaceTabs);
+
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First Word", lines[0]);
+    EXPECT_EQ("Second Word", lines[1]);
+    EXPECT_EQ("Third Word", lines[2]);
+}
+
+TEST(OclocArgHelperTest, GivenSourceFileWithEmptyLinesWhenRequestingVectorOfStringsThenOnlyNonEmptyLinesAreStored) {
+    const char input[] = "First\n\n\nSecond\n";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    std::vector<std::string> lines{};
+    source.toVectorOfStrings(lines);
+
+    ASSERT_EQ(2u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+}
+
+TEST(OclocArgHelperTest, GivenSourceFileWhenRequestingBinaryVectorThenBinaryIsReturned) {
+    const char input[] = "A file content";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+    const auto binaryContent = source.toBinaryVector();
+
+    ASSERT_EQ(inputLength, binaryContent.size());
+    ASSERT_TRUE(std::equal(binaryContent.begin(), binaryContent.end(), input));
+}
+
 TEST(OclocArgHelperTest, GivenNoOutputPrintMessages) {
     auto helper = WhiteBoxOclocArgHelper(0, nullptr, nullptr, nullptr,
                                          0, nullptr, nullptr, nullptr,
