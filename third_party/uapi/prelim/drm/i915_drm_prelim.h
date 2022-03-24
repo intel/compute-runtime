@@ -265,9 +265,12 @@ struct prelim_drm_i915_gem_create_ext {
 	 */
 	__u32 handle;
 	__u32 pad;
+
 #define PRELIM_I915_GEM_CREATE_EXT_SETPARAM	(PRELIM_I915_USER_EXT | 1)
-#define PRELIM_I915_GEM_CREATE_EXT_FLAGS_UNKNOWN \
-	(~PRELIM_I915_GEM_CREATE_EXT_SETPARAM)
+#define PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE	(PRELIM_I915_USER_EXT | 3)
+#define PRELIM_I915_GEM_CREATE_EXT_FLAGS_UNKNOWN			\
+	(~(PRELIM_I915_GEM_CREATE_EXT_SETPARAM |			\
+	   PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE))
 	__u64 extensions;
 };
 
@@ -307,6 +310,13 @@ struct prelim_drm_i915_gem_object_param {
 struct prelim_drm_i915_gem_create_ext_setparam {
 	struct i915_user_extension base;
 	struct prelim_drm_i915_gem_object_param param;
+};
+
+struct prelim_drm_i915_gem_create_ext_vm_private {
+	/** @base: Extension link. See struct i915_user_extension. */
+	struct i915_user_extension base;
+	/** @vm_id: Id of the VM to which Object is private */
+	__u32 vm_id;
 };
 
 #define PRELIM_PERF_VERSION	(1000)
@@ -405,18 +415,36 @@ struct prelim_drm_i915_query_item {
 	 * query's item.data_ptr directly if the allocated length is big enough
 	 * For details about table format and content see intel_hwconfig_types.h
 	 */
-#define PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE	(PRELIM_DRM_I915_QUERY | 6)
-#define PRELIM_DRM_I915_QUERY_GEOMETRY_SLICES	(PRELIM_DRM_I915_QUERY | 7)
-#define PRELIM_DRM_I915_QUERY_COMPUTE_SLICES	(PRELIM_DRM_I915_QUERY | 8)
+#define PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE		(PRELIM_DRM_I915_QUERY | 6)
+	/**
+	 * Query Geometry Subslices: returns the items found in query_topology info
+	 * with a mask for geometry_subslice_mask applied
+	 *
+	 * @flags:
+	 *
+	 * bits 0:7 must be a valid engine class and bits 8:15 must be a valid engine
+	 * instance.
+	 */
+#define PRELIM_DRM_I915_QUERY_GEOMETRY_SUBSLICES	(PRELIM_DRM_I915_QUERY | 7)
+#define PRELIM_DRM_I915_QUERY_GEOMETRY_SLICES		PRELIM_DRM_I915_QUERY_GEOMETRY_SUBSLICES
+	/**
+	 * Query Compute Subslices: returns the items found in query_topology info
+	 * with a mask for compute_subslice_mask applied
+	 *
+	 * @flags:
+	 *
+	 * bits 0:7 must be a valid engine class and bits 8:15 must be a valid engine
+	 * instance.
+	 */
+#define PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES		(PRELIM_DRM_I915_QUERY | 8)
+#define PRELIM_DRM_I915_QUERY_COMPUTE_SLICES		PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES
 	/**
 	 * Query Command Streamer timestamp register.
 	 */
-#define PRELIM_DRM_I915_QUERY_CS_CYCLES		(PRELIM_DRM_I915_QUERY | 9)
-
-#define PRELIM_DRM_I915_QUERY_FABRIC_INFO	(PRELIM_DRM_I915_QUERY | 11)
-
-#define PRELIM_DRM_I915_QUERY_ENGINE_INFO	(PRELIM_DRM_I915_QUERY | 13)
-#define PRELIM_DRM_I915_QUERY_L3_BANK_COUNT	(PRELIM_DRM_I915_QUERY | 14)
+#define PRELIM_DRM_I915_QUERY_CS_CYCLES			(PRELIM_DRM_I915_QUERY | 9)
+#define PRELIM_DRM_I915_QUERY_FABRIC_INFO		(PRELIM_DRM_I915_QUERY | 11)
+#define PRELIM_DRM_I915_QUERY_ENGINE_INFO		(PRELIM_DRM_I915_QUERY | 13)
+#define PRELIM_DRM_I915_QUERY_L3_BANK_COUNT		(PRELIM_DRM_I915_QUERY | 14)
 };
 
 /*
@@ -558,9 +586,11 @@ struct prelim_drm_i915_gem_context_param {
 };
 
 struct prelim_drm_i915_gem_context_create_ext {
+/* Depricated in favor of PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING */
 #define PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS		(1u << 31)
-#define PRELIM_I915_CONTEXT_CREATE_FLAGS_UNKNOWN \
-	(~(PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS | ~I915_CONTEXT_CREATE_FLAGS_UNKNOWN))
+#define PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING	(1u << 31)
+#define PRELIM_I915_CONTEXT_CREATE_FLAGS_UNKNOWN			\
+	(~(PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING | ~I915_CONTEXT_CREATE_FLAGS_UNKNOWN))
 };
 
 /*
@@ -1054,7 +1084,7 @@ struct prelim_drm_i915_gem_vm_bind {
 
 	/** BO handle or file descriptor. Set 'fd' to -1 for system pages **/
 	union {
-		__u32 handle;
+		__u32 handle; /* For unbind, it is reserved and must be 0 */
 		__s32 fd;
 	};
 
@@ -1206,11 +1236,20 @@ struct prelim_drm_i915_gem_execbuffer_ext_user_fence {
 	__u64 rsvd;
 };
 
+/* Deprecated in favor of prelim_drm_i915_vm_bind_ext_user_fence */
 struct prelim_drm_i915_vm_bind_ext_sync_fence {
 #define PRELIM_I915_VM_BIND_EXT_SYNC_FENCE     (PRELIM_I915_USER_EXT | 0)
 	struct i915_user_extension base;
 	__u64 addr;
 	__u64 val;
+};
+
+struct prelim_drm_i915_vm_bind_ext_user_fence {
+#define PRELIM_I915_VM_BIND_EXT_USER_FENCE     (PRELIM_I915_USER_EXT | 3)
+	struct i915_user_extension base;
+	__u64 addr;
+	__u64 val;
+	__u64 rsvd;
 };
 
 struct prelim_drm_i915_gem_vm_control {
