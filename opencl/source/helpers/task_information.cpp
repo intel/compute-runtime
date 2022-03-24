@@ -70,7 +70,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         true,                                                                        //blocking
         true,                                                                        //dcFlush
         false,                                                                       //useSLM
-        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),  //guardCommandBufferWithPipeControl
+        true,                                                                        //guardCommandBufferWithPipeControl
         false,                                                                       //GSBA32BitRequired
         false,                                                                       //requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
@@ -199,7 +199,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         true,                                                                             //blocking
         flushDC,                                                                          //dcFlush
         slmUsed,                                                                          //useSLM
-        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       //guardCommandBufferWithPipeControl
+        true,                                                                             //guardCommandBufferWithPipeControl
         commandType == CL_COMMAND_NDRANGE_KERNEL,                                         //GSBA32BitRequired
         requiresCoherency,                                                                //requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                                 //lowPriority
@@ -357,7 +357,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         true,                                                                  //blocking
         false,                                                                 //dcFlush
         false,                                                                 //useSLM
-        !commandStreamReceiver.isUpdateTagFromWaitEnabled(),                   //guardCommandBufferWithPipeControl
+        true,                                                                  //guardCommandBufferWithPipeControl
         false,                                                                 //GSBA32BitRequired
         false,                                                                 //requiresCoherency
         commandQueue.getPriority() == QueuePriority::LOW,                      //lowPriority

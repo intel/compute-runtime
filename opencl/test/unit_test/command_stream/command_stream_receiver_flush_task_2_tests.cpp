@@ -102,8 +102,24 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnableUpdateTaskFromWaitWhenN
     // Parse command list
     parseCommands<FamilyType>(commandStreamTask, 0);
 
+    auto pipeControlExpected = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itorPC);
+
+    if (pipeControlExpected) {
+        EXPECT_NE(cmdList.end(), itorPC);
+        if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+            itorPC++;
+            itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+            EXPECT_NE(cmdList.end(), itorPC);
+        }
+
+        // Verify that the dcFlushEnabled bit is set in PC
+        auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pCmdWA->getDcFlushEnable());
+    } else {
+        EXPECT_EQ(cmdList.end(), itorPC);
+    }
 
     buffer->release();
 }

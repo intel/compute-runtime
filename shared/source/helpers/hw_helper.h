@@ -65,7 +65,6 @@ class HwHelper {
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual bool isTimestampWaitSupported() const = 0;
-    virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
     virtual void setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                 void *surfaceStateBuffer,
@@ -249,8 +248,6 @@ class HwHelperHw : public HwHelper {
     bool timestampPacketWriteSupported() const override;
 
     bool isTimestampWaitSupported() const override;
-
-    bool isUpdateTaskCountFromWaitSupported() const override;
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
 
