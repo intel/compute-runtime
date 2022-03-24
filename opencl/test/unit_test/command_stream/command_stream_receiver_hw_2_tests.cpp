@@ -84,7 +84,7 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
                         EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
 
-    BlitProperties blitProperties;
+    BlitProperties blitProperties{};
     blitProperties.copySize = {bltSize, 1, 1};
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
@@ -1443,20 +1443,18 @@ HWTEST_F(BcsTestsImages, givenImage1DWhenAdjustBlitPropertiesForImageIsCalledThe
     imgDesc.image_height = 0u;
     imgDesc.image_depth = 0u;
     std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc));
-    Vec3<size_t> size{0, 0, 0};
-    size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
-    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::HostPtrToImage;
+    BlitProperties blitProperties{};
+    blitProperties.dstGpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
 
-    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch, blitDirection);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, false);
 
-    EXPECT_EQ(imgDesc.image_width, size.x);
-    EXPECT_EQ(1u, size.y);
-    EXPECT_EQ(1u, size.z);
-    EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+    EXPECT_EQ(imgDesc.image_width, blitProperties.dstSize.x);
+    EXPECT_EQ(1u, blitProperties.dstSize.y);
+    EXPECT_EQ(1u, blitProperties.dstSize.z);
+    EXPECT_EQ(expectedBytesPerPixel, blitProperties.bytesPerPixel);
     EXPECT_EQ(expectedRowPitch, rowPitch);
     EXPECT_EQ(expectedSlicePitch, slicePitch);
 }
@@ -1469,15 +1467,30 @@ HWTEST_F(BcsTestsImages, givenImage1DBufferWhenAdjustBlitPropertiesForImageIsCal
 
     cl_image_desc imgDesc = Image1dBufferDefaults::imageDesc;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
-    std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc));
-    Vec3<size_t> size{0, 0, 0};
-    size_t bytesPerPixel = 0u;
-
-    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
+    cl_image_format imgFormat{};
+    imgFormat.image_channel_order = CL_RGBA;
+    imgFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    std::unique_ptr<Image> image(Image1dHelper<>::create(context.get(), &imgDesc, &imgFormat));
+    size_t originalBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    size_t expectedBytesPerPixel = 1;
+    BlitProperties blitProperties{};
+    blitProperties.srcGpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
 
     for (auto &[blitDirection, expectedBlitDirection] : testParams) {
-        ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch, blitDirection);
-        EXPECT_EQ(expectedBlitDirection, blitDirection);
+        blitProperties.blitDirection = blitDirection;
+        blitProperties.copySize = {1, 1, 1};
+        blitProperties.srcSize = {imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth};
+
+        ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, true);
+
+        EXPECT_EQ(expectedBlitDirection, blitProperties.blitDirection);
+        EXPECT_EQ(expectedBytesPerPixel, blitProperties.bytesPerPixel);
+        EXPECT_EQ(imgDesc.image_width, blitProperties.srcSize.x / originalBytesPerPixel);
+        EXPECT_EQ(imgDesc.image_height, blitProperties.srcSize.y);
+        EXPECT_EQ(imgDesc.image_depth, blitProperties.srcSize.z);
+        EXPECT_EQ(1u, blitProperties.copySize.x / originalBytesPerPixel);
+        EXPECT_EQ(1u, blitProperties.copySize.y);
+        EXPECT_EQ(1u, blitProperties.copySize.z);
     }
 }
 
@@ -1490,20 +1503,18 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCall
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
 
     std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-    Vec3<size_t> size{0, 0, 0};
-    size_t bytesPerPixel = 0u;
     size_t expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
     size_t expectedRowPitch = image->getImageDesc().image_row_pitch;
     size_t expectedSlicePitch = image->getImageDesc().image_slice_pitch;
-    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::HostPtrToImage;
+    BlitProperties blitProperties{};
+    blitProperties.dstGpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
 
-    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch, blitDirection);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, false);
 
-    EXPECT_EQ(imgDesc.image_width, size.x);
-    EXPECT_EQ(imgDesc.image_height, size.y);
-    EXPECT_EQ(imgDesc.image_array_size, size.z);
-    EXPECT_EQ(expectedBytesPerPixel, bytesPerPixel);
+    EXPECT_EQ(imgDesc.image_width, blitProperties.dstSize.x);
+    EXPECT_EQ(imgDesc.image_height, blitProperties.dstSize.y);
+    EXPECT_EQ(imgDesc.image_array_size, blitProperties.dstSize.z);
+    EXPECT_EQ(expectedBytesPerPixel, blitProperties.bytesPerPixel);
     EXPECT_EQ(expectedRowPitch, rowPitch);
     EXPECT_EQ(expectedSlicePitch, slicePitch);
 }
@@ -1511,18 +1522,16 @@ HWTEST_F(BcsTestsImages, givenImage2DArrayWhenAdjustBlitPropertiesForImageIsCall
 HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForImageIsCalledThenGpuAddressIsCorrect) {
     cl_image_desc imgDesc = Image1dDefaults::imageDesc;
     std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
-    Vec3<size_t> size{0, 0, 0};
-    size_t bytesPerPixel = 0u;
-    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::HostPtrToImage;
 
     uint64_t surfaceOffset = 0x01000;
     image->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
-    uint64_t gpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
-    uint64_t expectedGpuAddress = gpuAddress + surfaceOffset;
+    BlitProperties blitProperties{};
+    blitProperties.dstGpuAddress = image->getGraphicsAllocation(0)->getGpuAddress();
+    uint64_t expectedGpuAddress = blitProperties.dstGpuAddress + surfaceOffset;
 
-    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), size, bytesPerPixel, gpuAddress, rowPitch, slicePitch, blitDirection);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, false);
 
-    EXPECT_EQ(gpuAddress, expectedGpuAddress);
+    EXPECT_EQ(blitProperties.dstGpuAddress, expectedGpuAddress);
 }
 
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
