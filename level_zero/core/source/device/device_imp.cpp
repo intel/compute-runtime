@@ -200,14 +200,59 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     return returnValue;
 }
 
+uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCopyEngineGroupsRequested,
+                                                    ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
+    NEO::Device *activeDevice = getActiveDevice();
+
+    if (this->isImplicitScalingCapable() == false) {
+        return 0u;
+    }
+
+    uint32_t numCopyEngineGroupsInSubDevice = 0;
+    NEO::Device *activeSubDevice = activeDevice->getSubDevice(0u);
+    auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
+    uint32_t subDeviceNumEngineGroups = static_cast<uint32_t>(subDeviceEngineGroups.size());
+
+    const auto &hardwareInfo = activeSubDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    for (uint32_t subDeviceQueueGroupsIter = 0; subDeviceQueueGroupsIter < subDeviceNumEngineGroups; subDeviceQueueGroupsIter++) {
+        if (subDeviceEngineGroups[subDeviceQueueGroupsIter].engineGroupType == NEO::EngineGroupType::Copy ||
+            subDeviceEngineGroups[subDeviceQueueGroupsIter].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+
+            if (pCommandQueueGroupProperties) {
+                pCommandQueueGroupProperties[numCopyEngineGroupsInSubDevice].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+                pCommandQueueGroupProperties[numCopyEngineGroupsInSubDevice].maxMemoryFillPatternSize =
+                    hwHelper.getMaxFillPaternSizeForCopyEngine();
+
+                l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[numCopyEngineGroupsInSubDevice], subDeviceEngineGroups[subDeviceQueueGroupsIter].engineGroupType);
+                pCommandQueueGroupProperties[numCopyEngineGroupsInSubDevice].numQueues =
+                    static_cast<uint32_t>(subDeviceEngineGroups[subDeviceQueueGroupsIter].engines.size());
+            }
+            numCopyEngineGroupsInSubDevice++;
+
+            if (numCopyEngineGroupsInSubDevice == numberOfSubDeviceCopyEngineGroupsRequested) {
+                break;
+            }
+        }
+    }
+
+    return numCopyEngineGroupsInSubDevice;
+}
+
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     NEO::Device *activeDevice = getActiveDevice();
     auto &engineGroups = activeDevice->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
+    uint32_t numSubDeviceCopyEngineGroups = getCopyQueueGroupsFromSubDevice(std::numeric_limits<uint32_t>::max(), nullptr);
+
+    uint32_t totalEngineGroups = numEngineGroups + numSubDeviceCopyEngineGroups;
+
     if (*pCount == 0) {
-        *pCount = numEngineGroups;
+        *pCount = totalEngineGroups;
         return ZE_RESULT_SUCCESS;
     }
 
@@ -215,8 +260,8 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-    *pCount = std::min(numEngineGroups, *pCount);
-    for (uint32_t i = 0; i < *pCount; i++) {
+    *pCount = std::min(totalEngineGroups, *pCount);
+    for (uint32_t i = 0; i < std::min(numEngineGroups, *pCount); i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::RenderCompute) {
             pCommandQueueGroupProperties[i].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
                                                     ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
@@ -236,6 +281,11 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         }
         l0HwHelper.setAdditionalGroupProperty(pCommandQueueGroupProperties[i], engineGroups[i].engineGroupType);
         pCommandQueueGroupProperties[i].numQueues = static_cast<uint32_t>(engineGroups[i].engines.size());
+    }
+
+    if (*pCount > numEngineGroups) {
+        uint32_t remainingEngineGroups = *pCount - numEngineGroups;
+        getCopyQueueGroupsFromSubDevice(remainingEngineGroups, &pCommandQueueGroupProperties[numEngineGroups]);
     }
 
     return ZE_RESULT_SUCCESS;
