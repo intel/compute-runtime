@@ -43,7 +43,10 @@ namespace NEO {
 
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() {
-    this->unregisterDirectSubmissionFromController();
+    auto directSubmissionController = executionEnvironment.directSubmissionController.get();
+    if (directSubmissionController) {
+        directSubmissionController->unregisterDirectSubmission(this);
+    }
 }
 
 template <typename GfxFamily>
@@ -993,14 +996,6 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     return DebugManager.flags.ForceCsrReprogramming.get();
-}
-
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::unregisterDirectSubmissionFromController() {
-    auto directSubmissionController = executionEnvironment.directSubmissionController.get();
-    if (directSubmissionController) {
-        directSubmissionController->unregisterDirectSubmission(this);
-    }
 }
 
 template <typename GfxFamily>
