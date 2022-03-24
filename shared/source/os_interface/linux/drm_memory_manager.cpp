@@ -1671,7 +1671,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto memoryInfo = drm.getMemoryInfo();
     const bool useBooMmap = memoryInfo && allocationData.useMmapObject;
 
-    if (not useBooMmap) {
+    if (!useBooMmap) {
         return nullptr;
     }
 
@@ -1749,7 +1749,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     }
 
     const bool useBooMmap = this->getDrm(properties.rootDeviceIndex).getMemoryInfo() && properties.useMmapObject;
-    if (not useBooMmap) {
+    if (!useBooMmap) {
         auto bo = new BufferObject(&getDrm(properties.rootDeviceIndex), openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
