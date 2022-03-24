@@ -342,6 +342,7 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     overridePlatformName(deviceName);
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
     const char hexPrefix = 2;
+    auto deviceId = -1;
     std::string product("");
 
     auto numeration = argHelper->getMajorMinorRevision(deviceName);
@@ -362,7 +363,8 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     }
 
     if (deviceName.substr(0, hexPrefix) == "0x" && std::all_of(deviceName.begin() + hexPrefix, deviceName.end(), (::isxdigit))) {
-        product = argHelper->returnProductNameForDevice(stoi(deviceName, 0, 16));
+        deviceId = stoi(deviceName, 0, 16);
+        product = argHelper->returnProductNameForDevice(deviceId);
         if (!product.empty()) {
             argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
             deviceName = product;
@@ -378,6 +380,9 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
                 hwInfo = *hardwareInfoTable[productId];
                 if (revisionId != -1) {
                     hwInfo.platform.usRevId = revisionId;
+                }
+                if (deviceId != -1) {
+                    hwInfo.platform.usDeviceID = deviceId;
                 }
 
                 auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
