@@ -108,11 +108,11 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
     uint64_t gpuVa = graphicsAllocation.getGpuAddress() + offset;
 
     while (size > 0) {
-        uint32_t sizeInBytsToPrefetch = std::min(alignUp(size, MemoryConstants::cacheLineSize),
-                                                 static_cast<uint32_t>(MemoryConstants::pageSize64k));
+        uint32_t sizeInBytesToPrefetch = std::min(alignUp(size, MemoryConstants::cacheLineSize),
+                                                  static_cast<uint32_t>(MemoryConstants::pageSize64k));
 
         // zero based cacheline count (0 == 1 cacheline)
-        uint32_t prefetchSize = (sizeInBytsToPrefetch / MemoryConstants::cacheLineSize) - 1;
+        uint32_t prefetchSize = (sizeInBytesToPrefetch / MemoryConstants::cacheLineSize) - 1;
 
         auto statePrefetch = commandStream.getSpaceForCmd<STATE_PREFETCH>();
         STATE_PREFETCH cmd = Family::cmdInitStatePrefetch;
@@ -128,12 +128,12 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 
         *statePrefetch = cmd;
 
-        if (sizeInBytsToPrefetch > size) {
+        if (sizeInBytesToPrefetch > size) {
             break;
         }
 
-        gpuVa += sizeInBytsToPrefetch;
-        size -= sizeInBytsToPrefetch;
+        gpuVa += sizeInBytesToPrefetch;
+        size -= sizeInBytesToPrefetch;
     }
 }
 
