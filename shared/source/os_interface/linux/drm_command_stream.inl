@@ -81,6 +81,12 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 }
 
 template <typename GfxFamily>
+inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
+    this->unregisterDirectSubmissionFromController();
+    this->cleanupResources();
+}
+
+template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->printDeviceIndex();
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
