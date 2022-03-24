@@ -235,29 +235,8 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 
 template <>
 void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
-    if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
+    if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER) {
         allocationData.flags.useSystemMemory = false;
-    }
-
-    bool forceLocalMemoryForDirectSubmission = true;
-    switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
-    case 0:
-        forceLocalMemoryForDirectSubmission = false;
-        break;
-    case 1:
-        forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
-        break;
-    default:
-        break;
-    }
-
-    if (forceLocalMemoryForDirectSubmission) {
-        if (properties.allocationType == AllocationType::COMMAND_BUFFER ||
-            properties.allocationType == AllocationType::RING_BUFFER ||
-            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
-            allocationData.flags.useSystemMemory = false;
-            allocationData.flags.requiresCpuAccess = true;
-        }
     }
 
     allocationData.cacheRegion = properties.cacheRegion;

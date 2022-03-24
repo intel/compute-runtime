@@ -201,6 +201,11 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 }
 
 template <>
+bool HwHelperHw<Family>::useSystemMemoryPlacementForCommandBuffer(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
 bool HwHelperHw<Family>::forceNonGpuCoherencyWA(bool requiresCoherency) const {
     return false;
 }
