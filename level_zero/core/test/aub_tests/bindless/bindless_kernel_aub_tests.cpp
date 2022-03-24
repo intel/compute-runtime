@@ -58,7 +58,7 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
     ModuleImp *module = nullptr;
 };
 
-HWTEST2_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IsAtMostXeHpgCore) {
+HWTEST_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
