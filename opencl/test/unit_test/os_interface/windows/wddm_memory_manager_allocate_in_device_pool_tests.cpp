@@ -173,7 +173,7 @@ TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenAllocationLessThen2MbWhen
     testAlignment(size, expectedAlignment);
 }
 
-TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenTooMuchMemoryWastedOn2MbAligmentWhenAllocationInDevicePoolIsCreatedThenUse64kbAlignment) {
+TEST_F(WddmMemoryManagerDevicePoolAlignmentTests, givenTooMuchMemoryWastedOn2MbAlignmentWhenAllocationInDevicePoolIsCreatedThenUse64kbAlignment) {
     const float threshold = 0.1f;
 
     {

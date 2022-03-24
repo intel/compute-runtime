@@ -600,7 +600,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
         DebugManager.flags.Force32bitAddressing.set(false);
     }
 }
-HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAligmentWhenAllocateGraphicsMemoryThenAligmentIsSetCorrect) {
+HWTEST_F(MemoryAllocatorTest, givenSupportFor1MbAlignmentWhenAllocateGraphicsMemoryThenAlignmentIsSetCorrect) {
     class MockHwHelperHw : public HwHelperHw<FamilyType> {
       public:
         using HwHelperHw<FamilyType>::HwHelperHw;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,6 @@
 #include <vector>
 
 namespace NEO {
-
-constexpr size_t ssAligment = MemoryConstants::cacheLineSize;
 
 class IndirectHeap;
 class GraphicsAllocation;
