@@ -55,6 +55,8 @@ struct DeviceImp : public Device {
     ze_result_t setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) override;
     ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) override;
     ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) override;
+    uint32_t getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCopyEngineGroupsRequested,
+                                             ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
     ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
                                                ze_command_queue_group_properties_t *pCommandQueueGroupProperties) override;
     ze_result_t getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) override;
@@ -124,8 +126,13 @@ struct DeviceImp : public Device {
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;
     void createSysmanHandle(bool isSubDevice);
+    NEO::Device::EngineGroupsT &getSubDeviceCopyEngineGroups();
+    void populateSubDeviceCopyEngineGroups();
+    bool isQueueGroupOrdinalValid(uint32_t ordinal);
 
   protected:
+    NEO::Device::EngineGroupsT subDeviceCopyEngineGroups{};
+
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
     std::unique_ptr<DebugSession> debugSession = nullptr;
