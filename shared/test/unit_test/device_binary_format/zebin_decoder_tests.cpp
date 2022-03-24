@@ -1993,6 +1993,47 @@ kernels:
     EXPECT_EQ(2, args[0].argIndex);
 }
 
+TEST(ReadZeInfoPayloadArguments, GivenArgByPointerWithSlmAddresingModeAndSlmAlignmentThenSetSlmAlignmentAccordingly) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    payload_arguments:
+        - arg_type : arg_bypointer
+          offset : 24
+          size : 4
+          arg_index	: 2
+          addrmode	: slm
+        - arg_type : arg_bypointer
+          offset : 16
+          size : 8
+          arg_index	: 1
+          addrmode	: slm
+          slm_alignment: 8
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &argsNode = *parser.findNodeWithKeyDfs("payload_arguments");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoPayloadArguments args;
+    int32_t maxArgIndex = -1;
+    int32_t maxSmpIndex = -1;
+    auto err = NEO::readZeInfoPayloadArguments(parser, argsNode, args, maxArgIndex, maxSmpIndex, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    ASSERT_EQ(2U, args.size());
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer, args[0].argType);
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer, args[1].argType);
+    EXPECT_EQ(16, args[0].slmArgAlignment);
+    EXPECT_EQ(8, args[1].slmArgAlignment);
+}
+
 TEST(ReadZeInfoBindingTableIndices, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
@@ -4742,6 +4783,44 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenA
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type enqueued_local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeByPointerWithSlmAlignmentSetThenPopulatesKernelDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+               - arg_type : arg_bypointer
+                 offset : 0
+                 size : 8
+                 arg_index	: 0
+                 addrmode	: slm
+                 slm_alignment: 8
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto res = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, res);
+    ASSERT_EQ(1u, programInfo.kernelInfos.size());
+    ASSERT_EQ(1u, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+    const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    EXPECT_EQ(8, arg.requiredSlmAlignment);
 }
 
 TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {

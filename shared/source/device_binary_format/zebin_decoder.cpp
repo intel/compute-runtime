@@ -582,6 +582,8 @@ DecodeError readZeInfoPayloadArguments(const NEO::Yaml::YamlParser &parser, cons
                 outMaxSamplerIndex = std::max<int32_t>(outMaxSamplerIndex, payloadArgMetadata.samplerIndex);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::sourceOffset == key) {
                 validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.sourceOffset, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::slmArgAlignment == key) {
+                validPayload &= readZeInfoValueChecked(parser, payloadArgumentMemberNd, payloadArgMetadata.slmArgAlignment, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for payload argument in context of " + context.str() + "\n");
             }
@@ -840,7 +842,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeSharedLocalMemory:
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).slmOffset = src.offset;
-            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).requiredSlmAlignment = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::slmArgAlignment;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).requiredSlmAlignment = src.slmArgAlignment;
             break;
         }
         break;
