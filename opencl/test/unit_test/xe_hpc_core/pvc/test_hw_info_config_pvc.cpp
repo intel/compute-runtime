@@ -148,8 +148,8 @@ PVCTEST_F(PvcHwInfo, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConve
                 auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(steppingFromHwRevId, hwInfo);
                 EXPECT_NE(CommonConstants::invalidStepping, hwRevId);
                 // expect values to match. 0x1 and 0x0 translate to the same stepping so they are interpreted as a match too.
-                if (((testValue & FamilyType::pvcSteppingBits) == (hwRevId & FamilyType::pvcSteppingBits)) ||
-                    (((testValue & FamilyType::pvcSteppingBits) == 0x1) && ((hwRevId & FamilyType::pvcSteppingBits) == 0x0))) {
+                if (((testValue & PVC::pvcSteppingBits) == (hwRevId & PVC::pvcSteppingBits)) ||
+                    (((testValue & PVC::pvcSteppingBits) == 0x1) && ((hwRevId & PVC::pvcSteppingBits) == 0x0))) {
                     anyMatchAfterConversionFromStepping = true;
                 }
             }

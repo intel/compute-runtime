@@ -47,6 +47,8 @@ struct PVC : public XE_HPC_COREFamily {
         }
         return false;
     }
+
+    static constexpr uint32_t pvcSteppingBits = 0b111;
 };
 
 class PVC_CONFIG : public PVC {

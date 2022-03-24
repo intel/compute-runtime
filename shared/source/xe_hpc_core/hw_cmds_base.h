@@ -29,7 +29,6 @@ struct XE_HPC_CORE {
 
     static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
-    static constexpr uint32_t pvcSteppingBits = 0b111;
 
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;

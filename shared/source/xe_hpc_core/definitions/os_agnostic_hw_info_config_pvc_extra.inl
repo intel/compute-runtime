@@ -12,7 +12,7 @@ bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalker
 
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    auto revId = hwInfo.platform.usRevId & XE_HPC_COREFamily::pvcSteppingBits;
+    auto revId = hwInfo.platform.usRevId & PVC::pvcSteppingBits;
     return (0x3 <= revId) ? 16u : 8u;
 }
 

@@ -38,7 +38,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
 
 template <>
 uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    switch (hwInfo.platform.usRevId & XE_HPC_COREFamily::pvcSteppingBits) {
+    switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
     case 0x0:
     case 0x1:
     case 0x3:
