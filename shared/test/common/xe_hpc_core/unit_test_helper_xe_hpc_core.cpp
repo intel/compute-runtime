@@ -57,7 +57,7 @@ bool UnitTestHelper<Family>::isAdditionalSynchronizationRequired() {
 template <>
 bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(hwInfo);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }

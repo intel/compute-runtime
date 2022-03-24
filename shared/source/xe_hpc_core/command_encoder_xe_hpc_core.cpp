@@ -176,7 +176,7 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 template <>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(hwInfo);
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
 
     if (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() != -1) {
         programGlobalFenceAsPostSyncOperationInComputeWalker = !!DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();

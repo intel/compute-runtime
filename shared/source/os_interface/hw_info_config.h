@@ -88,9 +88,8 @@ class HwInfoConfig {
     virtual bool programAllStateComputeCommandFields() const = 0;
     virtual bool isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
@@ -167,9 +166,8 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool programAllStateComputeCommandFields() const override;
     bool isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
-    bool isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
-    bool isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
+    bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;

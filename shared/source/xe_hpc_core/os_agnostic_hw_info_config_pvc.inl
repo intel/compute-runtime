@@ -78,12 +78,7 @@ bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
-    return !PVC::isXlA0(hwInfo);
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return !PVC::isXlA0(hwInfo);
 }
 

@@ -28,14 +28,9 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsComputeDispatchAllWalkerEnable
     EXPECT_FALSE(hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsGlobalFenceAsMiMemFenceCommandInCommandStreamRequiredThenFalseIsReturned) {
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsGlobalFenceInCommandStreamRequiredThenFalseIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isGlobalFenceAsMiMemFenceCommandInCommandStreamRequired(*defaultHwInfo));
-}
-
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsGlobalFenceAsPostSyncOperationInComputeWalkerRequiredThenFalseIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(hwInfoConfig.isGlobalFenceAsPostSyncOperationInComputeWalkerRequired(*defaultHwInfo));
+    EXPECT_FALSE(hwInfoConfig.isGlobalFenceInCommandStreamRequired(*defaultHwInfo));
 }
 
 HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsSpecialPipelineSelectModeChangedThenFalseIsReturned) {
