@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,12 @@ if(NOT WIN32)
   add_dependencies(run_${product}_${revision_id}_mt_unit_tests copy_test_files_${product}_${revision_id})
 endif()
 
+unset(GTEST_OUTPUT)
+if(DEFINED GTEST_OUTPUT_DIR)
+  set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_mt_unit_tests_results.json")
+  message(STATUS "GTest output set to ${GTEST_OUTPUT}")
+endif()
+
 add_dependencies(run_mt_unit_tests run_${product}_${revision_id}_mt_unit_tests)
 set_target_properties(run_${product}_${revision_id}_mt_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 
@@ -24,7 +30,7 @@ add_custom_command(
                    POST_BUILD
                    COMMAND WORKING_DIRECTORY ${TargetDir}
                    COMMAND echo "Running igdrcl_mt_tests ${product} ${slices}x${subslices}x${eu_per_ss}"
-                   COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
+                   COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
 )
 
 add_dependencies(run_${product}_${revision_id}_mt_unit_tests prepare_test_kernels_for_ocl)

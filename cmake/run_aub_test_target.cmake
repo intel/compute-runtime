@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -58,12 +58,18 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
     set(aub_test_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} IGDRCL_TEST_SELF_EXEC=off ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_aub_tests>)
   endif()
 
+  unset(GTEST_OUTPUT)
+  if(DEFINED GTEST_OUTPUT_DIR)
+    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_aub_tests_results.json")
+    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
+  endif()
+
   add_custom_command(
                      TARGET run_${product}_${revision_id}_aub_tests
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running AUB generation for ${product} in ${TargetDir}/${product}_aub
-                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${NEO_TESTS_LISTENER_OPTION} --rev_id ${revision_id}
+                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_OUTPUT} --rev_id ${revision_id}
   )
 endif()
 
@@ -76,12 +82,18 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
     set(l0_aub_test_cmd_prefix LD_LIBRARY_PATH=${NEO__GMM_LIBRARY_PATH} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:ze_intel_gpu_aub_tests>)
   endif()
 
+  unset(GTEST_OUTPUT)
+  if(DEFINED GTEST_OUTPUT_DIR)
+    set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ze_intel_gpu_${product}_${revision_id}_aub_tests_results.json")
+    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
+  endif()
+
   add_custom_command(
                      TARGET run_${product}_${revision_id}_aub_tests
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running Level Zero AUB generation for ${product} in ${TargetDir}/${product}_aub
-                     COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} --rev_id ${revision_id}
+                     COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${GTEST_OUTPUT} --rev_id ${revision_id}
   )
 endif()
 
