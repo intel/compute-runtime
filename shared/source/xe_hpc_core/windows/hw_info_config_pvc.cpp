@@ -17,6 +17,7 @@ namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;
 
 #include "shared/source/xe_hpc_core/os_agnostic_hw_info_config_pvc.inl"
+#include "shared/source/xe_hpc_core/os_agnostic_hw_info_config_xe_hpc_core.inl"
 
 #include "os_agnostic_hw_info_config_pvc_extra.inl"
 
