@@ -88,7 +88,7 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorrectAllocationTypeIsSet) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     ASSERT_NE(0u, cmdContainer.getCmdBufferAllocations().size());
     EXPECT_EQ(AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
@@ -101,7 +101,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorre
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectAllocationTypes) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
         HeapType heapType = static_cast<HeapType>(i);
@@ -119,7 +119,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIsInitialized) {
     CommandContainer cmdContainer;
-    auto status = cmdContainer.initialize(pDevice, nullptr);
+    auto status = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(ErrorCode::SUCCESS, status);
 
     EXPECT_EQ(pDevice, cmdContainer.getDevice());
@@ -142,6 +142,27 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
               pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, !hwHelper.useSystemMemoryPlacementForISA(pDevice->getHardwareInfo())));
 }
 
+TEST_F(CommandContainerTest, givenCommandContainerWhenHeapNotRequiredThenHeapIsNotInitialized) {
+    CommandContainer cmdContainer;
+    auto status = cmdContainer.initialize(pDevice, nullptr, false);
+    EXPECT_EQ(ErrorCode::SUCCESS, status);
+
+    EXPECT_EQ(pDevice, cmdContainer.getDevice());
+    EXPECT_EQ(cmdContainer.getHeapHelper(), nullptr);
+    EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
+
+    for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
+        auto indirectHeap = cmdContainer.getIndirectHeap(static_cast<HeapType>(i));
+        EXPECT_EQ(indirectHeap, nullptr);
+    }
+
+    EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
+    EXPECT_EQ(cmdContainer.getNumIddPerBlock(), defaultNumIddsPerBlock);
+
+    EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(), 0u);
+}
+
 TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdContainerIsInitializedThenInstructionBaseAddressIsSetToInternalHeap) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceSystemMemoryPlacement.set(1 << (static_cast<uint32_t>(AllocationType::KERNEL_ISA) - 1));
@@ -159,7 +180,7 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
     auto instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(0, false);
 
     CommandContainer cmdContainer;
-    auto status = cmdContainer.initialize(device.get(), nullptr);
+    auto status = cmdContainer.initialize(device.get(), nullptr, true);
     EXPECT_EQ(ErrorCode::SUCCESS, status);
 
     EXPECT_EQ(instructionHeapBaseAddress, cmdContainer.getInstructionHeapBaseAddress());
@@ -168,14 +189,14 @@ TEST_F(CommandContainerTest, givenEnabledLocalMemoryAndIsaInSystemMemoryWhenCmdC
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {
     CommandContainer cmdContainer;
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
-    auto status = cmdContainer.initialize(pDevice, nullptr);
+    auto status = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
     AllocationsList allocList;
     auto cmdContainer = std::make_unique<CommandContainer>();
-    cmdContainer->initialize(pDevice, &allocList);
+    cmdContainer->initialize(pDevice, &allocList, true);
     auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
@@ -210,7 +231,7 @@ TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemo
     CommandContainer cmdContainer;
     auto temp_memoryManager = pDevice->executionEnvironment->memoryManager.release();
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *pDevice->executionEnvironment));
-    auto status = cmdContainer.initialize(pDevice, nullptr);
+    auto status = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
     delete temp_memoryManager;
 }
@@ -225,10 +246,10 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocat
 
 TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThenHeapAllocationsAreReused) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::DYNAMIC_STATE)->getUnderlyingBuffer();
     cmdContainer.reset(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     bool status = false;
     for (uint32_t i = 0; i < HeapType::NUM_TYPES && !status; i++) {
         status = cmdContainer->getIndirectHeapAllocation(static_cast<HeapType>(i))->getUnderlyingBuffer() == heapAllocationsAddress;
@@ -238,7 +259,7 @@ TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThen
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenResetThenStateIsReset) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     LinearStream stream;
     uint32_t usedSize = 1;
     cmdContainer.getCommandStream()->getSpace(usedSize);
@@ -252,7 +273,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenResetThenStateIsReset) {
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidencyContainerThenNothingIsAdded) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto size = cmdContainer.getResidencyContainer().size();
     cmdContainer.addToResidencyContainer(nullptr);
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), size);
@@ -260,7 +281,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidenc
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAllocationAndDuplicatesRemovedThenExpectedSizeIsReturned) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     MockGraphicsAllocation mockAllocation;
 
     auto sizeBefore = cmdContainer.getResidencyContainer().size();
@@ -285,7 +306,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapH
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->setReservedSshSize(4 * MemoryConstants::pageSize);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
     auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
@@ -298,7 +319,7 @@ HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequir
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->setReservedSshSize(4 * MemoryConstants::pageSize);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
     auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
@@ -313,7 +334,7 @@ HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequir
 
 TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenExistingAllocationIsReturned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     HeapType types[] = {HeapType::SURFACE_STATE,
                         HeapType::DYNAMIC_STATE};
@@ -344,7 +365,7 @@ TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAl
 
 TEST_F(CommandContainerTest, givenUnalignedAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenHeapReturnedIsCorrectlyAligned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
     auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
@@ -368,7 +389,7 @@ TEST_F(CommandContainerTest, givenUnalignedAvailableSpaceWhenGetHeapWithRequired
 
 TEST_F(CommandContainerTest, givenNoAlignmentAndAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenHeapReturnedIsNotAligned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     auto heapAllocation = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE);
     auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
@@ -392,7 +413,7 @@ TEST_F(CommandContainerTest, givenNoAlignmentAndAvailableSpaceWhenGetHeapWithReq
 
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenNewAllocationIsReturned) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     HeapType types[] = {HeapType::SURFACE_STATE,
                         HeapType::DYNAMIC_STATE};
@@ -426,7 +447,7 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
 
 TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferentBaseThenHeapIsDirty) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     HeapType type = HeapType::INDIRECT_OBJECT;
 
@@ -458,7 +479,7 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenCreatedAlocationHaveDifferen
 
 TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationIsCreatedAndCommandStreamReplaced) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     auto stream = cmdContainer->getCommandStream();
     ASSERT_NE(nullptr, stream);
 
@@ -486,7 +507,7 @@ TEST_F(CommandContainerTest, whenAllocateNextCmdBufferIsCalledThenNewAllocationI
 
 TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAreFreedAndStreamIsReplacedWithInitialBuffer) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
 
     cmdContainer->allocateNextCommandBuffer();
     cmdContainer->allocateNextCommandBuffer();
@@ -531,7 +552,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThe
     HeapType heap = GetParam();
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
     size_t size = 5000;
     void *ptr = cmdContainer.getHeapSpaceAllowGrow(heap, size);
@@ -545,7 +566,7 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
     HeapType heap = GetParam();
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     cmdContainer.setDirtyStateForAllHeaps(false);
 
     auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
@@ -573,12 +594,12 @@ TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHe
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     CommandContainer cmdContainer0;
-    cmdContainer0.initialize(device0.get(), nullptr);
+    cmdContainer0.initialize(device0.get(), nullptr, true);
     uint32_t heapRootDeviceIndex0 = cmdContainer0.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
     EXPECT_EQ(device0->getRootDeviceIndex(), heapRootDeviceIndex0);
 
     CommandContainer cmdContainer1;
-    cmdContainer1.initialize(device1.get(), nullptr);
+    cmdContainer1.initialize(device1.get(), nullptr, true);
     uint32_t heapRootDeviceIndex1 = cmdContainer1.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
     EXPECT_EQ(device1->getRootDeviceIndex(), heapRootDeviceIndex1);
 }
@@ -594,13 +615,13 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenCm
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     CommandContainer cmdContainer0;
-    cmdContainer0.initialize(device0.get(), nullptr);
+    cmdContainer0.initialize(device0.get(), nullptr, true);
     EXPECT_EQ(1u, cmdContainer0.getCmdBufferAllocations().size());
     uint32_t cmdBufferAllocationIndex0 = cmdContainer0.getCmdBufferAllocations().front()->getRootDeviceIndex();
     EXPECT_EQ(device0->getRootDeviceIndex(), cmdBufferAllocationIndex0);
 
     CommandContainer cmdContainer1;
-    cmdContainer1.initialize(device1.get(), nullptr);
+    cmdContainer1.initialize(device1.get(), nullptr, true);
     EXPECT_EQ(1u, cmdContainer1.getCmdBufferAllocations().size());
     uint32_t cmdBufferAllocationIndex1 = cmdContainer1.getCmdBufferAllocations().front()->getRootDeviceIndex();
     EXPECT_EQ(device1->getRootDeviceIndex(), cmdBufferAllocationIndex1);
@@ -620,13 +641,13 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenIn
     auto &hwHelper1 = HwHelper::get(device1->getHardwareInfo().platform.eRenderCoreFamily);
 
     CommandContainer cmdContainer0;
-    cmdContainer0.initialize(device0.get(), nullptr);
+    cmdContainer0.initialize(device0.get(), nullptr, true);
     bool useLocalMemory0 = !hwHelper0.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
     uint64_t baseAddressHeapDevice0 = device0.get()->getMemoryManager()->getInternalHeapBaseAddress(device0->getRootDeviceIndex(), useLocalMemory0);
     EXPECT_EQ(cmdContainer0.getInstructionHeapBaseAddress(), baseAddressHeapDevice0);
 
     CommandContainer cmdContainer1;
-    cmdContainer1.initialize(device1.get(), nullptr);
+    cmdContainer1.initialize(device1.get(), nullptr, true);
     bool useLocalMemory1 = !hwHelper1.useSystemMemoryPlacementForISA(device0->getHardwareInfo());
     uint64_t baseAddressHeapDevice1 = device1.get()->getMemoryManager()->getInternalHeapBaseAddress(device1->getRootDeviceIndex(), useLocalMemory1);
     EXPECT_EQ(cmdContainer1.getInstructionHeapBaseAddress(), baseAddressHeapDevice1);
@@ -637,7 +658,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllo
     MockGraphicsAllocation alloc;
     size_t size = 0x1000;
     alloc.setSize(size);
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->getDeallocationContainer().push_back(&alloc);
     cmdContainer.reset();
     EXPECT_EQ(alloc.getUnderlyingBufferSize(), size);
@@ -645,7 +666,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllo
 
 TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResetingContainerThenExpectFirstCommandBufferAllocationIsReused) {
     auto cmdContainer = std::make_unique<CommandContainer>();
-    cmdContainer->initialize(pDevice, nullptr);
+    cmdContainer->initialize(pDevice, nullptr, true);
 
     auto stream = cmdContainer->getCommandStream();
     ASSERT_NE(nullptr, stream);
@@ -690,21 +711,21 @@ class MyLinearStreamMock : public LinearStream {
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStreamContainsContainerPtr) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     EXPECT_EQ(reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream())->cmdContainer, &cmdContainer);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenContainerIsInitializedThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     size_t alignedSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - CommandContainer::cmdBufferReservedSize);
 }
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStreamSizeEqualAlignedTotalCmdBuffSizeDecreasedOfReservedSize) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     cmdContainer.allocateNextCommandBuffer();
     size_t alignedSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - CommandContainer::cmdBufferReservedSize);
@@ -712,7 +733,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAlocatingNextCmdBufferThenStre
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenBBEndPlacedAtEndOfLinearStream) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto ptr = cmdContainer.getCommandStream()->getSpace(0u);
@@ -722,7 +743,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBuf
 
 TEST_F(CommandContainerTest, givenCmdContainerWhenCloseAndAllocateNextCommandBufferCalledThenNewCmdBufferAllocationCreated) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     cmdContainer.closeAndAllocateNextCommandBuffer();
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);

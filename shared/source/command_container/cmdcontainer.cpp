@@ -55,7 +55,7 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
     numIddsPerBlock = maxNumAggregatedIdds;
 }
 
-ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList) {
+ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
 
@@ -79,36 +79,37 @@ ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusable
     if (!getFlushTaskUsedForImmediate()) {
         addToResidencyContainer(cmdBufferAllocation);
     }
+    if (requireHeaps) {
+        constexpr size_t heapSize = 65536u;
+        heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
-    constexpr size_t heapSize = 65536u;
-    heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
+        for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
+            if (NEO::ApiSpecificConfig::getBindlessConfiguration() && i != IndirectHeap::Type::INDIRECT_OBJECT) {
+                continue;
+            }
+            allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
+                                                                       heapSize,
+                                                                       alignedSize,
+                                                                       device->getRootDeviceIndex());
+            if (!allocationIndirectHeaps[i]) {
+                return ErrorCode::OUT_OF_DEVICE_MEMORY;
+            }
+            residencyContainer.push_back(allocationIndirectHeaps[i]);
 
-    for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
-        if (NEO::ApiSpecificConfig::getBindlessConfiguration() && i != IndirectHeap::Type::INDIRECT_OBJECT) {
-            continue;
+            bool requireInternalHeap = (IndirectHeap::Type::INDIRECT_OBJECT == i);
+            indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
+            if (i == IndirectHeap::Type::SURFACE_STATE) {
+                indirectHeaps[i]->getSpace(reservedSshSize);
+            }
         }
-        allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
-                                                                   heapSize,
-                                                                   alignedSize,
-                                                                   device->getRootDeviceIndex());
-        if (!allocationIndirectHeaps[i]) {
-            return ErrorCode::OUT_OF_DEVICE_MEMORY;
-        }
-        residencyContainer.push_back(allocationIndirectHeaps[i]);
 
-        bool requireInternalHeap = (IndirectHeap::Type::INDIRECT_OBJECT == i);
-        indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
-        if (i == IndirectHeap::Type::SURFACE_STATE) {
-            indirectHeaps[i]->getSpace(reservedSshSize);
-        }
+        indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), allocationIndirectHeaps[IndirectHeap::Type::INDIRECT_OBJECT]->isAllocatedInLocalMemoryPool());
+
+        instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
+
+        iddBlock = nullptr;
+        nextIddInBlock = this->getNumIddPerBlock();
     }
-
-    indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), allocationIndirectHeaps[IndirectHeap::Type::INDIRECT_OBJECT]->isAllocatedInLocalMemoryPool());
-
-    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
-
-    iddBlock = nullptr;
-    nextIddInBlock = this->getNumIddPerBlock();
 
     return ErrorCode::SUCCESS;
 }

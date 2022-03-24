@@ -1020,7 +1020,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNo
     debugger->sbaTrackingGpuVa.address = 0x45670000;
 
     NEO::CommandContainer container;
-    container.initialize(neoDevice, nullptr);
+    container.initialize(neoDevice, nullptr, true);
 
     NEO::Debugger::SbaAddresses sba = {};
     sba.SurfaceStateBaseAddress = 0x123456000;
@@ -1043,7 +1043,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
     debugger->sbaTrackingGpuVa.address = 0x45670000;
     {
         NEO::CommandContainer container;
-        container.initialize(neoDevice, nullptr);
+        container.initialize(neoDevice, nullptr, true);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.SurfaceStateBaseAddress = 0x123456000;
@@ -1056,7 +1056,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
 
     {
         NEO::CommandContainer container;
-        container.initialize(neoDevice, nullptr);
+        container.initialize(neoDevice, nullptr, true);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.GeneralStateBaseAddress = 0x123456000;
@@ -1069,7 +1069,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
 
     {
         NEO::CommandContainer container;
-        container.initialize(neoDevice, nullptr);
+        container.initialize(neoDevice, nullptr, true);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.BindlessSurfaceStateBaseAddress = 0x123456000;

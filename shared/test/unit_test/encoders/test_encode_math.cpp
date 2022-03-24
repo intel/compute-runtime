@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,7 +146,7 @@ HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
     GenCmdList commands;
     CommandContainer cmdContainer;
 
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     EncodeMath<FamilyType>::commandReserve(cmdContainer);
 
@@ -176,7 +176,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
 
     GenCmdList commands;
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     constexpr uint32_t regOffset = 0x2000u;
     constexpr uint32_t immVal = 0xbaau;
     constexpr uint64_t dstAddress = 0xDEADCAF0u;
@@ -222,7 +222,7 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorr
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint32_t crossThreadAdress[3] = {};
@@ -248,7 +248,7 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCor
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
     uint32_t crossThreadAdress[3] = {};

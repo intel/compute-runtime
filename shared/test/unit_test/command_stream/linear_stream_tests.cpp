@@ -134,7 +134,7 @@ TEST_F(LinearStreamTest, givenLinearStreamWithoutCmdContainerWhenOneByteLeftInSt
 using CommandContainerLinearStreamTest = Test<DeviceFixture>;
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOneByteLeftInStreamThenGetSpaceThrowAbort) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
     stream->sizeUsed = stream->getMaxAvailableSpace() - 1;
     EXPECT_THROW(stream->getSpace(1), std::exception);
@@ -142,7 +142,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenOn
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenNewCmdBufferAllocated) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
@@ -155,7 +155,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenLinearStreamHasNewAllocation) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
@@ -169,7 +169,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenGetSpaceReturnPtrFromNewAllocation) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
@@ -182,7 +182,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsSpaceForCommandAndBBEndThenNewCmdBufferIsNotAllocated) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());
@@ -195,7 +195,7 @@ TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenTh
 
 TEST_F(CommandContainerLinearStreamTest, givenLinearStreamWithCmdContainerWhenThereIsNoSpaceForCommandAndBBEndThenBBEndAddedAtEndOfStream) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto stream = reinterpret_cast<MyLinearStreamMock *>(cmdContainer.getCommandStream());

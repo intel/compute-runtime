@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ using EncodeBatchBufferStartOrEndTest = Test<DeviceFixture>;
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndThenCommandIsAdded) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(cmdContainer);
 
     GenCmdList commands;
@@ -30,7 +30,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndTh
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartThenCommandIsAdded) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, true);
 
     GenCmdList commands;
@@ -43,7 +43,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartWithSecondLevelParameterThenCommandIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, true);
 
     GenCmdList commands;
@@ -60,7 +60,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartWithFirstLevelParameterThenCommandIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, false);
 
     GenCmdList commands;
@@ -77,7 +77,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenGpuAddressWhenEncodeBBStartThenAddressIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     uint64_t gpuAddress = 12 * MemoryConstants::pageSize;
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), gpuAddress, false);
@@ -98,7 +98,7 @@ using EncodeNoopTest = Test<DeviceFixture>;
 
 HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto commandStream = cmdContainer.getCommandStream();
 
     EncodeNoop<FamilyType>::alignToCacheLine(*commandStream);
@@ -111,7 +111,7 @@ HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedC
 
 HWTEST_F(EncodeNoopTest, WhenEmittingNoopsThenExpectCorrectNumberOfBytesNooped) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     auto commandStream = cmdContainer.getCommandStream();
 
     size_t usedBefore = commandStream->getUsed();

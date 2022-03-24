@@ -775,18 +775,21 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        csr.createPreemptionAllocation();
+    }
 
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           &csr,
                                                           &desc,
-                                                          true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -834,18 +837,21 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        csr.createPreemptionAllocation();
+    }
 
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           &csr,
                                                           &desc,
-                                                          true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -892,18 +898,21 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
     csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread || device->getNEODevice()->isDebuggerActive()) {
+        csr.createPreemptionAllocation();
+    }
 
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           &csr,
                                                           &desc,
-                                                          true,
+                                                          false,
                                                           false,
                                                           returnValue);
     ASSERT_NE(nullptr, commandQueue);
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};

@@ -69,7 +69,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
-    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList);
+    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps);
 
     void prepareBindfulSsh();
 

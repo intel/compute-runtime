@@ -1549,7 +1549,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListCreate, whenBindlessModeEnabledWhenComman
     ASSERT_EQ(cmdList.end(), itor);
 }
 
-HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenCreatedThenStateBaseAddressCmdIsNotProgrammed) {
+HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenCreatedThenStateBaseAddressCmdIsNotProgrammedAndHeapIsNotAllocated) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
@@ -1562,6 +1562,11 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenCreatedThenStateBase
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
 
     EXPECT_EQ(cmdList.end(), itor);
+
+    for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
+        ASSERT_EQ(commandList->commandContainer.getIndirectHeap(static_cast<NEO::HeapType>(i)), nullptr);
+        ASSERT_EQ(commandList->commandContainer.getIndirectHeapAllocation(static_cast<NEO::HeapType>(i)), nullptr);
+    }
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenSetBarrierThenMiFlushDWIsProgrammed) {

@@ -25,7 +25,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, true);
     ASSERT_EQ(ErrorCode::SUCCESS, ret);
 
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
@@ -53,7 +53,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
 GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenDoNotDispatchMMIOCommand) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -75,7 +75,7 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
 
     CommandContainer cmdContainer;
 
-    auto ret = cmdContainer.initialize(pDevice, nullptr);
+    auto ret = cmdContainer.initialize(pDevice, nullptr, true);
     ASSERT_EQ(ErrorCode::SUCCESS, ret);
 
     {
@@ -111,7 +111,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, true);
 
@@ -125,7 +125,7 @@ GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpect
 GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpectNoCommandsDispatched) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr);
+    cmdContainer.initialize(pDevice, nullptr, true);
 
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 

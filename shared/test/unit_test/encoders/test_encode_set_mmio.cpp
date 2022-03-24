@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
         cmdContainer = std::make_unique<CommandContainer>();
-        cmdContainer->initialize(pDevice, nullptr);
+        cmdContainer->initialize(pDevice, nullptr, true);
     }
     void TearDown() {
         cmdContainer.reset();
