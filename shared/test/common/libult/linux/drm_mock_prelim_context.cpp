@@ -69,7 +69,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
     case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
         auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
         mmap_arg->offset = 0;
-        return 0;
+        return mmapOffsetReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
@@ -141,10 +141,6 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
 
-        constexpr uint32_t createExtHandle{1u};
-        createExt->handle = createExtHandle;
-        receivedCreateGemExt = CreateGemExt{createExt->size, createExtHandle};
-
         auto extension = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(createExt->extensions);
         if (!extension) {
             return EINVAL;
@@ -164,6 +160,11 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
 
+        constexpr uint32_t createExtHandle{1u};
+        createExt->handle = createExtHandle;
+        receivedCreateGemExt = CreateGemExt{createExt->size, createExtHandle};
+        receivedCreateGemExt->setParamExt = CreateGemExt::SetParam{extension->param.handle, extension->param.size, extension->param.param};
+
         receivedCreateGemExt->memoryRegions.clear();
         for (uint32_t i = 0; i < extension->param.size; i++) {
             receivedCreateGemExt->memoryRegions.push_back({data[i].memory_class, data[i].memory_instance});
@@ -173,7 +174,8 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         if ((firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (firstMemoryRegion.memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
-        return 0;
+
+        return gemCreateExtReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE: {
         waitUserFenceCalled++;
@@ -198,6 +200,11 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         }
 
         return !contextDebugSupported ? EINVAL : 0;
+    } break;
+    case PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE: {
+        const auto req = reinterpret_cast<prelim_drm_i915_gem_vm_advise *>(arg);
+        receivedVmAdvise = VmAdvise{req->handle, req->attribute};
+        return vmAdviseReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_UUID_REGISTER: {
         auto uuidControl = reinterpret_cast<prelim_drm_i915_uuid_control *>(arg);
@@ -494,4 +501,20 @@ uint64_t DrmPrelimHelper::getMakeResidentVmBindFlag() {
 
 uint64_t DrmPrelimHelper::getSIPContextParamDebugFlag() {
     return PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP;
+}
+
+uint64_t DrmPrelimHelper::getMemoryRegionsParamFlag() {
+    return PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS;
+}
+
+uint32_t DrmPrelimHelper::getVmAdviseNoneFlag() {
+    return PRELIM_I915_VM_ADVISE_ATOMIC_NONE;
+}
+
+uint32_t DrmPrelimHelper::getVmAdviseDeviceFlag() {
+    return PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE;
+}
+
+uint32_t DrmPrelimHelper::getVmAdviseSystemFlag() {
+    return PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
 }

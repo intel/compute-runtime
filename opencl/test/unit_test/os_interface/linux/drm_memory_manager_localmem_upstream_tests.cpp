@@ -49,14 +49,6 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
         memoryManager = std::make_unique<TestedDrmMemoryManager>(localMemoryEnabled, false, false, *executionEnvironment);
     }
 
-    bool isAllocationWithinHeap(const GraphicsAllocation &allocation, HeapIndex heap) {
-        const auto allocationStart = allocation.getGpuAddress();
-        const auto allocationEnd = allocationStart + allocation.getUnderlyingBufferSize();
-        const auto heapStart = GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(heap));
-        const auto heapEnd = GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(heap));
-        return heapStart <= allocationStart && allocationEnd <= heapEnd;
-    }
-
   protected:
     DebugManagerStateRestore restorer{};
     ExecutionEnvironment *executionEnvironment = nullptr;

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 class DrmMockCustomImpl : public DrmMockCustom {
@@ -49,7 +50,7 @@ class DrmMockCustomImpl : public DrmMockCustom {
             ioctlImpl_cnt.gemCreateExt++;
         } break;
         default: {
-            std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
+            std::cout << "unexpected IOCTL: " << NEO::IoctlToStringHelper::getIoctlString(request) << std::endl;
             UNRECOVERABLE_IF(true);
         } break;
         }
