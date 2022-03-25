@@ -62,6 +62,31 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::ArgTUnknown);
 }
 
+using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
+TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+    kernel->initialize(&desc);
+
+    uint64_t baseAddress = 0;
+    ze_result_t res = kernel->getBaseAddress(nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = kernel->getBaseAddress(&baseAddress);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(baseAddress, 0u);
+    EXPECT_EQ(baseAddress, kernel->getImmutableData()->getKernelInfo()->kernelAllocation->getGpuAddress());
+}
+
 TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {
     Mock<Kernel> mockKernel;
     EXPECT_EQ(mockKernel.setArgUnknown(0, 0, nullptr), ZE_RESULT_SUCCESS);

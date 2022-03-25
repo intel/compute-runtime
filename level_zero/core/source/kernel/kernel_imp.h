@@ -33,6 +33,7 @@ struct KernelImp : Kernel {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getBaseAddress(uint64_t *baseAddress) override;
     ze_result_t setIndirectAccess(ze_kernel_indirect_access_flags_t flags) override;
     ze_result_t getIndirectAccess(ze_kernel_indirect_access_flags_t *flags) override;
     ze_result_t getSourceAttributes(uint32_t *pSize, char **pString) override;

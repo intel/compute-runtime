@@ -213,6 +213,13 @@ void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *glob
     }
 }
 
+ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
+    if (baseAddress) {
+        *baseAddress = NEO::GmmHelper::decanonize(this->kernelImmData->getKernelInfo()->kernelAllocation->getGpuAddress());
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 uint32_t KernelImmutableData::getIsaSize() const {
     return static_cast<uint32_t>(isaGraphicsAllocation->getUnderlyingBufferSize());
 }

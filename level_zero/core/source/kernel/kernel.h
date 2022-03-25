@@ -106,6 +106,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     ~Kernel() override = default;
 
     virtual ze_result_t destroy() = 0;
+    virtual ze_result_t getBaseAddress(uint64_t *baseAddress) = 0;
     virtual ze_result_t setIndirectAccess(ze_kernel_indirect_access_flags_t flags) = 0;
     virtual ze_result_t getIndirectAccess(ze_kernel_indirect_access_flags_t *flags) = 0;
     virtual ze_result_t getSourceAttributes(uint32_t *pSize, char **pString) = 0;
