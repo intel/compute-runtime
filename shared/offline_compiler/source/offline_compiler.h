@@ -36,7 +36,7 @@ class OfflineCompiler {
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
-    int build();
+    MOCKABLE_VIRTUAL int build();
     std::string &getBuildLog();
     void printUsage();
     std::string getDevicesConfigs();

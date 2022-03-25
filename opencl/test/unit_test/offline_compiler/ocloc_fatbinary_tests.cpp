@@ -15,8 +15,14 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/hw_helper.h"
 
+#include "environment.h"
+#include "mock/mock_argument_helper.h"
+#include "mock/mock_offline_compiler.h"
+
 #include <algorithm>
 #include <unordered_set>
+
+extern Environment *gEnvironment;
 
 namespace NEO {
 
@@ -39,6 +45,15 @@ std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
     const auto cfg2 = argHelper->parseProductConfigFromValue(allEnabledDeviceConfigs[1].config);
 
     return cfg1 + "," + cfg2;
+}
+
+std::string getDeviceConfig(const OfflineCompiler &offlineCompiler) {
+    const auto &hwInfo = offlineCompiler.getHardwareInfo();
+
+    const std::string product = hardwarePrefix[hwInfo.platform.eProductFamily];
+    const auto stepping = hwInfo.platform.usRevId;
+
+    return product + "." + std::to_string(stepping);
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
@@ -1229,6 +1244,144 @@ TEST_F(OclocFatBinaryTest, GivenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     const auto expectedErrorMessage{"Error! Input file is not in supported generic IR format! "
                                     "Currently supported format is SPIR-V.\n"};
     EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbinaryForTargetThenNothingIsDoneAndErrorIsReturned) {
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    // We expect that nothing is done and error is returned.
+    // Therefore, if offline compiler is used, ensure that it just returns error code,
+    // which is different than expected one.
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+
+    const int previousReturnValue{OclocErrorCode::INVALID_FILE};
+    const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, buildResult);
+    EXPECT_EQ(0, mockOfflineCompiler.buildCalledCount);
+}
+
+TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatbinaryForTargetThenCompilationIsInvokedAndErrorLogIsPrinted) {
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::INVALID_FILE;
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+
+    ::testing::internal::CaptureStdout();
+    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, buildResult);
+    EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
+
+    std::string commandString{};
+    for (const auto &arg : argv) {
+        commandString += " ";
+        commandString += arg;
+    }
+
+    const std::string expectedOutput{
+        "Build failed for : " + deviceConfig + " with error code: -5151\n"
+                                               "Command was:" +
+        commandString + "\n"};
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(OclocFatBinaryHelpersTest, GivenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsPrinted) {
+    using namespace std::string_literals;
+
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const char buildWarning[] = "Warning: This is a build log!";
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+
+    // Dummy value
+    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+
+    ::testing::internal::CaptureStdout();
+    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
+
+    const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(OclocFatBinaryHelpersTest, GivenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
+    using namespace std::string_literals;
+
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-q",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    // Dummy value
+    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+
+    ::testing::internal::CaptureStdout();
+    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, buildResult);
+    EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
+
+    EXPECT_TRUE(output.empty()) << output;
 }
 
 } // namespace NEO

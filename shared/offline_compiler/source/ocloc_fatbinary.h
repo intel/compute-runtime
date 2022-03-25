@@ -47,7 +47,7 @@ std::vector<DeviceMapping> getProductConfigsForSpecificTargets(CompilerOptions::
 std::vector<ConstStringRef> getPlatformsForSpecificTargets(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper);
 std::vector<ConstStringRef> toProductNames(const std::vector<PRODUCT_FAMILY> &productIds);
 PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms);
-int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
+int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);
 int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper);
 std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv);

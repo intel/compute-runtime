@@ -309,7 +309,7 @@ std::vector<DeviceMapping> getTargetConfigsForFatbinary(ConstStringRef deviceArg
     return retVal;
 }
 
-int buildFatBinaryForTarget(int retVal, std::vector<std::string> argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
+int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig) {
     std::string product = hardwarePrefix[pCompiler->getHardwareInfo().platform.eProductFamily];
     auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
