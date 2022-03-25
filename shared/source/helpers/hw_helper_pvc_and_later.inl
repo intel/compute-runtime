@@ -42,6 +42,11 @@ bool HwHelperHw<Family>::isTimestampWaitSupported() const {
 }
 
 template <>
+bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
+    return true;
+}
+
+template <>
 uint32_t HwHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                                      const HardwareInfo &hwInfo, bool isEngineInstanced) const {
     if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {

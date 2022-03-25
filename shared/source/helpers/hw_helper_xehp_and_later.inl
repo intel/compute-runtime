@@ -61,6 +61,11 @@ bool HwHelperHw<GfxFamily>::isTimestampWaitSupported() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
 

@@ -81,6 +81,13 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 }
 
 template <typename GfxFamily>
+inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
+    if (this->isUpdateTagFromWaitEnabled()) {
+        this->waitForCompletionWithTimeout(WaitParams{false, false, 0}, this->peekTaskCount());
+    }
+}
+
+template <typename GfxFamily>
 SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->printDeviceIndex();
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
