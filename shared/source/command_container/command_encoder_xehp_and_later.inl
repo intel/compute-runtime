@@ -248,13 +248,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
         postSync.setDestinationAddress(args.eventAddress);
 
-        auto gmmHelper = args.device->getRootDeviceEnvironment().getGmmHelper();
-        if (MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo)) {
-            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
-        } else {
-            postSync.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
-        }
-
+        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment());
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
 
@@ -292,6 +286,23 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
+}
+
+template <typename Family>
+inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &postSyncData = walkerCmd.getPostSync();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo)) {
+        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    } else {
+        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    }
+
+    if (DebugManager.flags.OverridePostSyncMocs.get() != -1) {
+        postSyncData.setMocs(DebugManager.flags.OverridePostSyncMocs.get());
+    }
 }
 
 template <typename Family>

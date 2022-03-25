@@ -100,23 +100,13 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
 
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);
 
-    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
-        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
-    } else {
-        postSyncData.setMocs(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
-    }
+    EncodeDispatchKernel<GfxFamily>::setupPostSyncMocs(*walkerCmd, rootDeviceEnvironment);
 
     EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, hwInfo);
-
-    if (DebugManager.flags.OverridePostSyncMocs.get() != -1) {
-        postSyncData.setMocs(DebugManager.flags.OverridePostSyncMocs.get());
-    }
 
     if (DebugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
         postSyncData.setOperation(GfxFamily::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);

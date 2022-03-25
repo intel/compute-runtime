@@ -7,10 +7,12 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -132,5 +134,39 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
         } else {
             EXPECT_FALSE(buffer[0].getPreParserDisable());
         }
+    }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd{};
+    MockExecutionEnvironment executionEnvironment{};
+    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0]));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.initGmm();
+
+    {
+        WALKER_TYPE walkerCmd{};
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+
+        auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+        auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+
+        EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
+    }
+    {
+        DebugManagerStateRestore restorer{};
+        auto expectedMocs = 9u;
+        DebugManager.flags.OverridePostSyncMocs.set(expectedMocs);
+        WALKER_TYPE walkerCmd{};
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+        EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }
