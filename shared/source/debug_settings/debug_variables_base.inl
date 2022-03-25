@@ -284,6 +284,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableMonitorFence, -1, "Disabl
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmissionController, -1, "Enable direct submission terminating after given timeout, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionControllerTimeout, -1, "Set direct submission controller timeout, -1: default 5 ms, >=0: timeout in ms")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1, "Force local memory storage for command/ring/semaphore buffer, -1: default - for all engines, 0: disabled, 1: for multiOsContextCapable engine, 2: for all engines")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionRingBuffers wont be updated if ring is not runnning.")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

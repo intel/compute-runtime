@@ -155,7 +155,15 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (this->disableMonitorFence) {
         auto previousRingBuffer = this->currentRingBuffer == DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer ? DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::SecondBuffer : DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer;
         this->currentTagData.tagValue++;
-        this->completionRingBuffers[previousRingBuffer] = this->currentTagData.tagValue;
+
+        bool updateCompletionRingBuffers = this->ringStart;
+        if (DebugManager.flags.EnableRingSwitchTagUpdateWa.get() == 0) {
+            updateCompletionRingBuffers = true;
+        }
+
+        if (updateCompletionRingBuffers) {
+            this->completionRingBuffers[previousRingBuffer] = this->currentTagData.tagValue;
+        }
     }
 
     if (this->ringStart) {
