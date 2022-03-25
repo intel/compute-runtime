@@ -93,7 +93,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         EncodeSurfaceState<GfxFamily>::disableCompressionFlags(surfaceState);
     }
     appendSurfaceStateDepthParams(surfaceState, gmm);
-    EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer());
+    EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer(),
+                                                                this->plane);
     appendSurfaceStateParams(surfaceState, rootDeviceIndex, useGlobalAtomics);
     appendSurfaceStateExt(surfaceState);
 }

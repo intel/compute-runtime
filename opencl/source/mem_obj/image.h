@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -185,6 +185,8 @@ class Image : public MemObj {
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch, uint32_t rootDeviceIndex);
     void setMcsSurfaceInfo(const McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
+    void setPlane(const GMM_YUV_PLANE_ENUM plane) { this->plane = plane; }
+    GMM_YUV_PLANE_ENUM getPlane() const { return this->plane; }
     size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
     virtual void transformImage2dArrayTo3d(void *memory) = 0;
@@ -237,6 +239,7 @@ class Image : public MemObj {
     SurfaceOffsets surfaceOffsets = {0};
     uint32_t baseMipLevel = 0;
     uint32_t mipCount = 1;
+    GMM_YUV_PLANE_ENUM plane = GMM_NO_PLANE;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);

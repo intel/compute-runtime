@@ -410,6 +410,7 @@ Image *Image::create(Context *context,
             image->setQPitch(imgInfo.qPitch);
             image->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
             image->setMipCount(imgInfo.mipCount);
+            image->setPlane(imgInfo.plane);
             if (parentImage) {
                 image->setMediaPlaneType(static_cast<cl_uint>(imageDesc->image_depth));
                 image->setParentSharingHandler(parentImage->getSharingHandler());
@@ -516,6 +517,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     sharedImage->setCubeFaceIndex(cubeFaceIndex);
     sharedImage->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
     sharedImage->setMcsSurfaceInfo(mcsSurfaceInfo);
+    sharedImage->setPlane(imgInfo.plane);
     return sharedImage;
 }
 

@@ -6,9 +6,11 @@
  */
 
 #pragma once
+
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -269,7 +271,8 @@ struct EncodeSurfaceState {
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
-    static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper, bool imageFromBuffer);
+    static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
+                                             bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane);
     static void setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType);
     static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
     static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);

@@ -343,12 +343,53 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedImageWhenAppendingSu
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false);
+                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
 
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
+}
+
+HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedPlanarImageWhenAppendingSurfaceStateParamsForCompressionThenCorrectCompressionFormatIsSet, CompressionParamsSupportedMatcher) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE rss{};
+    platformsImpl->clear();
+    rss.setMemoryCompressionEnable(true);
+    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+
+    struct {
+        uint8_t returnedCompressionFormat;
+        uint8_t expectedCompressionFormat;
+        GMM_YUV_PLANE_ENUM plane;
+    } testInputs[] = {
+        // regular image
+        {0x0, 0x0, GMM_NO_PLANE},
+        {0xF, 0xF, GMM_NO_PLANE},
+        {0x10, 0x10, GMM_NO_PLANE},
+        {0x1F, 0x1F, GMM_NO_PLANE},
+        // luma plane
+        {0x0, 0x0, GMM_PLANE_Y},
+        {0xF, 0xF, GMM_PLANE_Y},
+        {0x10, 0x0, GMM_PLANE_Y},
+        {0x1F, 0xF, GMM_PLANE_Y},
+        // chroma plane
+        {0x0, 0x10, GMM_PLANE_U},
+        {0x0, 0x10, GMM_PLANE_V},
+        {0xF, 0x1F, GMM_PLANE_U},
+        {0xF, 0x1F, GMM_PLANE_V},
+        {0x10, 0x10, GMM_PLANE_U},
+        {0x10, 0x10, GMM_PLANE_V},
+        {0x1F, 0x1F, GMM_PLANE_U},
+        {0x1F, 0x1F, GMM_PLANE_V},
+    };
+
+    for (auto &testInput : testInputs) {
+        gmmClientContext->compressionFormatToReturn = testInput.returnedCompressionFormat;
+        EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
+                                                                     context->getDevice(0)->getGmmHelper(), false, testInput.plane);
+        EXPECT_EQ(testInput.expectedCompressionFormat, rss.getCompressionFormat());
+    }
 }
 
 HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, CompressionParamsSupportedMatcher) {
@@ -362,7 +403,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false);
+                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
@@ -382,7 +423,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
 
     EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, image->getMultiGraphicsAllocation().getDefaultGraphicsAllocation(),
-                                                                 context->getDevice(0)->getGmmHelper(), false);
+                                                                 context->getDevice(0)->getGmmHelper(), false, GMM_NO_PLANE);
 
     EXPECT_EQ(platform(), nullptr);
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
