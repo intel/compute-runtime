@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

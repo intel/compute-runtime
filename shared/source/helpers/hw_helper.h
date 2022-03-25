@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
@@ -27,7 +26,7 @@ namespace NEO {
 class GmmHelper;
 class GraphicsAllocation;
 class TagAllocatorBase;
-class LinearSteram;
+class LinearStream;
 class Gmm;
 struct AllocationData;
 struct AllocationProperties;

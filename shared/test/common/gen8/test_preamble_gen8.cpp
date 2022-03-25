@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gen8/reg_configs.h"

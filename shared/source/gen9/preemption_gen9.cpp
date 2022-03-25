@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
+#include "shared/source/helpers/register_offsets.h"
 
 #include <cstring>
 

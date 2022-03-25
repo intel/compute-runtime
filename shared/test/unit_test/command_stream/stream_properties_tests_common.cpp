@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/command_stream/stream_properties_tests_common.h"
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
