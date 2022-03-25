@@ -130,34 +130,6 @@ TEST_F(DeviceGetCapsTest,
     EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
 }
 
-TEST_F(DeviceGetCapsTest,
-       givenImplicitScalingTrueWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
-    DebugManagerStateRestore dbgRestorer;
-
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
-    pDevice->deviceBitfield = 15;
-
-    DebugManager.flags.EnableImplicitScaling.set(1);
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
-}
-
-TEST_F(DeviceGetCapsTest,
-       givenImplicitScalingFalseWhenInitializeCapsIsCalledThenMaxMemAllocSizeIsSetCorrectly) {
-    DebugManagerStateRestore dbgRestorer;
-
-    DebugManager.flags.CreateMultipleSubDevices.set(4);
-    pDevice->deviceBitfield = 15;
-
-    DebugManager.flags.EnableImplicitScaling.set(0);
-    DebugManager.flags.EnableWalkerPartition.set(1);
-    DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
-}
-
 TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
     DebugManagerStateRestore dbgRestorer;
     {
