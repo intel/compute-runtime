@@ -246,4 +246,8 @@ int IoctlHelperUpstream::setContextDebugFlag(Drm *drm, uint32_t drmContextId) {
     return 0;
 }
 
+bool IoctlHelperUpstream::isDebugAttachAvailable() {
+    return false;
+}
+
 } // namespace NEO

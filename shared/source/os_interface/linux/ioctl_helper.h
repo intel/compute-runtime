@@ -126,6 +126,7 @@ class IoctlHelper {
     virtual int unregisterUuid(Drm *drm, uint32_t handle) = 0;
     virtual bool isContextDebugSupported(Drm *drm) = 0;
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
+    virtual bool isDebugAttachAvailable() = 0;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -178,6 +179,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     int unregisterUuid(Drm *drm, uint32_t handle) override;
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
+    bool isDebugAttachAvailable() override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -243,6 +245,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int unregisterUuid(Drm *drm, uint32_t handle) override;
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
+    bool isDebugAttachAvailable() override;
 };
 
 } // namespace NEO

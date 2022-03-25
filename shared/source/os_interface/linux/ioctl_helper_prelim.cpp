@@ -550,4 +550,8 @@ int IoctlHelperPrelim20::setContextDebugFlag(Drm *drm, uint32_t drmContextId) {
     return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &ctxParam);
 }
 
+bool IoctlHelperPrelim20::isDebugAttachAvailable() {
+    return true;
+}
+
 } // namespace NEO

@@ -209,6 +209,15 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
     }
 }
 
+TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.allowDebugAttachCallBase = true;
+
+    EXPECT_TRUE(drm.isDebugAttachAvailable());
+}
+
 struct BufferObjectMock : public BufferObject {
     using BufferObject::BufferObject;
     using BufferObject::fillExecObject;

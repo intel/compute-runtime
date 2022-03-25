@@ -18,15 +18,6 @@
 
 using namespace NEO;
 
-TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.allowDebugAttachCallBase = true;
-
-    EXPECT_FALSE(drm.isDebugAttachAvailable());
-}
-
 using HwConfigTopologyQuery = ::testing::Test;
 
 HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnSubsliceIoctlQuery, MatchAny) {
@@ -58,6 +49,15 @@ HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOn
 
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
+}
+
+TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.allowDebugAttachCallBase = true;
+
+    EXPECT_FALSE(drm.isDebugAttachAvailable());
 }
 
 TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalse) {

@@ -891,6 +891,10 @@ bool Drm::sysmanQueryEngineInfo() {
     return Drm::queryEngineInfo(true);
 }
 
+bool Drm::isDebugAttachAvailable() {
+    return ioctlHelper->isDebugAttachAvailable();
+}
+
 int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
     std::string clockSysFsPath = sysFsPciPath + "/gt_max_freq_mhz";
