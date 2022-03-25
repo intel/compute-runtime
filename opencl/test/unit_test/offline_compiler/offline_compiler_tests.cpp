@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <array>
 #include <fstream>
+#include <string>
 
 extern Environment *gEnvironment;
 
@@ -351,6 +352,130 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
 
     EXPECT_STREQ(OfflineCompiler::queryHelp.data(), output.c_str());
     EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
+}
+
+TEST_F(OfflineCompilerTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
+    const std::array<std::string, 7> flagsToTest = {
+        "-file", "-output", "-device", "-options", "-internal_options", "-out_dir", "-revision_id"};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> argv = {
+            "ocloc",
+            "compile",
+            flag};
+
+        MockOfflineCompiler mockOfflineCompiler{};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+        const std::string expectedErrorMessage{"Invalid option (arg 2): " + flag + "\n"};
+        EXPECT_EQ(expectedErrorMessage, output);
+    }
+}
+
+TEST_F(OfflineCompilerTests, Given32BitModeFlagWhenParsingThenInternalOptionsContain32BitModeFlag) {
+    const std::array<std::string, 2> flagsToTest = {
+        "-32", CompilerOptions::arch32bit.str()};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> argv = {
+            "ocloc",
+            "compile",
+            "-file",
+            "test_files/copybuffer.cl",
+            flag,
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        MockOfflineCompiler mockOfflineCompiler{};
+
+        const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+        EXPECT_EQ(OclocErrorCode::SUCCESS, result);
+
+        const auto is32BitModeSet{mockOfflineCompiler.internalOptions.find(CompilerOptions::arch32bit.data()) != std::string::npos};
+        EXPECT_TRUE(is32BitModeSet);
+    }
+}
+
+TEST_F(OfflineCompilerTests, Given64BitModeFlagWhenParsingThenInternalOptionsContain64BitModeFlag) {
+    const std::array<std::string, 2> flagsToTest = {
+        "-64", CompilerOptions::arch64bit.str()};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> argv = {
+            "ocloc",
+            "compile",
+            "-file",
+            "test_files/copybuffer.cl",
+            flag,
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        MockOfflineCompiler mockOfflineCompiler{};
+
+        const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+        EXPECT_EQ(OclocErrorCode::SUCCESS, result);
+
+        const auto is64BitModeSet{mockOfflineCompiler.internalOptions.find(CompilerOptions::arch64bit.data()) != std::string::npos};
+        EXPECT_TRUE(is64BitModeSet);
+    }
+}
+
+TEST_F(OfflineCompilerTests, Given32BitModeFlagAnd64BitModeFlagWhenParsingThenErrorLogIsPrintedAndFailureIsReturned) {
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-32",
+        "-64",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_NE(OclocErrorCode::SUCCESS, result);
+
+    const auto maskedResult = result | OclocErrorCode::INVALID_COMMAND_LINE;
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, maskedResult);
+
+    const std::string expectedErrorMessage{"Error: Cannot compile for 32-bit and 64-bit, please choose one.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST_F(OfflineCompilerTests, GivenFlagStringWhenParsingThenInternalBooleanIsSetAndSuccessIsReturned) {
+    using namespace std::string_literals;
+
+    const std::array flagsToTest = {
+        std::pair{"-options_name"s, &MockOfflineCompiler::useOptionsSuffix},
+        std::pair{"-gen_file"s, &MockOfflineCompiler::useGenFile},
+        std::pair{"-llvm_bc"s, &MockOfflineCompiler::useLlvmBc}};
+
+    for (const auto &[flagString, memberBoolean] : flagsToTest) {
+        const std::vector<std::string> argv = {
+            "ocloc",
+            "compile",
+            "-file",
+            "test_files/copybuffer.cl",
+            flagString,
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        MockOfflineCompiler mockOfflineCompiler{};
+
+        const auto result = mockOfflineCompiler.parseCommandLine(argv.size(), argv);
+        EXPECT_EQ(OclocErrorCode::SUCCESS, result);
+
+        EXPECT_TRUE(mockOfflineCompiler.*memberBoolean);
+    }
 }
 
 TEST_F(OfflineCompilerTests, GivenArgsWhenQueryIsCalledThenSuccessIsReturned) {

@@ -48,6 +48,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::sourceCode;
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
+    using OfflineCompiler::useGenFile;
+    using OfflineCompiler::useLlvmBc;
     using OfflineCompiler::useLlvmText;
     using OfflineCompiler::useOptionsSuffix;
 
