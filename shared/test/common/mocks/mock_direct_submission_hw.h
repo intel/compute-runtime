@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::partitionedMode;
     using BaseClass::performDiagnosticMode;
     using BaseClass::postSyncOffset;
+    using BaseClass::reserved;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;
     using BaseClass::ringCommandStream;

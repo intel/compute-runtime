@@ -409,6 +409,16 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     cpuCachelineFlush(currentPosition, dispatchSize);
     handleResidency();
 
+    if (DebugManager.flags.DirectSubmissionReadBackCommandBuffer.get() == 1) {
+        volatile auto cmdBufferStart = reinterpret_cast<uint32_t *>(batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
+        reserved = *cmdBufferStart;
+    }
+
+    if (DebugManager.flags.DirectSubmissionReadBackRingBuffer.get() == 1) {
+        volatile auto ringBufferStart = reinterpret_cast<uint32_t *>(ringCommandStream.getSpace(0));
+        reserved = *ringBufferStart;
+    }
+
     //unblock GPU
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);

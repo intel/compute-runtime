@@ -153,6 +153,7 @@ class DirectSubmissionHw {
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
     uint32_t postSyncOffset = 0u;
+    uint32_t reserved = 0u;
 
     bool ringStart = false;
     bool disableCpuCacheFlush = true;
