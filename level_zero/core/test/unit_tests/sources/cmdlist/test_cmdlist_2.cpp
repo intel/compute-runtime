@@ -483,12 +483,20 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
 
     result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2u, events.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, nullptr, 2u, events.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    itor = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    itor = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     itor++;
     itor = find<SEMAPHORE_WAIT *>(itor, cmdList.end());

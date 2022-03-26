@@ -254,7 +254,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, numCommandLists, phCommandLists);
-        linearStreamSizeEstimate += estimateStateComputeModeCmdSizeForMultipleCommandLists(numCommandLists, phCommandLists);
 
         if (gsbaStateDirty) {
             linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
@@ -382,11 +381,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         if (!isCopyOnlyCommandQueue) {
-            auto &requiredStreamState = commandList->getRequiredStreamState();
-            streamProperties.stateComputeMode.setProperties(requiredStreamState.stateComputeMode);
-
             bool programVfe = frontEndStateDirty;
             if (isPatchingVfeStateAllowed) {
+                auto &requiredStreamState = commandList->getRequiredStreamState();
                 streamProperties.frontEndState.setProperties(requiredStreamState.frontEndState);
                 programVfe |= streamProperties.frontEndState.isDirty();
             }
@@ -395,14 +392,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                 programFrontEnd(scratchSpaceController->getScratchPatchAddress(), scratchSpaceController->getPerThreadScratchSpaceSize(), child);
                 frontEndStateDirty = false;
             }
-            if (streamProperties.stateComputeMode.isDirty()) {
-                NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
-                    child, streamProperties.stateComputeMode, {}, false, hwInfo, csr->isRcs());
-            }
 
-            auto &finalStreamState = commandList->getFinalStreamState();
-            streamProperties.stateComputeMode.setProperties(finalStreamState.stateComputeMode);
             if (isPatchingVfeStateAllowed) {
+                auto &finalStreamState = commandList->getFinalStreamState();
                 streamProperties.frontEndState.setProperties(finalStreamState.frontEndState);
             }
         }
@@ -536,31 +528,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
         }
         auto &finalStreamState = commandList->getFinalStreamState();
         streamPropertiesCopy.frontEndState.setProperties(finalStreamState.frontEndState);
-    }
-
-    return estimatedSize;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateStateComputeModeCmdSizeForMultipleCommandLists(
-    uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
-
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    size_t singleScmCmdSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(this->device->getHwInfo(), false, csr->isRcs());
-
-    auto streamPropertiesCopy = csr->getStreamProperties();
-    size_t estimatedSize = 0;
-
-    for (size_t i = 0; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto &requiredStreamState = commandList->getRequiredStreamState();
-        streamPropertiesCopy.stateComputeMode.setProperties(requiredStreamState.stateComputeMode);
-
-        if (streamPropertiesCopy.stateComputeMode.isDirty()) {
-            estimatedSize += singleScmCmdSize;
-        }
-        auto &finalStreamState = commandList->getFinalStreamState();
-        streamPropertiesCopy.stateComputeMode.setProperties(finalStreamState.stateComputeMode);
     }
 
     return estimatedSize;

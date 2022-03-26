@@ -2226,10 +2226,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);
-        requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), hwInfo);
         finalStreamState = requiredStreamState;
+        requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernel.getSchedulingHintExp(), hwInfo);
         containsAnyKernel = true;
-        return;
     }
 
     finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, disableOverdispatch, -1, hwInfo);

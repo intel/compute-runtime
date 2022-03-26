@@ -42,8 +42,6 @@ struct CommandQueueHw : public CommandQueueImp {
 
     MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool isFrontEndStateDirty, uint32_t numCommandLists,
                                                                            ze_command_list_handle_t *phCommandLists);
-    MOCKABLE_VIRTUAL size_t estimateStateComputeModeCmdSizeForMultipleCommandLists(uint32_t numCommandLists,
-                                                                                   ze_command_list_handle_t *phCommandLists);
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();
     void programPipelineSelect(NEO::LinearStream &commandStream);

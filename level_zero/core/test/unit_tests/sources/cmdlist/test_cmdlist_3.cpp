@@ -284,7 +284,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
+    EXPECT_EQ(7u, allPcCommands.size());
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsNotFound, PlatformSupport) {
@@ -331,7 +331,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(5u, allPcCommands.size());
+    EXPECT_EQ(6u, allPcCommands.size());
 
     context->freeMem(srcBuffer);
     context->freeMem(dstBuffer);
@@ -374,7 +374,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(5u, allPcCommands.size());
+    EXPECT_EQ(6u, allPcCommands.size());
 
     context->freeMem(dstBuffer);
 }
@@ -417,7 +417,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
+    EXPECT_EQ(7u, allPcCommands.size());
 
     context->freeMem(dstBuffer);
 }
@@ -460,7 +460,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(5u, allPcCommands.size());
+    EXPECT_EQ(6u, allPcCommands.size());
 
     context->freeMem(dstBuffer);
 }
@@ -506,7 +506,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(5u, allPcCommands.size());
+    EXPECT_EQ(6u, allPcCommands.size());
     auto cmd = genCmdCast<PIPE_CONTROL *>(*allPcCommands.back());
     EXPECT_TRUE(cmd->getDcFlushEnable());
 
@@ -552,6 +552,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     itor++;
     itor = find<PIPE_CONTROL *>(itor, cmdList.end());
