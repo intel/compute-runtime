@@ -84,9 +84,14 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
 
     ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
     for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
-        ASSERT_NE(commandList->commandContainer.getIndirectHeap(static_cast<NEO::HeapType>(i)), nullptr);
-        ++numAllocations;
-        ASSERT_NE(commandList->commandContainer.getIndirectHeapAllocation(static_cast<NEO::HeapType>(i)), nullptr);
+        auto heapType = static_cast<NEO::HeapType>(i);
+        if (NEO::HeapType::DYNAMIC_STATE == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
+            ASSERT_EQ(commandList->commandContainer.getIndirectHeap(heapType), nullptr);
+        } else {
+            ASSERT_NE(commandList->commandContainer.getIndirectHeap(heapType), nullptr);
+            ++numAllocations;
+            ASSERT_NE(commandList->commandContainer.getIndirectHeapAllocation(heapType), nullptr);
+        }
     }
 
     EXPECT_LT(0u, commandList->commandContainer.getCommandStream()->getAvailableSpace());

@@ -220,8 +220,8 @@ template <typename GfxFamily>
 class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
   public:
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const IndirectHeap &dsh, const IndirectHeap &ioh,
-                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              const IndirectHeap *dsh, const IndirectHeap *ioh,
+                              const IndirectHeap *ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }

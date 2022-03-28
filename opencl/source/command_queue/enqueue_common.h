@@ -827,9 +827,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     CompletionStamp completionStamp = getGpgpuCommandStreamReceiver().flushTask(
         commandStream,
         commandStreamStart,
-        *dsh,
-        *ioh,
-        getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+        dsh,
+        ioh,
+        &getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
         taskLevel,
         dispatchFlags,
         getDevice());
@@ -1035,9 +1035,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         completionStamp = getGpgpuCommandStreamReceiver().flushTask(
             *commandStream,
             commandStreamStart,
-            getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-            getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-            getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+            &getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+            &getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+            &getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
             taskLevel,
             dispatchFlags,
             getDevice());

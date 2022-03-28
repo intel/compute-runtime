@@ -157,9 +157,9 @@ template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
-    const IndirectHeap &dsh,
-    const IndirectHeap &ioh,
-    const IndirectHeap &ssh,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
     uint32_t taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {
@@ -272,7 +272,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool checkVfeStateDirty = false;
     if (requiredScratchSize || requiredPrivateScratchSize) {
-        scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
+        scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
                                                         0u,
                                                         requiredScratchSize,
                                                         requiredPrivateScratchSize,
@@ -337,10 +337,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (stallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
-
-    bool dshDirty = dshState.updateAndCheck(&dsh);
-    bool iohDirty = iohState.updateAndCheck(&ioh);
-    bool sshDirty = sshState.updateAndCheck(&ssh);
+    const bool hasDsh = hwInfo.capabilityTable.supportsImages;
+    bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
+    bool iohDirty = iohState.updateAndCheck(ioh);
+    bool sshDirty = sshState.updateAndCheck(ssh);
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
@@ -394,13 +394,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             &cmd,
-            &dsh,
-            &ioh,
-            &ssh,
+            dsh,
+            ioh,
+            ssh,
             newGSHbase,
             true,
             mocsIndex,
-            getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
+            getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
             instructionHeapBaseAddress,
             0,
             true,
@@ -419,7 +419,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         if (bindingTableBaseAddressRequired) {
-            StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, ssh, device.getGmmHelper());
+            StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, *ssh, device.getGmmHelper());
             bindingTableBaseAddressRequired = false;
         }
 
@@ -478,13 +478,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
         forcePipeControl(commandStreamCSR);
     }
+    if (hasDsh) {
+        auto dshAllocation = dsh->getGraphicsAllocation();
+        this->makeResident(*dshAllocation);
+        dshAllocation->setEvictable(false);
+    }
+    auto iohAllocation = ioh->getGraphicsAllocation();
+    auto sshAllocation = ssh->getGraphicsAllocation();
 
-    auto dshAllocation = dsh.getGraphicsAllocation();
-    auto iohAllocation = ioh.getGraphicsAllocation();
-    auto sshAllocation = ssh.getGraphicsAllocation();
-
-    this->makeResident(*dshAllocation);
-    dshAllocation->setEvictable(false);
     this->makeResident(*iohAllocation);
     this->makeResident(*sshAllocation);
     iohAllocation->setEvictable(false);
@@ -952,21 +953,22 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     uint64_t baseAddress,
     uint64_t commandOffset,
-    const LinearStream &dsh,
-    const LinearStream &ioh,
-    const LinearStream &ssh,
+    const LinearStream *dsh,
+    const LinearStream *ioh,
+    const LinearStream *ssh,
     uint64_t generalStateBase) {
 
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-
-    PatchInfoData dynamicStatePatchInfo = {dsh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    if constexpr (GfxFamily::supportsSampler) {
+        PatchInfoData dynamicStatePatchInfo = {dsh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+        flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
+    }
     PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::GeneralStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData surfaceStatePatchInfo = {ssh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData surfaceStatePatchInfo = {ssh->getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
 
-    flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
     flatBatchBufferHelper->setPatchInfoData(generalStatePatchInfo);
     flatBatchBufferHelper->setPatchInfoData(surfaceStatePatchInfo);
-    collectStateBaseAddresIohPatchInfo(baseAddress, commandOffset, ioh);
+    collectStateBaseAddresIohPatchInfo(baseAddress, commandOffset, *ioh);
 }
 
 template <typename GfxFamily>

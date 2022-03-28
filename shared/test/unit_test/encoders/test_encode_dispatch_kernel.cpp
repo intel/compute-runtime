@@ -1190,7 +1190,11 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessModeEnabledWhenD
     EXPECT_EQ(sshBefore, sshAfter);
 }
 
-HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchingKernelWithSamplerThenGlobalDshInResidnecyContainer) {
+HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchingKernelWithSamplerThenGlobalDshInResidencyContainer) {
+    bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+    if (!deviceUsesDsh) {
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto cmdContainer = std::make_unique<CommandContainer>();

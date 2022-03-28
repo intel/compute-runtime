@@ -986,18 +986,22 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
 
     for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);
+        if (NEO::HeapType::DYNAMIC_STATE == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
+            ASSERT_EQ(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
+            ASSERT_EQ(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
+        } else {
+            ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
+            ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeapAllocation(heapType));
+            ASSERT_EQ(commandListControl->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize(),
+                      commandList->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize());
 
-        ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
-        ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeapAllocation(heapType));
-        ASSERT_EQ(commandListControl->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize(),
-                  commandList->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize());
+            ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
+            ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeap(heapType));
+            ASSERT_EQ(commandListControl->commandContainer.getIndirectHeap(heapType)->getUsed(),
+                      commandList->commandContainer.getIndirectHeap(heapType)->getUsed());
 
-        ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
-        ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeap(heapType));
-        ASSERT_EQ(commandListControl->commandContainer.getIndirectHeap(heapType)->getUsed(),
-                  commandList->commandContainer.getIndirectHeap(heapType)->getUsed());
-
-        ASSERT_EQ(commandListControl->commandContainer.isHeapDirty(heapType), commandList->commandContainer.isHeapDirty(heapType));
+            ASSERT_EQ(commandListControl->commandContainer.isHeapDirty(heapType), commandList->commandContainer.isHeapDirty(heapType));
+        }
     }
 
     GenCmdList cmdList;

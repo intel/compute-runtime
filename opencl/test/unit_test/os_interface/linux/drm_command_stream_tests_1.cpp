@@ -483,7 +483,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *device);
 
     //make sure command buffer is recorded
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
@@ -549,7 +549,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
     dispatchFlags.guardCommandBufferWithPipeControl = true;
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();

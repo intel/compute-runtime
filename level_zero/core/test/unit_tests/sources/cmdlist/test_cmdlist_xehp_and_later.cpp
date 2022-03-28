@@ -59,14 +59,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
 
-    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if constexpr (FamilyType::supportsSampler) {
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(cmdSba->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
+    }
+
     auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-
-    EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
-    EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
-    EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
-
     EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
 
@@ -124,15 +128,17 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     ASSERT_NE(cmdList.end(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
-
-    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if constexpr (FamilyType::supportsSampler) {
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(cmdSba->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
+    }
     auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-
-    EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
-    EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
-    EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
-
     EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
 

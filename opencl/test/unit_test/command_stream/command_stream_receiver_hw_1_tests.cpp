@@ -61,9 +61,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
 
         csr.flushTask(commandStream,
                       0,
-                      heap,
-                      heap,
-                      heap,
+                      &heap,
+                      &heap,
+                      &heap,
                       0,
                       dispatchFlags,
                       mockDevice->getDevice());

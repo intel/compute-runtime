@@ -87,6 +87,9 @@ ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusable
             if (NEO::ApiSpecificConfig::getBindlessConfiguration() && i != IndirectHeap::Type::INDIRECT_OBJECT) {
                 continue;
             }
+            if (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == i) {
+                continue;
+            }
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
                                                                        alignedSize,

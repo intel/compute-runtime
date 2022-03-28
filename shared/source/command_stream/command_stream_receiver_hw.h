@@ -43,7 +43,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
+                              const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
@@ -83,9 +83,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,
         uint64_t commandOffset,
-        const LinearStream &dsh,
-        const LinearStream &ioh,
-        const LinearStream &ssh,
+        const LinearStream *dsh,
+        const LinearStream *ioh,
+        const LinearStream *ssh,
         uint64_t generalStateBase);
 
     void collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh);

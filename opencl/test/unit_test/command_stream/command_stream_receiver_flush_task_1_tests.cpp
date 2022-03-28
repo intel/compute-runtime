@@ -143,9 +143,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
 
     mockCsr.flushTask(commandStream,
                       0,
-                      dsh,
-                      ioh,
-                      ssh,
+                      &dsh,
+                      &ioh,
+                      &ssh,
                       taskLevel,
                       dispatchFlags,
                       *pDevice);
@@ -160,9 +160,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIoh
 
     mockCsr.flushTask(commandStream,
                       0,
-                      dsh,
-                      ioh,
-                      ssh,
+                      &dsh,
+                      &ioh,
+                      &ssh,
                       taskLevel,
                       dispatchFlags,
                       *pDevice);
@@ -193,9 +193,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 
     mockCsr.flushTask(commandStream,
                       0,
-                      dsh,
-                      ioh,
-                      ssh,
+                      &dsh,
+                      &ioh,
+                      &ssh,
                       taskLevel,
                       dispatchFlags,
                       *pDevice);
@@ -226,9 +226,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -266,9 +266,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushThenCommandBufferAlreadyH
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -532,8 +532,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenCompletionStam
 HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenStateBaseAddressIsCorrect) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
-
-    EXPECT_FALSE(commandStreamReceiver.dshState.updateAndCheck(&dsh));
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        EXPECT_TRUE(commandStreamReceiver.dshState.updateAndCheck(&dsh));
+    } else {
+        EXPECT_FALSE(commandStreamReceiver.dshState.updateAndCheck(&dsh));
+    }
     EXPECT_FALSE(commandStreamReceiver.iohState.updateAndCheck(&ioh));
     EXPECT_FALSE(commandStreamReceiver.sshState.updateAndCheck(&ssh));
 }
@@ -831,6 +834,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenSizeChangedWhenFlushingTaskTh
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
+    bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+    if (!deviceUsesDsh) {
+        GTEST_SKIP();
+    }
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     configureCSRtoNonDirtyState<FamilyType>(false);
 
@@ -1029,9 +1036,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
     commandStreamReceiver.flushTask(
         commandStream,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         flushTaskFlags,
         *mockDevice);
@@ -1126,9 +1133,9 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
     commandStreamReceiver.flushTask(
         commandStream,
         0,
-        linear,
-        linear,
-        linear,
+        &linear,
+        &linear,
+        &linear,
         1,
         dispatchFlags,
         *pDevice);
@@ -1174,9 +1181,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWh
     commandStreamReceiver->flushTask(
         commandStreamTask,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         dispatchFlags,
         *pDevice);
@@ -1218,9 +1225,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWh
     commandStreamReceiver.flushTask(
         commandStreamTask,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         dispatchFlags,
         *pDevice);
@@ -1308,9 +1315,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -1335,9 +1342,9 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
 
     mockCsr.flushTask(commandStream,
                       0,
-                      dsh,
-                      ioh,
-                      ssh,
+                      &dsh,
+                      &ioh,
+                      &ssh,
                       taskLevel,
                       dispatchFlags,
                       *pDevice);
@@ -1360,9 +1367,9 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
             MemoryCompressionState lastMemoryCompressionState = mockCsr.lastMemoryCompressionState;
             mockCsr.flushTask(commandStream,
                               0,
-                              dsh,
-                              ioh,
-                              ssh,
+                              &dsh,
+                              &ioh,
+                              &ssh,
                               taskLevel,
                               dispatchFlags,
                               *pDevice);
@@ -1374,9 +1381,9 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
             mockCsr.lastMemoryCompressionState = memoryCompressionState;
             mockCsr.flushTask(commandStream,
                               0,
-                              dsh,
-                              ioh,
-                              ssh,
+                              &dsh,
+                              &ioh,
+                              &ssh,
                               taskLevel,
                               dispatchFlags,
                               *pDevice);

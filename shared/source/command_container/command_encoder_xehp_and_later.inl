@@ -121,29 +121,30 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, args.preemptionMode);
 
-    auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-    UNRECOVERABLE_IF(!heap);
-
-    uint32_t samplerStateOffset = 0;
-    uint32_t samplerCount = 0;
-
-    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
-        samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-        samplerStateOffset = EncodeStates<Family>::copySamplerState(
-            heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
-            kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
-            args.dispatchInterface->getDynamicStateHeapData(),
-            args.device->getBindlessHeapsHelper(), hwInfo);
-        if (ApiSpecificConfig::getBindlessConfiguration()) {
-            container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
-        }
-    }
-
     if constexpr (Family::supportsSampler) {
-        idd.setSamplerStatePointer(samplerStateOffset);
-    }
+        auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        UNRECOVERABLE_IF(!heap);
 
-    EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
+        uint32_t samplerStateOffset = 0;
+        uint32_t samplerCount = 0;
+
+        if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
+            samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+            samplerStateOffset = EncodeStates<Family>::copySamplerState(
+                heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
+                kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
+                args.dispatchInterface->getDynamicStateHeapData(),
+                args.device->getBindlessHeapsHelper(), hwInfo);
+            if (ApiSpecificConfig::getBindlessConfiguration()) {
+                container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
+            }
+        }
+
+        idd.setSamplerStatePointer(samplerStateOffset);
+        EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, samplerCount, bindingTableStateCount);
+    } else {
+        EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(idd, 0u, bindingTableStateCount);
+    }
 
     uint64_t offsetThreadData = 0u;
     const uint32_t inlineDataSize = sizeof(INLINE_DATA);

@@ -78,33 +78,36 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.outOfOrderExecutionAllowed = true;
 
-    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
+    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 10 : 9;
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        --expectedCallsCount;
+    }
 
     size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -143,9 +146,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -167,13 +170,16 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhen
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        --expectedCallsCount;
+    }
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -210,18 +216,26 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    constexpr uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    uint32_t expectedCallsCount = TestTraits<gfxCoreFamily>::iohInSbaSupported ? 4 : 3;
+    auto dshPatchIndex = 0u;
+    auto gshPatchIndex = 1u;
+    auto sshPatchIndex = 2u;
+    auto iohPatchIndex = 3u;
+    const bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+    if (!deviceUsesDsh) {
+        --expectedCallsCount;
+        gshPatchIndex = 0u;
+        sshPatchIndex = 1u;
+        iohPatchIndex = 2u;
+    }
 
     uint64_t baseAddress = 0xabcdef;
     uint64_t commandOffset = 0xa;
     uint64_t generalStateBase = 0xff;
 
-    mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, dsh, ioh, ssh, generalStateBase);
+    mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, &dsh, &ioh, &ssh, generalStateBase);
 
     ASSERT_EQ(mockHelper->patchInfoDataVector.size(), expectedCallsCount);
-    PatchInfoData dshPatch = mockHelper->patchInfoDataVector[0];
-    PatchInfoData gshPatch = mockHelper->patchInfoDataVector[1];
-    PatchInfoData sshPatch = mockHelper->patchInfoDataVector[2];
 
     for (auto &patch : mockHelper->patchInfoDataVector) {
         EXPECT_EQ(patch.targetAllocation, baseAddress);
@@ -229,22 +243,27 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     }
 
     //DSH
-    EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGraphicsAllocation()->getGpuAddress());
-    EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
+    if (deviceUsesDsh) {
+        PatchInfoData dshPatch = mockHelper->patchInfoDataVector[dshPatchIndex];
+        EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGraphicsAllocation()->getGpuAddress());
+        EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
+    }
 
     if constexpr (TestTraits<gfxCoreFamily>::iohInSbaSupported) {
         //IOH
-        PatchInfoData iohPatch = mockHelper->patchInfoDataVector[3];
+        PatchInfoData iohPatch = mockHelper->patchInfoDataVector[iohPatchIndex];
 
         EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
         EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
     }
 
     //SSH
+    PatchInfoData sshPatch = mockHelper->patchInfoDataVector[sshPatchIndex];
     EXPECT_EQ(sshPatch.sourceAllocation, ssh.getGraphicsAllocation()->getGpuAddress());
     EXPECT_EQ(sshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET);
 
     //GSH
+    PatchInfoData gshPatch = mockHelper->patchInfoDataVector[gshPatchIndex];
     EXPECT_EQ(gshPatch.sourceAllocation, generalStateBase);
     EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET);
 

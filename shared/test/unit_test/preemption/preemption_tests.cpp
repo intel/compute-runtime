@@ -326,9 +326,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
 
         csr.flushTask(commandStream,
                       0,
-                      *heap.get(),
-                      *heap.get(),
-                      *heap.get(),
+                      heap.get(),
+                      heap.get(),
+                      heap.get(),
                       0,
                       dispatchFlags,
                       *mockDevice);
@@ -376,9 +376,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionT
 
         csr.flushTask(commandStream,
                       0,
-                      *heap.get(),
-                      *heap.get(),
-                      *heap.get(),
+                      heap.get(),
+                      heap.get(),
+                      heap.get(),
                       0,
                       dispatchFlags,
                       *mockDevice);

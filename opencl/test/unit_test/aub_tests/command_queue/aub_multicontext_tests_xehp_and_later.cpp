@@ -386,9 +386,9 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
         dispatchFlags.guardCommandBufferWithPipeControl = true;
 
         rootCsr->flushTask(stream, 0,
-                           rootCsr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                           rootCsr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                           rootCsr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                           &rootCsr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+                           &rootCsr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+                           &rootCsr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
                            0u, dispatchFlags, rootDevice->getDevice());
 
         rootCsr->flushBatchedSubmissions();

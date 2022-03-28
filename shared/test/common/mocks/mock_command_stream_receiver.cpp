@@ -16,9 +16,9 @@ SubmissionStatus MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, Resi
 CompletionStamp MockCommandStreamReceiver::flushTask(
     LinearStream &commandStream,
     size_t commandStreamStart,
-    const IndirectHeap &dsh,
-    const IndirectHeap &ioh,
-    const IndirectHeap &ssh,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
     uint32_t taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {

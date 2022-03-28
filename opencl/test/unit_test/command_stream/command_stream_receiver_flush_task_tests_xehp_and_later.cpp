@@ -71,7 +71,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
 
     auto offset = commandStreamReceiver.getCS(0).getUsed();
     // make SBA dirty (using ioh as dsh and dsh as ioh just to force SBA reprogramming)
-    commandStreamReceiver.flushTask(commandStream, 0, ioh, dsh, ssh, taskLevel, flushTaskFlags, *pDevice);
+    commandStreamReceiver.flushTask(commandStream, 0, &ioh, &dsh, &ssh, taskLevel, flushTaskFlags, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
@@ -238,9 +238,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramExtendedP
     commandStreamReceiver.flushTask(
         commandStream,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         flushTaskFlags,
         *mockDevice);
@@ -677,9 +677,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Gi
     commandStreamReceiver->flushTask(
         commandStreamTask,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         dispatchFlags,
         *pDevice);
@@ -715,9 +715,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -744,9 +744,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -785,9 +785,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     mockCsr->flushTask(commandStream,
                        4,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -803,6 +803,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     //preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
 
@@ -865,9 +866,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     commandStreamReceiver.storeMakeResidentAllocations = true;
     commandStreamReceiver.flushTask(commandStream,
                                     0,
-                                    dsh,
-                                    ioh,
-                                    ssh,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
                                     taskLevel,
                                     dispatchFlags,
                                     *pDevice);

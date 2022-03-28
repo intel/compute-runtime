@@ -106,13 +106,16 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectA
     for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
         HeapType heapType = static_cast<HeapType>(i);
         auto heap = cmdContainer.getIndirectHeap(heapType);
-
-        if (HeapType::INDIRECT_OBJECT == heapType) {
-            EXPECT_EQ(AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
-            EXPECT_NE(0u, heap->getHeapGpuStartOffset());
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+            EXPECT_EQ(heap, nullptr);
         } else {
-            EXPECT_EQ(AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
-            EXPECT_EQ(0u, heap->getHeapGpuStartOffset());
+            if (HeapType::INDIRECT_OBJECT == heapType) {
+                EXPECT_EQ(AllocationType::INTERNAL_HEAP, heap->getGraphicsAllocation()->getAllocationType());
+                EXPECT_NE(0u, heap->getHeapGpuStartOffset());
+            } else {
+                EXPECT_EQ(AllocationType::LINEAR_STREAM, heap->getGraphicsAllocation()->getAllocationType());
+                EXPECT_EQ(0u, heap->getHeapGpuStartOffset());
+            }
         }
     }
 }
@@ -128,9 +131,14 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
     EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
 
     for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
-        auto indirectHeap = cmdContainer.getIndirectHeap(static_cast<HeapType>(i));
-        auto heapAllocation = cmdContainer.getIndirectHeapAllocation(static_cast<HeapType>(i));
-        EXPECT_EQ(indirectHeap->getGraphicsAllocation(), heapAllocation);
+        auto heapType = static_cast<HeapType>(i);
+        auto indirectHeap = cmdContainer.getIndirectHeap(heapType);
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+            EXPECT_EQ(indirectHeap, nullptr);
+        } else {
+            auto heapAllocation = cmdContainer.getIndirectHeapAllocation(heapType);
+            EXPECT_EQ(indirectHeap->getGraphicsAllocation(), heapAllocation);
+        }
     }
 
     EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
@@ -247,12 +255,17 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocat
 TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThenHeapAllocationsAreReused) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true);
-    auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::DYNAMIC_STATE)->getUnderlyingBuffer();
+    auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::SURFACE_STATE)->getUnderlyingBuffer();
     cmdContainer.reset(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true);
-    bool status = false;
+    bool status = true;
     for (uint32_t i = 0; i < HeapType::NUM_TYPES && !status; i++) {
-        status = cmdContainer->getIndirectHeapAllocation(static_cast<HeapType>(i))->getUnderlyingBuffer() == heapAllocationsAddress;
+        auto heapType = static_cast<HeapType>(i);
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+            status = status && cmdContainer->getIndirectHeapAllocation(heapType) == nullptr;
+        } else {
+            status = status && cmdContainer->getIndirectHeapAllocation(heapType)->getUnderlyingBuffer() == heapAllocationsAddress;
+        }
     }
     EXPECT_TRUE(status);
 }
@@ -336,30 +349,34 @@ TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAl
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    HeapType types[] = {HeapType::SURFACE_STATE,
-                        HeapType::DYNAMIC_STATE};
+    HeapType heapTypes[] = {HeapType::SURFACE_STATE,
+                            HeapType::DYNAMIC_STATE};
 
-    for (auto type : types) {
-        auto heapAllocation = cmdContainer->getIndirectHeapAllocation(type);
-        auto heap = cmdContainer->getIndirectHeap(type);
+    for (auto heapType : heapTypes) {
+        auto heapAllocation = cmdContainer->getIndirectHeapAllocation(heapType);
+        auto heap = cmdContainer->getIndirectHeap(heapType);
 
-        const size_t sizeRequested = 32;
-        const size_t alignment = 32;
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+            EXPECT_EQ(heap, nullptr);
+        } else {
+            const size_t sizeRequested = 32;
+            const size_t alignment = 32;
 
-        EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
-        auto sizeBefore = heap->getUsed();
+            EXPECT_GE(heap->getAvailableSpace(), sizeRequested + alignment);
+            auto sizeBefore = heap->getUsed();
 
-        auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(type, sizeRequested, alignment);
-        auto newAllocation = heapRequested->getGraphicsAllocation();
+            auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(heapType, sizeRequested, alignment);
+            auto newAllocation = heapRequested->getGraphicsAllocation();
 
-        EXPECT_EQ(heap, heapRequested);
-        EXPECT_EQ(heapAllocation, newAllocation);
+            EXPECT_EQ(heap, heapRequested);
+            EXPECT_EQ(heapAllocation, newAllocation);
 
-        EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
-        EXPECT_FALSE(cmdContainer->isHeapDirty(type));
+            EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+            EXPECT_FALSE(cmdContainer->isHeapDirty(heapType));
 
-        auto sizeAfter = heapRequested->getUsed();
-        EXPECT_EQ(sizeBefore, sizeAfter);
+            auto sizeAfter = heapRequested->getUsed();
+            EXPECT_EQ(sizeBefore, sizeAfter);
+        }
     }
 }
 
@@ -415,29 +432,33 @@ TEST_F(CommandContainerTest, givenNotEnoughSpaceWhenGetHeapWithRequiredSizeAndAl
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
     cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
-    HeapType types[] = {HeapType::SURFACE_STATE,
-                        HeapType::DYNAMIC_STATE};
+    HeapType heapTypes[] = {HeapType::SURFACE_STATE,
+                            HeapType::DYNAMIC_STATE};
 
-    for (auto type : types) {
-        auto heapAllocation = cmdContainer->getIndirectHeapAllocation(type);
-        auto heap = cmdContainer->getIndirectHeap(type);
+    for (auto heapType : heapTypes) {
+        auto heapAllocation = cmdContainer->getIndirectHeapAllocation(heapType);
+        auto heap = cmdContainer->getIndirectHeap(heapType);
 
-        const size_t sizeRequested = 32;
-        const size_t alignment = 32;
-        size_t availableSize = heap->getAvailableSpace();
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+            EXPECT_EQ(heap, nullptr);
+        } else {
+            const size_t sizeRequested = 32;
+            const size_t alignment = 32;
+            size_t availableSize = heap->getAvailableSpace();
 
-        heap->getSpace(availableSize - sizeRequested / 2);
+            heap->getSpace(availableSize - sizeRequested / 2);
 
-        EXPECT_LT(heap->getAvailableSpace(), sizeRequested + alignment);
+            EXPECT_LT(heap->getAvailableSpace(), sizeRequested + alignment);
 
-        auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(type, sizeRequested, alignment);
-        auto newAllocation = heapRequested->getGraphicsAllocation();
+            auto heapRequested = cmdContainer->getHeapWithRequiredSizeAndAlignment(heapType, sizeRequested, alignment);
+            auto newAllocation = heapRequested->getGraphicsAllocation();
 
-        EXPECT_EQ(heap, heapRequested);
-        EXPECT_NE(heapAllocation, newAllocation);
+            EXPECT_EQ(heap, heapRequested);
+            EXPECT_NE(heapAllocation, newAllocation);
 
-        EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
-        EXPECT_TRUE(cmdContainer->isHeapDirty(type));
+            EXPECT_TRUE((reinterpret_cast<size_t>(heapRequested->getSpace(0)) & (alignment - 1)) == 0);
+            EXPECT_TRUE(cmdContainer->isHeapDirty(heapType));
+        }
     }
     for (auto deallocation : cmdContainer->getDeallocationContainer()) {
         cmdContainer->getDevice()->getMemoryManager()->freeGraphicsMemory(deallocation);
@@ -549,40 +570,49 @@ INSTANTIATE_TEST_CASE_P(
         IndirectHeap::Type::SURFACE_STATE));
 
 TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetAllowHeapGrowCalledThenHeapIsReturned) {
-    HeapType heap = GetParam();
+    HeapType heapType = GetParam();
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true);
-    auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
-    size_t size = 5000;
-    void *ptr = cmdContainer.getHeapSpaceAllowGrow(heap, size);
-    ASSERT_NE(nullptr, ptr);
 
-    auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
-    ASSERT_EQ(usedSpaceBefore + size, usedSpaceAfter);
+    cmdContainer.initialize(pDevice, nullptr, true);
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        EXPECT_EQ(cmdContainer.getIndirectHeap(heapType), nullptr);
+    } else {
+        auto usedSpaceBefore = cmdContainer.getIndirectHeap(heapType)->getUsed();
+        size_t size = 5000;
+        void *ptr = cmdContainer.getHeapSpaceAllowGrow(heapType, size);
+        ASSERT_NE(nullptr, ptr);
+
+        auto usedSpaceAfter = cmdContainer.getIndirectHeap(heapType)->getUsed();
+        ASSERT_EQ(usedSpaceBefore + size, usedSpaceAfter);
+    }
 }
 
 TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSizeThenBiggerHeapIsReturned) {
-    HeapType heap = GetParam();
+    HeapType heapType = GetParam();
 
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true);
     cmdContainer.setDirtyStateForAllHeaps(false);
+    auto heap = cmdContainer.getIndirectHeap(heapType);
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        EXPECT_EQ(heap, nullptr);
+    } else {
+        auto usedSpaceBefore = heap->getUsed();
+        auto availableSizeBefore = heap->getAvailableSpace();
 
-    auto usedSpaceBefore = cmdContainer.getIndirectHeap(heap)->getUsed();
-    auto availableSizeBefore = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
+        void *ptr = cmdContainer.getHeapSpaceAllowGrow(heapType, availableSizeBefore + 1);
+        ASSERT_NE(nullptr, ptr);
 
-    void *ptr = cmdContainer.getHeapSpaceAllowGrow(heap, availableSizeBefore + 1);
-    ASSERT_NE(nullptr, ptr);
-
-    auto usedSpaceAfter = cmdContainer.getIndirectHeap(heap)->getUsed();
-    auto availableSizeAfter = cmdContainer.getIndirectHeap(heap)->getAvailableSpace();
-    EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
-    EXPECT_EQ(!cmdContainer.isHeapDirty(heap), heap == IndirectHeap::Type::INDIRECT_OBJECT);
+        auto usedSpaceAfter = heap->getUsed();
+        auto availableSizeAfter = heap->getAvailableSpace();
+        EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
+        EXPECT_EQ(!cmdContainer.isHeapDirty(heapType), heapType == IndirectHeap::Type::INDIRECT_OBJECT);
+    }
 }
 
 TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHeapsAreCreatedWithCorrectRootDeviceIndex) {
-    HeapType heap = GetParam();
+    HeapType heapType = GetParam();
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     const size_t numDevices = 2;
@@ -595,13 +625,19 @@ TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHe
 
     CommandContainer cmdContainer0;
     cmdContainer0.initialize(device0.get(), nullptr, true);
-    uint32_t heapRootDeviceIndex0 = cmdContainer0.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
-    EXPECT_EQ(device0->getRootDeviceIndex(), heapRootDeviceIndex0);
 
     CommandContainer cmdContainer1;
     cmdContainer1.initialize(device1.get(), nullptr, true);
-    uint32_t heapRootDeviceIndex1 = cmdContainer1.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
-    EXPECT_EQ(device1->getRootDeviceIndex(), heapRootDeviceIndex1);
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages && HeapType::DYNAMIC_STATE == heapType) {
+        EXPECT_EQ(cmdContainer0.getIndirectHeap(heapType), nullptr);
+        EXPECT_EQ(cmdContainer1.getIndirectHeap(heapType), nullptr);
+    } else {
+        uint32_t heapRootDeviceIndex0 = cmdContainer0.getIndirectHeap(heapType)->getGraphicsAllocation()->getRootDeviceIndex();
+        EXPECT_EQ(device0->getRootDeviceIndex(), heapRootDeviceIndex0);
+
+        uint32_t heapRootDeviceIndex1 = cmdContainer1.getIndirectHeap(heapType)->getGraphicsAllocation()->getRootDeviceIndex();
+        EXPECT_EQ(device1->getRootDeviceIndex(), heapRootDeviceIndex1);
+    }
 }
 
 TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenCmdBufferAllocationIsCreatedWithCorrectRootDeviceIndex) {

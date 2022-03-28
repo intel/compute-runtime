@@ -880,7 +880,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
 
-    csr->flushTask(cs, 0u, dsh, ioh, ssh, 0u, dispatchFlags, *device);
+    csr->flushTask(cs, 0u, &dsh, &ioh, &ssh, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();
@@ -891,6 +891,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     csr->flushBatchedSubmissions();
 
     csrSurfaceCount += csr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount -= device->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     EXPECT_EQ(1u, wddm->submitResult.called);
@@ -1043,7 +1044,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
+    mockWddmCsr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *device);
 
     for (auto engine : memoryManager->getRegisteredEngines()) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());

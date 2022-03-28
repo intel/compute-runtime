@@ -120,9 +120,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenTaskCsPassedAsCommandStreamPa
     auto cs = commandStreamReceiver.flushTask(
         commandStreamTask,
         0,
-        dsh,
-        ioh,
-        ssh,
+        &dsh,
+        &ioh,
+        &ssh,
         taskLevel,
         dispatchFlags,
         *pDevice);
@@ -1084,7 +1084,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenPreambleSe
 
     commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
                                                                           flushTaskFlags.threadArbitrationPolicy, *defaultHwInfo);
-    commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, flushTaskFlags, *pDevice);
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
@@ -1228,9 +1228,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -1257,9 +1257,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
 
     mockCsr->flushTask(commandStream,
                        0,
-                       dsh,
-                       ioh,
-                       ssh,
+                       &dsh,
+                       &ioh,
+                       &ssh,
                        taskLevel,
                        dispatchFlags,
                        *pDevice);
@@ -1427,19 +1427,19 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFlus
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *pDevice);
 
     EXPECT_TRUE(csr->pageTableManagerInitialized);
     EXPECT_FALSE(csr2->pageTableManagerInitialized);
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *pDevice);
 
     EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
     EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterParamsPassed.size());
     EXPECT_EQ(csr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
 
     pDevice->resetCommandStreamReceiver(csr2);
-    csr2->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    csr2->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *pDevice);
     EXPECT_TRUE(csr2->pageTableManagerInitialized);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -1597,11 +1597,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenInit
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *pDevice);
 
     EXPECT_FALSE(csr->pageTableManagerInitialized);
 
-    csr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *pDevice);
+    csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *pDevice);
 
     EXPECT_FALSE(csr->pageTableManagerInitialized);
     memoryManager->freeGraphicsMemory(graphicsAllocation);

@@ -649,9 +649,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     mockCsr.flushTask(commandStream,
                       0,
-                      dsh,
-                      ioh,
-                      ssh,
+                      &dsh,
+                      &ioh,
+                      &ssh,
                       taskLevel,
                       dispatchFlags,
                       *device);

@@ -165,7 +165,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
             getCsrHw<FamilyType>()->streamProperties.stateComputeMode.threadArbitrationPolicy.value = -1;
         }
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
     auto findCmd = [&](bool expectToBeProgrammed) {

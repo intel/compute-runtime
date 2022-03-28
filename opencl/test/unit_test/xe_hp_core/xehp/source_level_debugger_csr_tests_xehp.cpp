@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,9 @@ XEHPTEST_F(CommandStreamReceiverWithActiveDebuggerXehpTest, GivenASteppingAndAct
 
     mockCsr->flushTask(commandStream,
                        0,
-                       *heap.get(),
-                       *heap.get(),
-                       *heap.get(),
+                       heap.get(),
+                       heap.get(),
+                       heap.get(),
                        0,
                        dispatchFlags,
                        neoDevice);
@@ -66,9 +66,9 @@ XEHPTEST_F(CommandStreamReceiverWithActiveDebuggerXehpTest, GivenASteppingAndAct
 
     mockCsr->flushTask(commandStream,
                        0,
-                       *heap.get(),
-                       *heap.get(),
-                       *heap.get(),
+                       heap.get(),
+                       heap.get(),
+                       heap.get(),
                        0,
                        dispatchFlags,
                        neoDevice);

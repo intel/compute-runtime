@@ -215,7 +215,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithoutSharedHandles
     auto flushTask = [&](bool coherencyRequired) {
         flags.requiresCoherency = coherencyRequired;
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
     auto findCmd = [&](bool expectToBeProgrammed, bool expectCoherent) {
@@ -274,7 +274,7 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyRequirementWithSharedHandlesWhe
         makeResidentSharedAlloc();
 
         startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
     auto flushTaskAndFindCmds = [&](bool expectCoherent, bool areCommandsProgrammed) {
@@ -319,11 +319,11 @@ HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyU
     IndirectHeap stream(graphicAlloc);
 
     makeResidentSharedAlloc();
-    csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
     auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
 
-    csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
 
     HardwareParse hwParser;

@@ -24,6 +24,10 @@ using namespace NEO;
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateThenIndirectStatePointerIsCorrect) {
+    bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+    if (!deviceUsesDsh) {
+        GTEST_SKIP();
+    }
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     SAMPLER_STATE samplerState;
@@ -37,6 +41,10 @@ HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateTh
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenDebugVariableSetWhenCopyingSamplerStateThenSetLowQualityFilterMode, IsAtLeastGen12lp) {
+    bool deviceUsesDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+    if (!deviceUsesDsh) {
+        GTEST_SKIP();
+    }
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     DebugManagerStateRestore restore;
@@ -301,7 +309,11 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetSta
     auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
     auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
-    EXPECT_EQ(dsh->getHeapGpuBase(), pCmd->getDynamicStateBaseAddress());
+    if constexpr (FamilyType::supportsSampler) {
+        EXPECT_EQ(dsh->getHeapGpuBase(), pCmd->getDynamicStateBaseAddress());
+    } else {
+        EXPECT_EQ(dsh, nullptr);
+    }
     EXPECT_EQ(ssh->getHeapGpuBase(), pCmd->getSurfaceStateBaseAddress());
 
     EXPECT_EQ(sba.getDynamicStateBaseAddress(), pCmd->getDynamicStateBaseAddress());
@@ -332,8 +344,11 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenSetStateBaseAddressCa
     ASSERT_NE(itorCmd, commands.end());
 
     auto cmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
-
-    EXPECT_NE(dsh->getHeapGpuBase(), cmd->getDynamicStateBaseAddress());
+    if constexpr (FamilyType::supportsSampler) {
+        EXPECT_NE(dsh->getHeapGpuBase(), cmd->getDynamicStateBaseAddress());
+    } else {
+        EXPECT_EQ(dsh, nullptr);
+    }
     EXPECT_NE(ssh->getHeapGpuBase(), cmd->getSurfaceStateBaseAddress());
 }
 

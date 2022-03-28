@@ -212,7 +212,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     auto flushTask = [&](bool coherencyRequired) {
         flags.requiresCoherency = coherencyRequired;
         startOffset = csr->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
     auto findCmd = [&](bool expectToBeProgrammed, bool expectCoherent, bool expectPipeControl) {
@@ -266,7 +266,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenSharedHandlesWhenFlushTaskCalle
         makeResidentSharedAlloc();
 
         startOffset = csr->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+        csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
     auto flushTaskAndFindCmds = [&](bool expectCoherent, bool valueChanged) {
@@ -302,12 +302,12 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenFlushWithoutSharedHandlesWhenPr
     IndirectHeap stream(graphicAlloc);
 
     makeResidentSharedAlloc();
-    csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     EXPECT_TRUE(csr->getCsrRequestFlags()->hasSharedHandles);
     auto startOffset = csr->commandStream.getUsed();
 
     csr->streamProperties.stateComputeMode.isCoherencyRequired.set(true);
-    csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     EXPECT_TRUE(csr->getCsrRequestFlags()->hasSharedHandles);
 
     HardwareParse hwParser;

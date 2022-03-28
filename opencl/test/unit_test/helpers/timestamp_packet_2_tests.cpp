@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,9 +52,9 @@ class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> 
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
-        const IndirectHeap &dsh,
-        const IndirectHeap &ioh,
-        const IndirectHeap &ssh,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
         uint32_t taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {

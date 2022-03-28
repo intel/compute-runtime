@@ -100,9 +100,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPi
     auto cmdSizeForAllCommands = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
     commandStreamReceiver.flushTask(commandStream,
                                     0,
-                                    dsh,
-                                    ioh,
-                                    ssh,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
                                     taskLevel,
                                     dispatchFlags,
                                     *pDevice);
@@ -131,9 +131,9 @@ HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPi
 
     commandStreamReceiver.flushTask(commandStream,
                                     0,
-                                    dsh,
-                                    ioh,
-                                    ssh,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
                                     taskLevel,
                                     dispatchFlags,
                                     *pDevice);

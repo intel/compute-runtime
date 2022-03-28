@@ -90,9 +90,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
-        const IndirectHeap &dsh,
-        const IndirectHeap &ioh,
-        const IndirectHeap &ssh,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
         uint32_t taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override;
@@ -251,8 +251,8 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const IndirectHeap &dsh, const IndirectHeap &ioh,
-                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              const IndirectHeap *dsh, const IndirectHeap *ioh,
+                              const IndirectHeap *ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
 
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));

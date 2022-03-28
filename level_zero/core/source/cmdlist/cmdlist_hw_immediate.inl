@@ -105,9 +105,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
     auto completionStamp = this->csr->flushTask(
         *commandStream,
         commandStreamStart,
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE)),
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT)),
-        *(this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE)),
+        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE),
+        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT),
+        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE),
         this->csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));

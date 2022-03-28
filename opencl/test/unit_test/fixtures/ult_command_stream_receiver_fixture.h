@@ -94,9 +94,9 @@ struct UltCommandStreamReceiverTest
         return commandStreamReceiver.flushTask(
             commandStream,
             startOffset,
-            dsh,
-            ioh,
-            ssh,
+            &dsh,
+            &ioh,
+            &ssh,
             taskLevel,
             flushTaskFlags,
             *pDevice);
