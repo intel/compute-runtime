@@ -17,6 +17,7 @@
 #include <map>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 #include <vector>
 
 #define ROOT_DEVICE 0xFFFFFFFF
@@ -43,6 +44,222 @@ struct Device {
     Device(uint32_t inDeviceIndex, uint32_t inSubDeviceIndex) {
         deviceIndex = inDeviceIndex;
         subDeviceIndex = inSubDeviceIndex;
+    }
+};
+
+/////////////
+/// Workload
+/////////////
+struct Workload {
+    virtual ~Workload() = default;
+    virtual void initialize(ze_context_handle_t &context, ze_device_handle_t &device) = 0;
+    virtual bool run(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &commandQueue,
+                     ze_command_list_handle_t &commandList) = 0;
+    virtual bool validate() = 0;
+    virtual void finalize(ze_context_handle_t &context, ze_device_handle_t &device) = 0;
+};
+
+///////////////////////////////////////////////////////////
+/// AppendMemoryCopyFromHeapToDeviceAndBackToHost Workload
+///////////////////////////////////////////////////////////
+struct AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
+
+    static constexpr size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
+    char *heapBuffer1 = nullptr;
+    char *heapBuffer2 = nullptr;
+    void *zeBuffer = nullptr;
+
+    void initialize(ze_context_handle_t &context, ze_device_handle_t &device) override {
+        heapBuffer1 = new char[allocSize];
+        heapBuffer2 = new char[allocSize];
+        for (size_t i = 0; i < allocSize; ++i) {
+            heapBuffer1[i] = static_cast<char>(i + 1);
+        }
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+        deviceDesc.ordinal = 0;
+        deviceDesc.flags = 0;
+        deviceDesc.pNext = nullptr;
+
+        VALIDATECALL(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+    }
+
+    bool run(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &commandQueue,
+             ze_command_list_handle_t &commandList) override {
+
+        // Counter to increase complexity of the workload
+        int32_t repeatCount = 3;
+
+        while (repeatCount-- > 0) {
+            // Copy from heap to device-allocated memory
+            VALIDATECALL(zeCommandListAppendMemoryCopy(commandList, zeBuffer, heapBuffer1, allocSize,
+                                                       nullptr, 0, nullptr));
+            VALIDATECALL(zeCommandListAppendBarrier(commandList, nullptr, 0, nullptr));
+            // Copy from device-allocated memory to heap2
+            VALIDATECALL(zeCommandListAppendMemoryCopy(commandList, heapBuffer2, zeBuffer, allocSize,
+                                                       nullptr, 0, nullptr));
+        }
+        return true;
+    }
+
+    bool validate() override {
+        // Validate heap and ze buffers have the original data from heapBuffer1
+        return (0 == memcmp(heapBuffer1, heapBuffer2, allocSize));
+    }
+
+    void finalize(ze_context_handle_t &context, ze_device_handle_t &device) override {
+
+        VALIDATECALL(zeMemFree(context, zeBuffer));
+        delete[] heapBuffer1;
+        delete[] heapBuffer2;
+    }
+};
+
+////////////////////////////////
+/// CopyBufferToBuffer Workload
+////////////////////////////////
+struct CopyBufferToBuffer : public Workload {
+
+    const uint32_t allocationSize = 4096;
+    void *sourceBuffer = nullptr;
+    void *destinationBuffer = nullptr;
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+    bool executeFromSpirv = false;
+
+    void initialize(ze_context_handle_t &context, ze_device_handle_t &device) override {
+
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+        deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+        deviceDesc.ordinal = 0;
+
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        hostDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+        VALIDATECALL(zeMemAllocShared(context, &deviceDesc, &hostDesc,
+                                      allocationSize, 1, device,
+                                      &sourceBuffer));
+        VALIDATECALL(zeMemAllocShared(context, &deviceDesc, &hostDesc,
+                                      allocationSize, 1, device,
+                                      &destinationBuffer));
+
+        // Initialize memory
+        memset(sourceBuffer, 55, allocationSize);
+        memset(destinationBuffer, 0, allocationSize);
+
+        std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
+
+        if (file.is_open()) {
+            file.seekg(0, file.end);
+            auto length = file.tellg();
+            file.seekg(0, file.beg);
+
+            std::cout << "Using copy_buffer_to_buffer.spv" << std::endl;
+
+            std::unique_ptr<char[]> spirvInput(new char[length]);
+            file.read(spirvInput.get(), length);
+
+            ze_module_desc_t moduleDesc = {};
+            ze_module_build_log_handle_t buildlog;
+            moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+            moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
+            moduleDesc.inputSize = length;
+            moduleDesc.pBuildFlags = "";
+
+            if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
+                size_t szLog = 0;
+                zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
+
+                char *strLog = (char *)malloc(szLog);
+                zeModuleBuildLogGetString(buildlog, &szLog, strLog);
+                std::cout << "Build log:" << strLog << std::endl;
+
+                free(strLog);
+            }
+            VALIDATECALL(zeModuleBuildLogDestroy(buildlog));
+
+            ze_kernel_desc_t kernelDesc = {};
+            kernelDesc.pKernelName = "CopyBufferToBufferBytes";
+            VALIDATECALL(zeKernelCreate(module, &kernelDesc, &kernel));
+            file.close();
+            executeFromSpirv = true;
+        }
+    }
+
+    bool run(ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &commandQueue,
+             ze_command_list_handle_t &commandList) override {
+
+        if (executeFromSpirv) {
+            uint32_t groupSizeX = 32u;
+            uint32_t groupSizeY = 1u;
+            uint32_t groupSizeZ = 1u;
+            VALIDATECALL(zeKernelSuggestGroupSize(kernel, allocationSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+            VALIDATECALL(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+            uint32_t offset = 0;
+            VALIDATECALL(zeKernelSetArgumentValue(kernel, 1, sizeof(destinationBuffer), &destinationBuffer));
+            VALIDATECALL(zeKernelSetArgumentValue(kernel, 0, sizeof(sourceBuffer), &sourceBuffer));
+            VALIDATECALL(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
+            VALIDATECALL(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
+            VALIDATECALL(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+
+            ze_group_count_t dispatchTraits;
+            dispatchTraits.groupCountX = allocationSize / groupSizeX;
+            dispatchTraits.groupCountY = 1u;
+            dispatchTraits.groupCountZ = 1u;
+
+            VALIDATECALL(zeCommandListAppendLaunchKernel(commandList, kernel, &dispatchTraits,
+                                                         nullptr, 0, nullptr));
+        } else {
+
+            std::cout << "Using zeCommandListAppendMemoryCopy" << std::endl;
+
+            VALIDATECALL(zeCommandListAppendMemoryCopy(commandList, destinationBuffer, sourceBuffer, allocationSize, nullptr, 0, nullptr));
+        }
+
+        return true;
+    }
+
+    bool validate() override {
+
+        // Validate.
+        const bool outputValidationSuccessful = (memcmp(destinationBuffer, sourceBuffer, allocationSize) == 0);
+
+        if (!outputValidationSuccessful) {
+            // Validate
+            uint8_t *srcCharBuffer = static_cast<uint8_t *>(sourceBuffer);
+            uint8_t *dstCharBuffer = static_cast<uint8_t *>(destinationBuffer);
+            for (size_t i = 0; i < allocationSize; i++) {
+                if (srcCharBuffer[i] != dstCharBuffer[i]) {
+                    std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                              << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+                    break;
+                }
+            }
+        }
+
+        std::cout << "\nResults validation "
+                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
+                  << std::endl;
+
+        return outputValidationSuccessful;
+    }
+
+    void finalize(ze_context_handle_t &context, ze_device_handle_t &device) override {
+
+        VALIDATECALL(zeMemFree(context, sourceBuffer));
+        VALIDATECALL(zeMemFree(context, destinationBuffer));
+
+        if (kernel) {
+            zeKernelDestroy(kernel);
+            kernel = nullptr;
+        }
+
+        if (module) {
+            zeModuleDestroy(module);
+            module = nullptr;
+        }
     }
 };
 
@@ -102,9 +319,7 @@ struct Sample {
     ///////////////////////////
     /// Workload
     ///////////////////////////
-    uint32_t allocationSize = 4096;
-    void *sourceBuffer = nullptr;
-    void *destinationBuffer = nullptr;
+    std::unique_ptr<Workload> workload = nullptr;
 
     ///////////////////////////
     /// Options
@@ -118,18 +333,26 @@ struct Sample {
     ///////////////////////////
     Sample(Device inDevice,
            bool useMetrics,
+           std::unique_ptr<Workload> inWorkload,
            int32_t argc,
            char *argv[])
         : device(inDevice) {
         wait(argc, argv);
         enableMetrics(useMetrics);
         create();
+        if (inWorkload == nullptr) {
+            workload = std::make_unique<CopyBufferToBuffer>();
+        } else {
+            workload = std::move(inWorkload);
+        }
+        workload->initialize(contextHandle, deviceHandle);
     }
 
     ///////////////////////////
     /// Sample destructor
     ///////////////////////////
     ~Sample() {
+        workload->finalize(contextHandle, deviceHandle);
         destroy();
     }
 
@@ -208,10 +431,10 @@ struct Sample {
         validateResults();
     }
 
-    ///////////////////////////
-    /// executeStreamWorkload
-    ///////////////////////////
-    void executeStreamWorkload() {
+    ////////////////////////////////////
+    /// executeStreamWorkloadWithMarker
+    ////////////////////////////////////
+    void executeStreamWorkloadWithMarker() {
 
         // Create metric stream instance.
         createMetricStream();
@@ -245,6 +468,29 @@ struct Sample {
         obtainCalculatedMetrics();
     }
 
+    ////////////////////////////////////
+    /// executeStreamWorkload
+    ////////////////////////////////////
+    void executeStreamWorkload(bool skipValidation = false, bool waitBeforeStatusQuery = false) {
+
+        // Create metric stream instance.
+        createMetricStream();
+
+        // Execute a test workload that will be measured by metric stream.
+        executeWorkload();
+
+        // Execute command list.
+        exectuteCommandList(waitBeforeStatusQuery);
+
+        // Validate output data.
+        if (!skipValidation) {
+            validateResults();
+        }
+
+        // Obtain raw stream metrics.
+        obtainRawStreamMetrics();
+    }
+
     ///////////////////////////
     /// executeQueryWorkload
     ///////////////////////////
@@ -275,6 +521,11 @@ struct Sample {
 
         // Obtain final stream metrics.
         obtainCalculatedMetrics();
+    }
+
+    std::vector<uint8_t> &getRawData(uint32_t &rawDataSize) {
+        rawDataSize = static_cast<uint32_t>(this->rawDataSize);
+        return rawData;
     }
 
   private:
@@ -326,9 +577,6 @@ struct Sample {
             VALIDATECALL(zetMetricQueryPoolDestroy(queryPoolHandle));
         }
         // Destroy notification event.
-        VALIDATECALL(zeMemFree(contextHandle, sourceBuffer));
-        VALIDATECALL(zeMemFree(contextHandle, destinationBuffer));
-
         VALIDATECALL(zeEventDestroy(notificationEvent));
         VALIDATECALL(zeEventPoolDestroy(eventPool));
 
@@ -494,24 +742,6 @@ struct Sample {
     /// createResources
     ///////////////////////////
     void createResources() {
-
-        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-        deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-        deviceDesc.ordinal = 0;
-
-        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        hostDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-
-        VALIDATECALL(zeMemAllocShared(contextHandle, &deviceDesc, &hostDesc,
-                                      allocationSize, 1, deviceHandle,
-                                      &sourceBuffer));
-        VALIDATECALL(zeMemAllocShared(contextHandle, &deviceDesc, &hostDesc,
-                                      allocationSize, 1, deviceHandle,
-                                      &destinationBuffer));
-
-        // Initialize memory
-        memset(sourceBuffer, 55, allocationSize);
-        memset(destinationBuffer, 0, allocationSize);
     }
 
     ///////////////////////////
@@ -537,78 +767,13 @@ struct Sample {
     /// executeWorkload
     ///////////////////////////
     void executeWorkload() {
-
-        std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
-
-        if (file.is_open()) {
-            file.seekg(0, file.end);
-            auto length = file.tellg();
-            file.seekg(0, file.beg);
-
-            std::cout << "Using copy_buffer_to_buffer.spv" << std::endl;
-
-            std::unique_ptr<char[]> spirvInput(new char[length]);
-            file.read(spirvInput.get(), length);
-
-            ze_module_desc_t moduleDesc = {};
-            ze_module_build_log_handle_t buildlog;
-            moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-            moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
-            moduleDesc.inputSize = length;
-            moduleDesc.pBuildFlags = "";
-
-            ze_module_handle_t module = nullptr;
-            ze_kernel_handle_t kernel = nullptr;
-
-            if (zeModuleCreate(contextHandle, deviceHandle, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
-                size_t szLog = 0;
-                zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
-
-                char *strLog = (char *)malloc(szLog);
-                zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-                std::cout << "Build log:" << strLog << std::endl;
-
-                free(strLog);
-            }
-            VALIDATECALL(zeModuleBuildLogDestroy(buildlog));
-
-            ze_kernel_desc_t kernelDesc = {};
-            kernelDesc.pKernelName = "CopyBufferToBufferBytes";
-            VALIDATECALL(zeKernelCreate(module, &kernelDesc, &kernel));
-
-            uint32_t groupSizeX = 32u;
-            uint32_t groupSizeY = 1u;
-            uint32_t groupSizeZ = 1u;
-            VALIDATECALL(zeKernelSuggestGroupSize(kernel, allocationSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
-            VALIDATECALL(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
-
-            uint32_t offset = 0;
-            VALIDATECALL(zeKernelSetArgumentValue(kernel, 1, sizeof(destinationBuffer), &destinationBuffer));
-            VALIDATECALL(zeKernelSetArgumentValue(kernel, 0, sizeof(sourceBuffer), &sourceBuffer));
-            VALIDATECALL(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
-            VALIDATECALL(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
-            VALIDATECALL(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
-
-            ze_group_count_t dispatchTraits;
-            dispatchTraits.groupCountX = allocationSize / groupSizeX;
-            dispatchTraits.groupCountY = 1u;
-            dispatchTraits.groupCountZ = 1u;
-
-            VALIDATECALL(zeCommandListAppendLaunchKernel(commandList, kernel, &dispatchTraits,
-                                                         nullptr, 0, nullptr));
-            file.close();
-        } else {
-
-            std::cout << "Using zeCommandListAppendMemoryCopy" << std::endl;
-
-            VALIDATECALL(zeCommandListAppendMemoryCopy(commandList, destinationBuffer, sourceBuffer, allocationSize, nullptr, 0, nullptr));
-        }
+        workload->run(contextHandle, deviceHandle, commandQueue, commandList);
     }
 
     //////////////////////////
     /// exectuteCommandList
     ///////////////////////////
-    void exectuteCommandList() {
+    void exectuteCommandList(bool waitBeforeStatusQuery = false) {
 
         // Close command list.
         VALIDATECALL(zeCommandListClose(commandList));
@@ -619,6 +784,10 @@ struct Sample {
         // If using async command queue, explicit sync must be used for correctness.
         VALIDATECALL(zeCommandQueueSynchronize(commandQueue, std::numeric_limits<uint32_t>::max()));
 
+        if (waitBeforeStatusQuery) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
         // Check if notification event meets zet_metric_group_properties_t::notifyEveryNReports requirments.
         const bool notificationOccured = zeEventQueryStatus(notificationEvent) == ZE_RESULT_SUCCESS;
         std::cout << "Requested report count ready to read:  " << (notificationOccured ? "true" : "false") << std::endl;
@@ -628,28 +797,10 @@ struct Sample {
     /// validateResults
     ///////////////////////////
     void validateResults() {
-
-        // Validate.
-        const bool outputValidationSuccessful = (memcmp(destinationBuffer, sourceBuffer, allocationSize) == 0);
-
-        if (!outputValidationSuccessful) {
-            // Validate
-            uint8_t *srcCharBuffer = static_cast<uint8_t *>(sourceBuffer);
-            uint8_t *dstCharBuffer = static_cast<uint8_t *>(destinationBuffer);
-            for (size_t i = 0; i < allocationSize; i++) {
-                if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                    std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                              << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                    break;
-                }
-            }
+        if (!workload->validate()) {
+            std::cout << "Result Validation Failed !!"
+                      << "\n";
         }
-
-        std::cout << "\nResults validation "
-                  << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-
-        VALIDATECALL(outputValidationSuccessful ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN)
     }
 
     ///////////////////////////
@@ -967,7 +1118,7 @@ bool sample(int argc, char *argv[]) {
     std::cout << std::endl
               << "-==== No metric: device " << 0 << " ====-" << std::endl;
 
-    Sample sample({0, 0}, false, argc, argv);
+    Sample sample({0, 0}, false, nullptr, argc, argv);
 
     sample.executeOnlyWorkload();
 
@@ -983,7 +1134,7 @@ bool query(int argc, char *argv[], std::vector<Device> devices, std::vector<std:
 
     // Create samples for each device.
     for (uint32_t i = 0; i < devices.size(); ++i) {
-        samples.push_back(new Sample(devices[i], true, argc, argv));
+        samples.push_back(new Sample(devices[i], true, std::make_unique<CopyBufferToBuffer>(), argc, argv));
     }
 
     // Activate metric sets.
@@ -1109,7 +1260,7 @@ bool stream(int argc, char *argv[], std::vector<Device> devices, std::vector<std
 
     // Create samples for each device.
     for (uint32_t i = 0; i < devices.size(); ++i) {
-        samples.push_back(new Sample(devices[i], true, argc, argv));
+        samples.push_back(new Sample(devices[i], true, std::make_unique<CopyBufferToBuffer>(), argc, argv));
     }
 
     // Activate metric sets.
@@ -1119,7 +1270,7 @@ bool stream(int argc, char *argv[], std::vector<Device> devices, std::vector<std
 
     // Execute workload.
     for (uint32_t i = 0; i < devices.size(); ++i) {
-        samples[i]->executeStreamWorkload();
+        samples[i]->executeStreamWorkloadWithMarker();
     }
 
     // Deactivate metric sets.
@@ -1226,6 +1377,96 @@ bool stream_device_0_1(int argc, char *argv[]) {
     return true;
 }
 
+void processIpSamplingRawData(Sample *sample) {
+
+    uint32_t readSize = 0;
+    std::vector<uint8_t> rawData = sample->getRawData(readSize);
+    uint8_t *buf = rawData.data();
+    struct prelim_drm_i915_stall_cntr_info {
+        uint16_t subslice;
+        uint16_t flags;
+/* EU stall data line dropped due to memory buffer being full */
+#define PRELIM_I915_EUSTALL_FLAG_OVERFLOW_DROP (1 << 8)
+    };
+    struct prelim_drm_i915_stall_cntr_info info;
+
+    uint32_t no_samples = 0;
+
+    for (uint32_t i = 0; i < readSize; i += 64, no_samples++) {
+        /*
+            * Bits		Field
+            * 0  to 28	IP (addr)
+            * 29 to 36	active count
+            * 37 to 44	other count
+            * 45 to 52	control count
+            * 53 to 60	pipestall count
+            * 61 to 68	send count
+            * 69 to 76	dist_acc count
+            * 77 to 84	sbid count
+            * 85 to 92	sync count
+            * 93 to 100	inst_fetch count
+            */
+        uint8_t *sample_addr = buf + i;
+        uint32_t addr;
+        uint16_t temp_count;
+        memcpy(&addr, sample_addr, sizeof(addr));
+        std::cout << std::hex << "0x" << (addr & 0x1fffffff) << " : ";
+
+        uint8_t *count_addr = sample_addr + 3;
+        uint8_t count[9];
+        for (uint32_t j = 0; j < 9; j++) {
+            memcpy(&temp_count, count_addr, sizeof(temp_count));
+            count[j] = ((temp_count >> 5) & 0xff);
+            std::cout << std::dec << static_cast<unsigned>(count[j]) << ", ";
+            count_addr = count_addr + 1;
+        }
+        uint8_t *info_addr = sample_addr + 48;
+        memcpy(&info, info_addr, sizeof(info));
+        std::cout << "ss: " << std::dec << static_cast<unsigned>(info.subslice) << ", f: 0x" << std::hex << info.flags << "\n";
+    }
+}
+
+/////////////////////////////////////////////
+/// stream_ip_sampling_device_0_sub_device_0
+/////////////////////////////////////////////
+bool stream_ip_sampling_device_0_sub_device_0(int argc, char *argv[]) {
+
+    std::cout << std::endl
+              << "-==== Metric stream Ip Sampling: device 0 / sub_device 0 ====-" << std::endl;
+
+    std::vector<Sample *> samples;
+    std::vector<Device> devices = {
+        Device(0, 0)};
+
+    // Create samples for each device.
+    for (uint32_t i = 0; i < devices.size(); ++i) {
+        samples.push_back(new Sample(devices[i], true, std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(), argc, argv));
+    }
+
+    // Activate metric sets.
+    for (uint32_t i = 0; i < devices.size(); ++i) {
+        samples[i]->activateMetrics("EuStallSampling", ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
+    }
+
+    // Execute workload.
+    for (uint32_t i = 0; i < devices.size(); ++i) {
+        samples[i]->executeStreamWorkload(true, true);
+        processIpSamplingRawData(samples[i]);
+    }
+
+    // Deactivate metric sets.
+    for (uint32_t i = 0; i < devices.size(); ++i) {
+        samples[i]->deactivateMetrics();
+    }
+
+    // Destroy samples.
+    for (uint32_t i = 0; i < devices.size(); ++i) {
+        delete samples[i];
+    }
+
+    return true;
+}
+
 /////////////////////////////
 ///// main
 /////////////////////////////
@@ -1253,6 +1494,7 @@ int main(int argc, char *argv[]) {
     tests["stream_device_1"] = stream_device_1;
     tests["stream_device_1_sub_device_1"] = stream_device_1_sub_device_1;
     tests["stream_device_0_1"] = stream_device_0_1;
+    tests["stream_ip_sampling_device_0_sub_device_0"] = stream_ip_sampling_device_0_sub_device_0;
 
     // Run test.
     for (auto &test : tests) {
