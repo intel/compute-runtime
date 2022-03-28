@@ -1042,6 +1042,18 @@ TEST(GetDeviceInfoTest, givenPciBusInfoIsNotAvailableWhenGettingPciBusInfoForDev
     ASSERT_EQ(retVal, CL_INVALID_VALUE);
 }
 
+TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuid) {
+    std::array<uint8_t, HwInfoConfig::uuidSize> generateDeviceUuid, deviceUuidKHR;
+    size_t retSize = 0;
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto retVal = device->getDeviceInfo(CL_DEVICE_UUID_KHR, sizeof(deviceUuidKHR), &deviceUuidKHR, &retSize);
+    ASSERT_EQ(retVal, CL_SUCCESS);
+
+    device.get()->getDevice().generateUuid(generateDeviceUuid);
+    EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
+}
+
 struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();

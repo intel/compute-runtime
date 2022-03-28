@@ -68,6 +68,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     size_t value = 0u;
     ClDeviceInfoParam param{};
     const void *src = nullptr;
+    std::array<uint8_t, HwInfoConfig::uuidSize> deviceUuid;
 
     // clang-format off
     // please keep alphabetical order
@@ -292,6 +293,12 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
             retSize = srcSize = sizeof(deviceInfo.pciBusInfo);
         }
         break;
+    case CL_DEVICE_UUID_KHR: {
+        device.generateUuid(deviceUuid);
+        src = &deviceUuid;
+        retSize = srcSize = sizeof(deviceUuid);
+        break;
+    }
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;

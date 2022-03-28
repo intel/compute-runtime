@@ -86,6 +86,19 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsA
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
 }
 
+TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
+    std::array<uint8_t, HwInfoConfig::uuidSize> uuid, expectedUuid;
+    pDevice->generateUuid(uuid);
+    uint32_t rootDeviceIndex = pDevice->getRootDeviceIndex();
+
+    expectedUuid.fill(0);
+    memcpy_s(&expectedUuid[0], sizeof(uint32_t), &pDevice->getDeviceInfo().vendorId, sizeof(pDevice->getDeviceInfo().vendorId));
+    memcpy_s(&expectedUuid[4], sizeof(uint32_t), &pDevice->getHardwareInfo().platform.usDeviceID, sizeof(pDevice->getHardwareInfo().platform.usDeviceID));
+    memcpy_s(&expectedUuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, HwInfoConfig::uuidSize), 0);
+}
+
 using DeviceGetCapsTest = Test<DeviceFixture>;
 
 TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledThenMaxParameterSizeIsSetCorrectly) {
