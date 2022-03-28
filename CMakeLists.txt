@@ -618,6 +618,7 @@ else()
   endif()
   check_cxx_compiler_flag(-msse4.2 COMPILER_SUPPORTS_SSE42)
   check_cxx_compiler_flag(-mavx2 COMPILER_SUPPORTS_AVX2)
+  check_cxx_compiler_flag(-march=armv8-a+simd COMPILER_SUPPORTS_NEON)
 endif()
 
 if(NOT MSVC)

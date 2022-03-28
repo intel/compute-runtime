@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ struct CpuInfo {
     static const uint64_t featureHle = 0x000200000ULL;
     static const uint64_t featureRtm = 0x000400000ULL;
     static const uint64_t featureAvX2 = 0x000800000ULL;
+    static const uint64_t featureNeon = 0x001000000ULL;
     static const uint64_t featureKncni = 0x004000000ULL;
     static const uint64_t featureAvX512F = 0x008000000ULL;
     static const uint64_t featureAdx = 0x010000000ULL;

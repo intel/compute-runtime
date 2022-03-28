@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/local_id_gen_special.inl"
+#include "shared/source/utilities/cpu_info.h"
 
 namespace NEO {
 
 struct uint16x8_t;
+struct uint16x16_t;
 
 // This is the initial value of SIMD for local ID
 // computation.  It correlates to the SIMD lane.
@@ -26,6 +28,18 @@ const uint16_t initialLocalID[] = {
 void (*LocalIDHelper::generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 8>;
 void (*LocalIDHelper::generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 16>;
 void (*LocalIDHelper::generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder, bool chooseMaxRowSize) = generateLocalIDsSimd<uint16x8_t, 32>;
+
+// Initialize the lookup table based on CPU capabilities
+LocalIDHelper::LocalIDHelper() {
+    bool supportsNEON = CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureNeon);
+    if (supportsNEON) {
+        LocalIDHelper::generateSimd8 = generateLocalIDsSimd<uint16x8_t, 8>;
+        LocalIDHelper::generateSimd16 = generateLocalIDsSimd<uint16x16_t, 16>;
+        LocalIDHelper::generateSimd32 = generateLocalIDsSimd<uint16x16_t, 32>;
+    }
+}
+
+LocalIDHelper LocalIDHelper::initializer;
 
 void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize) {
     auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]));
