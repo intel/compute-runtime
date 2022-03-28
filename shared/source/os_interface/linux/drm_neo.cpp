@@ -1530,6 +1530,9 @@ PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
         linkWidthStream << pathPrefix << fileName;
 
         int fd = NEO::SysCalls::open(linkWidthStream.str().c_str(), O_RDONLY);
+        if (fd == 0) {
+            return false;
+        }
         ssize_t bytesRead = NEO::SysCalls::pread(fd, readString.data(), readString.size() - 1, 0);
         NEO::SysCalls::close(fd);
         if (bytesRead <= 0) {
