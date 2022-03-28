@@ -951,7 +951,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
     const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
-    const bool isEngineCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroupType);
+    const bool isEngineCopyOnly = EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);

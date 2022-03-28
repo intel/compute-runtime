@@ -378,11 +378,6 @@ int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isCopyOnlyEngineType(EngineGroupType type) const {
-    return (EngineGroupType::Copy == type || EngineGroupType::LinkedCopy == type);
-}
-
-template <>
 bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     constexpr uint64_t tile1Bitfield = 0b10;
 

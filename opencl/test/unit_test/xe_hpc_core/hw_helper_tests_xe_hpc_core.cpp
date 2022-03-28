@@ -854,18 +854,6 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenPassingCopyEngineTypeThenItsCopyOnly) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.isCopyOnlyEngineType(EngineGroupType::Copy));
-}
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenPassingLinkedCopyEngineTypeThenItsCopyOnly) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.isCopyOnlyEngineType(EngineGroupType::LinkedCopy));
-}
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenPassingComputeEngineTypeThenItsNotCopyOnly) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isCopyOnlyEngineType(EngineGroupType::Compute));
-}
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenGetGpgpuEnginesCalledThenDontSetCccs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;

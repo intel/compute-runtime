@@ -180,8 +180,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto &hwHelper = NEO::HwHelper::get(platform.eRenderCoreFamily);
-    bool isCopyOnly = hwHelper.isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
+    bool isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
 
     if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
         getCsrForLowPriority(&csr);

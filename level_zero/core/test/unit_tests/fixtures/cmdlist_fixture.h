@@ -46,7 +46,7 @@ class CommandListFixture : public DeviceFixture {
     std::unique_ptr<Event> event;
 };
 
-template <bool createImmediate, bool createInternal>
+template <bool createImmediate, bool createInternal, bool createCopy>
 struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     void SetUp() {
         DebugManager.flags.EnableImplicitScaling.set(1);
@@ -55,11 +55,14 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
 
         SingleRootMultiSubDeviceFixture::SetUp();
         ze_result_t returnValue;
+
+        NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
+
         if (!createImmediate) {
-            commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+            commandList.reset(whitebox_cast(CommandList::create(productFamily, device, cmdListEngineType, 0u, returnValue)));
         } else {
             const ze_command_queue_desc_t desc = {};
-            commandList.reset(whitebox_cast(CommandList::createImmediate(productFamily, device, &desc, createInternal, NEO::EngineGroupType::RenderCompute, returnValue)));
+            commandList.reset(whitebox_cast(CommandList::createImmediate(productFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
         }
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

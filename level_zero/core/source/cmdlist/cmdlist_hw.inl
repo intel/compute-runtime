@@ -90,12 +90,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     clearCommandsToPatch();
     commandListSLMEnabled = false;
 
-    if (device->isImplicitScalingCapable() && !this->internalUsage) {
-        this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
-    } else {
-        this->partitionCount = 1;
-    }
-
     if (!isCopyOnly()) {
         if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
             programStateBaseAddress(commandContainer, false);
@@ -120,7 +114,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->engineGroupType = engineGroupType;
     this->flags = flags;
 
-    if (device->isImplicitScalingCapable() && !this->internalUsage) {
+    if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
     }
 

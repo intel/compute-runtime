@@ -80,7 +80,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_LE(sizeWithoutEvent, sizeWithEvent);
 }
 
-using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false>>;
+using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false, false>>;
 
 HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsWithinXeGfxFamily) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

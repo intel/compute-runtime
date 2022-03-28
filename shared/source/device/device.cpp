@@ -311,7 +311,7 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         return;
     }
 
-    if (hwHelper.isCopyOnlyEngineType(engineGroupType) && DebugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
+    if (EngineHelper::isCopyOnlyEngineType(engineGroupType) && DebugManager.flags.EnableBlitterOperationsSupport.get() == 0) {
         return;
     }
 

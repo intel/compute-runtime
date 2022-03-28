@@ -209,7 +209,9 @@ struct CommandList : _ze_command_list_handle_t {
     void removeHostPtrAllocations();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
-    bool isCopyOnly() const;
+    bool isCopyOnly() const {
+        return NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
+    }
     bool isInternal() const {
         return internalUsage;
     }
@@ -269,11 +271,11 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};
     CommandsToPatch commandsToPatch{};
-
-    ze_command_list_flags_t flags = 0u;
     UnifiedMemoryControls unifiedMemoryControls;
 
+    ze_command_list_flags_t flags = 0u;
     NEO::EngineGroupType engineGroupType;
+
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;
     bool containsCooperativeKernelsFlag = false;

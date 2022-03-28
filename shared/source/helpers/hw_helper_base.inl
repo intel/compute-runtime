@@ -633,11 +633,6 @@ bool HwHelperHw<GfxFamily>::isCooperativeEngineSupported(const HardwareInfo &hwI
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isCopyOnlyEngineType(EngineGroupType type) const {
-    return NEO::EngineGroupType::Copy == type;
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isSipWANeeded(const HardwareInfo &hwInfo) const {
     return false;
 }

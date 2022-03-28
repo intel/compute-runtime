@@ -127,12 +127,6 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
-bool CommandList::isCopyOnly() const {
-    const auto &hardwareInfo = device->getNEODevice()->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    return hwHelper.isCopyOnlyEngineType(engineGroupType);
-}
-
 NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
     NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor());
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
