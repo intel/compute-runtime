@@ -802,8 +802,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
+    EXPECT_FALSE(csr.downloadAllocationCalled);
     EXPECT_FALSE(event1.isCompleted());
     EXPECT_FALSE(event2.isCompleted());
+    EXPECT_TRUE(csr.downloadAllocationCalled);
+    csr.downloadAllocationCalled = false;
 
     typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
@@ -812,6 +815,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
 
     EXPECT_TRUE(event1.isCompleted());
     EXPECT_FALSE(event2.isCompleted());
+    EXPECT_TRUE(csr.downloadAllocationCalled);
+    csr.downloadAllocationCalled = false;
 
     for (uint32_t i = 0; i < deferredTimestampPackets->peekNodes()[0]->getPacketsUsed(); i++) {
         timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
@@ -819,12 +824,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
 
     EXPECT_TRUE(event1.isCompleted());
     EXPECT_TRUE(event2.isCompleted());
+    EXPECT_TRUE(csr.downloadAllocationCalled);
+    csr.downloadAllocationCalled = false;
 
     cmdQ->finish();
 
     EXPECT_TRUE(event1.isCompleted());
     EXPECT_TRUE(event2.isCompleted());
     EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
+    EXPECT_TRUE(csr.downloadAllocationCalled);
 
     clReleaseEvent(clEvent1);
     clReleaseEvent(clEvent2);

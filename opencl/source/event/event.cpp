@@ -685,6 +685,7 @@ bool Event::areTimestampsCompleted() {
         if (this->cmdQueue->isWaitForTimestampsEnabled()) {
             for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
                 for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                    this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(this->cmdQueue->getGpgpuCommandStreamReceiver().getRootDeviceIndex()));
                     if (timestamp->getContextEndValue(i) == 1) {
                         return false;
                     }
