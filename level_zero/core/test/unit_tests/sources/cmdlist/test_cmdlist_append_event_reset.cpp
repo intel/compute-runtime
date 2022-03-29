@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,6 +246,7 @@ HWTEST2_F(CommandListAppendEventReset,
     constexpr uint32_t packets = 2u;
     event->setPacketsInUse(packets);
     event->setEventTimestampFlag(false);
+    event->setPartitionedEvent(true);
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
@@ -253,7 +254,7 @@ HWTEST2_F(CommandListAppendEventReset,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packets +

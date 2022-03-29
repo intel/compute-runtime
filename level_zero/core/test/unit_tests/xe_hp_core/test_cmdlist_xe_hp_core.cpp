@@ -10,6 +10,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -171,6 +172,10 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEv
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    auto gpuAddress = event->getGpuAddress(device) +
+                      (pCommandList->partitionCount * event->getSinglePacketSize()) +
+                      event->getContextEndOffset();
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
@@ -184,6 +189,8 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithRegularEv
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncCount++;
         }
     }
@@ -222,6 +229,10 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), false, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    auto gpuAddress = event->getGpuAddress(device) +
+                      (pCommandList->partitionCount * event->getSinglePacketSize()) +
+                      event->getContextEndOffset();
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), 0), pCommandList->commandContainer.getCommandStream()->getUsed()));
@@ -235,6 +246,8 @@ HWTEST2_F(MultTileCommandListAppendLaunchKernelL3Flush, givenKernelWithTimestamp
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncCount++;
         }
     }

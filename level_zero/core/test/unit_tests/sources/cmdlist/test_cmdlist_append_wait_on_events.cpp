@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -359,6 +359,50 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
         gpuAddress += event->getSinglePacketSize();
     }
     EXPECT_EQ(1u, semaphoreWaitsFound);
+}
+
+using MultTileCommandListAppendWaitOnEvent = Test<MultiTileCommandListFixture<false, false, false>>;
+HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
+          GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    size_t expectedSize = commandList->partitionCount * sizeof(MI_SEMAPHORE_WAIT);
+
+    event->setPacketsInUse(commandList->partitionCount);
+    event->setPartitionedEvent(true);
+
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto result = commandList->appendWaitOnEvents(1, &eventHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(expectedSize, (usedSpaceAfter - usedSpaceBefore));
+
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore),
+                                                      expectedSize));
+
+    auto itorSW = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorSW.size());
+    uint32_t semaphoreWaitsFound = 0;
+    for (auto it : itorSW) {
+        auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                  cmd->getCompareOperation());
+        EXPECT_EQ(cmd->getSemaphoreDataDword(), std::numeric_limits<uint32_t>::max());
+        EXPECT_EQ(gpuAddress, cmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
+
+        semaphoreWaitsFound++;
+        gpuAddress += event->getSinglePacketSize();
+    }
+    EXPECT_EQ(2u, semaphoreWaitsFound);
 }
 
 } // namespace ult

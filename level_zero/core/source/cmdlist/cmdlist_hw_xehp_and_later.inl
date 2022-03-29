@@ -95,7 +95,7 @@ void programEventL3Flush(ze_event_handle_t hEvent,
     auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
                                                      : event->getSinglePacketSize();
     uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
-    if (event->isEventTimestampFlagSet()) {
+    if (event->useContextEndOffset()) {
         eventAddress += event->getContextEndOffset();
     }
 
@@ -240,6 +240,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
+            event->setPartitionedEvent(true);
         }
         if (L3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);

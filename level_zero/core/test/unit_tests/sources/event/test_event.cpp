@@ -720,6 +720,42 @@ TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEvent
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForPartitionedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+    constexpr uint32_t packetsInUse = 2;
+    event->setPacketsInUse(packetsInUse);
+    event->setPartitionedEvent(true);
+
+    const size_t eventPacketSize = event->getSinglePacketSize();
+    const size_t eventCompletionOffset = event->getContextEndOffset();
+
+    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
+    VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
+    VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
+    CpuIntrinsicsTests::pauseCounter = 0u;
+    CpuIntrinsicsTests::pauseAddress = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    for (uint32_t i = 0; i < packetsInUse; i++) {
+        *hostAddr = Event::STATE_CLEARED;
+        hostAddr = ptrOffset(hostAddr, eventPacketSize);
+    }
+
+    CpuIntrinsicsTests::setupPauseAddress = [&]() {
+        if (CpuIntrinsicsTests::pauseCounter > 10) {
+            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            for (uint32_t i = 0; i < packetsInUse; i++) {
+                *nextPacket = Event::STATE_SIGNALED;
+                nextPacket = ptrOffset(nextPacket, eventPacketSize);
+            }
+        }
+    };
+
+    constexpr uint64_t infiniteTimeout = std::numeric_limits<std::uint64_t>::max();
+    ze_result_t result = event->hostSynchronize(infiniteTimeout);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
@@ -1463,8 +1499,11 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     auto result = event->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
+    event->setPartitionedEvent(true);
+
     result = event->reset();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isPartitionedEvent());
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
 
@@ -1517,6 +1556,32 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     constexpr uint32_t packetsUsed = 4u;
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
+    event->hostSignal();
+    for (uint32_t i = 0; i < packetsUsed; i++) {
+        EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);
+        hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
+    }
+}
+
+TEST_F(EventTests, givenPartitionedEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+    eventDesc.wait = 0;
+    auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool,
+                                                                                                                           &eventDesc,
+                                                                                                                           device)));
+    ASSERT_NE(event, nullptr);
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), event->getContextEndOffset()));
+
+    EXPECT_EQ(Event::STATE_INITIAL, *hostAddr);
+    EXPECT_EQ(1u, event->getPacketsInUse());
+
+    constexpr uint32_t packetsUsed = 4u;
+    event->setPacketsInUse(packetsUsed);
+    event->setEventTimestampFlag(false);
+    event->setPartitionedEvent(true);
+
     event->hostSignal();
     for (uint32_t i = 0; i < packetsUsed; i++) {
         EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);

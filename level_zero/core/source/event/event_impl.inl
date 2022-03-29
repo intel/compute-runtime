@@ -120,8 +120,11 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
+            void const *queryAddress = partitionedEvent
+                                           ? kernelEventCompletionData[i].getContextEndAddress(packetId)
+                                           : kernelEventCompletionData[i].getContextStartAddress(packetId);
             bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
-                static_cast<TagSizeT const *>(kernelEventCompletionData[i].getContextStartAddress(packetId)),
+                static_cast<TagSizeT const *>(queryAddress),
                 queryVal,
                 std::not_equal_to<TagSizeT>());
             if (!ready) {
@@ -193,6 +196,10 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++) {
             memcpy_s(packetHostAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            if (isPartitionedEvent()) {
+                void *packetContextEndAddr = ptrOffset(packetHostAddr, contextEndOffset);
+                memcpy_s(packetContextEndAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            }
             packetHostAddr = ptrOffset(packetHostAddr, singlePacketSize);
         }
     }
@@ -261,8 +268,10 @@ ze_result_t EventImp<TagSizeT>::reset() {
             kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
         }
     }
+    partitionedEvent = true;
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();
+    partitionedEvent = false;
     return ZE_RESULT_SUCCESS;
 }
 

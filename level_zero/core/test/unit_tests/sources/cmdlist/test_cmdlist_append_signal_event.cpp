@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ HWTEST2_F(CommandListAppendSignalEvent,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
@@ -260,7 +260,7 @@ HWTEST2_F(CommandListAppendSignalEvent,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
 
     size_t expectedSize = NEO::EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
     size_t usedSize = cmdStream->getUsed();
@@ -316,7 +316,7 @@ HWTEST2_F(CommandListAppendSignalEvent,
     commandList->appendSignalEventPostWalker(event->toHandle());
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);

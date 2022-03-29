@@ -298,8 +298,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    if (event->isEventTimestampFlagSet()) {
+    if (event->useContextEndOffset()) {
         baseAddr += event->getContextEndOffset();
+    }
+
+    if (event->isEventTimestampFlagSet()) {
         packetsToReset = EventPacketsCount::eventPackets;
     }
     event->resetPackets();
@@ -1667,6 +1670,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
             if (this->partitionCount > 1) {
                 args.workloadPartitionOffset = true;
                 event->setPacketsInUse(this->partitionCount);
+                event->setPartitionedEvent(true);
+                baseAddr += event->getContextEndOffset();
             }
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -1810,7 +1815,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
     size_t eventSignalOffset = 0;
-    if (event->isEventTimestampFlagSet()) {
+    if (this->partitionCount > 1) {
+        event->setPartitionedEvent(true);
+        event->setPacketsInUse(this->partitionCount);
+    }
+    if (event->useContextEndOffset()) {
         eventSignalOffset = event->getContextEndOffset();
     }
 
@@ -1824,10 +1833,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         NEO::PipeControlArgs args;
         bool applyScope = event->signalScope;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(applyScope, hwInfo);
-        if (this->partitionCount > 1) {
-            args.workloadPartitionOffset = true;
-            event->setPacketsInUse(this->partitionCount);
-        }
+        args.workloadPartitionOffset = event->isPartitionedEvent();
         if (applyScope || event->isEventTimestampFlagSet()) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -1882,29 +1888,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     bool dcFlushRequired = false;
 
     const auto &hwInfo = this->device->getHwInfo();
+
     if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
             dcFlushRequired |= !!event->waitScope;
         }
     }
-
-    size_t estimatedBufferSize = 0;
-    if (dcFlushRequired) {
-        if (isCopyOnly()) {
-            estimatedBufferSize += NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
-        } else {
-            estimatedBufferSize += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
-        }
-    }
-    for (uint32_t i = 0; i < numEvents; i++) {
-        auto event = Event::fromHandle(phEvent[i]);
-        uint32_t packetsToWait = event->getPacketsInUse();
-        for (uint32_t i = 0u; i < packetsToWait; i++) {
-            estimatedBufferSize += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
-        }
-    }
-
     if (dcFlushRequired) {
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
@@ -1922,7 +1912,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         gpuAddr = event->getGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
 
-        if (event->isEventTimestampFlagSet()) {
+        if (event->useContextEndOffset()) {
             gpuAddr += event->getContextEndOffset();
         }
         for (uint32_t i = 0u; i < packetsToWait; i++) {

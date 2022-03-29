@@ -85,25 +85,36 @@ struct Event : _ze_event_handle_t {
     void setEventTimestampFlag(bool timestampFlag) {
         isTimestampEvent = timestampFlag;
     }
-
-    bool isEventTimestampFlagSet() { return isTimestampEvent; }
+    bool isEventTimestampFlagSet() const {
+        return isTimestampEvent;
+    }
+    void setPartitionedEvent(bool partitionedEvent) {
+        this->partitionedEvent = partitionedEvent;
+    }
+    bool isPartitionedEvent() const {
+        return partitionedEvent;
+    }
+    bool useContextEndOffset() const {
+        return isTimestampEvent || partitionedEvent;
+    }
 
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
     uint64_t contextEndTS;
+    std::chrono::microseconds gpuHangCheckPeriod{500'000};
 
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     void *hostAddress = nullptr;
-    bool l3FlushWaApplied = false;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
 
     uint32_t kernelCount = 1u;
-    std::chrono::microseconds gpuHangCheckPeriod{500'000};
+
+    bool l3FlushWaApplied = false;
 
   protected:
     size_t contextStartOffset = 0u;
@@ -113,6 +124,7 @@ struct Event : _ze_event_handle_t {
     size_t timestampSizeInDw = 0u;
     size_t singlePacketSize = 0u;
     bool isTimestampEvent = false;
+    bool partitionedEvent = false;
 };
 
 template <typename TagSizeT>
