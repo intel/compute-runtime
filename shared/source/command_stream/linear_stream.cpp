@@ -39,4 +39,12 @@ LinearStream::LinearStream(void *buffer, size_t bufferSize, CommandContainer *cm
     this->cmdContainer = cmdContainer;
     this->batchBufferEndSize = batchBufferEndSize;
 }
+
+uint64_t LinearStream::getGpuBase() const {
+    if (graphicsAllocation) {
+        return graphicsAllocation->getGpuAddress();
+    }
+    return gpuBase;
+}
+
 } // namespace NEO

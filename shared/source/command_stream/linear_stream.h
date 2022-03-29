@@ -32,6 +32,10 @@ class LinearStream {
     size_t getMaxAvailableSpace() const;
     size_t getAvailableSpace() const;
     size_t getUsed() const;
+
+    uint64_t getGpuBase() const;
+    void setGpuBase(uint64_t);
+
     void overrideMaxSize(size_t newMaxSize);
     void replaceBuffer(void *buffer, size_t bufferSize);
     GraphicsAllocation *getGraphicsAllocation() const;
@@ -50,10 +54,15 @@ class LinearStream {
     GraphicsAllocation *graphicsAllocation;
     CommandContainer *cmdContainer = nullptr;
     size_t batchBufferEndSize = 0;
+    uint64_t gpuBase = 0;
 };
 
 inline void *LinearStream::getCpuBase() const {
     return buffer;
+}
+
+inline void LinearStream::setGpuBase(uint64_t gpuAddress) {
+    gpuBase = gpuAddress;
 }
 
 inline void *LinearStream::getSpace(size_t size) {

@@ -29,6 +29,25 @@ TEST(LinearStreamCtorTest, whenProvidedAllArgumentsThenExpectSameValuesSet) {
     EXPECT_EQ(gfxAllocation, linearStream.getGraphicsAllocation());
 }
 
+TEST(LinearStreamSimpleTest, givenLinearStreamWithoutGraphicsAllocationWhenGettingGpuBaseThenValueSetAsGpuBaseIsReturned) {
+    uint32_t pCmdBuffer[1024]{};
+    LinearStream linearStream(pCmdBuffer, 1000);
+
+    EXPECT_EQ(0u, linearStream.getGpuBase());
+
+    linearStream.setGpuBase(0x1234000);
+    EXPECT_EQ(0x1234000u, linearStream.getGpuBase());
+}
+
+TEST(LinearStreamSimpleTest, givenLinearStreamWithGraphicsAllocationWhenGettingGpuBaseThenGpuAddressFromGraphicsAllocationIsReturned) {
+    MockGraphicsAllocation gfxAllocation;
+    gfxAllocation.setCpuPtrAndGpuAddress(nullptr, 0x5555000);
+    uint32_t pCmdBuffer[1024]{};
+    LinearStream linearStream(&gfxAllocation, pCmdBuffer, 1000);
+
+    EXPECT_EQ(0x5555000u, linearStream.getGpuBase());
+}
+
 TEST_F(LinearStreamTest, GivenSizeZeroWhenGettingSpaceUsedThenNonNullPointerIsReturned) {
     EXPECT_NE(nullptr, linearStream.getSpace(0));
 }

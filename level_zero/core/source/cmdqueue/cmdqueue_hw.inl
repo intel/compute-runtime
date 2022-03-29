@@ -275,6 +275,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t padding = alignedSize - linearStreamSizeEstimate;
     reserveLinearStreamSize(alignedSize);
     NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
+    child.setGpuBase(ptrOffset(commandStream->getGpuBase(), commandStream->getUsed()));
 
     const auto globalFenceAllocation = csr->getGlobalFenceAllocation();
     if (globalFenceAllocation) {
