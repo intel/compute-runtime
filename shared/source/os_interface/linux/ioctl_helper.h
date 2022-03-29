@@ -112,8 +112,8 @@ class IoctlHelper {
     virtual uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) = 0;
     virtual std::unique_ptr<uint8_t[]> createVmBindExtSetPat() = 0;
     virtual void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
-    virtual std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() = 0;
-    virtual void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
+    virtual std::unique_ptr<uint8_t[]> createVmBindExtUserFence() = 0;
+    virtual void fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
@@ -164,8 +164,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     std::unique_ptr<uint8_t[]> createVmBindExtSetPat() override;
     void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
-    std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
-    void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtUserFence() override;
+    void fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;
@@ -229,8 +229,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     std::unique_ptr<uint8_t[]> createVmBindExtSetPat() override;
     void fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
-    std::unique_ptr<uint8_t[]> createVmBindExtSyncFence() override;
-    void fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    std::unique_ptr<uint8_t[]> createVmBindExtUserFence() override;
+    void fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;

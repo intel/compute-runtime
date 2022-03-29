@@ -289,9 +289,9 @@ TEST(IoctlHelperTestsUpstream, whenCreateVmBindSetPatThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, ioctlHelper.createVmBindExtSetPat());
 }
 
-TEST(IoctlHelperTestsUpstream, whenCreateVmBindSyncFenceThenNullptrIsReturned) {
+TEST(IoctlHelperTestsUpstream, whenCreateVmBindUserFenceThenNullptrIsReturned) {
     IoctlHelperUpstream ioctlHelper{};
-    EXPECT_EQ(nullptr, ioctlHelper.createVmBindExtSyncFence());
+    EXPECT_EQ(nullptr, ioctlHelper.createVmBindExtUserFence());
 }
 
 TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindSetPatThenNothingThrows) {
@@ -300,10 +300,10 @@ TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindSetPatThenNothingThrows
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u));
 }
 
-TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindSyncFenceThenNothingThrows) {
+TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindUserFenceThenNothingThrows) {
     IoctlHelperUpstream ioctlHelper{};
-    auto vmBindExtSyncFence = ioctlHelper.createVmBindExtSyncFence();
-    EXPECT_NO_THROW(ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, 0u, 0u, 0u));
+    auto vmBindExtUserFence = ioctlHelper.createVmBindExtUserFence();
+    EXPECT_NO_THROW(ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, 0u, 0u, 0u));
 }
 
 TEST(IoctlHelperTestsUpstream, whenVmBindIsCalledThenZeroIsReturned) {

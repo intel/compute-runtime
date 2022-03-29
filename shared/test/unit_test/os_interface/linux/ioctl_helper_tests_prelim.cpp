@@ -162,7 +162,7 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetHwConfigIoctlValThenCorrectVal
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetDirectSubmissionFlagThenCorrectValueReturned) {
-    EXPECT_EQ(PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS, ioctlHelper.getDirectSubmissionFlag());
+    EXPECT_EQ(PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING, ioctlHelper.getDirectSubmissionFlag());
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetMemRegionsIoctlValThenCorrectValueReturned) {
@@ -197,8 +197,8 @@ TEST_F(IoctlPrelimHelperTests, whenCreateVmBindSetPatThenValidPointerIsReturned)
     EXPECT_NE(nullptr, ioctlHelper.createVmBindExtSetPat());
 }
 
-TEST_F(IoctlPrelimHelperTests, whenCreateVmBindSyncFenceThenValidPointerIsReturned) {
-    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtSyncFence());
+TEST_F(IoctlPrelimHelperTests, whenCreateVmBindUserFenceThenValidPointerIsReturned) {
+    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtUserFence());
 }
 
 TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSetPatThenUnrecoverableIsThrown) {
@@ -206,9 +206,9 @@ TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSetPatThenUnrecoverable
     EXPECT_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u), std::runtime_error);
 }
 
-TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSyncFenceThenUnrecoverableIsThrown) {
-    std::unique_ptr<uint8_t[]> vmBindExtSyncFence{};
-    EXPECT_THROW(ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, 0u, 0u, 0u), std::runtime_error);
+TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindUserFenceThenUnrecoverableIsThrown) {
+    std::unique_ptr<uint8_t[]> vmBindExtUserFence{};
+    EXPECT_THROW(ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, 0u, 0u, 0u), std::runtime_error);
 }
 
 TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSetPatThenProperValuesAreSet) {
@@ -226,21 +226,23 @@ TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSetPatThenProperValu
     vmBindExtSetPat.release();
 }
 
-TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSyncFenceThenProperValuesAreSet) {
-    std::unique_ptr<uint8_t[]> vmBindExtSyncFence{};
-    prelim_drm_i915_vm_bind_ext_sync_fence prelimVmBindExtSyncFence{};
-    vmBindExtSyncFence.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtSyncFence));
+TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindUserFenceThenProperValuesAreSet) {
+    std::unique_ptr<uint8_t[]> vmBindExtUserFence{};
+    prelim_drm_i915_vm_bind_ext_user_fence prelimVmBindExtUserFence{};
+    vmBindExtUserFence.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtUserFence));
 
     uint64_t expectedAddress = 0xdead;
     uint64_t expectedValue = 0xc0de;
     uint64_t expectedNextExtension = 1234;
-    ioctlHelper.fillVmBindExtSyncFence(vmBindExtSyncFence, expectedAddress, expectedValue, expectedNextExtension);
-    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_SYNC_FENCE), prelimVmBindExtSyncFence.base.name);
-    EXPECT_EQ(expectedAddress, prelimVmBindExtSyncFence.addr);
-    EXPECT_EQ(expectedValue, prelimVmBindExtSyncFence.val);
-    EXPECT_EQ(expectedNextExtension, prelimVmBindExtSyncFence.base.next_extension);
+    uint64_t expectedSize = sizeof(prelimVmBindExtUserFence.base) + sizeof(uint64_t) * 3;
+    ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, expectedAddress, expectedValue, expectedNextExtension);
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_USER_FENCE), prelimVmBindExtUserFence.base.name);
+    EXPECT_EQ(expectedAddress, prelimVmBindExtUserFence.addr);
+    EXPECT_EQ(expectedValue, prelimVmBindExtUserFence.val);
+    EXPECT_EQ(expectedNextExtension, prelimVmBindExtUserFence.base.next_extension);
+    EXPECT_EQ(expectedSize, sizeof(prelimVmBindExtUserFence));
 
-    vmBindExtSyncFence.release();
+    vmBindExtUserFence.release();
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {

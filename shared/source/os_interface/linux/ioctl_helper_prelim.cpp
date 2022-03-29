@@ -216,7 +216,7 @@ bool IoctlHelperPrelim20::setVmPrefetch(Drm *drm, uint64_t start, uint64_t lengt
 }
 
 uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
-    return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
+    return PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING;
 }
 
 int32_t IoctlHelperPrelim20::getMemRegionsIoctlVal() {
@@ -449,17 +449,17 @@ void IoctlHelperPrelim20::fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &
     prelimVmBindExtSetPat->base.next_extension = nextExtension;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtSyncFence() {
-    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_sync_fence));
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtUserFence() {
+    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_user_fence));
 }
 
-void IoctlHelperPrelim20::fillVmBindExtSyncFence(const std::unique_ptr<uint8_t[]> &vmBindExtSyncFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
-    auto prelimVmBindExtSyncFence = reinterpret_cast<prelim_drm_i915_vm_bind_ext_sync_fence *>(vmBindExtSyncFence.get());
-    UNRECOVERABLE_IF(!prelimVmBindExtSyncFence);
-    prelimVmBindExtSyncFence->base.name = PRELIM_I915_VM_BIND_EXT_SYNC_FENCE;
-    prelimVmBindExtSyncFence->base.next_extension = nextExtension;
-    prelimVmBindExtSyncFence->addr = fenceAddress;
-    prelimVmBindExtSyncFence->val = fenceValue;
+void IoctlHelperPrelim20::fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
+    auto prelimVmBindExtUserFence = reinterpret_cast<prelim_drm_i915_vm_bind_ext_user_fence *>(vmBindExtUserFence.get());
+    UNRECOVERABLE_IF(!prelimVmBindExtUserFence);
+    prelimVmBindExtUserFence->base.name = PRELIM_I915_VM_BIND_EXT_USER_FENCE;
+    prelimVmBindExtUserFence->base.next_extension = nextExtension;
+    prelimVmBindExtUserFence->addr = fenceAddress;
+    prelimVmBindExtUserFence->val = fenceValue;
 }
 
 std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() {

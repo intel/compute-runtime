@@ -55,9 +55,10 @@ struct WaitUserFence {
     int64_t timeout{0};
 };
 
-struct SyncFenceVmBindExt {
+struct UserFenceVmBindExt {
     uint64_t addr;
     uint64_t val;
+    uint64_t rsvd;
 };
 
 struct UuidVmBindExt {
@@ -87,7 +88,7 @@ struct DrmMockPrelimContext {
 
     size_t vmBindCalled{0};
     std::optional<VmBindParams> receivedVmBind{};
-    std::optional<SyncFenceVmBindExt> receivedVmBindSyncFence{};
+    std::optional<UserFenceVmBindExt> receivedVmBindUserFence{};
     std::optional<UuidVmBindExt> receivedVmBindUuidExt[2]{};
     std::optional<uint64_t> receivedVmBindPatIndex{};
     int vmBindReturn{0};
@@ -127,7 +128,7 @@ uint32_t getQueryComputeSlicesIoctl();
 uint32_t getDistanceInfoQueryId();
 uint32_t getComputeEngineClass();
 uint32_t getStringUuidClass();
-uint32_t getULLSContextCreateFlag();
+uint32_t getLongRunningContextCreateFlag();
 uint32_t getRunAloneContextParam();
 uint32_t getAccContextParam();
 uint32_t getAccContextParamSize();

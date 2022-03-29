@@ -409,9 +409,9 @@ void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr, bool bind) {
     size_t uuidIndex{0};
     auto baseExt = reinterpret_cast<i915_user_extension *>(ptr);
     while (baseExt) {
-        if (baseExt->name == PRELIM_I915_VM_BIND_EXT_SYNC_FENCE) {
-            const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_sync_fence *>(baseExt);
-            receivedVmBindSyncFence = {ext->addr, ext->val};
+        if (baseExt->name == PRELIM_I915_VM_BIND_EXT_USER_FENCE) {
+            const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_user_fence *>(baseExt);
+            receivedVmBindUserFence = {ext->addr, ext->val};
         } else if (baseExt->name == PRELIM_I915_VM_BIND_EXT_UUID) {
             const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_uuid *>(baseExt);
             receivedVmBindUuidExt[uuidIndex++] = UuidVmBindExt{ext->uuid_handle, ext->base.next_extension};
@@ -444,8 +444,8 @@ uint32_t DrmPrelimHelper::getStringUuidClass() {
     return PRELIM_I915_UUID_CLASS_STRING;
 }
 
-uint32_t DrmPrelimHelper::getULLSContextCreateFlag() {
-    return PRELIM_I915_CONTEXT_CREATE_FLAGS_ULLS;
+uint32_t DrmPrelimHelper::getLongRunningContextCreateFlag() {
+    return PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING;
 }
 
 uint32_t DrmPrelimHelper::getRunAloneContextParam() {

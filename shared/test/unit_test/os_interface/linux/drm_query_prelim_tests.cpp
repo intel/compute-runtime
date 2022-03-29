@@ -31,7 +31,7 @@ TEST(DrmQueryTest, givenDirectSubmissionActiveWhenCreateDrmContextThenProperFlag
 
     drm.createDrmContext(0, true, false);
 
-    EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getULLSContextCreateFlag());
+    EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
 }
 
 TEST(DrmQueryTest, givenDirectSubmissionDisabledAndDirectSubmissionDrmContextSetWhenCreateDrmContextThenProperFlagIsSet) {
@@ -44,7 +44,7 @@ TEST(DrmQueryTest, givenDirectSubmissionDisabledAndDirectSubmissionDrmContextSet
 
     drm.createDrmContext(0, false, false);
 
-    EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getULLSContextCreateFlag());
+    EXPECT_TRUE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
 }
 
 TEST(DrmQueryTest, givenDirectSubmissionActiveAndDirectSubmissionDrmContextSetZeroWhenCreateDrmContextThenProperFlagIsNotSet) {
@@ -57,7 +57,7 @@ TEST(DrmQueryTest, givenDirectSubmissionActiveAndDirectSubmissionDrmContextSetZe
 
     drm.createDrmContext(0, true, false);
 
-    EXPECT_FALSE(drm.receivedContextCreateFlags & DrmPrelimHelper::getULLSContextCreateFlag());
+    EXPECT_FALSE(drm.receivedContextCreateFlags & DrmPrelimHelper::getLongRunningContextCreateFlag());
 }
 
 TEST(DrmQueryTest, givenCooperativeEngineWhenCreateDrmContextThenRunAloneContextIsRequested) {

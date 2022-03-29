@@ -1409,7 +1409,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         if (bind) {
             std::unique_lock<std::mutex> lock;
 
-            auto vmBindExtSyncFence = ioctlHelper->createVmBindExtSyncFence();
+            auto vmBindExtUserFence = ioctlHelper->createVmBindExtUserFence();
 
             if (drm->useVMBindImmediate()) {
                 lock = drm->lockBindFenceMutex();
@@ -1419,8 +1419,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                     auto address = castToUint64(drm->getFenceAddr(vmHandleId));
                     auto value = drm->getNextFenceVal(vmHandleId);
 
-                    ioctlHelper->fillVmBindExtSyncFence(vmBindExtSyncFence, address, value, nextExtension);
-                    vmBind.extensions = castToUint64(vmBindExtSyncFence.get());
+                    ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
+                    vmBind.extensions = castToUint64(vmBindExtUserFence.get());
                 }
             }
 
