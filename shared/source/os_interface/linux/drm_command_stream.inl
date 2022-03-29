@@ -153,6 +153,14 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     } else {
         this->flushStamp->setStamp(bb->peekHandle());
     }
+
+    auto readBackMode = DebugManager.flags.ReadBackCommandBufferAllocation.get();
+    bool readBackAllowed = ((batchBuffer.commandBufferAllocation->isAllocatedInLocalMemoryPool() && readBackMode == 1) || readBackMode == 2);
+
+    if (readBackAllowed) {
+        readBackAllocation(ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset));
+    }
+
     auto ret = this->flushInternal(batchBuffer, allocationsForResidency);
 
     if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerActive) {
@@ -165,6 +173,11 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     }
 
     return SubmissionStatus::SUCCESS;
+}
+
+template <typename GfxFamily>
+void DrmCommandStreamReceiver<GfxFamily>::readBackAllocation(void *source) {
+    reserved = *reinterpret_cast<volatile uint32_t *>(source);
 }
 
 template <typename GfxFamily>

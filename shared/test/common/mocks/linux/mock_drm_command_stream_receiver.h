@@ -106,14 +106,20 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         }
     }
 
-    bool callHwFlush = true;
-
     int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
         if (callHwFlush) {
             return DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
         }
         return 0;
     }
+
+    void readBackAllocation(void *source) override {
+        latestReadBackAddress = source;
+        DrmCommandStreamReceiver<GfxFamily>::readBackAllocation(source);
+    }
+
+    void *latestReadBackAddress = nullptr;
+    bool callHwFlush = true;
 };
 
 template <typename GfxFamily>

@@ -70,6 +70,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     MOCKABLE_VIRTUAL int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index);
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t waitValue);
+    MOCKABLE_VIRTUAL void readBackAllocation(void *source);
     bool isUserFenceWaitActive();
 
     std::vector<BufferObject *> residency;
@@ -77,6 +78,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
 
+    volatile uint32_t reserved = 0;
     int32_t kmdWaitTimeout = -1;
 
     bool useUserFenceWait = true;

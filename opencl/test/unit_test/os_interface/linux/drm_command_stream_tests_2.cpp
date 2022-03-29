@@ -169,6 +169,42 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWithDuplicate
     mm->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDebugFlagSetWhenFlushingThenReadBackCommandBufferPointerIfRequired) {
+    auto commandBuffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
+    LinearStream cs(commandBuffer);
+
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    EncodeNoop<FamilyType>::alignToCacheLine(cs);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+
+    {
+        DebugManager.flags.ReadBackCommandBufferAllocation.set(1);
+
+        csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+        if (commandBuffer->isAllocatedInLocalMemoryPool()) {
+            EXPECT_EQ(commandBuffer->getUnderlyingBuffer(), testedCsr->latestReadBackAddress);
+        } else {
+            EXPECT_EQ(nullptr, testedCsr->latestReadBackAddress);
+        }
+
+        testedCsr->latestReadBackAddress = nullptr;
+    }
+
+    {
+        DebugManager.flags.ReadBackCommandBufferAllocation.set(2);
+
+        csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+        EXPECT_EQ(commandBuffer->getUnderlyingBuffer(), testedCsr->latestReadBackAddress);
+    }
+
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
     TestedDrmCommandStreamReceiver<FamilyType> testedCsr(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                          *this->executionEnvironment,

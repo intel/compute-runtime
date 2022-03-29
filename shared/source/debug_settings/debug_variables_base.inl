@@ -197,6 +197,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampEvents, -1, "-1: default (based
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreParserEnabledForMiArbCheck, -1, "-1: default , 0: PreParser disabled, 1: PreParser enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, BatchBufferStartPrepatchingWaEnabled, -1, "-1: default , 0: disabled, 1: enabled. WA applies valid VA pointing to 'self' instead of 0x0. This mitigates incorrect VA preparsing.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetVmAdviseAtomicAttribute, -1, "-1: default - atomic system, 0: atomic none, 1: atomic device, 2: atomic system)")
+DECLARE_DEBUG_VARIABLE(int32_t, ReadBackCommandBufferAllocation, -1, "Read command buffer allocation back on the host side. -1: default, 0 - disabled, 1 - local memory only, 2 - local and system memory")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
