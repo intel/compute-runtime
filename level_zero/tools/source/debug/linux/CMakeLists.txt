@@ -1,0 +1,15 @@
+#
+# Copyright (C) 2021-2022 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+if(UNIX)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/debug_session.cpp
+  )
+
+  add_subdirectories()
+endif()
