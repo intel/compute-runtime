@@ -394,11 +394,10 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAt
     desc.pNext = &importNTHandle;
 
     NEO::MockDevice *neoDevice = nullptr;
-    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-    NEO::MemoryManager *prevMemoryManager = driverHandle->getMemoryManager();
-    NEO::MemoryManager *currMemoryManager = new MemoryManagerNTHandleMock(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(currMemoryManager);
-    neoDevice->injectMemoryManager(currMemoryManager);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
+    executionEnvironment->memoryManager.reset(new MemoryManagerNTHandleMock(*executionEnvironment));
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
+    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
@@ -410,7 +409,6 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAt
 
     imageHW.reset(nullptr);
     delete device;
-    driverHandle->setMemoryManager(prevMemoryManager);
 }
 
 class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
@@ -418,8 +416,12 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
     FailMemoryManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::OsAgnosticMemoryManager(executionEnvironment) {}
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        return nullptr;
+        if (fail) {
+            return nullptr;
+        }
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(properties);
     }
+    bool fail = false;
 };
 
 HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, IsAtLeastSkl) {
@@ -447,15 +449,17 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     }
 
     NEO::MockDevice *neoDevice = nullptr;
-    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-    NEO::MemoryManager *currMemoryManager = new FailMemoryManagerMock(*neoDevice->executionEnvironment);
-    neoDevice->injectMemoryManager(currMemoryManager);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
+    auto failMemMngr = new FailMemoryManagerMock(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(failMemMngr);
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
+    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
 
-    L0::Image *imageHandle;
-
+    L0::Image *imageHandle = nullptr;
+    failMemMngr->fail = true;
     auto ret = L0::Image::create(neoDevice->getHardwareInfo().platform.eProductFamily, device, &desc, &imageHandle);
 
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, ret);

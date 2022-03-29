@@ -248,6 +248,7 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
     *mediaStateFlush = Family::cmdInitMediaStateFlush;
 
     auto iddOffset = static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heapBase));
+
     iddOffset += ApiSpecificConfig::getBindlessConfiguration() ? static_cast<uint32_t>(container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuAddress() -
                                                                                        container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getGpuBaseAddress())
                                                                : 0;

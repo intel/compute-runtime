@@ -102,12 +102,24 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         this->migrateSharedAllocations();
     }
 
+    auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT));
+    NEO::IndirectHeap *dsh = nullptr;
+    NEO::IndirectHeap *ssh = nullptr;
+
+    if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
+        dsh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE));
+        ssh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE));
+    } else {
+        dsh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH);
+        ssh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
+    }
+
     auto completionStamp = this->csr->flushTask(
         *commandStream,
         commandStreamStart,
-        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE),
-        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT),
-        this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE),
+        dsh,
+        ioh,
+        ssh,
         this->csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));

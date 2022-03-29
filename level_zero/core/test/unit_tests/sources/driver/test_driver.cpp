@@ -177,11 +177,12 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     devProperties.pNext = &importNTHandle;
 
     NEO::MockDevice *neoDevice = nullptr;
-    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-    NEO::MemoryManager *prevMemoryManager = driverHandle->getMemoryManager();
-    NEO::MemoryManager *currMemoryManager = new MemoryManagerNTHandleMock(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(currMemoryManager);
-    neoDevice->injectMemoryManager(currMemoryManager);
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
+    executionEnvironment->memoryManager.reset(new MemoryManagerNTHandleMock(*executionEnvironment));
+
+    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
+
+    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
@@ -200,7 +201,6 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    driverHandle->setMemoryManager(prevMemoryManager);
     delete device;
 }
 
