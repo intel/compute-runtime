@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,32 +49,8 @@ TEST(CpuInfoTest, giveFunctionIsNotAvailableWhenFeatureIsNotSupportedThenMaskBit
 
     CpuInfo testCpuInfo;
 
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFpu));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureCmov));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureMmx));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFxsave));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSse));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE2));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE3));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSssE3));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE41));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE42));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureMovbe));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featurePopcnt));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featurePclmulqdq));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAes));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureF16C));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvx));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdrnd));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFma));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureBmi));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureLzcnt));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureHle));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
@@ -85,32 +61,8 @@ TEST(CpuInfoTest, giveFunctionIsAvailableWhenFeatureIsNotSupportedThenMaskBitIsO
 
     CpuInfo testCpuInfo;
 
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFpu));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureCmov));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureMmx));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFxsave));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSse));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE2));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE3));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSssE3));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE41));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE42));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureMovbe));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featurePopcnt));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featurePclmulqdq));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAes));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureF16C));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvx));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdrnd));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureFma));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureBmi));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureLzcnt));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureHle));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
-    EXPECT_FALSE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
@@ -121,32 +73,8 @@ TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
 
     CpuInfo testCpuInfo;
 
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureFpu));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureCmov));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureMmx));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureFxsave));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSse));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE2));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE3));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSssE3));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE41));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureSsE42));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureMovbe));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featurePopcnt));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featurePclmulqdq));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureAes));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureF16C));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvx));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdrnd));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureFma));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureBmi));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureLzcnt));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureHle));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureRtm));
     EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureAvX2));
     EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureClflush));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureTsc));
-    EXPECT_TRUE(testCpuInfo.isFeatureSupported(CpuInfo::featureRdtscp));
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
