@@ -170,15 +170,6 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
         auto bind = elf.extractSymbolBind(symbol);
         auto type = elf.extractSymbolType(symbol);
 
-        if (type == Elf::SYMBOL_TABLE_TYPE::STT_FUNC) {
-            SymbolInfo symbolInfo;
-            symbolInfo.offset = static_cast<uint32_t>(symbol.value);
-            symbolInfo.size = static_cast<uint32_t>(symbol.size);
-            symbolInfo.bind = static_cast<SymbolBind>(bind);
-
-            extFuncSymbols.push_back({elf.getSymbolName(symbol.name), symbolInfo});
-        }
-
         if (bind == Elf::SYMBOL_TABLE_BIND::STB_GLOBAL) {
             SymbolInfo symbolInfo;
             symbolInfo.offset = static_cast<uint32_t>(symbol.value);
@@ -205,6 +196,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
                     int32_t instructionsSegmentId = static_cast<int32_t>(segmentIdIter->second);
                     UNRECOVERABLE_IF((this->exportedFunctionsSegmentId != -1) && (this->exportedFunctionsSegmentId != instructionsSegmentId));
                     this->exportedFunctionsSegmentId = instructionsSegmentId;
+                    extFuncSymbols.push_back({elf.getSymbolName(symbol.name), symbolInfo});
                 }
             } break;
             }
@@ -253,7 +245,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
     }
 }
 
-void LinkerInput::parseRelocationForExtFuncUsage(RelocationInfo relocInfo, std::string kernelName) {
+void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo, const std::string &kernelName) {
     auto extFuncSymIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
         return pair.first == relocInfo.symbolName;
     });
@@ -263,11 +255,9 @@ void LinkerInput::parseRelocationForExtFuncUsage(RelocationInfo relocInfo, std::
                 auto &symbol = pair.second;
                 return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
             });
-            if (callerIt == extFuncSymbols.end()) {
-                this->valid = false;
-                return;
+            if (callerIt != extFuncSymbols.end()) {
+                extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
             }
-            extFunDependencies.push_back({relocInfo.symbolName, callerIt->first});
         } else {
             kernelDependencies.push_back({relocInfo.symbolName, kernelName});
         }

@@ -35,10 +35,6 @@ enum class LinkingStatus : uint32_t {
     LinkedFully,
     LinkedPartially
 };
-enum class SymbolBind : uint8_t {
-    Local,
-    Global
-};
 
 inline const char *asString(SegmentType segment) {
     switch (segment) {
@@ -57,7 +53,6 @@ struct SymbolInfo {
     uint32_t offset = std::numeric_limits<uint32_t>::max();
     uint32_t size = std::numeric_limits<uint32_t>::max();
     SegmentType segment = SegmentType::Unknown;
-    SymbolBind bind = SymbolBind::Local;
 };
 
 struct LinkerInput {
@@ -156,7 +151,7 @@ struct LinkerInput {
     }
 
   protected:
-    void parseRelocationForExtFuncUsage(RelocationInfo relocInfo, std::string kernelName);
+    void parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo, const std::string &kernelName);
 
     Traits traits;
     SymbolMap symbols;

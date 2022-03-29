@@ -954,7 +954,7 @@ TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenDebugBreakCal
     EXPECT_FALSE(linkerInput.getTraits().exportsFunctions);
 }
 
-TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhenParsingRelocationsForExtFuncUsageThenSetValidToFalse) {
+TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhenParsingRelocationsForExtFuncUsageThenDoNotAddDependency) {
     WhiteBox<NEO::LinkerInput> mockLinkerInput;
 
     auto &extFuncSymbols = mockLinkerInput.extFuncSymbols;
@@ -969,12 +969,11 @@ TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhe
 
     relocInfo.offset = 0U;
     mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Elf::SectionsNamesZebin::externalFunctions.str());
-    EXPECT_FALSE(mockLinkerInput.isValid());
+    EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
 
-    mockLinkerInput.valid = true;
     relocInfo.offset = 0x10U;
     mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Elf::SectionsNamesZebin::externalFunctions.str());
-    EXPECT_FALSE(mockLinkerInput.isValid());
+    EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
 }
 
 TEST(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
