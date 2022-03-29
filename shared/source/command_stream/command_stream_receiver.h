@@ -235,7 +235,7 @@ class CommandStreamReceiver {
         return scratchSpaceController.get();
     }
 
-    virtual void downloadAllocation(GraphicsAllocation &gfxAllocation){};
+    void downloadAllocation(GraphicsAllocation &gfxAllocation);
 
     void registerInstructionCacheFlush() {
         auto mutex = obtainUniqueOwnership();
@@ -324,6 +324,7 @@ class CommandStreamReceiver {
     void printDeviceIndex();
     void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
+    void downloadTagAllocation();
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
@@ -356,6 +357,7 @@ class CommandStreamReceiver {
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
     std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
+    std::function<void(GraphicsAllocation &)> downloadAllocationImpl;
 
     GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *globalFenceAllocation = nullptr;

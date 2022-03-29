@@ -169,6 +169,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
     if (address) {
+        this->downloadTagAllocation();
         return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
     }
 
@@ -277,7 +278,7 @@ void CommandStreamReceiver::cleanupResources() {
     }
 
     if (tagsMultiAllocation) {
-        //Null tag address to prevent waiting for tag update when freeing it
+        // Null tag address to prevent waiting for tag update when freeing it
         tagAllocation = nullptr;
         tagAddress = nullptr;
         DEBUG_BREAK_IF(tagAllocation != nullptr);
@@ -460,6 +461,12 @@ ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
 AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const std::string &kernelName) { return {false, false}; }
 
 void CommandStreamReceiver::addAubComment(const char *comment) {}
+
+void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation) {
+    if (this->downloadAllocationImpl) {
+        this->downloadAllocationImpl(gfxAllocation);
+    }
+}
 
 void CommandStreamReceiver::startControllingDirectSubmissions() {
     auto controller = this->executionEnvironment.directSubmissionController.get();
@@ -805,7 +812,14 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
     return false;
 }
 
+void CommandStreamReceiver::downloadTagAllocation() {
+    if (this->getTagAllocation()) {
+        this->downloadAllocation(*this->getTagAllocation());
+    }
+}
+
 bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) {
+    this->downloadTagAllocation();
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
             return false;

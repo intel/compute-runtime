@@ -128,6 +128,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
                              const DeviceBitfield deviceBitfield)
         : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
           recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
+            this->downloadAllocationUlt(graphicsAllocation);
+        };
+    }
+    ~UltCommandStreamReceiver() {
+        this->downloadAllocationImpl = nullptr;
     }
     static CommandStreamReceiver *create(bool withAubDump,
                                          ExecutionEnvironment &executionEnvironment,
@@ -171,7 +177,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         downloadAllocationCalled = true;
     }
 
-    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+    void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
         downloadAllocationCalled = true;
     }
 
@@ -339,7 +345,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool recordFlusheBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
-    bool downloadAllocationCalled = false;
+    std::atomic_bool downloadAllocationCalled = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;

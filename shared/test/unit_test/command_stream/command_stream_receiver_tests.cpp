@@ -301,6 +301,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpu
     constexpr auto taskCountToWait = 1;
     const auto waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_TRUE(csr.downloadAllocationCalled);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCallingWaitForTaskCountAndCleanAllocationListThenWaitIsCalledAndGpuHangIsReturned) {

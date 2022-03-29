@@ -55,10 +55,15 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
                             ? this->peekHwInfo().capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
     this->stream = &tbxStream;
+    this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
+        this->downloadAllocationTbx(graphicsAllocation);
+    };
 }
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
+    this->downloadAllocationImpl = nullptr;
+
     if (streamInitialized) {
         tbxStream.close();
     }
@@ -480,14 +485,14 @@ void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocatio
     volatile uint32_t *pollAddress = this->getTagAddress();
     for (uint32_t i = 0; i < this->activePartitions; i++) {
         while (*pollAddress < this->latestFlushedTaskCount) {
-            downloadAllocation(*this->getTagAllocation());
+            this->downloadAllocation(*this->getTagAllocation());
         }
         pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
 
     auto lockCSR = this->obtainUniqueOwnership();
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
-        downloadAllocation(*graphicsAllocation);
+        this->downloadAllocation(*graphicsAllocation);
     }
     this->allocationsForDownload.clear();
 }
@@ -527,7 +532,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyCont
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(GraphicsAllocation &gfxAllocation) {
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAllocation &gfxAllocation) {
     if (hardwareContextController) {
         hardwareContextController->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
                                               this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
@@ -552,13 +557,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
     volatile uint32_t *pollAddress = this->getTagAddress();
     for (uint32_t i = 0; i < this->activePartitions; i++) {
         while (*pollAddress < this->latestFlushedTaskCount) {
-            downloadAllocation(*this->getTagAllocation());
+            this->downloadAllocation(*this->getTagAllocation());
         }
         pollAddress = ptrOffset(pollAddress, this->postSyncWriteOffset);
     }
     auto lockCSR = this->obtainUniqueOwnership();
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
-        downloadAllocation(*graphicsAllocation);
+        this->downloadAllocation(*graphicsAllocation);
     }
     this->allocationsForDownload.clear();
 }

@@ -25,7 +25,14 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::writeMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
-        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {}
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
+            this->downloadAllocationTbxMock(gfxAllocation);
+        };
+    }
+    ~MockTbxCsr() {
+        this->downloadAllocationImpl = nullptr;
+    }
 
     void initializeEngine() override {
         TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
@@ -50,8 +57,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
     }
-    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
-        TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(gfxAllocation);
+    void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {
+        TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(gfxAllocation);
         makeCoherentCalled = true;
     }
     void dumpAllocation(GraphicsAllocation &gfxAllocation) override {
@@ -74,9 +81,18 @@ template <typename GfxFamily>
 struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::tagsMultiAllocation;
-    using TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw;
     using TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations;
-    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+
+    MockTbxCsrRegisterDownloadedAllocations(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+        this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
+            this->downloadAllocationTbxMock(gfxAllocation);
+        };
+    }
+    ~MockTbxCsrRegisterDownloadedAllocations() {
+        this->downloadAllocationImpl = nullptr;
+    }
+    void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {
         *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
         downloadedAllocations.insert(&gfxAllocation);
     }
