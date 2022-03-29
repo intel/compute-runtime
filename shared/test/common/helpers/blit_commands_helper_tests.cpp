@@ -466,6 +466,7 @@ INSTANTIATE_TEST_CASE_P(size_t,
                                         4,
                                         8,
                                         16));
+
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, BlitPlatforms) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     MockGraphicsAllocation srcAlloc;
@@ -499,6 +500,18 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
     auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+}
+
+HWTEST2_F(BlitTests, whenPrintImageBlitBlockCopyCommandIsCalledThenCmdDetailsAreNotPrintedToStdOutput, BlitPlatforms) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+
+    testing::internal::CaptureStdout();
+    NEO::BlitCommandsHelper<FamilyType>::printImageBlitBlockCopyCommand(bltCmd);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("");
+    EXPECT_EQ(expectedOutput, output);
 }
 
 HWTEST2_F(BlitTests, givenGen9AndGetBlitAllocationPropertiesThenCorrectValuesAreReturned, IsGen9) {

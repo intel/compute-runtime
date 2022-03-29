@@ -3682,19 +3682,19 @@ struct XY_BLOCK_COPY_BLT {
         return (TheStructure.Common.DestinationBaseAddress);
     }
 
-    inline void setDestinationXoffset(const uint32_t value) {
+    inline void setDestinationXOffset(const uint32_t value) {
         TheStructure.Common.DestinationXoffset = value;
     }
 
-    inline uint32_t getDestinationXoffset() const {
+    inline uint32_t getDestinationXOffset() const {
         return (TheStructure.Common.DestinationXoffset);
     }
 
-    inline void setDestinationYoffset(const uint32_t value) {
+    inline void setDestinationYOffset(const uint32_t value) {
         TheStructure.Common.DestinationYoffset = value;
     }
 
-    inline uint32_t getDestinationYoffset() const {
+    inline uint32_t getDestinationYOffset() const {
         return (TheStructure.Common.DestinationYoffset);
     }
 
@@ -3778,19 +3778,19 @@ struct XY_BLOCK_COPY_BLT {
         return (TheStructure.Common.SourceBaseAddress);
     }
 
-    inline void setSourceXoffset(const uint32_t value) {
+    inline void setSourceXOffset(const uint32_t value) {
         TheStructure.Common.SourceXoffset = value;
     }
 
-    inline uint32_t getSourceXoffset() const {
+    inline uint32_t getSourceXOffset() const {
         return (TheStructure.Common.SourceXoffset);
     }
 
-    inline void setSourceYoffset(const uint32_t value) {
+    inline void setSourceYOffset(const uint32_t value) {
         TheStructure.Common.SourceYoffset = value;
     }
 
-    inline uint32_t getSourceYoffset() const {
+    inline uint32_t getSourceYOffset() const {
         return (TheStructure.Common.SourceYoffset);
     }
 

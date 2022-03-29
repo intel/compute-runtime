@@ -12,6 +12,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 
+#include <cinttypes>
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -382,6 +384,47 @@ bool BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired() {
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+    printf("ColorDepth: %u\n", blitCmd.getColorDepth());
+    printf("SourcePitch: %u\n", blitCmd.getSourcePitch());
+    printf("SourceTiling: %u\n", blitCmd.getSourceTiling());
+    printf("SourceX1Coordinate_Left: %u\n", blitCmd.getSourceX1CoordinateLeft());
+    printf("SourceY1Coordinate_Top: %u\n", blitCmd.getSourceY1CoordinateTop());
+    printf("SourceBaseAddress: %" PRIx64 "\n", blitCmd.getSourceBaseAddress());
+    printf("SourceXOffset: %u\n", blitCmd.getSourceXOffset());
+    printf("SourceYOffset: %u\n", blitCmd.getSourceYOffset());
+    printf("SourceTargetMemory: %u\n", blitCmd.getSourceTargetMemory());
+    printf("SourceCompressionFormat: %u\n", blitCmd.getSourceCompressionFormat());
+    printf("SourceSurfaceHeight: %u\n", blitCmd.getSourceSurfaceHeight());
+    printf("SourceSurfaceWidth: %u\n", blitCmd.getSourceSurfaceWidth());
+    printf("SourceSurfaceType: %u\n", blitCmd.getSourceSurfaceType());
+    printf("SourceSurfaceQpitch: %u\n", blitCmd.getSourceSurfaceQpitch());
+    printf("SourceSurfaceDepth: %u\n", blitCmd.getSourceSurfaceDepth());
+    printf("SourceHorizontalAlign: %u\n", blitCmd.getSourceHorizontalAlign());
+    printf("SourceVerticalAlign: %u\n", blitCmd.getSourceVerticalAlign());
+    printf("SourceArrayIndex: %u\n", blitCmd.getSourceArrayIndex());
+    printf("DestinationPitch: %u\n", blitCmd.getDestinationPitch());
+    printf("DestinationTiling: %u\n", blitCmd.getDestinationTiling());
+    printf("DestinationX1Coordinate_Left: %u\n", blitCmd.getDestinationX1CoordinateLeft());
+    printf("DestinationY1Coordinate_Top: %u\n", blitCmd.getDestinationY1CoordinateTop());
+    printf("DestinationX2Coordinate_Right: %u\n", blitCmd.getDestinationX2CoordinateRight());
+    printf("DestinationY2Coordinate_Bottom: %u\n", blitCmd.getDestinationY2CoordinateBottom());
+    printf("DestinationBaseAddress: %" PRIx64 "\n", blitCmd.getDestinationBaseAddress());
+    printf("DestinationXOffset: %u\n", blitCmd.getDestinationXOffset());
+    printf("DestinationYOffset: %u\n", blitCmd.getDestinationYOffset());
+    printf("DestinationTargetMemory: %u\n", blitCmd.getDestinationTargetMemory());
+    printf("DestinationCompressionFormat: %u\n", blitCmd.getDestinationCompressionFormat());
+    printf("DestinationSurfaceHeight: %u\n", blitCmd.getDestinationSurfaceHeight());
+    printf("DestinationSurfaceWidth: %u\n", blitCmd.getDestinationSurfaceWidth());
+    printf("DestinationSurfaceType: %u\n", blitCmd.getDestinationSurfaceType());
+    printf("DestinationSurfaceQpitch: %u\n", blitCmd.getDestinationSurfaceQpitch());
+    printf("DestinationSurfaceDepth: %u\n", blitCmd.getDestinationSurfaceDepth());
+    printf("DestinationHorizontalAlign: %u\n", blitCmd.getDestinationHorizontalAlign());
+    printf("DestinationVerticalAlign: %u\n", blitCmd.getDestinationVerticalAlign());
+    printf("DestinationArrayIndex: %u\n", blitCmd.getDestinationArrayIndex());
 }
 
 } // namespace NEO

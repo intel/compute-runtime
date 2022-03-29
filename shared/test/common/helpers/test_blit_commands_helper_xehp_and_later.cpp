@@ -980,3 +980,70 @@ HWTEST2_F(BlitTests, givenDisabledGlobalCacheInvalidationWhenProgrammingGlobalSe
 HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenMiArbCheckWaRequiredThenReturnTrue, IsXeHPOrAbove) {
     EXPECT_TRUE(BlitCommandsHelper<FamilyType>::miArbCheckWaRequired());
 }
+
+HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsCalledThenCmdDetailsArePrintedToStdOutput, IsXeHPOrAbove) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintImageBlitBlockCopyCmdDetails.set(true);
+
+    uint32_t streamBuffer[100]{};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation srcAlloc;
+    MockGraphicsAllocation dstAlloc;
+    MockGraphicsAllocation clearColorAllocation;
+    Vec3<size_t> dstOffsets = {0, 0, 0};
+    Vec3<size_t> srcOffsets = {0, 0, 0};
+    Vec3<size_t> copySize = {0x1, 0x1, 0x1};
+    size_t srcRowPitch = 1;
+    size_t srcSlicePitch = 1;
+    size_t dstRowPitch = 1;
+    size_t dstSlicePitch = 1;
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(&dstAlloc, &srcAlloc,
+                                                                          dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                          dstRowPitch, dstSlicePitch, &clearColorAllocation);
+    blitProperties.srcSize = {1, 1, 1};
+    blitProperties.dstSize = {1, 1, 1};
+
+    testing::internal::CaptureStdout();
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::stringstream expectedOutput;
+    expectedOutput << "ColorDepth: 0\n"
+                   << "SourcePitch: 1\n"
+                   << "SourceTiling: 0\n"
+                   << "SourceX1Coordinate_Left: 0\n"
+                   << "SourceY1Coordinate_Top: 0\n"
+                   << "SourceBaseAddress: 0\n"
+                   << "SourceXOffset: 0\n"
+                   << "SourceYOffset: 0\n"
+                   << "SourceTargetMemory: 0\n"
+                   << "SourceCompressionFormat: 0\n"
+                   << "SourceSurfaceHeight: 1\n"
+                   << "SourceSurfaceWidth: 1\n"
+                   << "SourceSurfaceType: 0\n"
+                   << "SourceSurfaceQpitch: 0\n"
+                   << "SourceSurfaceDepth: 1\n"
+                   << "SourceHorizontalAlign: 0\n"
+                   << "SourceVerticalAlign: 0\n"
+                   << "SourceArrayIndex: 1\n"
+                   << "DestinationPitch: 1\n"
+                   << "DestinationTiling: 0\n"
+                   << "DestinationX1Coordinate_Left: 0\n"
+                   << "DestinationY1Coordinate_Top: 0\n"
+                   << "DestinationX2Coordinate_Right: 1\n"
+                   << "DestinationY2Coordinate_Bottom: 1\n"
+                   << "DestinationBaseAddress: 0\n"
+                   << "DestinationXOffset: 0\n"
+                   << "DestinationYOffset: 0\n"
+                   << "DestinationTargetMemory: 0\n"
+                   << "DestinationCompressionFormat: 0\n"
+                   << "DestinationSurfaceHeight: 1\n"
+                   << "DestinationSurfaceWidth: 1\n"
+                   << "DestinationSurfaceType: 0\n"
+                   << "DestinationSurfaceQpitch: 0\n"
+                   << "DestinationSurfaceDepth: 1\n"
+                   << "DestinationHorizontalAlign: 0\n"
+                   << "DestinationVerticalAlign: 0\n"
+                   << "DestinationArrayIndex: 1\n";
+    EXPECT_EQ(expectedOutput.str(), output);
+}

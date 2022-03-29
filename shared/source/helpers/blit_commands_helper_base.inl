@@ -296,6 +296,11 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const Bli
     dispatchPreBlitCommand(linearStream, hwInfo);
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
         appendSliceOffsets(blitProperties, bltCmd, i, rootDeviceEnvironment, srcSlicePitch, dstSlicePitch);
+
+        if (DebugManager.flags.PrintImageBlitBlockCopyCmdDetails.get()) {
+            printImageBlitBlockCopyCommand(bltCmd);
+        }
+
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_BLOCK_COPY_BLT>();
         *cmd = bltCmd;
         dispatchPostBlitCommand(linearStream, hwInfo);
