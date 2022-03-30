@@ -17,6 +17,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -28,7 +29,7 @@ extern ApiSpecificConfig::ApiType apiTypeForUlts;
 } //namespace NEO
 using namespace NEO;
 
-class DrmCommandStreamTestL0 : public ::testing::Test {
+class DrmCommandStreamTest : public ::testing::Test {
   public:
     template <typename GfxFamily>
     void SetUpT() {
@@ -89,13 +90,26 @@ class DrmCommandStreamTestL0 : public ::testing::Test {
 };
 
 template <typename GfxFamily>
-struct MockDrmCsrL0 : public DrmCommandStreamReceiver<GfxFamily> {
+struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
     using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
     using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
 };
 
-HWTEST_TEMPLATED_F(DrmCommandStreamTestL0, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    MockDrmCsrL0<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionValueThenTaskCountOfAllocationIsReturned) {
+    MockGraphicsAllocation allocation{};
+    uint32_t expectedValue = 0x1234;
+    allocation.updateTaskCount(expectedValue, osContext->getContextId());
+    EXPECT_EQ(expectedValue, csr->getCompletionValue(allocation));
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsettedTagAddressIsReturned) {
+    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress()));
+    auto expectedAddress = tagAddress + Drm::completionFenceOffset;
+    EXPECT_EQ(expectedAddress, csr->getCompletionAddress());
 }

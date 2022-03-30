@@ -1526,14 +1526,13 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
 
             uint32_t activeHwContexts = csr->getActivePartitions();
             auto osContextId = osContext->getContextId();
-            auto allocationTaskCount = allocation->getTaskCount(osContextId);
-            uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(csr->getTagAddress()));
+            auto allocationTaskCount = csr->getCompletionValue(*allocation);
+            uint64_t completionFenceAddress = csr->getCompletionAddress();
             if (completionFenceAddress == 0) {
                 continue;
             }
 
             if (allocation->isUsedByOsContext(osContextId)) {
-                completionFenceAddress += Drm::completionFenceOffset;
                 Drm &drm = getDrm(csr->getRootDeviceIndex());
                 auto &ctxVector = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
 

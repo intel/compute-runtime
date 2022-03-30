@@ -319,6 +319,14 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
 
+    virtual uint64_t getCompletionAddress() {
+        return 0;
+    }
+
+    virtual uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation) {
+        return 0;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

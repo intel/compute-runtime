@@ -316,4 +316,16 @@ inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
     return (this->drm->isVmBindAvailable() && useUserFenceWait);
 }
 
+template <typename GfxFamily>
+uint64_t DrmCommandStreamReceiver<GfxFamily>::getCompletionAddress() {
+    uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+    completionFenceAddress += Drm::completionFenceOffset;
+    return completionFenceAddress;
+}
+
+template <typename GfxFamily>
+uint32_t DrmCommandStreamReceiver<GfxFamily>::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
+    auto osContextId = osContext->getContextId();
+    return gfxAllocation.getTaskCount(osContextId);
+}
 } // namespace NEO

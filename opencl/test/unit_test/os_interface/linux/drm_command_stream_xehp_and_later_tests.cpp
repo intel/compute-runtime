@@ -51,10 +51,10 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
-        osContext = std::make_unique<OsContextLinux>(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor(device->getDeviceBitfield()));
-        osContext->ensureContextInitialized();
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useHwCsr = true;
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
     }
 
     void TearDown() {
@@ -64,7 +64,6 @@ struct DrmCommandStreamMultiTileMemExecFixture {
     DebugManagerStateRestore dbgRestore;
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
     std::unique_ptr<MockDevice> device;
-    std::unique_ptr<OsContext> osContext;
     MockExecutionEnvironment *executionEnvironment = nullptr;
     DrmMockCustom *mock = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
@@ -73,7 +72,11 @@ struct DrmCommandStreamMultiTileMemExecFixture {
 using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
+    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor(device->getDeviceBitfield()));
+    osContext->ensureContextInitialized();
+
     auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
     device->resetCommandStreamReceiver(testCsr);
     EXPECT_EQ(2u, testCsr->activePartitions);
     testCsr->setupContext(*osContext.get());

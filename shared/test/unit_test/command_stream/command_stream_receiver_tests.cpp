@@ -64,6 +64,13 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     InternalAllocationStorage *internalAllocationStorage;
 };
 
+TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueOrAddressThenZeroIsReturned) {
+    EXPECT_EQ(0u, commandStreamReceiver->getCompletionAddress());
+
+    MockGraphicsAllocation allocation{};
+    EXPECT_EQ(0u, commandStreamReceiver->getCompletionValue(allocation));
+}
+
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.peekTaskLevel());
