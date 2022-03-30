@@ -35,7 +35,6 @@ class L0HwHelper {
     virtual bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool forceDefaultUsmCompressionSupport() const = 0;
-    virtual bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const = 0;
 
     virtual void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const = 0;
     virtual std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
@@ -60,7 +59,6 @@ class L0HwHelperHw : public L0HwHelper {
     bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool forceDefaultUsmCompressionSupport() const override;
-    bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const override;
     void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const override;
     std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const override;
     bool multiTileCapablePlatform() const override;

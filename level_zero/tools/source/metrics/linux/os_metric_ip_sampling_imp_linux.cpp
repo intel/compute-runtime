@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -14,7 +15,6 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
 #include <algorithm>
@@ -184,9 +184,9 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
 bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
 
     const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
 
-    if (!l0HwHelper.isIpSamplingSupported(hardwareInfo)) {
+    if (!hwInfoConfig.isIpSamplingSupported(hardwareInfo)) {
         return false;
     }
 

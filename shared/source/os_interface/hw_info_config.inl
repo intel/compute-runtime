@@ -338,4 +338,9 @@ bool HwInfoConfigHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

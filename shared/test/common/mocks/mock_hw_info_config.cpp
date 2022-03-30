@@ -328,6 +328,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInCfeStateReq
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const {
     return false;
 }
@@ -342,4 +347,4 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const 
     return false;
 }
 
-} //namespace NEO
+} // namespace NEO

@@ -112,9 +112,4 @@ bool L0HwHelperHw<GfxFamily>::forceDefaultUsmCompressionSupport() const {
     return false;
 }
 
-template <typename GfxFamily>
-bool L0HwHelperHw<GfxFamily>::isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const {
-    return false;
-}
-
 } // namespace L0

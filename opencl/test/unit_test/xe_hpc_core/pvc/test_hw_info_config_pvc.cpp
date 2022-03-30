@@ -157,3 +157,18 @@ PVCTEST_F(PvcHwInfo, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConve
         }
     }
 }
+
+PVCTEST_F(PvcHwInfo, givenPvcHwInfoConfigWhenIsIpSamplingSupportedThenCorrectResultIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto hwInfo = *defaultHwInfo;
+
+    for (auto &deviceId : PVC_XL_IDS) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_FALSE(hwInfoConfig.isIpSamplingSupported(hwInfo));
+    }
+
+    for (auto &deviceId : PVC_XT_IDS) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_TRUE(hwInfoConfig.isIpSamplingSupported(hwInfo));
+    }
+}

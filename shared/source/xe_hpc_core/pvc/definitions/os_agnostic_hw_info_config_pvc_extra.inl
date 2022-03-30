@@ -20,3 +20,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+    return PVC::isXt(hwInfo);
+}
