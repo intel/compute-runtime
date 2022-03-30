@@ -640,7 +640,8 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
 TEST_F(PageFaultManagerTest, givenAubOrTbxCsrWhenSelectingHandlerThenAubAndTbxGpuDomainHandlerIsSet) {
     DebugManagerStateRestore restorer;
 
-    for (auto csrType : {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB}) {
+    for (auto csrType : {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX,
+                         CommandStreamReceiverType::CSR_HW_WITH_AUB, CommandStreamReceiverType::CSR_TBX_WITH_AUB}) {
         DebugManager.flags.SetCommandStreamReceiver.set(csrType);
 
         auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
@@ -655,14 +656,12 @@ TEST_F(PageFaultManagerTest, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandle
 
     EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
 
-    for (auto csrType : {CommandStreamReceiverType::CSR_HW, CommandStreamReceiverType::CSR_HW_WITH_AUB}) {
-        DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW);
 
-        auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
-        pageFaultManager2->selectGpuDomainHandler();
+    auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
+    pageFaultManager2->selectGpuDomainHandler();
 
-        EXPECT_EQ(pageFaultManager->gpuDomainHandler, reinterpret_cast<void *>(pageFaultManager2->gpuDomainHandler));
-    }
+    EXPECT_EQ(pageFaultManager->gpuDomainHandler, reinterpret_cast<void *>(pageFaultManager2->gpuDomainHandler));
 }
 
 struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint32_t> {

@@ -119,9 +119,7 @@ inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData
 }
 
 void PageFaultManager::selectGpuDomainHandler() {
-    if (DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_AUB ||
-        DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX ||
-        DebugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_TBX_WITH_AUB) {
+    if (DebugManager.flags.SetCommandStreamReceiver.get() > CommandStreamReceiverType::CSR_HW) {
         this->gpuDomainHandler = &PageFaultManager::handleGpuDomainTransferForAubAndTbx;
     }
 }
