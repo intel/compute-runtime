@@ -120,15 +120,14 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenDisabledCrossRootDeviceAccsessFl
     }
 }
 
-HWTEST_F(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenCorrectMemoryIsRequested) {
+HWTEST_F(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::COMMAND_BUFFER, false, mockDeviceBitfield);
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
-    const auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.useSystemMemoryPlacementForCommandBuffer(*defaultHwInfo), allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
 TEST_F(MemoryManagerGetAlloctionDataTests, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
@@ -820,8 +819,7 @@ HWTEST_F(GetAllocationDataTestHw, givenRingBufferAllocationWhenGetAllocationData
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 0x10000u, AllocationType::RING_BUFFER, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    const auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.useSystemMemoryPlacementForCommandBuffer(*defaultHwInfo), allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.allocateMemory);
     EXPECT_FALSE(allocData.flags.allow32Bit);
     EXPECT_FALSE(allocData.flags.allow64kbPages);
@@ -835,8 +833,7 @@ HWTEST_F(GetAllocationDataTestHw, givenSemaphoreBufferAllocationWhenGetAllocatio
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 0x1000u, AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    const auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.useSystemMemoryPlacementForCommandBuffer(*defaultHwInfo), allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.allocateMemory);
     EXPECT_FALSE(allocData.flags.allow32Bit);
     EXPECT_FALSE(allocData.flags.allow64kbPages);

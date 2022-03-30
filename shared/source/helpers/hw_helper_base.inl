@@ -597,12 +597,6 @@ bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &h
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForCommandBuffer(const HardwareInfo &hwInfo) const {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return !getEnableLocalMemory(hwInfo) || LocalMemoryAccessMode::CpuAccessDisallowed == hwInfoConfig.getLocalMemoryAccessMode(hwInfo);
-}
-
-template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
     return false;
 }

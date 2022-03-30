@@ -359,6 +359,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
+    case AllocationType::COMMAND_BUFFER:
     case AllocationType::RING_BUFFER:
     case AllocationType::SEMAPHORE_BUFFER:
     case AllocationType::BUFFER_HOST_MEMORY:
@@ -384,27 +385,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     if (GraphicsAllocation::isIsaAllocationType(properties.allocationType)) {
         allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForISA(*hwInfo);
-    } else if (properties.allocationType == AllocationType::COMMAND_BUFFER) {
-        allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForCommandBuffer(*hwInfo);
-    }
-
-    bool forceLocalMemoryForDirectSubmission = true;
-    switch (DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.get()) {
-    case 0:
-        forceLocalMemoryForDirectSubmission = false;
-        break;
-    case 1:
-        forceLocalMemoryForDirectSubmission = properties.flags.multiOsContextCapable;
-        break;
-    default:
-        break;
-    }
-
-    if (forceLocalMemoryForDirectSubmission) {
-        if (properties.allocationType == AllocationType::RING_BUFFER ||
-            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
-            allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForCommandBuffer(*hwInfo);
-        }
     }
 
     switch (properties.allocationType) {

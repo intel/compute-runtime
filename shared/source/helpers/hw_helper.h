@@ -107,7 +107,6 @@ class HwHelper {
     virtual int32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
-    virtual bool useSystemMemoryPlacementForCommandBuffer(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
     virtual bool isAssignEngineRoundRobinSupported() const = 0;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
@@ -326,8 +325,6 @@ class HwHelperHw : public HwHelper {
     bool useOnlyGlobalTimestamps() const override;
 
     bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const override;
-
-    bool useSystemMemoryPlacementForCommandBuffer(const HardwareInfo &hwInfo) const override;
 
     bool packedFormatsSupported() const override;
 

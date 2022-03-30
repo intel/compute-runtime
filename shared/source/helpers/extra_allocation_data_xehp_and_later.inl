@@ -19,7 +19,9 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
         if (properties.allocationType == AllocationType::LINEAR_STREAM ||
             properties.allocationType == AllocationType::INTERNAL_HEAP ||
             properties.allocationType == AllocationType::PRINTF_SURFACE ||
-            properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
+            properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
+            properties.allocationType == AllocationType::RING_BUFFER ||
+            properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {
             allocationData.flags.useSystemMemory = true;
         }
         if (!allocationData.flags.useSystemMemory) {
