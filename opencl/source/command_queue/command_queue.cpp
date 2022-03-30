@@ -985,6 +985,16 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
+void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
+    std::array<uint32_t, 8u> timestampData;
+    timestampData.fill(std::numeric_limits<uint32_t>::max());
+    if (node->refCountFetchSub(0) <= 2) { //One ref from deferred container and one from bcs barrier container it is going to be released from
+        for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
+            node->assignDataToAllTimestamps(i, timestampData.data());
+        }
+    }
+}
+
 bool CommandQueue::isWaitForTimestampsEnabled() const {
     auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
@@ -1061,12 +1071,8 @@ void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType eng
 
             // Save latest timestamp (override previous, if any).
             if (!bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.peekNodes().empty()) {
-                std::array<uint32_t, 8u> timestampData;
-                timestampData.fill(std::numeric_limits<uint32_t>::max());
                 for (auto &node : bcsTimestampPacketContainers[currentBcsIndex].lastBarrierToWaitFor.peekNodes()) {
-                    for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
-                        node->assignDataToAllTimestamps(i, timestampData.data());
-                    }
+                    this->assignDataToOverwrittenBcsNode(node);
                 }
             }
             TimestampPacketContainer newContainer{};

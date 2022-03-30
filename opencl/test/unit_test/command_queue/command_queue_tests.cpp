@@ -2135,6 +2135,19 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     EXPECT_EQ(1u, barrierNode->getContextEndValue(0u));
     dependencies.moveNodesToNewContainer(*queue.getDeferredTimestampPackets());
     queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    barrierNode->incRefCount();
+    barrierNode->incRefCount();
+    barrierNode->incRefCount();
+    barrierNode->incRefCount();
+
+    queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
+    EXPECT_EQ(1u, barrierNode->getContextEndValue(0u));
+    EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
+    barrierNode->refCountFetchSub(4u);
+    barrierNode = dependencies.barrierNodes.peekNodes()[0];
+    EXPECT_EQ(1u, barrierNode->getContextEndValue(0u));
+    dependencies.moveNodesToNewContainer(*queue.getDeferredTimestampPackets());
+    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
 
     queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
     EXPECT_NE(1u, barrierNode->getContextEndValue(0u));
