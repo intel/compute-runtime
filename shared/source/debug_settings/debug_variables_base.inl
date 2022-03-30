@@ -289,6 +289,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionForceLocalMemoryStorageMode, -1,
 DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0 - disable, 1 - enable. If enabled, completionRingBuffers wont be updated if ring is not runnning.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackCommandBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of cmd buffer after handling residency.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackRingBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of ring buffer after handling residency.")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertExtraMiMemFenceCommands, -1, "-1: default, 0 - disable, 1 - enable. If enabled, add extra MI_MEM_FENCE instructions with acquire bit set")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

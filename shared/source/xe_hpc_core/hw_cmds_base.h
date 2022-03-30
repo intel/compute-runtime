@@ -34,6 +34,7 @@ struct XE_HPC_CORE {
     static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = false;
     static constexpr bool isUsingGenericMediaStateClear = true;
+    static constexpr bool isUsingMiMemFence = true;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

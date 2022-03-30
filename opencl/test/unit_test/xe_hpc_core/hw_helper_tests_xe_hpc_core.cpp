@@ -684,7 +684,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhen
         LinearStream commandStream(buffer, 128);
         auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
 
-        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, hardwareInfo);
+        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, hardwareInfo);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);

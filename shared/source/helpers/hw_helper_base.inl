@@ -244,7 +244,7 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControlAndProgramPostSyncO
     setPostSyncExtraProperties(args, hwInfo);
     MemorySynchronizationCommands<GfxFamily>::setPipeControlWithPostSync(commandsBuffer, operation, gpuAddress, immediateData, args);
 
-    MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, hwInfo);
+    MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, hwInfo);
 }
 
 template <typename GfxFamily>
@@ -292,15 +292,15 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControlWA(void *&commandsB
         *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
-        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, hwInfo);
+        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, hwInfo);
     }
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
     size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(hwInfo);
     void *commandBuffer = commandStream.getSpace(requiredSize);
-    setAdditionalSynchronization(commandBuffer, gpuAddress, hwInfo);
+    setAdditionalSynchronization(commandBuffer, gpuAddress, acquire, hwInfo);
 }
 
 template <typename GfxFamily>
@@ -396,7 +396,7 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWA(const H
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>

@@ -24,6 +24,8 @@ struct GEN9 {
 
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
+    static constexpr bool isUsingMiMemFence = false;
+
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

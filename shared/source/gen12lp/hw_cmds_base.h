@@ -25,6 +25,7 @@ struct GEN12LP {
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
+    static constexpr bool isUsingMiMemFence = false;
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

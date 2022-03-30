@@ -246,11 +246,20 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
     dispatchDisablePrefetcher(true);
     EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                           semaphoreGpuVa,
                                                           value,
                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+
+    if constexpr (GfxFamily::isUsingMiMemFence) {
+        if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1) {
+
+            MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, this->device.getHardwareInfo());
+        }
+    }
+
     dispatchPrefetchMitigation();
     dispatchDisablePrefetcher(false);
 }
@@ -260,6 +269,13 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
     size_t semaphoreSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     semaphoreSize += getSizePrefetchMitigation();
     semaphoreSize += 2 * getSizeDisablePrefetcher();
+
+    if constexpr (GfxFamily::isUsingMiMemFence) {
+        if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1) {
+            semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(this->device.getHardwareInfo());
+        }
+    }
+
     return semaphoreSize;
 }
 
