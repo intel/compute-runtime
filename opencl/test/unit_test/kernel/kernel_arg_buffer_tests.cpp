@@ -744,7 +744,7 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
         pKernelInfo->argAsPtr(0).bindful = undefined<SurfaceStateHeapOffset>;
     }
-    void TearDown() override {
+    void TearDown() {
         delete pBuffer;
         KernelArgBufferFixture::TearDown();
     }

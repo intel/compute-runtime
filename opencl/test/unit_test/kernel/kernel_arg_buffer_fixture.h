@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class KernelArgBufferFixture : public ContextFixture, public ClDeviceFixture {
 
   public:
     void SetUp();
-    void TearDown() override;
+    void TearDown();
 
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram = nullptr;

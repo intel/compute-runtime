@@ -54,11 +54,7 @@ struct CommandQueueHwFixture {
 struct OOQueueFixture : public CommandQueueHwFixture {
     typedef CommandQueueHwFixture BaseClass;
 
-    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override {
-        ASSERT_NE(nullptr, pDevice);
-        BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
-        ASSERT_NE(nullptr, BaseClass::pCmdQ);
-    }
+    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override;
 };
 
 struct CommandQueueFixture {
@@ -122,5 +118,38 @@ struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwF
 
 using IoqCommandQueueHwBlitTest = CommandQueueHwBlitTest<false>;
 using OoqCommandQueueHwBlitTest = CommandQueueHwBlitTest<true>;
+
+struct CommandQueueHwTest
+    : public ClDeviceFixture,
+      public ContextFixture,
+      public CommandQueueHwFixture,
+      ::testing::Test {
+
+    using ContextFixture::SetUp;
+
+    void SetUp() override;
+
+    void TearDown() override;
+
+    cl_command_queue_properties properties;
+    const HardwareInfo *pHwInfo = nullptr;
+};
+
+struct OOQueueHwTest : public ClDeviceFixture,
+                       public ContextFixture,
+                       public OOQueueFixture,
+                       ::testing::Test {
+    using ContextFixture::SetUp;
+
+    OOQueueHwTest() {
+    }
+
+    void SetUp() override;
+
+    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override {
+    }
+
+    void TearDown() override;
+};
 
 } // namespace NEO

@@ -9,8 +9,6 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_enqueue_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_preemption_fixture.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/context_fixture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/context_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/d3d_test_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_flags_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_info_fixture.h

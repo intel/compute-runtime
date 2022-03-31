@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -45,6 +45,8 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/buffer_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/cl_device_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/cl_device_fixture.h
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/context_fixture.cpp
+    ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/context_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.h
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/indirect_heap/indirect_heap_fixture.cpp

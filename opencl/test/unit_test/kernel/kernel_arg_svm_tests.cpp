@@ -53,7 +53,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public ClDeviceFixture {
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete pKernel;
 
         delete pProgram;

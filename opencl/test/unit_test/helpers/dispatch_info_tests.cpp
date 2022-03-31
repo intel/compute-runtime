@@ -40,7 +40,7 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         pKernel->slmTotalSize = 128;
     }
-    void TearDown() override {
+    void TearDown() {
         delete pKernel;
         delete pProgram;
 

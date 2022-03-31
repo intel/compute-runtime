@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
         pKernel->setCrossThreadData(&pCrossThreadData[0], sizeof(pCrossThreadData));
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete pKernel;
 
         delete pProgram;

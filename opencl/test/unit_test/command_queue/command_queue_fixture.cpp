@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,4 +124,37 @@ void CommandQueueFixture::TearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }
+
+void OOQueueFixture ::SetUp(ClDevice *pDevice, cl_command_queue_properties properties) {
+    ASSERT_NE(nullptr, pDevice);
+    BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    ASSERT_NE(nullptr, BaseClass::pCmdQ);
+}
+
+void CommandQueueHwTest::SetUp() {
+    ClDeviceFixture::SetUp();
+    cl_device_id device = pClDevice;
+    ContextFixture::SetUp(1, &device);
+    CommandQueueHwFixture::SetUp(pClDevice, 0);
+}
+
+void CommandQueueHwTest::TearDown() {
+    CommandQueueHwFixture::TearDown();
+    ContextFixture::TearDown();
+    ClDeviceFixture::TearDown();
+}
+
+void OOQueueHwTest::SetUp() {
+    ClDeviceFixture::SetUp();
+    cl_device_id device = pClDevice;
+    ContextFixture::SetUp(1, &device);
+    OOQueueFixture::SetUp(pClDevice, 0);
+}
+
+void OOQueueHwTest::TearDown() {
+    OOQueueFixture::TearDown();
+    ContextFixture::TearDown();
+    ClDeviceFixture::TearDown();
+}
+
 } // namespace NEO

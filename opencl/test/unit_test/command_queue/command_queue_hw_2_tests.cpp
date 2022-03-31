@@ -1,0 +1,601 @@
+/*
+ * Copyright (C) 2018-2022 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
+
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/dispatch_info_builder.h"
+#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+using namespace NEO;
+
+void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
+    for (auto &srcDi : src) {
+        dst.push(srcDi);
+    }
+    dst.setBuiltinOpParams(src.peekBuiltinOpParams());
+}
+
+struct MockBuilder : BuiltinDispatchInfoBuilder {
+    using BuiltinDispatchInfoBuilder::BuiltinDispatchInfoBuilder;
+    bool buildDispatchInfos(MultiDispatchInfo &d) const override {
+        wasBuildDispatchInfosWithBuiltinOpParamsCalled = true;
+        paramsReceived.multiDispatchInfo.setBuiltinOpParams(d.peekBuiltinOpParams());
+        return true;
+    }
+    bool buildDispatchInfos(MultiDispatchInfo &d, Kernel *kernel,
+                            const uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset) const override {
+        paramsReceived.kernel = kernel;
+        paramsReceived.gws = gws;
+        paramsReceived.elws = elws;
+        paramsReceived.offset = offset;
+        wasBuildDispatchInfosWithKernelParamsCalled = true;
+
+        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::NoSplit> dispatchInfoBuilder(clDevice);
+        dispatchInfoBuilder.setKernel(paramsToUse.kernel);
+        dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
+        dispatchInfoBuilder.bake(d);
+
+        CloneMdi(paramsReceived.multiDispatchInfo, d);
+        return true;
+    }
+
+    mutable bool wasBuildDispatchInfosWithBuiltinOpParamsCalled = false;
+    mutable bool wasBuildDispatchInfosWithKernelParamsCalled = false;
+    struct Params {
+        MultiDispatchInfo multiDispatchInfo;
+        Kernel *kernel = nullptr;
+        Vec3<size_t> gws = Vec3<size_t>{0, 0, 0};
+        Vec3<size_t> elws = Vec3<size_t>{0, 0, 0};
+        Vec3<size_t> offset = Vec3<size_t>{0, 0, 0};
+    };
+
+    mutable Params paramsReceived;
+    Params paramsToUse;
+};
+
+struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
+
+    void SetUpImpl(EBuiltInOps::Type operation) {
+        auto builtIns = new MockBuiltins();
+        pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+
+        auto swapBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
+            rootDeviceIndex,
+            operation,
+            std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuilder(*builtIns, pCmdQ->getClDevice())));
+
+        mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
+            operation,
+            *pClDevice));
+    }
+
+    MockBuilder *mockBuilder;
+};
+
+HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
+
+    SetUpImpl(EBuiltInOps::CopyBufferToBuffer);
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
+
+    cl_int status = pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 0, ptr, nullptr, 0, 0, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    void *alignedPtr = alignDown(ptr, 4);
+    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+    Vec3<size_t> offset = {0, 0, 0};
+
+    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+
+    EXPECT_EQ(alignedPtr, builtinParams.dstPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.dstOffset.x);
+    EXPECT_EQ(offset, builtinParams.srcOffset);
+
+    status = pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, 0, ptr, nullptr, 0, 0, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+
+    EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
+    EXPECT_EQ(offset, builtinParams.dstOffset);
+}
+
+HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
+
+    SetUpImpl(EBuiltInOps::CopyBufferToImage3d);
+
+    std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
+
+    auto imageDesc = dstImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+
+    size_t rowPitch = dstImage->getHostPtrRowPitch();
+    size_t slicePitch = dstImage->getHostPtrSlicePitch();
+
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
+
+    void *alignedPtr = alignDown(ptr, 4);
+    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+    Vec3<size_t> offset = {0, 0, 0};
+
+    cl_int status = pCmdQ->enqueueWriteImage(dstImage.get(),
+                                             CL_FALSE,
+                                             origin,
+                                             region,
+                                             rowPitch,
+                                             slicePitch,
+                                             ptr,
+                                             nullptr,
+                                             0,
+                                             0,
+                                             nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+    EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
+    EXPECT_EQ(offset, builtinParams.dstOffset);
+}
+
+HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
+
+    SetUpImpl(EBuiltInOps::CopyImage3dToBuffer);
+
+    std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
+
+    auto imageDesc = dstImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+
+    size_t rowPitch = dstImage->getHostPtrRowPitch();
+    size_t slicePitch = dstImage->getHostPtrSlicePitch();
+
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
+
+    void *alignedPtr = alignDown(ptr, 4);
+    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+    Vec3<size_t> offset = {0, 0, 0};
+
+    cl_int status = pCmdQ->enqueueReadImage(dstImage.get(),
+                                            CL_FALSE,
+                                            origin,
+                                            region,
+                                            rowPitch,
+                                            slicePitch,
+                                            ptr,
+                                            nullptr,
+                                            0,
+                                            0,
+                                            nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+    EXPECT_EQ(alignedPtr, builtinParams.dstPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.dstOffset.x);
+    EXPECT_EQ(offset, builtinParams.srcOffset);
+}
+
+HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
+
+    SetUpImpl(EBuiltInOps::CopyBufferRect);
+
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+
+    size_t bufferOrigin[3] = {0, 0, 0};
+    size_t hostOrigin[3] = {0, 0, 0};
+    size_t region[3] = {0, 0, 0};
+
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
+
+    cl_int status = pCmdQ->enqueueReadBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, 0, nullptr);
+
+    void *alignedPtr = alignDown(ptr, 4);
+    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+    Vec3<size_t> offset = {0, 0, 0};
+    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+
+    EXPECT_EQ(alignedPtr, builtinParams.dstPtr);
+    EXPECT_EQ(ptrOffset, builtinParams.dstOffset.x);
+    EXPECT_EQ(offset, builtinParams.srcOffset);
+
+    status = pCmdQ->enqueueWriteBufferRect(buffer.get(), CL_FALSE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, 0, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+    EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
+    EXPECT_EQ(offset, builtinParams.dstOffset);
+    EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
+}
+
+HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
+
+    int32_t executionStamp = 0;
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(mockCSR);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t size = 1;
+
+    class MockEventWithSetCompleteOnUpdate : public Event {
+      public:
+        MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
+                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+        }
+        void updateExecutionStatus() override {
+            setStatus(CL_COMPLETE);
+        }
+    };
+
+    Event event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
+
+    uint32_t virtualEventTaskLevel = 77;
+    uint32_t virtualEventTaskCount = 80;
+    MockEventWithSetCompleteOnUpdate virtualEvent(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
+
+    cl_event blockedEvent = &event;
+
+    // Put Queue in blocked state by assigning virtualEvent
+    virtualEvent.incRefInternal();
+    event.addChild(virtualEvent);
+    cmdQHw->virtualEvent = &virtualEvent;
+
+    cmdQHw->taskLevel = 23;
+    cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    //new virtual event is created on enqueue, bind it to the created virtual event
+    EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
+
+    event.setStatus(CL_SUBMITTED);
+
+    virtualEvent.Event::updateExecutionStatus();
+    EXPECT_FALSE(cmdQHw->isQueueBlocked());
+
+    //+1 due to dependency between virtual event & new virtual event
+    //new virtual event is actually responsible for command delivery
+    EXPECT_EQ(virtualEventTaskLevel + 1, cmdQHw->taskLevel);
+    EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsThenGpgpuCommandStreamIsNotObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+
+    cl_int retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterNotFlushedKernelThenGpgpuCommandStreamIsObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    pCmdQ->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    size_t offset = 0;
+    size_t size = 1;
+    cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+    const auto ensureCommandBufferAllocationCalledAfterKernel = gpgpuCsr.ensureCommandBufferAllocationCalled;
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(ensureCommandBufferAllocationCalledAfterKernel, gpgpuCsr.ensureCommandBufferAllocationCalled);
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterFlushedKernelThenGpgpuCommandStreamIsNotObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    size_t offset = 0;
+    size_t size = 1;
+    cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+    const auto ensureCommandBufferAllocationCalledAfterKernel = gpgpuCsr.ensureCommandBufferAllocationCalled;
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ensureCommandBufferAllocationCalledAfterKernel, gpgpuCsr.ensureCommandBufferAllocationCalled);
+}
+
+HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandThenWaitForBarrierOnBlit) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernel *kernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t gws = 1;
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+    char ptr[1] = {};
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+
+    uint64_t barrierNodeAddress = 0u;
+    {
+        HardwareParse ccsHwParser;
+        ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+
+        const auto pipeControlItor = find<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+
+        // There shouldn't be any semaphores before the barrier
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), pipeControlItor);
+        EXPECT_EQ(pipeControlItor, semaphoreItor);
+    }
+
+    {
+        HardwareParse bcsHwParser;
+        bcsHwParser.parseCommands<FamilyType>(pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0), 0u);
+
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+
+        const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end());
+        EXPECT_EQ(bcsHwParser.cmdList.end(), pipeControlItor);
+    }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
+HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandThenWaitForBlitBeforeBarrier) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernel *kernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t gws = 1;
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+    char ptr[1] = {};
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    uint64_t lastBlitNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*pCmdQ->getTimestampPacketContainer()->peekNodes()[0]);
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+    auto bcsStart = pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0).getUsed();
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+
+    uint64_t barrierNodeAddress = 0u;
+    {
+        HardwareParse ccsHwParser;
+        ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        EXPECT_EQ(lastBlitNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+
+        const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, ccsHwParser.cmdList.end());
+        const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+
+        // There shouldn't be any more semaphores before the barrier
+        EXPECT_EQ(pipeControlItor, find<MI_SEMAPHORE_WAIT *>(std::next(semaphoreItor), pipeControlItor));
+    }
+
+    {
+        HardwareParse bcsHwParser;
+        bcsHwParser.parseCommands<FamilyType>(pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0), bcsStart);
+
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
+
+        // Only one barrier semaphore from first BCS enqueue
+        const auto blitItor = find<XY_COPY_BLT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        EXPECT_EQ(1u, findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), blitItor).size());
+    }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
+HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCommandThenWaitForBlitBeforeBarrier) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(0);
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    UserEvent userEvent;
+    cl_event userEventWaitlist[] = {&userEvent};
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernel *kernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t gws = 1;
+    BufferDefaults::context = context;
+    auto buffer = clUniquePtr(BufferHelper<>::create());
+    char ptr[1] = {};
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 0, nullptr, nullptr));
+    uint64_t lastBlitNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*pCmdQ->getTimestampPacketContainer()->peekNodes()[0]);
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, &offset, &gws, nullptr, 0, nullptr, nullptr));
+    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+    auto bcsStart = pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0).getUsed();
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueBarrierWithWaitList(0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 1u, ptr, nullptr, 1, userEventWaitlist, nullptr));
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    uint64_t barrierNodeAddress = 0u;
+    {
+        HardwareParse ccsHwParser;
+        ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        EXPECT_EQ(lastBlitNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+
+        const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, ccsHwParser.cmdList.end());
+        const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+
+        // There shouldn't be any more semaphores before the barrier
+        EXPECT_EQ(pipeControlItor, find<MI_SEMAPHORE_WAIT *>(std::next(semaphoreItor), pipeControlItor));
+    }
+
+    {
+        HardwareParse bcsHwParser;
+        bcsHwParser.parseCommands<FamilyType>(pCmdQ->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS)->getCS(0), bcsStart);
+
+        const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
+        const auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+        EXPECT_EQ(barrierNodeAddress, semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(bcsHwParser.cmdList.end(), find<PIPE_CONTROL *>(semaphoreItor, bcsHwParser.cmdList.end()));
+    }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+}
+
+HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsProvidedThenThisBuilderIsUsedForCreatingDispatchInfo) {
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
+
+    MockKernelWithInternals mockKernelToUse(*pClDevice);
+    MockBuilder builder(*pDevice->getBuiltIns(), *pClDevice);
+    builder.paramsToUse.gws.x = 11;
+    builder.paramsToUse.elws.x = 13;
+    builder.paramsToUse.offset.x = 17;
+    builder.paramsToUse.kernel = mockKernelToUse.mockKernel;
+
+    MockKernelWithInternals mockKernelToSend(*pClDevice);
+    mockKernelToSend.kernelInfo.builtinDispatchBuilder = &builder;
+    NullSurface s;
+    Surface *surfaces[] = {&s};
+    size_t gws[3] = {3, 0, 0};
+    size_t lws[3] = {5, 0, 0};
+    size_t off[3] = {7, 0, 0};
+
+    EXPECT_FALSE(builder.wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    EXPECT_FALSE(builder.wasBuildDispatchInfosWithKernelParamsCalled);
+
+    cmdQHw->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(surfaces, false, mockKernelToSend.mockKernel, 1, off, gws, lws, lws, 0, nullptr, nullptr);
+
+    EXPECT_FALSE(builder.wasBuildDispatchInfosWithBuiltinOpParamsCalled);
+    EXPECT_TRUE(builder.wasBuildDispatchInfosWithKernelParamsCalled);
+
+    EXPECT_EQ(Vec3<size_t>(gws[0], gws[1], gws[2]), builder.paramsReceived.gws);
+    EXPECT_EQ(Vec3<size_t>(lws[0], lws[1], lws[2]), builder.paramsReceived.elws);
+    EXPECT_EQ(Vec3<size_t>(off[0], off[1], off[2]), builder.paramsReceived.offset);
+    EXPECT_EQ(mockKernelToSend.mockKernel, builder.paramsReceived.kernel);
+
+    auto dispatchInfo = builder.paramsReceived.multiDispatchInfo.begin();
+    EXPECT_EQ(1U, builder.paramsReceived.multiDispatchInfo.size());
+    EXPECT_EQ(builder.paramsToUse.gws.x, dispatchInfo->getGWS().x);
+    EXPECT_EQ(builder.paramsToUse.elws.x, dispatchInfo->getEnqueuedWorkgroupSize().x);
+    EXPECT_EQ(builder.paramsToUse.offset.x, dispatchInfo->getOffset().x);
+    EXPECT_EQ(builder.paramsToUse.kernel, dispatchInfo->getKernel());
+}

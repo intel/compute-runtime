@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->isBuiltIn = true;
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete pKernel;
         delete pProgram;
 
