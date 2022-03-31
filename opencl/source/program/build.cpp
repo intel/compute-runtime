@@ -64,10 +64,12 @@ cl_int Program::build(
                 deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
             }
 
-            if (nullptr != buildOptions) {
-                options = buildOptions;
-            } else if (this->createdFrom != CreatedFrom::BINARY) {
-                options = "";
+            if (this->createdFrom != CreatedFrom::BINARY) {
+                if (nullptr != buildOptions) {
+                    options = buildOptions;
+                } else {
+                    options = "";
+                }
             }
 
             const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
@@ -46,6 +47,13 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
         break;
     }
 
+    ArrayRef<const uint8_t> intermediateRepresentation;
+    for (auto &elfSH : elf.sectionHeaders) {
+        if (elfSH.header->type == Elf::SHT_ZEBIN_SPIRV) {
+            intermediateRepresentation = elfSH.data;
+        }
+    }
+
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
         validForTarget &= validateTargetDevice(elf, requestedTargetDevice);
@@ -58,15 +66,21 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
         validForTarget &= (8U == requestedTargetDevice.maxPointerSizeInBytes);
     }
 
-    if (false == validForTarget) {
-        outErrReason = "Unhandled target device";
-        return {};
-    }
-
     SingleDeviceBinary ret;
     ret.deviceBinary = archive;
     ret.format = NEO::DeviceBinaryFormat::Zebin;
     ret.targetDevice = requestedTargetDevice;
+
+    if (false == validForTarget) {
+        if (false == intermediateRepresentation.empty()) {
+            ret.intermediateRepresentation = intermediateRepresentation;
+            ret.buildOptions = NEO::CompilerOptions::allowZebin;
+            ret.deviceBinary = {};
+        } else {
+            outErrReason = "Unhandled target device";
+            return {};
+        }
+    }
 
     return ret;
 }
