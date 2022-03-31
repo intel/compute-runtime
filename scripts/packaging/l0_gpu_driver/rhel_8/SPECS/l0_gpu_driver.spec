@@ -2,6 +2,7 @@
 %global ver xxx
 %global rel xxx
 %global build_id xxx
+%global NEO_RELEASE_WITH_REGKEYS FALSE
 
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
@@ -45,6 +46,8 @@ cd build
    -DCMAKE_BUILD_TYPE=Release \
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=1 \
+   -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/

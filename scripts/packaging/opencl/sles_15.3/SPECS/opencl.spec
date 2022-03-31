@@ -6,6 +6,7 @@
 %global NEO_OCL_VERSION_MAJOR xxx
 %global NEO_OCL_VERSION_MINOR xxx
 %global NEO_OCL_VERSION_BUILD xxx
+%global NEO_RELEASE_WITH_REGKEYS FALSE
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -60,7 +61,8 @@ Summary:        ocloc package for opencl
    -DBUILD_WITH_L0=FALSE \
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
-   -DRELEASE_WITH_REGKEYS=1 \
+   -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -Wno-dev
 %make_build
 

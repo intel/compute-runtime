@@ -4,6 +4,7 @@
 %global ver xxx
 %global rel xxx
 %global build_id xxx
+%global NEO_RELEASE_WITH_REGKEYS FALSE
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -56,7 +57,8 @@ exposing hardware capabilities to applications.
    -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
-   -DRELEASE_WITH_REGKEYS=TRUE \
+   -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
    -Wno-dev

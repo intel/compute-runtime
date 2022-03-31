@@ -52,6 +52,8 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}.${API_VERSION}"
     RELEASE="${API_VERSION_SRC}${API_RPM_MODEL_LINK}"
 
+    RELEASE_WITH_REGKEYS="${RELEASE_WITH_REGKEYS:-FALSE}"
+
     #setup rpm build tree
     rm -rf $BUILD_DIR
     mkdir -p $BUILD_DIR/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
@@ -68,6 +70,7 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     # Update spec file with new version
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
+    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $SPEC
     perl -pi -e "s/^%global build_id .*/%global build_id ${NEO_L0_VERSION_PATCH}/" $SPEC
 
     rpmbuild --define "_topdir $BUILD_DIR" -bs $SPEC --define 'build_type ${CMAKE_BUILD_TYPE}' "${build_args[@]}"

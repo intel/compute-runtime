@@ -4,6 +4,7 @@
 %global NEO_OCL_VERSION_MAJOR xxx
 %global NEO_OCL_VERSION_MINOR xxx
 %global NEO_OCL_VERSION_BUILD xxx
+%global NEO_RELEASE_WITH_REGKEYS FALSE
 
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
@@ -51,8 +52,9 @@ cd build
    -DCMAKE_BUILD_TYPE=Release \
    -DBUILD_WITH_L0=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
+   -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
    -DCMAKE_INSTALL_PREFIX=/usr \
-   -DRELEASE_WITH_REGKEYS=1
+   -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS}
 %make_build
 
 %install

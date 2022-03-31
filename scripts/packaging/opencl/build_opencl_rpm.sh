@@ -52,6 +52,8 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}.${API_VERSION}"
     RELEASE="${API_VERSION_SRC}${API_RPM_MODEL_LINK}"
 
+    RELEASE_WITH_REGKEYS="${RELEASE_WITH_REGKEYS:-FALSE}"
+
     #setup rpm build tree
     rm -rf $BUILD_DIR
     mkdir -p $BUILD_DIR/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
@@ -72,6 +74,7 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $BUILD_DIR/SPECS/opencl.spec
     perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $BUILD_DIR/SPECS/opencl.spec
     perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $BUILD_DIR/SPECS/opencl.spec
+    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $BUILD_DIR/SPECS/opencl.spec
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
 
