@@ -616,69 +616,6 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     EXPECT_NE(cmdList.end(), itor2);
 }
 
-HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithHostScopeThenPipeControlAndSemWaitAreAddedViaFlushTask) {
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    ASSERT_NE(nullptr, commandList);
-
-    EXPECT_EQ(device, commandList->device);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
-
-    auto &commandContainer = commandList->commandContainer;
-    MockEvent event, event2;
-    event.signalScope = 0;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
-    ze_event_handle_t events[] = {&event, &event2};
-
-    auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
-    EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
-}
-
-HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendWaitEventsWithSubdeviceScopeThenPipeControlAndSemWaitAreAddedViaFlushTask) {
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    ASSERT_NE(nullptr, commandList);
-
-    EXPECT_EQ(device, commandList->device);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
-
-    auto &commandContainer = commandList->commandContainer;
-    MockEvent event, event2;
-    event.signalScope = 0;
-    event.waitScope = 0;
-    event2.waitScope = 0;
-    ze_event_handle_t events[] = {&event, &event2};
-
-    auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
-    EXPECT_EQ(used, commandContainer.getCommandStream()->getUsed());
-}
-
 HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithHostScopeThenMiFlushAndSemWaitAreAdded) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);

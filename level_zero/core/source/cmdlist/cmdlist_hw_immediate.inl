@@ -45,35 +45,35 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration) {
     NEO::DispatchFlags dispatchFlags(
-        {},                                                          //csrDependencies
-        nullptr,                                                     //barrierTimestampPacketNodes
-        {},                                                          //pipelineSelectArgs
-        nullptr,                                                     //flushStampReference
-        NEO::QueueThrottle::MEDIUM,                                  //throttle
-        this->getCommandListPreemptionMode(),                        //preemptionMode
-        GrfConfig::NotApplicable,                                    //numGrfRequired
-        NEO::L3CachingSettings::l3CacheOn,                           //l3CacheSettings
-        NEO::ThreadArbitrationPolicy::NotPresent,                    //threadArbitrationPolicy
-        NEO::AdditionalKernelExecInfo::NotApplicable,                //additionalKernelExecInfo
-        NEO::KernelExecutionType::NotApplicable,                     //kernelExecutionType
-        NEO::MemoryCompressionState::NotApplicable,                  //memoryCompressionState
-        NEO::QueueSliceCount::defaultSliceCount,                     //sliceCount
-        this->isSyncModeQueue,                                       //blocking
-        this->isSyncModeQueue,                                       //dcFlush
-        this->getCommandListSLMEnable(),                             //useSLM
-        this->isSyncModeQueue,                                       //guardCommandBufferWithPipeControl
-        false,                                                       //GSBA32BitRequired
-        false,                                                       //requiresCoherency
-        false,                                                       //lowPriority
-        true,                                                        //implicitFlush
-        this->csr->isNTo1SubmissionModelEnabled(),                   //outOfOrderExecutionAllowed
-        false,                                                       //epilogueRequired
-        false,                                                       //usePerDssBackedBuffer
-        false,                                                       //useSingleSubdevice
-        false,                                                       //useGlobalAtomics
-        this->device->getNEODevice()->getNumGenericSubDevices() > 1, //areMultipleSubDevicesInContext
-        false,                                                       //memoryMigrationRequired
-        false                                                        //textureCacheFlush
+        {},                                                          // csrDependencies
+        nullptr,                                                     // barrierTimestampPacketNodes
+        {},                                                          // pipelineSelectArgs
+        nullptr,                                                     // flushStampReference
+        NEO::QueueThrottle::MEDIUM,                                  // throttle
+        this->getCommandListPreemptionMode(),                        // preemptionMode
+        GrfConfig::NotApplicable,                                    // numGrfRequired
+        NEO::L3CachingSettings::l3CacheOn,                           // l3CacheSettings
+        NEO::ThreadArbitrationPolicy::NotPresent,                    // threadArbitrationPolicy
+        NEO::AdditionalKernelExecInfo::NotApplicable,                // additionalKernelExecInfo
+        NEO::KernelExecutionType::NotApplicable,                     // kernelExecutionType
+        NEO::MemoryCompressionState::NotApplicable,                  // memoryCompressionState
+        NEO::QueueSliceCount::defaultSliceCount,                     // sliceCount
+        this->isSyncModeQueue,                                       // blocking
+        this->isSyncModeQueue,                                       // dcFlush
+        this->getCommandListSLMEnable(),                             // useSLM
+        this->isSyncModeQueue,                                       // guardCommandBufferWithPipeControl
+        false,                                                       // GSBA32BitRequired
+        false,                                                       // requiresCoherency
+        false,                                                       // lowPriority
+        true,                                                        // implicitFlush
+        this->csr->isNTo1SubmissionModelEnabled(),                   // outOfOrderExecutionAllowed
+        false,                                                       // epilogueRequired
+        false,                                                       // usePerDssBackedBuffer
+        false,                                                       // useSingleSubdevice
+        false,                                                       // useGlobalAtomics
+        this->device->getNEODevice()->getNumGenericSubDevices() > 1, // areMultipleSubDevicesInContext
+        false,                                                       // memoryMigrationRequired
+        false                                                        // textureCacheFlush
     );
     this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
 
@@ -323,41 +323,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    ze_result_t ret = ZE_RESULT_SUCCESS;
-    bool isTimestampEvent = false;
-
-    for (uint32_t i = 0; i < numEvents; i++) {
-        auto event = Event::fromHandle(phWaitEvents[i]);
-        isTimestampEvent |= (event->isEventTimestampFlagSet()) ? true : false;
+    if (this->isFlushTaskSubmissionEnabled) {
+        checkAvailableSpace();
     }
-
-    if (isTimestampEvent) {
-        if (this->isFlushTaskSubmissionEnabled) {
-            checkAvailableSpace();
-        }
-        ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
-        return flushImmediate(ret, true);
-    } else {
-        bool dcFlushRequired = false;
-        const auto &hwInfo = this->device->getHwInfo();
-        if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
-            for (uint32_t i = 0; i < numEvents; i++) {
-                auto event = Event::fromHandle(phWaitEvents[i]);
-                dcFlushRequired |= (!event->waitScope) ? false : true;
-            }
-        }
-
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = dcFlushRequired;
-        for (uint32_t i = 0; i < numEvents; i++) {
-            auto event = Event::fromHandle(phWaitEvents[i]);
-            bool isStartOfDispatch = (i == 0);
-            bool isEndOfDispatch = (i == numEvents - 1);
-            this->csr->flushNonKernelTask(&event->getAllocation(this->device), event->getGpuAddress(this->device), Event::STATE_CLEARED, args, true, isStartOfDispatch, isEndOfDispatch);
-        }
-    }
-    return ret;
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents);
+    return flushImmediate(ret, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
