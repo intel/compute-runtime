@@ -31,6 +31,8 @@ class MockOclocArgHelper : public OclocArgHelper {
     bool callBaseReadBinaryFile = false;
     bool callBaseLoadDataFromFile = false;
     bool callBaseSaveOutput = false;
+    bool callBaseReadFileToVectorOfStrings = false;
+    bool shouldReturnEmptyVectorOfStrings = false;
 
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
                                              filesMap(filesMap){};
@@ -44,6 +46,7 @@ class MockOclocArgHelper : public OclocArgHelper {
         callBaseReadBinaryFile = value;
         callBaseLoadDataFromFile = value;
         callBaseSaveOutput = value;
+        callBaseReadFileToVectorOfStrings = value;
     }
 
   protected:
@@ -52,6 +55,16 @@ class MockOclocArgHelper : public OclocArgHelper {
             return OclocArgHelper::fileExists(filename);
         }
         return filesMap.find(filename) != filesMap.end();
+    }
+
+    void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines) override {
+        if (callBaseReadFileToVectorOfStrings) {
+            return OclocArgHelper::readFileToVectorOfStrings(filename, lines);
+        }
+
+        if (shouldReturnEmptyVectorOfStrings) {
+            lines.clear();
+        }
     }
 
     std::vector<char> readBinaryFile(const std::string &filename) override {

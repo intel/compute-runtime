@@ -27,6 +27,7 @@
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 #include "mock/mock_argument_helper.h"
+#include "mock/mock_multi_command.h"
 #include "mock/mock_offline_compiler.h"
 
 #include <algorithm>
@@ -313,6 +314,148 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
     deleteFileWithArgs();
     deleteOutFileList();
     delete pMultiCommand;
+}
+
+TEST(MultiCommandWhiteboxTest, GivenVerboseModeWhenShowingResultsThenLogsArePrintedForEachBuild) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.retValues = {OclocErrorCode::SUCCESS, OclocErrorCode::INVALID_FILE};
+    mockMultiCommand.quiet = false;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.showResults();
+    const auto output = testing::internal::GetCapturedStdout();
+
+    const auto maskedResult = result | OclocErrorCode::INVALID_FILE;
+    EXPECT_NE(OclocErrorCode::SUCCESS, result);
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, maskedResult);
+
+    const auto expectedOutput{"Build command 0: successful\n"
+                              "Build command 1: failed. Error code: -5151\n"};
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenVerboseModeAndDefinedOutputFilenameAndDirectoryWhenAddingAdditionalOptionsToSingleCommandLineThenNothingIsDone) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    std::vector<std::string> singleArgs = {
+        "-file",
+        "test_files/copybuffer.cl",
+        "-output",
+        "SpecialOutputFilename",
+        "-out_dir",
+        "SomeOutputDirectory",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    const auto singleArgsCopy{singleArgs};
+    const size_t buildId{0};
+
+    ::testing::internal::CaptureStdout();
+    mockMultiCommand.addAdditionalOptionsToSingleCommandLine(singleArgs, buildId);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(singleArgsCopy, singleArgs);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenHelpArgumentsWhenInitializingThenHelpIsPrinted) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    std::vector<std::string> singleArgs = {
+        "--help"};
+
+    const auto args{singleArgs};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.initialize(args);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    const auto expectedOutput = R"===(Compiles multiple files using a config file.
+
+Usage: ocloc multi <file_name>
+  <file_name>   Input file containing a list of arguments for subsequent
+                ocloc invocations.
+                Expected format of each line inside such file is:
+                '-file <filename> -device <device_type> [compile_options]'.
+                See 'ocloc compile --help' for available compile_options.
+                Results of subsequent compilations will be dumped into 
+                a directory with name indentical file_name's base name.
+
+  -output_file_list             Name of optional file containing 
+                                paths to outputs .bin files
+
+)===";
+
+    EXPECT_EQ(expectedOutput, output);
+    EXPECT_EQ(-1, result);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenCommandLineWithApostrophesWhenSplittingLineInSeparateArgsThenTextBetweenApostrophesIsReadAsSingleArg) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    const std::string commandLine{" -out_dir \"Some Directory\" -output \'Some Filename\'"};
+    std::vector<std::string> outputArgs{};
+    const std::size_t numberOfBuild{0};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.splitLineInSeparateArgs(outputArgs, commandLine, numberOfBuild);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, result);
+    EXPECT_TRUE(output.empty()) << output;
+
+    ASSERT_EQ(4u, outputArgs.size());
+
+    EXPECT_EQ("-out_dir", outputArgs[0]);
+    EXPECT_EQ("Some Directory", outputArgs[1]);
+
+    EXPECT_EQ("-output", outputArgs[2]);
+    EXPECT_EQ("Some Filename", outputArgs[3]);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenCommandLineWithMissingApostropheWhenSplittingLineInSeparateArgsThenErrorIsReturned) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    const std::string commandLine{"-out_dir \"Some Directory"};
+    std::vector<std::string> outputArgs{};
+    const std::size_t numberOfBuild{0};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.splitLineInSeparateArgs(outputArgs, commandLine, numberOfBuild);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, result);
+
+    const auto expectedOutput = "One of the quotes is open in build number 1\n";
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenArgsWithQuietModeAndEmptyMulticomandFileWhenInitializingThenQuietFlagIsSetAndErrorIsReturned) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    mockMultiCommand.uniqueHelper->callBaseFileExists = false;
+    mockMultiCommand.uniqueHelper->callBaseReadFileToVectorOfStrings = false;
+    mockMultiCommand.uniqueHelper->shouldReturnEmptyVectorOfStrings = true;
+    mockMultiCommand.filesMap["commands.txt"] = "";
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "multi",
+        "commands.txt",
+        "-q"};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.initialize(args);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, result);
+
+    const auto expectedOutput = "Command file was empty.\n";
+    EXPECT_EQ(expectedOutput, output);
 }
 
 TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenResetGtSystemInfo) {

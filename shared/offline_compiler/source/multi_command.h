@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
@@ -23,7 +25,7 @@ class MultiCommand {
   public:
     MultiCommand &operator=(const MultiCommand &) = delete;
     MultiCommand(const MultiCommand &) = delete;
-    ~MultiCommand() = default;
+    MOCKABLE_VIRTUAL ~MultiCommand() = default;
 
     static MultiCommand *create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper);
 
