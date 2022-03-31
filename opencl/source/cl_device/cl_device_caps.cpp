@@ -152,7 +152,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_spirv_subgroups ";
         deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
 
-        deviceExtensions += "cl_intel_unified_shared_memory_preview ";
+        deviceExtensions += "cl_intel_unified_shared_memory ";
         if (hwInfo.capabilityTable.supportsImages) {
             deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
         }
