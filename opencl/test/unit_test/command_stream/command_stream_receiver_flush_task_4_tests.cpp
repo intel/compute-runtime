@@ -647,6 +647,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhen
     mockCsr.storeMakeResidentAllocations = true;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    cleanupHeaps();
+    initHeaps();
     mockCsr.flushTask(commandStream,
                       0,
                       &dsh,

@@ -20,9 +20,16 @@ class MockBufferStorage {
   public:
     MockBufferStorage() : mockGfxAllocation(data, sizeof(data) / 2),
                           multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
+        initDevice();
     }
+
     MockBufferStorage(bool unaligned) : mockGfxAllocation(unaligned ? alignUp(&data, 4) : alignUp(&data, 64), sizeof(data) / 2),
                                         multiGfxAllocation(GraphicsAllocationHelper::toMultiGraphicsAllocation(&mockGfxAllocation)) {
+        initDevice();
+    }
+    void initDevice() {
+        VariableBackup<uint32_t> maxOsContextCountBackup(&MemoryManager::maxOsContextCount);
+        device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     }
     ~MockBufferStorage() {
         if (mockGfxAllocation.getDefaultGmm()) {
@@ -31,7 +38,7 @@ class MockBufferStorage {
     }
     char data[128];
     MockGraphicsAllocation mockGfxAllocation;
-    std::unique_ptr<MockDevice> device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> device;
     MultiGraphicsAllocation multiGfxAllocation;
 };
 
