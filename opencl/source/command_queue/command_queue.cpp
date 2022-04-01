@@ -996,9 +996,11 @@ void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
 }
 
 bool CommandQueue::isWaitForTimestampsEnabled() const {
-    auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    const auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
     enabled &= hwHelper.isTimestampWaitSupported();
+    enabled &= !hwInfoConfig.isDcFlushAllowed();
 
     switch (DebugManager.flags.EnableTimestampWait.get()) {
     case 0:

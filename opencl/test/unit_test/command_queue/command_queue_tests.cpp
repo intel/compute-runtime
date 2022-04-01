@@ -146,6 +146,13 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
     {
+        DebugManager.flags.EnableTimestampWait.set(-1);
+        const auto &hwHelper = HwHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        const auto &hwInfoConfig = *HwInfoConfig::get(mockDevice->getHardwareInfo().platform.eProductFamily);
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupported() && !hwInfoConfig.isDcFlushAllowed());
+    }
+
+    {
         DebugManager.flags.EnableTimestampWait.set(0);
         EXPECT_FALSE(cmdQ.isWaitForTimestampsEnabled());
     }
@@ -477,7 +484,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
-    //now destroy command queue, heap should go to reusable list
+    // now destroy command queue, heap should go to reusable list
     delete cmdQ;
     EXPECT_FALSE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekContains(*graphicsAllocation));
@@ -616,7 +623,7 @@ TEST_P(CommandQueueIndirectHeapTest, WhenGettingIndirectHeapWithNewSizeThenMaxAv
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
     ASSERT_NE(nullptr, &indirectHeap);
     if (this->GetParam() == IndirectHeap::Type::SURFACE_STATE) {
-        //no matter what SSH is always capped
+        // no matter what SSH is always capped
         EXPECT_EQ(cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
                   indirectHeap.getMaxAvailableSpace());
     } else {
@@ -732,7 +739,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveW
     cmdQ->getIndirectHeap(this->GetParam(), 100);
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
-    //now destroy command queue, heap should go to reusable list
+    // now destroy command queue, heap should go to reusable list
     delete cmdQ;
     EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 }
