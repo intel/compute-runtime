@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,9 +34,13 @@ class BinaryDecoder {
   public:
     BinaryDecoder(const std::string &file, const std::string &patch, const std::string &dump)
         : binaryFile(file), pathToPatch(patch), pathToDump(dump){};
+
     BinaryDecoder(OclocArgHelper *helper) : argHelper(helper), iga(new IgaWrapper) {
         iga->setMessagePrinter(argHelper->getPrinterRef());
-    };
+    }
+
+    MOCKABLE_VIRTUAL ~BinaryDecoder() = default;
+
     int decode();
     int validateInput(const std::vector<std::string> &args);
 

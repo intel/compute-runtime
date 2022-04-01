@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/offline_compiler/source/decoder/translate_platform_base.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/test_files.h"
 
@@ -12,9 +13,13 @@
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
 #include "gtest/gtest.h"
+#include "igad.h"
+#include "igfxfmid.h"
 #include "mock/mock_decoder.h"
 
+#include <array>
 #include <fstream>
+#include <utility>
 
 SProgramBinaryHeader createProgramBinaryHeader(const uint32_t numberOfKernels, const uint32_t patchListSize) {
     return SProgramBinaryHeader{MAGIC_CL, 0, 0, 0, numberOfKernels, 0, patchListSize};
@@ -30,8 +35,9 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 }
 
 namespace NEO {
+
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
-    std::vector<std::string> args = {
+    const std::vector<std::string> args = {
         "ocloc",
         "decoder",
         "-file",
@@ -43,6 +49,117 @@ TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
 
     MockDecoder decoder;
     EXPECT_EQ(0, decoder.validateInput(args));
+}
+
+TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenErrorIsReported) {
+    const std::array<std::string, 4> flagsToTest = {
+        "-file", "-device", "-patch", "-dump"};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "decoder",
+            flag};
+
+        constexpr auto suppressMessages{false};
+        MockDecoder decoder{suppressMessages};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = decoder.validateInput(args);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(-1, result);
+
+        const std::string expectedErrorMessage{"Unknown argument " + flag + "\n"};
+        EXPECT_EQ(expectedErrorMessage, output);
+    }
+}
+
+TEST(DecoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndInternalFlagIsSet) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "decoder",
+        "-file",
+        "test_files/binary.bin",
+        "-patch",
+        "test_files/patch",
+        "-dump",
+        "test_files/created",
+        "-ignore_isa_padding"};
+
+    MockDecoder decoder;
+    EXPECT_EQ(0, decoder.validateInput(args));
+    EXPECT_TRUE(decoder.ignoreIsaPadding);
+}
+
+TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndMessagesAreSuppressed) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "decoder",
+        "-file",
+        "test_files/binary.bin",
+        "-patch",
+        "test_files/patch",
+        "-dump",
+        "test_files/created",
+        "-q"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+
+    EXPECT_EQ(0, decoder.validateInput(args));
+    EXPECT_TRUE(decoder.argHelper->getPrinterRef().isSuppressed());
+}
+
+TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndWarningAboutCreationOfDefaultDirectoryIsPrinted) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "decoder",
+        "-file",
+        "test_files/binary.bin",
+        "-device",
+        "pvc",
+        "-patch",
+        "test_files/patch"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+    decoder.getMockIga()->isKnownPlatformReturnValue = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = decoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(0, result);
+
+    const std::string expectedErrorMessage{"Warning : Path to dump folder not specificed - using ./dump as default.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryWarningIsNotEmitted) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "decoder",
+        "-file",
+        "test_files/binary.bin",
+        "-device",
+        "pvc",
+        "-patch",
+        "test_files/patch"};
+
+    constexpr auto suppressMessages{false};
+    MockDecoder decoder{suppressMessages};
+    decoder.mockArgHelper->hasOutput = true;
+    decoder.getMockIga()->isKnownPlatformReturnValue = true;
+
+    ::testing::internal::CaptureStdout();
+    const auto result = decoder.validateInput(args);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(output.empty()) << output;
+
+    decoder.mockArgHelper->hasOutput = false;
 }
 
 TEST(DecoderTests, GivenValidSizeStringWhenGettingSizeThenProperOutcomeIsExpectedAndExceptionIsNotThrown) {
@@ -301,4 +418,77 @@ TEST(DecoderTests, givenPatchtokensBinaryFormatWhenTryingToGetDevBinaryThenRawDa
     std::string dataString(static_cast<const char *>(data), dataSize);
     EXPECT_STREQ("CTNI\n\n\n\n\n\n\n", dataString.c_str());
 }
+
+TEST(DecoderHelperTest, GivenTextSeparatedByTabsWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\tNice\tText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenTextSeparatedByNewLinesWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\nNice\nText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenTextSeparatedByCarriageReturnWhenSearchingForExistingTextThenItsIndexIsReturned) {
+    const std::vector<std::string> lines = {"Some\rNice\rText"};
+    const auto position = findPos(lines, "Nice");
+
+    EXPECT_EQ(0u, position);
+}
+
+TEST(DecoderHelperTest, GivenOnlyMatchingSubstringWhenSearchingForExistingTextThenInvalidIndexIsReturned) {
+    const std::vector<std::string> lines = {"Carpet"};
+    const auto position = findPos(lines, "Car");
+
+    EXPECT_EQ(lines.size(), position);
+}
+
+TEST(DecoderHelperTest, GivenPathEndedBySlashWhenCallingAddSlashThenNothingIsDone) {
+    std::string path{"./some/path/"};
+    addSlash(path);
+
+    EXPECT_EQ("./some/path/", path);
+}
+
+TEST(DecoderHelperTest, GivenPathEndedByBackSlashWhenCallingAddSlashThenNothingIsDone) {
+    std::string path{".\\some\\path\\"};
+    addSlash(path);
+
+    EXPECT_EQ(".\\some\\path\\", path);
+}
+
+TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
+    constexpr static std::array translations = {
+        std::pair{IGFX_GEN8_CORE, IGA_GEN8},
+        std::pair{IGFX_GEN9_CORE, IGA_GEN9},
+        std::pair{IGFX_GEN11_CORE, IGA_GEN11},
+        std::pair{IGFX_GEN11LP_CORE, IGA_GEN11},
+        std::pair{IGFX_UNKNOWN_CORE, IGA_GEN_INVALID}};
+
+    for (const auto &[input, expectedOutput] : translations) {
+        EXPECT_EQ(expectedOutput, translateToIgaGen(input));
+    }
+}
+
+TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
+    constexpr static std::array translations = {
+        std::pair{IGFX_BROADWELL, IGA_GEN8},
+        std::pair{IGFX_CHERRYVIEW, IGA_GEN8lp},
+        std::pair{IGFX_SKYLAKE, IGA_GEN9},
+        std::pair{IGFX_BROXTON, IGA_GEN9lp},
+        std::pair{IGFX_KABYLAKE, IGA_GEN9p5},
+        std::pair{IGFX_COFFEELAKE, IGA_GEN9p5},
+        std::pair{IGFX_ICELAKE, IGA_GEN11},
+        std::pair{IGFX_ICELAKE_LP, IGA_GEN11},
+        std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
+
+    for (const auto &[input, expectedOutput] : translations) {
+        EXPECT_EQ(expectedOutput, translateToIgaGen(input));
+    }
+}
+
 } // namespace NEO

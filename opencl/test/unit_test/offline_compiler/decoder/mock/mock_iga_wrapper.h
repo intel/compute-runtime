@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct MockIgaWrapper : public IgaWrapper {
     }
 
     bool isKnownPlatform() const override {
-        return false;
+        return isKnownPlatformReturnValue;
     }
 
     bool tryLoadIga() override {
@@ -47,4 +47,5 @@ struct MockIgaWrapper : public IgaWrapper {
 
     bool disasmWasCalled = false;
     bool asmWasCalled = false;
+    bool isKnownPlatformReturnValue = false;
 };

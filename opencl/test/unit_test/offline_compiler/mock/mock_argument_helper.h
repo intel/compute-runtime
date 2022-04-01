@@ -14,10 +14,13 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <string>
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
+    using OclocArgHelper::hasOutput;
+
     using FileName = std::string;
     using FileData = std::string;
     using FilesMap = std::map<FileName, FileData>;
