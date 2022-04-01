@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,12 +38,6 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
-        ON_CALL(*ptestSysfsAccess.get(), read(_, Matcher<int &>(_)))
-            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getVal));
-        ON_CALL(*ptestSysfsAccess.get(), write(_, Matcher<int>(_)))
-            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::setVal));
-        ON_CALL(*ptestSysfsAccess.get(), canRead(_))
-            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getCanReadStatus));
         for (const auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
             delete handle;
         }
@@ -153,8 +147,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetModeThe
 
 TEST_F(ZesStandbyFixture, GivenInvalidStandbyFileWhenReadisCalledThenExpectFailure) {
     zes_standby_promo_mode_t mode = {};
-    ON_CALL(*ptestSysfsAccess.get(), read(_, Matcher<int &>(_)))
-        .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::setValReturnError));
+    ptestSysfsAccess->setValReturnError(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     auto handles = get_standby_handles(mockHandleCount);
 
@@ -320,10 +313,6 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
-        ON_CALL(*ptestSysfsAccess.get(), read(_, Matcher<int &>(_)))
-            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getVal));
-        ON_CALL(*ptestSysfsAccess.get(), canRead(_))
-            .WillByDefault(::testing::Invoke(ptestSysfsAccess.get(), &Mock<StandbySysfsAccess>::getCanReadStatus));
         for (const auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
             delete handle;
         }
