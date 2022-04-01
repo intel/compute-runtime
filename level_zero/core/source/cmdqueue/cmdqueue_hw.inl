@@ -368,7 +368,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
+        auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
         auto cmdBufferCount = cmdBufferAllocations.size();
 
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
