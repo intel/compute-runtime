@@ -72,14 +72,9 @@ struct DrmCommandStreamMultiTileMemExecFixture {
 using DrmCommandStreamMultiTileMemExecTest = Test<DrmCommandStreamMultiTileMemExecFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSupportsCompletionFenceAndVmBindWhenCallingCsrExecThenMultipleTagAllocationIsPassed) {
-    auto osContext = std::make_unique<OsContextLinux>(*mock, 0u, EngineDescriptorHelper::getDefaultDescriptor(device->getDeviceBitfield()));
-    osContext->ensureContextInitialized();
-
     auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
     device->resetCommandStreamReceiver(testCsr);
     EXPECT_EQ(2u, testCsr->activePartitions);
-    testCsr->setupContext(*osContext.get());
 
     mock->completionFenceSupported = true;
     mock->isVmBindAvailableCall.callParent = false;

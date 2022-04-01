@@ -5920,4 +5920,27 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionAndTagAddressIsNullThenDoNotCallWaitUserFence) {
+    mock->ioctl_expected.total = -1;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::COMMAND_BUFFER});
+    auto engine = memoryManager->getRegisteredEngines()[0];
+    allocation->updateTaskCount(2, engine.osContext->getContextId());
+
+    auto testCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    auto backupTagAddress = testCsr->tagAddress;
+    testCsr->tagAddress = nullptr;
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    testCsr->tagAddress = backupTagAddress;
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 } // namespace NEO

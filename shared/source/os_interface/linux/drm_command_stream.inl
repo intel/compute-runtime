@@ -319,6 +319,9 @@ inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
 template <typename GfxFamily>
 uint64_t DrmCommandStreamReceiver<GfxFamily>::getCompletionAddress() {
     uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+    if (completionFenceAddress == 0) {
+        return 0;
+    }
     completionFenceAddress += Drm::completionFenceOffset;
     return completionFenceAddress;
 }
