@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -18,10 +19,8 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_command_stream_fixture.h"
 
 using namespace NEO;
 
