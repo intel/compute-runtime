@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace CpuIntrinsicsTests {
 std::atomic<uintptr_t> lastClFlushedPtr(0u);
 std::atomic<uint32_t> clFlushCounter(0u);
 std::atomic<uint32_t> pauseCounter(0u);
+std::atomic<uint32_t> sfenceCounter(0u);
 
 volatile uint32_t *pauseAddress = nullptr;
 uint32_t pauseValue = 0u;
@@ -32,6 +33,10 @@ namespace CpuIntrinsics {
 void clFlush(void const *ptr) {
     CpuIntrinsicsTests::clFlushCounter++;
     CpuIntrinsicsTests::lastClFlushedPtr = reinterpret_cast<uintptr_t>(ptr);
+}
+
+void sfence() {
+    CpuIntrinsicsTests::sfenceCounter++;
 }
 
 void pause() {

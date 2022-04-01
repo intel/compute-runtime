@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,10 @@ namespace CpuIntrinsics {
 
 void clFlush(void const *ptr) {
     _mm_clflush(ptr);
+}
+
+void sfence() {
+    _mm_sfence();
 }
 
 void pause() {

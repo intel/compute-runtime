@@ -291,6 +291,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableRingSwitchTagUpdateWa, -1, "-1: default, 0
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackCommandBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of cmd buffer after handling residency.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionReadBackRingBuffer, -1, "-1: default - disabled, 0 - disable, 1 - enable. If enabled, read first dword of ring buffer after handling residency.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertExtraMiMemFenceCommands, -1, "-1: default, 0 - disable, 1 - enable. If enabled, add extra MI_MEM_FENCE instructions with acquire bit set")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionInsertSfenceInstructionPriorToSubmission, -1, "-1: default, 0 - disable, 1 - Instert _mm_sfence before unlocking semaphore only, 2 - insert before and after semaphore")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

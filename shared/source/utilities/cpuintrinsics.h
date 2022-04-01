@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 namespace NEO {
 namespace CpuIntrinsics {
+
+void sfence();
 
 void clFlush(void const *ptr);
 

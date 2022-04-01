@@ -435,8 +435,17 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         reserved = *ringBufferStart;
     }
 
+    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() >= 1) {
+        CpuIntrinsics::sfence();
+    }
+
     //unblock GPU
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
+
+    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() == 2) {
+        CpuIntrinsics::sfence();
+    }
+
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
     DirectSubmissionDiagnostics::diagnosticModeOneSubmit(diagnostic.get());
