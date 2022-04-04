@@ -1076,7 +1076,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 dssCount * KB * hardwareInfo.capabilityTable.slmSize,
                                                                 hwHelper.alignSlmSize(slmTotalSize),
                                                                 static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                                                hwHelper.getBarriersCountFromHasBarriers(barrierCount),
+                                                                barrierCount,
                                                                 workDim,
                                                                 localWorkSize);
     auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();

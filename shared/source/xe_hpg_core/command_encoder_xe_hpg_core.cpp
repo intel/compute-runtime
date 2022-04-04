@@ -11,6 +11,7 @@
 #include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpg_core/hw_cmds_base.h"
 
 using Family = NEO::XE_HPG_COREFamily;
@@ -102,7 +103,11 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 
 template <>
 void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo) {
-    interfaceDescriptor.setNumberOfBarriers(static_cast<INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS>(value));
+    using BARRIERS = INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS;
+    static const LookupArray<uint32_t, BARRIERS, 8> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
+                                                                         {1, BARRIERS::NUMBER_OF_BARRIERS_B1}}});
+    BARRIERS numBarriers = barrierLookupArray.lookUp(value);
+    interfaceDescriptor.setNumberOfBarriers(numBarriers);
 }
 
 template <>

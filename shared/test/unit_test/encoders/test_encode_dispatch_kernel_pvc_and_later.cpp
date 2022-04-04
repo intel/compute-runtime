@@ -55,16 +55,26 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenOverrideSlmTotalSizeDebugVari
 
 HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValuesAreSet, IsAtLeastXeHpcCore) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using BARRIERS = typename INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS;
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     MockDevice device;
     auto hwInfo = device.getHardwareInfo();
 
-    uint32_t barrierCounts[] = {0, 1, 2, 7};
-
-    for (auto barrierCount : barrierCounts) {
+    struct BarrierCountToBarrierNumEnum {
+        uint32_t barrierCount;
+        uint32_t numBarriersEncoding;
+    };
+    constexpr BarrierCountToBarrierNumEnum barriers[8] = {{0, 0},
+                                                          {1, 1},
+                                                          {2, 2},
+                                                          {4, 3},
+                                                          {8, 4},
+                                                          {16, 5},
+                                                          {24, 6},
+                                                          {32, 7}};
+    for (auto &[barrierCount, numBarriersEnum] : barriers) {
         EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, barrierCount, hwInfo);
-
-        EXPECT_EQ(barrierCount, idd.getNumberOfBarriers());
+        EXPECT_EQ(numBarriersEnum, idd.getNumberOfBarriers());
     }
 }
 

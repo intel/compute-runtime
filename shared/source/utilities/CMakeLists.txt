@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -25,6 +25,7 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/logger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/lookup_array.h
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h

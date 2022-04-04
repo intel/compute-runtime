@@ -101,21 +101,6 @@ bool HwHelperHw<Family>::tilingAllowed(bool isSharedContext, bool isImage1d, boo
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint32_t hasBarriers) {
-    static constexpr uint32_t possibleBarriersCounts[] = {
-        0u,  // 0
-        1u,  // 1
-        2u,  // 2
-        4u,  // 3
-        8u,  // 4
-        16u, // 5
-        24u, // 6
-        32u, // 7
-    };
-    return possibleBarriersCounts[hasBarriers];
-}
-
-template <>
 uint32_t HwHelperHw<Family>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
                                                            uint32_t threadsPerEu) {
     auto maxThreadsPerEuCount = 1024u / grfCount;

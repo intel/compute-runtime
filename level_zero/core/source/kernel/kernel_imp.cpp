@@ -428,7 +428,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
                                                                dssCount * KB * hardwareInfo.capabilityTable.slmSize,
                                                                hwHelper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize),
                                                                static_cast<uint32_t>(hwHelper.getMaxBarrierRegisterPerSlice()),
-                                                               hwHelper.getBarriersCountFromHasBarriers(barrierCount),
+                                                               barrierCount,
                                                                workDim,
                                                                localWorkSize);
     *totalGroupCount = hwHelper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);

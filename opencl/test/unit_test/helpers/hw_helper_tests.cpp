@@ -950,12 +950,6 @@ HWTEST_F(HwHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned) {
     EXPECT_FALSE(hwHelper.isBankOverrideRequired(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingGetBarriersCountFromHasBarrierThenCorrectValueIsReturned) {
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_EQ(0u, hwHelper.getBarriersCountFromHasBarriers(0u));
-    EXPECT_EQ(1u, hwHelper.getBarriersCountFromHasBarriers(1u));
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto result = hwHelper.calculateAvailableThreadCount(

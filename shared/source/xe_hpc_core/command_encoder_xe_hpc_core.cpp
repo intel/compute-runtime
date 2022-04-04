@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/utilities/lookup_array.h"
 #include "shared/source/xe_hpc_core/hw_cmds_base.h"
 
 using Family = NEO::XE_HPC_COREFamily;
@@ -169,7 +170,17 @@ template <>
 void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor,
                                                         uint32_t value,
                                                         const HardwareInfo &hwInfo) {
-    interfaceDescriptor.setNumberOfBarriers(static_cast<INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS>(value));
+    using BARRIERS = INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS;
+    static const LookupArray<uint32_t, BARRIERS, 8> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
+                                                                         {1, BARRIERS::NUMBER_OF_BARRIERS_B1},
+                                                                         {2, BARRIERS::NUMBER_OF_BARRIERS_B2},
+                                                                         {4, BARRIERS::NUMBER_OF_BARRIERS_B4},
+                                                                         {8, BARRIERS::NUMBER_OF_BARRIERS_B8},
+                                                                         {16, BARRIERS::NUMBER_OF_BARRIERS_B16},
+                                                                         {24, BARRIERS::NUMBER_OF_BARRIERS_B24},
+                                                                         {32, BARRIERS::NUMBER_OF_BARRIERS_B32}}});
+    BARRIERS numBarriers = barrierLookupArray.lookUp(value);
+    interfaceDescriptor.setNumberOfBarriers(numBarriers);
 }
 
 template <>
