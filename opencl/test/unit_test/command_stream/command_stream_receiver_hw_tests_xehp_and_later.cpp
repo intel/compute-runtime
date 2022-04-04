@@ -161,7 +161,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, whenProgra
     EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL, miSemaphoreWait.getRegisterPollMode());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenSratchAllocationRequestedThenProgramCfeStateWithScratchAllocation) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenScratchAllocationRequestedThenProgramCfeStateWithScratchAllocation) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -179,6 +179,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 0x1000;
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     uint32_t computeUnits = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
+
+    auto maxSubSlice = HwInfoConfig::get(hwInfo.platform.eProductFamily)->computeMaxNeededSubSliceSpace(hwInfo);
+    auto maxHwThreadCount = maxSubSlice * hwInfo.gtSystemInfo.MaxEuPerSubSlice * (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+
     size_t scratchSpaceSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] * computeUnits;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
@@ -199,7 +203,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_SCRATCH, scratchState->getSurfaceType());
 
     SURFACE_STATE_BUFFER_LENGTH length = {0};
-    length.Length = static_cast<uint32_t>(computeUnits - 1);
+    length.Length = static_cast<uint32_t>(maxHwThreadCount - 1);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, scratchState->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, scratchState->getWidth());
     EXPECT_EQ(length.SurfaceState.Height + 1u, scratchState->getHeight());
