@@ -123,7 +123,10 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
         // For IGFX_XE_HP HBM frequency would be 2.8 GT/s = 2.8 * 1000 * 1000 * 1000 T/s = 2800000000 T/s
         hbmFrequency = 2.8 * gigaUnitTransferToUnitTransfer;
     } else if (productFamily == IGFX_PVC) {
-        if (stepping == REVISION_B) {
+        if (stepping == REVISION_A0 || stepping == REVISION_A1 || stepping == REVISION_A3) {
+            // For IGFX_PVC REV A0, A1 and A3 HBM frequency would be 3.2 GT/s = 3.2 * 1000 * 1000 * 1000 T/s = 3200000000 T/s
+            hbmFrequency = 3.2 * gigaUnitTransferToUnitTransfer;
+        } else {
             const std::string baseDir = "gt/gt" + std::to_string(subdeviceId) + "/";
             // Calculating bandwidth based on HBM max frequency
             const std::string hbmRP0FreqFile = baseDir + "hbm_RP0_freq_mhz";
@@ -133,9 +136,6 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
                 hbmFrequency = hbmFreqValue * 1000 * 1000; // Converting MHz value to Hz
                 return;
             }
-        } else if (stepping == REVISION_A0) {
-            // For IGFX_PVC REV A0 HBM frequency would be 3.2 GT/s = 3.2 * 1000 * 1000 * 1000 T/s = 3200000000 T/s
-            hbmFrequency = 3.2 * gigaUnitTransferToUnitTransfer;
         }
     }
 }
