@@ -175,9 +175,11 @@ if(${GENERATE_EXECUTABLE})
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
-    set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
-                 APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${EXPORTS_FILENAME}"
-    )
+    if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
+      set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
+                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${EXPORTS_FILENAME}"
+      )
+    endif()
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
                  APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic"
     )
