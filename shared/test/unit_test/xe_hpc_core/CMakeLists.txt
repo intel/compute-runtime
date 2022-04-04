@@ -13,9 +13,17 @@ if(TESTS_XE_HPC_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hpc_core_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xe_hpc_core_tests.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_xe_hpc_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_xe_hpc_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_xe_hpc_core.cpp
   )
+
+  set(IGDRCL_SRCS_tests_xe_hpc_core_excludes
+      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpc_core.cpp
+  )
+  set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_xe_hpc_core_excludes})
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)
     list(APPEND NEO_SHARED_tests_xe_hpc_core
@@ -23,6 +31,10 @@ if(TESTS_XE_HPC_CORE)
     )
   endif()
 
-  target_sources(${TARGET_NAME} PRIVATE ${NEO_SHARED_tests_xe_hpc_core})
+  target_sources(${TARGET_NAME} PRIVATE
+                 ${IGDRCL_SRCS_tests_xe_hpc_core_excludes}
+                 ${NEO_SHARED_tests_xe_hpc_core}
+  )
+
   add_subdirectories()
 endif()
