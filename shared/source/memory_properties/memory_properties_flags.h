@@ -14,6 +14,7 @@ class Device;
 
 struct MemoryProperties {
     const Device *pDevice = nullptr;
+    uint32_t memCacheClos = 0;
     union {
         MemoryFlags flags;
         uint32_t allFlags = 0;

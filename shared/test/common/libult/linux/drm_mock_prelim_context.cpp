@@ -487,6 +487,22 @@ uint64_t DrmPrelimHelper::getU16WaitUserFenceFlag() {
     return PRELIM_I915_UFENCE_WAIT_U16;
 }
 
+uint64_t DrmPrelimHelper::getU32WaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_U32;
+}
+
+uint64_t DrmPrelimHelper::getU64WaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_U64;
+}
+
+uint64_t DrmPrelimHelper::getGTEWaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_GTE;
+}
+
+uint64_t DrmPrelimHelper::getSoftWaitUserFenceFlag() {
+    return PRELIM_I915_UFENCE_WAIT_SOFT;
+}
+
 uint64_t DrmPrelimHelper::getCaptureVmBindFlag() {
     return PRELIM_I915_GEM_VM_BIND_CAPTURE;
 }
