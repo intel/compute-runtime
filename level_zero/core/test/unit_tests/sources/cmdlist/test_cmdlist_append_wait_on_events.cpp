@@ -47,7 +47,12 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
 
         auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
+        uint64_t gpuAddress = event->getGpuAddress(device);
+        if (event->isUsingContextEndOffset()) {
+            gpuAddress += event->getContextEndOffset();
+        }
+
+        EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
         EXPECT_EQ(cmd->getWaitMode(),
                   MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
     }
@@ -73,15 +78,19 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
     auto itor = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(2u, itor.size());
 
+    auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
+
+    uint64_t gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
     for (int i = 0; i < 2; i++) {
         auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor[i]);
         EXPECT_EQ(cmd->getCompareOperation(),
                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
-
-        auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
-
-        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
+        EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
         EXPECT_EQ(cmd->getWaitMode(),
                   MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
     }
@@ -266,7 +275,12 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTim
 
     auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
 
-    EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress(device) & addressSpace);
+    uint64_t gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
     EXPECT_EQ(cmd->getWaitMode(),
               MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
@@ -322,6 +336,9 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     EXPECT_NE(oldCommandBuffer, newCommandBuffer);
 
     auto gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -369,7 +386,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
     size_t expectedSize = commandList->partitionCount * sizeof(MI_SEMAPHORE_WAIT);
 
     event->setPacketsInUse(commandList->partitionCount);
-    event->setPartitionedEvent(true);
+    event->setUsingContextEndOffset(true);
 
     ze_event_handle_t eventHandle = event->toHandle();
 

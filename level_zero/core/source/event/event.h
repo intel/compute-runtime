@@ -88,14 +88,11 @@ struct Event : _ze_event_handle_t {
     bool isEventTimestampFlagSet() const {
         return isTimestampEvent;
     }
-    void setPartitionedEvent(bool partitionedEvent) {
-        this->partitionedEvent = partitionedEvent;
+    void setUsingContextEndOffset(bool usingContextEndOffset) {
+        this->usingContextEndOffset = usingContextEndOffset;
     }
-    bool isPartitionedEvent() const {
-        return partitionedEvent;
-    }
-    bool useContextEndOffset() const {
-        return isTimestampEvent || partitionedEvent;
+    bool isUsingContextEndOffset() const {
+        return isTimestampEvent || usingContextEndOffset;
     }
 
     uint64_t globalStartTS;
@@ -123,8 +120,9 @@ struct Event : _ze_event_handle_t {
     size_t globalEndOffset = 0u;
     size_t timestampSizeInDw = 0u;
     size_t singlePacketSize = 0u;
+    size_t eventPoolOffset = 0u;
     bool isTimestampEvent = false;
-    bool partitionedEvent = false;
+    bool usingContextEndOffset = false;
 };
 
 template <typename TagSizeT>

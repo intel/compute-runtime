@@ -16,6 +16,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -552,6 +553,12 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
+    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).multiTileCapablePlatform()) {
+        EXPECT_TRUE(event->isUsingContextEndOffset());
+    } else {
+        EXPECT_FALSE(event->isUsingContextEndOffset());
+    }
+
     result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
@@ -671,23 +678,38 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenStateSignaledThenHostSynchronizeReturnsSuccess) {
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
+
+    event->setUsingContextEndOffset(false);
     ze_result_t result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndStateSignaledHostSynchronizeReturnsSuccess) {
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroWhenStateSignaledThenHostSynchronizeReturnsSuccess) {
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;
+
+    event->setUsingContextEndOffset(false);
     ze_result_t result = event->hostSynchronize(10);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenOffsetEventStateSignaledThenHostSynchronizeReturnsSuccess) {
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    hostAddr = ptrOffset(hostAddr, event->getContextEndOffset());
+    *hostAddr = Event::STATE_SIGNALED;
+
+    event->setUsingContextEndOffset(true);
+    ze_result_t result = event->hostSynchronize(0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
+    event->setUsingContextEndOffset(false);
 
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextStartOffset();
@@ -720,10 +742,10 @@ TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForNonTimestampEvent
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForPartitionedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
+TEST_F(EventSynchronizeTest, givenInfiniteTimeoutWhenWaitingForOffsetedNonTimestampEventCompletionThenReturnOnlyAfterAllEventPacketsAreCompleted) {
     constexpr uint32_t packetsInUse = 2;
     event->setPacketsInUse(packetsInUse);
-    event->setPartitionedEvent(true);
+    event->setUsingContextEndOffset(true);
 
     const size_t eventPacketSize = event->getSinglePacketSize();
     const size_t eventCompletionOffset = event->getContextEndOffset();
@@ -820,11 +842,13 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
     EXPECT_NE(nullptr, event0);
 
     uint32_t *hostAddr = static_cast<uint32_t *>(event0->getHostAddress());
+    if (event0->isUsingContextEndOffset()) {
+        hostAddr = ptrOffset(hostAddr, event0->getContextEndOffset());
+    }
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
 
     // change state
     event0->hostSignal();
-    hostAddr = static_cast<uint32_t *>(event0->getHostAddress());
     EXPECT_EQ(*hostAddr, Event::STATE_SIGNALED);
 
     // create an event from the pool with the same index as event0, but this time, since isImportedIpcPool is true, no reset should happen
@@ -836,6 +860,9 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
     EXPECT_NE(nullptr, event1);
 
     uint32_t *hostAddr1 = static_cast<uint32_t *>(event1->getHostAddress());
+    if (event1->isUsingContextEndOffset()) {
+        hostAddr1 = ptrOffset(hostAddr1, event1->getContextEndOffset());
+    }
     EXPECT_EQ(*hostAddr1, Event::STATE_SIGNALED);
 
     // create another event from the pool with the same index, but this time, since isImportedIpcPool is false, reset should happen
@@ -847,6 +874,9 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
     EXPECT_NE(nullptr, event2);
 
     uint32_t *hostAddr2 = static_cast<uint32_t *>(event2->getHostAddress());
+    if (event2->isUsingContextEndOffset()) {
+        hostAddr2 = ptrOffset(hostAddr2, event2->getContextEndOffset());
+    }
     EXPECT_EQ(*hostAddr2, Event::STATE_INITIAL);
 }
 
@@ -1499,11 +1529,10 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     auto result = event->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    event->setPartitionedEvent(true);
+    event->setUsingContextEndOffset(true);
 
     result = event->reset();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_FALSE(event->isPartitionedEvent());
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
 
@@ -1550,6 +1579,9 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     ASSERT_NE(event, nullptr);
 
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    if (event->isUsingContextEndOffset()) {
+        hostAddr = ptrOffset(hostAddr, event->getContextEndOffset());
+    }
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
@@ -1563,7 +1595,7 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     }
 }
 
-TEST_F(EventTests, givenPartitionedEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
+TEST_F(EventTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacketsAreSignaled) {
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
@@ -1572,7 +1604,12 @@ TEST_F(EventTests, givenPartitionedEventUseMultiplePacketsWhenHostSignalThenExpe
                                                                                                                            device)));
     ASSERT_NE(event, nullptr);
 
-    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), event->getContextEndOffset()));
+    size_t eventOffset = 0;
+    if (event->isUsingContextEndOffset()) {
+        eventOffset = event->getContextEndOffset();
+    }
+
+    uint32_t *hostAddr = static_cast<uint32_t *>(ptrOffset(event->getHostAddress(), eventOffset));
 
     EXPECT_EQ(Event::STATE_INITIAL, *hostAddr);
     EXPECT_EQ(1u, event->getPacketsInUse());
@@ -1580,7 +1617,6 @@ TEST_F(EventTests, givenPartitionedEventUseMultiplePacketsWhenHostSignalThenExpe
     constexpr uint32_t packetsUsed = 4u;
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
-    event->setPartitionedEvent(true);
 
     event->hostSignal();
     for (uint32_t i = 0; i < packetsUsed; i++) {

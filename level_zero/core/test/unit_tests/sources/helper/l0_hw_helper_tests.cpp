@@ -19,6 +19,7 @@ namespace ult {
 using L0HwHelperTest = ::testing::Test;
 
 using PlatformsWithWa = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
+using NonMultiTilePlatforms = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(L0HwHelperTest, givenResumeWANotNeededThenFalseIsReturned, IsAtMostGen11) {
     auto &l0HwHelper = L0::L0HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily);
@@ -558,6 +559,10 @@ HWTEST2_F(L0HwHelperFusedEuTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWh
             subsliceIndex++;
         }
     }
+}
+
+HWTEST2_F(L0HwHelperTest, GivenNonMultiTilePlatformsWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnFalse, NonMultiTilePlatforms) {
+    EXPECT_FALSE(L0::L0HwHelperHw<FamilyType>::get().multiTileCapablePlatform());
 }
 
 } // namespace ult
