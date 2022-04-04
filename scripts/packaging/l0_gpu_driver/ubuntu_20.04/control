@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 11),
  cmake,
  level-zero-devel,
  intel-igc-opencl-devel,
- intel-gmmlib-devel,
+ libigdgmm-dev,
 # libva-dev,
  pkg-config
 Standards-Version: 4.3.0
@@ -19,7 +19,7 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  intel-igc-opencl,
- intel-gmmlib
+ libigdgmm12
 Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
  Level Zero is the primary low-level interface for language and runtime
  libraries. Level Zero offers fine-grain control over accelerators

@@ -3,7 +3,7 @@ components:
     dest_dir: gmmlib
     type: git
     branch: gmmlib
-    revision: intel-gmmlib-22.0.2
+    revision: intel-gmmlib-22.1.2
     repository: https://github.com/intel/gmmlib.git
   igc:
     dest_dir: igc
@@ -55,9 +55,9 @@ components:
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
   kernels_bin:
-    branch: kernels_bin
-    revision: 1885-128
     dest_dir: kernels_bin
     type: git
+    branch: kernels_bin
+    revision: 1885-128
 converter: M-1885
 version: '1'

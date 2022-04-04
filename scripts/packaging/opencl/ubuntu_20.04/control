@@ -6,7 +6,7 @@ XSBC-Original-Maintainer: Debian OpenCL Maintainers <pkg-opencl-devel@lists.alio
 Build-Depends: debhelper (>= 11),
  cmake,
  intel-igc-opencl-devel,
- intel-gmmlib-devel,
+ libigdgmm-dev,
 # libva-dev,
  pkg-config
 Standards-Version: 4.3.0
@@ -18,7 +18,7 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends},
  intel-igc-opencl,
- intel-gmmlib,
+ libigdgmm12,
  ocl-icd-libopencl1,
 Breaks:
  intel-opencl

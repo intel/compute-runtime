@@ -64,13 +64,13 @@ if [ -f "${SHLIBS}" ]; then
 fi
 
 if [ -z "${BRANCH_SUFFIX}" ]; then
-    GMM_VERSION=$(apt-cache policy intel-gmmlib | grep Installed | cut -f2- -d ':' | xargs)
+    GMM_VERSION=$(apt-cache policy libigdgmm12 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${GMM_VERSION}" ]; then
-        perl -pi -e "s/^ intel-gmmlib(?=,|$)/ intel-gmmlib (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ libigdgmm12(?=,|$)/ libigdgmm12 (=$GMM_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-    GMM_DEVEL_VERSION=$(apt-cache policy intel-gmmlib-devel | grep Installed | cut -f2- -d ':' | xargs)
+    GMM_DEVEL_VERSION=$(apt-cache policy libigdgmm-dev | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ intel-gmmlib-devel(?=,|$)/ intel-gmmlib-devel (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
 
     IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
