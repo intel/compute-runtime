@@ -72,6 +72,13 @@ ze_result_t MetricEnumeration::initialize() {
         if (hMetricsDiscovery &&
             openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
             cacheMetricInformation() == ZE_RESULT_SUCCESS) {
+
+            if (metricSource.isImplicitScalingCapable()) {
+                const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+                for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
+                    deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
+                }
+            }
             initializationState = ZE_RESULT_SUCCESS;
         } else {
             initializationState = ZE_RESULT_ERROR_UNKNOWN;

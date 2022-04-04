@@ -243,6 +243,105 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPo
     EXPECT_EQ(zetMetricQueryPoolDestroy(poolHandle), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsAreEnumeratedThenWorkPartitionIsEnabledForSubdevices) {
+
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+
+    zet_metric_group_properties_t metricGroupProperties = {};
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+    TypedValue_1_0 value = {};
+    value.Type = ValueType::Uint32;
+    value.ValueUInt32 = 64;
+
+    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
+    ContextHandle_1_0 metricsLibraryContextHandle = {&value};
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metric, GetParams())
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    auto subDeviceClientOptions = ClientOptionsData_1_0{};
+    auto subDeviceIndexClientOptions = ClientOptionsData_1_0{};
+    auto subDeviceCountClientOptions = ClientOptionsData_1_0{};
+    auto workloadPartitionClientOptions = ClientOptionsData_1_0{};
+
+    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+
+        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsLibrary = metricSource.getMetricsLibrary();
+        metricsLibrary.getSubDeviceClientOptions(subDeviceClientOptions, subDeviceIndexClientOptions,
+                                                 subDeviceCountClientOptions, workloadPartitionClientOptions);
+        EXPECT_EQ(workloadPartitionClientOptions.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
+        EXPECT_EQ(workloadPartitionClientOptions.WorkloadPartition.Enabled, false);
+    }
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    for (uint32_t i = 0, count = deviceImp.numSubDevices; i < count; ++i) {
+
+        auto &metricSource = deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+        auto &metricsLibrary = metricSource.getMetricsLibrary();
+        metricsLibrary.getSubDeviceClientOptions(subDeviceClientOptions, subDeviceIndexClientOptions,
+                                                 subDeviceCountClientOptions, workloadPartitionClientOptions);
+        EXPECT_EQ(workloadPartitionClientOptions.Type, MetricsLibraryApi::ClientOptionsType::WorkloadPartition);
+        EXPECT_EQ(workloadPartitionClientOptions.WorkloadPartition.Enabled, true);
+    }
+}
+
 TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetCommandListAppendMetricQueryBeginEndIsCalledForSubDeviceThenReturnsSuccess) {
 
     DebugManagerStateRestore restorer;

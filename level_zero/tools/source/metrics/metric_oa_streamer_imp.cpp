@@ -345,7 +345,6 @@ ze_result_t OaMetricStreamerImp::appendStreamerMarker(CommandList &commandList, 
     if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.
         pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
-        pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>().getMetricsLibrary().enableWorkloadPartition();
     }
 
     OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
