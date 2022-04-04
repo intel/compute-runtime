@@ -121,21 +121,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     updateStreamProperties(*kernel, false, isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                                      //eventAddress
-        neoDevice,                                              //device
-        kernel,                                                 //dispatchInterface
-        reinterpret_cast<const void *>(pThreadGroupDimensions), //pThreadGroupDimensions
-        commandListPreemptionMode,                              //preemptionMode
-        0,                                                      //partitionCount
-        isIndirect,                                             //isIndirect
-        isPredicate,                                            //isPredicate
-        false,                                                  //isTimestampEvent
-        false,                                                  //L3FlushEnable
-        this->containsStatelessUncachedResource,                //requiresUncachedMocs
-        false,                                                  //useGlobalAtomics
-        internalUsage,                                          //isInternal
-        isCooperative                                           //isCooperative
+        0,                                                      // eventAddress
+        neoDevice,                                              // device
+        kernel,                                                 // dispatchInterface
+        reinterpret_cast<const void *>(pThreadGroupDimensions), // pThreadGroupDimensions
+        commandListPreemptionMode,                              // preemptionMode
+        0,                                                      // partitionCount
+        isIndirect,                                             // isIndirect
+        isPredicate,                                            // isPredicate
+        false,                                                  // isTimestampEvent
+        false,                                                  // L3FlushEnable
+        this->containsStatelessUncachedResource,                // requiresUncachedMocs
+        false,                                                  // useGlobalAtomics
+        internalUsage,                                          // isInternal
+        isCooperative                                           // isCooperative
     };
+
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
 

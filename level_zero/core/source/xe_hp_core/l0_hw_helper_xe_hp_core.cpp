@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,11 @@ void populateFactoryTable<L0HwHelperHw<Family>>() {
 
 template <>
 bool L0HwHelperHw<Family>::isResumeWARequired() {
+    return true;
+}
+
+template <>
+bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
     return true;
 }
 

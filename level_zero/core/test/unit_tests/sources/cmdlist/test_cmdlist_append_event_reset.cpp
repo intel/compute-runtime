@@ -40,18 +40,22 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenPost
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
+    auto gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
+
+    uint32_t postSyncFound = 0;
     for (auto it : itorPC) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_INITIAL);
-            auto gpuAddress = event->getGpuAddress(device);
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-            postSyncFound = true;
+            postSyncFound++;
         }
     }
-    ASSERT_TRUE(postSyncFound);
+    EXPECT_EQ(1u, postSyncFound);
 }
 
 HWTEST_F(CommandListAppendEventReset, whenResetEventIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated) {
@@ -202,6 +206,9 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
 
     commandList->appendEventReset(event->toHandle());
     auto gpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        gpuAddress += event->getContextEndOffset();
+    }
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -246,7 +253,7 @@ HWTEST2_F(CommandListAppendEventReset,
     constexpr uint32_t packets = 2u;
     event->setPacketsInUse(packets);
     event->setEventTimestampFlag(false);
-    event->setPartitionedEvent(true);
+    event->setUsingContextEndOffset(true);
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;

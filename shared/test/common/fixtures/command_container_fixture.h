@@ -38,20 +38,20 @@ class CommandEncodeStatesFixture : public DeviceFixture {
                                                              const void *pThreadGroupDimensions,
                                                              bool requiresUncachedMocs) {
         EncodeDispatchKernelArgs args{
-            0,                        //eventAddress
-            device,                   //device
-            dispatchInterface,        //dispatchInterface
-            pThreadGroupDimensions,   //pThreadGroupDimensions
-            PreemptionMode::Disabled, //preemptionMode
-            1,                        //partitionCount
-            false,                    //isIndirect
-            false,                    //isPredicate
-            false,                    //isTimestampEvent
-            false,                    //L3FlushEnable
-            requiresUncachedMocs,     //requiresUncachedMocs
-            false,                    //useGlobalAtomics
-            false,                    //isInternal
-            false                     //isCooperative
+            0,                        // eventAddress
+            device,                   // device
+            dispatchInterface,        // dispatchInterface
+            pThreadGroupDimensions,   // pThreadGroupDimensions
+            PreemptionMode::Disabled, // preemptionMode
+            1,                        // partitionCount
+            false,                    // isIndirect
+            false,                    // isPredicate
+            false,                    // isTimestampEvent
+            false,                    // L3FlushEnable
+            requiresUncachedMocs,     // requiresUncachedMocs
+            false,                    // useGlobalAtomics
+            false,                    // isInternal
+            false                     // isCooperative
         };
 
         return args;

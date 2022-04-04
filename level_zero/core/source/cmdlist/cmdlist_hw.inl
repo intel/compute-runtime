@@ -292,7 +292,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    if (event->useContextEndOffset()) {
+    if (event->isUsingContextEndOffset()) {
         baseAddr += event->getContextEndOffset();
     }
 
@@ -1641,6 +1641,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
 
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         uint64_t baseAddr = event->getGpuAddress(this->device);
+        if (event->isUsingContextEndOffset()) {
+            baseAddr += event->getContextEndOffset();
+        }
 
         const auto &hwInfo = this->device->getHwInfo();
         if (isCopyOnly()) {
@@ -1654,8 +1657,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
             if (this->partitionCount > 1) {
                 args.workloadPartitionOffset = true;
                 event->setPacketsInUse(this->partitionCount);
-                event->setPartitionedEvent(true);
-                baseAddr += event->getContextEndOffset();
             }
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -1797,11 +1798,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
     size_t eventSignalOffset = 0;
-    if (this->partitionCount > 1) {
-        event->setPartitionedEvent(true);
-        event->setPacketsInUse(this->partitionCount);
-    }
-    if (event->useContextEndOffset()) {
+
+    if (event->isUsingContextEndOffset()) {
         eventSignalOffset = event->getContextEndOffset();
     }
 
@@ -1815,7 +1813,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         NEO::PipeControlArgs args;
         bool applyScope = event->signalScope;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(applyScope, hwInfo);
-        args.workloadPartitionOffset = event->isPartitionedEvent();
+        if (this->partitionCount > 1) {
+            event->setPacketsInUse(this->partitionCount);
+            args.workloadPartitionOffset = true;
+        }
         if (applyScope || event->isEventTimestampFlagSet()) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
@@ -1892,7 +1893,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         gpuAddr = event->getGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
 
-        if (event->useContextEndOffset()) {
+        if (event->isUsingContextEndOffset()) {
             gpuAddr += event->getContextEndOffset();
         }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
