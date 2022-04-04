@@ -6804,7 +6804,7 @@ typedef struct tagL3_FLUSH_ADDRESS_RANGE {
     }
 
     inline uint64_t getAddressLow() const {
-        return (TheStructure.Common.AddressLow << ADDRESSLOW_BIT_SHIFT);
+        return (static_cast<uint64_t>(TheStructure.Common.AddressLow) << ADDRESSLOW_BIT_SHIFT);
     }
 
     inline void setAddressHigh(const uint64_t value) {
@@ -6863,7 +6863,7 @@ struct L3_CONTROL_POST_SYNC_DATA {
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {
-        return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
+        return static_cast<uint64_t>(TheStructure.Common.Address) << ADDRESS_BIT_SHIFT;
     }
     inline void setImmediateData(const uint64_t value) {
         TheStructure.Common.ImmediateData = value;

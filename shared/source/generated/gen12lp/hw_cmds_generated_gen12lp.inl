@@ -5262,9 +5262,9 @@ typedef struct tagL3_FLUSH_ADDRESS_RANGE {
 
     inline uint64_t getAddressLow(bool isA0Stepping) const {
         if (isA0Stepping) {
-            return (TheStructure.CommonA0Stepping.AddressLow << ADDRESSLOW_BIT_SHIFT) & uint64_t(0xffffffff);
+            return (static_cast<uint64_t>(TheStructure.CommonA0Stepping.AddressLow) << ADDRESSLOW_BIT_SHIFT) & uint64_t(0xffffffff);
         } else {
-            return (TheStructure.Common.AddressLow << ADDRESSLOW_BIT_SHIFT);
+            return (static_cast<uint64_t>(TheStructure.Common.AddressLow) << ADDRESSLOW_BIT_SHIFT);
         }
     }
 
