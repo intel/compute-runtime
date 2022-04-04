@@ -26,6 +26,7 @@ struct MockCompilerDebugVars {
         bindless
     };
     bool shouldReturnInvalidTranslationOutput = false;
+    bool shouldFailCreationOfTranslationContext = false;
     bool forceBuildFailure = false;
     bool forceCreateFailure = false;
     bool forceRegisterFail = false;
@@ -45,6 +46,7 @@ struct MockCompilerDebugVars {
     std::string *receivedInput = nullptr;
 
     std::string fileName;
+    std::string translationContextCreationError;
 };
 
 struct MockCompilerEnableGuard {
@@ -287,6 +289,9 @@ struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
 
     uint32_t oclApiVersion = 120;
     MockCIFPlatform *platform = nullptr;
+
+    using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
+    std::vector<TranslationOpT> requestedTranslationCtxs;
 };
 
 } // namespace NEO

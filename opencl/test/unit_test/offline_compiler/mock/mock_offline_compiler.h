@@ -20,6 +20,7 @@ class MockOfflineCompiler : public OfflineCompiler {
   public:
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
+    using OfflineCompiler::buildIrBinary;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::excludeIr;
@@ -33,6 +34,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::hwInfo;
     using OfflineCompiler::igcDeviceCtx;
     using OfflineCompiler::initHardwareInfo;
+    using OfflineCompiler::inputFile;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
     using OfflineCompiler::internalOptions;
@@ -42,6 +44,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
+    using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
     using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::setStatelessToStatefullBufferOffsetFlag;
@@ -101,6 +104,14 @@ class MockOfflineCompiler : public OfflineCompiler {
         argHelper = uniqueHelper.get();
     }
 
+    void createDir(const std::string &path) override {
+        if (interceptCreatedDirs) {
+            createdDirs.push_back(path);
+        } else {
+            OfflineCompiler::createDir(path);
+        }
+    }
+
     std::map<std::string, std::string> filesMap{};
     int buildSourceCodeStatus = 0;
     bool overrideBuildSourceCodeStatus = false;
@@ -109,6 +120,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     std::unique_ptr<MockOclocArgHelper> uniqueHelper;
     int buildCalledCount{0};
     std::optional<int> buildReturnValue{};
+    bool interceptCreatedDirs{false};
+    std::vector<std::string> createdDirs{};
 };
 
 } // namespace NEO

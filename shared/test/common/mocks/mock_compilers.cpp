@@ -493,6 +493,10 @@ CIF::ICIF *MockIgcOclDeviceCtx::Create(CIF::InterfaceId_t intId, CIF::Version_t 
 IGC::IgcOclTranslationCtxBase *MockIgcOclDeviceCtx::CreateTranslationCtxImpl(CIF::Version_t ver,
                                                                              IGC::CodeType::CodeType_t inType,
                                                                              IGC::CodeType::CodeType_t outType) {
+    if (igcDebugVars->shouldFailCreationOfTranslationContext) {
+        return nullptr;
+    }
+
     requestedTranslationCtxs.emplace_back(inType, outType);
     return new MockIgcOclTranslationCtx;
 }
@@ -662,6 +666,11 @@ CIF::ICIF *MockFclOclDeviceCtx::Create(CIF::InterfaceId_t intId, CIF::Version_t 
 IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF::Version_t ver,
                                                                              IGC::CodeType::CodeType_t inType,
                                                                              IGC::CodeType::CodeType_t outType) {
+    if (fclDebugVars->shouldFailCreationOfTranslationContext) {
+        return nullptr;
+    }
+
+    requestedTranslationCtxs.emplace_back(inType, outType);
     return new MockFclOclTranslationCtx;
 }
 
@@ -669,6 +678,15 @@ IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF
                                                                              IGC::CodeType::CodeType_t inType,
                                                                              IGC::CodeType::CodeType_t outType,
                                                                              CIF::Builtins::BufferSimple *err) {
+    if (!fclDebugVars->translationContextCreationError.empty() && err) {
+        err->PushBackRawBytes(fclDebugVars->translationContextCreationError.c_str(), fclDebugVars->translationContextCreationError.size());
+    }
+
+    if (fclDebugVars->shouldFailCreationOfTranslationContext) {
+        return nullptr;
+    }
+
+    requestedTranslationCtxs.emplace_back(inType, outType);
     return new MockFclOclTranslationCtx;
 }
 

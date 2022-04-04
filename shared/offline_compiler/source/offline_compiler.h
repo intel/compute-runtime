@@ -114,6 +114,7 @@ class OfflineCompiler {
         return suffix;
     }
     MOCKABLE_VIRTUAL void writeOutAllFiles();
+    MOCKABLE_VIRTUAL void createDir(const std::string &path);
     void unifyExcludeIrFlags();
     HardwareInfo hwInfo;
 
@@ -167,4 +168,5 @@ class OfflineCompiler {
 
     OclocArgHelper *argHelper = nullptr;
 };
+
 } // namespace NEO

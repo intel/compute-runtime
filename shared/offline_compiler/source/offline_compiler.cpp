@@ -1143,10 +1143,10 @@ void OfflineCompiler::writeOutAllFiles() {
             dirList.push_back(tmp);
             pos = tmp.find_last_of("/\\", pos);
             tmp = tmp.substr(0, pos);
-        } while (pos != std::string::npos);
+        } while (pos != std::string::npos && !tmp.empty());
 
         while (!dirList.empty()) {
-            MakeDirectory(dirList.back().c_str());
+            createDir(dirList.back());
             dirList.pop_back();
         }
     }
@@ -1190,6 +1190,10 @@ void OfflineCompiler::writeOutAllFiles() {
             debugDataBinary,
             debugDataBinarySize);
     }
+}
+
+void OfflineCompiler::createDir(const std::string &path) {
+    MakeDirectory(path.c_str());
 }
 
 bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file, OclocArgHelper *helper) {

@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <fstream>
 #include <string>
 
@@ -913,6 +914,28 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenInitIsPerformedThenIrExcl
     EXPECT_TRUE(excludeIrFromZebinEnabled);
 }
 
+TEST_F(OfflineCompilerTests, givenExcludeIrArgumentAndExcludeIrFromZebinInternalOptionWhenInitIsPerformedThenExcludeIrFromZebinInternalOptionOccursJustOnce) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-exclude_ir",
+        "-internal_options",
+        "-ze-allow-zebin -ze-exclude-ir-from-zebin",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto expectedInternalOption{"-ze-exclude-ir-from-zebin"};
+    const auto firstExcludeIrFromZebin{mockOfflineCompiler.internalOptions.find(expectedInternalOption)};
+    ASSERT_NE(std::string::npos, firstExcludeIrFromZebin);
+
+    const auto lastExcludeIrFromZebin{mockOfflineCompiler.internalOptions.rfind(expectedInternalOption)};
+    EXPECT_EQ(firstExcludeIrFromZebin, lastExcludeIrFromZebin);
+}
+
 TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShouldBeExcluded) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -960,6 +983,140 @@ TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThen
     ASSERT_TRUE(warning.empty());
 
     EXPECT_TRUE(isAnyIrSectionDefined(elf.sectionHeaders));
+}
+
+TEST_F(OfflineCompilerTests, givenZeroSizeInputFileWhenInitializationIsPerformedThenInvalidFileIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->callBaseLoadDataFromFile = false;
+    mockOfflineCompiler.uniqueHelper->shouldLoadDataFromFileReturnZeroSize = true;
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, initResult);
+}
+
+TEST_F(OfflineCompilerTests, givenInvalidIgcOutputWhenCompilingKernelThenOutOfHostMemoryIsReturned) {
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.shouldReturnInvalidTranslationOutput = true;
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, initResult);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OclocErrorCode::OUT_OF_HOST_MEMORY, buildResult);
+
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, givenIgcBuildFailureWhenCompilingKernelThenBuildProgramFailureIsReturned) {
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.forceBuildFailure = true;
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, initResult);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OclocErrorCode::BUILD_PROGRAM_FAILURE, buildResult);
+
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, givenInvalidFclOutputWhenCompilingKernelThenOutOfHostMemoryIsReturned) {
+    MockCompilerDebugVars fclDebugVars{gEnvironment->fclDebugVars};
+    fclDebugVars.shouldReturnInvalidTranslationOutput = true;
+    NEO::setFclDebugVars(fclDebugVars);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, initResult);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OclocErrorCode::OUT_OF_HOST_MEMORY, buildResult);
+
+    NEO::setFclDebugVars(gEnvironment->fclDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, givenFclTranslationContextCreationFailureWhenCompilingKernelThenOutOfHostMemoryIsReturned) {
+    MockCompilerDebugVars fclDebugVars{gEnvironment->fclDebugVars};
+    fclDebugVars.shouldFailCreationOfTranslationContext = true;
+    NEO::setFclDebugVars(fclDebugVars);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, initResult);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OclocErrorCode::OUT_OF_HOST_MEMORY, buildResult);
+
+    NEO::setFclDebugVars(gEnvironment->fclDebugVars);
+}
+
+TEST_F(OfflineCompilerTests, givenFclTranslationContextCreationFailureAndErrorMessageWhenCompilingKernelThenProgramBuildFailureIsReturnedAndBuildLogIsUpdated) {
+    MockCompilerDebugVars fclDebugVars{gEnvironment->fclDebugVars};
+    fclDebugVars.shouldFailCreationOfTranslationContext = true;
+    fclDebugVars.translationContextCreationError = "Error: Could not create context!";
+    NEO::setFclDebugVars(fclDebugVars);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, initResult);
+
+    const auto buildResult{mockOfflineCompiler.build()};
+    EXPECT_EQ(OclocErrorCode::BUILD_PROGRAM_FAILURE, buildResult);
+
+    EXPECT_EQ("Error: Could not create context!", mockOfflineCompiler.getBuildLog());
+
+    NEO::setFclDebugVars(gEnvironment->fclDebugVars);
 }
 
 TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorrectExtensionsArePassed) {
@@ -1498,6 +1655,17 @@ TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBu
     EXPECT_EQ(mockOfflineCompiler->getBuildLog(), expectedBuildLogString);
 }
 
+TEST(OfflineCompilerTest, givenValidSizeAndInvalidLogPointerWhenUpdatingBuildLogThenNothingIsWritten) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const char *const invalidLog{nullptr};
+    const size_t logSize{7};
+    mockOfflineCompiler.updateBuildLog(invalidLog, logSize);
+
+    const auto buildLog = mockOfflineCompiler.getBuildLog();
+    EXPECT_TRUE(buildLog.empty()) << buildLog;
+}
+
 TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
@@ -1603,6 +1771,99 @@ TEST(OfflineCompilerTest, WhenGeneratingElfBinaryThenBinaryIsCreated) {
     EXPECT_FALSE(mockOfflineCompiler->elfBinary.empty());
 }
 
+TEST(OfflineCompilerTest, givenInvalidGenBinarySizeAndNotNullPointerWhenGeneratingElfBinaryThenNothingHappensAndFalseIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+
+    // Destructor of OfflineCompiler will deallocate the memory.
+    mockOfflineCompiler.genBinary = new char[0];
+    mockOfflineCompiler.genBinarySize = 0;
+
+    EXPECT_FALSE(mockOfflineCompiler.generateElfBinary());
+    EXPECT_TRUE(mockOfflineCompiler.elfBinary.empty());
+}
+
+TEST(OfflineCompilerTest, givenNonEmptyOptionsWhenGeneratingElfBinaryThenOptionsSectionIsIncludedInElfAndTrueIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.options = "-some_option";
+
+    // Destructor of OfflineCompiler will deallocate the memory.
+    mockOfflineCompiler.genBinary = new char[8]{};
+    mockOfflineCompiler.genBinarySize = 8;
+
+    EXPECT_TRUE(mockOfflineCompiler.generateElfBinary());
+    ASSERT_FALSE(mockOfflineCompiler.elfBinary.empty());
+
+    std::string errorReason{};
+    std::string warning{};
+
+    const auto elf{Elf::decodeElf(mockOfflineCompiler.elfBinary, errorReason, warning)};
+    ASSERT_TRUE(errorReason.empty());
+    ASSERT_TRUE(warning.empty());
+
+    const auto isOptionsSection = [](const auto &section) {
+        return section.header && section.header->type == Elf::SHT_OPENCL_OPTIONS;
+    };
+
+    const auto isAnyOptionsSectionDefined = std::any_of(elf.sectionHeaders.begin(), elf.sectionHeaders.end(), isOptionsSection);
+    EXPECT_TRUE(isAnyOptionsSectionDefined);
+}
+
+TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndNonEmptyOutputFileNameAndNonEmptyElfContentWhenWritingOutAllFilesThenFileWithCorrectNameIsWritten) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.outputNoSuffix = true;
+    mockOfflineCompiler.outputFile = "some_output_filename";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    EXPECT_EQ("12345678", outputFileIt->second);
+}
+
+TEST(OfflineCompilerTest, givenInputFileNameAndOutputNoSuffixFlagAndEmptyOutputFileNameAndNonEmptyElfContentWhenWritingOutAllFilesThenFileWithTruncatedInputNameIsWritten) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.outputNoSuffix = true;
+    mockOfflineCompiler.inputFile = "/home/important_file.spv";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("important_file");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    EXPECT_EQ("12345678", outputFileIt->second);
+}
+
+TEST(OfflineCompilerTest, givenNonEmptyOutputDirectoryWhenWritingOutAllFilesTheDirectoriesAreCreatedAndFileIsWrittenToIt) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.interceptCreatedDirs = true;
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.outputDirectory = "/home/important/compilation";
+    mockOfflineCompiler.outputNoSuffix = true;
+    mockOfflineCompiler.outputFile = "some_output_filename";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    ASSERT_EQ(3u, mockOfflineCompiler.createdDirs.size());
+
+    EXPECT_EQ("/home", mockOfflineCompiler.createdDirs[0]);
+    EXPECT_EQ("/home/important", mockOfflineCompiler.createdDirs[1]);
+    EXPECT_EQ("/home/important/compilation", mockOfflineCompiler.createdDirs[2]);
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("/home/important/compilation/some_output_filename");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    EXPECT_EQ("12345678", outputFileIt->second);
+}
+
 TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -1683,6 +1944,31 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 
     testing::internal::GetCapturedStdout();
+}
+
+TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTranslationContextIsUsed) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/emptykernel.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    ASSERT_EQ(CL_SUCCESS, initResult);
+
+    auto mockFclOclDeviceCtx = new NEO::MockFclOclDeviceCtx();
+    mockOfflineCompiler.fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
+
+    mockOfflineCompiler.useLlvmBc = true;
+    const auto buildResult = mockOfflineCompiler.buildIrBinary();
+    EXPECT_EQ(CL_SUCCESS, buildResult);
+
+    ASSERT_EQ(1U, mockFclOclDeviceCtx->requestedTranslationCtxs.size());
+
+    NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::oclC, IGC::CodeType::llvmBc};
+    EXPECT_EQ(expectedTranslation, mockFclOclDeviceCtx->requestedTranslationCtxs[0]);
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
@@ -2051,6 +2337,7 @@ TEST(OfflineCompilerTest, givenEnabledOptsSuffixWhenGenerateOptsSuffixIsCalledTh
     std::string suffix = compiler.generateOptsSuffix();
     EXPECT_STREQ("A_B_C", suffix.c_str());
 }
+
 TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBinaryAndWriteOutAllFilesAreCalled) {
     MockOfflineCompiler compiler;
     compiler.overrideBuildSourceCodeStatus = true;
@@ -2167,6 +2454,15 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(OclocErrorCode::SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
+}
+
+TEST(OfflineCompilerTest, givenEmptyDeviceNameWhenInitializingHardwareInfoThenInvalidDeviceIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler{};
+
+    const std::string emptyDeviceName{};
+    const auto result = mockOfflineCompiler.initHardwareInfo(emptyDeviceName);
+
+    EXPECT_EQ(OclocErrorCode::INVALID_DEVICE, result);
 }
 
 TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsUsed) {
