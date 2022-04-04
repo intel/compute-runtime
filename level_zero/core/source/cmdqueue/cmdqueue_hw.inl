@@ -460,6 +460,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                  anyCommandListWithCooperativeKernels);
 
     this->taskCount = csr->peekTaskCount();
+    if (dispatchPostSync) {
+        csr->setLatestFlushedTaskCount(this->taskCount);
+    }
 
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 

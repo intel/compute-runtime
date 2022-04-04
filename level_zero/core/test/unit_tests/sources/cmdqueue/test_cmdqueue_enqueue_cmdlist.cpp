@@ -1014,6 +1014,61 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecutingCommandListWithFenceThenDispatchPostSyncCommandAndUpdateFlushedTaskCount) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using PARSE = typename FamilyType::PARSE;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    csr->useNotifyEnableForPostSync = true;
+
+    const ze_command_queue_desc_t desc{};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           true,
+                                                           false,
+                                                           returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_fence_desc_t fenceDesc{};
+    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(nullptr, fence);
+    ze_fence_handle_t fenceHandle = fence->toHandle();
+
+    zet_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, fenceHandle, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+
+    uint32_t foundPostSyncMiFlush = 0u;
+    auto miFlushList = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    for (auto cmdIt : miFlushList) {
+        auto miFlush = reinterpret_cast<MI_FLUSH_DW *>(*cmdIt);
+
+        if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            foundPostSyncMiFlush++;
+            EXPECT_TRUE(miFlush->getNotifyEnable());
+        }
+    }
+    EXPECT_EQ(1u, foundPostSyncMiFlush);
+    EXPECT_EQ(csr->peekTaskCount(), csr->peekLatestFlushedTaskCount());
+
+    fence->destroy();
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopyCommandListWithFenceThenExpectSingleCopyPostSyncCommand) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using PARSE = typename FamilyType::PARSE;
