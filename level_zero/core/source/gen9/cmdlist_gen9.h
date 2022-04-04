@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ struct CommandListProductFamily : public CommandListCoreFamily<IGFX_GEN9_CORE> {
     using CommandListCoreFamily::CommandListCoreFamily;
 
     void programL3(bool isSLMused) override {
-        using GfxFamily = typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily;
         NEO::EncodeL3State<GfxFamily>::encode(commandContainer, isSLMused);
     }
 };

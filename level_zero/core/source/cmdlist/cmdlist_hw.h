@@ -43,10 +43,7 @@ struct Event;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily : CommandListImp {
-    using BaseClass = CommandListImp;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     using CommandListImp::CommandListImp;
     ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) override;

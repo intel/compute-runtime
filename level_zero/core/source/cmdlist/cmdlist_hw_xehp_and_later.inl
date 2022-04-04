@@ -40,7 +40,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t numRanges,
                                                                     const size_t *pRangeSizes,
                                                                     const void **pRanges) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     NEO::LinearStream *commandStream = commandContainer.getCommandStream();
     NEO::SVMAllocsManager *svmAllocsManager =
@@ -128,9 +127,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                                                bool isIndirect,
                                                                                bool isPredicate,
                                                                                bool isCooperative) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     const auto &hwInfo = this->device->getHwInfo();
     if (NEO::DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
