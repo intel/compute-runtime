@@ -623,7 +623,7 @@ struct MultiLevelBatchAubFixture : public AubWalkerPartitionZeroFixture {
 
 using MultiLevelBatchTestsWithNesting = Test<MultiLevelBatchAubFixture<true>>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, DISABLED_givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
     auto compareAddress = writeAddress;
 
