@@ -27,10 +27,15 @@ components:
     dest_dir: internal
     revision: FETCH_HEAD
     type: git
+  kernels_bin:
+    dest_dir: kernels_bin
+    type: git
+    branch: kernels_bin
+    revision: 1898-145
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: 0485b5dc951ddd09298c68dd7e520f51ba6db569
+    revision: c9a9f1c0d46f51b116cd9cb562205b20d33539ed
     type: git
   level_zero:
     dest_dir: level_zero
@@ -54,10 +59,5 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-  kernels_bin:
-    dest_dir: kernels_bin
-    type: git
-    branch: kernels_bin
-    revision: 1885-128
-converter: M-1885
+converter: M-1898
 version: '1'
