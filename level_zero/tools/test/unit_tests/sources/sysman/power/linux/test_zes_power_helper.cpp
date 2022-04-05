@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,31 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidDeviceHandlesAndHwmo
         EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
         delete pPowerImp;
     }
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceds) {
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDiectoriesFailAndPmtIsNullForSubDeviceZeroWhenGettingCardPowerThenReturnsFailure) {
+
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        if (pmtMapElement.first == 0) {
+            delete pmtMapElement.second;
+            pmtMapElement.second = nullptr;
+        }
+    }
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
+
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 } // namespace ult

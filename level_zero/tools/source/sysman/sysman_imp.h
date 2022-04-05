@@ -46,6 +46,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
 
     ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) override;
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
+    ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) override;

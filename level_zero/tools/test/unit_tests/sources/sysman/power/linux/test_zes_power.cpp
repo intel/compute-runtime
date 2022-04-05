@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,25 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     for (auto handle : handles) {
         EXPECT_NE(handle, nullptr);
     }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceds) {
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenInvalidPowerPointerWhenGettingCardPowerDomainAndThenReturnsFailure) {
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), nullptr), ZE_RESULT_ERROR_INVALID_NULL_POINTER);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenUninitializedPowerHandlesAndWhenGettingCardPowerDomainThenReurnsFailure) {
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
@@ -527,6 +546,27 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyThre
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetEnergyThreshold(handle, &threshold));
     }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenScanDiectoriesFailAndPmtIsNullWhenGettingCardPowerThenReturnsFailure) {
+
+    EXPECT_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillRepeatedly(Return(ZE_RESULT_ERROR_NOT_AVAILABLE));
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
+        if (pmtMapElement.second) {
+            delete pmtMapElement.second;
+            pmtMapElement.second = nullptr;
+        }
+    }
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
+
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,7 @@ zesGetDeviceProcAddrTable(
     pDdiTable->pfnEnumMemoryModules = zesDeviceEnumMemoryModules;
     pDdiTable->pfnEnumPerformanceFactorDomains = zesDeviceEnumPerformanceFactorDomains;
     pDdiTable->pfnEnumPowerDomains = zesDeviceEnumPowerDomains;
+    pDdiTable->pfnGetCardPowerDomain = zesDeviceGetCardPowerDomain;
     pDdiTable->pfnEnumPsus = zesDeviceEnumPsus;
     pDdiTable->pfnEnumRasErrorSets = zesDeviceEnumRasErrorSets;
     pDdiTable->pfnEnumSchedulers = zesDeviceEnumSchedulers;

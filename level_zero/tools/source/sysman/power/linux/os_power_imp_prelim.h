@@ -39,18 +39,12 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   private:
     std::string i915HwmonDir;
-    std::string energyHwmonDir;
     static const std::string hwmonDir;
     static const std::string i915;
-    static const std::string sustainedPowerLimitEnabled;
     static const std::string sustainedPowerLimit;
-    static const std::string sustainedPowerLimitInterval;
-    static const std::string burstPowerLimitEnabled;
-    static const std::string burstPowerLimit;
+    static const std::string criticalPowerLimit;
     static const std::string energyCounterNode;
     static const std::string defaultPowerLimit;
-    static const std::string minPowerLimit;
-    static const std::string maxPowerLimit;
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

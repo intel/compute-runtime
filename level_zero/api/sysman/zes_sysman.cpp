@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,6 +139,13 @@ zesDeviceEnumPowerDomains(
     uint32_t *pCount,
     zes_pwr_handle_t *phPower) {
     return L0::SysmanDevice::powerGet(hDevice, pCount, phPower);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceGetCardPowerDomain(
+    zes_device_handle_t hDevice,
+    zes_pwr_handle_t *phPower) {
+    return L0::SysmanDevice::powerGetCardDomain(hDevice, phPower);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

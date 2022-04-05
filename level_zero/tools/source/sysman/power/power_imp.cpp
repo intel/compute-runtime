@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,7 @@ void PowerImp::init() {
     if (pOsPower->isPowerModuleSupported()) {
         pOsPower->getProperties(&powerProperties);
         this->initSuccess = true;
+        this->isCardPower = powerProperties.onSubdevice ? false : true;
     }
 }
 

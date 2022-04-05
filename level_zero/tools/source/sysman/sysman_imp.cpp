@@ -189,6 +189,10 @@ ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t SysmanDeviceImp::powerGetCardDomain(zes_pwr_handle_t *phPower) {
+    return pPowerHandleContext->powerGetCardDomain(phPower);
+}
+
 ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
     return pPowerHandleContext->powerGet(pCount, phPower);
 }

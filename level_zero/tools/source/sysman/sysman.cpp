@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,6 +113,14 @@ ze_result_t SysmanDevice::powerGet(zes_device_handle_t hDevice, uint32_t *pCount
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     return pSysmanDevice->powerGet(pCount, phPower);
+}
+
+ze_result_t SysmanDevice::powerGetCardDomain(zes_device_handle_t hDevice, zes_pwr_handle_t *phPower) {
+    auto pSysmanDevice = L0::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->powerGetCardDomain(phPower);
 }
 
 ze_result_t SysmanDevice::frequencyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_freq_handle_t *phFrequency) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class Power : _zet_sysman_pwr_handle_t, _zes_pwr_handle_t {
     }
     inline zes_pwr_handle_t toHandle() { return this; }
     bool initSuccess = false;
+    bool isCardPower = false;
     zes_power_properties_t powerProperties = {};
 };
 struct PowerHandleContext {
@@ -44,6 +45,7 @@ struct PowerHandleContext {
 
     ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice);
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
+    ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower);
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Power *> handleList = {};

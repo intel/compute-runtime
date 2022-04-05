@@ -125,6 +125,8 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDevicePciGetStats(hSysman, &pciStats));
     zes_event_type_flags_t events = ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEventRegister(hSysman, events));
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetCardPowerDomain(hSysman, &phPower));
     static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 
