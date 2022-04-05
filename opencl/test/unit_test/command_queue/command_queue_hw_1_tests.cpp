@@ -106,7 +106,7 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotRet
 HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
     DebugManagerStateRestore restore;
     MockBuffer buffer;
-    KernelObjsForAuxTranslation kernelObjects;
+    auto emptyKernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     MultiDispatchInfo multiDispatchInfo;
     HardwareInfo *hwInfo = pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
@@ -118,10 +118,12 @@ HWTEST_F(CommandQueueHwTest, givenMultiDispatchInfoWhenAskingForAuxTranslationTh
 
     EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjects);
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(emptyKernelObjsForAuxTranslation));
     EXPECT_FALSE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
-    kernelObjects.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, &buffer});
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, &buffer});
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     EXPECT_TRUE(mockCmdQueueHw.isBlitAuxTranslationRequired(multiDispatchInfo));
 
     hwInfo->capabilityTable.blitterOperationsSupported = false;

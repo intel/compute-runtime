@@ -332,7 +332,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
         return usingImagesOnly;
     }
 
-    void fillWithKernelObjsForAuxTranslation(KernelObjsForAuxTranslation &kernelObjsForAuxTranslation);
+    std::unique_ptr<KernelObjsForAuxTranslation> fillWithKernelObjsForAuxTranslation();
 
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 

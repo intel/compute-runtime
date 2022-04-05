@@ -667,17 +667,16 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
         gmm->isCompressionEnabled = type.compressed;
 
-        KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-        pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+        auto kernelObjsForAuxTranslation = pKernel->fillWithKernelObjsForAuxTranslation();
 
         if (type.compressed) {
-            EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            EXPECT_EQ(1u, kernelObjsForAuxTranslation->size());
+            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslation->erase(kernelObj);
         } else {
-            EXPECT_EQ(0u, kernelObjsForAuxTranslation.size());
+            EXPECT_EQ(0u, kernelObjsForAuxTranslation->size());
         }
 
         pKernel->clearUnifiedMemoryExecInfo();
@@ -714,17 +713,16 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
 
         pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
 
-        KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-        pKernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+        auto kernelObjsForAuxTranslation = pKernel->fillWithKernelObjsForAuxTranslation();
 
         if (type.compressed) {
-            EXPECT_EQ(1u, kernelObjsForAuxTranslation.size());
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
+            EXPECT_EQ(1u, kernelObjsForAuxTranslation->size());
+            auto kernelObj = *kernelObjsForAuxTranslation->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, &gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslation->erase(kernelObj);
         } else {
-            EXPECT_EQ(0u, kernelObjsForAuxTranslation.size());
+            EXPECT_EQ(0u, kernelObjsForAuxTranslation->size());
         }
 
         pContext->getSVMAllocsManager()->removeSVMAlloc(allocData);

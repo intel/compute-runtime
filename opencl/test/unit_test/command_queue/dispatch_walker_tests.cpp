@@ -1336,11 +1336,11 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenAuxToNonAuxWhenTran
     MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
     MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    kernelObjsForAuxTranslation->insert(mockKernelObj1);
+    kernelObjsForAuxTranslation->insert(mockKernelObj2);
     MultiDispatchInfo multiDispatchInfo;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
-    kernelObjsForAuxTranslation.insert(mockKernelObj1);
-    kernelObjsForAuxTranslation.insert(mockKernelObj2);
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
@@ -1390,11 +1390,11 @@ HWTEST_P(DispatchWalkerTestForAuxTranslation, givenKernelWhenNonAuxToAuxWhenTran
     MockKernelObjForAuxTranslation mockKernelObj1(kernelObjType);
     MockKernelObjForAuxTranslation mockKernelObj2(kernelObjType);
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    kernelObjsForAuxTranslation->insert(mockKernelObj1);
+    kernelObjsForAuxTranslation->insert(mockKernelObj2);
     MultiDispatchInfo multiDispatchInfo;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
-    kernelObjsForAuxTranslation.insert(mockKernelObj1);
-    kernelObjsForAuxTranslation.insert(mockKernelObj2);
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;

@@ -61,19 +61,19 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
                                                  const cl_event *eventWaitList,
                                                  cl_event *event) {
     BuiltInOwnershipWrapper builtInLock;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+    std::unique_ptr<KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo(kernel);
 
     auto auxTranslationMode = AuxTranslationMode::None;
 
     kernel->updateAuxTranslationRequired();
     if (kernel->isAuxTranslationRequired()) {
-        kernel->fillWithKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
-        multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+        kernelObjsForAuxTranslation = kernel->fillWithKernelObjsForAuxTranslation();
 
-        if (!kernelObjsForAuxTranslation.empty()) {
+        if (!kernelObjsForAuxTranslation->empty()) {
             auxTranslationMode = HwHelperHw<GfxFamily>::get().getAuxTranslationMode(device->getHardwareInfo());
         }
+        multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     }
 
     if (AuxTranslationMode::Builtin == auxTranslationMode) {
@@ -502,16 +502,16 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
                                                                      BlitPropertiesContainer &blitPropertiesContainer,
                                                                      TimestampPacketDependencies &timestampPacketDependencies,
                                                                      const EventsRequest &eventsRequest, bool queueBlocked) {
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    auto nodesAllocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
-    auto numKernelObjs = multiDispatchInfo.getKernelObjsForAuxTranslation()->size();
+    const auto rootDeviceIndex = getDevice().getRootDeviceIndex();
+    const auto nodesAllocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    const auto numKernelObjs = multiDispatchInfo.getKernelObjsForAuxTranslation()->size();
     blitPropertiesContainer.resize(numKernelObjs * 2);
 
     auto bufferIndex = 0;
-    for (auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
+    for (const auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
         GraphicsAllocation *allocation = nullptr;
         if (kernelObj.type == KernelObjForAuxTranslation::Type::MEM_OBJ) {
-            auto buffer = static_cast<Buffer *>(kernelObj.object);
+            const auto buffer = static_cast<Buffer *>(kernelObj.object);
             allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
         } else {
             DEBUG_BREAK_IF(kernelObj.type != KernelObjForAuxTranslation::Type::GFX_ALLOC);
@@ -521,7 +521,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
             // Aux to NonAux
             blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(
                 AuxTranslationDirection::AuxToNonAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
-            auto auxToNonAuxNode = nodesAllocator->getTag();
+            const auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
         }
 
@@ -529,7 +529,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
             // NonAux to Aux
             blitPropertiesContainer[bufferIndex + numKernelObjs] = BlitProperties::constructPropertiesForAuxTranslation(
                 AuxTranslationDirection::NonAuxToAux, allocation, getGpgpuCommandStreamReceiver().getClearColorAllocation());
-            auto nonAuxToAuxNode = nodesAllocator->getTag();
+            const auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
         }
         bufferIndex++;

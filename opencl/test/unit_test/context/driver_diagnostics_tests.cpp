@@ -448,8 +448,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
 
     testing::internal::CaptureStdout();
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().getExtendedMetadata(0).argName.c_str());
@@ -479,8 +478,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
 
     testing::internal::CaptureStdout();
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ARGUMENT_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), 0, mockKernel.mockKernel->getKernelInfo().getExtendedMetadata(0).argName.c_str());
@@ -509,8 +507,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
     testing::internal::CaptureStdout();
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ALLOCATION_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), ptr, 128);
@@ -548,8 +545,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     context->getSVMAllocsManager()->insertSVMAlloc(allocData);
 
     testing::internal::CaptureStdout();
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[KERNEL_ALLOCATION_AUX_TRANSLATION],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), ptr, 128);
@@ -583,8 +579,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
 
     testing::internal::CaptureStdout();
 
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -610,8 +605,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
     testing::internal::CaptureStdout();
 
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -631,8 +625,7 @@ TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNull
 
     testing::internal::CaptureStdout();
 
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
@@ -654,8 +647,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
     testing::internal::CaptureStdout();
-    KernelObjsForAuxTranslation kernelObjects;
-    mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation(kernelObjects);
+    auto kernelObjects = mockKernel.mockKernel->fillWithKernelObjsForAuxTranslation();
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());

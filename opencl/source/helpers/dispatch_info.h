@@ -197,19 +197,19 @@ struct MultiDispatchInfo {
         return builtinOpParams;
     }
 
-    void setKernelObjsForAuxTranslation(const KernelObjsForAuxTranslation &kernelObjsForAuxTranslation) {
-        this->kernelObjsForAuxTranslation = &kernelObjsForAuxTranslation;
+    void setKernelObjsForAuxTranslation(std::unique_ptr<KernelObjsForAuxTranslation> &&kernelObjsForAuxTranslation) {
+        this->kernelObjsForAuxTranslation = std::move(kernelObjsForAuxTranslation);
     }
 
     const KernelObjsForAuxTranslation *getKernelObjsForAuxTranslation() const {
-        return kernelObjsForAuxTranslation;
+        return kernelObjsForAuxTranslation.get();
     }
 
   protected:
     BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
-    const KernelObjsForAuxTranslation *kernelObjsForAuxTranslation = nullptr;
+    std::unique_ptr<const KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     Kernel *mainKernel = nullptr;
 };
 } // namespace NEO

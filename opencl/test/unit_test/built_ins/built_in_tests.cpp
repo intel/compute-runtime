@@ -258,9 +258,6 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
@@ -270,9 +267,14 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation.insert(kernelObj);
+        kernelObjsForAuxTranslation->insert(kernelObj);
     }
+    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
+
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
     EXPECT_EQ(3u, multiDispatchInfo.size());
@@ -283,10 +285,10 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
 
         if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
             auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::MEM_OBJ, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             cl_mem clMem = buffer;
             EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
@@ -298,10 +300,10 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxT
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
             auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
@@ -324,9 +326,6 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
     mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType, 0x1000));
@@ -336,9 +335,13 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation.insert(kernelObj);
+        kernelObjsForAuxTranslation->insert(kernelObj);
     }
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
     EXPECT_EQ(3u, multiDispatchInfo.size());
@@ -349,10 +352,10 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
 
         if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
             auto buffer = castToObject<Buffer>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::MEM_OBJ, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             cl_mem clMem = buffer;
             EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
@@ -364,10 +367,10 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTran
             EXPECT_EQ(gws, dispatchInfo.getGWS());
         } else {
             auto gfxAllocation = static_cast<GraphicsAllocation *>(kernel->getKernelArguments().at(0).object);
-            auto kernelObj = *kernelObjsForAuxTranslation.find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
+            auto kernelObj = *kernelObjsForAuxTranslationPtr->find({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation});
             EXPECT_NE(nullptr, kernelObj.object);
             EXPECT_EQ(KernelObjForAuxTranslation::Type::GFX_ALLOC, kernelObj.type);
-            kernelObjsForAuxTranslation.erase(kernelObj);
+            kernelObjsForAuxTranslationPtr->erase(kernelObj);
 
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(0).object);
             EXPECT_EQ(gfxAllocation, kernel->getKernelArguments().at(1).object);
@@ -390,20 +393,20 @@ HWTEST2_P(AuxBuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThe
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
     for (int i = 0; i < 3; i++) {
         mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
     }
     std::vector<Kernel *> builtinKernels;
 
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
     BuiltinOpParams builtinOpsParams;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation.insert(kernelObj);
+        kernelObjsForAuxTranslation->insert(kernelObj);
     }
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
     EXPECT_TRUE(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
@@ -428,14 +431,15 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
     BuiltinDispatchInfoBuilder &baseBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pClDevice);
     auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
 
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    auto kernelObjsForAuxTranslationPtr = kernelObjsForAuxTranslation.get();
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
 
     MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     BuiltinOpParams builtinOpsParams;
 
-    kernelObjsForAuxTranslation.insert(mockKernelObjForAuxTranslation);
+    kernelObjsForAuxTranslationPtr->insert(mockKernelObjForAuxTranslation);
 
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::None;
     EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
@@ -465,20 +469,20 @@ HWTEST2_P(AuxBuiltInTests, givenMoreKernelObjectsForAuxTranslationThanKernelInst
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    BuiltinOpParams builtinOpsParams;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
     std::vector<MockKernelObjForAuxTranslation> mockKernelObjForAuxTranslation;
     for (int i = 0; i < 7; i++) {
         mockKernelObjForAuxTranslation.push_back(MockKernelObjForAuxTranslation(kernelObjType));
     }
 
+    BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
     for (auto &kernelObj : mockKernelObjForAuxTranslation) {
-        kernelObjsForAuxTranslation.insert(kernelObj);
+        kernelObjsForAuxTranslation->insert(kernelObj);
     }
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     EXPECT_TRUE(mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams));
     EXPECT_EQ(7u, mockAuxBuiltInOp.convertToAuxKernel.size());
@@ -558,9 +562,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
-    MultiDispatchInfo multiDispatchInfo;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParamsToAux;
     builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
@@ -571,14 +572,19 @@ HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettin
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-        kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-        kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
     }
+
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
 
     mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
     mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
@@ -624,9 +630,6 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
-    MultiDispatchInfo multiDispatchInfo;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParams;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
@@ -637,19 +640,22 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = true;
 
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
         cl_int retVal = CL_SUCCESS;
         buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
         buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
 
-        kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
     } else {
         gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
         gfxAllocation->setDefaultGmm(gmm.get());
 
-        kernelObjsForAuxTranslation.insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
     }
-
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
 
     {
@@ -681,9 +687,6 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
-    MultiDispatchInfo multiDispatchInfo;
-    KernelObjsForAuxTranslation kernelObjsForAuxTranslation;
-    multiDispatchInfo.setKernelObjsForAuxTranslation(kernelObjsForAuxTranslation);
 
     BuiltinOpParams builtinOpParams;
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
@@ -696,8 +699,11 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     } else {
         mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
     }
-    kernelObjsForAuxTranslation.insert(mockKernelObjForAuxTranslation);
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    kernelObjsForAuxTranslation->insert(mockKernelObjForAuxTranslation);
 
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
     mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);
 
     {
