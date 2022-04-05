@@ -1397,7 +1397,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             closEnabled = !!DebugManager.flags.ClosEnabled.get();
         }
 
-        auto vmBindExtSetPat = ioctlHelper->createVmBindExtSetPat();
+        VmBindExtSetPatT vmBindExtSetPat{};
 
         if (closEnabled) {
             uint64_t patIndex = ClosHelper::getPatIndex(bo->peekCacheRegion(), bo->peekCachePolicy());
@@ -1405,7 +1405,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 patIndex = static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
             }
             ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, patIndex, castToUint64(extensions.get()));
-            vmBind.extensions = castToUint64(vmBindExtSetPat.get());
+            vmBind.extensions = castToUint64(vmBindExtSetPat);
         } else {
             vmBind.extensions = castToUint64(extensions.get());
         }
@@ -1413,7 +1413,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         if (bind) {
             std::unique_lock<std::mutex> lock;
 
-            auto vmBindExtUserFence = ioctlHelper->createVmBindExtUserFence();
+            VmBindExtUserFenceT vmBindExtUserFence{};
 
             if (drm->useVMBindImmediate()) {
                 lock = drm->lockBindFenceMutex();
@@ -1424,7 +1424,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                     auto value = drm->getNextFenceVal(vmHandleId);
 
                     ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
-                    vmBind.extensions = castToUint64(vmBindExtUserFence.get());
+                    vmBind.extensions = castToUint64(vmBindExtUserFence);
                 }
             }
 

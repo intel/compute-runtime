@@ -284,25 +284,15 @@ TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsRet
     EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(drm.get(), gcc));
 }
 
-TEST(IoctlHelperTestsUpstream, whenCreateVmBindSetPatThenNullptrIsReturned) {
+TEST(IoctlHelperTestsUpstream, whenFillVmBindSetPatThenNothingThrows) {
     IoctlHelperUpstream ioctlHelper{};
-    EXPECT_EQ(nullptr, ioctlHelper.createVmBindExtSetPat());
-}
-
-TEST(IoctlHelperTestsUpstream, whenCreateVmBindUserFenceThenNullptrIsReturned) {
-    IoctlHelperUpstream ioctlHelper{};
-    EXPECT_EQ(nullptr, ioctlHelper.createVmBindExtUserFence());
-}
-
-TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindSetPatThenNothingThrows) {
-    IoctlHelperUpstream ioctlHelper{};
-    auto vmBindExtSetPat = ioctlHelper.createVmBindExtSetPat();
+    VmBindExtSetPatT vmBindExtSetPat{};
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u));
 }
 
-TEST(IoctlHelperTestsUpstream, givenNullptrWhenFillVmBindUserFenceThenNothingThrows) {
+TEST(IoctlHelperTestsUpstream, whenFillVmBindUserFenceThenNothingThrows) {
     IoctlHelperUpstream ioctlHelper{};
-    auto vmBindExtUserFence = ioctlHelper.createVmBindExtUserFence();
+    VmBindExtUserFenceT vmBindExtUserFence{};
     EXPECT_NO_THROW(ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, 0u, 0u, 0u));
 }
 

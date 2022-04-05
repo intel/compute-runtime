@@ -194,17 +194,9 @@ uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, drm_i915_gem_co
     return EINVAL;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtSetPat() {
-    return {};
-}
+void IoctlHelperUpstream::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {}
 
-void IoctlHelperUpstream::fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {}
-
-std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmBindExtUserFence() {
-    return {};
-}
-
-void IoctlHelperUpstream::fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {}
+void IoctlHelperUpstream::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {}
 
 std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturatePCIECapability() {
     return std::nullopt;

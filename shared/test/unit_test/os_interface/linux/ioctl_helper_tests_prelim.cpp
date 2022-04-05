@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -193,56 +194,38 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGettingFlagForWaitUserFenceSoftTh
     EXPECT_EQ(PRELIM_I915_UFENCE_WAIT_SOFT, ioctlHelper.getWaitUserFenceSoftFlag());
 }
 
-TEST_F(IoctlPrelimHelperTests, whenCreateVmBindSetPatThenValidPointerIsReturned) {
-    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtSetPat());
-}
-
-TEST_F(IoctlPrelimHelperTests, whenCreateVmBindUserFenceThenValidPointerIsReturned) {
-    EXPECT_NE(nullptr, ioctlHelper.createVmBindExtUserFence());
-}
-
-TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindSetPatThenUnrecoverableIsThrown) {
-    std::unique_ptr<uint8_t[]> vmBindExtSetPat{};
-    EXPECT_THROW(ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, 0u, 0u), std::runtime_error);
-}
-
-TEST_F(IoctlPrelimHelperTests, givenNullptrWhenFillVmBindUserFenceThenUnrecoverableIsThrown) {
-    std::unique_ptr<uint8_t[]> vmBindExtUserFence{};
-    EXPECT_THROW(ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, 0u, 0u, 0u), std::runtime_error);
-}
-
 TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindSetPatThenProperValuesAreSet) {
-    std::unique_ptr<uint8_t[]> vmBindExtSetPat{};
+    VmBindExtSetPatT vmBindExtSetPat{};
     prelim_drm_i915_vm_bind_ext_set_pat prelimVmBindExtSetPat{};
-    vmBindExtSetPat.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtSetPat));
 
     uint64_t expectedPatIndex = 2;
     uint64_t expectedNextExtension = 3;
     ioctlHelper.fillVmBindExtSetPat(vmBindExtSetPat, expectedPatIndex, expectedNextExtension);
+
+    memcpy_s(&prelimVmBindExtSetPat, sizeof(prelimVmBindExtSetPat), vmBindExtSetPat, sizeof(vmBindExtSetPat));
+
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_SET_PAT), prelimVmBindExtSetPat.base.name);
     EXPECT_EQ(expectedPatIndex, prelimVmBindExtSetPat.pat_index);
     EXPECT_EQ(expectedNextExtension, prelimVmBindExtSetPat.base.next_extension);
-
-    vmBindExtSetPat.release();
 }
 
 TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindUserFenceThenProperValuesAreSet) {
-    std::unique_ptr<uint8_t[]> vmBindExtUserFence{};
+    VmBindExtUserFenceT vmBindExtUserFence{};
     prelim_drm_i915_vm_bind_ext_user_fence prelimVmBindExtUserFence{};
-    vmBindExtUserFence.reset(reinterpret_cast<uint8_t *>(&prelimVmBindExtUserFence));
 
     uint64_t expectedAddress = 0xdead;
     uint64_t expectedValue = 0xc0de;
     uint64_t expectedNextExtension = 1234;
     uint64_t expectedSize = sizeof(prelimVmBindExtUserFence.base) + sizeof(uint64_t) * 3;
     ioctlHelper.fillVmBindExtUserFence(vmBindExtUserFence, expectedAddress, expectedValue, expectedNextExtension);
+
+    memcpy_s(&prelimVmBindExtUserFence, sizeof(prelimVmBindExtUserFence), vmBindExtUserFence, sizeof(vmBindExtUserFence));
+
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_BIND_EXT_USER_FENCE), prelimVmBindExtUserFence.base.name);
     EXPECT_EQ(expectedAddress, prelimVmBindExtUserFence.addr);
     EXPECT_EQ(expectedValue, prelimVmBindExtUserFence.val);
     EXPECT_EQ(expectedNextExtension, prelimVmBindExtUserFence.base.next_extension);
     EXPECT_EQ(expectedSize, sizeof(prelimVmBindExtUserFence));
-
-    vmBindExtUserFence.release();
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {

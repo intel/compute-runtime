@@ -437,24 +437,20 @@ uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, drm_i915_gem_co
     return gemCreateContextExt(drm, gcc, extSetparam);
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtSetPat() {
-    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_set_pat));
-};
+static_assert(sizeof(VmBindExtSetPatT) == sizeof(prelim_drm_i915_vm_bind_ext_set_pat), "Invalid size for VmBindExtSetPat");
 
-void IoctlHelperPrelim20::fillVmBindExtSetPat(const std::unique_ptr<uint8_t[]> &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {
-    auto prelimVmBindExtSetPat = reinterpret_cast<prelim_drm_i915_vm_bind_ext_set_pat *>(vmBindExtSetPat.get());
+void IoctlHelperPrelim20::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) {
+    auto prelimVmBindExtSetPat = reinterpret_cast<prelim_drm_i915_vm_bind_ext_set_pat *>(vmBindExtSetPat);
     UNRECOVERABLE_IF(!prelimVmBindExtSetPat);
     prelimVmBindExtSetPat->base.name = PRELIM_I915_VM_BIND_EXT_SET_PAT;
     prelimVmBindExtSetPat->pat_index = patIndex;
     prelimVmBindExtSetPat->base.next_extension = nextExtension;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmBindExtUserFence() {
-    return std::make_unique<uint8_t[]>(sizeof(prelim_drm_i915_vm_bind_ext_user_fence));
-}
+static_assert(sizeof(VmBindExtUserFenceT) == sizeof(prelim_drm_i915_vm_bind_ext_user_fence), "Invalid size for VmBindExtUserFence");
 
-void IoctlHelperPrelim20::fillVmBindExtUserFence(const std::unique_ptr<uint8_t[]> &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
-    auto prelimVmBindExtUserFence = reinterpret_cast<prelim_drm_i915_vm_bind_ext_user_fence *>(vmBindExtUserFence.get());
+void IoctlHelperPrelim20::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {
+    auto prelimVmBindExtUserFence = reinterpret_cast<prelim_drm_i915_vm_bind_ext_user_fence *>(vmBindExtUserFence);
     UNRECOVERABLE_IF(!prelimVmBindExtUserFence);
     prelimVmBindExtUserFence->base.name = PRELIM_I915_VM_BIND_EXT_USER_FENCE;
     prelimVmBindExtUserFence->base.next_extension = nextExtension;
