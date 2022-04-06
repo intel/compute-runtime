@@ -73,7 +73,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineC
             break;
         }
     }
-    setSupportedEngiesInfo(hwInfo, computeEngines, bcsInfoMask);
+    setSupportedEnginesInfo(hwInfo, computeEngines, bcsInfoMask);
 }
 
 EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<drm_i915_query_item> &queryItems, const std::vector<EngineCapabilities> &engineInfos)
@@ -110,7 +110,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const
     }
 
     BcsInfoMask bcsInfoMask = maxNBitValue(copyEnginesPerTile);
-    setSupportedEngiesInfo(hwInfo, computeEnginesPerTile, bcsInfoMask);
+    setSupportedEnginesInfo(hwInfo, computeEnginesPerTile, bcsInfoMask);
 }
 
 const EngineClassInstance *EngineInfo::getEngineInstance(uint32_t tile, aub_stream::EngineType engineType) const {
@@ -125,7 +125,7 @@ const EngineClassInstance *EngineInfo::getEngineInstance(uint32_t tile, aub_stre
     return &iter->second;
 }
 
-void EngineInfo::setSupportedEngiesInfo(HardwareInfo *hwInfo, uint32_t numComputeEngines, const BcsInfoMask &bcsInfoMask) {
+void EngineInfo::setSupportedEnginesInfo(HardwareInfo *hwInfo, uint32_t numComputeEngines, const BcsInfoMask &bcsInfoMask) {
     auto &ccsInfo = hwInfo->gtSystemInfo.CCSInfo;
 
     if (numComputeEngines > 0u) {
