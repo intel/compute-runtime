@@ -29,7 +29,13 @@ const std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap 
     {"0x4f9301",                  // For ATSM device
      {{"PACKAGE_ENERGY", 1032},
       {"SOC_TEMPERATURES", 56}}}, // SOC_TEMPERATURE contains GT_TEMP, DRAM_TEMP, SA_TEMP, DE_TEMP, PCIE_TEMP, TYPEC_TEMP
-    {"0xfdc76194",                // For XeHP_SDV device
+    {"0x4f9302",                  // For DG2 512EU / ATS-M1
+     {{"PACKAGE_ENERGY", 1032},
+      {"SOC_TEMPERATURES", 56}}},
+    {"0x4f9502", // For DG2 128EU / ATS-M3
+     {{"PACKAGE_ENERGY", 1032},
+      {"SOC_TEMPERATURES", 56}}},
+    {"0xfdc76194", // For XeHP_SDV device
      {{"HBM0MaxDeviceTemperature", 28},
       {"HBM1MaxDeviceTemperature", 36},
       {"TileMinTemperature", 40},
