@@ -39,6 +39,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     static constexpr size_t cmdBufferReservedSize = MemoryConstants::cacheLineSize +
                                                     CSRequirements::csOverfetchSize;
     static constexpr size_t totalCmdBufferSize = defaultListCmdBufferSize + cmdBufferReservedSize;
+    static constexpr size_t startingResidencyContainerSize = 128;
 
     CommandContainer();
 

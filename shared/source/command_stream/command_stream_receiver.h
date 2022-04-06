@@ -67,6 +67,8 @@ enum class DispatchMode {
 
 class CommandStreamReceiver {
   public:
+    static constexpr size_t startingResidencyContainerSize = 128;
+
     enum class SamplerCacheFlushState {
         samplerCacheFlushNotRequired,
         samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image

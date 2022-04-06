@@ -49,6 +49,8 @@ CommandContainer::CommandContainer() {
     for (auto &allocationIndirectHeap : allocationIndirectHeaps) {
         allocationIndirectHeap = nullptr;
     }
+
+    residencyContainer.reserve(startingResidencyContainerSize);
 }
 
 CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandContainer() {
