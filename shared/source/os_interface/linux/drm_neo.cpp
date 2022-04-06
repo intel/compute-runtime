@@ -1365,7 +1365,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
     }
 
-    auto bindAddresses = bo->getColourAddresses();
+    auto &bindAddresses = bo->getColourAddresses();
     auto bindIterations = bindAddresses.size();
     if (bindIterations == 0) {
         bindIterations = 1;
