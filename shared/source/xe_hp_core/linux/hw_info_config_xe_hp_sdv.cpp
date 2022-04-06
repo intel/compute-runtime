@@ -78,7 +78,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInf
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
-    return true;
+    return false;
 }
 
 template class HwInfoConfigHw<gfxProduct>;

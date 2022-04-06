@@ -252,6 +252,14 @@ HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInitit
     EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
 }
 
+HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsXEHP) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+
+    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
+}
+
 using MatchXeHpc = IsGfxCore<IGFX_XE_HPC_CORE>;
 HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenXeHPCCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, MatchXeHpc) {
     ze_command_queue_desc_t queueDesc = {};
