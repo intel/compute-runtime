@@ -45,7 +45,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}engine_node_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp

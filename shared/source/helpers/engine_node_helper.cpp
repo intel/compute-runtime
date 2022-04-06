@@ -76,6 +76,15 @@ bool isBcs(aub_stream::EngineType engineType) {
     return engineType == aub_stream::ENGINE_BCS || (engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8);
 }
 
+bool isBcsVirtualEngineEnabled() {
+    bool useVirtualEnginesForBcs = true;
+    if (DebugManager.flags.UseDrmVirtualEnginesForBcs.get() != -1) {
+        useVirtualEnginesForBcs = !!DebugManager.flags.UseDrmVirtualEnginesForBcs.get();
+    }
+
+    return useVirtualEnginesForBcs;
+}
+
 aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
     if (DebugManager.flags.ForceBcsEngineIndex.get() != -1) {
         auto index = DebugManager.flags.ForceBcsEngineIndex.get();

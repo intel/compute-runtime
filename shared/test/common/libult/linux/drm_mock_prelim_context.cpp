@@ -320,6 +320,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
 
     case PRELIM_DRM_I915_QUERY_DISTANCE_INFO: {
         if (failDistanceInfoQuery) {
+            queryItem->length = -EINVAL;
             return false;
         }
 
