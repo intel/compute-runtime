@@ -38,6 +38,12 @@ struct TagData {
     uint64_t tagValue = 0ull;
 };
 
+enum class DirectSubmissionSfenceMode : int32_t {
+    Disabled = 0,
+    BeforeSemaphoreOnly = 1,
+    BeforeAndAfterSemaphore = 2
+};
+
 namespace UllsDefaults {
 constexpr bool defaultDisableCacheFlush = true;
 constexpr bool defaultDisableMonitorFence = false;
@@ -153,6 +159,7 @@ class DirectSubmissionHw {
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
     uint32_t postSyncOffset = 0u;
+    DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
 
     bool ringStart = false;

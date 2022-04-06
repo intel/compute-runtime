@@ -39,6 +39,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
+    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
+        sfenceMode = static_cast<DirectSubmissionSfenceMode>(DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
+    }
+
     int32_t disableCacheFlushKey = DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
     if (disableCacheFlushKey != -1) {
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
@@ -435,14 +439,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         reserved = *ringBufferStart;
     }
 
-    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() >= 1) {
+    if (sfenceMode >= DirectSubmissionSfenceMode::BeforeSemaphoreOnly) {
         CpuIntrinsics::sfence();
     }
 
     //unblock GPU
     semaphoreData->QueueWorkCount = currentQueueWorkCount;
 
-    if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() == 2) {
+    if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
         CpuIntrinsics::sfence();
     }
 

@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -708,23 +709,22 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWorkloadThenProgramSfenceInstruction) {
     DebugManagerStateRestore restorer{};
 
-    DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(1);
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
     FlushStampTracker flushStamp(true);
 
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice, *osContext.get());
-    EXPECT_TRUE(directSubmission.initialize(true, true));
+    for (int32_t debugFlag : {-1, 0, 1, 2}) {
+        DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
-    auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice, *osContext.get());
+        EXPECT_TRUE(directSubmission.initialize(true, true));
 
-    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+        auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
 
-    EXPECT_EQ(initialCounterValue + 1, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
-    DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(2);
+        uint32_t expectedCount = (debugFlag == -1) ? 2 : static_cast<uint32_t>(debugFlag);
 
-    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
-
-    EXPECT_EQ(initialCounterValue + 3, CpuIntrinsicsTests::sfenceCounter);
+        EXPECT_EQ(initialCounterValue + expectedCount, CpuIntrinsicsTests::sfenceCounter);
+    }
 }
