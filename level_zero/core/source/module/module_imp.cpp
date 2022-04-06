@@ -701,6 +701,9 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
 
 void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching) {
     if (this->translationUnit->programInfo.linkerInput && this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+        const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+        const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
         for (auto &kernelImmData : this->kernelImmDatas) {
             if (nullptr == kernelImmData->getIsaGraphicsAllocation()) {
                 continue;
@@ -711,9 +714,10 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
             kernelImmData->getIsaGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
             kernelImmData->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             auto segmentId = &kernelImmData - &this->kernelImmDatas[0];
-            this->device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(kernelImmData->getIsaGraphicsAllocation(), 0,
-                                                                                        isaSegmentsForPatching[segmentId].hostPointer,
-                                                                                        isaSegmentsForPatching[segmentId].segmentSize);
+
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelImmData->getIsaGraphicsAllocation()),
+                                                                  *device->getNEODevice(), kernelImmData->getIsaGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
+                                                                  isaSegmentsForPatching[segmentId].segmentSize);
 
             kernelImmData->setIsaCopiedToAllocation();
 

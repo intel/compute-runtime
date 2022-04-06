@@ -99,6 +99,64 @@ HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUse
     EXPECT_EQ(NEO::AllocationType::KERNEL_ISA_INTERNAL, kernel->getIsaAllocation()->getAllocationType());
 }
 
+HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegementsThenIsaIsTransferredToAllocationWithBlitter) {
+    NEO::MockCompilerEnableGuard mock(true);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    executionEnvironment->memoryManager.reset(new MockMemoryManager(false, true, false, *executionEnvironment));
+
+    uint32_t blitterCalled = 0;
+    auto mockBlitMemoryToAllocation = [&](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
+        blitterCalled++;
+        return BlitOperationResult::Success;
+    };
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
+
+    auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0);
+    Mock<L0::DeviceImp> device(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+    device.driverHandle = driverHandle.get();
+
+    std::string testFile;
+    retrieveBinaryKernelFilenameApiSpecific(testFile, binaryFilename + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(&device, moduleBuildLog, ModuleType::User));
+    ASSERT_NE(nullptr, module.get());
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+
+    module->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+    module->initialize(&moduleDesc, neoDevice);
+
+    for (auto &ki : module->getKernelImmutableDataVector()) {
+        EXPECT_TRUE(ki->isIsaCopiedToAllocation());
+    }
+
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
+        EXPECT_EQ(5u, blitterCalled);
+    } else {
+        EXPECT_EQ(0u, blitterCalled);
+    }
+}
+
 using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
