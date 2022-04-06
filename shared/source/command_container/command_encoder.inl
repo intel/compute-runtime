@@ -115,7 +115,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, CS_GPR_R2);
         i++;
     }
-    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), CS_GPR_R1, dstAddress);
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), CS_GPR_R1, dstAddress, false);
 }
 
 /*
@@ -143,14 +143,15 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
  * and store it into dstAddress.
  */
 template <typename Family>
-void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress) {
+void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress,
+                                                 bool workloadPartition) {
     EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, regOffset);
     EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, immVal, true);
     EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_0,
                                    AluRegisters::R_1,
                                    AluRegisters::R_2);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    CS_GPR_R2, dstAddress);
+                                    CS_GPR_R2, dstAddress, workloadPartition);
 }
 
 /*
@@ -343,13 +344,18 @@ void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffse
 }
 
 template <typename Family>
-void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address) {
+void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition) {
+    auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+    EncodeStoreMMIO<Family>::encode(buffer, offset, address, workloadPartition);
+}
+
+template <typename Family>
+inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition) {
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
-    remapOffset(&cmd);
-    auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    *buffer = cmd;
+    appendFlags(&cmd, workloadPartition);
+    *cmdBuffer = cmd;
 }
 
 template <typename Family>
@@ -554,7 +560,7 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(crossThreadAddress, offsets[i]));
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(crossThreadAddress, offsets[i]), false);
     }
 }
 
@@ -645,7 +651,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
                 EncodeMath<Family>::addition(container, RESULT_ALU_REGISTER, BACKUP_ALU_REGISTER, RESULT_ALU_REGISTER);
             }
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RESULT_REGISTER, dstPtr);
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RESULT_REGISTER, dstPtr, false);
     }
 }
 

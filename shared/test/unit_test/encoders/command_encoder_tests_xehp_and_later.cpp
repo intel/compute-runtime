@@ -126,3 +126,72 @@ HWTEST2_F(XeHPAndLaterCommandEncoderTest,
 
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenWorkloadPartitionArgumentTrueWhenAddingStoreRegisterMemThenExpectCommandFlagTrue) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    uint64_t gpuAddress = 0xFFA000;
+    uint32_t offset = 0x123;
+
+    constexpr size_t bufferSize = 64;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeStoreMMIO<FamilyType>::encode(cmdStream,
+                                        offset,
+                                        gpuAddress,
+                                        true);
+
+    auto storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
+    ASSERT_NE(nullptr, storeRegMem);
+    EXPECT_TRUE(storeRegMem->getWorkloadPartitionIdOffsetEnable());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValueAndWorkloadPartitionWhenEncodeBitwiseAndValIsCalledThenContainerHasCorrectMathCommands) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    GenCmdList commands;
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, true);
+    constexpr uint32_t regOffset = 0x2000u;
+    constexpr uint32_t immVal = 0xbaau;
+    constexpr uint64_t dstAddress = 0xDEADCAF0u;
+    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress, true);
+
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer.getCommandStream()->getUsed());
+
+    auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
+
+    // load regOffset to R0
+    ASSERT_NE(commands.end(), itor);
+    auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+    EXPECT_EQ(regOffset, cmdLoadReg->getSourceRegisterAddress());
+    EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+
+    // load immVal to R1
+    itor++;
+    ASSERT_NE(commands.end(), itor);
+    auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+    EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
+    EXPECT_EQ(immVal, cmdLoadImm->getDataDword());
+
+    // encodeAluAnd should have its own unit tests, so we only check
+    // that the MI_MATH exists and length is set to 3u
+    itor++;
+    ASSERT_NE(commands.end(), itor);
+    auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+    EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+
+    // store R2 to address
+    itor++;
+    ASSERT_NE(commands.end(), itor);
+    auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
+    EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
+    EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
+}

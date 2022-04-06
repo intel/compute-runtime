@@ -61,11 +61,6 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
 }
 
 template <typename Family>
-inline void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
-    pStoreRegMem->setMmioRemapEnable(true);
-}
-
-template <typename Family>
 void EncodeSetMMIO<Family>::remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg) {
     if (isRemapApplicable(pMiLoadReg->getRegisterAddress())) {
         pMiLoadReg->setMmioRemapEnable(true);

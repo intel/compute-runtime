@@ -90,6 +90,11 @@ template <>
 void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
 }
 
+template <>
+void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
+    storeRegMem->setMmioRemapEnable(true);
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

@@ -104,17 +104,8 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         auto gpuVaOfData = addressOfSDI + offsetToData;
         const auto gpuVaOfDataDWORD1 = gpuVaOfData + 4;
 
-        MI_STORE_REGISTER_MEM srmCmdLow = GfxFamily::cmdInitStoreRegisterMem;
-        srmCmdLow.setRegisterAddress(CS_GPR_R1);
-        srmCmdLow.setMemoryAddress(gpuVaOfAddress);
-        NEO::EncodeStoreMMIO<GfxFamily>::remapOffset(&srmCmdLow);
-        *miStoreRegMemLow = srmCmdLow;
-
-        MI_STORE_REGISTER_MEM srmCmdHigh = GfxFamily::cmdInitStoreRegisterMem;
-        srmCmdHigh.setRegisterAddress(CS_GPR_R1 + 4);
-        srmCmdHigh.setMemoryAddress(gpuVaOfAddress + 4);
-        NEO::EncodeStoreMMIO<GfxFamily>::remapOffset(&srmCmdHigh);
-        *miStoreRegMemHigh = srmCmdHigh;
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, CS_GPR_R1, gpuVaOfAddress, false);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, CS_GPR_R1 + 4, gpuVaOfAddress + 4, false);
 
         MI_STORE_DATA_IMM setSbaBufferAddress = GfxFamily::cmdInitStoreDataImm;
         setSbaBufferAddress.setAddress(gpuVaOfData);

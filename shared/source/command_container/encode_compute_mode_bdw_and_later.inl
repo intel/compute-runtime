@@ -20,7 +20,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
 }
 
 template <typename Family>
-inline void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
+inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
 }
 
 template <typename Family>

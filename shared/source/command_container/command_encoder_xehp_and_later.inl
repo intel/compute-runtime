@@ -717,4 +717,10 @@ inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
     }
 }
 
+template <typename Family>
+inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
+    storeRegMem->setMmioRemapEnable(true);
+    storeRegMem->setWorkloadPartitionIdOffsetEnable(workloadPartition);
+}
+
 } // namespace NEO
