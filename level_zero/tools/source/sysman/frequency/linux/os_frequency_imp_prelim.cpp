@@ -345,11 +345,11 @@ void LinuxFrequencyImp::init() {
         efficientFreqFile = baseDir + "rps_RP1_freq_mhz";
         maxValFreqFile = baseDir + "rps_RP0_freq_mhz";
         minValFreqFile = baseDir + "rps_RPn_freq_mhz";
-        throttleReasonStatusFile = "throttle_reason_status";
-        throttleReasonPL1File = "throttle_reason_pl1";
-        throttleReasonPL2File = "throttle_reason_pl2";
-        throttleReasonPL4File = "throttle_reason_pl4";
-        throttleReasonThermalFile = "throttle_reason_thermal";
+        throttleReasonStatusFile = baseDir + "throttle_reason_status";
+        throttleReasonPL1File = baseDir + "throttle_reason_pl1";
+        throttleReasonPL2File = baseDir + "throttle_reason_pl2";
+        throttleReasonPL4File = baseDir + "throttle_reason_pl4";
+        throttleReasonThermalFile = baseDir + "throttle_reason_thermal";
     } else {
         minFreqFile = "gt_min_freq_mhz";
         maxFreqFile = "gt_max_freq_mhz";

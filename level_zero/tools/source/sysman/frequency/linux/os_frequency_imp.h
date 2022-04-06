@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ze_result_t getEfficient(double &efficient);
     ze_result_t getMaxVal(double &maxVal);
     ze_result_t getMinVal(double &minVal);
+    bool getThrottleReasonStatus(void);
 
   private:
     std::string minFreqFile;
@@ -59,6 +60,11 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     std::string efficientFreqFile;
     std::string maxValFreqFile;
     std::string minValFreqFile;
+    std::string throttleReasonStatusFile;
+    std::string throttleReasonPL1File;
+    std::string throttleReasonPL2File;
+    std::string throttleReasonPL4File;
+    std::string throttleReasonThermalFile;
     static const bool canControl;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

@@ -73,6 +73,16 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     return setMax(newMax);
 }
 
+bool LinuxFrequencyImp::getThrottleReasonStatus(void) {
+    uint32_t val = 0;
+    auto result = pSysfsAccess->read(throttleReasonStatusFile, val);
+    if (ZE_RESULT_SUCCESS == result) {
+        return (val == 0 ? false : true);
+    } else {
+        return false;
+    }
+}
+
 ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     ze_result_t result;
 
@@ -99,6 +109,26 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     pState->pNext = nullptr;
     pState->currentVoltage = -1.0;
     pState->throttleReasons = 0u;
+    if (getThrottleReasonStatus()) {
+        uint32_t val = 0;
+        ze_result_t result;
+        result = pSysfsAccess->read(throttleReasonPL1File, val);
+        if (val && (result == ZE_RESULT_SUCCESS)) {
+            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
+        }
+        result = pSysfsAccess->read(throttleReasonPL2File, val);
+        if (val && (result == ZE_RESULT_SUCCESS)) {
+            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
+        }
+        result = pSysfsAccess->read(throttleReasonPL4File, val);
+        if (val && (result == ZE_RESULT_SUCCESS)) {
+            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
+        }
+        result = pSysfsAccess->read(throttleReasonThermalFile, val);
+        if (val && (result == ZE_RESULT_SUCCESS)) {
+            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -295,6 +325,11 @@ void LinuxFrequencyImp::init() {
         efficientFreqFile = baseDir + "rps_RP1_freq_mhz";
         maxValFreqFile = baseDir + "rps_RP0_freq_mhz";
         minValFreqFile = baseDir + "rps_RPn_freq_mhz";
+        throttleReasonStatusFile = baseDir + "throttle_reason_status";
+        throttleReasonPL1File = baseDir + "throttle_reason_pl1";
+        throttleReasonPL2File = baseDir + "throttle_reason_pl2";
+        throttleReasonPL4File = baseDir + "throttle_reason_pl4";
+        throttleReasonThermalFile = baseDir + "throttle_reason_thermal";
     } else {
         minFreqFile = "gt_min_freq_mhz";
         maxFreqFile = "gt_max_freq_mhz";
@@ -304,6 +339,11 @@ void LinuxFrequencyImp::init() {
         efficientFreqFile = "gt_RP1_freq_mhz";
         maxValFreqFile = "gt_RP0_freq_mhz";
         minValFreqFile = "gt_RPn_freq_mhz";
+        throttleReasonStatusFile = "gt_throttle_reason_status";
+        throttleReasonPL1File = "gt_throttle_reason_status_pl1";
+        throttleReasonPL2File = "gt_throttle_reason_status_pl2";
+        throttleReasonPL4File = "gt_throttle_reason_status_pl4";
+        throttleReasonThermalFile = "gt_throttle_reason_status_thermal";
     }
 }
 
