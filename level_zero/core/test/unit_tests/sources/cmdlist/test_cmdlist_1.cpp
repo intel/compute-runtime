@@ -1836,7 +1836,7 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 
     auto usedBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    commandList->appendSignalEventPostWalker(nullptr);
+    commandList->appendSignalEventPostWalker(nullptr, false);
 
     EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
 }

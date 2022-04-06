@@ -6,11 +6,13 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
@@ -80,54 +82,14 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_LE(sizeWithoutEvent, sizeWithEvent);
 }
 
-using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false, false>>;
-
-HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsWithinXeGfxFamily) {
+template <typename FamilyType>
+void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
+                              uint64_t gpuFinalSyncAddress, uint64_t gpuCrossTileSyncAddress, uint64_t gpuStartAddress) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
-    EXPECT_EQ(2u, commandList->partitionCount);
-
-    size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
-                                        sizeof(PIPE_CONTROL) +
-                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
-                                        sizeof(MI_BATCH_BUFFER_START);
-
-    size_t startOffset = beforeControlSectionOffset +
-                         (2 * sizeof(uint32_t));
-
-    size_t expectedUseBuffer = startOffset +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
-                               sizeof(MI_STORE_DATA_IMM) +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
-
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    auto gpuBaseAddress = commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
-                          usedSpaceBefore;
-
-    auto gpuCrossTileSyncAddress = gpuBaseAddress +
-                                   beforeControlSectionOffset;
-
-    auto gpuFinalSyncAddress = gpuCrossTileSyncAddress +
-                               sizeof(uint32_t);
-
-    auto gpuStartAddress = gpuBaseAddress +
-                           startOffset;
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
-    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
-    size_t usedBuffer = usedSpaceAfter - usedSpaceBefore;
-    EXPECT_EQ(expectedUseBuffer, usedBuffer);
-
-    void *cmdBuffer = ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore);
-    size_t parsedOffset = 0;
 
     {
         auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -216,6 +178,59 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
         EXPECT_EQ(4u, miSemaphore->getSemaphoreDataDword());
         parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
     }
+}
+
+using MultiTileCommandListAppendBarrier = Test<MultiTileCommandListFixture<false, false, false>>;
+
+HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated, IsWithinXeGfxFamily) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(2u, commandList->partitionCount);
+
+    size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
+                                        sizeof(PIPE_CONTROL) +
+                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_BATCH_BUFFER_START);
+
+    size_t startOffset = beforeControlSectionOffset +
+                         (2 * sizeof(uint32_t));
+
+    size_t expectedUseBuffer = startOffset +
+                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                               sizeof(MI_STORE_DATA_IMM) +
+                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto gpuBaseAddress = commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
+                          usedSpaceBefore;
+
+    auto gpuCrossTileSyncAddress = gpuBaseAddress +
+                                   beforeControlSectionOffset;
+
+    auto gpuFinalSyncAddress = gpuCrossTileSyncAddress +
+                               sizeof(uint32_t);
+
+    auto gpuStartAddress = gpuBaseAddress +
+                           startOffset;
+
+    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+    size_t usedBuffer = usedSpaceAfter - usedSpaceBefore;
+    EXPECT_EQ(expectedUseBuffer, usedBuffer);
+
+    void *cmdBuffer = ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore);
+    size_t parsedOffset = 0;
+
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress);
+
     EXPECT_EQ(expectedUseBuffer, parsedOffset);
 }
 
@@ -276,94 +291,273 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     void *cmdBuffer = cmdListStream->getCpuBase();
     size_t parsedOffset = 0;
 
-    {
-        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, storeDataImm);
-        EXPECT_EQ(gpuFinalSyncAddress, storeDataImm->getAddress());
-        EXPECT_EQ(0u, storeDataImm->getDataDword0());
-        parsedOffset += sizeof(MI_STORE_DATA_IMM);
-    }
-    {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, pipeControl);
-        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_FALSE(pipeControl->getDcFlushEnable());
-        parsedOffset += sizeof(PIPE_CONTROL);
-    }
-    {
-        auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miAtomic);
-        auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
-        EXPECT_EQ(gpuCrossTileSyncAddress, miAtomicProgrammedAddress);
-        EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
-        parsedOffset += sizeof(MI_ATOMIC);
-    }
-    {
-        auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miSemaphore);
-        EXPECT_EQ(gpuCrossTileSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-        EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
-        parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
-    }
-    {
-        auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, bbStart);
-        EXPECT_EQ(gpuStartAddress, bbStart->getBatchBufferStartAddress());
-        EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
-        parsedOffset += sizeof(MI_BATCH_BUFFER_START);
-    }
-    {
-        auto crossField = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, parsedOffset));
-        EXPECT_EQ(0u, *crossField);
-        parsedOffset += sizeof(uint32_t);
-        auto finalField = reinterpret_cast<uint32_t *>(ptrOffset(cmdBuffer, parsedOffset));
-        EXPECT_EQ(0u, *finalField);
-        parsedOffset += sizeof(uint32_t);
-    }
-    {
-        auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miAtomic);
-        auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
-        EXPECT_EQ(gpuFinalSyncAddress, miAtomicProgrammedAddress);
-        EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
-        parsedOffset += sizeof(MI_ATOMIC);
-    }
-    {
-        auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miSemaphore);
-        EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-        EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
-        parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
-    }
-    {
-        auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, storeDataImm);
-        EXPECT_EQ(gpuCrossTileSyncAddress, storeDataImm->getAddress());
-        EXPECT_EQ(0u, storeDataImm->getDataDword0());
-        parsedOffset += sizeof(MI_STORE_DATA_IMM);
-    }
-    {
-        auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miAtomic);
-        auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
-        EXPECT_EQ(gpuFinalSyncAddress, miAtomicProgrammedAddress);
-        EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
-        parsedOffset += sizeof(MI_ATOMIC);
-    }
-    {
-        auto miSemaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(ptrOffset(cmdBuffer, parsedOffset));
-        ASSERT_NE(nullptr, miSemaphore);
-        EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
-        EXPECT_EQ(4u, miSemaphore->getSemaphoreDataDword());
-        parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
-    }
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress);
+
     EXPECT_EQ(expectedUseBuffer, parsedOffset);
+}
+
+HWTEST2_F(MultiTileCommandListAppendBarrier,
+          GivenNonTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndPostSyncOperation, IsWithinXeGfxFamily) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    uint64_t eventGpuAddress = event->getGpuAddress(device);
+    if (event->isUsingContextEndOffset()) {
+        eventGpuAddress += event->getContextEndOffset();
+    }
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(2u, commandList->partitionCount);
+
+    LinearStream *cmdListStream = commandList->commandContainer.getCommandStream();
+
+    size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
+                                        sizeof(PIPE_CONTROL) +
+                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_BATCH_BUFFER_START);
+
+    size_t bbStartOffset = beforeControlSectionOffset +
+                           (2 * sizeof(uint32_t));
+
+    size_t multiTileBarrierSize = bbStartOffset +
+                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                  sizeof(MI_STORE_DATA_IMM) +
+                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
+
+    auto useSizeBefore = cmdListStream->getUsed();
+    auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
+    auto useSizeAfter = cmdListStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, event->getPacketsInUse());
+
+    size_t totaSizedBarrierWithNonTimestampEvent = multiTileBarrierSize + postSyncSize;
+
+    EXPECT_EQ(totaSizedBarrierWithNonTimestampEvent, (useSizeAfter - useSizeBefore));
+
+    auto gpuBaseAddress = cmdListStream->getGraphicsAllocation()->getGpuAddress() + useSizeBefore;
+
+    auto gpuCrossTileSyncAddress = gpuBaseAddress +
+                                   beforeControlSectionOffset;
+
+    auto gpuFinalSyncAddress = gpuCrossTileSyncAddress +
+                               sizeof(uint32_t);
+
+    auto gpuStartAddress = gpuBaseAddress +
+                           bbStartOffset;
+
+    void *cmdBuffer = ptrOffset(cmdListStream->getCpuBase(), useSizeBefore);
+    size_t parsedOffset = 0;
+
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress);
+    EXPECT_EQ(multiTileBarrierSize, parsedOffset);
+
+    cmdBuffer = ptrOffset(cmdBuffer, parsedOffset);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      cmdBuffer,
+                                                      postSyncSize));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+    uint32_t postSyncFound = 0;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_EQ(eventGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+            postSyncFound++;
+        }
+    }
+    EXPECT_EQ(1u, postSyncFound);
+}
+
+template <typename FamilyType>
+void validateTimestampRegisters(GenCmdList &cmdList,
+                                uint64_t firstRegisterAddress, uint64_t secondRegisterAddress) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    constexpr uint32_t mask = 0xfffffffe;
+
+    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmdLoadReg->getSourceRegisterAddress());
+        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
+        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
+        EXPECT_EQ(firstRegisterAddress, cmdMem->getMemoryAddress());
+        EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
+        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmdLoadReg->getSourceRegisterAddress());
+        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
+        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
+        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+    }
+
+    itor++;
+    {
+        ASSERT_NE(cmdList.end(), itor);
+        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
+        EXPECT_EQ(secondRegisterAddress, cmdMem->getMemoryAddress());
+        EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
+    }
+}
+
+HWTEST2_F(MultiTileCommandListAppendBarrier,
+          GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsWithinXeGfxFamily) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 2;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    ze_result_t returnValue;
+    auto eventPoolTimeStamp = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto eventTimeStamp = std::unique_ptr<Event>(Event::create<uint32_t>(eventPoolTimeStamp.get(), &eventDesc, device));
+
+    uint64_t eventGpuAddress = eventTimeStamp->getGpuAddress(device);
+    uint64_t contextStartAddress = eventGpuAddress + event->getContextStartOffset();
+    uint64_t globalStartAddress = eventGpuAddress + event->getGlobalStartOffset();
+    uint64_t contextEndAddress = eventGpuAddress + event->getContextEndOffset();
+    uint64_t globalEndAddress = eventGpuAddress + event->getGlobalEndOffset();
+
+    ze_event_handle_t eventHandle = eventTimeStamp->toHandle();
+
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+    EXPECT_EQ(2u, commandList->partitionCount);
+
+    LinearStream *cmdListStream = commandList->commandContainer.getCommandStream();
+
+    size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
+                                        sizeof(PIPE_CONTROL) +
+                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_BATCH_BUFFER_START);
+
+    size_t bbStartOffset = beforeControlSectionOffset +
+                           (2 * sizeof(uint32_t));
+
+    size_t multiTileBarrierSize = bbStartOffset +
+                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                  sizeof(MI_STORE_DATA_IMM) +
+                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+
+    size_t timestampRegisters = 2 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) +
+                                     NEO::EncodeMath<FamilyType>::streamCommandSize + sizeof(MI_STORE_REGISTER_MEM));
+
+    size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSinglePipeControl() +
+                                        NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(device->getHwInfo());
+    size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
+
+    auto useSizeBefore = cmdListStream->getUsed();
+    auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
+    auto useSizeAfter = cmdListStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
+
+    size_t totaSizedBarrierWithTimestampEvent = multiTileBarrierSize + timestampRegisters + stopRegisters;
+    EXPECT_EQ(totaSizedBarrierWithTimestampEvent, (useSizeAfter - useSizeBefore));
+
+    void *cmdBuffer = ptrOffset(cmdListStream->getCpuBase(), useSizeBefore);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      cmdBuffer,
+                                                      timestampRegisters));
+    validateTimestampRegisters<FamilyType>(cmdList, globalStartAddress, contextStartAddress);
+
+    auto gpuBaseAddress = cmdListStream->getGraphicsAllocation()->getGpuAddress() + useSizeBefore + timestampRegisters;
+
+    auto gpuCrossTileSyncAddress = gpuBaseAddress +
+                                   beforeControlSectionOffset;
+
+    auto gpuFinalSyncAddress = gpuCrossTileSyncAddress +
+                               sizeof(uint32_t);
+
+    auto gpuStartAddress = gpuBaseAddress +
+                           bbStartOffset;
+
+    cmdBuffer = ptrOffset(cmdBuffer, timestampRegisters);
+    size_t parsedOffset = 0;
+
+    validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress);
+    EXPECT_EQ(multiTileBarrierSize, parsedOffset);
+
+    cmdBuffer = ptrOffset(cmdBuffer, (parsedOffset + postBarrierSynchronization));
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      cmdBuffer,
+                                                      timestampRegisters));
+    validateTimestampRegisters<FamilyType>(cmdList, globalEndAddress, contextEndAddress);
 }
 
 } // namespace ult

@@ -42,7 +42,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     const auto kernel = Kernel::fromHandle(hKernel);
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
     UNRECOVERABLE_IF(kernel == nullptr);
-    appendEventForProfiling(hEvent, true);
+    appendEventForProfiling(hEvent, true, false);
     const auto functionImmutableData = kernel->getImmutableData();
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
@@ -159,7 +159,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
-    appendSignalEventPostWalker(hEvent);
+    appendSignalEventPostWalker(hEvent, false);
 
     commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
