@@ -10,7 +10,7 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenAdlpSupportedDeviceIdThenDeviceDescriptorTableExists) {
-    std::array<DeviceDescriptor, 18> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 24> expectedDescriptors = {{
         {0x46A0, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
         {0x46B0, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
         {0x46A1, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
@@ -29,6 +29,12 @@ TEST_F(DeviceIdTests, GivenAdlpSupportedDeviceIdThenDeviceDescriptorTableExists)
         {0x46C1, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
         {0x46C2, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
         {0x46C3, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA7A0, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA720, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA7A8, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA7A1, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA721, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
+        {0xA7A9, &ADLP_CONFIG::hwInfo, &ADLP_CONFIG::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);
