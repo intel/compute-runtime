@@ -41,7 +41,11 @@ void collectBacktrace() {
         char *realname;
         int status;
         realname = abi::__cxa_demangle(info.dli_sname, 0, 0, &status);
-        printf("%s %s\n", functions[symbolId], realname);
+        if (realname) {
+            printf("%s %s\n", info.dli_fname, realname);
+        } else {
+            printf("%s %s\n", functions[symbolId], info.dli_sname);
+        }
         free(realname);
     }
 
