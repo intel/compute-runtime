@@ -7085,7 +7085,7 @@ struct MI_MEM_FENCE {
     inline void setFenceType(const FENCE_TYPE value) {
         TheStructure.Common.FenceType = value;
     }
-    inline FENCE_TYPE getAFenceType() const {
+    inline FENCE_TYPE getFenceType() const {
         return static_cast<FENCE_TYPE>(TheStructure.Common.FenceType);
     }
 };

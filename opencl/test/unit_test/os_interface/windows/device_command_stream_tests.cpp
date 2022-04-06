@@ -1076,13 +1076,11 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsE
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
-    std::unique_ptr<OsContext> osContext;
-    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
-                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
-    osContext->setDefaultContext(true);
+    auto osContext = device->getDefaultEngine().osContext;
+
     csr->callParentInitDirectSubmission = false;
 
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
@@ -1094,7 +1092,7 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsE
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
 
-    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext.get());
+    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext);
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
 
@@ -1114,12 +1112,10 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushi
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
-    std::unique_ptr<OsContext> osContext;
-    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
-                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
-    osContext->setDefaultContext(true);
+    auto osContext = device->getDefaultEngine().osContext;
+
     csr->callParentInitDirectSubmission = false;
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
@@ -1151,12 +1147,11 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushi
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
 
-    std::unique_ptr<OsContext> osContext;
-    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
+    auto osContext = device->getDefaultEngine().osContext;
+
     csr->callParentInitDirectSubmission = false;
     csr->initBlitterDirectSubmission = true;
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());

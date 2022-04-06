@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -17,6 +18,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -31,6 +33,9 @@ template <typename GfxFamily, typename Dispatcher>
 DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
                                                               OsContext &osContext)
     : device(device), osContext(osContext) {
+    hwInfo = &device.getHardwareInfo();
+
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
@@ -39,6 +44,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
+    miMemFenceRequired = hwInfoConfig->isGlobalFenceInCommandStreamRequired(*hwInfo);
+    if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
+        miMemFenceRequired = false;
+    }
     if (DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
         sfenceMode = static_cast<DirectSubmissionSfenceMode>(DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
     }
@@ -50,7 +59,6 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
 
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
 
-    hwInfo = &device.getHardwareInfo();
     createDiagnostic();
     setPostSyncOffset();
 }
@@ -174,6 +182,12 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
 
             this->partitionConfigSet = true;
         }
+        if (this->miMemFenceRequired) {
+            startBufferSize += getSizeSystemMemoryFenceAddress();
+            dispatchSystemMemoryFenceAddress();
+
+            this->systemMemoryFenceAddressSet = true;
+        }
         if (workloadMode == 1) {
             dispatchDiagnosticModeSection();
             startBufferSize += getDiagnosticModeSection();
@@ -197,6 +211,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     if (!this->partitionConfigSet) {
         startSize += getSizePartitionRegisterConfigurationSection();
     }
+    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+        startSize += getSizeSystemMemoryFenceAddress();
+    }
+
     size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
@@ -206,6 +224,11 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     if (!this->partitionConfigSet) {
         dispatchPartitionRegisterConfiguration();
         this->partitionConfigSet = true;
+    }
+
+    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+        dispatchSystemMemoryFenceAddress();
+        this->systemMemoryFenceAddressSet = true;
     }
 
     currentQueueWorkCount++;
@@ -257,11 +280,8 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
                                                           value,
                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
 
-    if constexpr (GfxFamily::isUsingMiMemFence) {
-        if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1) {
-
-            MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, this->device.getHardwareInfo());
-        }
+    if (miMemFenceRequired) {
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, this->device.getHardwareInfo());
     }
 
     dispatchPrefetchMitigation();
@@ -274,10 +294,8 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
     semaphoreSize += getSizePrefetchMitigation();
     semaphoreSize += 2 * getSizeDisablePrefetcher();
 
-    if constexpr (GfxFamily::isUsingMiMemFence) {
-        if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 1) {
-            semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(this->device.getHardwareInfo());
-        }
+    if (miMemFenceRequired) {
+        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(this->device.getHardwareInfo());
     }
 
     return semaphoreSize;
@@ -596,6 +614,20 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDiagnosticModeSection() 
 template <typename GfxFamily, typename Dispatcher>
 size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
     return Dispatcher::getSizeStoreDwordCommand();
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
+    auto &engineControl = device.getEngine(this->osContext.getEngineType(), this->osContext.getEngineUsage());
+
+    UNRECOVERABLE_IF(engineControl.osContext->getContextId() != engineControl.osContext->getContextId());
+
+    EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, engineControl.commandStreamReceiver->getGlobalFenceAllocation());
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSystemMemoryFenceAddress() {
+    return EncodeMemoryFence<GfxFamily>::getSystemMemoryFenceSize();
 }
 
 } // namespace NEO

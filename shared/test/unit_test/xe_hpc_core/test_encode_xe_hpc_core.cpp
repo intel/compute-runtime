@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/memory_fence_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -400,33 +399,4 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
     auto gmmHelper = cmdContainer->getDevice()->getGmmHelper();
     EXPECT_EQ(cmdSba->getStatelessDataPortAccessMemoryObjectControlState(),
               (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED)));
-}
-
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenStreamWhenEncodingSystemMemoryFenceThenCorrectFenceAddressIsSet) {
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-
-    const GraphicsAllocation allocation(0, AllocationType::UNKNOWN,
-                                        nullptr, 1234, 0, 4096, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-
-    auto before = cmdContainer->getCommandStream()->getUsed();
-    auto cmd = reinterpret_cast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdContainer->getCommandStream()->getSpace(0));
-    EncodeMemoryFence<FamilyType>::encodeSystemMemoryFence(*cmdContainer->getCommandStream(), &allocation);
-    auto after = cmdContainer->getCommandStream()->getUsed();
-
-    EXPECT_EQ(sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS), after - before);
-
-    STATE_SYSTEM_MEM_FENCE_ADDRESS expectedCmd = FamilyType::cmdInitStateSystemMemFenceAddress;
-    expectedCmd.setSystemMemoryFenceAddress(allocation.getGpuAddress());
-
-    EXPECT_EQ(expectedCmd.getSystemMemoryFenceAddress(), cmd->getSystemMemoryFenceAddress());
-    EXPECT_EQ(expectedCmd.TheStructure.RawData[0], cmd->TheStructure.RawData[0]);
-    EXPECT_EQ(expectedCmd.TheStructure.RawData[1], cmd->TheStructure.RawData[1]);
-    EXPECT_EQ(expectedCmd.TheStructure.RawData[2], cmd->TheStructure.RawData[2]);
-}
-
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, whenSizeForEncodeSystemMemoryFenceQueriedThenCorrectValueIsReturned) {
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
-
-    auto size = EncodeMemoryFence<FamilyType>::getSystemMemoryFenceSize();
-    EXPECT_EQ(sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS), size);
 }

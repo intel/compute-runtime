@@ -17,6 +17,7 @@
 using Family = NEO::XE_HPC_COREFamily;
 
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
+#include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
@@ -290,4 +291,5 @@ template struct EncodeWA<Family>;
 template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
+template struct EncodeMemoryFence<Family>;
 } // namespace NEO

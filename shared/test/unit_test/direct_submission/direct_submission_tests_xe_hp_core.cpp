@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchin
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext.get());
+                                                                    *osContext);
 
     EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), directSubmission.getSizePrefetchMitigation());
 
@@ -45,7 +45,7 @@ XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchin
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext.get());
+                                                                    *osContext);
 
     EXPECT_EQ(sizeof(MI_ARB_CHECK), directSubmission.getSizeDisablePrefetcher());
 

@@ -436,4 +436,11 @@ struct EncodeStoreMemory {
     }
 };
 
+template <typename GfxFamily>
+struct EncodeMemoryFence {
+    static size_t getSystemMemoryFenceSize();
+
+    static void encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation);
+};
+
 } // namespace NEO

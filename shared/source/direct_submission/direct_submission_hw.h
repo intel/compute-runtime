@@ -122,6 +122,9 @@ class DirectSubmissionHw {
     void dispatchPartitionRegisterConfiguration();
     size_t getSizePartitionRegisterConfigurationSection();
 
+    void dispatchSystemMemoryFenceAddress();
+    size_t getSizeSystemMemoryFenceAddress();
+
     void createDiagnostic();
     void initDiagnostic(bool &submitOnInit);
     MOCKABLE_VIRTUAL void performDiagnosticMode();
@@ -169,5 +172,7 @@ class DirectSubmissionHw {
     bool partitionedMode = false;
     bool partitionConfigSet = true;
     bool useNotifyForPostSync = false;
+    bool miMemFenceRequired = false;
+    bool systemMemoryFenceAddressSet = false;
 };
 } // namespace NEO

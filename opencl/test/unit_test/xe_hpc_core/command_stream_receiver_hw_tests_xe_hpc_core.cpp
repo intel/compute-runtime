@@ -304,7 +304,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest, whenEnqueueKernel
             ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
             auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
             ASSERT_NE(nullptr, fenceCmd);
-            EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getAFenceType());
+            EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
         }
     }
 }

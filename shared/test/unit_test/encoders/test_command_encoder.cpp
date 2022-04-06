@@ -125,3 +125,32 @@ HWTEST_F(CommandEncoderTest, GivenQwordStoreWhenAddingStoreDataImmThenExpectQwor
     EXPECT_TRUE(storeDataImm->getStoreQword());
     EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD, storeDataImm->getDwordLength());
 }
+
+HWTEST_F(CommandEncoderTest, givenPlatformSupportingMiMemFenceWhenEncodingThenProgramSystemMemoryFence) {
+    uint64_t gpuAddress = 0x12340000;
+    constexpr size_t bufferSize = 64;
+
+    NEO::MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1234000), gpuAddress, 0x123);
+
+    uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    size_t size = EncodeMemoryFence<FamilyType>::getSystemMemoryFenceSize();
+
+    EncodeMemoryFence<FamilyType>::encodeSystemMemoryFence(cmdStream, &allocation);
+
+    if constexpr (FamilyType::isUsingMiMemFence) {
+        using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+
+        STATE_SYSTEM_MEM_FENCE_ADDRESS expectedCmd = FamilyType::cmdInitStateSystemMemFenceAddress;
+        expectedCmd.setSystemMemoryFenceAddress(gpuAddress);
+
+        EXPECT_EQ(sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS), size);
+        EXPECT_EQ(sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS), cmdStream.getUsed());
+
+        EXPECT_EQ(0, memcmp(buffer, &expectedCmd, sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS)));
+    } else {
+        EXPECT_EQ(0u, size);
+        EXPECT_EQ(0u, cmdStream.getUsed());
+    }
+}

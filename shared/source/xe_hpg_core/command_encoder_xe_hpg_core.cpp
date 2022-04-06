@@ -189,4 +189,5 @@ template struct EncodeWA<Family>;
 template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
+template struct EncodeMemoryFence<Family>;
 } // namespace NEO

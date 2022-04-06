@@ -632,6 +632,9 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
         osContext->ensureContextInitialized();
+
+        device->allEngines.emplace_back(csr, osContext.get());
+
         csr->initDirectSubmission(*device.get(), *osContext.get());
     }
 

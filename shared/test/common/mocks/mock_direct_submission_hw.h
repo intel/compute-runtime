@@ -45,7 +45,9 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeStartSection;
     using BaseClass::getSizeSwitchRingBufferSection;
+    using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::hwInfo;
+    using BaseClass::miMemFenceRequired;
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
@@ -64,6 +66,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::startRingBuffer;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
+    using BaseClass::systemMemoryFenceAddressSet;
     using BaseClass::useNotifyForPostSync;
     using BaseClass::workloadMode;
     using BaseClass::workloadModeOneExpectedValue;

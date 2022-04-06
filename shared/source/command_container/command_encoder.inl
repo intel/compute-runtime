@@ -875,4 +875,13 @@ void EncodeEnableRayTracing<GfxFamily>::append3dStateBtd(void *ptr3dStateBtd) {}
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {}
 
+template <typename Family>
+size_t EncodeMemoryFence<Family>::getSystemMemoryFenceSize() {
+    return 0;
+}
+
+template <typename Family>
+void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation) {
+}
+
 } // namespace NEO

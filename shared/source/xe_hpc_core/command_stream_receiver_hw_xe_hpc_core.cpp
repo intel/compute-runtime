@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_container/memory_fence_encoder.h"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
 
