@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,4 +22,5 @@ append_sources_from_properties(L0_API
                                L0_EXTENSIONS_SRCS_API
                                L0_PUBLIC_EXTENSIONS_SRCS_API
 )
+
 set_property(GLOBAL PROPERTY L0_API ${L0_API})
