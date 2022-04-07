@@ -107,7 +107,7 @@ SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsCon
 }
 
 void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties,
-                                       const std::set<uint32_t> &rootDeviceIndices,
+                                       const RootDeviceIndicesContainer &rootDeviceIndices,
                                        const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) {
     if (size == 0)
         return nullptr;
@@ -131,7 +131,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
-    std::vector<uint32_t> rootDeviceIndicesVector(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end());
+    RootDeviceIndicesContainer rootDeviceIndicesVector(memoryProperties.rootDeviceIndices);
 
     uint32_t rootDeviceIndex = rootDeviceIndicesVector.at(0);
     auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
@@ -370,7 +370,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
-                                                    const std::set<uint32_t> &rootDeviceIndices,
+                                                    const RootDeviceIndicesContainer &rootDeviceIndices,
                                                     const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) {
 
     auto rootDeviceIndex = *rootDeviceIndices.begin();
@@ -383,7 +383,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
                                     deviceBitfield};
     MemoryPropertiesHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false, properties.cacheRegion);
 
-    std::vector<uint32_t> rootDeviceIndicesVector(rootDeviceIndices.begin(), rootDeviceIndices.end());
+    RootDeviceIndicesContainer rootDeviceIndicesVector(rootDeviceIndices);
 
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);

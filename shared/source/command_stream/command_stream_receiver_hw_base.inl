@@ -1341,7 +1341,7 @@ template <typename GfxFamily>
 TagAllocatorBase *CommandStreamReceiverHw<GfxFamily>::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
         auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-        const std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
+        const RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
 
         timestampPacketAllocator = hwHelper.createTimestampPacketAllocator(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), getType(), osContext->getDeviceBitfield());
     }

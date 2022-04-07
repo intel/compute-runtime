@@ -112,7 +112,7 @@ class Context : public BaseObject<_cl_context> {
                                        size_t size,
                                        GraphicsAllocation *&allocation);
 
-    const std::set<uint32_t> &getRootDeviceIndices() const;
+    const RootDeviceIndicesContainer &getRootDeviceIndices() const;
 
     uint32_t getMaxRootDeviceIndex() const;
 
@@ -200,7 +200,7 @@ class Context : public BaseObject<_cl_context> {
 
     void setupContextType();
 
-    std::set<uint32_t> rootDeviceIndices = {};
+    RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, DeviceBitfield> deviceBitfields;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
     ClDeviceVector devices;

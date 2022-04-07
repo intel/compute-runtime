@@ -54,7 +54,7 @@ struct SVMMemoryAllocatorFixture {
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockMemoryManager> memoryManager;
     std::unique_ptr<MockSVMAllocsManager> svmManager;
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 };
 
@@ -578,7 +578,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedM
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager.reset(new MockPageFaultManager);
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xf)}};
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
@@ -594,7 +594,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedM
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x8)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -616,7 +616,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xf)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = true;
@@ -640,7 +640,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xE)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = false;
@@ -664,7 +664,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xf)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = &device->getDevice();
@@ -680,7 +680,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenMultiOsContext
 
 TEST(UnifiedMemoryTest, givenDeviceBitfieldWithTwoBitsSetWhenMultiOsContextFlagTrueAndDeviceMemoryThenProperPropertiesArePassedToMemoryManager) {
     MockContext mockContext;
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     MockExecutionEnvironment executionEnvironment;
     auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
@@ -710,7 +710,7 @@ TEST(UnifiedMemoryTest, givenDeviceBitfieldWithSingleBitsSetWhenMultiOsContextFl
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     svmManager->multiOsContextSupport = true;
@@ -731,7 +731,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenNewTracki
     auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -765,7 +765,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenSubsequen
     auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -803,7 +803,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenNewAllocationIsCreatedThenItI
     auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -843,7 +843,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationsWhenTheyArePreparedForFreeingThe
     auto unifiedMemoryManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     memoryManager->pageFaultManager = std::make_unique<MockPageFaultManager>();
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -868,7 +868,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationsWhenTheyArePreparedForFreeingThe
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x8)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -882,7 +882,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
 }
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultiDeviceBitSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xF)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -900,7 +900,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultiDeviceBit
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideLeastOccupiedBank.set(1);
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xE)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -919,7 +919,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultiDeviceBit
 }
 
 TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleDeviceBitSetWhenMultiOsContextFlagTrueThenProperPropertiesArePassedToMemoryManager) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -935,7 +935,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleDeviceBi
 
 TEST_F(UnifiedMemoryManagerPropertiesTest,
        givenSvmManagerMultiOsContextSupportFlagTrueWhenRootDeviceIsSingleThenMultiStorageFlagFalse) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -951,7 +951,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
 
 TEST_F(UnifiedMemoryManagerPropertiesTest,
        given1ByteAsAllocationSizeWhenHostMemAllocIsCreatedItIsAlignedTo4k) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -966,7 +966,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
 
 TEST_F(UnifiedMemoryManagerPropertiesTest,
        givenSvmManagerMultiOsContextSupportFlagFalseWhenRootDeviceIsMultiThenMultiStorageFlagFalse) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xF)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -982,7 +982,7 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
 
 TEST_F(UnifiedMemoryManagerPropertiesTest,
        givenSvmManagerMultiOsContextSupportFlagTrueWhenRootDeviceIsMultiThenMultiStorageFlagTrue) {
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0xF)}};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
@@ -1011,7 +1011,7 @@ struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MemoryManagerPropertiesCheck> memoryManager;
     std::unique_ptr<MockSVMAllocsManager> svmManager;
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 };
 

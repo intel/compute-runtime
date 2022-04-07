@@ -47,7 +47,7 @@ using EventCreate = Test<DeviceFixture>;
 class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
   public:
     MemoryManagerEventPoolFailMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
-    void *createMultiGraphicsAllocationInSystemMemoryPool(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
+    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         return nullptr;
     };
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override { return nullptr; }
@@ -100,7 +100,7 @@ struct EventPoolFailTests : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 

@@ -125,7 +125,7 @@ cl_int Context::tryGetExistingMapAllocation(const void *ptr,
     return CL_SUCCESS;
 }
 
-const std::set<uint32_t> &Context::getRootDeviceIndices() const {
+const RootDeviceIndicesContainer &Context::getRootDeviceIndices() const {
     return rootDeviceIndices;
 }
 
@@ -215,9 +215,10 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     bool containsDeviceWithSubdevices = false;
     for (const auto &device : inputDevices) {
-        rootDeviceIndices.insert(device->getRootDeviceIndex());
+        rootDeviceIndices.push_back(device->getRootDeviceIndex());
         containsDeviceWithSubdevices |= device->getNumGenericSubDevices() > 1;
     }
+    rootDeviceIndices.remove_duplicates();
 
     this->driverDiagnostics = driverDiagnostics.release();
     if (rootDeviceIndices.size() > 1 && containsDeviceWithSubdevices && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {

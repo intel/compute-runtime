@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenRootDe
     auto rootDeviceIndices = pContext->getRootDeviceIndices();
 
     for (auto numDevice = 0u; numDevice < pContext->getNumDevices(); numDevice++) {
-        auto rootDeviceIndex = rootDeviceIndices.find(pContext->getDevice(numDevice)->getRootDeviceIndex());
+        auto rootDeviceIndex = std::find(rootDeviceIndices.begin(), rootDeviceIndices.end(), pContext->getDevice(numDevice)->getRootDeviceIndex());
         EXPECT_EQ(*rootDeviceIndex, pContext->getDevice(numDevice)->getRootDeviceIndex());
     }
 
@@ -167,7 +167,7 @@ TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenSpecia
     specialQueues.resize(pContext->getMaxRootDeviceIndex());
 
     for (auto numDevice = 0u; numDevice < pContext->getNumDevices(); numDevice++) {
-        auto rootDeviceIndex = rootDeviceIndices.find(pContext->getDevice(numDevice)->getRootDeviceIndex());
+        auto rootDeviceIndex = std::find(rootDeviceIndices.begin(), rootDeviceIndices.end(), pContext->getDevice(numDevice)->getRootDeviceIndex());
         EXPECT_EQ(*rootDeviceIndex, pContext->getDevice(numDevice)->getRootDeviceIndex());
         EXPECT_EQ(*rootDeviceIndex, pContext->getSpecialQueue(*rootDeviceIndex)->getDevice().getRootDeviceIndex());
         specialQueues[numDevice] = pContext->getSpecialQueue(*rootDeviceIndex);

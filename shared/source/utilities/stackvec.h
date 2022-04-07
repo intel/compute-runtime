@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <cstddef>
 #include <iterator>
@@ -239,6 +240,22 @@ class StackVec {
         ++onStackSize;
     }
 
+    void sort() {
+        std::sort(this->begin(), this->end());
+    }
+
+    void remove_duplicates() {
+        if (1 >= this->size()) {
+            return;
+        }
+        this->sort();
+        const auto last = std::unique(this->begin(), this->end());
+        auto currentEnd = this->end();
+        while (last != currentEnd--) {
+            this->pop_back();
+        }
+    }
+
     void pop_back() { // NOLINT
         if (usesDynamicMem()) {
             dynamicMem->pop_back();
@@ -449,3 +466,5 @@ bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
                 const StackVec<T, RhsStackCaps> &rhs) {
     return false == (lhs == rhs);
 }
+
+using RootDeviceIndicesContainer = StackVec<uint32_t, 16>;

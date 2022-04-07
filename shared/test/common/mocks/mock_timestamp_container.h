@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,14 +21,14 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-        : BaseClass(std::vector<uint32_t>{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
+        : BaseClass(RootDeviceIndicesContainer({rootDeviceIndex}), memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
     }
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount = 10)
         : MockTagAllocator(rootDeviceIndex, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false, mockDeviceBitfield) {
     }
 
-    MockTagAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager, size_t tagCount = 10)
+    MockTagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager, size_t tagCount = 10)
         : BaseClass(rootDeviceIndices, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false, mockDeviceBitfield) {}
 
     void returnTag(TagNodeBase *node) override {

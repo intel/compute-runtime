@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,11 +71,12 @@ void Mock<DriverHandle>::setupDevices(std::vector<std::unique_ptr<NEO::Device>> 
     this->numDevices = static_cast<uint32_t>(neoDevices.size());
     for (auto &neoDevice : neoDevices) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        this->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        this->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         this->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         auto device = Device::create(this, neoDevice.release(), false, &returnValue);
         this->devices.push_back(device);
     }
+    this->rootDeviceIndices.remove_duplicates();
 }
 
 Mock<DriverHandle>::~Mock(){};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get(), false);
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto rootDeviceIndex = device->getRootDeviceIndex();
-    std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, device->getDeviceBitfield()}};
     void *alloc = svmAllocsManager->createSVMAlloc(256, {}, rootDeviceIndices, deviceBitfields);
 
@@ -91,7 +91,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
     auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
     auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto rootDeviceIndex = device->getRootDeviceIndex();
-    std::set<uint32_t> rootDeviceIndices{rootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, device->getDeviceBitfield()}};
     void *alloc = svmAllocsManager->createSVMAlloc(256, {}, rootDeviceIndices, deviceBitfields);
     auto cmdQ = std::make_unique<CommandQueueMock>();

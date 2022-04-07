@@ -112,14 +112,14 @@ class SVMAllocsManager {
 
     struct UnifiedMemoryProperties {
         UnifiedMemoryProperties(InternalMemoryType memoryType,
-                                const std::set<uint32_t> &rootDeviceIndices,
+                                const RootDeviceIndicesContainer &rootDeviceIndices,
                                 const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) : memoryType(memoryType),
                                                                                                 rootDeviceIndices(rootDeviceIndices),
                                                                                                 subdeviceBitfields(subdeviceBitfields){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         MemoryProperties allocationFlags;
         Device *device = nullptr;
-        const std::set<uint32_t> &rootDeviceIndices;
+        const RootDeviceIndicesContainer &rootDeviceIndices;
         const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
     };
 
@@ -127,7 +127,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL ~SVMAllocsManager() = default;
     void *createSVMAlloc(size_t size,
                          const SvmAllocationProperties svmProperties,
-                         const std::set<uint32_t> &rootDeviceIndices,
+                         const RootDeviceIndicesContainer &rootDeviceIndices,
                          const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
     MOCKABLE_VIRTUAL void *createHostUnifiedMemoryAllocation(size_t size,
                                                              const UnifiedMemoryProperties &svmProperties);
@@ -169,7 +169,7 @@ class SVMAllocsManager {
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
-                                      const std::set<uint32_t> &rootDeviceIndices,
+                                      const RootDeviceIndicesContainer &rootDeviceIndices,
                                       const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
     AllocationType getGraphicsAllocationTypeAndCompressionPreference(const UnifiedMemoryProperties &unifiedMemoryProperties, bool &compressionEnabled) const;
 

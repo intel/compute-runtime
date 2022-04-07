@@ -1635,9 +1635,10 @@ struct MultipleDevicesFixture : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->toHandle(), device));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
+        context->rootDeviceIndices.remove_duplicates();
     }
 
     DebugManagerStateRestore restorer;
@@ -1875,9 +1876,10 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->toHandle(), device));
             auto neoDevice = device->getNEODevice();
-            context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
+        context->rootDeviceIndices.remove_duplicates();
     }
 
     DebugManagerStateRestore restorer;

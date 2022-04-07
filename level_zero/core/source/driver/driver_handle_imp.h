@@ -101,7 +101,7 @@ struct DriverHandleImp : public DriverHandle {
 
     uint32_t numDevices = 0;
 
-    std::set<uint32_t> rootDeviceIndices = {};
+    RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
     void updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &neoDevice);
     void enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice);

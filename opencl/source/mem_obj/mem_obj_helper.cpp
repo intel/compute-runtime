@@ -161,7 +161,7 @@ bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &memoryP
 
     auto pClDevice = memoryProperties.pDevice->getSpecializedDevice<ClDevice>();
     auto &contextRootDeviceIndices = context.getRootDeviceIndices();
-    bool isRootDeviceAssociated = (contextRootDeviceIndices.find(pClDevice->getRootDeviceIndex()) != contextRootDeviceIndices.end());
+    bool isRootDeviceAssociated = (std::find(contextRootDeviceIndices.begin(), contextRootDeviceIndices.end(), pClDevice->getRootDeviceIndex()) != contextRootDeviceIndices.end());
     return isRootDeviceAssociated;
 }
 

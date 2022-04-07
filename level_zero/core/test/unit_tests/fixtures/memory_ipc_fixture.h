@@ -117,7 +117,7 @@ struct MemoryExportImportTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -229,7 +229,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -325,7 +325,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 
@@ -486,7 +486,7 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         context->getDevices().insert(std::make_pair(device->toHandle(), device));
         auto neoDevice = device->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
     }
 

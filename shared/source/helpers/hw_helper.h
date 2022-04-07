@@ -125,7 +125,7 @@ class HwHelper {
     virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
-    virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
+    virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                              size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
@@ -360,7 +360,7 @@ class HwHelperHw : public HwHelper {
 
     size_t getPreemptionAllocationAlignment() const override;
 
-    std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const std::vector<uint32_t> &rootDeviceIndices, MemoryManager *memoryManager,
+    std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                      size_t initialTagCount, CommandStreamReceiverType csrType,
                                                                      DeviceBitfield deviceBitfield) const override;
     size_t getTimestampPacketAllocatorAlignment() const override;

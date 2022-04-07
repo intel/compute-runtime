@@ -386,7 +386,7 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
 }
 
 MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
 
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::L0) {
         rootDeviceIndices.push_back(rootDeviceIndex);
@@ -739,7 +739,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
 
 TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
+        RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
                                                                                    sizeof(HwTimeStamps), false, osContext->getDeviceBitfield());
     }
@@ -748,7 +748,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
 
 TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
     if (perfCounterAllocator.get() == nullptr) {
-        std::vector<uint32_t> rootDeviceIndices = {rootDeviceIndex};
+        RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
             rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false, osContext->getDeviceBitfield());
     }

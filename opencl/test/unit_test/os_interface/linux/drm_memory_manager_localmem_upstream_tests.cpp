@@ -115,7 +115,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationThenImportAndExportIoctlAreUsed, NonDefaultIoctlsSupported) {
     uint32_t rootDevicesNumber = 3u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
@@ -160,7 +160,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemoryInfoWhenCreateMultiGraphicsAllocationAndImportFailsThenNullptrIsReturned) {
     uint32_t rootDevicesNumber = 3u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
@@ -220,7 +220,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     uint32_t rootDevicesNumber = 1u;
     uint32_t rootDeviceIndex = 0u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
@@ -255,7 +255,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemoryInfoWhenCreateMultiGraphicsAllocationThenOldPathIsUsed) {
     uint32_t rootDevicesNumber = 3u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);

@@ -117,7 +117,7 @@ struct MultiGraphicsAllocationTests : ::testing::Test {
 
     UltDeviceFactory deviceFactory{2, 0};
     MockMultiGraphicsAllocation multiGraphicsAllocation{1};
-    std::vector<uint32_t> rootDeviceIndices{{0u, 1u}};
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
     MemoryManager *memoryManager = nullptr;
 };
 

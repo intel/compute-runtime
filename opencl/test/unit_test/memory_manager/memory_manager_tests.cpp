@@ -3116,7 +3116,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphi
 
     memoryManager.freeGraphicsMemory(localMemoryAllocation);
 
-    std::vector<uint32_t> rootDeviceIndices{};
+    RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.push_back(mockRootDeviceIndex);
 
     MultiGraphicsAllocation multiGraphicsAllocation(mockRootDeviceIndex);
@@ -3138,7 +3138,7 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
 
     AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::SVM_GPU, systemMemoryBitfield};
 
-    std::vector<uint32_t> rootDeviceIndices{};
+    RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.push_back(mockRootDeviceIndex);
     rootDeviceIndices.push_back(mockRootDeviceIndex);
     rootDeviceIndices.push_back(mockRootDeviceIndex);

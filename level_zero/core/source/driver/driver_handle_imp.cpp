@@ -69,10 +69,11 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
 
     for (auto devicePair : context->getDevices()) {
         auto neoDevice = devicePair.second->getNEODevice();
-        context->rootDeviceIndices.insert(neoDevice->getRootDeviceIndex());
+        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
                                          neoDevice->getDeviceBitfield()});
     }
+    context->rootDeviceIndices.remove_duplicates();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -194,7 +195,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         enableRootDeviceDebugger(neoDevice);
 
-        this->rootDeviceIndices.insert(rootDeviceIndex);
+        this->rootDeviceIndices.push_back(rootDeviceIndex);
         this->deviceBitfields.insert({rootDeviceIndex, neoDevice->getDeviceBitfield()});
 
         auto pNeoDevice = neoDevice.release();
@@ -207,6 +208,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             return returnValue;
         }
     }
+    this->rootDeviceIndices.remove_duplicates();
 
     if (this->devices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

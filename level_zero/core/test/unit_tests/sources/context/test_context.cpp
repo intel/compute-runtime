@@ -151,9 +151,9 @@ struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerContextMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createHostUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
         EXPECT_EQ(expectedRootDeviceIndexes.size(), memoryProperties.rootDeviceIndices.size());
-        EXPECT_NE(memoryProperties.rootDeviceIndices.find(expectedRootDeviceIndexes[0]),
+        EXPECT_NE(std::find(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end(), expectedRootDeviceIndexes[0]),
                   memoryProperties.rootDeviceIndices.end());
-        EXPECT_NE(memoryProperties.rootDeviceIndices.find(expectedRootDeviceIndexes[1]),
+        EXPECT_NE(std::find(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end(), expectedRootDeviceIndexes[1]),
                   memoryProperties.rootDeviceIndices.end());
         return NEO::SVMAllocsManager::createHostUnifiedMemoryAllocation(size, memoryProperties);
     }
@@ -739,7 +739,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     DebugManagerStateRestore restore;
     DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
-    std::set<uint32_t> rootDeviceIndices{mockRootDeviceIndex};
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);

@@ -35,8 +35,8 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
 
-        std::set<uint32_t> rootDeviceIndices;
-        rootDeviceIndices.insert(rootDeviceIndex);
+        RootDeviceIndicesContainer rootDeviceIndices;
+        rootDeviceIndices.push_back(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         auto ptr = svmAllocManager->createSVMAlloc(size, svmProps, rootDeviceIndices, subDeviceBitfields);

@@ -1789,7 +1789,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
     auto allocationType = AllocationType::BUFFER_HOST_MEMORY;
     auto maxRootDeviceIndex = numDevices - 1u;
 
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.reserve(numDevices);
     rootDeviceIndices.push_back(0u);
     rootDeviceIndices.push_back(1u);
@@ -1835,7 +1835,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
     auto allocationType = AllocationType::BUFFER_HOST_MEMORY;
     auto maxRootDeviceIndex = numDevices - 1u;
 
-    std::vector<uint32_t> rootDeviceIndices;
+    RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.reserve(numDevices);
     rootDeviceIndices.push_back(0u);
     rootDeviceIndices.push_back(2u);

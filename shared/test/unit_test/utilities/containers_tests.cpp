@@ -1710,6 +1710,36 @@ TEST(StackVec, GivenStackVecWithDynamicMemWhenSelfAssignedThenMemoryIsReused) {
     }
 }
 
+TEST(StackVec, GivenVectorWithDuplicatesWhenRemovingDuplicatesThenVectorIsSortedAndDuplicatesRemoved) {
+    StackVec<uint32_t, 8> stackVec = {6, 5, 4, 3, 2, 1, 5, 4, 5, 4, 2, 4, 3, 1, 6, 1};
+    ASSERT_EQ(stackVec.size(), 16u);
+
+    stackVec.remove_duplicates();
+    EXPECT_EQ(stackVec.size(), 6u);
+    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6};
+    EXPECT_EQ(stackVec, expectedStackVec);
+}
+
+TEST(StackVec, GivenVectorWithoutDuplicatesWhenRemovingDuplicatesThenVectorIsSorted) {
+    StackVec<uint32_t, 8> stackVec = {16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+    ASSERT_EQ(stackVec.size(), 16u);
+
+    stackVec.remove_duplicates();
+    EXPECT_EQ(stackVec.size(), 16u);
+    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    EXPECT_EQ(stackVec, expectedStackVec);
+}
+
+TEST(StackVec, GivenSortedVectorWithoutDuplicatesWhenRemovingDuplicatesThenVectorIsUnchanged) {
+    StackVec<uint32_t, 8> stackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    ASSERT_EQ(stackVec.size(), 16u);
+
+    stackVec.remove_duplicates();
+    EXPECT_EQ(stackVec.size(), 16u);
+    const StackVec<uint32_t, 8> expectedStackVec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    EXPECT_EQ(stackVec, expectedStackVec);
+}
+
 int sum(ArrayRef<int> a) {
     int sum = 0;
     for (auto v : a) {
