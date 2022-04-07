@@ -552,7 +552,7 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelect(NEO::LinearStream &com
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence) const {
-    return !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr;
+    return !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

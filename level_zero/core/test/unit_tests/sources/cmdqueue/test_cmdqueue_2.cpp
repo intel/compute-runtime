@@ -7,7 +7,9 @@
 
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -433,6 +435,81 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSinglePartitionCountWhenWaitFunctionF
     commandQueue->destroy();
     EXPECT_EQ(1u, csr->waitForCompletionWithTimeoutCalled);
 }
+
+HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateFromWaitEnabledAndNoFenceUsedThenExpectPostSyncDispatch) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using PARSE = typename FamilyType::PARSE;
+
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    size_t expectedSize = sizeof(MI_BATCH_BUFFER_START);
+    if (neoDevice->getDefaultEngine().commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
+        expectedSize += sizeof(MI_BATCH_BUFFER_START);
+    } else {
+        expectedSize += sizeof(MI_BATCH_BUFFER_END);
+    }
+    expectedSize += NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(neoDevice->getHardwareInfo());
+    expectedSize = alignUp(expectedSize, 8);
+
+    const ze_command_queue_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+    ze_result_t returnValue;
+
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, commandQueue->getSynchronousMode());
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    //1st execute provides all preamble commands
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    size_t executionConsumedSize = usedSpaceAfter - usedSpaceBefore;
+
+    EXPECT_EQ(expectedSize, executionConsumedSize);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+                                          ptrOffset(commandQueue->commandStream->getCpuBase(), usedSpaceBefore),
+                                          executionConsumedSize));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    size_t pipeControlsPostSyncNumber = 0u;
+    uint32_t expectedData = commandQueue->getCsr()->peekTaskCount();
+    for (size_t i = 0; i < pipeControls.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(commandQueue->getCsr()->getTagAllocation()->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+            EXPECT_EQ(expectedData, pipeControl->getImmediateData());
+            pipeControlsPostSyncNumber++;
+        }
+    }
+    EXPECT_EQ(1u, pipeControlsPostSyncNumber);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
 using CommandQueuePowerHintTest = Test<ContextFixture>;
 
 HWTEST_F(CommandQueuePowerHintTest, givenDriverHandleWithPowerHintAndOsContextPowerHintUnsetThenSuccessIsReturned) {
