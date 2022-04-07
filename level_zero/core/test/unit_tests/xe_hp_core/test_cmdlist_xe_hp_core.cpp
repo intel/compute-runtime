@@ -739,7 +739,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWhenInvokingAppendLaunchKerne
     for (auto it : itorPS) {
         auto cmd = genCmdCast<WALKER_TYPE *>(*it);
         auto &postSync = cmd->getPostSync();
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
+        EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
         EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
         postSyncFound = true;
     }

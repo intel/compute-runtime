@@ -1081,14 +1081,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
         EXPECT_EQ(cmd->getCompareOperation(),
                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
-        auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
-
-        uint64_t gpuAddress = event->getGpuAddress(device);
-        if (event->isUsingContextEndOffset()) {
-            gpuAddress += event->getContextEndOffset();
-        }
-
-        EXPECT_EQ(gpuAddress & addressSpace, cmd->getSemaphoreGraphicsAddress() & addressSpace);
+        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace, event->getGpuAddress(device) & device->getHwInfo().capabilityTable.gpuAddressSpace);
     }
 }
 

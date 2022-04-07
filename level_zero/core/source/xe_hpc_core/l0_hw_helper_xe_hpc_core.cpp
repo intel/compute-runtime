@@ -29,11 +29,6 @@ bool L0HwHelperHw<Family>::isIpSamplingSupported(const NEO::HardwareInfo &hwInfo
     return NEO::PVC::isXt(hwInfo);
 }
 
-template <>
-bool L0HwHelperHw<Family>::multiTileCapablePlatform() const {
-    return true;
-}
-
 template class L0HwHelperHw<Family>;
 
 } // namespace L0

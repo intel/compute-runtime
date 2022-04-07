@@ -37,13 +37,10 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto baseAddr = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        baseAddr += event->getContextEndOffset();
-    }
     auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itor);
-    EXPECT_EQ(baseAddr, cmd->getAddress());
+    EXPECT_EQ(cmd->getAddress(), baseAddr);
 }
 
 HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
@@ -203,7 +200,6 @@ HWTEST2_F(CommandListAppendSignalEvent,
     constexpr uint32_t packets = 2u;
 
     event->setEventTimestampFlag(false);
-    event->setUsingContextEndOffset(true);
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
@@ -257,7 +253,6 @@ HWTEST2_F(CommandListAppendSignalEvent,
     constexpr uint32_t packets = 2u;
 
     event->setEventTimestampFlag(false);
-    event->setUsingContextEndOffset(true);
     event->signalScope = 0;
 
     commandList->partitionCount = packets;
@@ -321,10 +316,7 @@ HWTEST2_F(CommandListAppendSignalEvent,
     commandList->appendSignalEventPostWalker(event->toHandle());
     EXPECT_EQ(packets, event->getPacketsInUse());
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);

@@ -21,7 +21,6 @@
 #include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 
@@ -95,7 +94,7 @@ void programEventL3Flush(ze_event_handle_t hEvent,
     auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
                                                      : event->getSinglePacketSize();
     uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
-    if (event->isUsingContextEndOffset()) {
+    if (event->useContextEndOffset()) {
         eventAddress += event->getContextEndOffset();
     }
 
@@ -164,7 +163,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
         L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
-        isTimestampEvent = event->isUsingContextEndOffset();
+        isTimestampEvent = event->isEventTimestampFlagSet();
         eventAddress = event->getPacketAddress(this->device);
     }
 
@@ -215,20 +214,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        eventAddress,                                             // eventAddress
-        neoDevice,                                                // device
-        kernel,                                                   // dispatchInterface
-        reinterpret_cast<const void *>(pThreadGroupDimensions),   // pThreadGroupDimensions
-        commandListPreemptionMode,                                // preemptionMode
-        this->partitionCount,                                     // partitionCount
-        isIndirect,                                               // isIndirect
-        isPredicate,                                              // isPredicate
-        isTimestampEvent,                                         // isTimestampEvent
-        L3FlushEnable,                                            // L3FlushEnable
-        this->containsStatelessUncachedResource,                  // requiresUncachedMocs
-        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
-        internalUsage,                                            // isInternal
-        isCooperative                                             // isCooperative
+        eventAddress,                                             //eventAddress
+        neoDevice,                                                //device
+        kernel,                                                   //dispatchInterface
+        reinterpret_cast<const void *>(pThreadGroupDimensions),   //pThreadGroupDimensions
+        commandListPreemptionMode,                                //preemptionMode
+        this->partitionCount,                                     //partitionCount
+        isIndirect,                                               //isIndirect
+        isPredicate,                                              //isPredicate
+        isTimestampEvent,                                         //isTimestampEvent
+        L3FlushEnable,                                            //L3FlushEnable
+        this->containsStatelessUncachedResource,                  //requiresUncachedMocs
+        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
+        internalUsage,                                            //isInternal
+        isCooperative                                             //isCooperative
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
@@ -237,6 +236,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
+            event->setPartitionedEvent(true);
         }
         if (L3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);

@@ -8,7 +8,6 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 
 namespace L0 {
 template <typename TagSizeT>
@@ -19,18 +18,15 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     if (eventPool->isEventPoolTimestampFlagSet()) {
         event->setEventTimestampFlag(true);
     }
-    auto neoDevice = device->getNEODevice();
     event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(EventPacketsCount::maxKernelSplit);
 
-    auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
+    auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
 
     uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer());
-    event->eventPoolOffset = desc->index * eventPool->getEventSize();
-    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + event->eventPoolOffset);
+    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (desc->index * eventPool->getEventSize()));
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
-    event->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    event->setUsingContextEndOffset(L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform());
+    event->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     EventPoolImp *EventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
     // do not reset even if it has been imported, since event pool
@@ -45,7 +41,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 template <typename TagSizeT>
 uint64_t EventImp<TagSizeT>::getGpuAddress(Device *device) {
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
-    return (alloc->getGpuAddress() + this->eventPoolOffset);
+    return (alloc->getGpuAddress() + (index * eventPool->getEventSize()));
 }
 
 template <typename TagSizeT>
@@ -124,7 +120,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
-            void const *queryAddress = usingContextEndOffset
+            void const *queryAddress = partitionedEvent
                                            ? kernelEventCompletionData[i].getContextEndAddress(packetId)
                                            : kernelEventCompletionData[i].getContextStartAddress(packetId);
             bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
@@ -142,11 +138,9 @@ ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryStatus() {
+    TagSizeT *hostAddr = static_cast<TagSizeT *>(hostAddress);
+
     if (metricStreamer != nullptr) {
-        TagSizeT *hostAddr = static_cast<TagSizeT *>(hostAddress);
-        if (usingContextEndOffset) {
-            hostAddr = ptrOffset(hostAddr, this->getContextEndOffset());
-        }
         *hostAddr = metricStreamer->getNotificationState();
     }
     this->csr->downloadAllocations();
@@ -191,21 +185,21 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
-    UNRECOVERABLE_IF(hostAddress == nullptr);
-
     if (isEventTimestampFlagSet()) {
         return hostEventSetValueTimestamps(eventVal);
     }
 
     auto packetHostAddr = hostAddress;
-    if (usingContextEndOffset) {
-        packetHostAddr = ptrOffset(packetHostAddr, contextEndOffset);
-    }
+    UNRECOVERABLE_IF(packetHostAddr == nullptr);
 
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++) {
             memcpy_s(packetHostAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            if (isPartitionedEvent()) {
+                void *packetContextEndAddr = ptrOffset(packetHostAddr, contextEndOffset);
+                memcpy_s(packetContextEndAddr, sizeof(TagSizeT), static_cast<void *>(&eventVal), sizeof(TagSizeT));
+            }
             packetHostAddr = ptrOffset(packetHostAddr, singlePacketSize);
         }
     }
@@ -274,8 +268,10 @@ ze_result_t EventImp<TagSizeT>::reset() {
             kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
         }
     }
+    partitionedEvent = true;
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();
+    partitionedEvent = false;
     return ZE_RESULT_SUCCESS;
 }
 

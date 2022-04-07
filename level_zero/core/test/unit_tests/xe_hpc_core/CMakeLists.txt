@@ -11,7 +11,6 @@ if(TESTS_XE_HPC_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdqueue_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_xe_hpc_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_hw_helper_xe_hpc_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_xe_hpc_core.cpp
   )
   add_subdirectories()

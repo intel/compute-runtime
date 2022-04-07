@@ -39,7 +39,6 @@ class L0HwHelper {
 
     virtual void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const = 0;
     virtual std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const = 0;
-    virtual bool multiTileCapablePlatform() const = 0;
 
   protected:
     L0HwHelper() = default;
@@ -63,7 +62,6 @@ class L0HwHelperHw : public L0HwHelper {
     bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const override;
     void getAttentionBitmaskForSingleThreads(std::vector<ze_device_thread_t> &threads, const NEO::HardwareInfo &hwInfo, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) const override;
     std::vector<ze_device_thread_t> getThreadsFromAttentionBitmask(const NEO::HardwareInfo &hwInfo, const uint8_t *bitmask, const size_t bitmaskSize) const override;
-    bool multiTileCapablePlatform() const override;
 };
 
 } // namespace L0
