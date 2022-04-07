@@ -16,7 +16,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/clos_helper.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
@@ -973,7 +973,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (DebugManager.flags.ClosEnabled.get() == 0 || hwHelper.getNumCacheRegions() == 0) {
-        this->cacheInfo.reset(new CacheInfoImpl(*this, 0, 0, 0));
+        this->cacheInfo.reset(new CacheInfo(*this, 0, 0, 0));
         return;
     }
 
@@ -987,7 +987,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
     const uint32_t maxReservationNumCacheRegions = hwHelper.getNumCacheRegions() - 1;
 
-    this->cacheInfo.reset(new CacheInfoImpl(*this, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
+    this->cacheInfo.reset(new CacheInfo(*this, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {

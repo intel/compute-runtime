@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
 #include "shared/source/memory_manager/residency.h"
-#include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -53,7 +53,7 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
         return true;
     }
 
-    auto cacheInfo = static_cast<CacheInfoImpl *>(drm->getCacheInfo());
+    auto cacheInfo = drm->getCacheInfo();
     if (cacheInfo == nullptr) {
         return false;
     }

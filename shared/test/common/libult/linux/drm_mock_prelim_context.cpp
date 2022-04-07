@@ -10,7 +10,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
@@ -93,8 +93,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         if (cacheReserveArg->clos_index > closIndex) {
             return EINVAL;
         }
-        auto cacheInfoImpl = static_cast<const CacheInfoImpl *>(cacheInfo);
-        auto maxReservationNumWays = cacheInfoImpl ? cacheInfoImpl->getMaxReservationNumWays() : maxNumWays;
+        auto maxReservationNumWays = cacheInfo ? cacheInfo->getMaxReservationNumWays() : maxNumWays;
         if (cacheReserveArg->num_ways > maxReservationNumWays) {
             return EINVAL;
         }

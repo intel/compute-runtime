@@ -4446,7 +4446,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
@@ -4458,7 +4458,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenRe
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
 
@@ -4470,7 +4470,7 @@ TEST(DrmAllocationTest, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSe
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.cacheInfo.reset(new MockCacheInfoImpl(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockBufferObject bo(&drm, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
@@ -4566,7 +4566,7 @@ TEST(DrmAllocationTest, givenBoWhenMarkingForCaptureThenBosAreMarked) {
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
     mock->ioctl_expected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-    drm->cacheInfo.reset(new MockCacheInfoImpl(*drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm->cacheInfo.reset(new MockCacheInfo(*drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     auto ptr = reinterpret_cast<void *>(0x1000);
     auto size = MemoryConstants::pageSize;

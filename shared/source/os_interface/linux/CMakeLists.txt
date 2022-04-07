@@ -8,7 +8,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cache_info_impl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/clos_cache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/clos_cache.h
     ${CMAKE_CURRENT_SOURCE_DIR}/clos_helper.h

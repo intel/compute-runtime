@@ -11,7 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/clos_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -744,7 +744,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    mock->cacheInfo.reset(new CacheInfoImpl(*mock, 64 * MemoryConstants::kiloByte, 2, 32));
+    mock->cacheInfo.reset(new CacheInfo(*mock, 64 * MemoryConstants::kiloByte, 2, 32));
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 

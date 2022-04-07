@@ -7,18 +7,18 @@
 
 #pragma once
 
-#include "shared/source/os_interface/linux/cache_info_impl.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 
 namespace NEO {
 
-struct MockCacheInfoImpl : public CacheInfoImpl {
-    using CacheInfoImpl::cacheRegionsReserved;
-    using CacheInfoImpl::isRegionReserved;
+struct MockCacheInfo : public CacheInfo {
+    using CacheInfo::cacheRegionsReserved;
+    using CacheInfo::isRegionReserved;
 
-    MockCacheInfoImpl(Drm &drm, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
-        : CacheInfoImpl(drm, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays) {}
+    MockCacheInfo(Drm &drm, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
+        : CacheInfo(drm, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays) {}
 
-    ~MockCacheInfoImpl() override = default;
+    ~MockCacheInfo() override = default;
 
     bool getCacheRegion(size_t regionSize, CacheRegion regionIndex) override {
         if (regionIndex >= CacheRegion::Count) {
