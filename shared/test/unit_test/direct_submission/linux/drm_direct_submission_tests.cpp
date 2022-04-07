@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::wait;
     using BaseClass::workPartitionAllocation;
 
-    MockDrmDirectSubmission(Device &device, OsContext &osContext) : DrmDirectSubmission<GfxFamily, Dispatcher>(device, osContext) {
+    MockDrmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation) : DrmDirectSubmission<GfxFamily, Dispatcher>(device, osContext, globalFenceAllocation) {
         this->disableMonitorFence = false;
     }
 };
@@ -87,7 +87,7 @@ using namespace NEO;
 
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplementationThenExpectInitialImplementationValues) {
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device.get(),
-                                                                                          *osContext.get());
+                                                                                          *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
     EXPECT_TRUE(drm->isDirectSubmissionActive());
@@ -114,7 +114,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
 HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsReturned) {
     auto directSubmission = DirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::create(*device.get(),
-                                                                                                 *osContext.get());
+                                                                                                 *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     EXPECT_NE(directSubmission.get(), nullptr);
 
     bool ret = directSubmission->initialize(false, false);
@@ -126,7 +126,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRin
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     directSubmission.disableMonitorFence = true;
     directSubmission.ringStart = true;
 
@@ -153,7 +153,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThe
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     directSubmission.disableMonitorFence = true;
     directSubmission.ringStart = true;
 
@@ -185,7 +185,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDi
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
@@ -213,7 +213,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundhWhenDispatchCommandBuffe
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
@@ -244,7 +244,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoNewResourceBoundhWhenDispatchCommandBuf
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(-1);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
@@ -274,7 +274,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlusZeroAnd
     DebugManager.flags.DirectSubmissionNewResourceTlbFlush.set(0);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
@@ -300,7 +300,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmDirectSubmissionTest, givenMultipleActiveTilesWh
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     uint32_t offset = directSubmission.postSyncOffset;
     EXPECT_NE(0u, offset);
@@ -338,7 +338,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     ultCsr->createWorkPartitionAllocation(*device);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(2u, directSubmission.activeTiles);
     EXPECT_TRUE(directSubmission.partitionedMode);
@@ -363,7 +363,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenRenderDispatcherAndMultiTileDeviceWhenCre
     ultCsr->createWorkPartitionAllocation(*device);
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(1u, directSubmission.activeTiles);
     EXPECT_FALSE(directSubmission.partitionedMode);
@@ -386,7 +386,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCr
     EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device.get(),
-                                                                     *osContext.get());
+                                                                     *osContext.get(), device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(1u, directSubmission.activeTiles);
     EXPECT_FALSE(directSubmission.partitionedMode);

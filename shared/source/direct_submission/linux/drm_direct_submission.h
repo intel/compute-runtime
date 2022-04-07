@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,8 +16,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     using DirectSubmissionHw<GfxFamily, Dispatcher>::ringCommandStream;
     using DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations;
 
-    DrmDirectSubmission(Device &device,
-                        OsContext &osContext);
+    DrmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation);
 
     ~DrmDirectSubmission();
 

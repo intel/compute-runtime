@@ -119,12 +119,12 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
-                    MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
+                    MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext, globalFenceAllocation);
                 ret = directSubmission->initialize(true, false);
                 this->dispatchMode = DispatchMode::ImmediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
-                    MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext);
+                    MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext, globalFenceAllocation);
                 blitterDirectSubmission->initialize(true, false);
             }
         }
@@ -1056,8 +1056,8 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
 template <typename GfxFamily>
 struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext)
-        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext) {
+    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
+        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation) {
     }
 
     bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) override {
@@ -1092,7 +1092,7 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsE
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
 
-    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext);
+    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext, device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
 

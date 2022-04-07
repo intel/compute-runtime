@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,8 @@ namespace NEO {
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
 template <typename GfxFamily, typename Dispatcher>
-WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device,
-                                                                  OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
+WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext, globalFenceAllocation) {
     osContextWin = reinterpret_cast<OsContextWin *>(&osContext);
     wddm = osContextWin->getWddm();
     commandBufferHeader = std::make_unique<COMMAND_BUFFER_HEADER_REC>();

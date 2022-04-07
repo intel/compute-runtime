@@ -1317,11 +1317,11 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
         auto lock = this->obtainUniqueOwnership();
         if (!this->isAnyDirectSubmissionEnabled()) {
             if (EngineHelpers::isBcs(osContext.getEngineType())) {
-                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
+                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext, this->globalFenceAllocation);
                 ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
 
             } else {
-                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
+                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext, this->globalFenceAllocation);
                 ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
             }
             auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();

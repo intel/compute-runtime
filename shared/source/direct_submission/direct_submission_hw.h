@@ -60,8 +60,7 @@ class OsContext;
 template <typename GfxFamily, typename Dispatcher>
 class DirectSubmissionHw {
   public:
-    DirectSubmissionHw(Device &device,
-                       OsContext &osContext);
+    DirectSubmissionHw(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation);
 
     virtual ~DirectSubmissionHw();
 
@@ -73,7 +72,7 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
 
-    static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(Device &device, OsContext &osContext);
+    static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation);
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
@@ -148,6 +147,7 @@ class DirectSubmissionHw {
     Device &device;
     OsContext &osContext;
     const HardwareInfo *hwInfo = nullptr;
+    const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *ringBuffer = nullptr;
     GraphicsAllocation *ringBuffer2 = nullptr;
     GraphicsAllocation *semaphores = nullptr;

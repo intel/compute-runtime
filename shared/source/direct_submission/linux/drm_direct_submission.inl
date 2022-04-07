@@ -20,9 +20,8 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
-                                                                OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
+DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext, globalFenceAllocation) {
 
     this->disableMonitorFence = true;
 

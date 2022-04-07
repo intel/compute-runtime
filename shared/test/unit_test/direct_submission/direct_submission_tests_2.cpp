@@ -95,7 +95,7 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
 };
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenInitializingDirectSubmissionThenEnableMiMemFenceProgramming) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
@@ -108,7 +108,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenIni
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenDispatchingWithoutInitThenEnableMiMemFenceProgramming) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     FlushStampTracker flushStamp(true);
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
@@ -126,7 +126,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenDis
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenSysMemFenceIsAlreadySentThenDontReprogram) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     FlushStampTracker flushStamp(true);
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
@@ -145,7 +145,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetWhenCreatingDi
     DebugManagerStateRestore restorer;
     DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     ultCsr->createWorkPartitionAllocation(*pDevice);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     directSubmission.partitionConfigSet = false;
     directSubmission.disableMonitorFence = false;
@@ -245,11 +245,11 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
-                                                                           *osContext);
+                                                                           *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     directSubmission.disableMonitorFence = true;
 
     bool ret = directSubmission.allocateResources();
@@ -296,11 +296,11 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(0);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
-                                                                           *osContext);
+                                                                           *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     directSubmission.disableCacheFlush = true;
     bool ret = directSubmission.allocateResources();
@@ -345,12 +345,12 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
-                                                                           *osContext);
+                                                                           *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     directSubmission.workloadMode = 1;
     bool ret = directSubmission.allocateResources();
@@ -392,11 +392,11 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
-                                                                                             *osContext);
+                                                                                             *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     directSubmission.workloadMode = 2;
     bool ret = directSubmission.allocateResources();
@@ -432,7 +432,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
@@ -474,7 +474,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
@@ -511,7 +511,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
@@ -550,7 +550,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
@@ -588,7 +588,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
 
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     testing::internal::CaptureStdout();
 
@@ -622,7 +622,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     directSubmission.activeTiles = 2;
     directSubmission.partitionedMode = true;
@@ -686,7 +686,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext);
+                                                                                      *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     directSubmission.activeTiles = 2;
     directSubmission.partitionedMode = true;
@@ -738,7 +738,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     directSubmission.disableMonitorFence = false;
 
     bool ret = directSubmission.initialize(true, true);
@@ -774,7 +774,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     directSubmission.disableMonitorFence = false;
 
     bool ret = directSubmission.initialize(true, true);
@@ -813,7 +813,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     bool ret = directSubmission.initialize(true, true);
     EXPECT_TRUE(ret);
 
@@ -838,7 +838,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     bool ret = directSubmission.initialize(true, true);
     EXPECT_TRUE(ret);
 
@@ -860,7 +860,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
     for (int32_t debugFlag : {-1, 0, 1, 2}) {
         DebugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
-        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice, *osContext);
+        MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice, *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
         EXPECT_TRUE(directSubmission.initialize(true, true));
 
         auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();

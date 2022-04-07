@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,7 @@ class Wddm;
 template <typename GfxFamily, typename Dispatcher>
 class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
-    WddmDirectSubmission(Device &device,
-                         OsContext &osContext);
+    WddmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation);
 
     ~WddmDirectSubmission();
 

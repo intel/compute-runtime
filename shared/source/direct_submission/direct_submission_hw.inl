@@ -30,9 +30,8 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
-                                                              OsContext &osContext)
-    : device(device), osContext(osContext) {
+DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
+    : device(device), osContext(osContext), globalFenceAllocation(globalFenceAllocation) {
     hwInfo = &device.getHardwareInfo();
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
@@ -618,11 +617,8 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
-    auto &engineControl = device.getEngine(this->osContext.getEngineType(), this->osContext.getEngineUsage());
-
-    UNRECOVERABLE_IF(engineControl.osContext->getContextId() != engineControl.osContext->getContextId());
-
-    EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, engineControl.commandStreamReceiver->getGlobalFenceAllocation());
+    UNRECOVERABLE_IF(!this->globalFenceAllocation);
+    EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation);
 }
 
 template <typename GfxFamily, typename Dispatcher>

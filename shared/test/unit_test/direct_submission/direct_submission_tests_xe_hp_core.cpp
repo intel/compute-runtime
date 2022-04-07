@@ -20,7 +20,7 @@ XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchin
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), directSubmission.getSizePrefetchMitigation());
 
@@ -45,7 +45,7 @@ XE_HP_CORE_TEST_F(DirectSubmissionTestXE_HP_CORE, givenBlitterUsedWhenDispatchin
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
-                                                                    *osContext);
+                                                                    *osContext, pDevice->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
 
     EXPECT_EQ(sizeof(MI_ARB_CHECK), directSubmission.getSizeDisablePrefetcher());
 
