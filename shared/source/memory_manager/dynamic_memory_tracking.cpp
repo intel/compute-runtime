@@ -33,7 +33,7 @@ void collectBacktrace() {
     auto pointersCount = backtrace(addressess, backtraceBufferSize);
     functions = backtrace_symbols(addressess, pointersCount);
 
-    printf("\n backtrace collected -- START --");
+    printf("\n backtrace collected -- START --\n");
 
     for (int symbolId = 0; symbolId < pointersCount; symbolId++) {
         Dl_info info;
@@ -49,7 +49,7 @@ void collectBacktrace() {
         free(realname);
     }
 
-    printf("\n backtrace collected -- END --");
+    printf(" backtrace collected -- END --");
 
     free(functions);
 }
