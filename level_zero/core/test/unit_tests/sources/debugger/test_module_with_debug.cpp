@@ -689,7 +689,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
 
 using NotifyModuleLoadTest = Test<ModuleFixture>;
 
-HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResident) {
+HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyLinkedThenIsaAllocationsAreCopiedAndResidentOnlyForUserModules) {
     NEO::MockCompilerEnableGuard mock(true);
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -715,19 +715,32 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
     moduleDesc.inputSize = size;
 
     ModuleBuildLog *moduleBuildLog = nullptr;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
 
     auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::User));
     ASSERT_NE(nullptr, module.get());
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
 
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
     module->initialize(&moduleDesc, neoDevice);
 
-    EXPECT_EQ(4, memoryOperationsHandler->makeResidentCalledCount);
+    EXPECT_EQ(5, memoryOperationsHandler->makeResidentCalledCount);
 
     for (auto &ki : module->getKernelImmutableDataVector()) {
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
+    }
+
+    auto moduleBuiltin = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    ASSERT_NE(nullptr, moduleBuiltin.get());
+
+    memoryOperationsHandler->makeResidentCalledCount = 0;
+
+    moduleBuiltin->initialize(&moduleDesc, neoDevice);
+
+    EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
+
+    for (auto &ki : moduleBuiltin->getKernelImmutableDataVector()) {
+        EXPECT_FALSE(ki->isIsaCopiedToAllocation());
     }
 }
 

@@ -2510,6 +2510,43 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
     EXPECT_FALSE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
+TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
+    std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
+                                                                      nullptr,
+                                                                      ModuleType::User);
+    module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+
+    module->translationUnit->globalVarBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+    module->translationUnit->globalConstBuffer = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::BUFFER, neoDevice->getDeviceBitfield()});
+
+    uint32_t kernelHeap = 0;
+    auto kernelInfo = new KernelInfo();
+    kernelInfo->heapInfo.KernelHeapSize = 1;
+    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+
+    // pass kernelInfo ownership to programInfo
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
+    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer, module->translationUnit->globalVarBuffer, false);
+    module->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    const auto allocs = module->getModuleAllocations();
+
+    EXPECT_EQ(3u, allocs.size());
+
+    auto iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->globalConstBuffer);
+    EXPECT_NE(allocs.end(), iter);
+
+    iter = std::find(allocs.begin(), allocs.end(), module->translationUnit->globalVarBuffer);
+    EXPECT_NE(allocs.end(), iter);
+
+    iter = std::find(allocs.begin(), allocs.end(), module->kernelImmDatas[0]->getIsaGraphicsAllocation());
+    EXPECT_NE(allocs.end(), iter);
+}
+
 using ModuleIsaCopyTest = Test<ModuleImmutableDataFixture>;
 
 TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {

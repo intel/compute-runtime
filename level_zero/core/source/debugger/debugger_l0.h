@@ -97,6 +97,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
     MOCKABLE_VIRTUAL void notifyCommandQueueCreated();
     MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed();
+    MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;

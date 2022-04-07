@@ -556,10 +556,10 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    if (this->isFullyLinked) {
+    if (this->isFullyLinked && this->type == ModuleType::User) {
         for (auto &ki : kernelImmDatas) {
 
-            if (this->type == ModuleType::User && !ki->isIsaCopiedToAllocation()) {
+            if (!ki->isIsaCopiedToAllocation()) {
 
                 NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *ki->getIsaGraphicsAllocation()),
                                                                       *neoDevice, ki->getIsaGraphicsAllocation(), 0, ki->getKernelInfo()->heapInfo.pKernelHeap,
@@ -567,14 +567,11 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
 
                 ki->setIsaCopiedToAllocation();
             }
+        }
 
-            if (device->getL0Debugger()) {
-                NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-                if (memoryOperationsIface) {
-                    auto allocation = ki->getIsaGraphicsAllocation();
-                    memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
-                }
-            }
+        if (device->getL0Debugger()) {
+            auto allocs = getModuleAllocations();
+            device->getL0Debugger()->notifyModuleLoadAllocations(allocs);
         }
     }
     return success;
@@ -1156,6 +1153,23 @@ void ModuleImp::registerElfInDebuggerL0() {
             }
         }
     }
+}
+
+StackVec<NEO::GraphicsAllocation *, 32> ModuleImp::getModuleAllocations() {
+    StackVec<NEO::GraphicsAllocation *, 32> allocs;
+    for (auto &kernImmData : kernelImmDatas) {
+        allocs.push_back(kernImmData->getIsaGraphicsAllocation());
+    }
+
+    if (translationUnit) {
+        if (translationUnit->globalVarBuffer) {
+            allocs.push_back(translationUnit->globalVarBuffer);
+        }
+        if (translationUnit->globalConstBuffer) {
+            allocs.push_back(translationUnit->globalConstBuffer);
+        }
+    }
+    return allocs;
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {

@@ -123,4 +123,13 @@ void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container, SbaAd
         programSbaTrackingCommands(*container.getCommandStream(), sba);
     }
 }
+
+void DebuggerL0::notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs) {
+    NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    if (memoryOperationsIface) {
+        for (auto gfxAlloc : allocs) {
+            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&gfxAlloc, 1));
+        }
+    }
+}
 } // namespace L0

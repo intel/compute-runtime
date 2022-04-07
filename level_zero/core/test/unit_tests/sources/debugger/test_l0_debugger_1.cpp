@@ -1081,6 +1081,18 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
     }
 }
 
+HWTEST_F(L0DebuggerSimpleTest, givenDebuggerWithoutMemoryOperationsHandlerWhenNotifyingModuleAllocationsThenNoAllocationIsResident) {
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+
+    StackVec<NEO::GraphicsAllocation *, 32> allocs;
+    NEO::GraphicsAllocation alloc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                  MemoryPool::System4KBPages);
+    allocs.push_back(&alloc);
+
+    debugger->notifyModuleLoadAllocations(allocs);
+}
+
 HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreated) {
     auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
