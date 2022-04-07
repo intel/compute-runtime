@@ -358,3 +358,26 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenMachineIsIntelGTAndIntelGTNoteSectionIsV
     EXPECT_TRUE(unpackWarnings.empty());
     EXPECT_TRUE(unpackErrors.empty());
 }
+
+TEST(UnpackSingleDeviceBinaryZebin, WhenZebinIsNotValidForTargetAndHasSPIRVThenSetIRAndBuildOptions) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    const uint8_t spirvData[30] = {0xd};
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN_SPIRV, NEO::Elf::SectionsNamesZebin::spv, spirvData);
+
+    zebin.elfHeader->type = NEO::Elf::ET_ZEBIN_EXE;
+    zebin.elfHeader->machine = IGFX_UNKNOWN;
+
+    NEO::TargetDevice targetDevice;
+    targetDevice.productFamily = IGFX_SKYLAKE;
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(zebin.storage, "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_EQ(NEO::DeviceBinaryFormat::Zebin, unpackResult.format);
+    EXPECT_TRUE(unpackResult.deviceBinary.empty());
+
+    EXPECT_FALSE(unpackResult.intermediateRepresentation.empty());
+    EXPECT_EQ(0, memcmp(spirvData, unpackResult.intermediateRepresentation.begin(), sizeof(spirvData)));
+    EXPECT_STREQ(NEO::CompilerOptions::allowZebin.begin(), unpackResult.buildOptions.begin());
+}

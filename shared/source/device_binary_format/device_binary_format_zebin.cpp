@@ -46,6 +46,17 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
         break;
     }
 
+    SingleDeviceBinary ret;
+    ret.deviceBinary = archive;
+    ret.format = NEO::DeviceBinaryFormat::Zebin;
+    ret.targetDevice = requestedTargetDevice;
+
+    for (auto &elfSH : elf.sectionHeaders) {
+        if (elfSH.header->type == Elf::SHT_ZEBIN_SPIRV) {
+            ret.intermediateRepresentation = elfSH.data;
+        }
+    }
+
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
         validForTarget &= validateTargetDevice(elf, requestedTargetDevice);
@@ -59,14 +70,14 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     }
 
     if (false == validForTarget) {
-        outErrReason = "Unhandled target device";
-        return {};
+        if (false == ret.intermediateRepresentation.empty()) {
+            ret.buildOptions = NEO::CompilerOptions::allowZebin;
+            ret.deviceBinary = {};
+        } else {
+            outErrReason = "Unhandled target device";
+            return {};
+        }
     }
-
-    SingleDeviceBinary ret;
-    ret.deviceBinary = archive;
-    ret.format = NEO::DeviceBinaryFormat::Zebin;
-    ret.targetDevice = requestedTargetDevice;
 
     return ret;
 }

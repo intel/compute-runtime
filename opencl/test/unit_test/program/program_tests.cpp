@@ -2659,7 +2659,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
     retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_TRUE(pProgram->shouldWarnAboutRebuild);
+    ASSERT_TRUE(pProgram->requiresRebuild);
 }
 
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernelRebulildIsForcedThenDeviceBinaryIsUsed) {

@@ -198,7 +198,7 @@ cl_int Program::createProgramFromBinary(
                 this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = archive.size();
             } else {
                 this->isCreatedFromBinary = false;
-                this->shouldWarnAboutRebuild = true;
+                this->requiresRebuild = true;
             }
 
             switch (singleDeviceBinary.format) {

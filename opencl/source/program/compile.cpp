@@ -149,7 +149,7 @@ cl_int Program::compile(
         TranslationOutput compilerOuput;
         auto compilerErr = pCompilerInterface->compile(defaultDevice, inputArgs, compilerOuput);
         for (const auto &device : deviceVector) {
-            if (shouldWarnAboutRebuild && !shouldSuppressRebuildWarning) {
+            if (requiresRebuild && !shouldSuppressRebuildWarning) {
                 this->updateBuildLog(device->getRootDeviceIndex(), CompilerWarnings::recompiledFromIr.data(), CompilerWarnings::recompiledFromIr.length());
             }
 

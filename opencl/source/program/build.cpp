@@ -64,10 +64,12 @@ cl_int Program::build(
                 deviceBuildInfos[device].buildStatus = CL_BUILD_IN_PROGRESS;
             }
 
-            if (nullptr != buildOptions) {
-                options = buildOptions;
-            } else if (this->createdFrom != CreatedFrom::BINARY) {
-                options = "";
+            if (false == requiresRebuild) {
+                if (nullptr != buildOptions) {
+                    options = buildOptions;
+                } else if (this->createdFrom != CreatedFrom::BINARY) {
+                    options = "";
+                }
             }
 
             const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
@@ -130,7 +132,7 @@ cl_int Program::build(
             NEO::TranslationOutput compilerOuput = {};
 
             for (const auto &clDevice : deviceVector) {
-                if (shouldWarnAboutRebuild && !shouldSuppressRebuildWarning) {
+                if (requiresRebuild && !shouldSuppressRebuildWarning) {
                     this->updateBuildLog(clDevice->getRootDeviceIndex(), CompilerWarnings::recompiledFromIr.data(), CompilerWarnings::recompiledFromIr.length());
                 }
                 auto compilerErr = pCompilerInterface->build(clDevice->getDevice(), inputArgs, compilerOuput);

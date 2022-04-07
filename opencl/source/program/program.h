@@ -318,7 +318,7 @@ class Program : public BaseObject<_cl_program> {
 
     std::unordered_map<ClDevice *, DeviceBuildInfo> deviceBuildInfos;
     bool isCreatedFromBinary = false;
-    bool shouldWarnAboutRebuild = false;
+    bool requiresRebuild = false;
 
     std::string sourceCode;
     std::string options;
