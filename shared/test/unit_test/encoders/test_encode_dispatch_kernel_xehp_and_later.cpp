@@ -1230,3 +1230,85 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhen
     auto cmd = genCmdCast<WALKER_TYPE *>(*itor);
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, cmd->getPostSync().getOperation());
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
+            givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    bool dpasModeRequired = true;
+    cmdContainer->lastPipelineSelectModeRequired = false;
+
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+    ASSERT_NE(itorCmd, commands.end());
+
+    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+    EXPECT_EQ(cmd->getSystolicModeEnable(), dpasModeRequired);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
+            givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten) {
+    DebugManagerStateRestore restorer;
+
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    bool dpasModeRequired = true;
+    DebugManager.flags.OverrideSystolicPipelineSelect.set(!dpasModeRequired);
+    cmdContainer->lastPipelineSelectModeRequired = false;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+    ASSERT_NE(itorCmd, commands.end());
+
+    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+    EXPECT_EQ(cmd->getSystolicModeEnable(), !dpasModeRequired);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
+            givenDispatchInterfaceWhenDpasRequiredIsSameAsDefaultThenPipelineSelectCommandNotAdded) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    bool dpasModeRequired = true;
+    cmdContainer->lastPipelineSelectModeRequired = dpasModeRequired;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = dpasModeRequired;
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+
+    EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0),
+                                             cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+    EXPECT_EQ(itorCmd, commands.end());
+}
