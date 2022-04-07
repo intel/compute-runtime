@@ -1198,35 +1198,30 @@ void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
 void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
     DEBUG_BREAK_IF(storageInfo.colouringPolicy == ColouringPolicy::DeviceCountBased && storageInfo.colouringGranularity != MemoryConstants::pageSize64k);
 
-    auto remainingSize = alignUp(allocation.getUnderlyingBufferSize(), storageInfo.colouringGranularity);
+    auto totalSize = allocation.getUnderlyingBufferSize();
+
     auto handles = storageInfo.getNumBanks();
     auto banksCnt = storageInfo.getTotalBanksCnt();
+    auto coloringGranularity = storageInfo.colouringGranularity;
+
+    auto chunkSize = coloringGranularity;
 
     if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
-        handles = static_cast<uint32_t>(remainingSize / storageInfo.colouringGranularity);
+        handles = static_cast<uint32_t>((totalSize + storageInfo.colouringGranularity - 1) / storageInfo.colouringGranularity);
         allocation.resizeGmms(handles);
     }
-    /* This logic is to colour resource as equally as possible.
-    Divide size by number of devices and align result up to 64kb page, then subtract it from whole size and allocate it on the first tile. First tile has it's chunk.
-    In the following iteration divide rest of a size by remaining devices and again subtract it.
-    Notice that if allocation size (in pages) is not divisible by 4 then remainder can be equal to 1,2,3 and by using this algorithm it can be spread efficiently.
 
-    For example: 18 pages allocation and 4 devices. Page size is 64kb.
-    Divide by 4 and align up to page size and result is 5 pages. After subtract, remaining size is 13 pages.
-    Now divide 13 by 3 and align up - result is 5 pages. After subtract, remaining size is 8 pages.
-    Divide 8 by 2 - result is 4 pages.
-    In last iteration remaining 4 pages go to last tile.
-    18 pages is coloured to (5, 5, 4, 4).
+    if (storageInfo.colouringPolicy == ColouringPolicy::DeviceCountBased || storageInfo.colouringPolicy == ColouringPolicy::MappingBased) {
+        chunkSize = totalSize / handles;
+        chunkSize = alignUp(chunkSize, coloringGranularity);
+    }
 
-    It was tested and doesn't require any debug*/
     for (auto handleId = 0u; handleId < handles; handleId++) {
-        auto currentSize = alignUp(remainingSize / (handles - handleId), storageInfo.colouringGranularity);
-        remainingSize -= currentSize;
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= (1u << (handleId % banksCnt));
         auto gmm = new Gmm(clientContext,
                            nullptr,
-                           currentSize,
+                           chunkSize,
                            0u,
                            CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *clientContext->getHardwareInfo()),
                            compression,
@@ -1440,31 +1435,34 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             }
             memoryBanks &= 1u << currentBank;
         }
-        auto boSize = alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
+        auto chunkSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
+        auto boSize = alignUp(chunkSize, MemoryConstants::pageSize64k);
         bos[handleId] = createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount);
         if (nullptr == bos[handleId]) {
             return false;
         }
         allocation->getBufferObjectToModify(currentBank + iterationOffset) = bos[handleId];
         if (storageInfo.multiStorage) {
-            boAddress += boSize;
+            boAddress += chunkSize;
         }
     }
 
     if (storageInfo.colouringPolicy == ColouringPolicy::MappingBased) {
-        auto size = alignUp(allocation->getUnderlyingBufferSize(), storageInfo.colouringGranularity);
-        auto chunks = static_cast<uint32_t>(size / storageInfo.colouringGranularity);
         auto granularity = storageInfo.colouringGranularity;
 
+        size_t totalChunkCount = 0u;
+
         for (uint32_t boHandle = 0; boHandle < handles; boHandle++) {
+            auto chunkCount = bos[boHandle]->peekSize() / storageInfo.colouringGranularity;
             bos[boHandle]->setColourWithBind();
             bos[boHandle]->setColourChunk(granularity);
-            bos[boHandle]->reserveAddressVector(alignUp(chunks, handles) / handles);
+            bos[boHandle]->reserveAddressVector(chunkCount);
+            totalChunkCount += chunkCount;
         }
 
         auto boHandle = 0u;
         auto colourAddress = gpuAddress;
-        for (auto chunk = 0u; chunk < chunks; chunk++) {
+        for (auto chunk = 0u; chunk < totalChunkCount; chunk++) {
             if (boHandle == handles) {
                 boHandle = 0u;
             }
