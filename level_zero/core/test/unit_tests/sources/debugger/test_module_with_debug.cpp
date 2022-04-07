@@ -300,6 +300,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
 using ModuleWithZebinAndSLDTest = Test<ModuleWithZebinFixture>;
 TEST_F(ModuleWithZebinAndSLDTest, GivenZebinThenCreateDebugZebinAndPassToSLD) {
     module->addEmptyZebin();
+    module->addSegments();
 
     auto debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(debugger);
@@ -560,6 +561,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
@@ -615,6 +617,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
@@ -659,6 +662,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     auto kernelInfo = std::make_unique<KernelInfo>();
     kernelInfo->heapInfo.KernelHeapSize = 1;
     kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);

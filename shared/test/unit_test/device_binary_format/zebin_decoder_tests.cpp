@@ -2567,7 +2567,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
 TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmitsWarning) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("some_entry : a\nkernels : \nversion:\'") + toString(zeInfoDecoderVersion) + "\'\n";
+    auto brokenZeInfo = std::string("some_entry : a\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\nversion:\'") + toString(zeInfoDecoderVersion) + "\'\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -2601,7 +2601,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nkernels:\nkernels:\n";
+    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n" + "\nkernels : \n  - name : valid_empty_kernel\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -5543,4 +5543,26 @@ functions:
     const auto expectedError = "DeviceBinaryFormat::Zebin::.ze_info : could not read grf_count from : [abc] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read simd_size from : [def] in context of : external functions\nDeviceBinaryFormat::Zebin::.ze_info : could not read barrier_count from : [ghi] in context of : external functions\n";
     EXPECT_STREQ(expectedError, errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(ParsingEmptyOptionalVectorTypesZeInfo, givenEmptyOptionalVectorDataEntryInZeInfoWithSamePreviousIndentationWhenParsingZeInfoThenFalsIsReturnedAndErrorPrinted) {
+    NEO::Yaml::YamlParser parser;
+    bool parseResult = true;
+    std::string errors;
+    std::string warnings;
+
+    NEO::ConstStringRef zeInfoMissingEntrySamePrevInd = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+      simd_size: 8
+    per_thread_payload_arguments:
+    binding_table_indices:
+      - bti_value:       0
+        arg_index:       0
+...
+)===";
+    parseResult = parser.parse(zeInfoMissingEntrySamePrevInd, errors, warnings);
+    ASSERT_FALSE(parseResult);
+    EXPECT_STREQ("NEO::Yaml : Could not parse line : [5] : [per_thread_payload_arguments:] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -\n", errors.c_str());
 }

@@ -305,7 +305,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
         MockImmutableData(L0::Device *device) {
 
             auto mockKernelDescriptor = new NEO::KernelDescriptor;
-            mockKernelDescriptor->kernelMetadata.kernelName = "kernel";
+            mockKernelDescriptor->kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
             kernelDescriptor = mockKernelDescriptor;
             this->device = device;
             isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,

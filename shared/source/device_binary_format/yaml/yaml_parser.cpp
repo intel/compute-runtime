@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -340,9 +340,18 @@ void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes
     ++node.numChildren;
 }
 
+bool isEmptyVector(const Token &token, size_t lineId, std::string &outError) {
+    if (isVectorDataType(token)) {
+        outError = constructYamlError(lineId, token.pos, token.pos + token.len, "Vector data type expects to have at least one value starting with -");
+        return false;
+    }
+    return true;
+}
+
 bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
     StackVec<NodeId, 64> nesting;
     size_t lineId = 0U;
+    size_t lastUsedLine = 0u;
     outNodes.resize(1);
     outNodes.rbegin()->id = 0U;
     outNodes.rbegin()->firstChildId = 1U;
@@ -358,6 +367,9 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
 
         auto currLineIndent = lines[lineId].indent;
         if (currLineIndent == outNodes.rbegin()->indent) {
+            if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
+                return false;
+            }
             outNodes.reserve(outNodes.size() + 1);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
@@ -426,6 +438,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                 outNodes.rbegin()->value = lines[lineId].first + 1;
             }
         }
+        lastUsedLine = lineId;
         ++lineId;
     }
 
@@ -433,7 +446,6 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
         finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
         nesting.pop_back();
     }
-
     if (1U == outNodes.size()) {
         outWarning.append("NEO::Yaml : Text has no data\n");
         outNodes.clear();

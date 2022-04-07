@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/program/program_with_zebin.h"
@@ -39,7 +40,7 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
     };
     checkGPUSeg(program->buildInfos[rootDeviceIndex].constantSurface, segments.constData);
     checkGPUSeg(program->buildInfos[rootDeviceIndex].globalSurface, segments.varData);
-    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap["kernel1"]);
+    checkGPUSeg(program->getKernelInfoArray(rootDeviceIndex)[0]->getGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), segments.stringData.address);
     EXPECT_EQ(reinterpret_cast<const char *>(program->buildInfos[rootDeviceIndex].constStringSectionData.initData), strings);

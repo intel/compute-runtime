@@ -11,6 +11,7 @@
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include <array>
 #include <iterator>
 #include <string>
 
@@ -203,6 +204,24 @@ constexpr bool operator!=(Token token, char matcher) {
 
 constexpr bool operator!=(char matcher, Token token) {
     return token != matcher;
+}
+
+constexpr bool isVectorDataType(const Token &token) {
+    auto tokenString = ConstStringRef(token.pos, token.len);
+    constexpr std::array<const char *, 7> vectorAttributesNames = {
+        "kernels",
+        "functions",
+        "global_host_access_table",
+        "payload_arguments",
+        "per_thread_payload_arguments",
+        "binding_table_indices",
+        "per_thread_memory_buffers"};
+    for (const auto &type : vectorAttributesNames) {
+        if (equals(tokenString, type)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 struct Line {

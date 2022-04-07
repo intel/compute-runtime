@@ -2597,7 +2597,7 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
     };
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.constData);
     checkGPUSeg(module->translationUnit->globalConstBuffer, segments.varData);
-    checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap["kernel"]);
+    checkGPUSeg(module->kernelImmDatas[0]->getIsaGraphicsAllocation(), segments.nameToSegMap[ZebinTestData::ValidEmptyProgram::kernelName]);
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(module->translationUnit->programInfo.globalStrings.initData), segments.stringData.address);
     EXPECT_EQ(module->translationUnit->programInfo.globalStrings.size, segments.stringData.size);
@@ -2605,6 +2605,7 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
 
 TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsCreatedAndReturned) {
     module->addEmptyZebin();
+    module->addSegments();
     size_t debugDataSize;
     module->getDebugInfo(&debugDataSize, nullptr);
     auto debugData = std::make_unique<uint8_t[]>(debugDataSize);
@@ -2616,6 +2617,7 @@ TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsC
 
 TEST_F(ModuleWithZebinTest, givenValidZebinAndPassedDataSmallerThanDebugDataThenErrorIsReturned) {
     module->addEmptyZebin();
+    module->addSegments();
     size_t debugDataSize;
     module->getDebugInfo(&debugDataSize, nullptr);
     auto debugData = std::make_unique<uint8_t[]>(debugDataSize);

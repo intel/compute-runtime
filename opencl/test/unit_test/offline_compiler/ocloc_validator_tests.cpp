@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,7 +89,7 @@ TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     int res = NEO::Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(static_cast<int>(NEO::DecodeError::InvalidBinary), res) << oclocStdout;
-    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nDeviceBinaryFormat::Zebin::.ze_info : Expected at most one kernels entry in global scope of .ze_info, got : 2")) << oclocStdout;
+    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected errors :\nNEO::Yaml : Could not parse line : [1] : [kernels ] <-- parser position on error. Reason : Vector data type expects to have at least one value starting with -")) << oclocStdout;
 }
 
 TEST(OclocValidate, givenDeviceProductTableEveryProductMatchesProperPattern) {
