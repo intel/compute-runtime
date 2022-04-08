@@ -38,7 +38,7 @@ class MultiCommand {
     int initialize(const std::vector<std::string> &args);
     int splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, size_t numberOfBuild);
     int showResults();
-    int singleBuild(const std::vector<std::string> &args);
+    MOCKABLE_VIRTUAL int singleBuild(const std::vector<std::string> &args);
     void addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &, size_t buildId);
     void printHelp();
     void runBuilds(const std::string &argZero);

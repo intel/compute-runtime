@@ -19,6 +19,7 @@ namespace NEO {
 class MockMultiCommand : public MultiCommand {
   public:
     using MultiCommand::argHelper;
+    using MultiCommand::lines;
     using MultiCommand::quiet;
     using MultiCommand::retValues;
 
@@ -38,8 +39,20 @@ class MockMultiCommand : public MultiCommand {
 
     ~MockMultiCommand() override = default;
 
+    int singleBuild(const std::vector<std::string> &args) override {
+        ++singleBuildCalledCount;
+
+        if (callBaseSingleBuild) {
+            return MultiCommand::singleBuild(args);
+        }
+
+        return OclocErrorCode::SUCCESS;
+    }
+
     std::map<std::string, std::string> filesMap{};
     std::unique_ptr<MockOclocArgHelper> uniqueHelper{};
+    int singleBuildCalledCount{0};
+    bool callBaseSingleBuild{true};
 };
 
 } // namespace NEO

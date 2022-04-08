@@ -143,7 +143,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
         }
 
         if (!quiet) {
-            argHelper->printf("Command numer %zu: \n", i + 1);
+            argHelper->printf("Command number %zu: \n", i + 1);
         }
 
         addAdditionalOptionsToSingleCommandLine(args, i);

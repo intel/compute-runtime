@@ -434,7 +434,44 @@ TEST(MultiCommandWhiteboxTest, GivenCommandLineWithMissingApostropheWhenSplittin
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(MultiCommandWhiteboxTest, GivenArgsWithQuietModeAndEmptyMulticomandFileWhenInitializingThenQuietFlagIsSetAndErrorIsReturned) {
+TEST(MultiCommandWhiteboxTest, GivenCommandLineWithMissingApostropheWhenRunningBuildsThenErrorIsReturnedAndBuildIsNotStarted) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = true;
+    mockMultiCommand.callBaseSingleBuild = false;
+    mockMultiCommand.lines.push_back("-out_dir \"Some Directory");
+
+    mockMultiCommand.runBuilds("ocloc");
+    EXPECT_EQ(0, mockMultiCommand.singleBuildCalledCount);
+
+    ASSERT_EQ(1u, mockMultiCommand.retValues.size());
+    EXPECT_EQ(OclocErrorCode::INVALID_FILE, mockMultiCommand.retValues[0]);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenTwoValidCommandLinesAndVerboseModeWhenRunningBuildsThenBuildsAreStartedReturnValuesAreStoredAndLogsArePrinted) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+    mockMultiCommand.callBaseSingleBuild = false;
+
+    const std::string validLine{"-file test_files/copybuffer.cl -output SpecialOutputFilename -out_dir SomeOutputDirectory -device " + gEnvironment->devicePrefix};
+    mockMultiCommand.lines.push_back(validLine);
+    mockMultiCommand.lines.push_back(validLine);
+
+    ::testing::internal::CaptureStdout();
+    mockMultiCommand.runBuilds("ocloc");
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(2, mockMultiCommand.singleBuildCalledCount);
+
+    ASSERT_EQ(2u, mockMultiCommand.retValues.size());
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockMultiCommand.retValues[0]);
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockMultiCommand.retValues[1]);
+
+    const auto expectedOutput{"Command number 1: \n"
+                              "Command number 2: \n"};
+    EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenArgsWithQuietModeAndEmptyMulticommandFileWhenInitializingThenQuietFlagIsSetAndErrorIsReturned) {
     MockMultiCommand mockMultiCommand{};
     mockMultiCommand.quiet = false;
 
@@ -457,6 +494,29 @@ TEST(MultiCommandWhiteboxTest, GivenArgsWithQuietModeAndEmptyMulticomandFileWhen
 
     const auto expectedOutput = "Command file was empty.\n";
     EXPECT_EQ(expectedOutput, output);
+
+    EXPECT_TRUE(mockMultiCommand.quiet);
+}
+
+TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturned) {
+    MockMultiCommand mockMultiCommand{};
+    mockMultiCommand.quiet = false;
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "multi",
+        "commands.txt",
+        "-invalid_option"};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = mockMultiCommand.initialize(args);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+    const auto expectedError = "Invalid option (arg 3): -invalid_option\n";
+    const auto errorPosition = output.find(expectedError);
+    EXPECT_NE(std::string::npos, errorPosition);
 }
 
 TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenResetGtSystemInfo) {
