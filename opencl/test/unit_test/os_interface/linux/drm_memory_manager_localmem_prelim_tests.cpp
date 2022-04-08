@@ -959,7 +959,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicy
     EXPECT_EQ(allocation->storageInfo.colouringGranularity, 256 * MemoryConstants::kiloByte);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-    auto numHandles = (allocData.size + allocation->storageInfo.colouringGranularity - 1) / allocation->storageInfo.colouringGranularity;
+    auto numHandles = static_cast<uint32_t>(alignUp(allocData.size, allocation->storageInfo.colouringGranularity) / allocation->storageInfo.colouringGranularity);
     EXPECT_EQ(numHandles, allocation->getNumGmms());
     EXPECT_EQ(numHandles, drmAllocation->getBOs().size());
 
@@ -1012,9 +1012,13 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMappingBasedColouringPolicyWh
         EXPECT_EQ(boSize, bo->peekSize());
 
         auto addresses = bo->getColourAddresses();
-        EXPECT_EQ(addresses.size(), 5u);
-        EXPECT_EQ(boSize, 5 * MemoryConstants::pageSize64k);
-
+        if (handleId < 2) {
+            EXPECT_EQ(addresses.size(), 5u);
+            EXPECT_EQ(boSize, 5 * MemoryConstants::pageSize64k);
+        } else {
+            EXPECT_EQ(addresses.size(), 4u);
+            EXPECT_EQ(boSize, 4 * MemoryConstants::pageSize64k);
+        }
         for (auto i = 0u; i < addresses.size(); i++) {
             EXPECT_EQ(addresses[i], boAddress + 4 * i * allocation->storageInfo.colouringGranularity + handleId * allocation->storageInfo.colouringGranularity);
         }

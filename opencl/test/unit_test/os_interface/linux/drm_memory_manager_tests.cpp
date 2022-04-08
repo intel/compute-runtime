@@ -5160,9 +5160,9 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
         ASSERT_NE(nullptr, bo);
         auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
         EXPECT_EQ(boAddress, bo->peekAddress());
-        EXPECT_EQ(alignUp(boSize, MemoryConstants::pageSize64k), bo->peekSize());
-        EXPECT_EQ(boSize, 5 * MemoryConstants::pageSize64k);
-        boAddress += 5 * MemoryConstants::pageSize64k;
+        EXPECT_EQ(boSize, bo->peekSize());
+        EXPECT_EQ(boSize, handleId == 0 || handleId == 1 ? 5 * MemoryConstants::pageSize64k : 4 * MemoryConstants::pageSize64k);
+        boAddress += boSize;
     }
     memoryManager->freeGraphicsMemory(allocation);
 }
