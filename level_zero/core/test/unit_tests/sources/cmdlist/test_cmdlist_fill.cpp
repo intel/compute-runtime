@@ -6,11 +6,13 @@
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -208,6 +210,218 @@ HWTEST2_F(AppendFillTest,
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
 
     delete[] nonMultipleDstPtr;
+}
+
+using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
+
+HWTEST2_F(AppendFillTest,
+          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsBetweenGen9AndGen12lp) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t globalStartAddress = event->getGpuAddress(device) + event->getGlobalStartOffset();
+    uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
+    uint64_t globalEndAddress = event->getGpuAddress(device) + event->getGlobalEndOffset();
+    uint64_t contextEndAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = commandList->appendMemoryFill(immediateDstPtr, &immediatePattern,
+                                           sizeof(immediatePattern),
+                                           immediateAllocSize, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(1u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    auto begin = cmdList.begin();
+    ASSERT_EQ(2u, itorWalkers.size());
+    auto secondWalker = itorWalkers[1];
+
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           begin,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           false);
+
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           secondWalker,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           false);
+}
+
+HWTEST2_F(AppendFillTest,
+          givenCallToAppendMemoryFillWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsBetweenGen9AndGen12lp) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t globalStartAddress = event->getGpuAddress(device) + event->getGlobalStartOffset();
+    uint64_t contextStartAddress = event->getGpuAddress(device) + event->getContextStartOffset();
+    uint64_t globalEndAddress = event->getGpuAddress(device) + event->getGlobalEndOffset();
+    uint64_t contextEndAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(1u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    auto begin = cmdList.begin();
+    ASSERT_EQ(2u, itorWalkers.size());
+    auto secondWalker = itorWalkers[1];
+
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           begin,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           false);
+
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           secondWalker,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           false);
+}
+
+HWTEST2_F(AppendFillTest,
+          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfiling, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + event->getSinglePacketSize();
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = commandList->appendMemoryFill(immediateDstPtr, &immediatePattern,
+                                           sizeof(immediatePattern),
+                                           immediateAllocSize, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2u, event->getPacketsInUse());
+    EXPECT_EQ(2u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+}
+
+HWTEST2_F(AppendFillTest,
+          givenCallToAppendMemoryFillWhenTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfiling, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + event->getSinglePacketSize();
+
+    auto commandList = std::make_unique<WhiteBox<MockCommandList<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = commandList->appendMemoryFill(dstPtr, pattern, patternSize, allocSize, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2u, event->getPacketsInUse());
+    EXPECT_EQ(2u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 }
 
 } // namespace ult

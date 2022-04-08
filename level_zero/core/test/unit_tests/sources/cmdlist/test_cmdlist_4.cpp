@@ -77,12 +77,19 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
         commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
 
-    auto iterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<PIPE_CONTROL *>(*iterator);
-    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-    EXPECT_FALSE(cmd->getDcFlushEnable());
-    EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-    EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP, cmd->getPostSyncOperation());
+    auto pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+    bool foundTimestampPipeControl = false;
+    for (auto it : pcList) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            foundTimestampPipeControl = true;
+        }
+    }
+    EXPECT_TRUE(foundTimestampPipeControl);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, IsAtLeastSkl) {

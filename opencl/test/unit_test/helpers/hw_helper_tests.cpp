@@ -385,6 +385,42 @@ HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIs
     EXPECT_EQ(hwInfoConfig.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
 }
 
+HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrectPostSyncUsed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint64_t address = 0x1234567887654320;
+    uint64_t immediateData = 0x0;
+
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControlWithPostSync(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, args);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(immediateData, pipeControl->getImmediateData());
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
+}
+
+HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncWriteImmediateDataUsedThenCorrectPostSyncUsed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint64_t address = 0x1234567887654320;
+    uint64_t immediateData = 0x1234;
+
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControlWithPostSync(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, args);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(immediateData, pipeControl->getImmediateData());
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+}
+
 TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;

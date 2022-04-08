@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -382,82 +381,6 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     EXPECT_EQ(1u, postSyncFound);
 }
 
-template <typename FamilyType>
-void validateTimestampRegisters(GenCmdList &cmdList,
-                                uint64_t firstRegisterAddress, uint64_t secondRegisterAddress) {
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using MI_MATH = typename FamilyType::MI_MATH;
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
-
-    constexpr uint32_t mask = 0xfffffffe;
-
-    auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
-
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
-        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
-        EXPECT_EQ(firstRegisterAddress, cmdMem->getMemoryAddress());
-        EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
-        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
-        EXPECT_EQ(secondRegisterAddress, cmdMem->getMemoryAddress());
-        EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
-    }
-}
-
 HWTEST2_F(MultiTileCommandListAppendBarrier,
           GivenTimestampEventSignalWhenAppendingMultTileBarrierThenExpectMultiTileBarrierAndTimestampOperations, IsWithinXeGfxFamily) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -533,7 +456,12 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                       cmdBuffer,
                                                       timestampRegisters));
-    validateTimestampRegisters<FamilyType>(cmdList, globalStartAddress, contextStartAddress);
+    auto begin = cmdList.begin();
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           begin,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           true);
 
     auto gpuBaseAddress = cmdListStream->getGraphicsAllocation()->getGpuAddress() + useSizeBefore + timestampRegisters;
 
@@ -557,7 +485,12 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
                                                       cmdBuffer,
                                                       timestampRegisters));
-    validateTimestampRegisters<FamilyType>(cmdList, globalEndAddress, contextEndAddress);
+    begin = cmdList.begin();
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           begin,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           true);
 }
 
 } // namespace ult

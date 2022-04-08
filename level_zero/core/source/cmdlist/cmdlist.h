@@ -264,6 +264,7 @@ struct CommandList : _ze_command_list_handle_t {
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
+    bool setupTimestampEventForMultiTile(ze_event_handle_t signalEvent);
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;

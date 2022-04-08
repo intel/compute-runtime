@@ -501,13 +501,6 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
     itor++;
     itor = find<SEMAPHORE_WAIT *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
-        EXPECT_NE(cmdList.end(), itor);
-    } else {
-        EXPECT_EQ(cmdList.end(), itor);
-    }
 }
 
 using platformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -540,22 +533,18 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto iterator = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    bool postSyncFound = false;
+    uint32_t postSyncFound = 0;
     ASSERT_NE(0u, iterator.size());
-    uint32_t numPCs = 0;
     for (auto it : iterator) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        numPCs++;
         if ((cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
             (cmd->getImmediateData() == Event::STATE_SIGNALED) &&
             (cmd->getDcFlushEnable())) {
-            postSyncFound = true;
-            break;
+            postSyncFound++;
         }
     }
 
-    ASSERT_TRUE(postSyncFound);
-    EXPECT_EQ(numPCs, iterator.size());
+    EXPECT_EQ(1u, postSyncFound);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, platformSupport) {
@@ -585,22 +574,18 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto iterator = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    bool postSyncFound = false;
+    uint32_t postSyncFound = 0;
     ASSERT_NE(0u, iterator.size());
-    uint32_t numPCs = 0;
     for (auto it : iterator) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        numPCs++;
         if ((cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
             (cmd->getImmediateData() == Event::STATE_SIGNALED) &&
             (!cmd->getDcFlushEnable())) {
-            postSyncFound = true;
-            break;
+            postSyncFound++;
         }
     }
 
-    ASSERT_TRUE(postSyncFound);
-    EXPECT_EQ(numPCs, iterator.size() - 1);
+    EXPECT_EQ(1u, postSyncFound);
 
     auto it = *(iterator.end() - 1);
     auto cmd1 = genCmdCast<PIPE_CONTROL *>(*it);

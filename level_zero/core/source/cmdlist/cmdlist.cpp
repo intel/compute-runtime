@@ -181,4 +181,16 @@ void CommandList::handleIndirectAllocationResidency() {
     }
 }
 
+bool CommandList::setupTimestampEventForMultiTile(ze_event_handle_t signalEvent) {
+    if (this->partitionCount > 1 &&
+        signalEvent) {
+        auto event = Event::fromHandle(signalEvent);
+        if (event->isEventTimestampFlagSet()) {
+            event->setPacketsInUse(this->partitionCount);
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace L0

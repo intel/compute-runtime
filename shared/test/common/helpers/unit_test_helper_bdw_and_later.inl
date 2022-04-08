@@ -72,4 +72,9 @@ std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(Command
     return {};
 }
 
+template <typename GfxFamily>
+inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCmd(typename GfxFamily::MI_STORE_REGISTER_MEM &storeRegisterMem) {
+    return false;
+}
+
 } // namespace NEO

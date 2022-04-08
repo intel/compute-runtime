@@ -210,9 +210,9 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnTimestampEventWithThre
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     event->setPacketsInUse(3u);
-    event->kernelCount = 2;
+    event->increaseKernelCount();
     event->setPacketsInUse(3u);
-    event->kernelCount = 3;
+    event->increaseKernelCount();
     event->setPacketsInUse(3u);
     ASSERT_EQ(9u, event->getPacketsInUse());
 

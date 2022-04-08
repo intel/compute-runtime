@@ -104,33 +104,13 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatusKernelTimestamp() {
+ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
     assignKernelEventCompletionData(hostAddress);
     uint32_t queryVal = Event::STATE_CLEARED;
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
-            bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
-                static_cast<TagSizeT const *>(kernelEventCompletionData[i].getContextEndAddress(packetId)),
-                queryVal,
-                std::not_equal_to<TagSizeT>());
-            if (!ready) {
-                return ZE_RESULT_NOT_READY;
-            }
-        }
-    }
-    this->csr->getInternalAllocationStorage()->cleanAllocationList(this->csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
-    return ZE_RESULT_SUCCESS;
-}
-
-template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::queryStatusNonTimestamp() {
-    assignKernelEventCompletionData(hostAddress);
-    uint32_t queryVal = Event::STATE_CLEARED;
-    for (uint32_t i = 0; i < kernelCount; i++) {
-        uint32_t packetsToCheck = kernelEventCompletionData[i].getPacketsUsed();
-        for (uint32_t packetId = 0; packetId < packetsToCheck; packetId++) {
-            void const *queryAddress = usingContextEndOffset
+            void const *queryAddress = isUsingContextEndOffset()
                                            ? kernelEventCompletionData[i].getContextEndAddress(packetId)
                                            : kernelEventCompletionData[i].getContextStartAddress(packetId);
             bool ready = NEO::WaitUtils::waitFunctionWithPredicate<const TagSizeT>(
@@ -156,11 +136,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
         *hostAddr = metricStreamer->getNotificationState();
     }
     this->csr->downloadAllocations();
-    if (isEventTimestampFlagSet()) {
-        return queryStatusKernelTimestamp();
-    } else {
-        return queryStatusNonTimestamp();
-    }
+    return queryStatusEventPackets();
 }
 
 template <typename TagSizeT>
@@ -274,11 +250,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    if (isEventTimestampFlagSet()) {
-        kernelCount = EventPacketsCount::maxKernelSplit;
-        for (uint32_t i = 0; i < kernelCount; i++) {
-            kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
-        }
+    kernelCount = EventPacketsCount::maxKernelSplit;
+    for (uint32_t i = 0; i < kernelCount; i++) {
+        kernelEventCompletionData[i].setPacketsUsed(NEO::TimestampPacketSizeControl::preferredPacketCount);
     }
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();

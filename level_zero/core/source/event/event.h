@@ -96,6 +96,17 @@ struct Event : _ze_event_handle_t {
         return isTimestampEvent || usingContextEndOffset;
     }
 
+    void increaseKernelCount() {
+        kernelCount++;
+        UNRECOVERABLE_IF(kernelCount > EventPacketsCount::maxKernelSplit);
+    }
+    uint32_t getKernelCount() const {
+        return kernelCount;
+    }
+    void zeroKernelCount() {
+        kernelCount = 0;
+    }
+
     uint64_t globalStartTS;
     uint64_t globalEndTS;
     uint64_t contextStartTS;
@@ -110,8 +121,6 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
 
-    uint32_t kernelCount = 1u;
-
     bool l3FlushWaApplied = false;
 
   protected:
@@ -122,6 +131,9 @@ struct Event : _ze_event_handle_t {
     size_t timestampSizeInDw = 0u;
     size_t singlePacketSize = 0u;
     size_t eventPoolOffset = 0u;
+
+    uint32_t kernelCount = 1u;
+
     bool isTimestampEvent = false;
     bool usingContextEndOffset = false;
 };
@@ -180,8 +192,7 @@ struct EventImp : public Event {
 
   protected:
     ze_result_t calculateProfilingData();
-    ze_result_t queryStatusKernelTimestamp();
-    ze_result_t queryStatusNonTimestamp();
+    ze_result_t queryStatusEventPackets();
     ze_result_t hostEventSetValue(TagSizeT eventValue);
     ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     void assignKernelEventCompletionData(void *address);

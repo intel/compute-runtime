@@ -355,5 +355,79 @@ HWTEST2_F(CommandListAppendSignalEvent,
     EXPECT_EQ(1u, postSyncFound);
 }
 
+HWTEST2_F(CommandListAppendSignalEvent,
+          givenMultiTileCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenWorkPartitionedRegistersAreUsed, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    auto &commandContainer = commandList->commandContainer;
+
+    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    constexpr uint32_t packets = 2u;
+
+    event->setEventTimestampFlag(true);
+    commandList->partitionCount = packets;
+
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(packets, event->getPacketsInUse());
+
+    auto eventGpuAddress = event->getGpuAddress(device);
+    uint64_t contextStartAddress = eventGpuAddress + event->getContextStartOffset();
+    uint64_t globalStartAddress = eventGpuAddress + event->getGlobalStartOffset();
+    uint64_t contextEndAddress = eventGpuAddress + event->getContextEndOffset();
+    uint64_t globalEndAddress = eventGpuAddress + event->getGlobalEndOffset();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    while (cmd->getPostSyncOperation() != POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorPC);
+        cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    }
+    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+    EXPECT_FALSE(cmd->getDcFlushEnable());
+    EXPECT_EQ(timestampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+
+    auto startCmdList = cmdList.begin();
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           startCmdList,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalStartAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddress,
+                                           true);
+
+    if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
+        uint64_t globalStartAddressHigh = globalStartAddress + sizeof(uint32_t);
+        uint64_t contextStartAddressHigh = contextStartAddress + sizeof(uint32_t);
+        validateTimestampRegisters<FamilyType>(cmdList,
+                                               startCmdList,
+                                               REG_GLOBAL_TIMESTAMP_UN, globalStartAddressHigh,
+                                               0x23AC, contextStartAddressHigh,
+                                               true);
+    }
+
+    validateTimestampRegisters<FamilyType>(cmdList,
+                                           startCmdList,
+                                           REG_GLOBAL_TIMESTAMP_LDW, globalEndAddress,
+                                           GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddress,
+                                           true);
+
+    if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
+        uint64_t globalEndAddressHigh = globalEndAddress + sizeof(uint32_t);
+        uint64_t contextEndAddressHigh = contextEndAddress + sizeof(uint32_t);
+        validateTimestampRegisters<FamilyType>(cmdList,
+                                               startCmdList,
+                                               REG_GLOBAL_TIMESTAMP_UN, globalEndAddressHigh,
+                                               0x23AC, contextEndAddressHigh,
+                                               true);
+    }
+}
+
 } // namespace ult
 } // namespace L0

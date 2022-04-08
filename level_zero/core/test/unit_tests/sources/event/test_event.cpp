@@ -551,13 +551,25 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    auto &l0HwHelper = L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    auto event = std::unique_ptr<L0::Event>(l0HwHelper.createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
-    if (L0HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).multiTileCapablePlatform()) {
+    if (l0HwHelper.multiTileCapablePlatform()) {
         EXPECT_TRUE(event->isUsingContextEndOffset());
     } else {
         EXPECT_FALSE(event->isUsingContextEndOffset());
+    }
+
+    uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getHostAddress());
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getContextEndOffset());
+    }
+    uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
+    for (uint32_t i = 0; i < maxPacketsCount; i++) {
+        EXPECT_EQ(Event::STATE_INITIAL, *eventCompletionMemory);
+        eventCompletionMemory = ptrOffset(eventCompletionMemory, event->getSinglePacketSize());
     }
 
     result = event->queryStatus();
@@ -1064,7 +1076,7 @@ TEST_F(TimestampEventCreate, givenEventTimestampsCreatedWhenResetIsInvokeThenCor
         EXPECT_EQ(1u, event->kernelEventCompletionData[j].getPacketsUsed());
     }
 
-    EXPECT_EQ(1u, event->kernelCount);
+    EXPECT_EQ(1u, event->getKernelCount());
 }
 
 TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedForAllTimestamps) {
@@ -1093,13 +1105,13 @@ TEST_F(TimestampEventCreate, givenEventTimestampWhenPacketCountIsSetThenCorrectO
 
     gpuAddr += (4u * event->getSinglePacketSize());
 
-    event->kernelCount = 2;
+    event->increaseKernelCount();
     event->setPacketsInUse(2u);
     EXPECT_EQ(6u, event->getPacketsInUse());
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
     gpuAddr += (2u * event->getSinglePacketSize());
-    event->kernelCount = 3;
+    event->increaseKernelCount();
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
     EXPECT_EQ(7u, event->getPacketsInUse());
 }
@@ -1122,7 +1134,7 @@ TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrec
         }
         EXPECT_EQ(1u, event->kernelEventCompletionData[j].getPacketsUsed());
     }
-    EXPECT_EQ(1u, event->kernelCount);
+    EXPECT_EQ(1u, event->getKernelCount());
 }
 
 TEST_F(TimestampEventCreate, givenpCountZeroCallingQueryTimestampExpThenpCountSetProperly) {

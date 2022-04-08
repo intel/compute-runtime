@@ -70,4 +70,9 @@ inline uint64_t UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(const t
     return (gpuAddressHigh << 32) | gpuAddress;
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::timestampRegisterHighAddress() {
+    return false;
+}
+
 } // namespace NEO

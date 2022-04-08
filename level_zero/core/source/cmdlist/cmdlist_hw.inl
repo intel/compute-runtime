@@ -364,9 +364,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         return ret;
     }
 
-    appendEventForProfiling(hSignalEvent, true, false);
+    bool workloadPartition = setupTimestampEventForMultiTile(hSignalEvent);
+
+    appendEventForProfiling(hSignalEvent, true, workloadPartition);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
-    appendSignalEventPostWalker(hSignalEvent, false);
+    appendSignalEventPostWalker(hSignalEvent, workloadPartition);
 
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
         executeCommandListImmediate(true);
@@ -801,22 +803,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
-                                                                          const ze_group_count_t *pThreadGroupDimensions,
-                                                                          ze_event_handle_t hEvent) {
-    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false, false);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker) {
-    if (beforeWalker) {
-        appendEventForProfiling(hEvent, true, false);
-    } else {
-        appendSignalEventPostWalker(hEvent, false);
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(void *dstPtr,
                                                                                NEO::GraphicsAllocation *dstPtrAlloc,
                                                                                uint64_t dstOffset,
@@ -1075,18 +1061,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         if (isStateless) {
             func = Builtin::CopyBufferToBufferSideStateless;
         }
-        ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                                  dstAllocationStruct.alloc, dstAllocationStruct.offset,
-                                                  srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, srcAllocationStruct.offset, leftSize)
-                           : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                                          dstAllocationStruct.alloc, dstAllocationStruct.offset,
-                                                          reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                                          srcAllocationStruct.alloc, srcAllocationStruct.offset,
-                                                          leftSize, 1UL,
-                                                          func,
-                                                          hSignalEvent,
-                                                          isStateless);
+        if (isCopyOnly()) {
+            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
+                                       dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                       srcAllocationStruct.alignedAllocationPtr,
+                                       srcAllocationStruct.alloc, srcAllocationStruct.offset, leftSize);
+        } else {
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                               dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alloc, srcAllocationStruct.offset,
+                                               leftSize, 1UL,
+                                               func,
+                                               hSignalEvent,
+                                               isStateless);
+        }
     }
 
     if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
@@ -1094,19 +1083,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         if (isStateless) {
             func = Builtin::CopyBufferToBufferMiddleStateless;
         }
-        ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                                  dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
-                                                  srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, middleSizeBytes)
-                           : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                                          dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
-                                                          reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                                          srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
-                                                          middleSizeBytes,
-                                                          middleElSize,
-                                                          func,
-                                                          hSignalEvent,
-                                                          isStateless);
+        if (isCopyOnly()) {
+            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
+                                       dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
+                                       srcAllocationStruct.alignedAllocationPtr,
+                                       srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, middleSizeBytes);
+        } else {
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                               dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
+                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
+                                               middleSizeBytes,
+                                               middleElSize,
+                                               func,
+                                               hSignalEvent,
+                                               isStateless);
+        }
     }
 
     if (ret == ZE_RESULT_SUCCESS && rightSize) {
@@ -1114,18 +1106,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         if (isStateless) {
             func = Builtin::CopyBufferToBufferSideStateless;
         }
-        ret = isCopyOnly() ? appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
-                                                  dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
-                                                  srcAllocationStruct.alignedAllocationPtr,
-                                                  srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, rightSize)
-                           : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                                          dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
-                                                          reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                                          srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
-                                                          rightSize, 1UL,
-                                                          func,
-                                                          hSignalEvent,
-                                                          isStateless);
+        if (isCopyOnly()) {
+            ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
+                                       dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
+                                       srcAllocationStruct.alignedAllocationPtr,
+                                       srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, rightSize);
+        } else {
+            ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                               dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
+                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                               srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
+                                               rightSize, 1UL,
+                                               func,
+                                               hSignalEvent,
+                                               isStateless);
+        }
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
@@ -1557,6 +1552,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                             reinterpret_cast<uintptr_t>(patternGfxAllocPtr) + patternOffsetRemainder,
                                                             patternGfxAlloc);
             builtinFunctionRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
+
             res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, hSignalEvent);
             if (res) {
                 return res;
@@ -1951,7 +1947,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_h
     constexpr uint32_t mask = 0xfffffffe;
     auto event = Event::fromHandle(hEvent);
 
-    auto baseAddr = event->getGpuAddress(this->device);
+    auto baseAddr = event->getPacketAddress(this->device);
     auto contextOffset = beforeWalker ? event->getContextStartOffset() : event->getContextEndOffset();
     auto globalOffset = beforeWalker ? event->getGlobalStartOffset() : event->getGlobalEndOffset();
 
@@ -1966,7 +1962,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(ze_event_h
         NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextAddress, workloadPartition);
     }
 
-    adjustWriteKernelTimestamp(globalAddress, contextAddress, maskLsb, mask);
+    adjustWriteKernelTimestamp(globalAddress, contextAddress, maskLsb, mask, workloadPartition);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2018,6 +2014,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         }
     }
 
+    bool workloadPartition = setupTimestampEventForMultiTile(hSignalEvent);
+    appendEventForProfiling(hSignalEvent, true, workloadPartition);
+
     const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
@@ -2031,17 +2030,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     } else {
         NEO::PipeControlArgs args;
 
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             *commandContainer.getCommandStream(),
             POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
             reinterpret_cast<uint64_t>(dstptr),
             0,
+            hwInfo,
             args);
     }
 
-    if (hSignalEvent) {
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(hSignalEvent, false);
-    }
+    appendSignalEventPostWalker(hSignalEvent, workloadPartition);
 
     auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t), false);
     commandContainer.addToResidencyContainer(allocationStruct.alloc);
@@ -2263,7 +2261,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask) {}
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_t hSignalEvent,
@@ -2274,15 +2272,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     if (ret) {
         return ret;
     }
-    bool workloadPartition = false;
-    if (this->partitionCount > 1 &&
-        hSignalEvent) {
-        auto event = Event::fromHandle(hSignalEvent);
-        if (event->isEventTimestampFlagSet()) {
-            event->setPacketsInUse(this->partitionCount);
-            workloadPartition = true;
-        }
-    }
+    bool workloadPartition = setupTimestampEventForMultiTile(hSignalEvent);
     appendEventForProfiling(hSignalEvent, true, workloadPartition);
 
     if (isCopyOnly()) {

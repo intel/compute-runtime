@@ -278,5 +278,295 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     pCommandList->reset();
 }
 
+using AppendMemoryCopyXeHpAndLater = Test<DeviceFixture>;
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+          givenCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernels,
+          IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1231);
+    void *dstPtr = reinterpret_cast<void *>(0x200002345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + event->getSinglePacketSize();
+    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 2 * event->getSinglePacketSize();
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
+    EXPECT_EQ(3u, event->getPacketsInUse());
+    EXPECT_EQ(3u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+    auto thirdWalker = itorWalkers[2];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+}
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+          givenMultiTileCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernels,
+          IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+    commandList.partitionCount = 2;
+
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1231);
+    void *dstPtr = reinterpret_cast<void *>(0x200002345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + 2 * event->getSinglePacketSize();
+    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 4 * event->getSinglePacketSize();
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
+    EXPECT_EQ(6u, event->getPacketsInUse());
+    EXPECT_EQ(3u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+    auto thirdWalker = itorWalkers[2];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+}
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+          givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWaHandled,
+          isXeHpOrXeHpgCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1231);
+    void *dstPtr = reinterpret_cast<void *>(0x200002345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + 2 * event->getSinglePacketSize();
+    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 4 * event->getSinglePacketSize();
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
+    EXPECT_EQ(6u, event->getPacketsInUse());
+    EXPECT_EQ(3u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+    auto thirdWalker = itorWalkers[2];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    auto itorPipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    uint64_t eventGpuAddress = firstKernelEventAddress + event->getSinglePacketSize();
+    if (event->isUsingContextEndOffset()) {
+        eventGpuAddress += event->getContextEndOffset();
+    }
+    uint32_t postSyncPipeControls = 0;
+    for (auto it : itorPipeControls) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
+            EXPECT_TRUE(cmd->getDcFlushEnable());
+            EXPECT_EQ(eventGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            postSyncPipeControls++;
+            eventGpuAddress += (2 * event->getSinglePacketSize());
+        }
+    }
+    EXPECT_EQ(3u, postSyncPipeControls);
+}
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+          givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlushWaHandled,
+          isXeHpOrXeHpgCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+    commandList.partitionCount = 2;
+
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1231);
+    void *dstPtr = reinterpret_cast<void *>(0x200002345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + 4 * event->getSinglePacketSize();
+    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 8 * event->getSinglePacketSize();
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
+    EXPECT_EQ(12u, event->getPacketsInUse());
+    EXPECT_EQ(3u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+    auto thirdWalker = itorWalkers[2];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    auto itorPipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    uint64_t eventGpuAddress = firstKernelEventAddress + 2 * event->getSinglePacketSize();
+    if (event->isUsingContextEndOffset()) {
+        eventGpuAddress += event->getContextEndOffset();
+    }
+    uint32_t postSyncPipeControls = 0;
+    for (auto it : itorPipeControls) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
+            EXPECT_TRUE(cmd->getDcFlushEnable());
+            EXPECT_EQ(eventGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            postSyncPipeControls++;
+            eventGpuAddress += (4 * event->getSinglePacketSize());
+        }
+    }
+    EXPECT_EQ(3u, postSyncPipeControls);
+}
+
 } // namespace ult
 } // namespace L0
