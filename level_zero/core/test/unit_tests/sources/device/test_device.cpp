@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -14,6 +15,8 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
@@ -35,6 +38,7 @@
 
 #include "gtest/gtest.h"
 
+#include <list>
 #include <memory>
 
 namespace NEO {
@@ -1774,6 +1778,43 @@ TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSu
     ze_bool_t canAccess = true;
     ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+HWTEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyAndDeviceLostSynchronizeThenCanAccessPeerReturnsDeviceLost) {
+    constexpr size_t devicesCount{2};
+    ASSERT_LE(devicesCount, driverHandle->devices.size());
+
+    L0::Device *devices[devicesCount] = {driverHandle->devices[0], driverHandle->devices[1]};
+    std::vector<NEO::Device *> allNeoDevices{};
+
+    for (const auto device : devices) {
+        const auto neoDevice = device->getNEODevice();
+        const auto neoSubDevices = neoDevice->getSubDevices();
+
+        allNeoDevices.push_back(neoDevice);
+        allNeoDevices.insert(allNeoDevices.end(), neoSubDevices.begin(), neoSubDevices.end());
+    }
+
+    for (const auto neoDevice : allNeoDevices) {
+        auto &deviceRegularEngines = neoDevice->getRegularEngineGroups();
+        ASSERT_EQ(1u, deviceRegularEngines.size());
+        ASSERT_EQ(1u, deviceRegularEngines[0].engines.size());
+
+        auto &deviceEngine = deviceRegularEngines[0].engines[0];
+        auto hwCsr = static_cast<CommandStreamReceiverHw<FamilyType> *>(deviceEngine.commandStreamReceiver);
+        auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(hwCsr);
+
+        ultCsr->callBaseWaitForCompletionWithTimeout = false;
+        ultCsr->returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    }
+
+    GFXCORE_FAMILY device0Family = devices[0]->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = devices[1]->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = devices[0]->canAccessPeer(devices[1]->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
 }
 
 using DeviceTests = Test<DeviceFixture>;

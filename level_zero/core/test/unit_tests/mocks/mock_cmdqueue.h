@@ -6,12 +6,16 @@
  */
 
 #pragma once
+
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
+
+#include <cstddef>
+#include <optional>
 
 namespace L0 {
 namespace ult {
@@ -71,6 +75,14 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return synchronizeReturnValue;
     }
 
+    NEO::WaitStatus reserveLinearStreamSize(size_t size) override {
+        if (reserveLinearStreamSizeReturnValue.has_value()) {
+            return *reserveLinearStreamSizeReturnValue;
+        }
+
+        return BaseClass::reserveLinearStreamSize(size);
+    }
+
     NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr, bool isCooperative) override {
         residencyContainerSnapshot = residencyContainer;
         return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
@@ -79,6 +91,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     uint32_t synchronizedCalled = 0;
     NEO::ResidencyContainer residencyContainerSnapshot;
     ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
+    std::optional<NEO::WaitStatus> reserveLinearStreamSizeReturnValue{};
 };
 
 struct Deleter {
@@ -86,5 +99,6 @@ struct Deleter {
         cmdQ->destroy();
     }
 };
+
 } // namespace ult
 } // namespace L0

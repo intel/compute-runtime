@@ -148,8 +148,17 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bool performMigration) {
     this->close();
     ze_command_list_handle_t immediateHandle = this->toHandle();
-    this->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
-    this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
+
+    const auto commandListExecutionResult = this->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
+    if (commandListExecutionResult == ZE_RESULT_ERROR_DEVICE_LOST) {
+        return commandListExecutionResult;
+    }
+
+    const auto synchronizationResult = this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
+    if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {
+        return synchronizationResult;
+    }
+
     this->reset();
 
     return ZE_RESULT_SUCCESS;

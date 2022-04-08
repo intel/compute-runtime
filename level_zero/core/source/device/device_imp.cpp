@@ -126,8 +126,11 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
             if (ret == ZE_RESULT_SUCCESS) {
                 this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
                 pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;
-                L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
-                *value = true;
+
+                ret = L0::CommandQueue::fromHandle(commandQueue)->synchronize(std::numeric_limits<uint64_t>::max());
+                if (ret == ZE_RESULT_SUCCESS) {
+                    *value = true;
+                }
             }
         }
 
@@ -137,6 +140,10 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
         L0::Context::fromHandle(context)->destroy();
         L0::CommandQueue::fromHandle(commandQueue)->destroy();
         L0::CommandList::fromHandle(commandList)->destroy();
+
+        if (ret == ZE_RESULT_ERROR_DEVICE_LOST) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
     }
 
     return ZE_RESULT_SUCCESS;

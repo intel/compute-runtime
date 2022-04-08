@@ -189,8 +189,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         }
         return returnWaitForCompletionWithTimeout;
     }
+
     WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
+    }
+
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        if (waitForTaskCountWithKmdNotifyFallbackReturnValue.has_value()) {
+            return *waitForTaskCountWithKmdNotifyFallbackReturnValue;
+        }
+
+        return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
@@ -357,5 +366,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool shouldFailFlushBatchedSubmissions = false;
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
 };
+
 } // namespace NEO

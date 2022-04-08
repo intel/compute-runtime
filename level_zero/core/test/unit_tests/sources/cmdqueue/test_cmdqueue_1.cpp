@@ -86,9 +86,51 @@ TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutput
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStreamThenReturnGpuHang) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    NEO::WaitStatus waitStatus{NEO::WaitStatus::NotReady};
+
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
+
+    size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
+
+    auto firstAllocation = commandQueue->commandStream->getGraphicsAllocation();
+    EXPECT_EQ(firstAllocation, commandQueue->buffers.getCurrentBufferAllocation());
+
+    uint32_t currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::Ready;
+
+    commandQueue->commandStream->getSpace(maxSize - 16u);
+    commandQueue->buffers.setCurrentFlushStamp(121u, 121u);
+    size_t nextSize = 32u;
+
+    waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
+
+    csr.waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
+    commandQueue->commandStream->getSpace(maxSize - 32u);
+    commandQueue->buffers.setCurrentFlushStamp(128u, 128u);
+    nextSize = 64u;
+
+    waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::GpuHang, waitStatus);
+
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
+    NEO::WaitStatus waitStatus{NEO::WaitStatus::NotReady};
 
     auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
                                                            device,
@@ -110,7 +152,9 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
     commandQueue->commandStream->getSpace(maxSize - 16u);
     commandQueue->buffers.setCurrentFlushStamp(121u, 121u);
     size_t nextSize = 16u + 16u;
-    commandQueue->reserveLinearStreamSize(nextSize);
+
+    waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
     auto secondAllocation = commandQueue->commandStream->getGraphicsAllocation();
     EXPECT_EQ(secondAllocation, commandQueue->buffers.getCurrentBufferAllocation());
@@ -119,7 +163,9 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
 
     commandQueue->commandStream->getSpace(maxSize - 16u);
     commandQueue->buffers.setCurrentFlushStamp(244u, 244u);
-    commandQueue->reserveLinearStreamSize(nextSize);
+
+    waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
     auto thirdAllocation = commandQueue->commandStream->getGraphicsAllocation();
     EXPECT_EQ(thirdAllocation, commandQueue->buffers.getCurrentBufferAllocation());
@@ -128,7 +174,9 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
     EXPECT_EQ(csr.latestWaitForCompletionWithTimeoutTaskCount, 121u);
 
     commandQueue->commandStream->getSpace(maxSize - 16u);
-    commandQueue->reserveLinearStreamSize(nextSize);
+
+    waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
     auto fourthAllocation = commandQueue->commandStream->getGraphicsAllocation();
     EXPECT_EQ(fourthAllocation, commandQueue->buffers.getCurrentBufferAllocation());
@@ -173,7 +221,9 @@ TEST_F(CommandQueueCreate, whenCmdBuffersAllocationsAreCreatedThenSizeIsNotLessT
 
     commandQueue->commandStream->getSpace(maxSize - 16u);
     size_t nextSize = 16u + 16u;
-    commandQueue->reserveLinearStreamSize(nextSize);
+
+    const auto waitStatus = commandQueue->reserveLinearStreamSize(nextSize);
+    EXPECT_EQ(NEO::WaitStatus::Ready, waitStatus);
 
     auto sizeSecondBuffer = commandQueue->buffers.getCurrentBufferAllocation()->getUnderlyingBufferSize();
     EXPECT_LE(maxSize, sizeSecondBuffer);
@@ -227,6 +277,27 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     EXPECT_GT(maxSize, sizeAfter - sizeBefore);
 
     commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCommandListsThenDeviceLostIsReturned, IsSKL) {
+    const ze_command_queue_desc_t desc = {};
+    MockCommandQueueHw<gfxCoreFamily> commandQueue(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    commandQueue.reserveLinearStreamSizeReturnValue = NEO::WaitStatus::GpuHang;
+
+    Mock<Kernel> kernel;
+    kernel.immutableData.device = device;
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
+
+    ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
+
+    const auto result = commandQueue.executeCommandLists(1, cmdListHandles, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
 HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitWhenDispatchTaskCountWriteThenNoPipeControlFlushed) {

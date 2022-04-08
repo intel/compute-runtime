@@ -16,6 +16,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -270,7 +271,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
-    reserveLinearStreamSize(alignedSize);
+
+    const auto waitStatus = reserveLinearStreamSize(alignedSize);
+    if (waitStatus == NEO::WaitStatus::GpuHang) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
     NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
     child.setGpuBase(ptrOffset(commandStream->getGpuBase(), commandStream->getUsed() - alignedSize));
 

@@ -17,6 +17,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 namespace L0 {
 namespace ult {
@@ -1016,6 +1017,102 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+}
+
+HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+    mockCommandQueue.executeCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    auto oldCommandQueue = commandList->cmdQImmediate;
+    commandList->cmdQImmediate = &mockCommandQueue;
+
+    returnValue = commandList->appendWaitOnEvents(1, &event);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
+
+    commandList->cmdQImmediate = oldCommandQueue;
+}
+
+HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+    mockCommandQueue.synchronizeResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    auto oldCommandQueue = commandList->cmdQImmediate;
+    commandList->cmdQImmediate = &mockCommandQueue;
+
+    returnValue = commandList->appendWaitOnEvents(1, &event);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
+
+    commandList->cmdQImmediate = oldCommandQueue;
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingEventResetThenDeviceLostIsReturned) {

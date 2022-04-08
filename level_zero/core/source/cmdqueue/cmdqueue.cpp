@@ -66,15 +66,20 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
     return returnValue;
 }
 
-void CommandQueueImp::reserveLinearStreamSize(size_t size) {
+NEO::WaitStatus CommandQueueImp::reserveLinearStreamSize(size_t size) {
+    auto waitStatus{NEO::WaitStatus::Ready};
+
     UNRECOVERABLE_IF(commandStream == nullptr);
     if (commandStream->getAvailableSpace() < size) {
-        buffers.switchBuffers(csr);
+        waitStatus = buffers.switchBuffers(csr);
+
         NEO::GraphicsAllocation *nextBufferAllocation = buffers.getCurrentBufferAllocation();
         commandStream->replaceBuffer(nextBufferAllocation->getUnderlyingBuffer(),
                                      defaultQueueCmdBufferSize);
         commandStream->replaceGraphicsAllocation(nextBufferAllocation);
     }
+
+    return waitStatus;
 }
 
 NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
@@ -230,18 +235,21 @@ void CommandQueueImp::CommandBufferManager::destroy(Device *device) {
     }
 }
 
-void CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
+NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::CommandStreamReceiver *csr) {
     if (bufferUse == BUFFER_ALLOCATION::FIRST) {
         bufferUse = BUFFER_ALLOCATION::SECOND;
     } else {
         bufferUse = BUFFER_ALLOCATION::FIRST;
     }
 
+    auto waitStatus{NEO::WaitStatus::Ready};
     auto completionId = flushId[bufferUse];
     if (completionId.second != 0u) {
         UNRECOVERABLE_IF(csr == nullptr);
-        csr->waitForTaskCountWithKmdNotifyFallback(completionId.first, completionId.second, false, NEO::QueueThrottle::MEDIUM);
+        waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(completionId.first, completionId.second, false, NEO::QueueThrottle::MEDIUM);
     }
+
+    return waitStatus;
 }
 
 } // namespace L0
