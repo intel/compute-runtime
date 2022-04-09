@@ -78,6 +78,29 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
 }
 
+TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+    DebugManager.flags.EnableImplicitScaling.set(1u);
+    DebugManager.flags.CreateMultipleSubDevices.set(2u);
+
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+    ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
+
+    ASSERT_NE(nullptr, deviceImp->pageFaultCommandList->cmdQImmediate);
+    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
+    EXPECT_EQ(deviceImp->pageFaultCommandList->device, deviceImp->subDevices[0]);
+}
+
 TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {
     constexpr uint32_t numSubDevices = 3;
     constexpr uint32_t numMaskedSubDevices = 2;

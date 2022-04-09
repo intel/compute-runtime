@@ -893,9 +893,15 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
         ze_result_t resultValue = ZE_RESULT_SUCCESS;
+
+        Device *pageFaultDevice = device;
+        if (device->implicitScalingCapable) {
+            pageFaultDevice = device->subDevices[0];
+        }
+
         device->pageFaultCommandList =
             CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, NEO::EngineGroupType::Copy, resultValue);
+                device->neoDevice->getHardwareInfo().platform.eProductFamily, pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::Copy, resultValue);
     }
 
     if (osInterface) {
@@ -923,16 +929,18 @@ void DeviceImp::releaseResources() {
         !neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger->isLegacy()) {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
     }
+
+    if (this->pageFaultCommandList) {
+        this->pageFaultCommandList->destroy();
+        this->pageFaultCommandList = nullptr;
+    }
+
     for (uint32_t i = 0; i < this->numSubDevices; i++) {
         delete this->subDevices[i];
     }
     this->subDevices.clear();
     this->numSubDevices = 0;
 
-    if (this->pageFaultCommandList) {
-        this->pageFaultCommandList->destroy();
-        this->pageFaultCommandList = nullptr;
-    }
     metricContext.reset();
     builtins.reset();
     cacheReservation.reset();
