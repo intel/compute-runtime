@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,6 @@ struct SystemInfo {
 
   protected:
     void parseDeviceBlob(const std::vector<uint8_t> &inputData);
-    void extendParseDeviceBlob(const uint32_t *data, uint32_t element);
 
     uint32_t maxSlicesSupported = 0;
     uint32_t maxDualSubSlicesSupported = 0;

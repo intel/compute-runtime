@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,5 @@
 namespace NEO {
 
 void SystemInfo::checkSysInfoMismatch(HardwareInfo *hwInfo) {}
-void SystemInfo::extendParseDeviceBlob(const uint32_t *data, uint32_t element) {}
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,6 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint8_t> &inputData) {
         if (INTEL_HWCONFIG_MAX_CCS == data[i]) {
             maxCCS = data[i + 2];
         }
-        extendParseDeviceBlob(data, i);
         /* Skip to next attribute */
         auto blobLength = 2 + data[i + 1];
         i += blobLength;
