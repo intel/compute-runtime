@@ -14,7 +14,8 @@
 namespace L0 {
 
 const std::string iafPath = "device/";
-const std::string iafDirectory = "iaf.";
+const std::string iafDirectoryLegacy = "iaf.";
+const std::string iafDirectory = "i915.iaf.";
 const std::string fabricIdFile = "/iaf_fabric_id";
 
 ze_result_t FabricDeviceAccessNl::getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) {
@@ -216,8 +217,8 @@ ze_result_t FabricDeviceAccessNl::init() {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
         for (auto entry : list) {
-            if (!iafDirectory.compare(entry.substr(0, iafDirectory.length()))) {
-                // device/iaf.X/iaf_fabric_id, where X is the hardware slot number
+            if ((!iafDirectoryLegacy.compare(entry.substr(0, iafDirectoryLegacy.length()))) || (!iafDirectory.compare(entry.substr(0, iafDirectory.length())))) {
+                // device/iaf.X/iaf_fabric_id or device/i915.iaf.X/iaf_fabric_id, where X is the hardware slot number
                 path = iafPath + entry + fabricIdFile;
             }
         }
