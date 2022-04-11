@@ -38,7 +38,15 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
 }
 
 uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage) {
-    return 1;
+    if (returnErrorOnPatIndexQuery) {
+        return MockPatIndex::error;
+    }
+
+    if (usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+        return MockPatIndex::uncached;
+    }
+
+    return MockPatIndex::cached;
 }
 
 } // namespace NEO

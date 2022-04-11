@@ -437,6 +437,32 @@ size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwI
     return 0x2800000;
 }
 
+template <>
+uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
+    /*
+    PAT Index  CLOS   MemType
+    SHARED
+    0          0      UC (00)
+    1          0      WC (01)
+    2          0      WT (10)
+    3          0      WB (11)
+    RESERVED 1
+    4          1      WT (10)
+    5          1      WB (11)
+    RESERVED 2
+    6          2      WT (10)
+    7          2      WB (11)
+    */
+
+    if ((DebugManager.flags.ForceAllResourcesUncached.get() == true)) {
+        cacheRegion = CacheRegion::Default;
+        cachePolicy = CachePolicy::Uncached;
+    }
+
+    UNRECOVERABLE_IF((cacheRegion > CacheRegion::Default) && (cachePolicy < CachePolicy::WriteThrough));
+    return (static_cast<uint32_t>(cachePolicy) + (static_cast<uint16_t>(cacheRegion) * 2));
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"

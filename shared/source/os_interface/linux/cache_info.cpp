@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 namespace NEO {

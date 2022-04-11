@@ -12,7 +12,6 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/cache_info.h"
-#include "shared/source/os_interface/linux/clos_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -25,6 +24,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -667,7 +667,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenCsrTagAllocatorsWhenDestructin
     EXPECT_EQ(mock->context.vmBindCalled, mock->context.vmUnbindCalled);
 }
 
-HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledWhenVmBindCalledThenSetPatIndexExtension) {
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhenVmBindCalledThenSetPatIndexExtension) {
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
@@ -678,15 +678,24 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledWhenVmBindCalledThe
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
-    bool supported = (hwHelper.getNumCacheRegions() > 0);
+    auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+
+    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
+    bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
 
     for (int32_t debugFlag : {-1, 0, 1}) {
+        if (debugFlag == 1 && !closSupported) {
+            continue;
+        }
+
         DebugManager.flags.ClosEnabled.set(debugFlag);
 
         mock->context.receivedVmBindPatIndex.reset();
+        mock->context.receivedVmUnbindPatIndex.reset();
+
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
 
-        if (debugFlag == 0 || (debugFlag == -1 && !supported)) {
+        if (!patIndexProgrammingSupported) {
             EXPECT_FALSE(mock->context.receivedVmBindPatIndex);
 
             operationHandler->evict(device, *timestampStorageAlloc);
@@ -695,16 +704,121 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledWhenVmBindCalledThe
             continue;
         }
 
-        EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+        if (debugFlag == 0 || !closSupported || debugFlag == -1) {
+            auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached);
 
-        mock->context.receivedVmUnbindPatIndex.reset();
-        operationHandler->evict(device, *timestampStorageAlloc);
+            EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
-        EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
+            operationHandler->evict(device, *timestampStorageAlloc);
+            EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
+        } else {
+            EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+
+            operationHandler->evict(device, *timestampStorageAlloc);
+            EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
+        }
+    }
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorWhenVmBindCalledThenSetDefaultPatIndexExtension) {
+    DebugManager.flags.UseVmBind.set(1);
+    mock->bindAvailable = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+
+    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+
+    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
+    bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
+
+    if (!closSupported || !patIndexProgrammingSupported) {
+        GTEST_SKIP();
+    }
+
+    static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext())->returnErrorOnPatIndexQuery = true;
+
+    for (int32_t debugFlag : {-1, 0, 1}) {
+        DebugManager.flags.ClosEnabled.set(debugFlag);
 
         mock->context.receivedVmBindPatIndex.reset();
         mock->context.receivedVmUnbindPatIndex.reset();
+
+        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+
+        EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+
+        operationHandler->evict(device, *timestampStorageAlloc);
+        EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
     }
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugFlagSetWhenVmBindCalledThenSetDefaultPatIndexExtension) {
+    DebugManager.flags.UseVmBind.set(1);
+    DebugManager.flags.ForceAllResourcesUncached.set(1);
+    mock->bindAvailable = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+
+    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+
+    bool closSupported = (hwHelper.getNumCacheRegions() > 0);
+    bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
+
+    if (!closSupported || !patIndexProgrammingSupported) {
+        GTEST_SKIP();
+    }
+
+    static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext())->returnErrorOnPatIndexQuery = true;
+
+    mock->context.receivedVmBindPatIndex.reset();
+    mock->context.receivedVmUnbindPatIndex.reset();
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+
+    EXPECT_EQ(0u, mock->context.receivedVmBindPatIndex.value());
+
+    operationHandler->evict(device, *timestampStorageAlloc);
+    EXPECT_EQ(0u, mock->context.receivedVmUnbindPatIndex.value());
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBindCalledThenSetCorrectPatIndexExtension) {
+    DebugManager.flags.UseVmBind.set(1);
+    DebugManager.flags.ForceAllResourcesUncached.set(1);
+    mock->bindAvailable = true;
+
+    auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+
+    auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+
+    if (!hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
+        GTEST_SKIP();
+    }
+
+    mock->context.receivedVmBindPatIndex.reset();
+    mock->context.receivedVmUnbindPatIndex.reset();
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+
+    auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached);
+
+    EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
+
+    operationHandler->evict(device, *timestampStorageAlloc);
+    EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
 }
 
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledThenOverridePatIndex) {
@@ -748,58 +862,80 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
+    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
+
+    if (hwHelper.getNumCacheRegions() == 0) {
+        GTEST_SKIP();
+    }
+
     for (auto cacheRegion : {CacheRegion::Default, CacheRegion::Region1, CacheRegion::Region2}) {
         EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->setCacheAdvice(mock, 32 * MemoryConstants::kiloByte, cacheRegion));
 
         mock->context.receivedVmBindPatIndex.reset();
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
-        EXPECT_EQ(ClosHelper::getPatIndex(cacheRegion, CachePolicy::WriteBack), mock->context.receivedVmBindPatIndex.value());
+        auto patIndex = hwHelper.getPatIndex(cacheRegion, CachePolicy::WriteBack);
+
+        EXPECT_EQ(patIndex, mock->context.receivedVmBindPatIndex.value());
 
         mock->context.receivedVmUnbindPatIndex.reset();
         operationHandler->evict(device, *allocation);
 
-        EXPECT_EQ(ClosHelper::getPatIndex(cacheRegion, CachePolicy::WriteBack), mock->context.receivedVmUnbindPatIndex.value());
+        EXPECT_EQ(patIndex, mock->context.receivedVmUnbindPatIndex.value());
     }
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue) {
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-    EXPECT_EQ(1u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
-    EXPECT_EQ(2u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
-    EXPECT_EQ(3u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
-    EXPECT_ANY_THROW(ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
-    EXPECT_ANY_THROW(ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
-    EXPECT_EQ(4u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
-    EXPECT_EQ(5u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+    if (hwHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    } else {
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_EQ(1u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
+        EXPECT_EQ(2u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
+        EXPECT_EQ(3u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
 
-    EXPECT_ANY_THROW(ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
-    EXPECT_ANY_THROW(ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
-    EXPECT_EQ(6u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
-    EXPECT_EQ(7u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
+        EXPECT_EQ(4u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
+        EXPECT_EQ(5u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
+        EXPECT_EQ(6u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
+        EXPECT_EQ(7u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+    }
 }
 
 TEST(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForPatIndexThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceAllResourcesUncached.set(1);
 
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+    if (hwHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_ANY_THROW(hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
+    } else {
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack));
 
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
-    EXPECT_EQ(0u, ClosHelper::getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::Uncached));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region1, CachePolicy::WriteBack));
+
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::Uncached));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteCombined));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteThrough));
+        EXPECT_EQ(0u, hwHelper.getPatIndex(CacheRegion::Region2, CachePolicy::WriteBack));
+    }
 }
 
 TEST(DrmResidencyHandlerTests, givenSupportedVmBindAndDebugFlagUseVmBindWhenQueryingIsVmBindAvailableThenBindAvailableIsInitializedOnce) {

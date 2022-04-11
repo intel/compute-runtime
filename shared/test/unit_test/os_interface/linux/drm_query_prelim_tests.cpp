@@ -278,6 +278,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingT
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObjectMock bo(&drm, 1, 0, 1);
@@ -334,6 +335,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObjectMock bo(&drm, 1, 0, 1);
@@ -353,6 +355,7 @@ TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediat
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObjectMock bo(&drm, 1, 0, 1);
@@ -369,6 +372,7 @@ TEST(DrmBufferObjectTestPrelim, whenBindingThenImmediateFlagIsSetAndExtensionLis
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setDirectSubmissionActive(true);

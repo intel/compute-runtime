@@ -58,3 +58,10 @@ PVCTEST_F(HwInfoConfigTestLinuxPvc, GivenPvcWhenConfigureHardwareCustomThenKmdNo
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
+
+HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse, IGFX_PVC);
+
+PVCTEST_F(HwInfoConfigTestLinuxPvc, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
+}

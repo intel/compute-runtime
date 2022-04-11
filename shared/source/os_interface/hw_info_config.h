@@ -95,6 +95,7 @@ class HwInfoConfig {
     virtual bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -174,6 +175,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
+    bool isVmBindPatIndexProgrammingSupported() const override;
 
   protected:
     HwInfoConfigHw() = default;

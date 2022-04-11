@@ -24,9 +24,8 @@ struct DrmDebugPrelimTest : public ::testing::Test {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    }
-
-    void TearDown() override {
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+        executionEnvironment->initializeMemoryManager();
     }
 
   protected:
@@ -240,10 +239,6 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
 }
 
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockBufferObject bo(&drm, 0, 0, 1);
@@ -264,10 +259,6 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
 }
 
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternalContextThenExtensionsAreNotPassedToVmBindIoctl) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockBufferObject bo(&drm, 0, 0, 1);
@@ -282,10 +273,6 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
 }
 
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngineContextThenExtensionsAreNotPassedToVmBindIoctl) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockBufferObject bo(&drm, 0, 0, 1);
@@ -302,10 +289,6 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 }
 
 HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtensionsAreNotSet) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
-    executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockBufferObject bo(&drm, 0, 0, 1);
@@ -318,7 +301,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
 
     bo.unbind(&osContext, 0);
-    if (HwHelperHw<FamilyType>::get().getNumCacheRegions() > 0) {
+    if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
         EXPECT_NE(0u, drm.context.receivedVmUnbind.value().extensions);
     } else {
         EXPECT_EQ(0u, drm.context.receivedVmUnbind.value().extensions);

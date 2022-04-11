@@ -19,6 +19,7 @@ TEST(DrmVmBindTest, givenBoRequiringImmediateBindWhenBindingThenImmediateFlagIsP
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
@@ -36,6 +37,7 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = true;
@@ -64,6 +66,7 @@ TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindTh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
     struct DrmQueryMockToTestWaitForBind : public DrmQueryMock {
@@ -105,6 +108,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);

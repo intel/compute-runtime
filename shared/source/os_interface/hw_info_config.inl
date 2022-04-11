@@ -333,4 +333,9 @@ bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequi
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isVmBindPatIndexProgrammingSupported() const {
+    return false;
+}
+
 } // namespace NEO

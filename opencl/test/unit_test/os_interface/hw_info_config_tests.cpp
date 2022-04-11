@@ -390,3 +390,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfTile64With3DSurfaceOnBCSI
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isTile64With3DSurfaceOnBCSSupported(pInHwInfo));
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
+}

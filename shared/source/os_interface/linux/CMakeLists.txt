@@ -11,7 +11,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/clos_cache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/clos_cache.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/clos_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_drm.h
@@ -94,6 +93,10 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_xehp_and_later.inl
   )
+endif()
+
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xe_hpc_and_later.inl)
 endif()
 
 if(DISABLE_WDDM_LINUX)

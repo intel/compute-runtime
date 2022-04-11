@@ -327,4 +327,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isComputeDispatchAllWalkerEnableInCfeStateReq
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const {
+    return false;
+}
+
 } //namespace NEO

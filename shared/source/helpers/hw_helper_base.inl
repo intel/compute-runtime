@@ -721,4 +721,11 @@ bool HwHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const HardwareInfo &hwInf
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     return hwInfoConfig.isFlushTaskAllowed();
 }
+
+template <typename GfxFamily>
+uint64_t HwHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
+    UNRECOVERABLE_IF(true);
+
+    return -1;
+}
 } // namespace NEO

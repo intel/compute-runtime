@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -17,7 +18,6 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
-#include "shared/source/os_interface/linux/clos_helper.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -1337,6 +1337,25 @@ bool Drm::isVmBindAvailable() {
     return bindAvailable;
 }
 
+uint64_t getPatIndex(Drm *drm, const HwHelper &hwHelper, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) {
+    if (DebugManager.flags.OverridePatIndex.get() != -1) {
+        return static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
+    }
+
+    uint64_t patIndex = drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER);
+
+    if (DebugManager.flags.ForceAllResourcesUncached.get()) {
+        patIndex = drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    }
+
+    if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled) {
+        DEBUG_BREAK_IF(true);
+        patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
+    }
+
+    return patIndex;
+}
+
 int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
     auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
     auto ioctlHelper = drm->getIoctlHelper();
@@ -1371,6 +1390,10 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bindIterations = 1;
     }
 
+    auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+
     int ret = 0;
     for (size_t i = 0; i < bindIterations; i++) {
 
@@ -1388,10 +1411,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             vmBind.start = bindAddresses[i];
         }
 
-        auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-
-        bool closEnabled = (hwHelper.getNumCacheRegions() > 0);
+        bool closEnabled = (hwHelper.getNumCacheRegions() > 0) && (bo->peekCacheRegion() > CacheRegion::Default);
 
         if (DebugManager.flags.ClosEnabled.get() != -1) {
             closEnabled = !!DebugManager.flags.ClosEnabled.get();
@@ -1399,11 +1419,9 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
         VmBindExtSetPatT vmBindExtSetPat{};
 
-        if (closEnabled) {
-            uint64_t patIndex = ClosHelper::getPatIndex(bo->peekCacheRegion(), bo->peekCachePolicy());
-            if (DebugManager.flags.OverridePatIndex.get() != -1) {
-                patIndex = static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
-            }
+        if (hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
+            uint64_t patIndex = getPatIndex(drm, hwHelper, bo->peekCacheRegion(), bo->peekCachePolicy(), closEnabled);
+
             ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, patIndex, castToUint64(extensions.get()));
             vmBind.extensions = castToUint64(vmBindExtSetPat);
         } else {
