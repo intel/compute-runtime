@@ -9,7 +9,6 @@
 
 #include "sysman/linux/os_sysman_imp.h"
 
-#include <regex>
 namespace L0 {
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsUncorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
@@ -129,20 +128,28 @@ static uint64_t convertHexToUint64(std::string strVal) {
     return config;
 }
 
-static bool isErrorTypeSupported(std::string pattern, std::vector<std::string> &eventList) {
-    std::regex pPattern(pattern);
-    for (const auto &entry : eventList) {
-        if (regex_match(entry, pPattern) == true) {
-            return true;
-        }
+static bool getErrorType(std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEvents, std::vector<std::string> &eventList, ze_device_handle_t deviceHandle) {
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+    bool onSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+    uint32_t subDeviceId = deviceProperties.subdeviceId;
+    // Naming convention of files containing config values for errors
+    // error--<Name of error> Ex:- error--engine-reset  (config file with no subdevice)
+    // error-gt<N>--<Name of error> Ex:- error-gt0--engine-reset (config file with subdevices)
+    // error--<Name of error> Ex:- error--driver-object-migration  (config file for device level errors)
+    std::string errorPrefix = "error--"; // prefix string of the file containing config value for pmu counters
+    if (onSubDevice == true) {
+        errorPrefix = "error-gt" + std::to_string(subDeviceId) + "--";
     }
-    return false;
-}
-
-static bool getErrorType(std::vector<std::string> errorPattern, std::vector<std::string> &eventList) {
-    for (auto &pattern : errorPattern) {
-        if (isErrorTypeSupported(pattern, eventList) == true) {
-            return true;
+    for (auto const &rasErrorCatToListOfEvents : categoryToListOfEvents) {
+        for (auto const &nameOfError : rasErrorCatToListOfEvents.second) {
+            std::string errorPrefixLocal = errorPrefix;
+            if (nameOfError == "driver-object-migration") { // check for errors which occur at device level
+                errorPrefixLocal = "error--";
+            }
+            if (std::find(eventList.begin(), eventList.end(), errorPrefixLocal + nameOfError) != eventList.end()) {
+                return true;
+            }
         }
     }
     return false;
@@ -167,37 +174,10 @@ void LinuxRasSourceGt::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> 
     if (result != ZE_RESULT_SUCCESS) {
         return;
     }
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    bool onSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
-    uint32_t subDeviceId = deviceProperties.subdeviceId;
-    std::vector<std::string> uncorrectablePattern;
-    std::vector<std::string> correctablePattern;
-    // For device with no subDevice error entries are of form error--<Name of error type>
-    // and for device having subDevice error entries are of form error-gt<N>--<Name of error type>
-    uncorrectablePattern.push_back("^error--driver.*");
-    if (onSubDevice == false) {
-        correctablePattern.push_back("^error--correctable.*");
-        correctablePattern.push_back("^error--soc-correctable.*");
-        uncorrectablePattern.push_back("^error--engine-reset.*");
-        uncorrectablePattern.push_back("^error--eu-attention.*");
-        uncorrectablePattern.push_back("^error--fatal.*");
-        uncorrectablePattern.push_back("^error--soc-fatal.*");
-        uncorrectablePattern.push_back("^error--soc-nonfatal.*");
-    } else {
-        correctablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--correctable.*");
-        correctablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--soc-correctable.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--driver.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--fatal.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--soc-fatal.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--soc-nonfatal.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--eu-attention.*");
-        uncorrectablePattern.push_back("^error-gt" + std::to_string(subDeviceId) + "--engine-reset.*");
-    }
-    if (getErrorType(correctablePattern, listOfEvents) == true) {
+    if (getErrorType(categoryToListOfEventsCorrectable, listOfEvents, deviceHandle) == true) {
         errorType.insert(ZES_RAS_ERROR_TYPE_CORRECTABLE);
     }
-    if (getErrorType(uncorrectablePattern, listOfEvents) == true) {
+    if (getErrorType(categoryToListOfEventsUncorrectable, listOfEvents, deviceHandle) == true) {
         errorType.insert(ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
     }
 }
