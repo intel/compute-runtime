@@ -138,9 +138,9 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     bool initBlitterDirectSubmission = false;
 };
 
-class WddmCommandStreamWithMockGdiFixture {
+class WddmCommandStreamMockGdiTest : public ::testing::Test {
   public:
-    MockWddmCsr<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
+    CommandStreamReceiver *csr = nullptr;
     MemoryManager *memoryManager = nullptr;
     std::unique_ptr<MockDevice> device = nullptr;
     WddmMock *wddm = nullptr;
@@ -148,7 +148,8 @@ class WddmCommandStreamWithMockGdiFixture {
     DebugManagerStateRestore stateRestore;
     GraphicsAllocation *preemptionAllocation = nullptr;
 
-    void SetUp() {
+    template <typename FamilyType>
+    void SetUpT() {
         HardwareInfo *hwInfo = nullptr;
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
@@ -156,23 +157,24 @@ class WddmCommandStreamWithMockGdiFixture {
         wddm->resetGdi(gdi);
         ASSERT_NE(wddm, nullptr);
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
-        this->csr = new MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0, 1);
+        auto mockCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 0, 1);
+        this->csr = mockCsr;
         memoryManager = new WddmMemoryManager(*executionEnvironment);
         ASSERT_NE(nullptr, memoryManager);
         executionEnvironment->memoryManager.reset(memoryManager);
         device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
-        device->resetCommandStreamReceiver(this->csr);
+        device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
-        this->csr->overrideRecorededCommandBuffer(*device);
+        mockCsr->overrideRecorededCommandBuffer(*device);
     }
 
-    void TearDown() {
+    template <typename FamilyType>
+    void TearDownT() {
         wddm = nullptr;
     }
 };
 
 using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
-using WddmCommandStreamMockGdiTest = ::Test<WddmCommandStreamWithMockGdiFixture>;
 using WddmDefaultTest = ::Test<DeviceFixture>;
 struct DeviceCommandStreamTest : ::Test<MockAubCenterFixture>, DeviceFixture {
     void SetUp() override {
@@ -804,7 +806,7 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     EXPECT_EQ(WaitStatus::Ready, secondWaitResult);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledForResidencyAllocations) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledForResidencyAllocations) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -824,7 +826,7 @@ TEST_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledFor
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidencyAllocationsListIsCleared) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidencyAllocationsListIsCleared) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -848,27 +850,28 @@ TEST_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidencyAllocationsL
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
     //preemption allocation + sip allocation
     size_t csrSurfaceCount = 0;
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
     }
-    csrSurfaceCount += csr->globalFenceAllocation ? 1 : 0;
+    csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
 
-    csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    csr->useNewResourceImplicitFlush = false;
-    csr->useGpuIdleImplicitFlush = false;
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    csr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto dshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto iohAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto sshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto dshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto iohAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto sshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    auto tagAllocation = csr->getTagAllocation();
+    auto tagAllocation = mockCsr->getTagAllocation();
 
     LinearStream cs(commandBuffer);
     IndirectHeap dsh(dshAlloc);
@@ -880,7 +883,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
 
-    csr->flushTask(cs, 0u, &dsh, &ioh, &ssh, 0u, dispatchFlags, *device);
+    mockCsr->flushTask(cs, 0u, &dsh, &ioh, &ssh, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();
@@ -888,14 +891,14 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     ResidencyContainer copyOfResidency = storedCommandBuffer->surfaces;
     copyOfResidency.push_back(storedCommandBuffer->batchBuffer.commandBufferAllocation);
 
-    csr->flushBatchedSubmissions();
+    mockCsr->flushBatchedSubmissions();
 
-    csrSurfaceCount += csr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount -= device->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     EXPECT_EQ(1u, wddm->submitResult.called);
-    auto csrCommandStream = csr->commandStream.getGraphicsAllocation();
+    auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
     EXPECT_EQ(csrCommandStream->getGpuAddress(), wddm->submitResult.commandBufferSubmitted);
     EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)wddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
     EXPECT_EQ(6u + csrSurfaceCount, wddm->makeResidentResult.handleCount);
@@ -1068,8 +1071,9 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
     uint32_t dispatchCommandBufferCalled = 0;
 };
 
-TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<DEFAULT_TEST_FAMILY_NAME>;
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     DebugManager.flags.EnableDirectSubmission.set(1);
 
@@ -1078,7 +1082,7 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsE
 
     auto osContext = device->getDefaultEngine().osContext;
 
-    csr->callParentInitDirectSubmission = false;
+    mockCsr->callParentInitDirectSubmission = false;
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
@@ -1092,20 +1096,22 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsE
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
 
-    csr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext, device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext, device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
 
-    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->directSubmission.get());
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_GT(directSubmission->dispatchCommandBufferCalled, 0u);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
-    using Dispatcher = RenderDispatcher<DEFAULT_TEST_FAMILY_NAME>;
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission =
-        MockWddmDirectSubmission<DEFAULT_TEST_FAMILY_NAME, Dispatcher>;
+        MockWddmDirectSubmission<FamilyType, Dispatcher>;
+
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     DebugManager.flags.EnableDirectSubmission.set(1);
 
@@ -1114,7 +1120,7 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushi
 
     auto osContext = device->getDefaultEngine().osContext;
 
-    csr->callParentInitDirectSubmission = false;
+    mockCsr->callParentInitDirectSubmission = false;
     bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
@@ -1127,20 +1133,27 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushi
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->directSubmission.get());
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
                           Dispatcher::getSizePreemption() +
                           directSubmission->getSizeDispatch();
+
+    if (directSubmission->miMemFenceRequired) {
+        expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
+    }
+
     EXPECT_EQ(expectedSize, actualDispatchSize);
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
-    using Dispatcher = BlitterDispatcher<DEFAULT_TEST_FAMILY_NAME>;
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+    using Dispatcher = BlitterDispatcher<FamilyType>;
     using MockSubmission =
-        MockWddmDirectSubmission<DEFAULT_TEST_FAMILY_NAME, Dispatcher>;
+        MockWddmDirectSubmission<FamilyType, Dispatcher>;
+
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     DebugManager.flags.EnableDirectSubmission.set(1);
 
@@ -1149,8 +1162,8 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushi
 
     auto osContext = device->getDefaultEngine().osContext;
 
-    csr->callParentInitDirectSubmission = false;
-    csr->initBlitterDirectSubmission = true;
+    mockCsr->callParentInitDirectSubmission = false;
+    mockCsr->initBlitterDirectSubmission = true;
     bool ret = csr->initDirectSubmission(*device.get(), *osContext);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
@@ -1163,12 +1176,17 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushi
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->blitterDirectSubmission.get());
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
                           Dispatcher::getSizePreemption() +
                           directSubmission->getSizeDispatch();
+
+    if (directSubmission->miMemFenceRequired) {
+        expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
+    }
+
     EXPECT_EQ(expectedSize, actualDispatchSize);
     memoryManager->freeGraphicsMemory(commandBuffer);
 }

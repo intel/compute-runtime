@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,11 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeSwitchRingBufferSection;
+    using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::getTagAddressValue;
     using BaseClass::handleCompletionRingBuffer;
     using BaseClass::handleResidency;
+    using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;
