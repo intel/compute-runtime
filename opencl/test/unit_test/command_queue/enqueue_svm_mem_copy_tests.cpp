@@ -355,6 +355,33 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
     alignedFree(dstHostPtr);
 }
 
+HWTEST_F(EnqueueSvmMemCopyTest, givenCsrSelectionArgsCalledWithRootDeviceIndexGreaterThanNumAllocationsThenNoSourceResourceSet) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    auto dstHostPtr = alignedMalloc(256, 64);
+
+    auto retVal = mockCmdQ->enqueueSVMMemcpy(
+        CL_TRUE,    // cl_bool  blocking_copy
+        dstHostPtr, // void *dst_ptr
+        srcSvmPtr,  // const void *src_ptr
+        256,        // size_t size
+        0,          // cl_uint num_events_in_wait_list
+        nullptr,    // cl_event *event_wait_list
+        nullptr     // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockCmdQ->notifyEnqueueSVMMemcpyCalled);
+
+    MultiGraphicsAllocation &srcSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr)->gpuAllocations;
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &srcSvmAlloc, {}, static_cast<uint32_t>(srcSvmAlloc.getGraphicsAllocations().size()) + 1, nullptr};
+    EXPECT_EQ(csrSelectionArgs.srcResource.allocation, nullptr);
+
+    alignedFree(dstHostPtr);
+}
+
 HWTEST_F(EnqueueSvmMemCopyTest, givenConstHostMemoryAsSourceWhenEnqueueSVMMemcpyThenCpuCopyIsAllowed) {
     if (!pDevice->isFullRangeSvm()) {
         GTEST_SKIP();

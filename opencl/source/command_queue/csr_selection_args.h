@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,10 @@ struct CsrSelectionArgs {
     }
 
     static void processResource(const MultiGraphicsAllocation &multiGfxAlloc, uint32_t rootDeviceIndex, Resource &outResource) {
-        processResource(*multiGfxAlloc.getGraphicsAllocation(rootDeviceIndex), rootDeviceIndex, outResource);
+        auto allocation = multiGfxAlloc.getGraphicsAllocation(rootDeviceIndex);
+        if (allocation) {
+            processResource(*allocation, rootDeviceIndex, outResource);
+        }
     }
 
     static void processResource(const GraphicsAllocation &gfxAlloc, uint32_t rootDeviceIndex, Resource &outResource) {
