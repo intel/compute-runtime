@@ -1008,7 +1008,8 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
 
     std::string output = testing::internal::GetCapturedStdout();
     std::stringstream expectedOutput;
-    expectedOutput << "ColorDepth: 0\n"
+    expectedOutput << "Slice index: 0\n"
+                   << "ColorDepth: 0\n"
                    << "SourcePitch: 1\n"
                    << "SourceTiling: 0\n"
                    << "SourceX1Coordinate_Left: 0\n"
@@ -1044,6 +1045,6 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
                    << "DestinationSurfaceDepth: 1\n"
                    << "DestinationHorizontalAlign: 0\n"
                    << "DestinationVerticalAlign: 0\n"
-                   << "DestinationArrayIndex: 1\n";
+                   << "DestinationArrayIndex: 1\n\n";
     EXPECT_EQ(expectedOutput.str(), output);
 }

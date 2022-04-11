@@ -96,6 +96,6 @@ void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitP
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {}
+void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {}
 
 } // namespace NEO

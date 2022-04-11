@@ -387,7 +387,8 @@ void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitP
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {
+    printf("Slice index: %u\n", sliceIndex);
     printf("ColorDepth: %u\n", blitCmd.getColorDepth());
     printf("SourcePitch: %u\n", blitCmd.getSourcePitch());
     printf("SourceTiling: %u\n", blitCmd.getSourceTiling());
@@ -424,7 +425,7 @@ void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typenam
     printf("DestinationSurfaceDepth: %u\n", blitCmd.getDestinationSurfaceDepth());
     printf("DestinationHorizontalAlign: %u\n", blitCmd.getDestinationHorizontalAlign());
     printf("DestinationVerticalAlign: %u\n", blitCmd.getDestinationVerticalAlign());
-    printf("DestinationArrayIndex: %u\n", blitCmd.getDestinationArrayIndex());
+    printf("DestinationArrayIndex: %u\n\n", blitCmd.getDestinationArrayIndex());
 }
 
 } // namespace NEO
