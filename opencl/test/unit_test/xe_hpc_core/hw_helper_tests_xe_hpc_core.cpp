@@ -154,6 +154,19 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenQueryingMaxNumSamplersThenReturnZe
     EXPECT_EQ(0u, helper.getMaxNumSamplers());
 }
 
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    EXPECT_EQ(0u, hwHelper.getBarriersCountFromHasBarriers(0u));
+    EXPECT_EQ(1u, hwHelper.getBarriersCountFromHasBarriers(1u));
+    EXPECT_EQ(2u, hwHelper.getBarriersCountFromHasBarriers(2u));
+    EXPECT_EQ(4u, hwHelper.getBarriersCountFromHasBarriers(3u));
+    EXPECT_EQ(8u, hwHelper.getBarriersCountFromHasBarriers(4u));
+    EXPECT_EQ(16u, hwHelper.getBarriersCountFromHasBarriers(5u));
+    EXPECT_EQ(24u, hwHelper.getBarriersCountFromHasBarriers(6u));
+    EXPECT_EQ(32u, hwHelper.getBarriersCountFromHasBarriers(7u));
+}
+
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,

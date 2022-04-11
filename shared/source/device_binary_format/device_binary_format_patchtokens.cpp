@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
 #include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/source/utilities/logger.h"
 
@@ -56,6 +58,14 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Patchtokens>(Progr
     }
 
     NEO::populateProgramInfo(dst, decodedProgram);
+
+    // set barrierCount to number of barriers decoded from hasBarriers token
+    UNRECOVERABLE_IF(src.targetDevice.coreFamily == IGFX_UNKNOWN_CORE);
+    auto &hwHelper = NEO::HwHelper::get(src.targetDevice.coreFamily);
+    for (auto &ki : dst.kernelInfos) {
+        auto &kd = ki->kernelDescriptor;
+        kd.kernelAttributes.barrierCount = hwHelper.getBarriersCountFromHasBarriers(kd.kernelAttributes.barrierCount);
+    }
 
     return DecodeError::Success;
 }

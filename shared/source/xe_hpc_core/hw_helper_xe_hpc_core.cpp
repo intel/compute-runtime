@@ -24,6 +24,21 @@ template <>
 const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
+uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
+    static constexpr uint8_t possibleBarriersCounts[] = {
+        0u,  // 0
+        1u,  // 1
+        2u,  // 2
+        4u,  // 3
+        8u,  // 4
+        16u, // 5
+        24u, // 6
+        32u, // 7
+    };
+    return possibleBarriersCounts[hasBarriers];
+}
+
+template <>
 bool HwHelperHw<Family>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
 }

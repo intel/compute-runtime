@@ -447,6 +447,11 @@ uint32_t HwHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uin
 }
 
 template <typename GfxFamily>
+uint8_t HwHelperHw<GfxFamily>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
+    return hasBarriers;
+}
+
+template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
