@@ -1048,6 +1048,38 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCpuAccessRequiredWhenAllocati
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCpuAccessRequiredWhenAllocatingInDevicePoolAndMMAPFailThenAllocationIsNullptr) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.requiresCpuAccess = true;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
+                                     int flags, int fd, off_t offset) throw() {
+        return MAP_FAILED;
+    };
+
+    auto allocation1 = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_EQ(nullptr, allocation1);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+
+    status = MemoryManager::AllocationStatus::Success;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.requiresCpuAccess = true;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::WRITE_COMBINED;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation2 = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_EQ(nullptr, allocation2);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenWriteCombinedAllocationWhenAllocatingInDevicePoolThenAllocationIsLockedAndLockedPtrIsUsedAsGpuAddress) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData{};

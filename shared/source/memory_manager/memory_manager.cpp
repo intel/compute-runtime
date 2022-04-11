@@ -491,6 +491,11 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
             this->registerSysMemAlloc(allocation);
         }
     }
+
+    if (!allocation) {
+        return nullptr;
+    }
+
     FileLoggerInstance().logAllocation(allocation);
     registerAllocationInOs(allocation);
     return allocation;
@@ -647,6 +652,11 @@ void *MemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
         return graphicsAllocation->getLockedPtr();
     }
     auto retVal = lockResourceImpl(*graphicsAllocation);
+
+    if (!retVal) {
+        return nullptr;
+    }
+
     graphicsAllocation->lock(retVal);
     return retVal;
 }

@@ -1277,6 +1277,16 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
     return gpuAddress;
 }
 
+void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData, GfxPartition *gfxPartition, DrmAllocation *drmAllocation, GraphicsAllocation *graphicsAllocation, uint64_t &gpuAddress, size_t &sizeAllocated) {
+    for (auto bo : drmAllocation->getBOs()) {
+        delete bo;
+    }
+    for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        delete graphicsAllocation->getGmm(handleId);
+    }
+    gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::RetryInNonDevicePool;
     if (!this->localMemorySupported[allocationData.rootDeviceIndex] ||
@@ -1329,6 +1339,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                     allocationData.hostPtr, allocationData.flags.resource48Bit, allocationData.flags.use32BitFrontWindow);
 
     auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, gpuAddress, sizeAligned, MemoryPool::LocalMemory);
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
+    GraphicsAllocation *graphicsAllocation = static_cast<GraphicsAllocation *>(allocation.get());
+
     if (createSingleHandle) {
         allocation->setDefaultGmm(gmm.release());
     } else if (allocationData.storageInfo.multiStorage) {
@@ -1354,6 +1367,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     }
     if (allocationData.type == AllocationType::WRITE_COMBINED) {
         auto cpuAddress = lockResource(allocation.get());
+        if (!cpuAddress) {
+            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
+            status = AllocationStatus::Error;
+            return nullptr;
+        }
         auto alignedCpuAddress = alignDown(cpuAddress, 2 * MemoryConstants::megaByte);
         auto offset = ptrDiff(cpuAddress, alignedCpuAddress);
         allocation->setAllocationOffset(offset);
@@ -1363,19 +1381,18 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     }
     if (allocationData.flags.requiresCpuAccess) {
         auto cpuAddress = lockResource(allocation.get());
+        if (!cpuAddress) {
+            cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
+            status = AllocationStatus::Error;
+            return nullptr;
+        }
         allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
     }
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
     if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        for (auto bo : allocation->getBOs()) {
-            delete bo;
-        }
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
-            delete allocation->getGmm(handleId);
-        }
-        gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+        cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, graphicsAllocation, gpuAddress, sizeAllocated);
         status = AllocationStatus::Error;
         return nullptr;
     }
@@ -1625,6 +1642,11 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
     auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(offset));
     DEBUG_BREAK_IF(addr == MAP_FAILED);
 
+    if (addr == MAP_FAILED) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+        return nullptr;
+    }
+
     bo->setLockedAddress(addr);
 
     return bo->peekLockedAddress();
@@ -1704,6 +1726,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
     if (cpuPointer == MAP_FAILED) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
         return nullptr;
     }
 
@@ -1767,6 +1790,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         cpuPointer = this->mmapFunction(0, size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
         if (cpuPointer == MAP_FAILED) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
             delete bo;
             return nullptr;
         }
