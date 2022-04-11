@@ -20,7 +20,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     uint8_t kernelISA[8] = {0x3};
     uint8_t stringData[8] = {0x4};
 
-    uint8_t debugInfo[0x20] = {0x0};
+    uint8_t debugInfo[0x28] = {0x0};
     uint8_t debugAbbrev[8] = {0x0};
 
     using Segment = NEO::Debug::Segments::Segment;
@@ -43,7 +43,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     typedef NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> SymbolEntry;
     typedef NEO::Elf::ElfRela<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> Relocation;
 
-    SymbolEntry symbols[5]{};
+    SymbolEntry symbols[6]{};
     symbols[0].name = elfEncoder.appendSectionName("kernel");
     symbols[0].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_SECTION | NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL << 4;
     symbols[0].shndx = static_cast<decltype(SymbolEntry::shndx)>(kernelSectionIndex);
@@ -69,7 +69,12 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     symbols[4].shndx = static_cast<decltype(SymbolEntry::shndx)>(zeInfoSectionIndex);
     symbols[4].value = 0U;
 
-    Relocation debugRelocations[5]{};
+    symbols[5].name = elfEncoder.appendSectionName(NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel");
+    symbols[5].info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_SECTION | NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL << 4;
+    symbols[5].shndx = static_cast<decltype(SymbolEntry::shndx)>(debugInfoSectionIndex);
+    symbols[5].value = 0U;
+
+    Relocation debugRelocations[6]{};
     debugRelocations[0].addend = 0xabc;
     debugRelocations[0].offset = 0x0;
     debugRelocations[0].info = (uint64_t(0) << 32) | NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR;
@@ -90,6 +95,10 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     debugRelocations[4].addend = 0x0;
     debugRelocations[4].offset = 0x18U;
     debugRelocations[4].info = (uint64_t(4) << 32) | NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR;
+
+    debugRelocations[5].addend = 0x0;
+    debugRelocations[5].offset = 0x20U;
+    debugRelocations[5].info = (uint64_t(5) << 32) | NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR;
 
     elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab, ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(symbols), sizeof(symbols)));
     auto &relaHeader = elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Elf::SectionsNamesZebin::debugInfo.str(), ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(debugRelocations), sizeof(debugRelocations)));
@@ -132,41 +141,51 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->name, debugZebin.sectionHeaders[i].header->name);
         EXPECT_EQ(zebin.sectionHeaders[i].header->flags, debugZebin.sectionHeaders[i].header->flags);
 
-        auto sectionName = debugZebin.getSectionName(i);
+        const auto &sectionHeader = debugZebin.sectionHeaders[i].header;
+        const auto &sectionData = debugZebin.sectionHeaders[i].data;
+        const auto sectionName = debugZebin.getSectionName(i);
         auto refSectionName = NEO::ConstStringRef(sectionName);
         if (refSectionName.startsWith(NEO::Elf::SectionsNamesZebin::textPrefix.data())) {
-            offsetKernel = debugZebin.sectionHeaders[i].header->offset;
-            fileSzKernel = debugZebin.sectionHeaders[i].header->size;
+            offsetKernel = sectionHeader->offset;
+            fileSzKernel = sectionHeader->size;
+            EXPECT_EQ(segments.nameToSegMap["kernel"].address, sectionHeader->addr);
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataConst) {
-            offsetConstData = debugZebin.sectionHeaders[i].header->offset;
-            fileSzConstData = debugZebin.sectionHeaders[i].header->size;
+            offsetConstData = sectionHeader->offset;
+            fileSzConstData = sectionHeader->size;
+            EXPECT_EQ(segments.constData.address, sectionHeader->addr);
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataGlobal) {
-            offsetVarData = debugZebin.sectionHeaders[i].header->offset;
-            fileSzVarData = debugZebin.sectionHeaders[i].header->size;
+            offsetVarData = sectionHeader->offset;
+            fileSzVarData = sectionHeader->size;
+            EXPECT_EQ(segments.varData.address, sectionHeader->addr);
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::dataConstString) {
-            offsetStringData = debugZebin.sectionHeaders[i].header->offset;
-            fileSzStringData = debugZebin.sectionHeaders[i].header->size;
+            offsetStringData = sectionHeader->offset;
+            fileSzStringData = sectionHeader->size;
+            EXPECT_EQ(segments.stringData.address, sectionHeader->addr);
         } else if (refSectionName == NEO::Elf::SectionsNamesZebin::debugInfo) {
-            auto ptrDebugInfo = debugZebin.sectionHeaders[i].data.begin();
-            EXPECT_EQ(*reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[0].offset),
-                      segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend);
+            auto ptrDebugInfo = sectionData.begin();
+            EXPECT_EQ(segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend,
+                      *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[0].offset));
 
-            EXPECT_EQ(*reinterpret_cast<const uint32_t *>(ptrDebugInfo + debugRelocations[1].offset),
-                      static_cast<uint32_t>((segments.constData.address + symbols[1].value + debugRelocations[1].addend) & 0xffffffff));
+            EXPECT_EQ(static_cast<uint32_t>((segments.constData.address + symbols[1].value + debugRelocations[1].addend) & 0xffffffff),
+                      *reinterpret_cast<const uint32_t *>(ptrDebugInfo + debugRelocations[1].offset));
 
-            EXPECT_EQ(*reinterpret_cast<const uint32_t *>(ptrDebugInfo + debugRelocations[2].offset),
-                      static_cast<uint32_t>(((segments.varData.address + symbols[2].value + debugRelocations[2].addend) >> 32) & 0xffffffff));
+            EXPECT_EQ(static_cast<uint32_t>(((segments.varData.address + symbols[2].value + debugRelocations[2].addend) >> 32) & 0xffffffff),
+                      *reinterpret_cast<const uint32_t *>(ptrDebugInfo + debugRelocations[2].offset));
 
-            // debug symbols are not offseted
-            EXPECT_EQ(*reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[3].offset),
-                      symbols[3].value + debugRelocations[3].addend);
+            // debug symbols with name different than text segments are not offseted
+            EXPECT_EQ(symbols[3].value + debugRelocations[3].addend,
+                      *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[3].offset));
 
-            // if symbols points to other sections relocation is skipped
-            EXPECT_EQ(*reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[4].offset), 0U);
+            // if symbols points to other sections relocation is skipped - not text, data, debug
+            EXPECT_EQ(0U, *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[4].offset));
+
+            // debug symbols with text segment name are offseted by corresponding segment's address
+            EXPECT_EQ(segments.nameToSegMap["kernel"].address,
+                      *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[5].offset));
         } else {
-            EXPECT_EQ(zebin.sectionHeaders[i].header->size, debugZebin.sectionHeaders[i].header->size);
-            if (debugZebin.sectionHeaders[i].header->size > 0U) {
-                EXPECT_TRUE(memcmp(zebin.sectionHeaders[i].data.begin(), debugZebin.sectionHeaders[i].data.begin(), debugZebin.sectionHeaders[i].data.size()) == 0);
+            EXPECT_EQ(zebin.sectionHeaders[i].header->size, sectionHeader->size);
+            if (sectionHeader->size > 0U) {
+                EXPECT_TRUE(memcmp(zebin.sectionHeaders[i].data.begin(), sectionData.begin(), sectionData.size()) == 0);
             }
         }
     }

@@ -46,15 +46,16 @@ void DebugZebinCreator::createDebugZebin() {
         const auto &section = zebin.sectionHeaders[i];
         auto sectionName = zebin.getSectionName(i);
 
-        if (auto segment = getSegmentByName(sectionName)) {
-            elfEncoder.appendProgramHeaderLoad(i, segment->address, segment->size);
-        }
-
         auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, section.data);
         sectionHeader.link = section.header->link;
         sectionHeader.info = section.header->info;
         sectionHeader.name = section.header->name;
         sectionHeader.flags = section.header->flags;
+
+        if (auto segment = getSegmentByName(sectionName)) {
+            elfEncoder.appendProgramHeaderLoad(i, segment->address, segment->size);
+            sectionHeader.addr = segment->address;
+        }
     }
     debugZebin = elfEncoder.encode();
 }
@@ -81,21 +82,23 @@ void DebugZebinCreator::applyRelocations() {
     for (const auto &relocations : {elf.getDebugInfoRelocations(), elf.getRelocations()}) {
         for (const auto &reloc : relocations) {
 
-            auto sectionName = elf.getSectionName(reloc.symbolSectionIndex);
-            uint64_t sectionAddress = 0U;
-            if (auto segment = getSegmentByName(sectionName)) {
-                sectionAddress = segment->address;
-            } else if (ConstStringRef(sectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
-                // do not offset debug symbols
+            uint64_t symbolOffset = 0U;
+            auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
+            if (auto segment = getSegmentByName(symbolSectionName)) {
+                symbolOffset = segment->address;
+            } else if (ConstStringRef(symbolSectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
+                if (ConstStringRef(reloc.symbolName).startsWith(SectionsNamesZebin::textPrefix.data())) {
+                    symbolOffset = getTextSegmentByName(reloc.symbolName)->address;
+                }
             } else {
                 DEBUG_BREAK_IF(true);
                 continue;
             }
 
-            auto value = sectionAddress + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
-            auto address = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
+            uint64_t relocVal = symbolOffset + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
+            auto relocAddr = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
             auto type = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
-            applyRelocation(address, value, type);
+            applyRelocation(relocAddr, relocVal, type);
         }
     }
 }
@@ -115,10 +118,7 @@ std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Se
 
 const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sectionName) {
     if (sectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
-        auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
-        auto kernelSegmentIt = segments.nameToSegMap.find(kernelName.str());
-        UNRECOVERABLE_IF(kernelSegmentIt == segments.nameToSegMap.end());
-        return &kernelSegmentIt->second;
+        return getTextSegmentByName(sectionName);
     } else if (sectionName == SectionsNamesZebin::dataConst) {
         return &segments.constData;
     } else if (sectionName == SectionsNamesZebin::dataGlobal) {
@@ -127,6 +127,13 @@ const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sect
         return &segments.stringData;
     }
     return nullptr;
+}
+
+const Segments::Segment *DebugZebinCreator::getTextSegmentByName(ConstStringRef sectionName) {
+    auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
+    auto kernelSegmentIt = segments.nameToSegMap.find(kernelName.str());
+    UNRECOVERABLE_IF(kernelSegmentIt == segments.nameToSegMap.end());
+    return &kernelSegmentIt->second;
 }
 
 } // namespace Debug
