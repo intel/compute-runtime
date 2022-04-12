@@ -1,18 +1,10 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set_property(GLOBAL PROPERTY SHARED_SRCS_ADDITIONAL_FILES_GEN12LP ${SHARED_SRCS_ADDITIONAL_FILES_GEN12LP})
-
-if(SUPPORT_ADLP)
-  set(HW_DEFINITIONS_ADLP
-      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}hw_cmds_adlp.inl
-  )
-  set_property(GLOBAL APPEND PROPERTY CORE_SRCS_COREX_ALL_BASE ${HW_DEFINITIONS_ADLP})
-endif()
 
 if(SUPPORT_GEN12LP)
   add_subdirectories()

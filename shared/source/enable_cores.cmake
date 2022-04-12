@@ -50,10 +50,21 @@ macro(macro_for_each_platform)
       list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
     endif()
 
+    set(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.inl")
+    set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}${PLATFORM_FILE})
+    if(EXISTS ${SRC_FILE})
+      list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
+    endif()
+
     foreach(BRANCH ${BRANCH_DIR_LIST})
       set(PATH_TO_CORE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH})
 
       set(SRC_FILE ${PATH_TO_CORE}hw_cmds_${PLATFORM_IT_LOWER}.h)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
+      endif()
+
+      set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}${BRANCH_DIR_SUFFIX}hw_cmds_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
       endif()

@@ -7,6 +7,9 @@
 
 #pragma once
 #include "shared/source/xe_hpg_core/hw_cmds_base.h"
+
+#include "device_ids_configs_dg2.h"
+
 namespace NEO {
 
 struct DG2 : public XE_HPG_COREFamily {

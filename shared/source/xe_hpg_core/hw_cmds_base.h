@@ -10,7 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
 
-#include "device_ids_configs_dg2.h"
 #include "igfxfmid.h"
 
 #include <cstddef>
