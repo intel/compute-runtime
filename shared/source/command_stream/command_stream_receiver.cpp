@@ -169,7 +169,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
     if (address) {
-        this->downloadTagAllocation();
+        this->downloadTagAllocation(requiredTaskCount);
         return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
     }
 
@@ -812,14 +812,16 @@ bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
     return false;
 }
 
-void CommandStreamReceiver::downloadTagAllocation() {
+void CommandStreamReceiver::downloadTagAllocation(uint32_t taskCountToWait) {
     if (this->getTagAllocation()) {
-        this->downloadAllocation(*this->getTagAllocation());
+        if (taskCountToWait && taskCountToWait <= this->peekLatestFlushedTaskCount()) {
+            this->downloadAllocation(*this->getTagAllocation());
+        }
     }
 }
 
 bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, uint32_t taskCountToWait) {
-    this->downloadTagAllocation();
+    this->downloadTagAllocation(taskCountToWait);
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
             return false;

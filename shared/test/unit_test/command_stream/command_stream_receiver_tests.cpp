@@ -308,6 +308,31 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpu
     constexpr auto taskCountToWait = 1;
     const auto waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
+    EXPECT_FALSE(csr.downloadAllocationCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, whenDownloadTagAllocationThenDonwloadOnlyIfTagAllocationWasFlushed) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+    *csr.tagAddress = 1u;
+
+    auto ret = csr.testTaskCountReady(csr.tagAddress, 0u);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr.downloadAllocationCalled);
+
+    constexpr auto taskCountToWait = 1;
+    ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr.downloadAllocationCalled);
+
+    csr.getTagAllocation()->updateTaskCount(taskCountToWait, csr.osContext->getContextId());
+    ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr.downloadAllocationCalled);
+
+    csr.setLatestFlushedTaskCount(taskCountToWait);
+    ret = csr.testTaskCountReady(csr.tagAddress, taskCountToWait);
+    EXPECT_TRUE(ret);
     EXPECT_TRUE(csr.downloadAllocationCalled);
 }
 
