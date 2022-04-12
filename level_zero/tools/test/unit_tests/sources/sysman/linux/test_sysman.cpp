@@ -54,6 +54,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysm
     delete (sysmanImp->pFirmwareHandleContext);
     delete (sysmanImp->pDiagnosticsHandleContext);
     delete (sysmanImp->pPerformanceHandleContext);
+    delete (sysmanImp->pEcc);
 
     sysmanImp->pPowerHandleContext = nullptr;
     sysmanImp->pFrequencyHandleContext = nullptr;
@@ -71,6 +72,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanImpCreationWhenAllSysm
     sysmanImp->pFirmwareHandleContext = nullptr;
     sysmanImp->pDiagnosticsHandleContext = nullptr;
     sysmanImp->pPerformanceHandleContext = nullptr;
+    sysmanImp->pEcc = nullptr;
 
     auto pLinuxSysmanImpTemp = static_cast<PublicLinuxSysmanImp *>(sysmanImp->pOsSysman);
     pLinuxSysmanImpTemp->pSysfsAccess = pSysfsAccess;
@@ -127,6 +129,14 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleAndIfSysmanDeviceInitFailsThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEventRegister(hSysman, events));
     zes_pwr_handle_t phPower = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetCardPowerDomain(hSysman, &phPower));
+    ze_bool_t eccAvailable = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccAvailable(device, &eccAvailable));
+    ze_bool_t eccConfigurable = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEccConfigurable(device, &eccConfigurable));
+    zes_device_ecc_desc_t newState = {};
+    zes_device_ecc_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceSetEccState(device, &newState, &props));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceGetEccState(device, &props));
     static_cast<DeviceImp *>(device)->setSysmanHandle(pSysmanDeviceOriginal);
 }
 

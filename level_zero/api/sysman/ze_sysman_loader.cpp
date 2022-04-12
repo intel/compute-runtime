@@ -63,6 +63,10 @@ zesGetDeviceProcAddrTable(
     pDdiTable->pfnEnumSchedulers = zesDeviceEnumSchedulers;
     pDdiTable->pfnEnumStandbyDomains = zesDeviceEnumStandbyDomains;
     pDdiTable->pfnEnumTemperatureSensors = zesDeviceEnumTemperatureSensors;
+    pDdiTable->pfnEccAvailable = zesDeviceEccAvailable;
+    pDdiTable->pfnEccConfigurable = zesDeviceEccConfigurable;
+    pDdiTable->pfnGetEccState = zesDeviceGetEccState;
+    pDdiTable->pfnSetEccState = zesDeviceSetEccState;
     return result;
 }
 

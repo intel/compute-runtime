@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/ecc/ecc_imp.h"
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
@@ -38,6 +39,7 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
     pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
+    pEcc = new EccImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -57,6 +59,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pPci);
     freeResource(pFrequencyHandleContext);
     freeResource(pPowerHandleContext);
+    freeResource(pEcc);
     freeResource(pOsSysman);
 }
 
@@ -141,6 +144,9 @@ ze_result_t SysmanDeviceImp::init() {
     }
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
+    }
+    if (pEcc) {
+        pEcc->init();
     }
     return result;
 }
@@ -239,6 +245,19 @@ ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
 
 ze_result_t SysmanDeviceImp::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
     return pPerformanceHandleContext->performanceGet(pCount, phPerformance);
+}
+
+ze_result_t SysmanDeviceImp::deviceEccAvailable(ze_bool_t *pAvailable) {
+    return pEcc->deviceEccAvailable(pAvailable);
+}
+ze_result_t SysmanDeviceImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
+    return pEcc->deviceEccConfigurable(pConfigurable);
+}
+ze_result_t SysmanDeviceImp::deviceGetEccState(zes_device_ecc_properties_t *pState) {
+    return pEcc->getEccState(pState);
+}
+ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
+    return pEcc->setEccState(newState, pState);
 }
 
 } // namespace L0

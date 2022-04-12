@@ -747,3 +747,32 @@ zesPerformanceFactorSetConfig(
     double factor) {
     return L0::Performance::fromHandle(hPerf)->performanceSetConfig(factor);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceEccAvailable(
+    zes_device_handle_t hDevice,
+    ze_bool_t *pAvailable) {
+    return L0::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceEccConfigurable(
+    zes_device_handle_t hDevice,
+    ze_bool_t *pConfigurable) {
+    return L0::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceGetEccState(
+    zes_device_handle_t hDevice,
+    zes_device_ecc_properties_t *pState) {
+    return L0::SysmanDevice::deviceGetEccState(hDevice, pState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceSetEccState(
+    zes_device_handle_t hDevice,
+    const zes_device_ecc_desc_t *newState,
+    zes_device_ecc_properties_t *pState) {
+    return L0::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+}

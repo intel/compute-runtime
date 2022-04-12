@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
+#include "level_zero/tools/source/sysman/ecc/ecc.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
 #include "level_zero/tools/source/sysman/events/events.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
@@ -54,6 +55,10 @@ struct SysmanDevice : _ze_device_handle_t {
     static ze_result_t diagnosticsGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     static ze_result_t firmwareGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_firmware_handle_t *phFirmware);
     static ze_result_t deviceEventRegister(zes_device_handle_t hDevice, zes_event_type_flags_t events);
+    static ze_result_t deviceEccAvailable(zes_device_handle_t hDevice, ze_bool_t *pAvailable);
+    static ze_result_t deviceEccConfigurable(zes_device_handle_t hDevice, ze_bool_t *pConfigurable);
+    static ze_result_t deviceGetEccState(zes_device_handle_t hDevice, zes_device_ecc_properties_t *pState);
+    static ze_result_t deviceSetEccState(zes_device_handle_t hDevice, const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState);
     static bool deviceEventListen(zes_device_handle_t hDevice, zes_event_type_flags_t &pEvent, uint64_t timeout);
 
     virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
@@ -79,6 +84,10 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) = 0;
     virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
     virtual ze_result_t deviceEventRegister(zes_event_type_flags_t events) = 0;
+    virtual ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) = 0;
+    virtual ze_result_t deviceEccConfigurable(ze_bool_t *pConfigurable) = 0;
+    virtual ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) = 0;
+    virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
     virtual ~SysmanDevice() = default;
 };
