@@ -132,7 +132,11 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 
 template <>
 std::string HwHelperHw<Family>::getExtensions() const {
-    return "cl_intel_subgroup_local_block_io ";
+    std::string extensions;
+    extensions += "cl_intel_subgroup_local_block_io ";
+    extensions += "cl_intel_split_work_group_barrier ";
+
+    return extensions;
 }
 
 template <>
