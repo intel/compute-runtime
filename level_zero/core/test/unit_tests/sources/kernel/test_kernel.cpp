@@ -262,10 +262,10 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     desc.height = 13;
     desc.depth = 17;
 
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &desc);
@@ -275,7 +275,7 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
     auto imgInfo = imageHW->getImageInfo();
     auto pixelSize = imgInfo.surfaceFormat->ImageElementSizeInBytes;
 
-    kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(kernel->setArgImage(3, sizeof(imageHW.get()), &handle), ZE_RESULT_SUCCESS);
 
     auto crossThreadData = kernel->getCrossThreadData();
 
@@ -314,6 +314,92 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     auto pChannelOrder = ptrOffset(crossThreadData, imageArg.metadataPayload.channelOrder);
     EXPECT_EQ(getClChannelOrder(desc.format), *reinterpret_cast<const cl_channel_order *>(pChannelOrder));
+}
+
+HWTEST2_F(SetKernelArg, givenInvalidImageLayoutFormatComboAndKernelWhenSetArgImageIsCalledThenUnsupportedReturned, ImageSupport) {
+    createKernel();
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].as<NEO::ArgDescImage>());
+    imageArg.metadataPayload.imgWidth = 0x1c;
+    imageArg.metadataPayload.imgHeight = 0x18;
+    imageArg.metadataPayload.imgDepth = 0x14;
+
+    imageArg.metadataPayload.arraySize = 0x10;
+    imageArg.metadataPayload.numSamples = 0xc;
+    imageArg.metadataPayload.channelDataType = 0x8;
+    imageArg.metadataPayload.channelOrder = 0x4;
+    imageArg.metadataPayload.numMipLevels = 0x0;
+
+    imageArg.metadataPayload.flatWidth = 0x30;
+    imageArg.metadataPayload.flatHeight = 0x2c;
+    imageArg.metadataPayload.flatPitch = 0x28;
+    imageArg.metadataPayload.flatBaseOffset = 0x20;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto handle = imageHW->toHandle();
+
+    EXPECT_EQ(kernel->setArgImage(3, sizeof(imageHW.get()), &handle), ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
+}
+
+HWTEST2_F(SetKernelArg, givenInvalidImageSwizzleAndKernelWhenSetArgImageIsCallednThenUnsupportedReturned, ImageSupport) {
+    createKernel();
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].as<NEO::ArgDescImage>());
+    imageArg.metadataPayload.imgWidth = 0x1c;
+    imageArg.metadataPayload.imgHeight = 0x18;
+    imageArg.metadataPayload.imgDepth = 0x14;
+
+    imageArg.metadataPayload.arraySize = 0x10;
+    imageArg.metadataPayload.numSamples = 0xc;
+    imageArg.metadataPayload.channelDataType = 0x8;
+    imageArg.metadataPayload.channelOrder = 0x4;
+    imageArg.metadataPayload.numMipLevels = 0x0;
+
+    imageArg.metadataPayload.flatWidth = 0x30;
+    imageArg.metadataPayload.flatHeight = 0x2c;
+    imageArg.metadataPayload.flatPitch = 0x28;
+    imageArg.metadataPayload.flatBaseOffset = 0x20;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto handle = imageHW->toHandle();
+
+    EXPECT_EQ(kernel->setArgImage(3, sizeof(imageHW.get()), &handle), ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
 }
 
 HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDataIsSet, ImageSupport) {
