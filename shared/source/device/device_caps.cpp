@@ -79,9 +79,10 @@ void Device::initializeCaps() {
     deviceInfo.maxMemAllocSize = std::min(deviceInfo.globalMemSize, deviceInfo.maxMemAllocSize); // if globalMemSize was reduced for 32b
 
     uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    bool platformImplicitScaling = hwHelper.platformSupportsImplicitScaling(hwInfo);
 
     if (((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
-            getDeviceBitfield(), true))) &&
+            getDeviceBitfield(), platformImplicitScaling))) &&
         (!isSubDevice()) && (subDeviceCount > 1)) {
         deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
     }
