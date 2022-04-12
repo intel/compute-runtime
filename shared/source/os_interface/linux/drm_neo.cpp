@@ -954,10 +954,7 @@ bool Drm::useVMBindImmediate() const {
 void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
-    gtSysInfo->L3CacheSizeInKb = sysInfo->getL3CacheSizeInKb();
-    gtSysInfo->L3BankCount = sysInfo->getL3BankCount();
     gtSysInfo->MemoryType = sysInfo->getMemoryType();
-    gtSysInfo->MaxFillRate = sysInfo->getMaxFillRate();
     gtSysInfo->TotalVsThreads = sysInfo->getTotalVsThreads();
     gtSysInfo->TotalHsThreads = sysInfo->getTotalHsThreads();
     gtSysInfo->TotalDsThreads = sysInfo->getTotalDsThreads();

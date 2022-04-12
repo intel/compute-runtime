@@ -31,12 +31,9 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     std::vector<uint8_t> inputData{};
     SystemInfo systemInfo(inputData);
 
-    EXPECT_EQ(0u, systemInfo.getL3CacheSizeInKb());
-    EXPECT_EQ(0u, systemInfo.getL3BankCount());
     EXPECT_EQ(0u, systemInfo.getMemoryType());
     EXPECT_EQ(0u, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0u, systemInfo.getNumThreadsPerEu());
-    EXPECT_EQ(0u, systemInfo.getMaxFillRate());
     EXPECT_EQ(0u, systemInfo.getTotalVsThreads());
     EXPECT_EQ(0u, systemInfo.getTotalHsThreads());
     EXPECT_EQ(0u, systemInfo.getTotalDsThreads());
