@@ -20,7 +20,7 @@ components:
   infra:
     branch: master
     dest_dir: infra
-    revision: f95d3451bb894ce02ebf95ecc28814e5645d2aeb
+    revision: 3d1df2ecc8b05ffd9f174131cbeff2ab608f9542
     type: git
   internal:
     branch: master
