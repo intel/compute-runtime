@@ -89,6 +89,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
 
     if (pOffCompiler) {
         pOffCompiler->argHelper = helper;
+        pOffCompiler->igcFacade = std::make_unique<OclocIgcFacade>(helper);
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
 
@@ -244,7 +245,9 @@ int OfflineCompiler::buildSourceCode() {
             retVal = INVALID_PROGRAM;
             break;
         }
-        UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
+
+        UNRECOVERABLE_IF(!igcFacade->isInitialized());
+
         auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
         this->argHelper->printf(inputTypeWarnings.c_str());
 
@@ -255,7 +258,7 @@ int OfflineCompiler::buildSourceCode() {
             if (retVal != SUCCESS)
                 break;
 
-            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
+            auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
             igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
                                                      pBuildInfo->fclInternalOptions.get(),
                                                      nullptr, 0);
@@ -263,10 +266,10 @@ int OfflineCompiler::buildSourceCode() {
         } else {
             storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
             isSpirV = inputFileSpirV;
-            auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sourceCode.c_str(), sourceCode.size());
-            auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), options.c_str(), options.size());
-            auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), internalOptions.c_str(), internalOptions.size());
-            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+            auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
+            auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
+            auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
+            auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
             igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
         }
         if (igcOutput == nullptr) {
@@ -568,70 +571,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         preferredIntermediateRepresentation = IGC::CodeType::spirV;
     }
 
-    this->igcLib.reset(OsLibrary::load(Os::igcDllName));
-    if (this->igcLib == nullptr) {
-        return OUT_OF_HOST_MEMORY;
+    const auto igcInitializationResult = igcFacade->initialize(hwInfo);
+    if (igcInitializationResult != SUCCESS) {
+        argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
+        return igcInitializationResult;
     }
-
-    auto igcCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->igcLib->getProcAddress(CIF::CreateCIFMainFuncName));
-    if (igcCreateMain == nullptr) {
-        return OUT_OF_HOST_MEMORY;
-    }
-
-    this->igcMain = CIF::RAII::UPtr(createMainNoSanitize(igcCreateMain));
-    if (this->igcMain == nullptr) {
-        return OUT_OF_HOST_MEMORY;
-    }
-
-    std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
-    if (false == this->igcMain->IsCompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)) {
-        argHelper->printf("Incompatible interface in IGC : %s\n", CIF::InterfaceIdCoder::Dec(this->igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)).c_str());
-        DEBUG_BREAK_IF(true);
-        return OUT_OF_HOST_MEMORY;
-    }
-
-    CIF::Version_t verMin = 0, verMax = 0;
-    if (false == this->igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax)) {
-        argHelper->printf("Patchtoken interface is missing");
-        return OUT_OF_HOST_MEMORY;
-    }
-
-    this->igcDeviceCtx = this->igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
-    if (this->igcDeviceCtx == nullptr) {
-        return OUT_OF_HOST_MEMORY;
-    }
-    this->igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo.capabilityTable.defaultProfilingTimerResolution));
-    auto igcPlatform = this->igcDeviceCtx->GetPlatformHandle();
-    auto igcGtSystemInfo = this->igcDeviceCtx->GetGTSystemInfoHandle();
-    auto igcFtrWa = this->igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-    if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFtrWa == nullptr)) {
-        return OUT_OF_HOST_MEMORY;
-    }
-
-    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto copyHwInfo = hwInfo;
-    if (compilerHwInfoConfig) {
-        compilerHwInfoConfig->adjustHwInfoForIgc(copyHwInfo);
-    }
-
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), copyHwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
-    // populate with features
-
-    igcFtrWa.get()->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
-    igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    igcFtrWa.get()->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa.get()->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
-
-    if (compilerHwInfoConfig) {
-        igcFtrWa.get()->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
-    }
-    igcFtrWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.flags.ftrIoMmuPageFaulting);
-    igcFtrWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
-    igcFtrWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
-
-    igcFtrWa.get()->SetFtrResourceStreamer(hwInfo.featureTable.flags.ftrResourceStreamer);
 
     return retVal;
 }

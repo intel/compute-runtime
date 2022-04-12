@@ -18,6 +18,8 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "cif/common/cif_main.h"
+#include "cif/import/library_api.h"
+#include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
 
 #include <algorithm>
@@ -28,14 +30,14 @@ namespace NEO {
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
 std::unique_ptr<OfflineLinker> OfflineLinker::create(size_t argsCount, const std::vector<std::string> &args, int &errorCode, OclocArgHelper *argHelper) {
-    std::unique_ptr<OfflineLinker> linker{new OfflineLinker{argHelper}};
+    std::unique_ptr<OfflineLinker> linker{new OfflineLinker{argHelper, std::make_unique<OclocIgcFacade>(argHelper)}};
     errorCode = linker->initialize(argsCount, args);
 
     return linker;
 }
 
-OfflineLinker::OfflineLinker(OclocArgHelper *argHelper)
-    : argHelper{argHelper}, operationMode{OperationMode::SKIP_EXECUTION}, outputFilename{"linker_output"}, outputFormat{IGC::CodeType::llvmBc} {}
+OfflineLinker::OfflineLinker(OclocArgHelper *argHelper, std::unique_ptr<OclocIgcFacade> igcFacade)
+    : argHelper{argHelper}, operationMode{OperationMode::SKIP_EXECUTION}, outputFilename{"linker_output"}, outputFormat{IGC::CodeType::llvmBc}, igcFacade{std::move(igcFacade)} {}
 
 OfflineLinker::~OfflineLinker() = default;
 
@@ -65,7 +67,7 @@ int OfflineLinker::initialize(size_t argsCount, const std::vector<std::string> &
         return hwInfoInitializationResult;
     }
 
-    const auto igcPreparationResult{prepareIgc()};
+    const auto igcPreparationResult{igcFacade->initialize(hwInfo)};
     if (igcPreparationResult != OclocErrorCode::SUCCESS) {
         return igcPreparationResult;
     }
@@ -218,68 +220,6 @@ ArrayRef<const HardwareInfo *> OfflineLinker::getHardwareInfoTable() const {
     return {hardwareInfoTable};
 }
 
-int OfflineLinker::prepareIgc() {
-    igcLib = loadIgcLibrary();
-    if (!igcLib) {
-        argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", Os::igcDllName);
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
-    }
-
-    const auto igcCreateMainFunction = loadCreateIgcMainFunction();
-    if (!igcCreateMainFunction) {
-        argHelper->printf("Error! Cannot load required functions from IGC library.\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
-    }
-
-    igcMain = createIgcMain(igcCreateMainFunction);
-    if (!igcMain) {
-        argHelper->printf("Error! Cannot create IGC main component!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
-    }
-
-    igcDeviceCtx = createIgcDeviceContext();
-    if (!igcDeviceCtx) {
-        argHelper->printf("Error! Cannot create IGC device context!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
-    }
-
-    const auto igcPlatform = getIgcPlatformHandle();
-    const auto igcGtSystemInfo = getGTSystemInfoHandle();
-    if (!igcPlatform || !igcGtSystemInfo) {
-        argHelper->printf("Error! IGC device context has not been properly created!\n");
-        return OclocErrorCode::OUT_OF_HOST_MEMORY;
-    }
-
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
-
-    return OclocErrorCode::SUCCESS;
-}
-
-std::unique_ptr<OsLibrary> OfflineLinker::loadIgcLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::load(Os::igcDllName)};
-}
-
-CIF::CreateCIFMainFunc_t OfflineLinker::loadCreateIgcMainFunction() const {
-    return reinterpret_cast<CIF::CreateCIFMainFunc_t>(igcLib->getProcAddress(CIF::CreateCIFMainFuncName));
-}
-
-CIF::RAII::UPtr_t<CIF::CIFMain> OfflineLinker::createIgcMain(CIF::CreateCIFMainFunc_t createMainFunction) const {
-    return CIF::RAII::UPtr(createMainNoSanitize(createMainFunction));
-}
-
-CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> OfflineLinker::createIgcDeviceContext() const {
-    return igcMain->CreateInterface<IGC::IgcOclDeviceCtxTagOCL>();
-}
-
-CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OfflineLinker::getIgcPlatformHandle() const {
-    return igcDeviceCtx->GetPlatformHandle();
-}
-
-CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> OfflineLinker::getGTSystemInfoHandle() const {
-    return igcDeviceCtx->GetGTSystemInfoHandle();
-}
-
 int OfflineLinker::execute() {
     switch (operationMode) {
     case OperationMode::SHOW_HELP:
@@ -366,10 +306,10 @@ std::vector<uint8_t> OfflineLinker::createSingleInputFile() const {
 }
 
 std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(const std::vector<uint8_t> &elfInput) {
-    auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), elfInput.data(), elfInput.size());
-    auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), options.c_str(), options.size());
-    auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), internalOptions.c_str(), internalOptions.size());
-    auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(IGC::CodeType::elf, outputFormat);
+    auto igcSrc = igcFacade->createConstBuffer(elfInput.data(), elfInput.size());
+    auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
+    auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
+    auto igcTranslationCtx = igcFacade->createTranslationContext(IGC::CodeType::elf, outputFormat);
 
     const auto tracingOptions{nullptr};
     const auto tracingOptionsSize{0};

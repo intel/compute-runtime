@@ -956,6 +956,29 @@ TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerf
     EXPECT_TRUE(mockOfflineCompiler.excludeIr);
 }
 
+TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerformedThenFailureIsPropagatedAndErrorIsPrinted) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.mockIgcFacade->shouldFailLoadingOfIgcLib = true;
+
+    testing::internal::CaptureStdout();
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Error! Loading of IGC library has failed! Filename: " << Os::igcDllName << "\n"
+                         << "Error! IGC initialization failure. Error code = -6\n";
+
+    EXPECT_EQ(OclocErrorCode::OUT_OF_HOST_MEMORY, initResult);
+    EXPECT_EQ(expectedErrorMessage.str(), output);
+}
+
 TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenInitIsPerformedThenIrExcludeFlagsShouldBeUnified) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -1333,7 +1356,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     auto ret = offlineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(nullptr, offlineCompiler.fclDeviceCtx);
-    EXPECT_NE(nullptr, offlineCompiler.igcDeviceCtx);
+    EXPECT_TRUE(offlineCompiler.igcFacade->isInitialized());
 }
 
 TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
@@ -1981,7 +2004,7 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     testing::internal::CaptureStdout();
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     mockOfflineCompiler.inputFileSpirV = true;
@@ -2067,7 +2090,7 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
 
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
-    mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     mockOfflineCompiler.inputFileSpirV = true;

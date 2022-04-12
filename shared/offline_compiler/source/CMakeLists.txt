@@ -63,6 +63,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_error_code.h
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
+    ${OCLOC_DIRECTORY}/source/ocloc_igc_facade.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_igc_facade.h
     ${OCLOC_DIRECTORY}/source/ocloc_validator.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_validator.h
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp

@@ -7,13 +7,11 @@
 
 #pragma once
 
+#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include "cif/common/cif_main.h"
-#include "cif/import/library_api.h"
 #include "ocl_igc_interface/code_type.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <cstddef>
 #include <memory>
@@ -52,7 +50,7 @@ class OfflineLinker {
     std::string getBuildLog() const;
 
   protected:
-    explicit OfflineLinker(OclocArgHelper *argHelper);
+    explicit OfflineLinker(OclocArgHelper *argHelper, std::unique_ptr<OclocIgcFacade> igcFacade);
     int initialize(size_t argsCount, const std::vector<std::string> &args);
     int parseCommand(size_t argsCount, const std::vector<std::string> &args);
     IGC::CodeType::CodeType_t parseOutputFormat(const std::string &outputFormatName);
@@ -60,7 +58,6 @@ class OfflineLinker {
     int loadInputFilesContent();
     IGC::CodeType::CodeType_t detectCodeType(char *bytes, size_t size) const;
     int initHardwareInfo();
-    int prepareIgc();
     int link();
     int showHelp();
     std::vector<uint8_t> createSingleInputFile() const;
@@ -68,12 +65,6 @@ class OfflineLinker {
     void tryToStoreBuildLog(const char *buildLogRaw, size_t size);
 
     MOCKABLE_VIRTUAL ArrayRef<const HardwareInfo *> getHardwareInfoTable() const;
-    MOCKABLE_VIRTUAL std::unique_ptr<OsLibrary> loadIgcLibrary() const;
-    MOCKABLE_VIRTUAL CIF::CreateCIFMainFunc_t loadCreateIgcMainFunction() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<CIF::CIFMain> createIgcMain(CIF::CreateCIFMainFunc_t createMainFunction) const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> createIgcDeviceContext() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::PlatformTagOCL> getIgcPlatformHandle() const;
-    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::GTSystemInfoTagOCL> getGTSystemInfoHandle() const;
 
     OclocArgHelper *argHelper{};
     OperationMode operationMode{};
@@ -85,9 +76,7 @@ class OfflineLinker {
     std::string options{};
     std::string internalOptions{};
 
-    std::unique_ptr<OsLibrary> igcLib{};
-    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain{};
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx{};
+    std::unique_ptr<OclocIgcFacade> igcFacade{};
     HardwareInfo hwInfo{};
     std::string buildLog{};
 };

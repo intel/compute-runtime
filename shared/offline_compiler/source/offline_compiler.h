@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
@@ -15,7 +16,6 @@
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <cstdint>
 #include <memory>
@@ -113,6 +113,7 @@ class OfflineCompiler {
         std::replace(suffix.begin(), suffix.end(), ' ', '_');
         return suffix;
     }
+
     MOCKABLE_VIRTUAL void writeOutAllFiles();
     MOCKABLE_VIRTUAL void createDir(const std::string &path);
     void unifyExcludeIrFlags();
@@ -156,10 +157,9 @@ class OfflineCompiler {
     size_t debugDataBinarySize = 0;
     struct buildInfo;
     std::unique_ptr<buildInfo> pBuildInfo;
-    std::unique_ptr<OsLibrary> igcLib = nullptr;
-    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
-    CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx = nullptr;
     int revisionId = -1;
+
+    std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
 
     std::unique_ptr<OsLibrary> fclLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
