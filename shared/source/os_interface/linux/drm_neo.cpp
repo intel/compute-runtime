@@ -1211,6 +1211,14 @@ void Drm::queryPageFaultSupport() {
     }
 }
 
+bool Drm::hasPageFaultSupport() const {
+    if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+        return !!DebugManager.flags.EnableRecoverablePageFaults.get();
+    }
+
+    return false;
+}
+
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     auto engineInfo = this->engineInfo.get();
     if (!engineInfo) {

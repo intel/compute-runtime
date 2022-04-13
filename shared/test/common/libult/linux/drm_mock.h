@@ -131,6 +131,10 @@ class DrmMock : public Drm {
     }
 
     bool hasPageFaultSupport() const override {
+        if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+            return !!DebugManager.flags.EnableRecoverablePageFaults.get();
+        }
+
         return pageFaultSupported;
     }
 
