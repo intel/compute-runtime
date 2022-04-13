@@ -117,6 +117,31 @@ ze_result_t LinuxMemoryImp::getVFIDString(std::string &vfID) {
     return result;
 }
 
+ze_result_t LinuxMemoryImp::readMcChannelCounters(uint64_t &readCounters, uint64_t &writeCounters) {
+    // For DG2 there are 8 memory instances each memory instance has 2 channels there are total 16 MC Channels
+    uint32_t numMcChannels = 16u;
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};
+    std::vector<uint64_t> counterValues(3, 0); // Will store the values of counters metioned in nameOfCounters
+    for (uint64_t counterIndex = 0; counterIndex < nameOfCounters.size(); counterIndex++) {
+        for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
+            uint64_t val = 0;
+            std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
+            result = pPmt->readValue(readCounterKey, val);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+            counterValues[counterIndex] += val;
+        }
+    }
+    // PMT counters returns number of transactions that have occured and each tranaction is of 64 bytes
+    // Multiplying 64(tranaction size) with number of transactions gives the total reads or writes in bytes
+    constexpr uint64_t transactionSize = 64;
+    readCounters = (counterValues[0] + counterValues[2]) * transactionSize; // Read counters are summation of total IDI_READS and DISPLAY_VC1_READS
+    writeCounters = (counterValues[1]) * transactionSize;                   // Write counters are summation of IDI_WRITES
+    return result;
+}
+
 void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned short stepping, uint64_t &hbmFrequency) {
     hbmFrequency = 0;
     if (productFamily == IGFX_XE_HP_SDV) {
@@ -140,29 +165,40 @@ void LinuxMemoryImp::getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned shor
     }
 }
 
-ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
-    if (pPmt == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    std::string vfId = "";
-    auto result = getVFIDString(vfId);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    uint32_t numHbmModules = 0u;
-    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
-    auto productFamily = hwInfo.platform.eProductFamily;
-    auto stepping = NEO::HwInfoConfig::get(productFamily)->getSteppingFromHwRevId(hwInfo);
-    if (productFamily == IGFX_XE_HP_SDV) {
-        numHbmModules = 2u;
-    } else if (productFamily == IGFX_PVC) {
-        numHbmModules = 4u;
-    }
-
+ze_result_t LinuxMemoryImp::getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth) {
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
     pBandwidth->maxBandwidth = 0;
+    ze_result_t result = readMcChannelCounters(pBandwidth->readCounter, pBandwidth->writeCounter);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    pBandwidth->maxBandwidth = 0u;
+    std::string timeStamp = "MC_CAPTURE_TIMESTAMP";
+    uint64_t timeStampVal = 0;
+    result = pPmt->readValue(timeStamp, timeStampVal);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    pBandwidth->timestamp = timeStampVal * 1e-8; // Convert timeStamp into seconds
+    return result;
+}
+
+ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth) {
+    pBandwidth->readCounter = 0;
+    pBandwidth->writeCounter = 0;
+    pBandwidth->timestamp = 0;
+    pBandwidth->maxBandwidth = 0;
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    std::string vfId = "";
+    result = getVFIDString(vfId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    auto productFamily = hwInfo.platform.eProductFamily;
+    auto stepping = NEO::HwInfoConfig::get(productFamily)->getSteppingFromHwRevId(hwInfo);
     for (auto hbmModuleIndex = 0u; hbmModuleIndex < numHbmModules; hbmModuleIndex++) {
         uint32_t counterValue = 0;
         // To read counters from VFID 0 and HBM module 0, key would be: VF0_HBM0_READ
@@ -204,7 +240,33 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
 
     pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
     pBandwidth->maxBandwidth /= 8; // Divide by 8 to get bandwidth in bytes/sec
+    return result;
+}
 
+ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    if (pPmt == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    auto &hwInfo = pDevice->getNEODevice()->getHardwareInfo();
+    auto productFamily = hwInfo.platform.eProductFamily;
+    uint32_t numHbmModules = 0u;
+    switch (productFamily) {
+    case IGFX_DG2:
+        result = getBandwidthForDg2(pBandwidth);
+        break;
+    case IGFX_XE_HP_SDV:
+        numHbmModules = 2u;
+        result = getHbmBandwidth(numHbmModules, pBandwidth);
+        break;
+    case IGFX_PVC:
+        numHbmModules = 4u;
+        result = getHbmBandwidth(numHbmModules, pBandwidth);
+        break;
+    default:
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        break;
+    }
     return result;
 }
 
