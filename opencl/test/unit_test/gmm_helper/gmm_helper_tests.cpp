@@ -894,6 +894,25 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
     }
 }
 
+TEST(GmmTest, givenUsageTypeWhenAskingIfUncachableThenReturnCorrectValue) {
+    for (GMM_RESOURCE_USAGE_TYPE_ENUM usage : {GMM_RESOURCE_USAGE_OCL_IMAGE,
+                                               GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER,
+                                               GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
+                                               GMM_RESOURCE_USAGE_OCL_BUFFER,
+                                               GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC,
+                                               GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
+                                               GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED}) {
+
+        if (usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC ||
+            usage == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED ||
+            usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+            EXPECT_TRUE(CacheSettingsHelper::isUncachedType(usage));
+        } else {
+            EXPECT_FALSE(CacheSettingsHelper::isUncachedType(usage));
+        }
+    }
+}
+
 TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForHeaps.set(true);

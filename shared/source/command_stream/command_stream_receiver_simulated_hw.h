@@ -9,6 +9,7 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -107,7 +108,12 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation),
                                                       hint, graphicsAllocation.getUsedPageSize());
 
-        allocationParams.additionalParams.compressionEnabled = graphicsAllocation.isCompressionEnabled();
+        auto gmm = graphicsAllocation.getDefaultGmm();
+
+        if (gmm) {
+            allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled;
+            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+        }
 
         if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool()) {
             aubManager->writeMemory2(allocationParams);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
@@ -37,7 +38,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 
         auto gmm = allocation->getDefaultGmm();
 
-        params.additionalParams.compressionEnabled = gmm ? gmm->isCompressionEnabled : false;
+        if (gmm) {
+            params.additionalParams.compressionEnabled = gmm->isCompressionEnabled;
+            params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+        }
 
         aubManager->writeMemory2(params);
         residentAllocations.push_back(allocation);

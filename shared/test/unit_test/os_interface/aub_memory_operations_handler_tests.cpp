@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,28 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
     EXPECT_TRUE(aubManager.writeMemory2Called);
     EXPECT_EQ(1u, aubManager.storedAllocationParams.size());
     EXPECT_TRUE(aubManager.storedAllocationParams[0].additionalParams.compressionEnabled);
+    EXPECT_FALSE(aubManager.storedAllocationParams[0].additionalParams.uncached);
+}
+
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnUncachedAllocationThenPassCorrectParams) {
+    MockAubManager aubManager;
+    aubManager.storeAllocationParams = true;
+
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
+    gmm.isCompressionEnabled = false;
+    allocPtr->setDefaultGmm(&gmm);
+
+    auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+    EXPECT_EQ(1u, aubManager.storedAllocationParams.size());
+    EXPECT_FALSE(aubManager.storedAllocationParams[0].additionalParams.compressionEnabled);
+    EXPECT_TRUE(aubManager.storedAllocationParams[0].additionalParams.uncached);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAllocationWhenMakeResidentCalledThenTraceNotypeHintReturned) {
