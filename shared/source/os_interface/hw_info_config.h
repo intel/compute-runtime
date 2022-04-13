@@ -97,6 +97,7 @@ class HwInfoConfig {
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool useChannelRedForUnusedShaderChannels() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -178,6 +179,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
+    bool useChannelRedForUnusedShaderChannels() const override;
 
   protected:
     HwInfoConfigHw() = default;

@@ -395,3 +395,8 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSuppor
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfUseChannelRedForUnusedShaderChannelsThenTrueIsReturned, IsAtMostXeHpcCore) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.useChannelRedForUnusedShaderChannels());
+}

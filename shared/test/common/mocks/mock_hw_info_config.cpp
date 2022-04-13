@@ -337,4 +337,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareI
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const {
+    return false;
+}
+
 } //namespace NEO

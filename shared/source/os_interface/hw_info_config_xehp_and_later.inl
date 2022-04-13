@@ -62,4 +62,9 @@ bool HwInfoConfigHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInf
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::useChannelRedForUnusedShaderChannels() const {
+    return true;
+}
+
 } // namespace NEO
