@@ -54,7 +54,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
     &isSimulationPVC,                                          // isSimulation
-    "core",                                                    // platformType
+    "pvc",                                                     // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
