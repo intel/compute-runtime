@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,7 +24,7 @@ get_opencl_version() {
     __NEO_OCL_VERSION_BUILD_TMP=$(echo $NEO_TAG | awk -F '-' '{ print $1; }' | sed 's/^0*//')
     NEO_OCL_VERSION_BUILD="${NEO_OCL_VERSION_BUILD:-$__NEO_OCL_VERSION_BUILD_TMP}"
     unset __NEO_OCL_VERSION_BUILD_TMP
-    __NEO_OCL_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) {printf(".%s",  $2);} }')
+    __NEO_OCL_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) { print $2; } }')
     NEO_OCL_VERSION_HOTFIX="${NEO_OCL_VERSION_HOTFIX:-$__NEO_OCL_VERSION_HOTFIX_TMP}"
     unset __NEO_OCL_VERSION_HOTFIX_TMP
 }

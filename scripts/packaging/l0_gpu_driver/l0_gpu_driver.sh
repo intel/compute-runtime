@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,7 +21,7 @@ get_l0_gpu_driver_version() {
     __NEO_L0_VERSION_PATCH_TMP=$(echo $NEO_TAG | awk -F '-' '{ print $1; }' | sed 's/^0*//')
     NEO_L0_VERSION_PATCH="${NEO_L0_VERSION_PATCH:-$__NEO_L0_VERSION_PATCH_TMP}"
     unset __NEO_L0_VERSION_PATCH_TMP
-    __NEO_L0_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) {printf(".%s",  $2);} }')
+    __NEO_L0_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) { print $2; } }')
     NEO_L0_VERSION_HOTFIX="${NEO_L0_VERSION_HOTFIX:-$__NEO_L0_VERSION_HOTFIX_TMP}"
     unset __NEO_L0_VERSION_HOTFIX_TMP
 }
