@@ -332,4 +332,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const 
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO

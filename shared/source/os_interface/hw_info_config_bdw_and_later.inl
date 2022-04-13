@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,11 @@ void HwInfoConfigHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
+    return false;
 }
 
 } // namespace NEO

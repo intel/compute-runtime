@@ -197,6 +197,10 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
+    if (hwInfoConfig->isBFloat16ConversionSupported(hwInfo)) {
+        deviceExtensions += "cl_intel_bfloat16_conversions ";
+    }
+
     auto sharingAllowed = (getNumGenericSubDevices() <= 1u);
     if (sharingAllowed) {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());

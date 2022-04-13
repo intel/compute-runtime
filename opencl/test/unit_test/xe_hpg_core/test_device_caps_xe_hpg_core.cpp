@@ -38,6 +38,7 @@ XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, givenXeHpgCoreWhenCheckExtensionsThenDevi
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, giveDeviceExtensionsWhenDeviceCapsInitializedThenAddProperExtensions) {
+    auto &hwInfoConfig = *HwInfoConfig::get(pClDevice->getHardwareInfo().platform.eProductFamily);
     const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_create_buffer_with_properties")));
@@ -45,6 +46,9 @@ XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, giveDeviceExtensionsWhenDeviceCapsInitial
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_split_work_group_barrier")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+
+    bool expectBFloat16ConversionsExtension = hwInfoConfig.isBFloat16ConversionSupported(pClDevice->getHardwareInfo());
+    EXPECT_EQ(expectBFloat16ConversionsExtension, hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreDeviceCaps, givenXeHpgCoreWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {

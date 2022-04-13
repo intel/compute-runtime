@@ -96,6 +96,7 @@ class HwInfoConfig {
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
+    virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -176,6 +177,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
+    bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

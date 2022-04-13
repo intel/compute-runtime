@@ -55,6 +55,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREWhenDeviceCapsInitialized
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));
 }
 
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenXE_HP_COREWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {
