@@ -39,11 +39,13 @@ struct MockDrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandlerBin
     bool useBaseEvictUnused = true;
     uint32_t evictUnusedCalled = 0;
 
-    void evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
+    MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
         evictUnusedCalled++;
         if (useBaseEvictUnused) {
-            DrmMemoryOperationsHandlerBind::evictUnusedAllocations(waitForCompletion, isLockNeeded);
+            return DrmMemoryOperationsHandlerBind::evictUnusedAllocations(waitForCompletion, isLockNeeded);
         }
+
+        return MemoryOperationsStatus::SUCCESS;
     }
 };
 
@@ -169,7 +171,6 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenObjectAlwaysResidentAndNotUsedWh
     }
 
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
-
     operationHandler->evictUnusedAllocations(false, true);
 
     EXPECT_EQ(mock->context.vmBindCalled, 2u);
@@ -239,10 +240,24 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, whenEvictUnusedResourcesWithWaitFor
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount.store(123u);
 
-    operationHandler->evictUnusedAllocations(true, true);
+    const auto status = operationHandler->evictUnusedAllocations(true, true);
+    EXPECT_EQ(MemoryOperationsStatus::SUCCESS, status);
 
     auto latestWaitTaskCount = csr.latestWaitForCompletionWithTimeoutTaskCount.load();
     EXPECT_NE(latestWaitTaskCount, 123u);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenGpuHangWhenEvictUnusedResourcesWithWaitForCompletionThenGpuHangIsReturned) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    const auto status = operationHandler->evictUnusedAllocations(true, true);
+    EXPECT_EQ(MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION, status);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

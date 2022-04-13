@@ -164,12 +164,17 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
             return err;
         }
 
-        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(false, true);
+        evictUnusedAllocations(false, true);
         ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret != 0) {
-        static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(true, true);
+        const auto status = evictUnusedAllocations(true, true);
+        if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", GPU_HANG_DETECTED);
+            return GPU_HANG_DETECTED;
+        }
+
         ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
     }
 
@@ -180,6 +185,10 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     int err = this->drm->getErrno();
     PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     return err;
+}
+
+MemoryOperationsStatus BufferObject::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
+    return static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->evictUnusedAllocations(waitForCompletion, isLockNeeded);
 }
 
 void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal) {

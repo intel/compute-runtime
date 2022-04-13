@@ -23,7 +23,7 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
     virtual std::unique_lock<std::mutex> lockHandlerIfUsed() = 0;
 
-    virtual void evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) = 0;
+    virtual MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) = 0;
 
     static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm, uint32_t rootDeviceIndex);
 

@@ -9,6 +9,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
+#include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -137,7 +138,11 @@ class BufferObject {
         return this->bindAddresses;
     }
 
+    static constexpr int GPU_HANG_DETECTED{-7171};
+
   protected:
+    MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
+
     Drm *drm = nullptr;
     bool perContextVmsUsed = false;
     std::atomic<uint32_t> refCount;

@@ -25,11 +25,11 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
     std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
-    void evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
+    MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
 
   protected:
     MOCKABLE_VIRTUAL int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield);
-    void evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion);
+    MemoryOperationsStatus evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion);
 
     RootDeviceEnvironment &rootDeviceEnvironment;
     uint32_t rootDeviceIndex = 0;

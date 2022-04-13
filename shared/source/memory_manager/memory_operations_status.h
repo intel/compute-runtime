@@ -17,6 +17,7 @@ enum class MemoryOperationsStatus : uint32_t {
     OUT_OF_MEMORY,
     UNSUPPORTED,
     DEVICE_UNINITIALIZED,
+    GPU_HANG_DETECTED_DURING_OPERATION,
 };
 
 } // namespace NEO

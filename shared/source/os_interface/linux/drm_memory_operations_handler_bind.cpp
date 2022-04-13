@@ -133,7 +133,7 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed()
     return std::unique_lock<std::mutex>();
 }
 
-void DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
     auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
     std::unique_lock<std::mutex> evictLock(mutex, std::defer_lock);
@@ -143,11 +143,19 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompleti
 
     auto allocLock = memoryManager->acquireAllocLock();
 
-    this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs(), waitForCompletion);
-    this->evictUnusedAllocationsImpl(memoryManager->getLocalMemAllocs(this->rootDeviceIndex), waitForCompletion);
+    for (const auto status : {
+             this->evictUnusedAllocationsImpl(memoryManager->getSysMemAllocs(), waitForCompletion),
+             this->evictUnusedAllocationsImpl(memoryManager->getLocalMemAllocs(this->rootDeviceIndex), waitForCompletion)}) {
+
+        if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
+            return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+        }
+    }
+
+    return MemoryOperationsStatus::SUCCESS;
 }
 
-void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion) {
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     std::vector<GraphicsAllocation *> evictCandidates;
 
@@ -164,7 +172,10 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<Grap
                     }
 
                     if (waitForCompletion) {
-                        engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
+                        const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
+                        if (waitStatus == WaitStatus::GpuHang) {
+                            return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+                        }
                     }
 
                     if (allocation->isUsedByOsContext(engine.osContext->getContextId()) &&
@@ -191,6 +202,8 @@ void DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImpl(std::vector<Grap
         }
         evictCandidates.clear();
     }
+
+    return MemoryOperationsStatus::SUCCESS;
 }
 
 } // namespace NEO

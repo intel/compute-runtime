@@ -46,10 +46,23 @@ class TestedBufferObject : public BufferObject {
         return BufferObject::exec(used, startOffset, flags, requiresCoherency, osContext, vmHandleId, drmContextId, residency, residencyCount, execObjectsStorage, completionGpuAddress, completionValue);
     }
 
+    MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override {
+        if (callBaseEvictUnusedAllocations) {
+            return BufferObject::evictUnusedAllocations(waitForCompletion, isLockNeeded);
+        }
+
+        if (!waitForCompletion) {
+            return MemoryOperationsStatus::SUCCESS;
+        }
+
+        return MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION;
+    }
+
     uint64_t receivedCompletionGpuAddress = 0;
     drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
     uint32_t receivedCompletionValue = 0;
     uint32_t execCalled = 0;
+    bool callBaseEvictUnusedAllocations{true};
 };
 
 template <typename DrmClass>

@@ -39,6 +39,19 @@ TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturne
     EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0));
 }
 
+TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhenCallingExecGpuHangErrorCodeIsRetrurned) {
+    mock->ioctl_expected.total = 2;
+    mock->ioctl_res = -1;
+    mock->errnoValue = EFAULT;
+
+    bo->callBaseEvictUnusedAllocations = false;
+
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    const auto result = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
+
+    EXPECT_EQ(BufferObject::GPU_HANG_DETECTED, result);
+}
+
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {
     mock->ioctl_expected.total = 1; //set_tiling
     auto ret = bo->setTiling(I915_TILING_X, 0);
