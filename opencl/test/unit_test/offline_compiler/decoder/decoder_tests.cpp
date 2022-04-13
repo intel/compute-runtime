@@ -39,7 +39,7 @@ namespace NEO {
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-patch",
@@ -58,7 +58,7 @@ TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
     for (const auto &flag : flagsToTest) {
         const std::vector<std::string> args = {
             "ocloc",
-            "decoder",
+            "disasm",
             flag};
 
         constexpr auto suppressMessages{false};
@@ -78,7 +78,7 @@ TEST(DecoderTests, GivenFlagsWhichRequireMoreArgsWithoutThemWhenParsingThenError
 TEST(DecoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndInternalFlagIsSet) {
     const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-patch",
@@ -95,7 +95,7 @@ TEST(DecoderTests, GivenIgnoreIsaPaddingFlagWhenParsingValidListOfParametersThen
 TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndMessagesAreSuppressed) {
     const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-patch",
@@ -114,7 +114,7 @@ TEST(DecoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenReturnValueIsZeroAndWarningAboutCreationOfDefaultDirectoryIsPrinted) {
     const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-device",
@@ -139,7 +139,7 @@ TEST(DecoderTests, GivenMissingDumpFlagWhenParsingValidListOfParametersThenRetur
 TEST(DecoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryWarningIsNotEmitted) {
     const std::vector<std::string> args = {
         "ocloc",
-        "decoder",
+        "disasm",
         "-file",
         "test_files/binary.bin",
         "-device",

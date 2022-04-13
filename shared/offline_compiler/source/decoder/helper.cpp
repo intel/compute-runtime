@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,12 @@
 
 #include <algorithm>
 #include <fstream>
+
+void (*abortOclocExecution)(int) = abortOclocExecutionDefaultHandler;
+
+void abortOclocExecutionDefaultHandler(int errorCode) {
+    exit(errorCode);
+}
 
 void addSlash(std::string &path) {
     if (!path.empty()) {
@@ -37,7 +43,9 @@ std::vector<char> readBinaryFile(const std::string &fileName) {
         return binary;
     } else {
         printf("Error! Couldn't open %s\n", fileName.c_str());
-        exit(1);
+        abortOclocExecution(1);
+
+        return {};
     }
 }
 

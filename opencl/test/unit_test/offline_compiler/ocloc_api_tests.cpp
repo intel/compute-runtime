@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"
@@ -12,17 +13,24 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 
 #include <algorithm>
+#include <array>
+#include <stdexcept>
 #include <string>
 
 extern Environment *gEnvironment;
 
 using namespace std::string_literals;
+
+void mockedAbortOclocExecution(int errorCode) {
+    throw std::runtime_error{"mockedAbortOclocExecution() called with error code = " + std::to_string(errorCode)};
+}
 
 TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
     EXPECT_EQ(ocloc_version_t::OCLOC_VERSION_CURRENT, oclocVersion());
@@ -46,6 +54,29 @@ TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
 
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
     EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
+    EXPECT_NE(std::string::npos, output.find("Build succeeded.\n"));
+}
+
+TEST(OclocApiTests, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessIsReturnedAndBuildSucceededMessageIsNotPrinted) {
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-q",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+    EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
+    EXPECT_EQ(std::string::npos, output.find("Build succeeded.\n"));
 }
 
 TEST(OclocApiTests, GivenNeoRevisionQueryWhenQueryingThenNeoRevisionIsReturned) {
@@ -265,6 +296,37 @@ TEST(OclocApiTests, givenInvalidInputOptionsAndInternalOptionsFilesWhenCmdlineIs
                             "-shouldfailInternalOptions") != std::string::npos);
 }
 
+TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
+    ASSERT_TRUE(fileExists("test_files/shouldfail.cl"));
+
+    const char *argv[] = {
+        "ocloc",
+        "-q",
+        "-options",
+        "-invalid_option",
+        "-internal_options",
+        "-invalid_internal_option",
+        "-file",
+        "test_files/shouldfail.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(NEO::OclocErrorCode::SUCCESS, retVal);
+
+    EXPECT_FALSE(output.find("Compiling options read from file were:\n"
+                             "-shouldfailOptions") != std::string::npos);
+
+    EXPECT_FALSE(output.find("Internal options read from file were:\n"
+                             "-shouldfailInternalOptions") != std::string::npos);
+}
+
 TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
     ASSERT_TRUE(fileExists("test_files/valid_kernel.cl"));
     ASSERT_TRUE(fileExists("test_files/valid_kernel_ocloc_options.txt"));
@@ -400,6 +462,47 @@ TEST(OclocApiTests, GivenHelpParameterWhenDecodingThenHelpMsgIsPrintedAndSuccess
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 }
 
+TEST(OclocApiTests, GivenNonExistingFileWhenDecodingThenAbortIsCalled) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &mockedAbortOclocExecution};
+
+    const char *argv[] = {
+        "ocloc",
+        "disasm",
+        "-file",
+        "nonexistent_file_that_should_fail",
+        "-dump",
+        "test_files/created"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    const auto retVal = oclocInvoke(argc, argv,
+                                    0, nullptr, nullptr, nullptr,
+                                    0, nullptr, nullptr, nullptr,
+                                    nullptr, nullptr, nullptr, nullptr);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(std::string::npos, output.find("mockedAbortOclocExecution() called with error code = 1"));
+    EXPECT_EQ(-1, retVal);
+}
+
+TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "disasm",
+        "-file"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    const auto retVal = oclocInvoke(argc, argv,
+                                    0, nullptr, nullptr, nullptr,
+                                    0, nullptr, nullptr, nullptr,
+                                    nullptr, nullptr, nullptr, nullptr);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(std::string::npos, output.find("Unknown argument -file\n"));
+    EXPECT_EQ(-1, retVal);
+}
+
 TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccessIsReturned) {
     const char *argv[] = {
         "ocloc",
@@ -415,6 +518,63 @@ TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccess
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_FALSE(output.empty());
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+}
+
+TEST(OclocApiTests, GivenMissingDumpFileNameWhenEncodingThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "asm",
+        "-dump"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    const auto retVal = oclocInvoke(argc, argv,
+                                    0, nullptr, nullptr, nullptr,
+                                    0, nullptr, nullptr, nullptr,
+                                    nullptr, nullptr, nullptr, nullptr);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(std::string::npos, output.find("Unknown argument -dump\n"));
+    EXPECT_EQ(-1, retVal);
+}
+
+TEST(OclocApiTests, GivenValidArgumentsAndMissingPtmFileWhenEncodingThenErrorIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "asm",
+        "-dump",
+        "test_files/dump",
+        "-out",
+        "test_files/binary_gen.bin"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    const auto retVal = oclocInvoke(argc, argv,
+                                    0, nullptr, nullptr, nullptr,
+                                    0, nullptr, nullptr, nullptr,
+                                    nullptr, nullptr, nullptr, nullptr);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(std::string::npos, output.find("Error! Couldn't find PTM.txt"));
+    EXPECT_EQ(-1, retVal);
+}
+
+TEST(OclocApiTests, GiveMultiCommandHelpArgumentsWhenInvokingOclocThenHelpIsPrinted) {
+    const char *argv[] = {
+        "ocloc",
+        "multi",
+        "--help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    const auto retVal = oclocInvoke(argc, argv,
+                                    0, nullptr, nullptr, nullptr,
+                                    0, nullptr, nullptr, nullptr,
+                                    nullptr, nullptr, nullptr, nullptr);
+    const auto output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+
+    EXPECT_EQ(-1, retVal);
 }
 
 TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted) {
@@ -466,21 +626,25 @@ TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) 
     EXPECT_FALSE(output.empty());
 }
 
-TEST(OclocApiTests, GivenLongHelpArgumentWhenOclocIsInvokedThenHelpIsPrinted) {
-    const char *argv[] = {
-        "ocloc",
-        "--help"};
-    unsigned int argc = sizeof(argv) / sizeof(argv[0]);
+TEST(OclocApiTests, GivenHelpArgumentWhenOclocIsInvokedThenHelpIsPrinted) {
+    constexpr std::array flagsToTest = {"-h", "--help"};
+    for (const auto helpFlag : flagsToTest) {
+        const char *argv[] = {
+            "ocloc",
+            helpFlag};
 
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(argc, argv,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
+        unsigned int argc = sizeof(argv) / sizeof(argv[0]);
 
-    const auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
-    EXPECT_FALSE(output.empty());
+        testing::internal::CaptureStdout();
+        int retVal = oclocInvoke(argc, argv,
+                                 0, nullptr, nullptr, nullptr,
+                                 0, nullptr, nullptr, nullptr,
+                                 nullptr, nullptr, nullptr, nullptr);
+
+        const auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
+        EXPECT_FALSE(output.empty());
+    }
 }
 
 TEST(OclocApiTests, GivenHelpParameterWhenLinkingThenHelpMsgIsPrintedAndSuccessIsReturned) {

@@ -16,6 +16,10 @@
 #include <string>
 #include <vector>
 
+extern void (*abortOclocExecution)(int);
+
+void abortOclocExecutionDefaultHandler(int errorCode);
+
 void addSlash(std::string &path);
 
 std::vector<char> readBinaryFile(const std::string &fileName);
