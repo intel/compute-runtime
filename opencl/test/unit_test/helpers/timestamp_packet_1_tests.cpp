@@ -112,9 +112,9 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedThenMov
 HWTEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(executionEnvironment);
-    MockTagAllocator<MockTimestampPacketStorage> allocator(0, &memoryManager, 1);
+    MockTagAllocator<MockTimestampPackets32> allocator(0, &memoryManager, 1);
 
-    using MockNode = TagNode<MockTimestampPacketStorage>;
+    using MockNode = TagNode<MockTimestampPackets32>;
 
     auto firstNode = static_cast<MockNode *>(allocator.getTag());
     auto i = 0u;
@@ -141,7 +141,7 @@ HWTEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
 }
 
 TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
-    MockTimestampPacketStorage timestampPacketStorage;
+    MockTimestampPackets32 timestampPacketStorage;
     EXPECT_EQ(TimestampPacketSizeControl::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
 
     for (const auto &packet : timestampPacketStorage.packets) {

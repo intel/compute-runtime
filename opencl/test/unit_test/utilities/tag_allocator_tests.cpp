@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -22,23 +23,6 @@
 using namespace NEO;
 
 struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
-    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
-      public:
-        void setTagToReadyState() {
-            initialize();
-
-            uint32_t zeros[4] = {};
-
-            for (uint32_t i = 0; i < TimestampPacketSizeControl::preferredPacketCount; i++) {
-                assignDataToAllTimestamps(i, zeros);
-            }
-        }
-
-        void setToNonReadyState() {
-            packets[0].contextEnd = 1;
-        }
-    };
-
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(4);
         MemoryAllocatorFixture::SetUp();

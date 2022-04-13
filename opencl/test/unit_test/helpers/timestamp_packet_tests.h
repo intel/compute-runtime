@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -20,11 +21,6 @@
 using namespace NEO;
 
 struct TimestampPacketSimpleTests : public ::testing::Test {
-    class MockTimestampPacketStorage : public TimestampPackets<uint32_t> {
-      public:
-        using TimestampPackets<uint32_t>::packets;
-    };
-
     template <typename FamilyType>
     void setTagToReadyState(TagNodeBase *tagNode) {
         auto packetsUsed = tagNode->getPacketsUsed();

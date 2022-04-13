@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context_imp.h"
@@ -1150,11 +1151,6 @@ TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithS
     event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, subdevice)));
     ASSERT_NE(nullptr, event);
 
-    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
-      public:
-        using typename TimestampPackets<uint32_t>::Packet;
-    };
-
     typename MockTimestampPackets32::Packet packetData[2];
     event->setPacketsInUse(2u);
 
@@ -1194,11 +1190,6 @@ TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithS
 }
 
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
-      public:
-        using typename TimestampPackets<uint32_t>::Packet;
-    };
-
     typename MockTimestampPackets32::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
@@ -1216,11 +1207,6 @@ HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryK
 }
 
 TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
-    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
-      public:
-        using typename TimestampPackets<uint32_t>::Packet;
-    };
-
     typename MockTimestampPackets32::Packet packetData[2];
     event->setPacketsInUse(2u);
 

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -15,12 +16,6 @@
 namespace L0 {
 namespace ult {
 struct TimestampEvent : public Test<DeviceFixture> {
-  public:
-    class MockTimestampPackets32 : public TimestampPackets<uint32_t> {
-      public:
-        using typename TimestampPackets<uint32_t>::Packet;
-    };
-
     void SetUp() override {
         DeviceFixture::SetUp();
         ze_event_pool_desc_t eventPoolDesc = {};
