@@ -16,6 +16,7 @@
 
 // driver experimental API headers
 #include "zex_driver.h"
+#include "zex_memory.h"
 #include "zex_module.h"
 
 #endif // _ZEX_API_H

@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _ZEX_MODULE_H
-#define _ZEX_MODULE_H
+#ifndef _ZEX_MEMORY_H
+#define _ZEX_MEMORY_H
 #if defined(__cplusplus)
 #pragma once
 #endif
@@ -15,15 +15,10 @@
 extern "C" {
 #endif
 
-#include "zex_api.h"
-
-ZE_DLLEXPORT ze_result_t ZE_APICALL
-zexKernelGetBaseAddress(
-    ze_kernel_handle_t hKernel,
-    uint64_t *baseAddress);
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 
 #if defined(__cplusplus)
 } // extern "C"
 #endif
 
-#endif // _ZEX_MODULE_H
+#endif // _ZEX_MEMORY_H

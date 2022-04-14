@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#include "zex_api.h"
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexDriverImportExternalPointer(

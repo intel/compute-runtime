@@ -7,7 +7,7 @@
 
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
 
-#include "level_zero/api/experimental/zex_api.h"
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 
 namespace L0 {
 std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
