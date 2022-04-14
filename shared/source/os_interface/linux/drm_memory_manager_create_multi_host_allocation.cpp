@@ -16,7 +16,6 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
     if (!isAligned<MemoryConstants::pageSize>(allocationData.size)) {
         return nullptr;
     }
-
     auto numTiles = allocationData.storageInfo.getNumBanks();
     auto sizePerTile = allocationData.size;
     auto hostSizeToAllocate = numTiles * sizePerTile;
@@ -28,15 +27,26 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
 
     zeroCpuMemoryIfRequested(allocationData, cpuBasePointer, hostSizeToAllocate);
 
-    auto gpuAddress = acquireGpuRange(sizePerTile, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+    auto gpuAddress = allocationData.gpuAddress;
+    bool addressReserved = false;
+    if (gpuAddress == 0) {
+        gpuAddress = acquireGpuRange(sizePerTile, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        addressReserved = true;
+    } else {
+        gpuAddress = allocationData.gpuAddress;
+    }
+
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, numTiles, allocationData.type,
                                         nullptr /*bo*/, cpuBasePointer, gpuAddress, sizePerTile, MemoryPool::System4KBPages);
 
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(true);
     allocation->setUncacheable(true);
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizePerTile);
     allocation->setDriverAllocatedCpuPtr(cpuBasePointer);
+
+    if (addressReserved) {
+        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizePerTile);
+    }
 
     for (auto tile = 0u, currentBank = 0u; tile < numTiles; ++tile, ++currentBank) {
         while (!allocationData.storageInfo.memoryBanks.test(currentBank)) {

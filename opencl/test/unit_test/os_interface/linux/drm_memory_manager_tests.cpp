@@ -5943,4 +5943,92 @@ HWTEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletion
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenMultiSubDevicesBitfieldWhenAllocatingSbaTrackingBufferThenCorrectMultiHostAllocationReturned) {
+    mock->ioctl_expected.total = -1;
+
+    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
+                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         false, false,
+                                         0b0011};
+
+    const uint64_t gpuAddresses[] = {0, 0x12340000};
+
+    for (auto gpuAddress : gpuAddresses) {
+        properties.gpuAddress = gpuAddress;
+
+        auto sbaBuffer = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+
+        EXPECT_NE(nullptr, sbaBuffer);
+
+        EXPECT_EQ(MemoryPool::System4KBPages, sbaBuffer->getMemoryPool());
+        EXPECT_EQ(2u, sbaBuffer->getNumGmms());
+
+        EXPECT_NE(nullptr, sbaBuffer->getUnderlyingBuffer());
+        EXPECT_EQ(MemoryConstants::pageSize, sbaBuffer->getUnderlyingBufferSize());
+
+        auto &bos = sbaBuffer->getBOs();
+
+        EXPECT_NE(nullptr, bos[0]);
+        EXPECT_NE(nullptr, bos[1]);
+
+        if (gpuAddress != 0) {
+            EXPECT_EQ(gpuAddress, sbaBuffer->getGpuAddress());
+
+            EXPECT_EQ(gpuAddress, bos[0]->peekAddress());
+            EXPECT_EQ(gpuAddress, bos[1]->peekAddress());
+            EXPECT_EQ(0u, sbaBuffer->getReservedAddressPtr());
+        } else {
+            EXPECT_EQ(bos[0]->peekAddress(), bos[1]->peekAddress());
+            EXPECT_NE(nullptr, sbaBuffer->getReservedAddressPtr());
+            EXPECT_NE(0u, sbaBuffer->getGpuAddress());
+        }
+
+        EXPECT_EQ(nullptr, bos[2]);
+        EXPECT_EQ(nullptr, bos[3]);
+
+        memoryManager->freeGraphicsMemory(sbaBuffer);
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, givenSingleSubDevicesBitfieldWhenAllocatingSbaTrackingBufferThenSingleHostAllocationReturned) {
+    mock->ioctl_expected.total = -1;
+
+    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize,
+                                         NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER,
+                                         false, false,
+                                         0b0001};
+
+    const uint64_t gpuAddresses[] = {0, 0x12340000};
+
+    for (auto gpuAddress : gpuAddresses) {
+        properties.gpuAddress = gpuAddress;
+
+        auto sbaBuffer = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+
+        EXPECT_NE(nullptr, sbaBuffer);
+
+        EXPECT_EQ(MemoryPool::System4KBPages, sbaBuffer->getMemoryPool());
+        EXPECT_EQ(1u, sbaBuffer->getNumGmms());
+
+        EXPECT_NE(nullptr, sbaBuffer->getUnderlyingBuffer());
+        EXPECT_EQ(MemoryConstants::pageSize, sbaBuffer->getUnderlyingBufferSize());
+
+        auto &bos = sbaBuffer->getBOs();
+
+        EXPECT_NE(nullptr, bos[0]);
+        EXPECT_EQ(nullptr, bos[1]);
+        EXPECT_EQ(nullptr, bos[2]);
+        EXPECT_EQ(nullptr, bos[3]);
+
+        if (gpuAddress != 0) {
+            EXPECT_EQ(gpuAddress, sbaBuffer->getGpuAddress());
+            EXPECT_EQ(gpuAddress, bos[0]->peekAddress());
+        } else {
+            EXPECT_NE(0u, sbaBuffer->getGpuAddress());
+        }
+
+        memoryManager->freeGraphicsMemory(sbaBuffer);
+    }
+}
+
 } // namespace NEO

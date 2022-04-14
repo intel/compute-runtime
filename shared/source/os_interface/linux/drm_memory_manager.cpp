@@ -277,7 +277,9 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if (allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+    if (allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+        (allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER &&
+         allocationData.storageInfo.subDeviceBitfield.count() > 1)) {
         return createMultiHostAllocation(allocationData);
     }
 
@@ -412,6 +414,12 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const Allocat
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) {
+
+    if (allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER &&
+        allocationData.storageInfo.subDeviceBitfield.count() > 1) {
+        return createMultiHostAllocation(allocationData);
+    }
+
     auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
 
     const size_t minAlignment = getUserptrAlignment();

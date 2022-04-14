@@ -430,7 +430,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
-    if (properties.allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+    if (properties.allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+        properties.allocationType == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
         allocationData.flags.zeroMemory = 1;
     }
 
@@ -700,7 +701,8 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     for (auto i = 0u; i < graphicsAllocation->storageInfo.getNumBanks(); ++i) {
         memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()) + i * graphicsAllocation->getUnderlyingBufferSize(), destinationOffset),
                  (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
-        if (graphicsAllocation->getAllocationType() != AllocationType::DEBUG_CONTEXT_SAVE_AREA) {
+        if (graphicsAllocation->getAllocationType() != AllocationType::DEBUG_CONTEXT_SAVE_AREA &&
+            graphicsAllocation->getAllocationType() != AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
             break;
         }
     }

@@ -187,6 +187,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::RING_BUFFER ||
                allocationType == AllocationType::SEMAPHORE_BUFFER ||
                allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               allocationType == AllocationType::DEBUG_SBA_TRACKING_BUFFER ||
                allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
                allocationType == AllocationType::DEBUG_MODULE_AREA;
     }

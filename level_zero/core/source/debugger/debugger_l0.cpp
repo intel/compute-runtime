@@ -52,11 +52,10 @@ void DebuggerL0::initialize() {
         if (!singleAddressSpaceSbaTracking) {
             properties.osContext = engine.osContext;
         }
-        auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-        memset(sbaAllocation->getUnderlyingBuffer(), 0, sbaAllocation->getUnderlyingBufferSize());
+        properties.subDevicesBitfield = engine.osContext->getDeviceBitfield();
 
-        auto sbaHeaderPtr = reinterpret_cast<SbaTrackedAddresses *>(sbaAllocation->getUnderlyingBuffer());
-        *sbaHeaderPtr = sbaHeader;
+        auto sbaAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        device->getMemoryManager()->copyMemoryToAllocation(sbaAllocation, 0, &sbaHeader, sizeof(sbaHeader));
 
         perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
     }

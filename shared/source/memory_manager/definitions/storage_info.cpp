@@ -71,6 +71,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         storageInfo.tileInstanced = true;
         break;
     case AllocationType::PRIVATE_SURFACE:
+    case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
         storageInfo.cloningOfPageTables = false;
 
         if (properties.subDevicesBitfield.count() == 1) {
