@@ -778,18 +778,18 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenItIsMadeResidentThenSubsequen
 
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
 
-    //now call with task count 2 , allocations shouldn't change
+    // now call with task count 2 , allocations shouldn't change
     unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
     auto internalEntry = unifiedMemoryManager->indirectAllocationsResidency.find(&commandStreamReceiver)->second;
 
     EXPECT_EQ(2u, internalEntry.latestSentTaskCount);
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
 
-    //force Graphics Allocation to be non resident
+    // force Graphics Allocation to be non resident
     graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver.getOsContext().getContextId());
     EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
 
-    //now call with task count 3 , allocations shouldn't change
+    // now call with task count 3 , allocations shouldn't change
     unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
     EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
     unifiedMemoryManager->freeSVMAlloc(ptr);
@@ -815,7 +815,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenNewAllocationIsCreatedThenItI
     unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 1u);
 
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
-    //force to non resident
+    // force to non resident
     graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver.getOsContext().getContextId());
 
     auto ptr2 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
@@ -825,7 +825,7 @@ TEST(UnifiedMemoryTest, givenInternalAllocationWhenNewAllocationIsCreatedThenItI
 
     EXPECT_FALSE(graphicsAllocation2->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));
 
-    //now call with task count 2, both allocations needs to be made resident
+    // now call with task count 2, both allocations needs to be made resident
     unifiedMemoryManager->makeIndirectAllocationsResident(commandStreamReceiver, 2u);
 
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(commandStreamReceiver.getOsContext().getContextId()));

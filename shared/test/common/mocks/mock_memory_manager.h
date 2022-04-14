@@ -392,4 +392,23 @@ class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
     }
 };
 
+class MockMemoryManagerWithCapacity : public MockMemoryManager {
+  public:
+    MockMemoryManagerWithCapacity(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        if (this->capacity >= properties.size) {
+            this->capacity -= properties.size;
+            return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+        }
+        return nullptr;
+    }
+
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
+        this->capacity += gfxAllocation->getUnderlyingBufferSize();
+        MockMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
+    };
+
+    size_t capacity = 0u;
+};
+
 } // namespace NEO
