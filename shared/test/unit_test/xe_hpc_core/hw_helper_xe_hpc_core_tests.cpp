@@ -63,3 +63,8 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpeci
     auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     EXPECT_TRUE(hwHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
+
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(helper.isTimestampWaitSupported());
+}

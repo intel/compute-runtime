@@ -453,6 +453,11 @@ size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwI
 }
 
 template <>
+bool HwHelperHw<Family>::isTimestampWaitSupported() const {
+    return true;
+}
+
+template <>
 uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType

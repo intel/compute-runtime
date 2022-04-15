@@ -37,11 +37,6 @@ bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType en
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupported() const {
-    return true;
-}
-
-template <>
 bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
     return true;
 }
