@@ -107,12 +107,12 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
     this->traits.requiresPatchingOfInstructionSegments = true;
     auto relocEntryIt = reinterpret_cast<const vISA::GenRelocEntry *>(data);
     auto relocEntryEnd = relocEntryIt + numEntries;
-    if (instructionsSegmentId >= relocations.size()) {
-        static_assert(std::is_nothrow_move_constructible<decltype(relocations[0])>::value, "");
-        relocations.resize(instructionsSegmentId + 1);
+    if (instructionsSegmentId >= textRelocations.size()) {
+        static_assert(std::is_nothrow_move_constructible<decltype(textRelocations[0])>::value, "");
+        textRelocations.resize(instructionsSegmentId + 1);
     }
 
-    auto &outRelocInfo = relocations[instructionsSegmentId];
+    auto &outRelocInfo = textRelocations[instructionsSegmentId];
     outRelocInfo.reserve(numEntries);
     for (; relocEntryIt != relocEntryEnd; ++relocEntryIt) {
         RelocationInfo relocInfo{};
@@ -152,12 +152,12 @@ void LinkerInput::addDataRelocationInfo(const RelocationInfo &relocationInfo) {
 void LinkerInput::addElfTextSegmentRelocation(RelocationInfo relocationInfo, uint32_t instructionsSegmentId) {
     this->traits.requiresPatchingOfInstructionSegments = true;
 
-    if (instructionsSegmentId >= relocations.size()) {
-        static_assert(std::is_nothrow_move_constructible<decltype(relocations[0])>::value, "");
-        relocations.resize(instructionsSegmentId + 1);
+    if (instructionsSegmentId >= textRelocations.size()) {
+        static_assert(std::is_nothrow_move_constructible<decltype(textRelocations[0])>::value, "");
+        textRelocations.resize(instructionsSegmentId + 1);
     }
 
-    auto &outRelocInfo = relocations[instructionsSegmentId];
+    auto &outRelocInfo = textRelocations[instructionsSegmentId];
 
     relocationInfo.relocationSegment = SegmentType::Instructions;
 
@@ -207,6 +207,7 @@ void LinkerInput::decodeElfSymbolTableAndRelocations(Elf::Elf<Elf::EI_CLASS_64> 
     for (auto &reloc : elf.getRelocations()) {
         NEO::LinkerInput::RelocationInfo relocationInfo;
         relocationInfo.offset = reloc.offset;
+        relocationInfo.addend = reloc.addend;
         relocationInfo.symbolName = reloc.symbolName;
 
         switch (reloc.relocType) {
@@ -299,12 +300,12 @@ uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
     return (relocationtype == LinkerInput::RelocationInfo::Type::Address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
 
-void Linker::patchAddress(void *relocAddress, const Linker::RelocatedSymbol &symbol, const Linker::RelocationInfo &relocation) {
-    uint64_t gpuAddressAs64bit = static_cast<uint64_t>(symbol.gpuAddress);
+void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker::RelocationInfo &relocation) {
+    uint64_t gpuAddressAs64bit = static_cast<uint64_t>(value);
     switch (relocation.type) {
     default:
         UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocation.type);
-        *reinterpret_cast<uintptr_t *>(relocAddress) = symbol.gpuAddress;
+        *reinterpret_cast<uint64_t *>(relocAddress) = gpuAddressAs64bit;
         break;
     case RelocationInfo::Type::AddressLow:
         *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff);
@@ -357,7 +358,8 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 continue;
             }
 
-            patchAddress(relocAddress, symbolIt->second, relocation);
+            uint64_t patchValue = symbolIt->second.gpuAddress + relocation.addend;
+            patchAddress(relocAddress, patchValue, relocation);
         }
     }
 }
@@ -396,19 +398,18 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
             continue;
         }
 
-        uint64_t incrementValue = 0U;
+        uint64_t incrementValue = srcGpuAddressAs64Bit + relocation.addend;
         switch (relocType) {
         default:
             UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocType);
-            incrementValue = srcGpuAddressAs64Bit;
             patchIncrement<uint64_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         case RelocationInfo::Type::AddressLow:
-            incrementValue = srcGpuAddressAs64Bit & 0xffffffff;
+            incrementValue = incrementValue & 0xffffffff;
             patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         case RelocationInfo::Type::AddressHigh:
-            incrementValue = (srcGpuAddressAs64Bit >> 32) & 0xffffffff;
+            incrementValue = (incrementValue >> 32) & 0xffffffff;
             patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         }
@@ -547,7 +548,7 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
             auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
                                           static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
 
-            NEO::Linker::patchAddress(relocAddress, symbol, outUnresolvedExternals[vecIndex].unresolvedRelocation);
+            NEO::Linker::patchAddress(relocAddress, symbol.gpuAddress, outUnresolvedExternals[vecIndex].unresolvedRelocation);
 
             outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
             outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);

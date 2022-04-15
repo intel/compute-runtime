@@ -571,7 +571,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     NEO::LinkerInput::RelocationInfo relocation = {};
     relocation.symbolName = "A";
     relocation.offset = 0;
-    linkerInput->relocations.push_back(NEO::LinkerInput::Relocations{relocation});
+    linkerInput->textRelocations.push_back(NEO::LinkerInput::Relocations{relocation});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto rootDeviceIndex = device->getRootDeviceIndex();
@@ -605,9 +605,9 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SegmentType::Instructions};
 
     auto relocationType = NEO::LinkerInput::RelocationInfo::Type::Address;
-    linkerInput->relocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U, relocationType},
-                                        NEO::LinkerInput::RelocationInfo{"B", 16U, relocationType},
-                                        NEO::LinkerInput::RelocationInfo{"C", 24U, relocationType}});
+    linkerInput->textRelocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U, relocationType},
+                                            NEO::LinkerInput::RelocationInfo{"B", 16U, relocationType},
+                                            NEO::LinkerInput::RelocationInfo{"C", 24U, relocationType}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     linkerInput->exportedFunctionsSegmentId = 0;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -639,9 +639,9 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
 
     linkerInput.reset(static_cast<WhiteBox<LinkerInput> *>(buildInfo.linkerInput.release()));
 
-    for (size_t i = 0; i < linkerInput->relocations.size(); ++i) {
-        auto expectedPatch = buildInfo.globalSurface->getGpuAddress() + linkerInput->symbols[linkerInput->relocations[0][0].symbolName].offset;
-        auto relocationAddress = kernelHeap.data() + linkerInput->relocations[0][0].offset;
+    for (size_t i = 0; i < linkerInput->textRelocations.size(); ++i) {
+        auto expectedPatch = buildInfo.globalSurface->getGpuAddress() + linkerInput->symbols[linkerInput->textRelocations[0][0].symbolName].offset;
+        auto relocationAddress = kernelHeap.data() + linkerInput->textRelocations[0][0].offset;
 
         EXPECT_EQ(static_cast<uintptr_t>(expectedPatch), *reinterpret_cast<uintptr_t *>(relocationAddress)) << i;
     }
@@ -711,7 +711,7 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{".str", 0x8, LinkerInput::RelocationInfo::Type::Address, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{".str", 0x8, LinkerInput::RelocationInfo::Type::Address, SegmentType::Instructions}});
     linkerInput->symbols.insert({".str", {0x0, 0x8, SegmentType::GlobalStrings}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
 
@@ -745,7 +745,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequ
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);
@@ -777,7 +777,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKerne
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);
@@ -803,7 +803,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledD
     program.getKernelInfoArray(rootDeviceIndex).push_back(&kernelInfo);
 
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->relocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
+    linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolNames[0], 0x8, LinkerInput::RelocationInfo::Type::AddressLow, SegmentType::Instructions}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     program.setLinkerInput(rootDeviceIndex, std::move(linkerInput));
     auto ret = program.linkBinary(&device->getDevice(), nullptr, nullptr, {}, program.externalFunctions);

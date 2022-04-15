@@ -28,8 +28,8 @@ struct WhiteBox<NEO::LinkerInput> : NEO::LinkerInput {
     using BaseClass::extFunDependencies;
     using BaseClass::kernelDependencies;
     using BaseClass::parseRelocationForExtFuncUsage;
-    using BaseClass::relocations;
     using BaseClass::symbols;
+    using BaseClass::textRelocations;
     using BaseClass::traits;
     using BaseClass::valid;
 };
@@ -38,6 +38,9 @@ template <>
 struct WhiteBox<NEO::Linker> : NEO::Linker {
     using BaseClass = NEO::Linker;
     using BaseClass::BaseClass;
+    using BaseClass::patchDataSegments;
+    using BaseClass::patchInstructionsSegments;
+    using BaseClass::relocatedSymbols;
     using BaseClass::resolveExternalFunctions;
 };
 

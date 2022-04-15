@@ -840,7 +840,7 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    linkerInput->relocations.push_back({unresolvedRelocation});
+    linkerInput->textRelocations.push_back({unresolvedRelocation});
 
     module->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
     module->unresolvedExternalsInfo.push_back({unresolvedRelocation});

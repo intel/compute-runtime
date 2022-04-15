@@ -988,7 +988,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                         auto relocAddress = ptrOffset(isaSegmentsForPatching[unresolvedExternal.instructionsSegmentId].hostPointer,
                                                       static_cast<uintptr_t>(unresolvedExternal.unresolvedRelocation.offset));
 
-                        NEO::Linker::patchAddress(relocAddress, symbolIt->second, unresolvedExternal.unresolvedRelocation);
+                        NEO::Linker::patchAddress(relocAddress, symbolIt->second.gpuAddress, unresolvedExternal.unresolvedRelocation);
                         numPatchedSymbols++;
                         moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
                         std::map<void *, void *>::iterator it;

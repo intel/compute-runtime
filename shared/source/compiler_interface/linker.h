@@ -91,6 +91,7 @@ struct LinkerInput {
         uint64_t offset = std::numeric_limits<uint64_t>::max();
         Type type = Type::Unknown;
         SegmentType relocationSegment = SegmentType::Unknown;
+        int64_t addend = 0U;
     };
 
     using SectionNameToSegmentIdMap = std::unordered_map<std::string, uint32_t>;
@@ -127,7 +128,7 @@ struct LinkerInput {
     }
 
     const RelocationsPerInstSegment &getRelocationsInInstructionSegments() const {
-        return relocations;
+        return textRelocations;
     }
 
     const Relocations &getDataRelocations() const {
@@ -155,7 +156,7 @@ struct LinkerInput {
 
     Traits traits;
     SymbolMap symbols;
-    RelocationsPerInstSegment relocations;
+    RelocationsPerInstSegment textRelocations;
     Relocations dataRelocations;
     std::vector<std::pair<std::string, SymbolInfo>> extFuncSymbols;
     int32_t exportedFunctionsSegmentId = -1;
@@ -224,7 +225,7 @@ struct Linker {
         }
         return LinkingStatus::LinkedFully;
     }
-    static void patchAddress(void *relocAddress, const RelocatedSymbol &symbol, const RelocationInfo &relocation);
+    static void patchAddress(void *relocAddress, const uint64_t value, const RelocationInfo &relocation);
     RelocatedSymbolsMap extractRelocatedSymbols() {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));
     }
