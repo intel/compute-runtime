@@ -9,7 +9,7 @@ components:
     dest_dir: igc
     type: git
     branch: igc
-    revision: 01ca3a7e856625fe2ef885235401876bf80a08b5
+    revision: 62ab67c46dad5713d50702d3a5893e2398a99343
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
     dest_dir: igsc
@@ -31,7 +31,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 1898-149
+    revision: 1898-154
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
