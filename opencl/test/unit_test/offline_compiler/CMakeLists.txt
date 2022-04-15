@@ -53,8 +53,12 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/decoder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.h
@@ -68,6 +72,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/stdout_capturer.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
@@ -124,7 +129,7 @@ endif()
 get_property(CLOC_LIB_FOLDER TARGET ocloc_lib PROPERTY FOLDER)
 get_property(CLOC_LIB_COMPILE_FLAGS TARGET ocloc_lib PROPERTY COMPILE_FLAGS)
 set_property(TARGET ocloc_tests PROPERTY FOLDER ${CLOC_LIB_FOLDER})
-set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_LIB_COMPILE_FLAGS})
+set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_LIB_COMPILE_FLAGS} ${ASAN_FLAGS} ${TSAN_FLAGS})
 
 string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 

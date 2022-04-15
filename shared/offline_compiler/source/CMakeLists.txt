@@ -60,6 +60,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
+    ${OCLOC_DIRECTORY}/source/ocloc_dll_options.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_dll_options.h
     ${OCLOC_DIRECTORY}/source/ocloc_error_code.h
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
@@ -187,7 +189,7 @@ target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES}
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
 target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_CORE_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
-                           IGA_LIBRARY_NAME=${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+                           IGA_LIBRARY_NAME="${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
 target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})
 

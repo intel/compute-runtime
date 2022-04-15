@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "iga_wrapper.h"
 
+#include "shared/offline_compiler/source/ocloc_dll_options.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "helper.h"
@@ -43,16 +43,14 @@ struct IgaWrapper::Impl {
         iga.OptsContext.cb = sizeof(igaLib.OptsContext);
         iga.OptsContext.gen = igaGen;
 
-#define STR2(X) #X
-#define STR(X) STR2(X)
-        iga.library.reset(NEO::OsLibrary::load(STR(IGA_LIBRARY_NAME)));
+        iga.library.reset(NEO::OsLibrary::load(Os::igaDllName));
         if (iga.library == nullptr) {
             return;
         }
 
 #define LOAD_OR_ERROR(MEMBER, FUNC_NAME)                                                                            \
     if (nullptr == (iga.MEMBER = reinterpret_cast<decltype(iga.MEMBER)>(iga.library->getProcAddress(FUNC_NAME)))) { \
-        printf("Warning : Couldn't find %s in %s\n", FUNC_NAME, STR(IGA_LIBRARY_NAME));                             \
+        printf("Warning : Couldn't find %s in %s\n", FUNC_NAME, Os::igaDllName);                                    \
         return;                                                                                                     \
     }
 
@@ -65,10 +63,30 @@ struct IgaWrapper::Impl {
         LOAD_OR_ERROR(statusToString, IGA_STATUS_TO_STRING_STR);
 
 #undef LOAD_OR_ERROR
-#undef STR
-#undef STR2
 
         this->igaLib = std::move(iga);
+    }
+
+    void printContextErrors(MessagePrinter &messagePrinter, iga_context_t &context) {
+        const iga_diagnostic_t *errors{};
+        uint32_t errorsSize{};
+
+        this->igaLib.contextGetErrors(context, &errors, &errorsSize);
+
+        if (errorsSize > 0 && errors != nullptr) {
+            messagePrinter.printf("Errors: %s\n", errors->message);
+        }
+    }
+
+    void printContextWarnings(MessagePrinter &messagePrinter, iga_context_t &context) {
+        const iga_diagnostic_t *warnings{};
+        uint32_t warningsSize{};
+
+        this->igaLib.contextGetWarnings(context, &warnings, &warningsSize);
+
+        if (warningsSize > 0 && warnings != nullptr) {
+            messagePrinter.printf("Warnings: %s\n", warnings->message);
+        }
     }
 };
 
@@ -100,22 +118,13 @@ bool IgaWrapper::tryDisassembleGenISA(const void *kernelPtr, uint32_t kernelSize
     stat = pimpl->igaLib.disassemble(context, &disassembleOptions, kernelPtr, kernelSize, nullptr, nullptr, &pKernelText);
     if (stat != 0) {
         messagePrinter->printf("Error while disassembling with IGA!\nStatus msg: %s\n", pimpl->igaLib.statusToString(stat));
-        const iga_diagnostic_t *errors;
-        uint32_t size = 100;
-        pimpl->igaLib.contextGetErrors(context, &errors, &size);
-        if (errors != nullptr) {
-            messagePrinter->printf("Errors: %s\n", errors->message);
-        }
+        pimpl->printContextErrors(*messagePrinter, context);
+
         pimpl->igaLib.contextRelease(context);
         return false;
     }
 
-    const iga_diagnostic_t *warnings;
-    uint32_t warningsSize = 100;
-    pimpl->igaLib.contextGetWarnings(context, &warnings, &warningsSize);
-    if (warningsSize > 0 && warnings != nullptr) {
-        messagePrinter->printf("Warnings: %s\n", warnings->message);
-    }
+    pimpl->printContextWarnings(*messagePrinter, context);
 
     out = pKernelText;
     pimpl->igaLib.contextRelease(context);
@@ -143,24 +152,13 @@ bool IgaWrapper::tryAssembleGenISA(const std::string &inAsm, std::string &outBin
     stat = pimpl->igaLib.assemble(context, &assembleOptions, inAsm.c_str(), &pOutput, &size);
     if (stat != 0) {
         messagePrinter->printf("Error while assembling with IGA!\nStatus msg: %s\n", pimpl->igaLib.statusToString(stat));
-
-        const iga_diagnostic_t *errors;
-        uint32_t size = 100;
-        pimpl->igaLib.contextGetErrors(context, &errors, &size);
-        if (errors != nullptr) {
-            messagePrinter->printf("Errors: %s\n", errors->message);
-        }
+        pimpl->printContextErrors(*messagePrinter, context);
 
         pimpl->igaLib.contextRelease(context);
         return false;
     }
 
-    const iga_diagnostic_t *warnings;
-    uint32_t context_size;
-    pimpl->igaLib.contextGetWarnings(context, &warnings, &context_size);
-    if (context_size > 0 && warnings != nullptr) {
-        messagePrinter->printf("Warnings: %s\n", warnings->message);
-    }
+    pimpl->printContextWarnings(*messagePrinter, context);
 
     outBinary.assign(reinterpret_cast<char *>(pOutput), reinterpret_cast<char *>(pOutput) + size);
 
