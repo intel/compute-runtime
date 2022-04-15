@@ -834,6 +834,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
     EXPECT_TRUE(csr.downloadAllocationCalled);
 
+    for (CopyEngineState &state : cmdQ->bcsStates) {
+        if (state.isValid()) {
+            auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->getBcsCommandStreamReceiver(state.engineType));
+            EXPECT_EQ(bcsCsr->waitForCompletionWithTimeoutTaskCountCalled, 0u);
+        }
+    }
+
     clReleaseEvent(clEvent1);
     clReleaseEvent(clEvent2);
     *csr.getTagAddress() = csr.peekTaskCount();

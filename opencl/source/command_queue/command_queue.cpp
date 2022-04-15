@@ -122,8 +122,8 @@ CommandQueue::~CommandQueue() {
     }
 
     timestampPacketContainer.reset();
-    //for normal queue, decrement ref count on context
-    //special queue is owned by context so ref count doesn't have to be decremented
+    // for normal queue, decrement ref count on context
+    // special queue is owned by context so ref count doesn't have to be decremented
     if (context && !isSpecialCommandQueue) {
         context->decRefInternal();
     }
@@ -269,15 +269,19 @@ WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<
         if (gtpinIsGTPinInitialized()) {
             gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
         }
+
+        for (const CopyEngineState &copyEngine : copyEnginesToWait) {
+            auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
+
+            waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, this->getThrottle());
+            if (waitStatus == WaitStatus::GpuHang) {
+                return WaitStatus::GpuHang;
+            }
+        }
     }
 
     for (const CopyEngineState &copyEngine : copyEnginesToWait) {
         auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
-
-        waitStatus = bcsCsr->waitForTaskCountWithKmdNotifyFallback(copyEngine.taskCount, 0, false, this->getThrottle());
-        if (waitStatus == WaitStatus::GpuHang) {
-            return WaitStatus::GpuHang;
-        }
 
         waitStatus = bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(copyEngine.taskCount);
         if (waitStatus == WaitStatus::GpuHang) {
@@ -296,7 +300,7 @@ WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<
 
 bool CommandQueue::isQueueBlocked() {
     TakeOwnershipWrapper<CommandQueue> takeOwnershipWrapper(*this);
-    //check if we have user event and if so, if it is in blocked state.
+    // check if we have user event and if so, if it is in blocked state.
     if (this->virtualEvent) {
         auto executionStatus = this->virtualEvent->peekExecutionStatus();
         if (executionStatus <= CL_SUBMITTED) {
@@ -311,7 +315,7 @@ bool CommandQueue::isQueueBlocked() {
                     taskLevel++;
                 }
             } else {
-                //at this point we may reset queue TaskCount, since all command previous to this were aborted
+                // at this point we may reset queue TaskCount, since all command previous to this were aborted
                 taskCount = 0;
                 flushStamp->setStamp(0);
                 taskLevel = getGpgpuCommandStreamReceiver().peekTaskLevel();
@@ -319,7 +323,7 @@ bool CommandQueue::isQueueBlocked() {
 
             FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
 
-            //close the access to virtual event, driver added only 1 ref count.
+            // close the access to virtual event, driver added only 1 ref count.
             this->virtualEvent->decRefInternal();
             this->virtualEvent = nullptr;
             return false;
@@ -625,11 +629,11 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
         eventBuilder = &internalEventBuilder;
     }
 
-    //store task data in event
+    // store task data in event
     auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, *this));
     eventBuilder->getEvent()->setCommand(std::move(cmd));
 
-    //bind output event with input events
+    // bind output event with input events
     eventBuilder->addParentEvents(ArrayRef<const cl_event>(eventWaitList, numEventsInWaitlist));
     eventBuilder->addParentEvent(this->virtualEvent);
     eventBuilder->finalize();
@@ -772,12 +776,12 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
         debugVariableSet = true;
     }
 
-    //if we are blocked by user events, we can't service the call on CPU
+    // if we are blocked by user events, we can't service the call on CPU
     if (Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList)) {
         return false;
     }
 
-    //check if buffer is compatible
+    // check if buffer is compatible
     if (!buffer->isReadWriteOnCpuAllowed(device->getDevice())) {
         return false;
     }
@@ -790,18 +794,18 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
         return true;
     }
 
-    //non blocking transfers are not expected to be serviced by CPU
-    //we do not want to artifically stall the pipeline to allow CPU access
+    // non blocking transfers are not expected to be serviced by CPU
+    // we do not want to artifically stall the pipeline to allow CPU access
     if (blocking == CL_FALSE) {
         return false;
     }
 
-    //check if it is beneficial to do transfer on CPU
+    // check if it is beneficial to do transfer on CPU
     if (!buffer->isReadWriteOnCpuPreferred(ptr, size, getDevice())) {
         return false;
     }
 
-    //make sure that event wait list is empty
+    // make sure that event wait list is empty
     if (numEventsInWaitList == 0) {
         return true;
     }
@@ -988,7 +992,7 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
 void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
     std::array<uint32_t, 8u> timestampData;
     timestampData.fill(std::numeric_limits<uint32_t>::max());
-    if (node->refCountFetchSub(0) <= 2) { //One ref from deferred container and one from bcs barrier container it is going to be released from
+    if (node->refCountFetchSub(0) <= 2) { // One ref from deferred container and one from bcs barrier container it is going to be released from
         for (uint32_t i = 0; i < node->getPacketsUsed(); i++) {
             node->assignDataToAllTimestamps(i, timestampData.data());
         }
