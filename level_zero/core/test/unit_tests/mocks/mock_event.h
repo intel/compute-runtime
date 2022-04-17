@@ -104,6 +104,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t queryTimestampsExp(L0::Device *device, uint32_t *pCount, ze_kernel_timestamp_result_t *pTimestamps) override {
         return ZE_RESULT_SUCCESS;
     }
+    uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() override { return 1; }
     void resetPackets() override {}
     void setPacketsInUse(uint32_t value) override {}

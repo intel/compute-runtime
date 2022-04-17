@@ -58,6 +58,7 @@ struct Event : _ze_event_handle_t {
 
     virtual uint64_t getGpuAddress(Device *device) = 0;
     virtual uint32_t getPacketsInUse() = 0;
+    virtual uint32_t getPacketsUsedInLastKernel() = 0;
     virtual uint64_t getPacketAddress(Device *device) = 0;
     virtual void resetPackets() = 0;
     void *getHostAddress() { return hostAddress; }
@@ -168,6 +169,7 @@ struct EventImp : public Event {
     void resetPackets() override;
     uint64_t getPacketAddress(Device *device) override;
     uint32_t getPacketsInUse() override;
+    uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;

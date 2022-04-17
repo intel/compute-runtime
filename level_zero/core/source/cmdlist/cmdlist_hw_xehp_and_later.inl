@@ -100,9 +100,9 @@ void programEventL3Flush(ze_event_handle_t hEvent,
     }
 
     if (partitionCount > 1) {
-        event->setPacketsInUse(event->getPacketsInUse() + partitionCount);
+        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + partitionCount);
     } else {
-        event->setPacketsInUse(event->getPacketsInUse() + 1);
+        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + 1);
     }
 
     event->l3FlushWaApplied = true;
