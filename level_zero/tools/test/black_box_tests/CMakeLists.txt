@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,6 @@ if(UNIX)
   set(L0_BLACK_BOX_TEST_PROJECT_FOLDER "ze_intel_gpu/black_box_tests")
   set(TEST_TARGETS
       zello_sysman
-      zello_metrics
   )
 
   foreach(TEST_NAME ${TEST_TARGETS})
