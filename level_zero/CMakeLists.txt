@@ -248,7 +248,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
     )
-    target_link_libraries(${TARGET_NAME_L0}
+    target_link_libraries(${TARGET_NAME_L0} PRIVATE
                           dxgi
     )
     if(DEFINED L0_DLL_RC_FILE)
@@ -470,13 +470,13 @@ if(BUILD_WITH_L0)
   append_sources_from_properties(L0_SHARED_LIB_SRCS L0_SRCS_DLL NEO_CORE_SRCS_LINK NEO_SRCS_ENABLE_CORE)
   target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SHARED_LIB_SRCS})
 
-  target_link_libraries(${TARGET_NAME_L0}
+  target_link_libraries(${TARGET_NAME_L0} PRIVATE
                         ${NEO_SHARED_RELEASE_LIB_NAME}
                         ${NEO_EXTRA_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
   )
 
   if(UNIX)
-    target_link_libraries(${TARGET_NAME_L0} ${GMM_LINK_NAME})
+    target_link_libraries(${TARGET_NAME_L0} PRIVATE ${GMM_LINK_NAME})
     if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
       set_property(TARGET ${TARGET_NAME_L0}
                    APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
