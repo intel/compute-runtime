@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,9 @@ class GmmHandleAllocator {
         return nullptr;
     }
     virtual void destroyHandle(void *handle) {
+    }
+    virtual bool openHandle(void *handle, GMM_RESOURCE_INFO *dstResInfo, size_t handleSize) {
+        return true;
     }
     virtual size_t getHandleSize() {
         return 0;

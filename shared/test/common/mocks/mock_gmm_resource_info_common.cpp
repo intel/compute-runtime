@@ -20,6 +20,10 @@ GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RE
     return new MockGmmResourceInfo(inputGmmResourceInfo);
 }
 
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) {
+    return new MockGmmResourceInfo(inputGmmResourceInfo);
+}
+
 MockGmmResourceInfo::MockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {
     mockResourceCreateParams = *resourceCreateParams;
     setupDefaultActions();

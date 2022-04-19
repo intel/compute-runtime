@@ -749,11 +749,12 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     status = getGdi()->openResourceFromNtHandle(&openResourceFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
+    auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
+
+    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo), hwDeviceId->getUmKmDataTranslator()->enabled()));
+
     alloc->setDefaultHandle(allocationInfo2[0].hAllocation);
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
-
-    auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
-    alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
 }

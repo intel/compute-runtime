@@ -132,21 +132,28 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
+
     auto gmmRes = new Gmm(getGmmHelper(), incomingPtr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     auto gmmRes2 = new Gmm(getGmmHelper(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
+    auto gmmRes3 = new Gmm(getGmmHelper(), gmmRes2->gmmResourceInfo->peekGmmResourceInfo(), false);
 
     // copy is being made
     EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekGmmResourceInfo());
+    EXPECT_NE(gmmRes3->gmmResourceInfo->peekHandle(), gmmRes2->gmmResourceInfo->peekGmmResourceInfo());
 
     auto allocationSize = gmmRes->gmmResourceInfo->getSizeAllocation();
     EXPECT_NE(0u, allocationSize);
     EXPECT_EQ(allocationSize, gmmRes2->gmmResourceInfo->getSizeAllocation());
+    EXPECT_EQ(allocationSize, gmmRes3->gmmResourceInfo->getSizeAllocation());
 
     // now delete parent GMM and query child, this shouldn't fail
     delete gmmRes;
     EXPECT_EQ(allocationSize, gmmRes2->gmmResourceInfo->getSizeAllocation());
 
     delete gmmRes2;
+    EXPECT_EQ(allocationSize, gmmRes3->gmmResourceInfo->getSizeAllocation());
+
+    delete gmmRes3;
 }
 
 TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsSizeZero) {
@@ -977,6 +984,7 @@ TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
 
         MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams){};
         MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo){};
+        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) : GmmResourceInfo(clientContext, inputGmmResourceInfo, openingHandle){};
     };
 
     GMM_RESCREATE_PARAMS gmmParams = {};
@@ -996,7 +1004,11 @@ TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
     MyMockResourecInfo myMockResourceInfo2(getGmmClientContext(), myMockResourceInfo1.resourceInfo.get());
     EXPECT_NE(nullptr, myMockResourceInfo2.resourceInfo.get());
 
+    MyMockResourecInfo myMockResourceInfo3(getGmmClientContext(), myMockResourceInfo2.resourceInfo.get(), true);
+    EXPECT_NE(nullptr, myMockResourceInfo3.resourceInfo.get());
+
     EXPECT_NE(myMockResourceInfo1.resourceInfo.get(), myMockResourceInfo2.resourceInfo.get());
+    EXPECT_NE(myMockResourceInfo2.resourceInfo.get(), myMockResourceInfo3.resourceInfo.get());
 }
 
 using GmmEnvironmentTest = MockExecutionEnvironmentGmmFixtureTest;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,8 @@ class WslComputeHelperGmmHandleAllocator : public GmmHandleAllocator {
     WslComputeHelperGmmHandleAllocator(WslComputeHelperUmKmDataTranslator *translator);
 
     void *createHandle(const GMM_RESOURCE_INFO *gmmResourceInfo) override;
+
+    bool openHandle(void *handle, GMM_RESOURCE_INFO *dstResInfo, size_t handleSize) override;
 
     void destroyHandle(void *handle) override;
 
@@ -172,6 +174,15 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
         return tokensToStructFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT, dst, dstSize, &marshalled.base.header, reinterpret_cast<TokenHeader *>(&marshalled + 1));
     }
 
+    bool translateGmmResourceInfoFromInternalRepresentation(GmmResourceInfoWinStruct &resInfoPodStruct, const void *src, size_t srcSize) {
+        std::vector<uint8_t> tokData(gmmResourceInfoTokensSize);
+        TokenHeader *tok = reinterpret_cast<TokenHeader *>(tokData.data());
+        if (false == structToTokensFn(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT, tok, gmmResourceInfoTokensSize, src, srcSize)) {
+            return false;
+        }
+        return Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT>::demarshall(resInfoPodStruct, tok, tok + gmmResourceInfoTokensSize / sizeof(TokenHeader));
+    }
+
     bool translateGmmGfxPartitioningToInternalRepresentation(void *dst, size_t dstSize, const GMM_GFX_PARTITIONING &src) override {
         if (computeHelperLibraryVersion == 0) {
             return (0 == memcpy_s(dst, dstSize, &src, sizeof(src)));
@@ -233,6 +244,16 @@ void *WslComputeHelperGmmHandleAllocator::createHandle(const GMM_RESOURCE_INFO *
     translator->translateGmmResourceInfoToInternalRepresentation(ret.get(), sizeU64 * sizeof(uint64_t), *gmmResourceInfo);
 
     return ret.release();
+}
+
+bool WslComputeHelperGmmHandleAllocator::openHandle(void *handle, GMM_RESOURCE_INFO *dstResInfo, size_t handleSize) {
+    GmmResourceInfoWinStruct resInfoPodStruct = {};
+
+    translator->translateGmmResourceInfoFromInternalRepresentation(resInfoPodStruct, handle, handleSize);
+
+    static_cast<GmmResourceInfoWinAccessor *>(dstResInfo)->set(resInfoPodStruct);
+
+    return true;
 }
 
 void WslComputeHelperGmmHandleAllocator::destroyHandle(void *handle) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,15 +16,29 @@ GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESCREATE_
     createResourceInfo(resourceInfoPtr);
 }
 
-GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : clientContext(clientContext) {
+GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo, false) {}
+
+GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) : clientContext(clientContext) {
     auto resourceInfoPtr = clientContext->copyResInfoObject(inputGmmResourceInfo);
-    createResourceInfo(resourceInfoPtr);
+    if (openingHandle) {
+        createResourceInfo(resourceInfoPtr, inputGmmResourceInfo);
+    } else {
+        createResourceInfo(resourceInfoPtr);
+    }
 }
 
-GmmResourceInfo::~GmmResourceInfo() {
-    if (this->clientContext && this->clientContext->getHandleAllocator()) {
-        this->clientContext->getHandleAllocator()->destroyHandle(this->handle);
+void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
+    auto customDeleter = [this](GMM_RESOURCE_INFO *gmmResourceInfo) {
+        this->clientContext->destroyResInfoObject(gmmResourceInfo);
+    };
+    if (this->clientContext->getHandleAllocator()) {
+        this->resourceInfo = UniquePtrType(resourceInfoPtr, [](GMM_RESOURCE_INFO *gmmResourceInfo) {});
+        this->clientContext->getHandleAllocator()->openHandle(inputGmmResourceInfo, resourceInfoPtr, this->clientContext->getHandleAllocator()->getHandleSize());
+        this->handle = resourceInfoPtr;
+        this->handleSize = this->clientContext->getHandleAllocator()->getHandleSize();
+        return;
     }
+    this->resourceInfo = UniquePtrType(resourceInfoPtr, customDeleter);
 }
 
 void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr) {
@@ -39,6 +53,12 @@ void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr) {
     } else {
         this->handle = this->resourceInfo.get();
         this->handleSize = sizeof(GMM_RESOURCE_INFO);
+    }
+}
+
+GmmResourceInfo::~GmmResourceInfo() {
+    if (this->clientContext && this->clientContext->getHandleAllocator()) {
+        this->clientContext->getHandleAllocator()->destroyHandle(this->handle);
     }
 }
 

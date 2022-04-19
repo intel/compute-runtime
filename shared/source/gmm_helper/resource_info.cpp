@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,4 +15,9 @@ GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RE
 GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
     return new GmmResourceInfo(clientContext, inputGmmResourceInfo);
 }
+
+GmmResourceInfo *GmmResourceInfo::create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) {
+    return new GmmResourceInfo(clientContext, inputGmmResourceInfo, openingHandle);
+}
+
 } // namespace NEO

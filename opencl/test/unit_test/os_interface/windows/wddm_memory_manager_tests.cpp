@@ -698,6 +698,34 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledWithUmKmDataTranslatorEnabledThenNonNullGraphicsAllocationIsReturned) {
+    struct MockUmKmDataTranslator : UmKmDataTranslator {
+        using UmKmDataTranslator::isEnabled;
+    };
+
+    std::unique_ptr<MockUmKmDataTranslator> translator = std::make_unique<MockUmKmDataTranslator>();
+    translator->isEnabled = true;
+    std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceId = std::make_unique<NEO::HwDeviceIdWddm>(wddm->hwDeviceId->getAdapter(),
+                                                                                            wddm->hwDeviceId->getAdapterLuid(),
+                                                                                            executionEnvironment->osEnvironment.get(),
+                                                                                            std::move(translator));
+    wddm->hwDeviceId.reset(hwDeviceId.release());
+
+    void *pSysMem = reinterpret_cast<void *>(0x1000);
+
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::SHARED_IMAGE);
+    auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->resourceHandle);
+    EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
+    EXPECT_EQ(AllocationType::SHARED_IMAGE, wddmAlloc->getAllocationType());
+
+    memoryManager->freeGraphicsMemory(gpuAllocation);
+}
+
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
     auto alloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -255,6 +255,34 @@ TEST(WslUmKmDataTranslator, whenQueryingForTranslationThenQueryIsForwardedToWslC
     auto gmmResourceInfoHandle = gmmHandleAllocator->createHandle(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfo.data()));
     ASSERT_NE(nullptr, gmmResourceInfoHandle);
     EXPECT_EQ(mockTokToStrDriverBuildNumber, reinterpret_cast<GmmResourceInfoWinStruct *>(gmmResourceInfoHandle)->GmmResourceInfoCommon.pPrivateData);
+    gmmHandleAllocator->destroyHandle(gmmResourceInfoHandle);
+}
+
+TEST(WslUmKmDataTranslator, whenOpeningExistingHandleThenResourceInfoIsCopiedBasedOnTranslationResult) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    NEO::DebugManager.flags.UseUmKmDataTranslator.set(true);
+    NEO::wslComputeHelperLibNameToLoad = "";
+    NEO::Gdi gdi;
+    auto handle = validHandle;
+    gdi.queryAdapterInfo.mFunc = QueryAdapterInfoMock::queryadapterinfo;
+
+    auto translator = NEO::createUmKmDataTranslator(gdi, handle);
+    auto gmmHandleAllocator = translator->createGmmHandleAllocator();
+    const auto handleSize = gmmHandleAllocator->getHandleSize();
+
+    UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfo(handleSize);
+    auto gmmResourceInfoHandle = gmmHandleAllocator->createHandle(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfo.data()));
+    EXPECT_EQ(mockTokToStrDriverBuildNumber, reinterpret_cast<GmmResourceInfoWinStruct *>(gmmResourceInfoHandle)->GmmResourceInfoCommon.pPrivateData);
+
+    UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfoDst(handleSize);
+    gmmHandleAllocator->openHandle(gmmResourceInfoHandle, reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst.data()), handleSize);
+    EXPECT_EQ(mockStrToTokDriverBuildNumber, reinterpret_cast<uint64_t>(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst.data())->GetPrivateData()));
+
+    UmKmDataTempStorage<GMM_RESOURCE_INFO> gmmResInfoDst2(handleSize);
+    gmmHandleAllocator->openHandle(gmmResourceInfoHandle, reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst2.data()), sizeof(TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT) + 4);
+    EXPECT_EQ(0, reinterpret_cast<uint64_t>(reinterpret_cast<GMM_RESOURCE_INFO *>(gmmResInfoDst2.data())->GetPrivateData()));
+
     gmmHandleAllocator->destroyHandle(gmmResourceInfoHandle);
 }
 

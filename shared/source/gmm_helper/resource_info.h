@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ class GmmResourceInfo {
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
 
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
+
+    static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle);
 
     MOCKABLE_VIRTUAL ~GmmResourceInfo();
 
@@ -90,7 +92,10 @@ class GmmResourceInfo {
 
     GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
+    GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle);
+
     void createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr);
+    void createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
     UniquePtrType resourceInfo;
 
