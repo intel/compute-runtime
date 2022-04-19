@@ -111,20 +111,20 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
     }
 
-    bool initDirectSubmission(Device &device, OsContext &osContext) override {
+    bool initDirectSubmission() override {
         if (callParentInitDirectSubmission) {
-            return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(device, osContext);
+            return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission();
         }
         bool ret = true;
         if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
-                    MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext, globalFenceAllocation);
+                    MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);
                 ret = directSubmission->initialize(true, false);
                 this->dispatchMode = DispatchMode::ImmediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
-                    MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext, globalFenceAllocation);
+                    MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(*this);
                 blitterDirectSubmission->initialize(true, false);
             }
         }
@@ -1059,8 +1059,8 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
 template <typename GfxFamily>
 struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
-        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation) {
+    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
 
     bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) override {
@@ -1080,11 +1080,9 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
-    auto osContext = device->getDefaultEngine().osContext;
-
     mockCsr->callParentInitDirectSubmission = false;
 
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
+    bool ret = csr->initDirectSubmission();
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
@@ -1096,7 +1094,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
                             &cs, commandBuffer->getUnderlyingBuffer(), false};
 
-    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device.get(), *osContext, device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
+    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
 
@@ -1118,10 +1116,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
-    auto osContext = device->getDefaultEngine().osContext;
-
     mockCsr->callParentInitDirectSubmission = false;
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
+    bool ret = csr->initDirectSubmission();
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
     EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
@@ -1160,11 +1156,9 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
 
-    auto osContext = device->getDefaultEngine().osContext;
-
     mockCsr->callParentInitDirectSubmission = false;
     mockCsr->initBlitterDirectSubmission = true;
-    bool ret = csr->initDirectSubmission(*device.get(), *osContext);
+    bool ret = csr->initDirectSubmission();
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
     EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());

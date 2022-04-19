@@ -124,7 +124,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     virtual bool isKmdWaitModeActive() { return true; }
 
-    bool initDirectSubmission(Device &device, OsContext &osContext) override;
+    bool initDirectSubmission() override;
     GraphicsAllocation *getClearColorAllocation() override;
 
     TagAllocatorBase *getTimestampPacketAllocator() override;

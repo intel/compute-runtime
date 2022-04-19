@@ -198,7 +198,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         }
 
         bcsEngine->osContext->ensureContextInitialized();
-        bcsEngine->commandStreamReceiver->initDirectSubmission(*pDeviceForBlit, *bcsEngine->osContext);
+        bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,

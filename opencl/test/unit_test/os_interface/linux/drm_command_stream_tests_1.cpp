@@ -608,7 +608,7 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
-        csr->initDirectSubmission(*device.get(), *device->getDefaultEngine().osContext);
+        csr->initDirectSubmission();
     }
 
     template <typename GfxFamily>
@@ -628,19 +628,22 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
         DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0u);
 
         DrmCommandStreamDirectSubmissionTest::SetUpT<GfxFamily>();
+        executionEnvironment->incRefInternal();
 
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, device->getDeviceBitfield())));
         osContext->ensureContextInitialized();
 
         device->allEngines.emplace_back(csr, osContext.get());
-
-        csr->initDirectSubmission(*device.get(), *osContext.get());
+        csr->setupContext(*osContext);
+        csr->initDirectSubmission();
     }
 
     template <typename GfxFamily>
     void TearDownT() {
         DrmCommandStreamDirectSubmissionTest::TearDownT<GfxFamily>();
+        osContext.reset();
+        executionEnvironment->decRefInternal();
     }
 
     std::unique_ptr<OsContext> osContext;
@@ -654,8 +657,8 @@ struct DrmDirectSubmissionFunctionsCalled {
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionToTestDtor<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation, DrmDirectSubmissionFunctionsCalled &functionsCalled)
-        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation), functionsCalled(functionsCalled) {
+    MockDrmDirectSubmissionToTestDtor<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver, DrmDirectSubmissionFunctionsCalled &functionsCalled)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver), functionsCalled(functionsCalled) {
     }
     ~MockDrmDirectSubmissionToTestDtor() override {
         if (ringStart) {
@@ -680,8 +683,7 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenDtorIsCalledButRingIsNotStartedThenDontCallStopRingBufferNorWaitForTagValue) {
     DrmDirectSubmissionFunctionsCalled functionsCalled{};
-    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestDtor<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext,
-                                                                                            device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation(), functionsCalled);
+    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestDtor<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver, functionsCalled);
     ASSERT_NE(nullptr, directSubmission);
 
     EXPECT_FALSE(directSubmission->ringStart);
@@ -695,15 +697,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionToTestRingStop : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionToTestRingStop<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
-        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation) {
+    MockDrmDirectSubmissionToTestRingStop<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenStopRingBufferIsCalledThenClearRingStart) {
-    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestRingStop<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext,
-                                                                                                device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
+    auto directSubmission = std::make_unique<MockDrmDirectSubmissionToTestRingStop<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
     ASSERT_NE(nullptr, directSubmission);
 
     directSubmission->stopRingBuffer();
@@ -712,8 +713,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
-        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation) {
+    MockDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+        : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
 
     ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
@@ -722,8 +723,8 @@ struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission
 
 template <typename GfxFamily>
 struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>> {
-    MockDrmBlitterDirectSubmissionDispatchCommandBuffer<GfxFamily>(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
-        : DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>(device, osContext, globalFenceAllocation) {
+    MockDrmBlitterDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+        : DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
 
     ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
@@ -731,8 +732,7 @@ struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSub
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFailsThenFlushReturnsError) {
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device.get(), *device->getDefaultEngine().osContext,
-                                                                                                                                                                  device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
     static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferResult = false;
 
@@ -749,9 +749,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFa
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDirectSubmissionFailsThenFlushReturnsError) {
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device.get(),
-                                                                                                                                                                                *device->getDefaultEngine().osContext,
-                                                                                                                                                                                device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation());
+    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*csr);
     auto blitterDirectSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
     static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferResult = false;
 

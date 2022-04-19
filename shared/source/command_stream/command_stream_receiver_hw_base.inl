@@ -1017,7 +1017,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
     latestSentTaskCount = newTaskCount;
 
     getOsContext().ensureContextInitialized();
-    this->initDirectSubmission(device, getOsContext());
+    this->initDirectSubmission();
 
     const auto &hwInfo = this->peekHwInfo();
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
@@ -1307,21 +1307,21 @@ inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission() {
 }
 
 template <typename GfxFamily>
-inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &device, OsContext &osContext) {
+inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
     bool ret = true;
 
     bool submitOnInit = false;
-    auto startDirect = osContext.isDirectSubmissionAvailable(device.getHardwareInfo(), submitOnInit);
+    auto startDirect = this->osContext->isDirectSubmissionAvailable(peekHwInfo(), submitOnInit);
 
     if (startDirect) {
         auto lock = this->obtainUniqueOwnership();
         if (!this->isAnyDirectSubmissionEnabled()) {
-            if (EngineHelpers::isBcs(osContext.getEngineType())) {
-                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext, this->globalFenceAllocation);
+            if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(*this);
                 ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
 
             } else {
-                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext, this->globalFenceAllocation);
+                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(*this);
                 ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
             }
             auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
@@ -1332,7 +1332,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
                 this->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
             }
         }
-        osContext.setDirectSubmissionActive();
+        this->osContext->setDirectSubmissionActive();
     }
     return ret;
 }

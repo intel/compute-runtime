@@ -17,12 +17,12 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass = DirectSubmissionHw<GfxFamily, Dispatcher>;
     using BaseClass::activeTiles;
     using BaseClass::allocateResources;
+    using BaseClass::commandStreamReceiver;
     using BaseClass::completionRingBuffers;
     using BaseClass::cpuCachelineFlush;
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRingBuffer;
     using BaseClass::deallocateResources;
-    using BaseClass::device;
     using BaseClass::diagnostic;
     using BaseClass::DirectSubmissionHw;
     using BaseClass::disableCacheFlush;

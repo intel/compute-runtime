@@ -1374,7 +1374,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
 
-    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext, csr.getGlobalFenceAllocation());
+    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(csr);
     csr.recordFlusheBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
     bool initRet = directSubmission->initialize(true, false);
@@ -1417,7 +1417,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatc
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
 
-    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext, csr.getGlobalFenceAllocation());
+    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(csr);
     csr.recordFlusheBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
     bool initRet = directSubmission->initialize(true, false);

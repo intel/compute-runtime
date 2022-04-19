@@ -835,7 +835,11 @@ bool CommandStreamReceiver::testTaskCountReady(volatile uint32_t *pollAddress, u
 }
 
 const HardwareInfo &CommandStreamReceiver::peekHwInfo() const {
-    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    return *peekRootDeviceEnvironment().getHardwareInfo();
+}
+
+const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() const {
+    return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
 }
 
 } // namespace NEO

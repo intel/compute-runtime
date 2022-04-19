@@ -184,7 +184,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         osContext.reInitializeContext();
     }
     osContext.ensureContextInitialized();
-    csr->initDirectSubmission(*device->getNEODevice(), osContext);
+    csr->initDirectSubmission();
     return commandQueue;
 }
 

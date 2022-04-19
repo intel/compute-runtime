@@ -131,6 +131,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
     template <typename GfxFamily>
     void TearDownT() {
         executionEnvironment->decRefInternal();
+        device.reset();
     }
 
     template <typename GfxFamily>

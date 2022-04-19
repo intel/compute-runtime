@@ -291,12 +291,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return multiOsContextCapable;
     }
 
-    bool initDirectSubmission(Device &device, OsContext &osContext) override {
+    bool initDirectSubmission() override {
         if (ultHwConfig.csrFailInitDirectSubmission) {
             return false;
         }
         initDirectSubmissionCalled++;
-        return BaseClass::CommandStreamReceiver::initDirectSubmission(device, osContext);
+        return BaseClass::CommandStreamReceiver::initDirectSubmission();
     }
 
     bool isDirectSubmissionEnabled() const override {

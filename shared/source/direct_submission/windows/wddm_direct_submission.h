@@ -19,7 +19,7 @@ class Wddm;
 template <typename GfxFamily, typename Dispatcher>
 class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
-    WddmDirectSubmission(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation);
+    WddmDirectSubmission(const CommandStreamReceiver &commandStreamReceiver);
 
     ~WddmDirectSubmission();
 

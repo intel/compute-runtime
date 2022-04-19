@@ -10,11 +10,11 @@
 
 namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
-inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation) {
-    if (device.getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
-        return std::make_unique<DrmDirectSubmission<GfxFamily, Dispatcher>>(device, osContext, globalFenceAllocation);
+inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(const CommandStreamReceiver &commandStreamReceiver) {
+    if (commandStreamReceiver.peekRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
+        return std::make_unique<DrmDirectSubmission<GfxFamily, Dispatcher>>(commandStreamReceiver);
     } else {
-        return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(device, osContext, globalFenceAllocation);
+        return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(commandStreamReceiver);
     }
 }
 } // namespace NEO

@@ -245,7 +245,7 @@ class CommandStreamReceiver {
 
     bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
 
-    uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
+    uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
     void startControllingDirectSubmissions();
 
@@ -253,7 +253,7 @@ class CommandStreamReceiver {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
     }
 
-    virtual bool initDirectSubmission(Device &device, OsContext &osContext) {
+    virtual bool initDirectSubmission() {
         return true;
     }
 
@@ -317,6 +317,7 @@ class CommandStreamReceiver {
     virtual size_t getCmdsSizeForComputeBarrierCommand() const = 0;
 
     const HardwareInfo &peekHwInfo() const;
+    const RootDeviceEnvironment &peekRootDeviceEnvironment() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
 

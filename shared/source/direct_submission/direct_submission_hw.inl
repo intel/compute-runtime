@@ -30,9 +30,9 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device, OsContext &osContext, const GraphicsAllocation *globalFenceAllocation)
-    : device(device), osContext(osContext), globalFenceAllocation(globalFenceAllocation) {
-    hwInfo = &device.getHardwareInfo();
+DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const CommandStreamReceiver &commandStreamReceiver)
+    : commandStreamReceiver(commandStreamReceiver), osContext(commandStreamReceiver.getOsContext()), globalFenceAllocation(commandStreamReceiver.getGlobalFenceAllocation()) {
+    hwInfo = &commandStreamReceiver.peekHwInfo();
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
@@ -70,11 +70,11 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     DirectSubmissionAllocations allocations;
 
     bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
-    MemoryManager *memoryManager = device.getExecutionEnvironment()->memoryManager.get();
+    MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
     constexpr size_t minimumRequiredSize = 256 * MemoryConstants::kiloByte;
     constexpr size_t additionalAllocationSize = MemoryConstants::pageSize;
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
-    const AllocationProperties commandStreamAllocationProperties{device.getRootDeviceIndex(),
+    const AllocationProperties commandStreamAllocationProperties{commandStreamReceiver.getRootDeviceIndex(),
                                                                  true, allocationSize,
                                                                  AllocationType::RING_BUFFER,
                                                                  isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
@@ -86,7 +86,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     UNRECOVERABLE_IF(ringBuffer2 == nullptr);
     allocations.push_back(ringBuffer2);
 
-    const AllocationProperties semaphoreAllocationProperties{device.getRootDeviceIndex(),
+    const AllocationProperties semaphoreAllocationProperties{commandStreamReceiver.getRootDeviceIndex(),
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::SEMAPHORE_BUFFER,
                                                              isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
@@ -138,7 +138,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubmissionAllocations &allocations) {
-    auto memoryInterface = this->device.getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto memoryInterface = commandStreamReceiver.peekRootDeviceEnvironment().memoryOperationsInterface.get();
 
     auto ret = memoryInterface->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(allocations), false) == MemoryOperationsStatus::SUCCESS;
 
@@ -280,7 +280,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
 
     if (miMemFenceRequired) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, this->device.getHardwareInfo());
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, *hwInfo);
     }
 
     dispatchPrefetchMitigation();
@@ -294,7 +294,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
     semaphoreSize += 2 * getSizeDisablePrefetcher();
 
     if (miMemFenceRequired) {
-        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(this->device.getHardwareInfo());
+        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(*hwInfo);
     }
 
     return semaphoreSize;
@@ -532,7 +532,7 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
-    MemoryManager *memoryManager = device.getExecutionEnvironment()->memoryManager.get();
+    MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
 
     if (ringBuffer) {
         memoryManager->freeGraphicsMemory(ringBuffer);
