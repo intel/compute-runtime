@@ -33,6 +33,26 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(ze_event_handle_t hEvent,
+                                                               Device *device,
+                                                               uint32_t partitionCount,
+                                                               NEO::CommandContainer &commandContainer) {
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::adjustEventKernelCount(ze_event_handle_t hEvent) {
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker) {
+    if (beforeWalker) {
+        appendEventForProfiling(hEvent, true, false);
+    } else {
+        appendSignalEventPostWalker(hEvent, false);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
                                                                                ze_event_handle_t hEvent,
@@ -172,6 +192,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+                                                                          const ze_group_count_t *pThreadGroupDimensions,
+                                                                          ze_event_handle_t hEvent) {
+    if (hEvent) {
+        auto event = Event::fromHandle(hEvent);
+        event->kernelCount = 1;
+    }
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

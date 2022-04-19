@@ -84,13 +84,19 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void programEventL3Flush(ze_event_handle_t hEvent,
-                         Device *device,
-                         uint32_t partitionCount,
-                         NEO::CommandContainer &commandContainer) {
+void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(ze_event_handle_t hEvent,
+                                                               Device *device,
+                                                               uint32_t partitionCount,
+                                                               NEO::CommandContainer &commandContainer) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
     auto event = Event::fromHandle(hEvent);
+
+    const auto &hwInfo = this->device->getHwInfo();
+    bool L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
+    if (!L3FlushEnable || isCopyOnly()) {
+        return;
+    }
 
     auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
                                                      : event->getSinglePacketSize();
@@ -119,6 +125,13 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         Event::STATE_SIGNALED,
         commandContainer.getDevice()->getHardwareInfo(),
         args);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker) {
+    if (hEvent && isCopyOnly()) {
+        appendSignalEventPostWalker(hEvent, false);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -165,6 +178,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         commandContainer.addToResidencyContainer(eventAlloc);
         L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
         isTimestampEvent = event->isUsingContextEndOffset();
+
         eventAddress = event->getPacketAddress(this->device);
     }
 
@@ -238,9 +252,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
         }
-        if (L3FlushEnable) {
-            programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
-        }
+        programEventL3Flush(hEvent, this->device, this->partitionCount, commandContainer);
     }
 
     if (neoDevice->getDebugger()) {
@@ -290,6 +302,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+                                                                          const ze_group_count_t *pThreadGroupDimensions,
+                                                                          ze_event_handle_t hEvent) {
+    if (hEvent) {
+        auto event = Event::fromHandle(hEvent);
+        event->kernelCount += 1;
+    }
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, hEvent, false, false, false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::adjustEventKernelCount(ze_event_handle_t hEvent) {
+    if (hEvent) {
+        auto event = Event::fromHandle(hEvent);
+        if (!isCopyOnly()) {
+            event->kernelCount = 0u;
+        }
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -393,7 +393,8 @@ uint32_t EventImp<TagSizeT>::getPacketsUsedInLastKernel() {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::setPacketsInUse(uint32_t value) {
-    kernelEventCompletionData[getCurrKernelDataIndex()].setPacketsUsed(value);
+    auto kernelIndex = getCurrKernelDataIndex();
+    kernelEventCompletionData[kernelIndex].setPacketsUsed(value);
 }
 
 template <typename TagSizeT>
