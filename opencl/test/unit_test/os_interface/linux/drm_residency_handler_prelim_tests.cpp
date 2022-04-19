@@ -69,6 +69,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
             executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface.reset(new MockDrmMemoryOperationsHandlerBind(*executionEnvironment->rootDeviceEnvironments[i].get(), i));
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
             devices.emplace_back(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, i));
         }
@@ -537,8 +538,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -551,8 +552,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -565,8 +566,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
     uint32_t vmHandleId = 1u;
 
@@ -582,9 +583,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportAndMultiSubdevice
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
-    BufferObject boToPin2(mock, 3, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
+    BufferObject boToPin2(mock, 3, 3, 0, 1);
     BufferObject *boToPinPtr[] = {&boToPin, &boToPin2};
 
     auto ret = pinBB.validateHostPtr(boToPinPtr, 2u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -600,8 +601,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionWhenPinBOThenV
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -615,8 +616,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDirectSubmissionAndValidateHos
     mock->bindAvailable = true;
     device->getDefaultEngine().osContext->setDirectSubmissionActive();
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    BufferObject boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    BufferObject boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     pinBB.validateHostPtr(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -633,8 +634,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOThenAllo
     DebugManager.flags.UseVmBind.set(1);
     mock->bindAvailable = true;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    MockBO boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    MockBO boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     auto ret = pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -652,8 +653,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenVmBindSupportWhenPinBOAndVmBin
     mock->bindAvailable = true;
     mock->context.vmBindReturn = -1;
 
-    BufferObject pinBB(mock, 1, 0, 1);
-    MockBO boToPin(mock, 2, 0, 1);
+    BufferObject pinBB(mock, 3, 1, 0, 1);
+    MockBO boToPin(mock, 3, 2, 0, 1);
     BufferObject *boToPinPtr = &boToPin;
 
     auto ret = pinBB.pin(&boToPinPtr, 1u, device->getDefaultEngine().osContext, 0u, 0u);
@@ -690,13 +691,18 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
-
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
     bool closSupported = (hwHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = hwInfoConfig->isVmBindPatIndexProgrammingSupported();
+
+    uint64_t gpuAddress = 0x123000;
+    size_t size = 1;
+    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
+    DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
+
+    auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
 
     for (int32_t debugFlag : {-1, 0, 1}) {
         if (debugFlag == 1 && !closSupported) {
@@ -708,12 +714,14 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
         mock->context.receivedVmBindPatIndex.reset();
         mock->context.receivedVmUnbindPatIndex.reset();
 
-        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+        bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, (debugFlag == 1 && closSupported)));
+
+        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
 
         if (!patIndexProgrammingSupported) {
             EXPECT_FALSE(mock->context.receivedVmBindPatIndex);
 
-            operationHandler->evict(device, *timestampStorageAlloc);
+            operationHandler->evict(device, allocation);
             EXPECT_FALSE(mock->context.receivedVmUnbindPatIndex);
 
             continue;
@@ -724,12 +732,12 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
-            operationHandler->evict(device, *timestampStorageAlloc);
+            operationHandler->evict(device, allocation);
             EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
         } else {
             EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
 
-            operationHandler->evict(device, *timestampStorageAlloc);
+            operationHandler->evict(device, allocation);
             EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
         }
     }
@@ -743,8 +751,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorWhenVmBindCalledT
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
-
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
@@ -755,6 +761,13 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorWhenVmBindCalledT
         GTEST_SKIP();
     }
 
+    uint64_t gpuAddress = 0x123000;
+    size_t size = 1;
+    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
+    DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
+
+    auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
+
     static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext())->returnErrorOnPatIndexQuery = true;
 
     for (int32_t debugFlag : {-1, 0, 1}) {
@@ -763,11 +776,13 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorWhenVmBindCalledT
         mock->context.receivedVmBindPatIndex.reset();
         mock->context.receivedVmUnbindPatIndex.reset();
 
-        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+        bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
+
+        operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
 
         EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
 
-        operationHandler->evict(device, *timestampStorageAlloc);
+        operationHandler->evict(device, allocation);
         EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
     }
 }
@@ -780,8 +795,6 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
-
-    auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
@@ -798,11 +811,20 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     mock->context.receivedVmBindPatIndex.reset();
     mock->context.receivedVmUnbindPatIndex.reset();
 
-    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
+    uint64_t gpuAddress = 0x123000;
+    size_t size = 1;
+    BufferObject bo(mock, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), 0, 1, 1);
+    DrmAllocation allocation(0, 1, AllocationType::BUFFER, &bo, nullptr, gpuAddress, size, MemoryPool::System4KBPages);
+
+    bo.setPatIndex(mock->getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false));
+
+    auto allocationPtr = static_cast<GraphicsAllocation *>(&allocation);
+
+    operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
 
     EXPECT_EQ(0u, mock->context.receivedVmBindPatIndex.value());
 
-    operationHandler->evict(device, *timestampStorageAlloc);
+    operationHandler->evict(device, allocation);
     EXPECT_EQ(0u, mock->context.receivedVmUnbindPatIndex.value());
 }
 
@@ -875,13 +897,13 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 
     mock->cacheInfo.reset(new CacheInfo(*mock, 64 * MemoryConstants::kiloByte, 2, 32));
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-
     auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
 
     if (hwHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     for (auto cacheRegion : {CacheRegion::Default, CacheRegion::Region1, CacheRegion::Region2}) {
         EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->setCacheAdvice(mock, 32 * MemoryConstants::kiloByte, cacheRegion));

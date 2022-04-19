@@ -244,7 +244,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> drmMock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
-    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000, 1));
+    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 3, 1, 0x1000, 1));
 
     EXPECT_EQ(0x1000u, bo->peekSize());
 }
@@ -322,7 +322,7 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
     mock->ioctl_expected.reset();
 
     {
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 1, 0x1000, 1));
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 3, 1, 0x1000, 1));
     }
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemClose);
@@ -337,7 +337,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitia
     DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
     EXPECT_TRUE(drm.isPerContextVMRequired());
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
-    MockBufferObject bo(&drm, 0, 0, osContextCount);
+    MockBufferObject bo(&drm, 3, 0, 0, osContextCount);
 
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
@@ -364,7 +364,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
-    MockBufferObject bo(drm, 0, 0, osContextCount);
+    MockBufferObject bo(drm, 3, 0, 0, osContextCount);
 
     std::unique_ptr<OsContextLinux> osContext;
     osContext.reset(new OsContextLinux(*drm, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
@@ -391,7 +391,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
-    MockBufferObject bo(drm, 0, 0, osContextCount);
+    MockBufferObject bo(drm, 3, 0, 0, osContextCount);
 
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
@@ -432,7 +432,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
-    MockBufferObject bo(drm, 0, 0, osContextCount);
+    MockBufferObject bo(drm, 3, 0, 0, osContextCount);
 
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
@@ -484,7 +484,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
-    MockBufferObject bo(drm, 0, 0, osContextCount);
+    MockBufferObject bo(drm, 3, 0, 0, osContextCount);
 
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
@@ -515,7 +515,7 @@ TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
 
     EXPECT_EQ(1u, bo.bindExtHandles.size());
@@ -530,7 +530,7 @@ TEST(DrmBufferObject, whenMarkForCapturedCalledThenIsMarkedForCaptureReturnsTrue
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     EXPECT_FALSE(bo.isMarkedForCapture());
 
     bo.markForCapture();
@@ -570,21 +570,21 @@ TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
 
     uint64_t address = maxNBitValue(47) - maxNBitValue(5);
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.setAddress(address);
     auto boAddress = bo.peekAddress();
     EXPECT_EQ(boAddress, address);
 }
 TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
-    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
-
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+
+    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
 
     uint64_t address = maxNBitValue(48) - maxNBitValue(5);
     uint64_t expectedAddress = std::numeric_limits<uint64_t>::max() - maxNBitValue(5);
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.setAddress(address);
     auto boAddress = bo.peekAddress();
     EXPECT_EQ(boAddress, expectedAddress);
@@ -596,7 +596,7 @@ TEST_F(DrmBufferObjectTest, givenBoIsCreatedWhenPageFaultIsSupportedThenExplicit
 
     for (auto isPageFaultSupported : {false, true}) {
         drm.pageFaultSupported = isPageFaultSupported;
-        MockBufferObject bo(&drm, 0, 0, 1);
+        MockBufferObject bo(&drm, 3, 0, 0, 1);
         EXPECT_EQ(isPageFaultSupported, bo.isExplicitResidencyRequired());
     }
 }
@@ -604,7 +604,7 @@ TEST_F(DrmBufferObjectTest, givenBoIsCreatedWhenPageFaultIsSupportedThenExplicit
 TEST_F(DrmBufferObjectTest, whenBoRequiresExplicitResidencyThenTheCorrespondingQueryReturnsCorrectValue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
 
     for (auto required : {false, true}) {
         bo.requireExplicitResidency(required);

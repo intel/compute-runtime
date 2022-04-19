@@ -19,10 +19,10 @@
 class TestedBufferObject : public BufferObject {
   public:
     using BufferObject::handle;
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, 0, 1) {
+    TestedBufferObject(Drm *drm) : BufferObject(drm, 3, 1, 0, 1) {
     }
 
-    TestedBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, size, 1) {
+    TestedBufferObject(Drm *drm, size_t size) : BufferObject(drm, 3, 1, size, 1) {
     }
 
     void tileBy(uint32_t mode) {

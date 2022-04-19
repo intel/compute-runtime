@@ -40,9 +40,11 @@ struct GT_SYSTEM_INFO;
 namespace NEO {
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
+enum class AllocationType;
 class BufferObject;
 class DeviceFactory;
 class OsContext;
+class Gmm;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SystemInfo;
@@ -252,6 +254,8 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL uint32_t notifyFirstCommandQueueCreated();
     MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
+
+    uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const;
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);

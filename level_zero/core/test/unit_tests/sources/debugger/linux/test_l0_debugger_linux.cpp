@@ -140,7 +140,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledThenItRegistersBindExtHandles
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 0, 0, 1);
+    MockBufferObject bo(drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
     device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
 
@@ -181,11 +181,11 @@ TEST_F(L0DebuggerLinuxTest, givenNoOSInterfaceThenRegisterElfDoesNothing) {
 
 TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandle) {
     MockDrmAllocation isaAllocation(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo(drmMock, 0, 0, 1);
+    MockBufferObject bo(drmMock, 3, 0, 0, 1);
     isaAllocation.bufferObjects[0] = &bo;
 
     MockDrmAllocation isaAllocation2(AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
-    MockBufferObject bo2(drmMock, 0, 0, 1);
+    MockBufferObject bo2(drmMock, 3, 0, 0, 1);
     isaAllocation2.bufferObjects[0] = &bo2;
 
     uint32_t handle = 0;

@@ -28,7 +28,7 @@
 
 namespace NEO {
 
-BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
+BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
 
 class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
   public:
@@ -94,6 +94,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
     auto size = MemoryConstants::pageSize64k;
 
     auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            nullptr,
+                                                                                            AllocationType::BUFFER,
                                                                                             gpuAddress,
                                                                                             size,
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
@@ -132,6 +134,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMem
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -178,6 +181,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -269,6 +273,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -409,6 +414,8 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
     }
 
     BufferObject *createBufferObjectInMemoryRegion(Drm *drm,
+                                                   Gmm *gmm,
+                                                   AllocationType allocationType,
                                                    uint64_t gpuAddress,
                                                    size_t size,
                                                    uint32_t memoryBanks,
@@ -604,7 +611,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhen
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
-    BufferObject bo(mock, 1, 1024, 0);
+    BufferObject bo(mock, 3, 1, 1024, 0);
 
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
@@ -808,7 +815,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     this->ioctlResExt = {mockExp->ioctl_cnt.total, -1};
     mockExp->ioctl_res_ext = &ioctlResExt;
 
-    BufferObject bo(mockExp, 1, 0, 0);
+    BufferObject bo(mockExp, 3, 1, 0, 0);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -824,7 +831,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->returnIoctlExtraErrorValue = true;
     mockExp->failOnMmapOffset = true;
 
-    BufferObject bo(mockExp, 1, 0, 0);
+    BufferObject bo(mockExp, 3, 1, 0, 0);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 

@@ -281,7 +281,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingT
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    BufferObjectMock bo(&drm, 1, 0, 1);
+    BufferObjectMock bo(&drm, 3, 1, 0, 1);
     bo.setColourWithBind();
     bo.setColourChunk(MemoryConstants::pageSize64k);
     bo.addColouringAddress(0xffeeffee);
@@ -338,7 +338,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    BufferObjectMock bo(&drm, 1, 0, 1);
+    BufferObjectMock bo(&drm, 3, 1, 0, 1);
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     bo.markForCapture();
@@ -358,7 +358,7 @@ TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediat
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    BufferObjectMock bo(&drm, 1, 0, 1);
+    BufferObjectMock bo(&drm, 3, 1, 0, 1);
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
@@ -376,7 +376,7 @@ TEST(DrmBufferObjectTestPrelim, whenBindingThenImmediateFlagIsSetAndExtensionLis
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.setDirectSubmissionActive(true);
-    BufferObjectMock bo(&drm, 1, 0, 1);
+    BufferObjectMock bo(&drm, 3, 1, 0, 1);
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
     osContext.setDirectSubmissionActive();

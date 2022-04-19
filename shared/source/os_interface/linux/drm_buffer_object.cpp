@@ -33,9 +33,10 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
+BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
     this->tilingMode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
+    this->patIndex = patIndex;
 
     perContextVmsUsed = drm->isPerContextVMRequired();
     requiresExplicitResidency = drm->hasPageFaultSupport();

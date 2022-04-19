@@ -10,7 +10,9 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -1342,20 +1344,34 @@ bool Drm::isVmBindAvailable() {
     return bindAvailable;
 }
 
-uint64_t getPatIndex(Drm *drm, const HwHelper &hwHelper, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) {
+uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const {
     if (DebugManager.flags.OverridePatIndex.get() != -1) {
         return static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
     }
 
-    uint64_t patIndex = drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    if (DebugManager.flags.ForceAllResourcesUncached.get()) {
-        patIndex = drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    if (!HwInfoConfig::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+        return CommonConstants::unsupportedPatIndex;
+    }
+
+    GMM_RESOURCE_INFO *resourceInfo = nullptr;
+    GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
+
+    if (gmm) {
+        resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
+        usageType = gmm->resourceParams.Usage;
+    }
+
+    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType);
+
+    if (DebugManager.flags.ClosEnabled.get() != -1) {
+        closEnabled = !!DebugManager.flags.ClosEnabled.get();
     }
 
     if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled) {
         DEBUG_BREAK_IF(true);
-        patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
+        patIndex = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getPatIndex(cacheRegion, cachePolicy);
     }
 
     return patIndex;
@@ -1396,7 +1412,6 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
     }
 
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
     int ret = 0;
@@ -1416,18 +1431,11 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             vmBind.start = bindAddresses[i];
         }
 
-        bool closEnabled = (hwHelper.getNumCacheRegions() > 0) && (bo->peekCacheRegion() > CacheRegion::Default);
-
-        if (DebugManager.flags.ClosEnabled.get() != -1) {
-            closEnabled = !!DebugManager.flags.ClosEnabled.get();
-        }
-
         VmBindExtSetPatT vmBindExtSetPat{};
 
         if (hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
-            uint64_t patIndex = getPatIndex(drm, hwHelper, bo->peekCacheRegion(), bo->peekCachePolicy(), closEnabled);
-
-            ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, patIndex, castToUint64(extensions.get()));
+            UNRECOVERABLE_IF(bo->peekPatIndex() == CommonConstants::unsupportedPatIndex);
+            ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, bo->peekPatIndex(), castToUint64(extensions.get()));
             vmBind.extensions = castToUint64(vmBindExtSetPat);
         } else {
             vmBind.extensions = castToUint64(extensions.get());

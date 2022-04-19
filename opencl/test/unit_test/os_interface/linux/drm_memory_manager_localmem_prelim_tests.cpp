@@ -25,7 +25,7 @@
 #include "gtest/gtest.h"
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
-    BufferObject bo(mock, 1, 1024, 1);
+    BufferObject bo(mock, 3, 1, 1024, 1);
 
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
@@ -50,7 +50,13 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSup
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize64k;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)), 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            nullptr,
+                                                                                            AllocationType::BUFFER,
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
+                                                                                            1));
     ASSERT_NE(nullptr, bo);
 
     EXPECT_EQ(1u, mock->ioctlCallsCount);
@@ -93,6 +99,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -142,6 +149,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -210,6 +218,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
 
         rootDeviceIndices.push_back(i);
     }
@@ -1215,7 +1224,13 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     mock->queryEngineInfo();
 
     testing::internal::CaptureStdout();
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)), 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            nullptr,
+                                                                                            AllocationType::BUFFER,
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
+                                                                                            1));
     EXPECT_NE(nullptr, bo);
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -1540,7 +1555,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     this->ioctlResExt = {mock->ioctl_cnt.total, -1};
     mock->ioctl_res_ext = &ioctlResExt;
 
-    BufferObject bo(mock, 1, 0, 1);
+    BufferObject bo(mock, 3, 1, 0, 1);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -1555,7 +1570,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     mock->ioctl_expected.gemMmapOffset = 2;
     mock->failOnMmapOffset = true;
 
-    BufferObject bo(mock, 1, 0, 1);
+    BufferObject bo(mock, 3, 1, 0, 1);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -1888,7 +1903,8 @@ TEST(AllocationInfoLogging, givenDrmGraphicsAllocationWithMultipleBOsWhenGetting
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    BufferObject bo0(&drm, 0, 0, 1), bo1(&drm, 1, 0, 1), bo2(&drm, 2, 0, 1), bo3(&drm, 3, 0, 1);
+    BufferObject bo0(&drm, 3, 0, 0, 1), bo1(&drm, 3, 1, 0, 1),
+        bo2(&drm, 3, 2, 0, 1), bo3(&drm, 3, 3, 0, 1);
     BufferObjects bos{&bo0, &bo1, &bo2, &bo3};
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, bos, nullptr, 0u, 0u, MemoryPool::LocalMemory);
 

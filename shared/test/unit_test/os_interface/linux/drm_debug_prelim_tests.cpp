@@ -241,7 +241,7 @@ TEST(DrmPrelimTest, givenContextDebugNotAvailableWhenCheckedForSupportThenTrueIs
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultEngineContextThenExtensionsArePassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -261,7 +261,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternalContextThenExtensionsAreNotPassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -275,7 +275,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
 TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngineContextThenExtensionsAreNotPassedToVmBindIoctl) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 
@@ -291,7 +291,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtensionsAreNotSet) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);
     bo.addBindExtHandle(5);
 

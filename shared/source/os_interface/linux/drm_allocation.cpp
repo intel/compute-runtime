@@ -71,10 +71,13 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
         return false;
     }
 
+    auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::WriteBack, true);
+
     if (fragmentsStorage.fragmentCount > 0) {
         for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {
             auto bo = static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
             bo->setCacheRegion(regionIndex);
+            bo->setPatIndex(patIndex);
         }
         return true;
     }
@@ -82,6 +85,7 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
     for (auto bo : bufferObjects) {
         if (bo != nullptr) {
             bo->setCacheRegion(regionIndex);
+            bo->setPatIndex(patIndex);
         }
     }
     return true;

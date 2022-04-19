@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class MockBufferObject : public BufferObject {
     using BufferObject::BufferObject;
     using BufferObject::handle;
 
-    MockBufferObject(Drm *drm) : BufferObject(drm, 0, 0, 1) {
+    MockBufferObject(Drm *drm) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {
     }
 };
 

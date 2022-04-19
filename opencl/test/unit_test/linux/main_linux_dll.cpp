@@ -666,12 +666,16 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverridePatIndex.set(0);
+
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
     drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
     auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
@@ -681,6 +685,7 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableHostPtrValidation.set(0);
     DebugManager.flags.EnableGemCloseWorker.set(0);
+    DebugManager.flags.OverridePatIndex.set(0);
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.forceOsAgnosticMemoryManager = false;
@@ -691,6 +696,7 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     drm->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
     auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     EXPECT_FALSE(static_cast<DrmMemoryManager *>(drmMemoryManager.get())->isValidateHostMemoryEnabled());

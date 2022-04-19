@@ -284,10 +284,6 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 
 template <>
 uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
-    if (DebugManager.flags.ClosEnabled.get() == 0) {
-        return 0;
-    }
-
     constexpr uint32_t numSharedCacheRegions = 1;
     constexpr uint32_t numReservedCacheRegions = 2;
     constexpr uint32_t numTotalCacheRegions = numSharedCacheRegions + numReservedCacheRegions;

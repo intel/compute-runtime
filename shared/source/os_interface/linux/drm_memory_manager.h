@@ -63,7 +63,8 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
-    MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
+    MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
+                                                                    uint32_t memoryBanks, size_t maxOsContextCount);
 
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
 

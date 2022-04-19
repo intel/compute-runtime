@@ -31,10 +31,12 @@ class DrmMemoryManagerBasic : public ::testing::Test {
     DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get(), false, numRootDevices){};
     void SetUp() override {
         for (auto i = 0u; i < numRootDevices; i++) {
+            executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
             executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
             auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
             executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
             executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, i);
+            executionEnvironment.rootDeviceEnvironments[i]->initGmm();
         }
     }
     const uint32_t rootDeviceIndex = 1u;
@@ -68,10 +70,12 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         this->mock = mock;
         for (auto i = 0u; i < numRootDevices; i++) {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
+            rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
             rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
             rootDeviceEnvironment->builtins.reset(new MockBuiltins);
+            rootDeviceEnvironment->initGmm();
         }
 
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
@@ -188,6 +192,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
             rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i);
+            rootDeviceEnvironment->initGmm();
             i++;
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());

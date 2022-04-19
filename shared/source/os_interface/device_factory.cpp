@@ -110,6 +110,9 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
             static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
     }
+
+    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+
     return true;
 }
 

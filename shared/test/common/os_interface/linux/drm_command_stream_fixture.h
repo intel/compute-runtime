@@ -35,6 +35,7 @@ class DrmCommandStreamTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
+        executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
         mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
         osContext = std::make_unique<OsContextLinux>(*mock, 0u,
@@ -155,7 +156,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         friend DrmCommandStreamEnhancedTemplate<DrmType>;
 
       protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0, 16u) {
+        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 1, 0, 16u) {
             this->size = alignUp(size, 4096);
         }
     };
@@ -235,7 +236,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         friend DrmCommandStreamEnhancedTemplate<T>;
 
       protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0, 16u) {
+        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 1, 0, 16u) {
             this->size = alignUp(size, 4096);
         }
     };

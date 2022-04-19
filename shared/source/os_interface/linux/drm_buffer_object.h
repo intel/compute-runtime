@@ -32,7 +32,7 @@ class OsContext;
 
 class BufferObject {
   public:
-    BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount);
+    BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount);
     MOCKABLE_VIRTUAL ~BufferObject() = default;
 
     struct Deleter {
@@ -137,6 +137,8 @@ class BufferObject {
     std::vector<uint64_t> &getColourAddresses() {
         return this->bindAddresses;
     }
+    uint64_t peekPatIndex() const { return patIndex; }
+    void setPatIndex(uint64_t newPatIndex) { this->patIndex = newPatIndex; }
 
     static constexpr int GPU_HANG_DETECTED{-7171};
 
@@ -152,7 +154,6 @@ class BufferObject {
     uint64_t size;
     bool isReused;
 
-    //Tiling
     uint32_t tilingMode;
     bool allowCapture = false;
     bool requiresImmediateBinding = false;
@@ -166,6 +167,7 @@ class BufferObject {
     void *lockedAddress; // CPU side virtual address
 
     uint64_t unmapSize = 0;
+    uint64_t patIndex = CommonConstants::unsupportedPatIndex;
 
     CacheRegion cacheRegion = CacheRegion::Default;
     CachePolicy cachePolicy = CachePolicy::WriteBack;

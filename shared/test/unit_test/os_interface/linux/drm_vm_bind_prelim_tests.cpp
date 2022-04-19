@@ -23,7 +23,7 @@ TEST(DrmVmBindTest, givenBoRequiringImmediateBindWhenBindingThenImmediateFlagIsP
     executionEnvironment->initializeMemoryManager();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.requireImmediateBinding(true);
 
     OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -43,7 +43,7 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
     drm.pageFaultSupported = true;
 
     for (auto requireResidency : {false, true}) {
-        MockBufferObject bo(&drm, 0, 0, 1);
+        MockBufferObject bo(&drm, 3, 0, 0, 1);
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -83,7 +83,7 @@ TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindTh
     drm.pageFaultSupported = true;
 
     for (auto requireResidency : {false, true}) {
-        MockBufferObject bo(&drm, 0, 0, 1);
+        MockBufferObject bo(&drm, 3, 0, 0, 1);
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -118,7 +118,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     osContext.ensureContextInitialized();
     uint32_t vmHandleId = 0;
 
-    MockBufferObject bo(&drm, 0, 0, 1);
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::UNIFIED_SHARED_MEMORY, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
