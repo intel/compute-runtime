@@ -49,7 +49,7 @@ HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoW
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     auto taskCount = device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount();
 
-    cmdQ.waitForTimestamps(101u);
+    cmdQ.waitForTimestamps({}, 101u);
 
     EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount(), taskCount);
 }

@@ -344,6 +344,8 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddres
     lastHangCheckTime = waitStartTime;
     for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && timeDiff <= params.waitTimeout) {
+            this->downloadTagAllocation(taskCountToWait);
+
             if (!params.indefinitelyPoll && WaitUtils::waitFunction(partitionAddress, taskCountToWait)) {
                 break;
             }

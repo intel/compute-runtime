@@ -175,6 +175,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     void downloadAllocations() override {
         downloadAllocationCalled = true;
+        downloadAllocationsCalled = true;
     }
 
     void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
@@ -355,6 +356,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
     std::atomic_bool downloadAllocationCalled = false;
+    std::atomic_bool downloadAllocationsCalled = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;

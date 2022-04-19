@@ -205,7 +205,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const;
 
     bool isWaitForTimestampsEnabled() const;
-    virtual bool waitForTimestamps(uint32_t taskCount) = 0;
+    virtual bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount) = 0;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 

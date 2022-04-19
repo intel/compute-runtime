@@ -1033,18 +1033,18 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
         }
     }
 
-    auto waitedOnTimestamps = waitForTimestamps(taskCount);
-
-    TimestampPacketContainer nodesToRelease;
-    if (deferredTimestampPackets) {
-        deferredTimestampPackets->swapNodes(nodesToRelease);
-    }
-
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
     for (CopyEngineState &state : this->bcsStates) {
         if (state.isValid()) {
             activeBcsStates.push_back(state);
         }
+    }
+
+    auto waitedOnTimestamps = waitForTimestamps(activeBcsStates, taskCount);
+
+    TimestampPacketContainer nodesToRelease;
+    if (deferredTimestampPackets) {
+        deferredTimestampPackets->swapNodes(nodesToRelease);
     }
 
     const auto waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);

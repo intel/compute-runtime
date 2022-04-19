@@ -446,7 +446,7 @@ class CommandQueueHw : public CommandQueue {
 
     bool isCacheFlushCommand(uint32_t commandType) const override;
 
-    bool waitForTimestamps(uint32_t taskCount) override;
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount) override;
 
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
 
