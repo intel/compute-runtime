@@ -49,6 +49,7 @@ class DebugZebinCreator {
     void applyRelocation(uint64_t addr, uint64_t value, NEO::Elf::RELOC_TYPE_ZEBIN type);
     const Segments::Segment *getSegmentByName(ConstStringRef sectionName);
     const Segments::Segment *getTextSegmentByName(ConstStringRef sectionName);
+    bool isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type);
 
     std::vector<uint8_t> debugZebin;
     const Segments &segments;

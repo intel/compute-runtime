@@ -75,12 +75,23 @@ void DebugZebinCreator::applyRelocation(uint64_t addr, uint64_t value, RELOC_TYP
     }
 }
 
+bool DebugZebinCreator::isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type) {
+    return type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
+           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
+           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
+}
+
 void DebugZebinCreator::applyRelocations() {
     std::string errors, warnings;
     auto elf = decodeElf(debugZebin, errors, warnings);
 
     for (const auto &relocations : {elf.getDebugInfoRelocations(), elf.getRelocations()}) {
         for (const auto &reloc : relocations) {
+
+            auto relocType = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
+            if (isRelocTypeSupported(relocType) == false) {
+                continue;
+            }
 
             uint64_t symbolOffset = 0U;
             auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
@@ -97,8 +108,7 @@ void DebugZebinCreator::applyRelocations() {
 
             uint64_t relocVal = symbolOffset + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
             auto relocAddr = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
-            auto type = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
-            applyRelocation(relocAddr, relocVal, type);
+            applyRelocation(relocAddr, relocVal, relocType);
         }
     }
 }
