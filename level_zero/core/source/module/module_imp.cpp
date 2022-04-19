@@ -242,10 +242,8 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
-    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily);
-    compilerHwInfoConfig.adjustHwInfoForIgc(copyHwInfo);
-    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(copyHwInfo);
+    const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    NEO::TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(hwInfo);
     std::string decodeErrors;
     std::string decodeWarnings;
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);

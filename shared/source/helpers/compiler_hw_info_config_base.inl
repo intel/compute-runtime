@@ -20,8 +20,4 @@ bool CompilerHwInfoConfigHw<gfxProduct>::isStatelessToStatefulBufferOffsetSuppor
     return true;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-void CompilerHwInfoConfigHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
-}
-
 } // namespace NEO

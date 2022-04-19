@@ -162,11 +162,6 @@ cl_int Program::createProgramFromBinary(
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
-
-        auto copyHwInfo = *hwInfo;
-        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily);
-        compilerHwInfoConfig.adjustHwInfoForIgc(copyHwInfo);
-
         TargetDevice targetDevice = targetDeviceFromHwInfo(*hwInfo);
         std::string decodeErrors;
         std::string decodeWarnings;
@@ -304,7 +299,7 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
     auto &buildInfo = buildInfos[rootDeviceIndex];
     for (auto &kernelInfo : buildInfo.kernelInfoArray) {
         if (kernelInfo->kernelAllocation) {
-            //register cache flush in all csrs where kernel allocation was used
+            // register cache flush in all csrs where kernel allocation was used
             for (auto &engine : this->executionEnvironment.memoryManager->getRegisteredEngines()) {
                 auto contextId = engine.osContext->getContextId();
                 if (kernelInfo->kernelAllocation->isUsedByOsContext(contextId)) {
@@ -334,10 +329,10 @@ void Program::cleanCurrentKernelInfo(uint32_t rootDeviceIndex) {
 }
 
 void Program::updateNonUniformFlag() {
-    //Look for -cl-std=CL substring and extract value behind which can be 1.2 2.0 2.1 and convert to value
+    // Look for -cl-std=CL substring and extract value behind which can be 1.2 2.0 2.1 and convert to value
     auto pos = options.find(clStdOptionName);
     if (pos == std::string::npos) {
-        programOptionVersion = 12u; //Default is 1.2
+        programOptionVersion = 12u; // Default is 1.2
     } else {
         std::stringstream ss{options.c_str() + pos + clStdOptionName.size()};
         uint32_t majorV = 0u, minorV = 0u;
