@@ -412,7 +412,20 @@ extern GFXCORE_FAMILY renderCoreFamily;
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
         void TestBody() override {                                                                                                                        \
-            FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                               \
+            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
+                FAMILY_SELECTOR(::renderCoreFamily, testBodyHw)                                                                                           \
+            }                                                                                                                                             \
+        }                                                                                                                                                 \
+        void SetUp() override {                                                                                                                           \
+            if (IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                           \
+                GTEST_SKIP();                                                                                                                             \
+            }                                                                                                                                             \
+            test_suite_name::SetUp();                                                                                                                     \
+        }                                                                                                                                                 \
+        void TearDown() override {                                                                                                                        \
+            if (!IS_TEST_EXCLUDED(test_suite_name, test_name)) {                                                                                          \
+                test_suite_name::TearDown();                                                                                                              \
+            }                                                                                                                                             \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
