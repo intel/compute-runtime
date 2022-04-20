@@ -705,8 +705,14 @@ TEST(SourceLevelDebugger, whenCaptureSBACalledThenNoCommandsAreAddedToStream) {
     container.initialize(device.get(), nullptr, true);
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    debugger.captureStateBaseAddress(container, sbaAddresses);
+    debugger.captureStateBaseAddress(*container.getCommandStream(), sbaAddresses);
     EXPECT_EQ(0u, container.getCommandStream()->getUsed());
+}
+
+TEST(SourceLevelDebugger, whenGetSbaTrackingCommandsSizeQueriedThenZeroIsReturned) {
+    auto debugger = std::make_unique<SourceLevelDebugger>(new DebuggerLibrary);
+    auto size = debugger->getSbaTrackingCommandsSize(3);
+    EXPECT_EQ(0u, size);
 }
 
 TEST(SourceLevelDebugger, givenEnableMockSourceLevelDebuggerWhenInitializingExecEnvThenActiveDebuggerWithEmptyInterfaceIsCreated) {

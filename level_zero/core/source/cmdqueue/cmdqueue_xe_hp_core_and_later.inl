@@ -61,11 +61,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
 
             NEO::Debugger::SbaAddresses sbaAddresses = {};
-            sbaAddresses.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
-            sbaAddresses.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
-            sbaAddresses.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
-            sbaAddresses.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
-            sbaAddresses.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
+            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
 
             device->getL0Debugger()->programSbaTrackingCommands(commandStream, sbaAddresses);
         }

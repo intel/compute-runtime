@@ -141,6 +141,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     configureCSRtoNonDirtyState<FamilyType>(false);
+    commandStreamReceiver.isStateSipSent = false;
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
 
@@ -180,6 +181,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenProgramPipeContr
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     configureCSRtoNonDirtyState<FamilyType>(false);
+    commandStreamReceiver.isStateSipSent = false;
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
 

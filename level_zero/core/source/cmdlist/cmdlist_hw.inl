@@ -2256,14 +2256,9 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba, this->partitionCount > 1);
     if (NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger()) {
         NEO::Debugger::SbaAddresses sbaAddresses = {};
-        sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();
-        sbaAddresses.DynamicStateBaseAddress = sba.getDynamicStateBaseAddress();
-        sbaAddresses.GeneralStateBaseAddress = sba.getGeneralStateBaseAddress();
-        NEO::EncodeStateBaseAddress<GfxFamily>::setIohAddressForDebugger(sbaAddresses, sba);
-        sbaAddresses.InstructionBaseAddress = sba.getInstructionBaseAddress();
-        sbaAddresses.SurfaceStateBaseAddress = sba.getSurfaceStateBaseAddress();
+        NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, sba);
 
-        device->getL0Debugger()->captureStateBaseAddress(commandContainer, sbaAddresses);
+        device->getL0Debugger()->captureStateBaseAddress(*commandContainer.getCommandStream(), sbaAddresses);
     }
 }
 

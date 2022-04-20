@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,10 @@ class SourceLevelDebugger : public Debugger {
     MOCKABLE_VIRTUAL bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const;
     MOCKABLE_VIRTUAL bool initialize(bool useLocalMemory);
 
-    void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) override{};
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
+        return 0;
+    }
 
   protected:
     class SourceLevelDebuggerInterface;

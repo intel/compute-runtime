@@ -64,6 +64,23 @@ HWTEST2_F(CommandEncoderTest, givenICLLPWhenGettingRequiredSizeForStateBaseAddre
     EXPECT_EQ(size, 88ul);
 }
 
+HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerThenCorrectValuesAreReturned, IsAtMostXeHpgCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    STATE_BASE_ADDRESS cmd = FamilyType::cmdInitStateBaseAddress;
+    cmd.setInstructionBaseAddress(0x1234000);
+    cmd.setSurfaceStateBaseAddress(0x1235000);
+    cmd.setGeneralStateBaseAddress(0x1236000);
+
+    NEO::Debugger::SbaAddresses sbaAddress = {};
+    EncodeStateBaseAddress<FamilyType>::setSbaAddressesForDebugger(sbaAddress, cmd);
+    EXPECT_EQ(0x1234000u, sbaAddress.InstructionBaseAddress);
+    EXPECT_EQ(0x1235000u, sbaAddress.SurfaceStateBaseAddress);
+    EXPECT_EQ(0x1236000u, sbaAddress.GeneralStateBaseAddress);
+    EXPECT_EQ(0x0u, sbaAddress.BindlessSurfaceStateBaseAddress);
+    EXPECT_EQ(0x0u, sbaAddress.BindlessSamplerStateBaseAddress);
+}
+
 HWTEST_F(CommandEncoderTest, GivenDwordStoreWhenAddingStoreDataImmThenExpectDwordProgramming) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     size_t size = EncodeStoreMemory<FamilyType>::getStoreDataImmSize();

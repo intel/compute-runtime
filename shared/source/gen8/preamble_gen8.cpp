@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,8 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
 
 template <>
 size_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
-    return getKernelDebuggingCommandsSize(device.isDebuggerActive());
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    return getKernelDebuggingCommandsSize(debuggingEnabled);
 }
 
 template struct PreambleHelper<BDWFamily>;

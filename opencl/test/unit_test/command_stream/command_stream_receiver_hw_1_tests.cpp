@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -131,13 +132,17 @@ HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetAndSourceLevelDeb
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithoutSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
-    pDevice->setDebuggerActive(true);
+    auto debugger = new MockSourceLevelDebugger();
+    debugger->setActive(true);
+    debugger->sbaTrackingSize = 24;
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(debugger);
+
     commandStreamReceiver.isStateSipSent = true;
     auto sizeWithSourceKernelDebugging = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
 
     auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice, commandStreamReceiver.isRcs());
     EXPECT_EQ(sizeForStateSip, sizeWithSourceKernelDebugging - sizeWithoutSourceKernelDebugging - PreambleHelper<FamilyType>::getKernelDebuggingCommandsSize(true));
-    pDevice->setDebuggerActive(false);
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyChangedWhenEstimatingFlushTaskSizeThenResultDependsOnPolicyProgrammingCmdSize) {

@@ -581,13 +581,13 @@ HWTEST_F(L0DebuggerSimpleTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNo
     NEO::Debugger::SbaAddresses sba = {};
     sba.SurfaceStateBaseAddress = 0x123456000;
 
-    debugger->captureStateBaseAddress(container, sba);
+    debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
     auto sizeUsed = container.getCommandStream()->getUsed();
 
     EXPECT_NE(0u, sizeUsed);
     sba.SurfaceStateBaseAddress = 0;
 
-    debugger->captureStateBaseAddress(container, sba);
+    debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
     auto sizeUsed2 = container.getCommandStream()->getUsed();
 
     EXPECT_EQ(sizeUsed, sizeUsed2);
@@ -604,7 +604,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
         NEO::Debugger::SbaAddresses sba = {};
         sba.SurfaceStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(container, sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);
@@ -617,7 +617,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
         NEO::Debugger::SbaAddresses sba = {};
         sba.GeneralStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(container, sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);
@@ -630,7 +630,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
         NEO::Debugger::SbaAddresses sba = {};
         sba.BindlessSurfaceStateBaseAddress = 0x123456000;
 
-        debugger->captureStateBaseAddress(container, sba);
+        debugger->captureStateBaseAddress(*container.getCommandStream(), sba);
         auto sizeUsed = container.getCommandStream()->getUsed();
 
         EXPECT_NE(0u, sizeUsed);

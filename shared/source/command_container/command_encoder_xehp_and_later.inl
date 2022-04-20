@@ -445,7 +445,13 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::setIohAddressForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+    sbaAddress.BindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
+    sbaAddress.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
+    sbaAddress.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
+    sbaAddress.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
+    sbaAddress.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
+    sbaAddress.IndirectObjectBaseAddress = 0;
 }
 
 template <typename Family>

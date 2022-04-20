@@ -654,7 +654,10 @@ TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverable
             isLegacyMode = false;
         }
 
-        void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) override{};
+        void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
+        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
+            return 0;
+        }
     };
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     auto mockBuiltIns = new MockBuiltins();

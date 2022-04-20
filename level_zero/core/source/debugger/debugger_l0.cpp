@@ -117,9 +117,9 @@ DebuggerL0 ::~DebuggerL0() {
     device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
 }
 
-void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) {
+void DebuggerL0::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) {
     if (DebuggerL0::isAnyTrackedAddressChanged(sba)) {
-        programSbaTrackingCommands(*container.getCommandStream(), sba);
+        programSbaTrackingCommands(cmdStream, sba);
     }
 }
 

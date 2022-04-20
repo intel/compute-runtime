@@ -29,9 +29,9 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         return new MockDebuggerL0Hw<GfxFamily>(device);
     }
 
-    void captureStateBaseAddress(NEO::CommandContainer &container, NEO::Debugger::SbaAddresses sba) override {
+    void captureStateBaseAddress(NEO::LinearStream &cmdStream, NEO::Debugger::SbaAddresses sba) override {
         captureStateBaseAddressCount++;
-        L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(container, sba);
+        L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(cmdStream, sba);
     }
 
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {

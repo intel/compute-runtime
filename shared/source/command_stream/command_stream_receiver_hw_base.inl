@@ -788,7 +788,7 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
     size += getRequiredStateBaseAddressSize(device);
-    if (!this->isStateSipSent || device.isDebuggerActive()) {
+    if (!this->isStateSipSent || device.getDebugger()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();

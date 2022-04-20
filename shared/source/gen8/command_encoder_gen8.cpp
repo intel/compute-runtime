@@ -43,6 +43,15 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
                                                           const HardwareInfo &hwInfo) {
 }
 
+template <>
+void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+    sbaAddress.IndirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
+    sbaAddress.DynamicStateBaseAddress = sbaCmd.getDynamicStateBaseAddress();
+    sbaAddress.GeneralStateBaseAddress = sbaCmd.getGeneralStateBaseAddress();
+    sbaAddress.InstructionBaseAddress = sbaCmd.getInstructionBaseAddress();
+    sbaAddress.SurfaceStateBaseAddress = sbaCmd.getSurfaceStateBaseAddress();
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

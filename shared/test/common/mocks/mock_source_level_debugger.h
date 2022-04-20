@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,6 +87,10 @@ class MockSourceLevelDebugger : public SourceLevelDebugger {
         return initializeResult;
     }
 
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
+        return sbaTrackingSize;
+    }
+
     mutable uint32_t initializeCalled = 0u;
     bool initializeResult = false;
 
@@ -98,6 +102,8 @@ class MockSourceLevelDebugger : public SourceLevelDebugger {
     bool callBaseNotifyKernelDebugData = false;
     bool callBaseNotifyNewDevice = false;
     bool callBaseInitialize = false;
+
+    size_t sbaTrackingSize = 0;
 };
 
 class MockActiveSourceLevelDebugger : public SourceLevelDebugger {
