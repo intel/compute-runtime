@@ -64,6 +64,7 @@ struct DirectSubmissionInputParams : NonCopyableClass {
     MemoryManager *memoryManager = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
+    GraphicsAllocation *completionFenceAllocation = nullptr;
     const uint32_t rootDeviceIndex;
 };
 
@@ -160,6 +161,7 @@ class DirectSubmissionHw {
     MemoryOperationsHandler *memoryOperationHandler = nullptr;
     const HardwareInfo *hwInfo = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
+    GraphicsAllocation *completionFenceAllocation = nullptr;
     GraphicsAllocation *ringBuffer = nullptr;
     GraphicsAllocation *ringBuffer2 = nullptr;
     GraphicsAllocation *semaphores = nullptr;

@@ -35,7 +35,8 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     MOCKABLE_VIRTUAL void wait(uint32_t taskCountToWait);
 
-    TagData currentTagData;
+    TagData currentTagData{};
     volatile uint32_t *tagAddress;
+    uint32_t completionFenceValue{};
 };
 } // namespace NEO

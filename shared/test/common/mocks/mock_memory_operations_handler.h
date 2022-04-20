@@ -57,6 +57,11 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         if (osContext) {
             makeResidentContextId = osContext->getContextId();
         }
+        if (captureGfxAllocationsForMakeResident) {
+            for (auto &gfxAllocation : gfxAllocations) {
+                gfxAllocationsForMakeResident.push_back(gfxAllocation);
+            }
+        }
         return MemoryOperationsStatus::SUCCESS;
     }
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
@@ -64,9 +69,11 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         return MemoryOperationsStatus::SUCCESS;
     }
 
+    std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
     int makeResidentCalledCount = 0;
     int evictCalledCount = 0;
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
+    bool captureGfxAllocationsForMakeResident = false;
 };
 
 } // namespace NEO

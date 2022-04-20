@@ -100,6 +100,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
         allocations.push_back(workPartitionAllocation);
     }
 
+    if (completionFenceAllocation != nullptr) {
+        allocations.push_back(completionFenceAllocation);
+    }
+
     if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
         printf("Ring buffer 1 - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
                ringBuffer->getGpuAddress(),

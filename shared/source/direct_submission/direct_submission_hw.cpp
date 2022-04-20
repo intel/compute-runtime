@@ -14,6 +14,7 @@ DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamRece
     memoryManager = commandStreamReceiver.getMemoryManager();
     globalFenceAllocation = commandStreamReceiver.getGlobalFenceAllocation();
     workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();
+    completionFenceAllocation = commandStreamReceiver.getTagAllocation();
 }
 
 } // namespace NEO

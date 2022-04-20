@@ -321,7 +321,7 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
 
-    uint64_t getCompletionAddress() {
+    uint64_t getCompletionAddress() const {
         uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
         if (completionFenceAddress == 0) {
             return 0;

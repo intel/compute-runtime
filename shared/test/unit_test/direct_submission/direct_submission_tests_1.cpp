@@ -118,6 +118,54 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenMakingResourcesResidentT
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
 }
 
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAllocationWhenAllocatingResourcesThenMakeResidentIsCalledForRingAndSemaphoreBuffers) {
+    auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
+    mockMemoryOperations->captureGfxAllocationsForMakeResident = true;
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    directSubmission.callBaseResident = true;
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
+
+    EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
+    ASSERT_EQ(3u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(directSubmission.ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(directSubmission.ringBuffer2, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
+    EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocationWhenAllocatingResourcesThenMakeResidentIsCalledForRingAndSemaphoreBuffersAndCompletionFenceAllocation) {
+    auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
+    mockMemoryOperations->captureGfxAllocationsForMakeResident = true;
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    MockGraphicsAllocation completionFenceAllocation{};
+
+    directSubmission.completionFenceAllocation = &completionFenceAllocation;
+
+    directSubmission.callBaseResident = true;
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(&completionFenceAllocation, directSubmission.completionFenceAllocation);
+
+    EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
+    ASSERT_EQ(4u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
+    EXPECT_EQ(directSubmission.ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(directSubmission.ringBuffer2, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
+    EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
+    EXPECT_EQ(directSubmission.completionFenceAllocation, mockMemoryOperations->gfxAllocationsForMakeResident[3]);
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStartedThenExpectAllocationsCreatedAndCommandsDispatched) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);

@@ -39,11 +39,16 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
     this->partitionedMode = this->activeTiles > 1u;
     this->partitionConfigSet = !this->partitionedMode;
 
-    osContextLinux->getDrm().setDirectSubmissionActive(true);
+    auto &drm = osContextLinux->getDrm();
+    drm.setDirectSubmissionActive(true);
 
     if (this->partitionedMode) {
         this->workPartitionAllocation = inputParams.workPartitionAllocation;
         UNRECOVERABLE_IF(this->workPartitionAllocation == nullptr);
+    }
+
+    if (drm.completionFenceSupport()) {
+        this->completionFenceAllocation = inputParams.completionFenceAllocation;
     }
 }
 
@@ -52,6 +57,24 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->ringStart) {
         this->stopRingBuffer();
         this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+    }
+    if (this->completionFenceAllocation) {
+        auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+        auto &drm = osContextLinux->getDrm();
+        auto &drmContextIds = osContextLinux->getDrmContextIds();
+        uint32_t drmContextId = 0u;
+        auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset;
+        for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
+            if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
+                if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < completionFenceValue) {
+                    constexpr int64_t timeout = -1;
+                    constexpr uint16_t flags = 0;
+                    drm.waitUserFence(drmContextIds[drmContextId], completionFenceCpuAddress, completionFenceValue, Drm::ValueWidth::U32, timeout, flags);
+                }
+                drmContextId++;
+                completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, this->postSyncOffset);
+            }
+        }
     }
     this->deallocateResources();
 }
@@ -81,6 +104,14 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     bool ret = false;
     uint32_t drmContextId = 0u;
+
+    uint32_t completionValue = 0u;
+    uint64_t completionFenceGpuAddress = 0u;
+    if (this->completionFenceAllocation) {
+        completionValue = ++completionFenceValue;
+        completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset;
+    }
+
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
         if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
             ret |= !!bb->exec(static_cast<uint32_t>(size),
@@ -93,9 +124,12 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
                               nullptr,
                               0,
                               &execObject,
-                              0,
-                              0);
+                              completionFenceGpuAddress,
+                              completionValue);
             drmContextId++;
+            if (completionFenceGpuAddress) {
+                completionFenceGpuAddress += this->postSyncOffset;
+            }
         }
     }
 
