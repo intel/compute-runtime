@@ -830,6 +830,14 @@ struct IsAnyGfxCores {
     }
 };
 
+template <GFXCORE_FAMILY... args>
+struct IsNotAnyGfxCores {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... && IsNotGfxCore<args>::template isMatched<productFamily>());
+    }
+};
+
 template <PRODUCT_FAMILY product>
 struct IsProduct {
     template <PRODUCT_FAMILY productFamily>

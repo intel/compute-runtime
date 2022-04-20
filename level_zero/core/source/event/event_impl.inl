@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -30,7 +31,12 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
     event->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    event->setUsingContextEndOffset(L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform());
+    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
+    if (overrideUseContextEndOffset != -1) {
+        useContextEndOffset = !!overrideUseContextEndOffset;
+    }
+    event->setUsingContextEndOffset(useContextEndOffset);
 
     EventPoolImp *EventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
     // do not reset even if it has been imported, since event pool

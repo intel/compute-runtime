@@ -603,6 +603,80 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
 }
 
+HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, isXeHpOrXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
+
+    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    EXPECT_TRUE(useContextEndOffset);
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0,
+        1};
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        0};
+
+    ze_event_handle_t eventHandle = nullptr;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_result_t value = eventPool->createEvent(&eventDesc, &eventHandle);
+    ASSERT_NE(nullptr, eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, value);
+
+    auto event = Event::fromHandle(eventHandle);
+    EXPECT_FALSE(event->isEventTimestampFlagSet());
+    EXPECT_FALSE(event->isUsingContextEndOffset());
+
+    event->destroy();
+}
+
+HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseContextEndThenUseContextEndOffset, isNotXeHpOrXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
+
+    bool useContextEndOffset = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily).multiTileCapablePlatform();
+    EXPECT_FALSE(useContextEndOffset);
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0,
+        1};
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        0};
+
+    ze_event_handle_t eventHandle = nullptr;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_result_t value = eventPool->createEvent(&eventDesc, &eventHandle);
+    ASSERT_NE(nullptr, eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, value);
+
+    auto event = Event::fromHandle(eventHandle);
+    EXPECT_FALSE(event->isEventTimestampFlagSet());
+    EXPECT_TRUE(event->isUsingContextEndOffset());
+
+    event->destroy();
+}
+
 class EventSynchronizeTest : public Test<DeviceFixture> {
   public:
     void SetUp() override {

@@ -37,6 +37,8 @@ using IsAtMostXeHpcCore = IsAtMostGfxCore<IGFX_XE_HPC_CORE>;
 using isXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 using isXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HPC_CORE, IGFX_XE_HPG_CORE>;
 
+using isNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsKBL = IsProduct<IGFX_KABYLAKE>;
 using IsCFL = IsProduct<IGFX_COFFEELAKE>;
