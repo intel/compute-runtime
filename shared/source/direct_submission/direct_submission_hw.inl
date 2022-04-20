@@ -30,9 +30,12 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const CommandStreamReceiver &commandStreamReceiver)
-    : commandStreamReceiver(commandStreamReceiver), osContext(commandStreamReceiver.getOsContext()), globalFenceAllocation(commandStreamReceiver.getGlobalFenceAllocation()) {
-    hwInfo = &commandStreamReceiver.peekHwInfo();
+DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmissionInputParams &inputParams)
+    : osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex) {
+    memoryManager = inputParams.memoryManager;
+    globalFenceAllocation = inputParams.globalFenceAllocation;
+    hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
+    memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
     auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
 
@@ -70,11 +73,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     DirectSubmissionAllocations allocations;
 
     bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
-    MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
     constexpr size_t minimumRequiredSize = 256 * MemoryConstants::kiloByte;
     constexpr size_t additionalAllocationSize = MemoryConstants::pageSize;
     const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
-    const AllocationProperties commandStreamAllocationProperties{commandStreamReceiver.getRootDeviceIndex(),
+    const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
                                                                  true, allocationSize,
                                                                  AllocationType::RING_BUFFER,
                                                                  isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
@@ -86,7 +88,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     UNRECOVERABLE_IF(ringBuffer2 == nullptr);
     allocations.push_back(ringBuffer2);
 
-    const AllocationProperties semaphoreAllocationProperties{commandStreamReceiver.getRootDeviceIndex(),
+    const AllocationProperties semaphoreAllocationProperties{rootDeviceIndex,
                                                              true, MemoryConstants::pageSize,
                                                              AllocationType::SEMAPHORE_BUFFER,
                                                              isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
@@ -138,9 +140,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubmissionAllocations &allocations) {
-    auto memoryInterface = commandStreamReceiver.peekRootDeviceEnvironment().memoryOperationsInterface.get();
-
-    auto ret = memoryInterface->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(allocations), false) == MemoryOperationsStatus::SUCCESS;
+    auto ret = memoryOperationHandler->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(allocations), false) == MemoryOperationsStatus::SUCCESS;
 
     return ret;
 }
@@ -532,8 +532,6 @@ inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRing
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
-    MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
-
     if (ringBuffer) {
         memoryManager->freeGraphicsMemory(ringBuffer);
         ringBuffer = nullptr;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ set(NEO_CORE_DIRECT_SUBMISSION
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_prefetch_mitigation_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_controller.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_bdw_and_later.inl

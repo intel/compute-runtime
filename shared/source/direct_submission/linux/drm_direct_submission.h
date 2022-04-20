@@ -16,7 +16,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     using DirectSubmissionHw<GfxFamily, Dispatcher>::ringCommandStream;
     using DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations;
 
-    DrmDirectSubmission(const CommandStreamReceiver &commandStreamReceiver);
+    DrmDirectSubmission(const DirectSubmissionInputParams &inputParams);
 
     ~DrmDirectSubmission();
 

@@ -9,7 +9,7 @@
 
 namespace NEO {
 template <typename GfxFamily, typename Dispatcher>
-inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(const CommandStreamReceiver &commandStreamReceiver) {
-    return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(commandStreamReceiver);
+inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(const DirectSubmissionInputParams &inputParams) {
+    return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(inputParams);
 }
 } // namespace NEO

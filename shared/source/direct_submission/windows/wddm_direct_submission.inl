@@ -23,8 +23,8 @@ namespace NEO {
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
 template <typename GfxFamily, typename Dispatcher>
-WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const CommandStreamReceiver &commandStreamReceiver)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(commandStreamReceiver) {
+WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(const DirectSubmissionInputParams &inputParams)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(inputParams) {
     osContextWin = reinterpret_cast<OsContextWin *>(&this->osContext);
     wddm = osContextWin->getWddm();
     commandBufferHeader = std::make_unique<COMMAND_BUFFER_HEADER_REC>();

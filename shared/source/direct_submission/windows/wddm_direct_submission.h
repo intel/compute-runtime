@@ -19,7 +19,7 @@ class Wddm;
 template <typename GfxFamily, typename Dispatcher>
 class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
-    WddmDirectSubmission(const CommandStreamReceiver &commandStreamReceiver);
+    WddmDirectSubmission(const DirectSubmissionInputParams &inputParams);
 
     ~WddmDirectSubmission();
 

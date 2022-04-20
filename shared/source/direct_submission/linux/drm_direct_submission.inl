@@ -20,8 +20,8 @@
 namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
-DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const CommandStreamReceiver &commandStreamReceiver)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(commandStreamReceiver) {
+DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubmissionInputParams &inputParams)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(inputParams) {
 
     this->disableMonitorFence = true;
 
@@ -42,7 +42,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const CommandStr
     osContextLinux->getDrm().setDirectSubmissionActive(true);
 
     if (this->partitionedMode) {
-        this->workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();
+        this->workPartitionAllocation = inputParams.workPartitionAllocation;
         UNRECOVERABLE_IF(this->workPartitionAllocation == nullptr);
     }
 }

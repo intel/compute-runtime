@@ -55,11 +55,22 @@ class FlushStampTracker;
 class GraphicsAllocation;
 struct HardwareInfo;
 class OsContext;
+class MemoryOperationsHandler;
+
+struct DirectSubmissionInputParams : NonCopyableClass {
+    DirectSubmissionInputParams(const CommandStreamReceiver &commandStreamReceiver);
+    OsContext &osContext;
+    const RootDeviceEnvironment &rootDeviceEnvironment;
+    MemoryManager *memoryManager = nullptr;
+    const GraphicsAllocation *globalFenceAllocation = nullptr;
+    GraphicsAllocation *workPartitionAllocation = nullptr;
+    const uint32_t rootDeviceIndex;
+};
 
 template <typename GfxFamily, typename Dispatcher>
 class DirectSubmissionHw {
   public:
-    DirectSubmissionHw(const CommandStreamReceiver &commandStreamReceiver);
+    DirectSubmissionHw(const DirectSubmissionInputParams &inputParams);
 
     virtual ~DirectSubmissionHw();
 
@@ -71,7 +82,7 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
 
-    static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const CommandStreamReceiver &commandStreamReceiver);
+    static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const DirectSubmissionInputParams &inputParams);
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
@@ -143,8 +154,10 @@ class DirectSubmissionHw {
     uint64_t semaphoreGpuVa = 0u;
     uint64_t gpuVaForMiFlush = 0u;
 
-    const CommandStreamReceiver &commandStreamReceiver;
     OsContext &osContext;
+    const uint32_t rootDeviceIndex;
+    MemoryManager *memoryManager = nullptr;
+    MemoryOperationsHandler *memoryOperationHandler = nullptr;
     const HardwareInfo *hwInfo = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *ringBuffer = nullptr;
