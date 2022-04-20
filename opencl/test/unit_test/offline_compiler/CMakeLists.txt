@@ -136,7 +136,7 @@ string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_LIB_DEFAULT_DEVICE)
 add_custom_target(run_ocloc_tests ALL
                   DEPENDS ocloc_tests
 )
-if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+if(${NEO_TARGET_PROCESSOR} STREQUAL "x86_64")
   add_dependencies(run_unit_tests run_ocloc_tests)
   add_dependencies(unit_tests ocloc_tests)
 endif()
