@@ -926,6 +926,23 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                 break;
             case CL_QUEUE_INDEX_INTEL:
                 selectedQueueIndex = static_cast<cl_uint>(*(currentProperties + 1));
+                auto nodeOrdinal = DebugManager.flags.NodeOrdinal.get();
+                if (nodeOrdinal != -1) {
+                    int currentEngineIndex = 0;
+                    const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
+                    const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+                    auto engineGroupTyp = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
+                    selectedQueueFamilyIndex = static_cast<cl_uint>(getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupTyp));
+                    const auto &engines = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines;
+                    for (const auto &engine : engines) {
+                        if (engine.getEngineType() == static_cast<aub_stream::EngineType>(nodeOrdinal)) {
+                            selectedQueueIndex = currentEngineIndex;
+                            break;
+                        }
+                        currentEngineIndex++;
+                    }
+                }
                 specificEngineSelected = true;
                 break;
             }
