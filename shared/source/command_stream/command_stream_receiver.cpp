@@ -842,4 +842,9 @@ const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() 
     return *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
 }
 
+uint32_t CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
+    auto osContextId = osContext->getContextId();
+    return gfxAllocation.getTaskCount(osContextId);
+}
+
 } // namespace NEO

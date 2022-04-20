@@ -321,13 +321,16 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
 
-    virtual uint64_t getCompletionAddress() {
-        return 0;
+    uint64_t getCompletionAddress() {
+        uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+        if (completionFenceAddress == 0) {
+            return 0;
+        }
+        completionFenceAddress += completionFenceOffset;
+        return completionFenceAddress;
     }
 
-    virtual uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation) {
-        return 0;
-    }
+    uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation);
 
   protected:
     void cleanupResources();
@@ -406,6 +409,7 @@ class CommandStreamReceiver {
     uint32_t activePartitions = 1;
     uint32_t activePartitionsConfig = 1;
     uint32_t postSyncWriteOffset = 0;
+    uint32_t completionFenceOffset = 0;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

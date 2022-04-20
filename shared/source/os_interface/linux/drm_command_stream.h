@@ -62,10 +62,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
         gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
     }
 
-    uint64_t getCompletionAddress() override;
-
-    uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation) override;
-
     void printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
     using CommandStreamReceiver::pageTableManager;

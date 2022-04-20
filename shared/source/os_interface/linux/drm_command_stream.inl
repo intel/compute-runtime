@@ -38,6 +38,8 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
                                                               gemCloseWorkerMode mode)
     : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), gemCloseWorkerOperationMode(mode) {
 
+    this->completionFenceOffset = Drm::completionFenceOffset;
+
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
     this->drm = rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>();
@@ -314,21 +316,5 @@ bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitModeActive() {
 template <typename GfxFamily>
 inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
     return (this->drm->isVmBindAvailable() && useUserFenceWait);
-}
-
-template <typename GfxFamily>
-uint64_t DrmCommandStreamReceiver<GfxFamily>::getCompletionAddress() {
-    uint64_t completionFenceAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
-    if (completionFenceAddress == 0) {
-        return 0;
-    }
-    completionFenceAddress += Drm::completionFenceOffset;
-    return completionFenceAddress;
-}
-
-template <typename GfxFamily>
-uint32_t DrmCommandStreamReceiver<GfxFamily>::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
-    auto osContextId = osContext->getContextId();
-    return gfxAllocation.getTaskCount(osContextId);
 }
 } // namespace NEO

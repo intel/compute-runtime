@@ -59,16 +59,23 @@ struct CommandStreamReceiverTest : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    CommandStreamReceiver *commandStreamReceiver;
-    MemoryManager *memoryManager;
-    InternalAllocationStorage *internalAllocationStorage;
+    CommandStreamReceiver *commandStreamReceiver = nullptr;
+    MemoryManager *memoryManager = nullptr;
+    InternalAllocationStorage *internalAllocationStorage = nullptr;
 };
 
-TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueOrAddressThenZeroIsReturned) {
-    EXPECT_EQ(0u, commandStreamReceiver->getCompletionAddress());
-
+TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueThenProperTaskCountIsReturned) {
     MockGraphicsAllocation allocation{};
-    EXPECT_EQ(0u, commandStreamReceiver->getCompletionValue(allocation));
+    uint32_t expectedValue = 0x1234;
+
+    auto &osContext = commandStreamReceiver->getOsContext();
+    allocation.updateTaskCount(expectedValue, osContext.getContextId());
+    EXPECT_EQ(expectedValue, commandStreamReceiver->getCompletionValue(allocation));
+}
+
+TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionAddressThenProperAddressIsReturned) {
+    auto expectedAddress = castToUint64(const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
+    EXPECT_EQ(expectedAddress, commandStreamReceiver->getCompletionAddress());
 }
 
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
