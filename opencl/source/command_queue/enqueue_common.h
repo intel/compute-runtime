@@ -1087,6 +1087,7 @@ template <typename GfxFamily>
 template <uint32_t cmdType>
 cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr) {
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
@@ -1096,7 +1097,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
-    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     auto blockQueue = false;
     auto taskLevel = 0u;
@@ -1145,6 +1145,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};
     if (gpgpuSubmission) {
+        commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
         gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
     }
@@ -1156,6 +1157,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,
                                                       enqueueProperties, timestampPacketDependencies, eventsRequest,
                                                       eventBuilder, taskLevel, csrDeps, &bcsCsr);
+        if (gpgpuSubmission) {
+            commandStreamReceiverOwnership.unlock();
+        }
+
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
         }
@@ -1168,11 +1173,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
 
     if (blockQueue) {
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr, &bcsCsr);
+
+        if (gpgpuSubmission) {
+            commandStreamReceiverOwnership.unlock();
+        }
     }
 
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
 
-    commandStreamReceiverOwnership.unlock();
     queueOwnership.unlock();
     bcsCommandStreamReceiverOwnership.unlock();
 
