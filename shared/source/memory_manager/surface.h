@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -49,6 +50,7 @@ class HostPtrSurface : public Surface {
 
     void makeResident(CommandStreamReceiver &csr) override {
         DEBUG_BREAK_IF(!gfxAllocation);
+        gfxAllocation->prepareHostPtrForResidency(&csr);
         csr.makeResidentHostPtrAllocation(gfxAllocation);
     }
     Surface *duplicate() override {

@@ -1072,7 +1072,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
         }
 
         blitProperties.csrDependencies.makeResident(*this);
-
+        blitProperties.srcAllocation->prepareHostPtrForResidency(this);
+        blitProperties.dstAllocation->prepareHostPtrForResidency(this);
         makeResident(*blitProperties.srcAllocation);
         makeResident(*blitProperties.dstAllocation);
         if (blitProperties.clearColorAllocation) {

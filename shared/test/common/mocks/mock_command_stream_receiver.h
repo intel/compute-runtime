@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 
@@ -151,7 +152,12 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         ++hostPtrSurfaceCreationMutexLockCount;
         return CommandStreamReceiver::obtainHostPtrSurfaceCreationLock();
     }
-
+    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
+        bool status = CommandStreamReceiver::createAllocationForHostSurface(surface, requiresL3Flush);
+        if (status)
+            surface.getAllocation()->hostPtrTaskCountAssignment--;
+        return status;
+    }
     void postInitFlagsSetup() override {}
 
     static constexpr size_t tagSize = 256;
