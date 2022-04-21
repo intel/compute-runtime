@@ -20,6 +20,7 @@ set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_multi_command.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_ocloc_fcl_facade.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_ocloc_igc_facade.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_linker.h
@@ -62,6 +63,8 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fcl_facade_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fcl_facade_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_igc_facade_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_igc_facade_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_product_config_tests.cpp

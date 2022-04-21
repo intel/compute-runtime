@@ -32,7 +32,6 @@
 #include "cif/import/library_api.h"
 #include "compiler_options.h"
 #include "igfxfmid.h"
-#include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
@@ -55,8 +54,6 @@
 using namespace NEO::OclocErrorCode;
 
 namespace NEO {
-
-CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
 std::string convertToPascalCase(const std::string &inString) {
     std::string outString;
@@ -89,6 +86,7 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
 
     if (pOffCompiler) {
         pOffCompiler->argHelper = helper;
+        pOffCompiler->fclFacade = std::make_unique<OclocFclFacade>(helper);
         pOffCompiler->igcFacade = std::make_unique<OclocIgcFacade>(helper);
         retVal = pOffCompiler->initialize(numArgs, allArgs, dumpFiles);
     }
@@ -139,15 +137,15 @@ struct OfflineCompiler::buildInfo {
 
 int OfflineCompiler::buildIrBinary() {
     int retVal = SUCCESS;
-    UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
+    UNRECOVERABLE_IF(!fclFacade->isInitialized());
     pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
                                                          : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
 
     //sourceCode.size() returns the number of characters without null terminated char
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> fclSrc = nullptr;
-    pBuildInfo->fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
-    pBuildInfo->fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
-    auto err = CIF::Builtins::CreateConstBuffer(fclMain.get(), nullptr, 0);
+    pBuildInfo->fclOptions = fclFacade->createConstBuffer(options.c_str(), options.size());
+    pBuildInfo->fclInternalOptions = fclFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
+    auto err = fclFacade->createConstBuffer(nullptr, 0);
 
     auto srcType = IGC::CodeType::undefined;
     std::vector<uint8_t> tempSrcStorage;
@@ -165,13 +163,13 @@ int OfflineCompiler::buildIrBinary() {
             elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_HEADER, headerName, headerData);
         }
         tempSrcStorage = elfEncoder.encode();
-        fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), tempSrcStorage.data(), tempSrcStorage.size());
+        fclSrc = fclFacade->createConstBuffer(tempSrcStorage.data(), tempSrcStorage.size());
     } else {
         srcType = IGC::CodeType::oclC;
-        fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
+        fclSrc = fclFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size() + 1);
     }
 
-    auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(srcType, pBuildInfo->intermediateRepresentation, err.get());
+    auto fclTranslationCtx = fclFacade->createTranslationContext(srcType, pBuildInfo->intermediateRepresentation, err.get());
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
@@ -522,48 +520,13 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
 
     if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
-        auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
-
-        if (fclLibFile == nullptr) {
-            argHelper->printf("Error: Failed to load %s\n", Os::frontEndDllName);
-            return OUT_OF_HOST_MEMORY;
+        const auto fclInitializationResult = fclFacade->initialize(hwInfo);
+        if (fclInitializationResult != SUCCESS) {
+            argHelper->printf("Error! FCL initialization failure. Error code = %d\n", fclInitializationResult);
+            return fclInitializationResult;
         }
 
-        this->fclLib.reset(fclLibFile);
-        if (this->fclLib == nullptr) {
-            return OUT_OF_HOST_MEMORY;
-        }
-
-        auto fclCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->fclLib->getProcAddress(CIF::CreateCIFMainFuncName));
-        if (fclCreateMain == nullptr) {
-            return OUT_OF_HOST_MEMORY;
-        }
-
-        this->fclMain = CIF::RAII::UPtr(createMainNoSanitize(fclCreateMain));
-        if (this->fclMain == nullptr) {
-            return OUT_OF_HOST_MEMORY;
-        }
-
-        if (false == this->fclMain->IsCompatible<IGC::FclOclDeviceCtx>()) {
-            argHelper->printf("Incompatible interface in FCL : %s\n", CIF::InterfaceIdCoder::Dec(this->fclMain->FindIncompatible<IGC::FclOclDeviceCtx>()).c_str());
-            DEBUG_BREAK_IF(true);
-            return OUT_OF_HOST_MEMORY;
-        }
-
-        this->fclDeviceCtx = this->fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
-        if (this->fclDeviceCtx == nullptr) {
-            return OUT_OF_HOST_MEMORY;
-        }
-
-        fclDeviceCtx->SetOclApiVersion(hwInfo.capabilityTable.clVersionSupport * 10);
-        preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
-        if (this->fclDeviceCtx->GetUnderlyingVersion() > 4U) {
-            auto igcPlatform = fclDeviceCtx->GetPlatformHandle();
-            if (nullptr == igcPlatform) {
-                return OUT_OF_HOST_MEMORY;
-            }
-            IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo.platform);
-        }
+        preferredIntermediateRepresentation = fclFacade->getPreferredIntermediateRepresentation();
     } else {
         if (!isQuiet()) {
             argHelper->printf("Compilation from IR - skipping loading of FCL\n");

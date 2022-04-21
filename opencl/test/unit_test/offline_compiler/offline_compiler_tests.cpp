@@ -956,6 +956,29 @@ TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerf
     EXPECT_TRUE(mockOfflineCompiler.excludeIr);
 }
 
+TEST_F(OfflineCompilerTests, givenValidArgumentsAndFclInitFailureWhenInitIsPerformedThenFailureIsPropagatedAndErrorIsPrinted) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.mockFclFacade->shouldFailLoadingOfFclLib = true;
+
+    testing::internal::CaptureStdout();
+    const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
+    const auto output = testing::internal::GetCapturedStdout();
+
+    std::stringstream expectedErrorMessage;
+    expectedErrorMessage << "Error! Loading of FCL library has failed! Filename: " << Os::frontEndDllName << "\n"
+                         << "Error! FCL initialization failure. Error code = -6\n";
+
+    EXPECT_EQ(OclocErrorCode::OUT_OF_HOST_MEMORY, initResult);
+    EXPECT_EQ(expectedErrorMessage.str(), output);
+}
+
 TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerformedThenFailureIsPropagatedAndErrorIsPrinted) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -1355,7 +1378,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     MockOfflineCompiler offlineCompiler;
     auto ret = offlineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(nullptr, offlineCompiler.fclDeviceCtx);
+    EXPECT_FALSE(offlineCompiler.fclFacade->isInitialized());
     EXPECT_TRUE(offlineCompiler.igcFacade->isInitialized());
 }
 
@@ -2043,7 +2066,7 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
     ASSERT_EQ(CL_SUCCESS, initResult);
 
     auto mockFclOclDeviceCtx = new NEO::MockFclOclDeviceCtx();
-    mockOfflineCompiler.fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
+    mockOfflineCompiler.mockFclFacade->fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
 
     mockOfflineCompiler.useLlvmBc = true;
     const auto buildResult = mockOfflineCompiler.buildIrBinary();

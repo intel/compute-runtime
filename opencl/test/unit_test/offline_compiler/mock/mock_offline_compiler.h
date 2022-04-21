@@ -10,6 +10,7 @@
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
+#include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
 
 #include <optional>
@@ -25,7 +26,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::excludeIr;
-    using OfflineCompiler::fclDeviceCtx;
+    using OfflineCompiler::fclFacade;
     using OfflineCompiler::forceStatelessToStatefulOptimization;
     using OfflineCompiler::genBinary;
     using OfflineCompiler::genBinarySize;
@@ -61,6 +62,10 @@ class MockOfflineCompiler : public OfflineCompiler {
         uniqueHelper = std::make_unique<MockOclocArgHelper>(filesMap);
         uniqueHelper->setAllCallBase(true);
         argHelper = uniqueHelper.get();
+
+        auto uniqueFclFacadeMock = std::make_unique<MockOclocFclFacade>(argHelper);
+        mockFclFacade = uniqueFclFacadeMock.get();
+        fclFacade = std::move(uniqueFclFacadeMock);
 
         auto uniqueIgcFacadeMock = std::make_unique<MockOclocIgcFacade>(argHelper);
         mockIgcFacade = uniqueIgcFacadeMock.get();
@@ -125,6 +130,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     uint32_t writeOutAllFilesCalled = 0u;
     std::unique_ptr<MockOclocArgHelper> uniqueHelper;
     MockOclocIgcFacade *mockIgcFacade = nullptr;
+    MockOclocFclFacade *mockFclFacade = nullptr;
     int buildCalledCount{0};
     std::optional<int> buildReturnValue{};
     bool interceptCreatedDirs{false};

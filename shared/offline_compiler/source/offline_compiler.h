@@ -8,14 +8,14 @@
 #pragma once
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "cif/common/cif_main.h"
-#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/code_type.h"
 
 #include <cstdint>
 #include <memory>
@@ -160,10 +160,7 @@ class OfflineCompiler {
     int revisionId = -1;
 
     std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
-
-    std::unique_ptr<OsLibrary> fclLib = nullptr;
-    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
-    CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx = nullptr;
+    std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 
     OclocArgHelper *argHelper = nullptr;
