@@ -871,10 +871,6 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
     const auto params = kmdNotifyHelper->obtainTimeoutParams(useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, throttle, this->isKmdWaitModeActive(),
                                                              this->isAnyDirectSubmissionEnabled());
 
-    PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
-                       "\nWaiting for task count %u at location %p. Current value: %u\n",
-                       taskCountToWait, getTagAddress(), *getTagAddress());
-
     auto status = waitForCompletionWithTimeout(params, taskCountToWait);
     if (status == WaitStatus::NotReady) {
         waitForFlushStamp(flushStampToWait);
@@ -887,15 +883,13 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
         return status;
     }
 
-    UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
+    for (uint32_t i = 0; i < this->activePartitions; i++) {
+        UNRECOVERABLE_IF(*(ptrOffset(getTagAddress(), (i * this->postSyncWriteOffset))) < taskCountToWait);
+    }
 
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
-
-    PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
-                       "\nWaiting completed. Current value: %u\n", *getTagAddress());
-
     return WaitStatus::Ready;
 }
 

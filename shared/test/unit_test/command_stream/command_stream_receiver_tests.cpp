@@ -2001,3 +2001,43 @@ TEST(CreateWorkPartitionAllocationTest, givenEnabledBlitterWhenInitializingWorkP
     EXPECT_TRUE(retVal);
     EXPECT_EQ(0u, memoryManager->copyMemoryToAllocationBanksCalled);
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEnabledThenPrintTagValueForAllPartitions) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.LogWaitingForCompletion.set(true);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 2;
+
+    volatile uint32_t *tagAddress = csr.tagAddress;
+    constexpr uint32_t tagValue = 2;
+    *tagAddress = tagValue;
+    tagAddress = ptrOffset(tagAddress, csr.postSyncWriteOffset);
+    *tagAddress = tagValue;
+
+    WaitParams waitParams;
+    waitParams.waitTimeout = std::numeric_limits<int64_t>::max();
+    constexpr uint32_t taskCount = 1;
+
+    testing::internal::CaptureStdout();
+
+    WaitStatus status = csr.waitForCompletionWithTimeout(waitParams, taskCount);
+    EXPECT_EQ(WaitStatus::Ready, status);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::stringstream expectedOutput;
+
+    expectedOutput << std::endl
+                   << "Waiting for task count " << taskCount
+                   << " at location " << const_cast<uint32_t *>(csr.tagAddress)
+                   << " with timeout " << std::hex << waitParams.waitTimeout
+                   << ". Current value: " << std::dec << tagValue
+                   << " " << tagValue
+                   << std::endl
+                   << std::endl
+                   << "Waiting completed. Current value: " << tagValue
+                   << " " << tagValue << std::endl;
+
+    EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
+}

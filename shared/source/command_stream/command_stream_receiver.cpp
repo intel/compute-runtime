@@ -323,6 +323,11 @@ void CommandStreamReceiver::cleanupResources() {
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) {
+    bool printWaitForCompletion = DebugManager.flags.LogWaitingForCompletion.get();
+    if (printWaitForCompletion) {
+        printTagAddressContent(taskCountToWait, params.waitTimeout, true);
+    }
+
     uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         if (!this->flushBatchedSubmissions()) {
@@ -331,7 +336,11 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams 
         }
     }
 
-    return baseWaitFunction(getTagAddress(), params, taskCountToWait);
+    auto retCode = baseWaitFunction(getTagAddress(), params, taskCountToWait);
+    if (printWaitForCompletion) {
+        printTagAddressContent(taskCountToWait, params.waitTimeout, false);
+    }
+    return retCode;
 }
 
 WaitStatus CommandStreamReceiver::baseWaitFunction(volatile uint32_t *pollAddress, const WaitParams &params, uint32_t taskCountToWait) {
@@ -863,6 +872,23 @@ bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
     perDssBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::BUFFER, device.getDeviceBitfield()});
 
     return perDssBackedBuffer != nullptr;
+}
+
+void CommandStreamReceiver::printTagAddressContent(uint32_t taskCountToWait, int64_t waitTimeout, bool start) {
+    auto postSyncAddress = getTagAddress();
+    if (start) {
+        PRINT_DEBUG_STRING(true, stdout,
+                           "\nWaiting for task count %u at location %p with timeout %llx. Current value:",
+                           taskCountToWait, postSyncAddress, waitTimeout);
+    } else {
+        PRINT_DEBUG_STRING(true, stdout,
+                           "%s", "\nWaiting completed. Current value:");
+    }
+    for (uint32_t i = 0; i < activePartitions; i++) {
+        PRINT_DEBUG_STRING(true, stdout, " %u", *postSyncAddress);
+        postSyncAddress = ptrOffset(postSyncAddress, this->postSyncWriteOffset);
+    }
+    PRINT_DEBUG_STRING(true, stdout, "%s", "\n");
 }
 
 } // namespace NEO

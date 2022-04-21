@@ -342,6 +342,7 @@ class CommandStreamReceiver {
     void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
     bool checkImplicitFlushForGpuIdle();
     void downloadTagAllocation(uint32_t taskCountToWait);
+    void printTagAddressContent(uint32_t taskCountToWait, int64_t waitTimeout, bool start);
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
