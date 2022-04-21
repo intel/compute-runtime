@@ -107,7 +107,9 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setMinLod(minLodValue.getRawAccess());
     samplerState.setMaxLod(maxLodValue.getRawAccess());
 
-    appendSamplerStateParams(&samplerState);
+    auto &hwInfo = device->getHwInfo();
+
+    NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&samplerState, hwInfo);
 
     return ZE_RESULT_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,7 @@ template struct SamplerCoreFamily<IGFX_XE_HPG_CORE>;
 template <>
 struct SamplerProductFamily<IGFX_DG2> : public SamplerCoreFamily<IGFX_XE_HPG_CORE> {
     using SamplerCoreFamily::SamplerCoreFamily;
-    void appendSamplerStateParams(SAMPLER_STATE *state) override {
-        if (NEO::DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-            state->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
-        }
-    }
+
     ze_result_t initialize(Device *device, const ze_sampler_desc_t *desc) override {
         return SamplerCoreFamily<IGFX_XE_HPG_CORE>::initialize(device, desc);
     };
