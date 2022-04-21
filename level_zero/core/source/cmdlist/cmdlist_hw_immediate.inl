@@ -114,6 +114,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImm
         ssh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_SSH);
     }
 
+    if (this->device->getL0Debugger()) {
+        UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
+        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
+        this->csr->makeResident(*this->device->getDebugSurface());
+    }
+
     auto completionStamp = this->csr->flushTask(
         *commandStream,
         commandStreamStart,

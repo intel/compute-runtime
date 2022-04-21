@@ -362,6 +362,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
     }
 
+    bool debuggingEnabled = device.getDebugger() != nullptr;
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
 
     auto memoryCompressionState = lastMemoryCompressionState;
@@ -414,6 +415,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         programAdditionalStateBaseAddress(commandStreamCSR, cmd, device);
 
+        if (debuggingEnabled && !device.getDebugger()->isLegacy()) {
+            NEO::Debugger::SbaAddresses sbaAddresses = {};
+            NEO::EncodeStateBaseAddress<GfxFamily>::setSbaAddressesForDebugger(sbaAddresses, cmd);
+            device.getDebugger()->captureStateBaseAddress(commandStreamCSR, sbaAddresses);
+        }
+
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;
         }
@@ -424,13 +431,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, hwInfo, isRcs());
-        addPipeControlBeforeStateSip(commandStreamCSR, device);
-        programStateSip(commandStreamCSR, device);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase);
         }
     }
+
+    addPipeControlBeforeStateSip(commandStreamCSR, device);
+    programStateSip(commandStreamCSR, device);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
@@ -500,11 +508,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*preemptionAllocation);
     }
 
-    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
+    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || debuggingEnabled) {
         makeResident(*SipKernel::getSipKernel(device).getSipAllocation());
-        if (debugSurface) {
-            makeResident(*debugSurface);
-        }
+    }
+
+    if (sourceLevelDebuggerActive && debugSurface) {
+        makeResident(*debugSurface);
     }
 
     if (experimentalCmdBuffer.get() != nullptr) {
@@ -788,6 +797,10 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
     size += getRequiredStateBaseAddressSize(device);
+
+    if (device.getDebugger()) {
+        size += device.getDebugger()->getSbaTrackingCommandsSize(NEO::Debugger::SbaAddresses::trackedAddressCount);
+    }
     if (!this->isStateSipSent || device.getDebugger()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
     }
@@ -895,7 +908,8 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const 
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
-    if (!this->isStateSipSent || device.isDebuggerActive()) {
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    if (!this->isStateSipSent || debuggingEnabled) {
         PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device);
         this->isStateSipSent = true;
     }
