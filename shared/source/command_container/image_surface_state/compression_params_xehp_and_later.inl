@@ -16,15 +16,11 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
     const auto ccsMode = R_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E;
     const auto mcsLceMode = R_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE;
     if ((ccsMode == surfaceState->getAuxiliarySurfaceMode() || mcsLceMode == surfaceState->getAuxiliarySurfaceMode() || surfaceState->getMemoryCompressionEnable())) {
-        uint8_t compressionFormat;
+        uint32_t compressionFormat;
         auto gmmResourceInfo = allocation->getDefaultGmm()->gmmResourceInfo.get();
         if (gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
             compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
-            if (plane == GMM_PLANE_Y) {
-                compressionFormat &= 0xf;
-            } else if ((plane == GMM_PLANE_U) || (plane == GMM_PLANE_V)) {
-                compressionFormat |= 0x10;
-            }
+            EncodeWA<Family>::adjustCompressionFormatForPlanarImage(compressionFormat, plane);
         } else {
             compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }

@@ -266,7 +266,9 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
+                                                                GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLodSurfaceState();
@@ -285,6 +287,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
         auto gmmClientContext = rootDeviceEnvironment.getGmmClientContext();
         if (resInfo.MediaCompressed) {
             compressionDetails = gmmClientContext->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
+            EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, plane);
         } else if (resInfo.RenderCompressed) {
             compressionDetails = gmmClientContext->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }
@@ -306,8 +309,10 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     auto srcCompressionFormat = blitCmd.getSourceCompressionFormat();
     auto dstCompressionFormat = blitCmd.getDestinationCompressionFormat();
 
-    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat, rootDeviceEnvironment);
-    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat, rootDeviceEnvironment);
+    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
+                                rootDeviceEnvironment, blitProperties.srcPlane);
+    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
+                                rootDeviceEnvironment, blitProperties.dstPlane);
 
     srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);

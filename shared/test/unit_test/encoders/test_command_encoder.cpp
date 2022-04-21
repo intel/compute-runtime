@@ -171,3 +171,15 @@ HWTEST_F(CommandEncoderTest, givenPlatformSupportingMiMemFenceWhenEncodingThenPr
         EXPECT_EQ(0u, cmdStream.getUsed());
     }
 }
+
+HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothingHappens, IsAtMostGen12lp) {
+    for (auto plane : {GMM_NO_PLANE, GMM_PLANE_Y, GMM_PLANE_U, GMM_PLANE_V}) {
+        uint32_t compressionFormat = 0u;
+        EncodeWA<FamilyType>::adjustCompressionFormatForPlanarImage(compressionFormat, plane);
+        EXPECT_EQ(0u, compressionFormat);
+
+        compressionFormat = 0xFFu;
+        EncodeWA<FamilyType>::adjustCompressionFormatForPlanarImage(compressionFormat, plane);
+        EXPECT_EQ(0xFFu, compressionFormat);
+    }
+}

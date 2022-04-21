@@ -309,6 +309,8 @@ struct EncodeWA {
     static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
 
     static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const HardwareInfo &hwInfo, bool isRcs);
+
+    static void adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane);
 };
 
 template <typename GfxFamily>

@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "gtest/gtest.h"
@@ -606,13 +607,68 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCo
         uint32_t mipTailLod = 0;
         uint32_t compressionFormat = 0;
         auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
-        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod, compressionFormat, pDevice->getRootDeviceEnvironment());
+        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
+                                                                    compressionFormat, pDevice->getRootDeviceEnvironment(), GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
         if (compressionExpected) {
             EXPECT_GT(compressionFormat, 0u);
         } else {
             EXPECT_EQ(compressionFormat, 0u);
         }
+    }
+}
+
+HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompressionFormatIsProperlyAdjusted, CompressionParamsSupportedMatcher) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    struct {
+        uint8_t returnedCompressionFormat;
+        uint8_t expectedCompressionFormat;
+        GMM_YUV_PLANE_ENUM plane;
+    } testInputs[] = {
+        // regular image
+        {0x0, 0x0, GMM_NO_PLANE},
+        {0xF, 0xF, GMM_NO_PLANE},
+        {0x10, 0x10, GMM_NO_PLANE},
+        {0x1F, 0x1F, GMM_NO_PLANE},
+        // luma plane
+        {0x0, 0x0, GMM_PLANE_Y},
+        {0xF, 0xF, GMM_PLANE_Y},
+        {0x10, 0x0, GMM_PLANE_Y},
+        {0x1F, 0xF, GMM_PLANE_Y},
+        // chroma plane
+        {0x0, 0x10, GMM_PLANE_U},
+        {0x0, 0x10, GMM_PLANE_V},
+        {0xF, 0x1F, GMM_PLANE_U},
+        {0xF, 0x1F, GMM_PLANE_V},
+        {0x10, 0x10, GMM_PLANE_U},
+        {0x10, 0x10, GMM_PLANE_V},
+        {0x1F, 0x1F, GMM_PLANE_U},
+        {0x1F, 0x1F, GMM_PLANE_V},
+    };
+
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto &resInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->getResourceFlags()->Info;
+    resInfo.MediaCompressed = true;
+    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    BlitProperties properties = {};
+    properties.srcAllocation = &mockAllocationSrc;
+    uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
+    GMM_TILE_TYPE tileType = GMM_NOT_TILED;
+    uint32_t mipTailLod = 0;
+    uint32_t compressionFormat = 0;
+    auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
+
+    for (auto &testInput : testInputs) {
+        gmmClientContext->compressionFormatToReturn = testInput.returnedCompressionFormat;
+        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
+                                                                    compressionFormat, pDevice->getRootDeviceEnvironment(), testInput.plane);
+
+        EXPECT_EQ(testInput.expectedCompressionFormat, compressionFormat);
     }
 }
 

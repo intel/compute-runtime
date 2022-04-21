@@ -439,6 +439,10 @@ inline void EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStre
 }
 
 template <typename GfxFamily>
+inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane) {
+}
+
+template <typename GfxFamily>
 inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
     encodeExtraCacheSettings(surfaceState, *args.gmmHelper->getHardwareInfo());

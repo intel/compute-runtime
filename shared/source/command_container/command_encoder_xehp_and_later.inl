@@ -695,6 +695,15 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
 }
 
 template <typename Family>
+void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane) {
+    if (plane == GMM_PLANE_Y) {
+        compressionFormat &= 0xf;
+    } else if ((plane == GMM_PLANE_U) || (plane == GMM_PLANE_V)) {
+        compressionFormat |= 0x10;
+    }
+}
+
+template <typename Family>
 inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cmdBuffer,
                                                            uint64_t gpuAddress,
                                                            uint32_t dataDword0,

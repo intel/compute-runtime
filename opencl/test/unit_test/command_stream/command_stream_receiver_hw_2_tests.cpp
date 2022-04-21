@@ -1534,6 +1534,31 @@ HWTEST_F(BcsTestsImages, givenImageWithSurfaceOffsetWhenAdjustBlitPropertiesForI
     EXPECT_EQ(blitProperties.dstGpuAddress, expectedGpuAddress);
 }
 
+HWTEST_F(BcsTestsImages, givenImageWithPlaneSetWhenAdjustBlitPropertiesForImageIsCalledThenPlaneIsCorrect) {
+    cl_image_desc imgDesc = Image1dDefaults::imageDesc;
+    std::unique_ptr<Image> image(Image2dArrayHelper<>::create(context.get(), &imgDesc));
+
+    BlitProperties blitProperties{};
+
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, false);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, true);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.dstPlane);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+
+    image->setPlane(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, false);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y, blitProperties.dstPlane);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_NO_PLANE, blitProperties.srcPlane);
+
+    image->setPlane(GMM_YUV_PLANE_ENUM::GMM_PLANE_U);
+    ClBlitProperties::adjustBlitPropertiesForImage(image.get(), blitProperties, rowPitch, slicePitch, true);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_Y, blitProperties.dstPlane);
+    EXPECT_EQ(GMM_YUV_PLANE_ENUM::GMM_PLANE_U, blitProperties.srcPlane);
+}
+
 HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesAreSetCorrectly) {
     constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
     auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);

@@ -185,6 +185,7 @@ struct ClBlitProperties {
         auto &copySize = blitProperties.copySize;
         auto &bytesPerPixel = blitProperties.bytesPerPixel;
         auto &blitDirection = blitProperties.blitDirection;
+        auto &plane = isSource ? blitProperties.srcPlane : blitProperties.dstPlane;
 
         image->getSurfaceOffsets(surfaceOffsets);
         gpuAddress += surfaceOffsets.offset;
@@ -194,6 +195,7 @@ struct ClBlitProperties {
         bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
         rowPitch = imageDesc.image_row_pitch;
         slicePitch = imageDesc.image_slice_pitch;
+        plane = image->getPlane();
 
         if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
             if (blitDirection == BlitterConstants::BlitDirection::HostPtrToImage) {

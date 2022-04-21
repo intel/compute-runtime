@@ -83,6 +83,8 @@ struct BlitProperties {
     Vec3<size_t> dstSize = 0;
     Vec3<size_t> srcSize = 0;
     size_t bytesPerPixel = 1;
+    GMM_YUV_PLANE_ENUM dstPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
+    GMM_YUV_PLANE_ENUM srcPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
 
     bool isImageOperation() const {
         return blitDirection == BlitterConstants::BlitDirection::HostPtrToImage ||
@@ -157,7 +159,9 @@ struct BlitCommandsHelper {
     static void appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd);
     static void appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch);
     static void appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t originalSliceIndex, const bool isSource);
-    static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType,
+                                            uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment,
+                                            GMM_YUV_PLANE_ENUM plane);
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
                                            DebugPauseState waitCondition, const HardwareInfo &hwInfo);
     static size_t getSizeForDebugPauseCommands();
