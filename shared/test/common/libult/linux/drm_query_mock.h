@@ -25,6 +25,7 @@ class DrmQueryMock : public DrmMock {
     DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
         context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        callBaseIsVmBindAvailable = true;
 
         setupIoctlHelper(IGFX_UNKNOWN);
 

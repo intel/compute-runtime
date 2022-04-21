@@ -1047,6 +1047,7 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
 
     DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
+    drmDefault.callBaseIsVmBindAvailable = true;
     if (hwHelper.isLinuxCompletionFenceSupported() && drmDefault.isVmBindAvailable()) {
         EXPECT_TRUE(drmDefault.completionFenceSupport());
     } else {
@@ -1056,10 +1057,12 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     DebugManager.flags.UseVmBind.set(1);
     DebugManager.flags.EnableDrmCompletionFence.set(1);
     DrmMock drmEnabled{*executionEnvironment->rootDeviceEnvironments[0]};
+    drmEnabled.callBaseIsVmBindAvailable = true;
     EXPECT_TRUE(drmEnabled.completionFenceSupport());
 
     DebugManager.flags.EnableDrmCompletionFence.set(0);
     DrmMock drmDisabled{*executionEnvironment->rootDeviceEnvironments[0]};
+    drmDisabled.callBaseIsVmBindAvailable = true;
     EXPECT_FALSE(drmDisabled.completionFenceSupport());
 }
 

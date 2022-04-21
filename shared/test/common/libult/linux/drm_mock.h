@@ -147,6 +147,13 @@ class DrmMock : public Drm {
         return 0;
     }
 
+    bool isVmBindAvailable() override {
+        if (callBaseIsVmBindAvailable) {
+            return Drm::isVmBindAvailable();
+        }
+        return bindAvailable;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -182,6 +189,7 @@ class DrmMock : public Drm {
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;
     bool callBaseCreateDrmContext = true;
+    bool callBaseIsVmBindAvailable = false;
 
     bool capturedCooperativeContextRequest = false;
 
@@ -289,6 +297,7 @@ class DrmMockResources : public DrmMock {
   public:
     DrmMockResources(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {
         setBindAvailable();
+        callBaseIsVmBindAvailable = true;
     }
 
     bool registerResourceClasses() override {

@@ -1514,9 +1514,10 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     }
 
     bool disableScratch = DebugManager.flags.DisableScratchPages.get();
-    bool enablePageFault = hasPageFaultSupport() && isVmBindAvailable();
+    bool useVmBind = isVmBindAvailable();
+    bool enablePageFault = hasPageFaultSupport() && useVmBind;
 
-    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault);
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
 
     auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
 

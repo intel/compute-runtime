@@ -109,7 +109,7 @@ class IoctlHelper {
     virtual bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) = 0;
     virtual std::optional<int> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
-    virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault) = 0;
+    virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) = 0;
     virtual uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) = 0;
     virtual uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) = 0;
     virtual void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
@@ -160,7 +160,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
-    uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault) override;
+    uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
@@ -224,7 +224,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
-    uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault) override;
+    uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     uint32_t createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;

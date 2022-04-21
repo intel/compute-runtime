@@ -101,17 +101,22 @@ TEST_F(IoctlPrelimHelperTests, givenValidRegionInstanceClassWhenCreatingVmContro
 TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmCreateThenProperValueIsReturned) {
     for (auto &disableScratch : ::testing::Bool()) {
         for (auto &enablePageFault : ::testing::Bool()) {
-            auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault);
-            if (disableScratch) {
-                EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH), (flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH));
-            }
-            if (enablePageFault) {
-                EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT), (flags & PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT));
-            }
-            if (disableScratch || enablePageFault) {
-                EXPECT_NE(0u, flags);
-            } else {
-                EXPECT_EQ(0u, flags);
+            for (auto &useVmBind : ::testing::Bool()) {
+                auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+                if (disableScratch) {
+                    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH), (flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH));
+                }
+                if (enablePageFault) {
+                    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT), (flags & PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT));
+                }
+                if (useVmBind) {
+                    EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND), (flags & PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND));
+                }
+                if (disableScratch || enablePageFault || useVmBind) {
+                    EXPECT_NE(0u, flags);
+                } else {
+                    EXPECT_EQ(0u, flags);
+                }
             }
         }
     }

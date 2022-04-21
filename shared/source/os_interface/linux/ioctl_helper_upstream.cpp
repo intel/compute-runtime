@@ -183,7 +183,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmControlExtRegion(const s
     return {};
 }
 
-uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enablePageFault) {
+uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     return 0u;
 }
 

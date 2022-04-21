@@ -374,7 +374,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmControlExtRegion(const s
     return {};
 }
 
-uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enablePageFault) {
+uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     uint32_t flags = 0u;
     if (disableScratch) {
         flags |= PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH;
@@ -382,6 +382,10 @@ uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enab
 
     if (enablePageFault) {
         flags |= PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT;
+    }
+
+    if (useVmBind) {
+        flags |= PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND;
     }
 
     return flags;

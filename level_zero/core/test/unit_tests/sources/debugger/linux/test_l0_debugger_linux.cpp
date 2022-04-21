@@ -82,6 +82,7 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
     drmMock->bindAvailable = true;
     drmMock->setPerContextVMRequired(true);
 
@@ -103,6 +104,7 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
     drmMock->bindAvailable = false;
     drmMock->setPerContextVMRequired(true);
 
@@ -124,6 +126,7 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->callBaseIsVmBindAvailable = true;
     drmMock->bindAvailable = true;
     drmMock->setPerContextVMRequired(false);
 

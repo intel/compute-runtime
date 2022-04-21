@@ -52,8 +52,10 @@ TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmCreateThenZeroIsReturned) {
     IoctlHelperUpstream ioctlHelper{};
     for (auto &disableScratch : ::testing::Bool()) {
         for (auto &enablePageFault : ::testing::Bool()) {
-            auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault);
-            EXPECT_EQ(0u, flags);
+            for (auto &useVmBind : ::testing::Bool()) {
+                auto flags = ioctlHelper.getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+                EXPECT_EQ(0u, flags);
+            }
         }
     }
 }
