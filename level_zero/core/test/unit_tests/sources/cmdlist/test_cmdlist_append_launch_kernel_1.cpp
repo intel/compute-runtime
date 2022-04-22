@@ -1241,8 +1241,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     {
-        VariableBackup<uint32_t> usesSyncBuffer{&kernelAttributes.flags.packed};
-        usesSyncBuffer = false;
+        VariableBackup<std::array<bool, 3>> usesSyncBuffer{&kernelAttributes.flags.packed};
+        usesSyncBuffer = {};
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
         result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);

@@ -11,7 +11,6 @@
 #include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/kernel/read_extended_info.h"
 
 #include <sstream>
 #include <string>
@@ -54,6 +53,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.numGrfRequired = execEnv.NumGRFRequired;
     dst.kernelAttributes.simdSize = execEnv.LargestCompiledSIMDSize;
     dst.kernelAttributes.barrierCount = execEnv.HasBarriers;
+    dst.kernelAttributes.numThreadsRequired = execEnv.NumThreadsRequired;
 
     dst.kernelAttributes.flags.requiresDisabledEUFusion = (0 != execEnv.RequireDisableEUFusion);
     dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = (0 != execEnv.DisableMidThreadPreemption);
@@ -63,9 +63,9 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.flags.usesSpecialPipelineSelectMode = (0 != execEnv.HasDPAS);
     dst.kernelAttributes.flags.usesStatelessWrites = (0 != execEnv.StatelessWritesCount);
     dst.kernelAttributes.flags.useStackCalls = (0 != execEnv.HasStackCalls);
+    dst.kernelAttributes.flags.hasRTCalls = (0 != execEnv.HasRTCalls);
 
     dst.kernelMetadata.compiledSubGroupsNumber = execEnv.CompiledSubGroupsNumber;
-    readExtendedInfo(dst.extendedInfo, execEnv);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token) {
@@ -477,7 +477,24 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
-    populateKernelDescriptorRtDispatchGlobals(dst, src);
+
+    {
+        uint32_t heapOffset = 0;
+        uint32_t paramOffset = 0;
+        uint32_t paramSize = 0;
+
+        if (src.tokens.allocateRTGlobalBuffer != nullptr) {
+            auto allocateRTGlobalBuffer = static_cast<const struct iOpenCL::SPatchAllocateRTGlobalBuffer *>(src.tokens.allocateRTGlobalBuffer);
+            heapOffset = allocateRTGlobalBuffer->SurfaceStateHeapOffset;
+            paramOffset = allocateRTGlobalBuffer->DataParamOffset;
+            paramSize = allocateRTGlobalBuffer->DataParamSize;
+        }
+
+        populatePointerKernelArg(dst.payloadMappings.implicitArgs.rtDispatchGlobals,
+                                 paramOffset, paramSize, heapOffset, heapOffset,
+                                 dst.kernelAttributes.bufferAddressingMode);
+    }
+
     dst.payloadMappings.explicitArgs.resize(src.tokens.kernelArgs.size());
     dst.explicitArgsExtendedMetadata.resize(src.tokens.kernelArgs.size());
 

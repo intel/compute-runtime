@@ -676,20 +676,9 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
     EXPECT_EQ(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
 }
 
-class KernelDescriptorRTCallsTrue : public NEO::KernelDescriptor {
-    bool hasRTCalls() const override {
-        return true;
-    }
-};
-
-class KernelDescriptorRTCallsFalse : public NEO::KernelDescriptor {
-    bool hasRTCalls() const override {
-        return false;
-    }
-};
-
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized) {
-    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -735,7 +724,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueButKernelDoesNotHaveRTDGAllocationTokenThenRayTracingStillEnabledWithoutAllocation) {
-    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -773,7 +763,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueButKernelDoesNotHaveRTDGAll
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized) {
-    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -811,7 +802,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitialized) {
-    KernelDescriptorRTCallsFalse mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = false;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -845,7 +837,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatched) {
-    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -1211,7 +1204,8 @@ TEST_F(KernelPropertiesTests, givenValidKernelWithIndirectAccessFlagsAndDisableI
 
 HWTEST2_F(KernelPropertiesTests, whenHasRTCallsIsTrueThenUsesRayTracingIsTrue, MatchAny) {
     WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    KernelDescriptorRTCallsTrue mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
 
     mockKernelImmutableData.kernelDescriptor = &mockDescriptor;
@@ -1222,7 +1216,8 @@ HWTEST2_F(KernelPropertiesTests, whenHasRTCallsIsTrueThenUsesRayTracingIsTrue, M
 
 HWTEST2_F(KernelPropertiesTests, whenHasRTCallsIsFalseThenUsesRayTracingIsFalse, MatchAny) {
     WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    KernelDescriptorRTCallsFalse mockDescriptor = {};
+    KernelDescriptor mockDescriptor = {};
+    mockDescriptor.kernelAttributes.flags.hasRTCalls = false;
     WhiteBox<::L0::KernelImmutableData> mockKernelImmutableData = {};
 
     mockKernelImmutableData.kernelDescriptor = &mockDescriptor;

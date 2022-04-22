@@ -11,7 +11,9 @@
 
 TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     NEO::KernelDescriptor desc;
-    EXPECT_EQ(0U, desc.kernelAttributes.flags.packed);
+    for (auto &element : desc.kernelAttributes.flags.packed) {
+        EXPECT_EQ(0U, element);
+    }
     EXPECT_EQ(0U, desc.kernelAttributes.slmInlineSize);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[1]);

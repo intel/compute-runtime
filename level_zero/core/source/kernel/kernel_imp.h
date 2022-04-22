@@ -138,7 +138,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setCacheConfig(ze_cache_config_flags_t flags) override;
     bool usesRayTracing() {
-        return kernelImmData->getDescriptor().hasRTCalls();
+        return kernelImmData->getDescriptor().kernelAttributes.flags.hasRTCalls;
     }
 
     ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override {

@@ -16,6 +16,7 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include <array>
 #include <cinttypes>
 #include <cstddef>
 #include <limits>
@@ -27,10 +28,6 @@ namespace NEO {
 
 using StringMap = std::unordered_map<uint32_t, std::string>;
 using InstructionsSegmentOffset = uint16_t;
-
-struct ExtendedInfoBase {
-    virtual ~ExtendedInfoBase() = default;
-};
 
 struct KernelDescriptor {
     enum AddressingMode : uint8_t {
@@ -44,7 +41,6 @@ struct KernelDescriptor {
 
     KernelDescriptor() = default;
     virtual ~KernelDescriptor() = default;
-    virtual bool hasRTCalls() const;
 
     void updateCrossThreadDataSize() {
         uint32_t crossThreadDataSize = 0;
@@ -144,12 +140,11 @@ struct KernelDescriptor {
     }
 
     struct KernelAttributes {
-        KernelAttributes() { flags.packed = 0U; }
-
         uint32_t slmInlineSize = 0U;
         uint32_t perThreadScratchSize[2] = {0U, 0U};
         uint32_t perHwThreadPrivateMemorySize = 0U;
         uint32_t perThreadSystemThreadSurfaceSize = 0U;
+        uint32_t numThreadsRequired = 0u;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;
         uint16_t inlineDataPayloadSize = 0U;
@@ -185,14 +180,16 @@ struct KernelDescriptor {
 
         union {
             struct {
+                // 0
                 bool usesSpecialPipelineSelectMode : 1;
                 bool usesStringMapForPrintf : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;
-                bool usesFlattenedLocalIds;
+                bool usesFlattenedLocalIds : 1;
                 bool usesPrivateMemory : 1;
                 bool usesVme : 1;
                 bool usesImages : 1;
+                // 1
                 bool usesSamplers : 1;
                 bool usesSyncBuffer : 1;
                 bool useGlobalAtomics : 1;
@@ -201,14 +198,17 @@ struct KernelDescriptor {
                 bool perThreadDataHeaderIsPresent : 1;
                 bool perThreadDataUnusedGrfIsPresent : 1;
                 bool requiresDisabledEUFusion : 1;
+                // 2
                 bool requiresDisabledMidThreadPreemption : 1;
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
                 bool useStackCalls : 1;
+                bool hasRTCalls : 1;
+                bool reserved : 2;
             };
-            uint32_t packed;
-        } flags;
+            std::array<bool, 3> packed;
+        } flags = {};
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
 
         bool usesStringMap() const {
@@ -297,7 +297,6 @@ struct KernelDescriptor {
     } external;
 
     std::vector<uint8_t> generatedHeaps;
-    std::unique_ptr<ExtendedInfoBase> extendedInfo;
 };
 
 } // namespace NEO
