@@ -298,6 +298,39 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingSameKer
         EXPECT_EQ(callCounter, pMockKernel->setArgSvmAllocCalls);
         ++mockSvmManager->allocationsCounter;
 
+        // nullptr - called
+        EXPECT_FALSE(pMockKernel->getKernelArguments()[0].isSetToNullptr);
+        retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            nullptr                 // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
+        EXPECT_TRUE(pMockKernel->getKernelArguments()[0].isSetToNullptr);
+        ++mockSvmManager->allocationsCounter;
+
+        // nullptr again - not called
+        retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            nullptr                 // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(callCounter, pMockKernel->setArgSvmAllocCalls);
+        EXPECT_TRUE(pMockKernel->getKernelArguments()[0].isSetToNullptr);
+        ++mockSvmManager->allocationsCounter;
+
+        // same value as before nullptr - called
+        retVal = clSetKernelArgSVMPointer(
+            pMockMultiDeviceKernel, // cl_kernel kernel
+            0,                      // cl_uint arg_index
+            nextPtrSvm              // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
+        ++mockSvmManager->allocationsCounter;
+
         DebugManagerStateRestore stateRestorer;
         DebugManager.flags.EnableSharedSystemUsmSupport.set(1);
         mockSvmManager->freeSVMAlloc(nextPtrSvm);

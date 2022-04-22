@@ -557,9 +557,9 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     const auto svmAllocsManager = driverHandle->getSvmAllocsManager();
     const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
+    const auto &argInfo = this->kernelArgInfos[argIndex];
     NEO::SvmAllocationData *allocData = nullptr;
     if (argVal != nullptr) {
-        const auto &argInfo = this->kernelArgInfos[argIndex];
         const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
         if (argInfo.allocId > 0 && requestedAddress == argInfo.value) {
             bool reuseFromCache = false;
@@ -578,12 +578,17 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
                 }
             }
         }
+    } else {
+        if (argInfo.isSetToNullptr) {
+            return ZE_RESULT_SUCCESS;
+        }
     }
 
     const auto &allArgs = kernelImmData->getDescriptor().payloadMappings.explicitArgs;
     const auto &currArg = allArgs[argIndex];
     if (currArg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
         slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
+        kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
         UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
         auto slmOffset = *reinterpret_cast<uint32_t *>(crossThreadData.get() + currArg.as<NEO::ArgDescPointer>().slmOffset);
         slmOffset += static_cast<uint32_t>(argSize);
@@ -610,6 +615,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         uintptr_t nullBufferValue = 0;
         NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, nullBufferValue);
+        kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, true};
         return ZE_RESULT_SUCCESS;
     }
     const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
@@ -637,7 +643,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     const uint32_t allocId = allocData ? allocData->getAllocId() : 0u;
-    kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter};
+    kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }

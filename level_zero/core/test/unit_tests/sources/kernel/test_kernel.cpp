@@ -147,7 +147,23 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    //same value but no svmData - ZE_RESULT_ERROR_INVALID_ARGUMENT
+    //nullptr - not called, argInfo is updated
+    EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
+    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_TRUE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+
+    //nullptr again - not called
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
+    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_TRUE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+
+    //same value as before nullptr - called, argInfo is updated
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+
+    // same value but no svmData - ZE_RESULT_ERROR_INVALID_ARGUMENT
     svmAllocsManager->freeSVMAlloc(secondSvmAllocation);
     ++svmAllocsManager->allocationsCounter;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));

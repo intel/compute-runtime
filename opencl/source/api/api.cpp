@@ -4900,6 +4900,11 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 }
             }
         }
+    } else {
+        if (pMultiDeviceKernel->getKernelArguments()[argIndex].isSetToNullptr) {
+            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            return CL_SUCCESS;
+        }
     }
 
     DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argValue", argValue);

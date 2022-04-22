@@ -21,6 +21,7 @@ struct KernelArgInfo {
     const void *value;
     uint32_t allocId;
     uint32_t allocIdMemoryManagerCounter;
+    bool isSetToNullptr = false;
 };
 
 struct KernelImp : Kernel {
