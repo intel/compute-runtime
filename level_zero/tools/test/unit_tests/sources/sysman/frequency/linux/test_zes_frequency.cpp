@@ -277,6 +277,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
         EXPECT_DOUBLE_EQ(minFreq, limits.min);
         EXPECT_DOUBLE_EQ(newMax, limits.max);
+        EXPECT_DOUBLE_EQ(pSysfsAccess->mockBoost, limits.max);
     }
 }
 
@@ -296,6 +297,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
         EXPECT_DOUBLE_EQ(newMin, limits.min);
         EXPECT_DOUBLE_EQ(maxFreq, limits.max);
+        EXPECT_DOUBLE_EQ(pSysfsAccess->mockBoost, limits.max);
     }
 }
 
@@ -580,7 +582,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     EXPECT_EQ(setAllThrottleReasonsExceptPL2, state.throttleReasons);
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeWithLegacyPathThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeWithLegacyPathThenVerifyzesFrequencySetRangeTestCallSucceeds) {
     ON_CALL(*pSysfsAccess.get(), read(_, Matcher<double &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValLegacy));
     ON_CALL(*pSysfsAccess.get(), write(_, _))
@@ -602,6 +604,8 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetRange(handle, &limits));
         EXPECT_DOUBLE_EQ(minFreqLegacy, limits.min);
         EXPECT_DOUBLE_EQ(maxFreqLegacy, limits.max);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencySetRange(handle, &limits));
+        EXPECT_DOUBLE_EQ(pSysfsAccess->mockBoost, limits.max);
     }
 }
 

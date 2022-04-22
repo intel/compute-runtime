@@ -227,7 +227,7 @@ ze_result_t LinuxFrequencyImp::setMax(double max) {
         }
         return result;
     }
-    return ZE_RESULT_SUCCESS;
+    return pSysfsAccess->write(boostFreqFile, max);
 }
 
 ze_result_t LinuxFrequencyImp::getRequest(double &request) {
@@ -319,6 +319,7 @@ void LinuxFrequencyImp::init() {
     if (pSysfsAccess->directoryExists(baseDir)) {
         minFreqFile = baseDir + "rps_min_freq_mhz";
         maxFreqFile = baseDir + "rps_max_freq_mhz";
+        boostFreqFile = baseDir + "rps_boost_freq_mhz";
         requestFreqFile = baseDir + "punit_req_freq_mhz";
         tdpFreqFile = baseDir + "rapl_PL1_freq_mhz";
         actualFreqFile = baseDir + "rps_act_freq_mhz";
@@ -333,6 +334,7 @@ void LinuxFrequencyImp::init() {
     } else {
         minFreqFile = "gt_min_freq_mhz";
         maxFreqFile = "gt_max_freq_mhz";
+        boostFreqFile = "gt_boost_freq_mhz";
         requestFreqFile = "gt_cur_freq_mhz";
         tdpFreqFile = "rapl_PL1_freq_mhz";
         actualFreqFile = "gt_act_freq_mhz";

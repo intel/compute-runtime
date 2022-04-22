@@ -13,6 +13,7 @@ namespace ult {
 
 const std::string minFreqFile("gt/gt0/rps_min_freq_mhz");
 const std::string maxFreqFile("gt/gt0/rps_max_freq_mhz");
+const std::string boostFreqFile("gt/gt0/rps_boost_freq_mhz");
 const std::string requestFreqFile("gt/gt0/punit_req_freq_mhz");
 const std::string tdpFreqFile("gt/gt0/rapl_PL1_freq_mhz");
 const std::string actualFreqFile("gt/gt0/rps_act_freq_mhz");
@@ -27,6 +28,7 @@ const std::string throttleReasonThermalFile("gt/gt0/throttle_reason_thermal");
 
 const std::string minFreqFileLegacy("gt_min_freq_mhz");
 const std::string maxFreqFileLegacy("gt_max_freq_mhz");
+const std::string boostFreqFileLegacy("gt_boost_freq_mhz");
 const std::string requestFreqFileLegacy("gt_cur_freq_mhz");
 const std::string tdpFreqFileLegacy("rapl_PL1_freq_mhz");
 const std::string actualFreqFileLegacy("gt_act_freq_mhz");
@@ -45,6 +47,7 @@ template <>
 struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     double mockMin = 0;
     double mockMax = 0;
+    double mockBoost = 0;
     double mockRequest = 0;
     double mockTdp = 0;
     double mockActual = 0;
@@ -265,28 +268,26 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     ze_result_t setValLegacy(const std::string file, const double val) {
         if (file.compare(minFreqFileLegacy) == 0) {
             mockMin = val;
-        }
-        if (file.compare(maxFreqFileLegacy) == 0) {
+        } else if (file.compare(maxFreqFileLegacy) == 0) {
             mockMax = val;
-        }
-        if (file.compare(requestFreqFileLegacy) == 0) {
+        } else if (file.compare(boostFreqFileLegacy) == 0) {
+            mockBoost = val;
+        } else if (file.compare(requestFreqFileLegacy) == 0) {
             mockRequest = val;
-        }
-        if (file.compare(tdpFreqFileLegacy) == 0) {
+        } else if (file.compare(tdpFreqFileLegacy) == 0) {
             mockTdp = val;
-        }
-        if (file.compare(actualFreqFileLegacy) == 0) {
+        } else if (file.compare(actualFreqFileLegacy) == 0) {
             mockActual = val;
-        }
-        if (file.compare(efficientFreqFileLegacy) == 0) {
+        } else if (file.compare(efficientFreqFileLegacy) == 0) {
             mockEfficient = val;
-        }
-        if (file.compare(maxValFreqFileLegacy) == 0) {
+        } else if (file.compare(maxValFreqFileLegacy) == 0) {
             mockMaxVal = val;
-        }
-        if (file.compare(minValFreqFileLegacy) == 0) {
+        } else if (file.compare(minValFreqFileLegacy) == 0) {
             mockMinVal = val;
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
+
         return ZE_RESULT_SUCCESS;
     }
 
@@ -324,6 +325,9 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         }
         if (file.compare(maxFreqFile) == 0) {
             mockMax = val;
+        }
+        if (file.compare(boostFreqFile) == 0) {
+            mockBoost = val;
         }
         if (file.compare(requestFreqFile) == 0) {
             mockRequest = val;
