@@ -256,6 +256,17 @@ TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpecte
 TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
+
+        int ioctl(unsigned long request, void *arg) override {
+            auto start = std::chrono::steady_clock::now();
+            std::chrono::steady_clock::time_point end;
+
+            do {
+                end = std::chrono::steady_clock::now();
+            } while (std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() == 0);
+
+            return Drm::ioctl(request, arg);
+        }
     };
 
     constexpr long long initialMin = std::numeric_limits<long long>::max();
