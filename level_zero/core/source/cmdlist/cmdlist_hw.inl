@@ -224,17 +224,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         return ret;
     }
 
-    ret = appendLaunchKernelWithParams(hKernel, pLaunchFuncArgs,
-                                       hSignalEvent, false, false, true);
-    if (ret) {
-        return ret;
-    }
-
-    if (hSignalEvent) {
-        programEventL3Flush(hSignalEvent, this->device, this->partitionCount, commandContainer);
-    }
-
-    return ret;
+    return appendLaunchKernelWithParams(hKernel, pLaunchFuncArgs,
+                                        hSignalEvent, false, false, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -251,12 +242,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     appendEventForProfiling(hEvent, true, false);
     ret = appendLaunchKernelWithParams(hKernel, pDispatchArgumentsBuffer,
                                        nullptr, true, false, false);
-    if (ret) {
-        return ret;
-    }
-    if (hEvent) {
-        programEventL3Flush(hEvent, this->device, this->partitionCount, commandContainer);
-    }
     appendSignalEventPostWalker(hEvent, false);
 
     return ret;
@@ -291,9 +276,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
             return ret;
         }
     }
-    if (hEvent) {
-        programEventL3Flush(hEvent, this->device, this->partitionCount, commandContainer);
-    }
+
     appendSignalEventPostWalker(hEvent, false);
 
     return ret;
@@ -818,6 +801,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+                                                                          const ze_group_count_t *pThreadGroupDimensions,
+                                                                          ze_event_handle_t hEvent) {
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false, false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker) {
+    if (beforeWalker) {
+        appendEventForProfiling(hEvent, true, false);
+    } else {
+        appendSignalEventPostWalker(hEvent, false);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(void *dstPtr,
                                                                                NEO::GraphicsAllocation *dstPtrAlloc,
                                                                                uint64_t dstOffset,
@@ -1070,7 +1069,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, true);
-    adjustEventKernelCount(hSignalEvent);
 
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
         Builtin func = Builtin::CopyBufferToBufferSide;
@@ -1130,9 +1128,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                           isStateless);
     }
 
-    if (hSignalEvent) {
-        programEventL3Flush(hSignalEvent, this->device, this->partitionCount, commandContainer);
-    }
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
     const auto &hwInfo = this->device->getHwInfo();
@@ -1140,12 +1135,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         auto event = Event::fromHandle(hSignalEvent);
         if (event) {
             dstAllocationStruct.needsFlush &= !event->signalScope;
-            dstAllocationStruct.needsFlush &= !event->l3FlushWaApplied;
         }
 
-        dstAllocationStruct.needsFlush &= !isCopyOnly();
-
-        if (dstAllocationStruct.needsFlush) {
+        if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
@@ -1460,7 +1452,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinFunction->setArgumentValue(2, sizeof(value), &value);
 
         appendEventForProfilingAllWalkers(hSignalEvent, true);
-        adjustEventKernelCount(hSignalEvent);
 
         uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
@@ -1535,7 +1526,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         builtinFunction->setArgumentValue(3, sizeof(patternSizeInEls), &patternSizeInEls);
 
         appendEventForProfilingAllWalkers(hSignalEvent, true);
-        adjustEventKernelCount(hSignalEvent);
 
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
         res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
@@ -1574,9 +1564,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
-    if (hSignalEvent) {
-        programEventL3Flush(hSignalEvent, this->device, this->partitionCount, commandContainer);
-    }
     appendEventForProfilingAllWalkers(hSignalEvent, false);
 
     const auto &hwInfo = this->device->getHwInfo();
@@ -1584,10 +1571,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         auto event = Event::fromHandle(hSignalEvent);
         if (event) {
             hostPointerNeedsFlush &= !event->signalScope;
-            hostPointerNeedsFlush &= !event->l3FlushWaApplied;
         }
-
-        hostPointerNeedsFlush &= !isCopyOnly();
 
         if (hostPointerNeedsFlush) {
             NEO::PipeControlArgs args;

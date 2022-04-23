@@ -320,7 +320,6 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListWhenTimestampPassedToMemoryCopyThenA
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
-    EXPECT_EQ(1u, event->getPacketsInUse());
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, event->toHandle(), 0, nullptr);
     EXPECT_GT(commandList.appendMemoryCopyKernelWithGACalled, 0u);
     EXPECT_EQ(commandList.appendMemoryCopyBlitCalled, 0u);
