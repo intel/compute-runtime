@@ -117,12 +117,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
     }
 
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && !isCopyOnly() && !isInternal()) {
-        const auto &hwInfo = device->getHwInfo();
-        this->isFlushTaskSubmissionEnabled = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).isPlatformFlushTaskEnabled(hwInfo);
-        if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
-            this->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
-        }
+    if (this->isFlushTaskSubmissionEnabled) {
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
     }
 
@@ -149,17 +144,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bo
     this->close();
     ze_command_list_handle_t immediateHandle = this->toHandle();
 
+    this->commandContainer.removeDuplicatesFromResidencyContainer();
     const auto commandListExecutionResult = this->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
     if (commandListExecutionResult == ZE_RESULT_ERROR_DEVICE_LOST) {
         return commandListExecutionResult;
     }
 
-    const auto synchronizationResult = this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
-    if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-        return synchronizationResult;
-    }
+    if (this->isCopyOnly() && !this->isSyncModeQueue && !this->isTbxMode) {
+        this->commandContainer.currentLinearStreamStartOffset = this->commandContainer.getCommandStream()->getUsed();
+    } else {
+        const auto synchronizationResult = this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
+        if (synchronizationResult == ZE_RESULT_ERROR_DEVICE_LOST) {
+            return synchronizationResult;
+        }
 
-    this->reset();
+        this->reset();
+    }
 
     return ZE_RESULT_SUCCESS;
 }

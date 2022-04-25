@@ -80,6 +80,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint32_t nextIddInBlock = 0;
     bool lastPipelineSelectModeRequired = false;
     bool lastSentUseGlobalAtomics = false;
+    uint64_t currentLinearStreamStartOffset = 0u;
 
     Device *getDevice() const { return device; }
 

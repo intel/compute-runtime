@@ -1213,6 +1213,59 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCoo
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
+using WithinXeHPAndXeHPC = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelWithImmediateListWithoutFlushTaskThenNewCmdBufferAllocated, WithinXeHPAndXeHPC) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(0);
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    createKernel();
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+
+    auto &commandContainer = commandList->commandContainer;
+    const auto stream = commandContainer.getCommandStream();
+    const auto streamCpu = stream->getCpuBase();
+
+    Vec3<size_t> groupCount{1, 1, 1};
+    auto sizeLeftInStream = sizeof(MI_BATCH_BUFFER_END);
+    auto available = stream->getAvailableSpace();
+    stream->getSpace(available - sizeLeftInStream);
+
+    const uint32_t threadGroupDimensions[3] = {1, 1, 1};
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
+        0,
+        device->getNEODevice(),
+        kernel.get(),
+        threadGroupDimensions,
+        PreemptionMode::MidBatch,
+        0,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false};
+    NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs);
+
+    auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, 0u);
+
+    const auto streamCpu2 = stream->getCpuBase();
+
+    EXPECT_NE(nullptr, streamCpu2);
+    EXPECT_NE(streamCpu, streamCpu2);
+
+    EXPECT_EQ(2u, commandContainer.getCmdBufferAllocations().size());
+    auto immediateHandle = commandList->toHandle();
+    returnValue = commandList->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));

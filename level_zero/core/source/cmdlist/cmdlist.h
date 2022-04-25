@@ -257,6 +257,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t partitionCount = 1;
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;
+    bool isTbxMode = false;
     bool commandListSLMEnabled = false;
     bool requiresQueueUncachedMocs = false;
 

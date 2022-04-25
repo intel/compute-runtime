@@ -369,6 +369,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
         auto cmdBufferCount = cmdBufferAllocations.size();
+        bool immediateMode = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
 
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
         if (statePreemption != commandListPreemption) {
@@ -413,7 +414,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         for (size_t iter = 0; iter < cmdBufferCount; iter++) {
             auto allocation = cmdBufferAllocations[iter];
-            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, allocation->getGpuAddress(), true);
+            uint64_t startOffset = allocation->getGpuAddress();
+            if (immediateMode && (iter == (cmdBufferCount - 1))) {
+                startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
+            }
+            NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&child, startOffset, true);
         }
 
         printfFunctionContainer.insert(printfFunctionContainer.end(),

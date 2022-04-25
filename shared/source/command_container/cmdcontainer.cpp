@@ -286,6 +286,7 @@ void CommandContainer::closeAndAllocateNextCommandBuffer() {
     auto ptr = commandStream->getSpace(0u);
     memcpy_s(ptr, bbEndSize, hwHelper.getBatchBufferEndReference(), bbEndSize);
     allocateNextCommandBuffer();
+    currentLinearStreamStartOffset = 0u;
 }
 
 void CommandContainer::prepareBindfulSsh() {

@@ -220,6 +220,51 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyWith
     commandList->cmdQImmediate = nullptr;
 }
 
+HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenSuccessIsReturned, IsAtLeastSkl) {
+    Mock<CommandQueue> cmdQueue;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, cmdQueue.executeCommandListsCalled);
+    EXPECT_EQ(0u, cmdQueue.synchronizeCalled);
+
+    commandList->cmdQImmediate = nullptr;
+}
+
+HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenSuccessIsReturned, IsAtLeastSkl) {
+    Mock<CommandQueue> cmdQueue;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->isSyncModeQueue = true;
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, cmdQueue.executeCommandListsCalled);
+    EXPECT_EQ(1u, cmdQueue.synchronizeCalled);
+
+    commandList->cmdQImmediate = nullptr;
+}
+
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

@@ -1694,7 +1694,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenSetBarrierThenMiFlus
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST_F(CommandListCreate, givenImmediateCommandListWithCopyOnlyWhenSetBarrierThenMiFlushCmdIsNotInsertedInTheCmdContainer) {
+HWTEST_F(CommandListCreate, givenImmediateCommandListWithCopyOnlyWhenSetBarrierThenMiFlushCmdIsInsertedInTheCmdContainer) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -1713,7 +1713,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWithCopyOnlyWhenSetBarrierT
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
-    EXPECT_EQ(cmdList.end(), itor);
+    EXPECT_NE(cmdList.end(), itor);
 }
 
 HWTEST_F(CommandListCreate, whenCommandListIsResetThenContainsStatelessUncachedResourceIsSetToFalse) {
