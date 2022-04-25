@@ -213,7 +213,9 @@ TEST_F(KernelTests, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIs
         &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto expectedGpuAddress = GmmHelper::decanonize(pKernel->getKernelInfo().kernelAllocation->getGpuAddress());
+
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto expectedGpuAddress = gmmHelper->decanonize(pKernel->getKernelInfo().kernelAllocation->getGpuAddress());
     EXPECT_EQ(expectedGpuAddress, paramValue);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }

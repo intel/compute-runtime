@@ -797,7 +797,7 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
             wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
             return false;
         }
-        gpuAddress = GmmHelper::decanonize(gpuAddress);
+        gpuAddress = getGmmHelper(allocation->getRootDeviceIndex())->decanonize(gpuAddress);
         UNRECOVERABLE_IF(addressToMap != gpuAddress);
         addressToMap += allocation->getGmm(currentHandle)->gmmResourceInfo->getSizeAllocation();
     }

@@ -409,18 +409,19 @@ struct AubSurfaceDumpTests : public AubAllocDumpTests,
 HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledAndDumpFormatIsSpecifiedThenSurfaceInfoIsReturned) {
     ExecutionEnvironment *executionEnvironment = pDevice->executionEnvironment;
     MockMemoryManager memoryManager(*executionEnvironment);
+    auto gmmHelper = pDevice->getRootDeviceEnvironment().getGmmHelper();
 
     if (AubAllocDump::isBufferDumpFormat(dumpFormat)) {
         auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
         ASSERT_NE(nullptr, bufferAllocation);
 
-        MockBuffer::setAllocationType(bufferAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), isCompressed);
+        MockBuffer::setAllocationType(bufferAllocation, gmmHelper, isCompressed);
 
         std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {
             using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
             using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-            EXPECT_EQ(GmmHelper::decanonize(bufferAllocation->getGpuAddress()), surfaceInfo->address);
+            EXPECT_EQ(gmmHelper->decanonize(bufferAllocation->getGpuAddress()), surfaceInfo->address);
             EXPECT_EQ(static_cast<uint32_t>(bufferAllocation->getUnderlyingBufferSize()), surfaceInfo->width);
             EXPECT_EQ(1u, surfaceInfo->height);
             EXPECT_EQ(static_cast<uint32_t>(bufferAllocation->getUnderlyingBufferSize()), surfaceInfo->pitch);
@@ -450,7 +451,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
 
         std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*imageAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {
-            EXPECT_EQ(GmmHelper::decanonize(imageAllocation->getGpuAddress()), surfaceInfo->address);
+            EXPECT_EQ(gmmHelper->decanonize(imageAllocation->getGpuAddress()), surfaceInfo->address);
             EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), surfaceInfo->width);
             EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight()), surfaceInfo->height);
             EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch()), surfaceInfo->pitch);

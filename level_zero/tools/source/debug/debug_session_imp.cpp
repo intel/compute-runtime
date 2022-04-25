@@ -802,7 +802,8 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
 
             auto scratchSpacePTSize = hwHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
             auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, convertToThreadId(thread));
-            auto scratchAllocationBase = NEO::GmmHelper::decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
+            auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+            auto scratchAllocationBase = gmmHelper->decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
             if (scratchAllocationBase != 0) {
                 ScratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }
@@ -987,9 +988,9 @@ ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32
 }
 
 bool DebugSessionImp::isValidGpuAddress(uint64_t address) {
-    auto decanonizedAddress = NEO::GmmHelper::decanonize(address);
-    auto gmm = connectedDevice->getNEODevice()->getGmmHelper();
-    bool validAddress = gmm->isValidCanonicalGpuAddress(address);
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto decanonizedAddress = gmmHelper->decanonize(address);
+    bool validAddress = gmmHelper->isValidCanonicalGpuAddress(address);
 
     if (address == decanonizedAddress || validAddress) {
         return true;

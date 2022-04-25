@@ -233,8 +233,11 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenCanonicalAddresFo
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     EXPECT_NO_THROW(EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm));
+
     uint64_t nonCanonicalAddress = ((static_cast<uint64_t>(surfaceState.getClearColorAddressHigh()) << 32) | surfaceState.getClearColorAddress());
-    EXPECT_EQ(GmmHelper::decanonize(canonicalAddress), nonCanonicalAddress);
+    auto gmmHelper = context.getDevice(0)->getGmmHelper();
+
+    EXPECT_EQ(gmmHelper->decanonize(canonicalAddress), nonCanonicalAddress);
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {
@@ -249,7 +252,8 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
-    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState,
+                                                            imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
 

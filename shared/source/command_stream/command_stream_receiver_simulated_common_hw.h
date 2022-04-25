@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     MOCKABLE_VIRTUAL uint32_t getDeviceIndex() const;
 
   public:
+    using CommandStreamReceiverHw<GfxFamily>::peekExecutionEnvironment;
+
     CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment,
                                            uint32_t rootDeviceIndex,
                                            const DeviceBitfield deviceBitfield);

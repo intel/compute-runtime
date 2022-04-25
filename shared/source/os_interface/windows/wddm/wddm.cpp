@@ -487,9 +487,8 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_FREEGPUVIRTUALADDRESS FreeGPUVA = {};
     FreeGPUVA.hAdapter = getAdapter();
-    FreeGPUVA.BaseAddress = GmmHelper::decanonize(gpuPtr);
+    FreeGPUVA.BaseAddress = rootDeviceEnvironment.getGmmHelper()->decanonize(gpuPtr);
     FreeGPUVA.Size = size;
-
     status = getGdi()->freeGpuVirtualAddress(&FreeGPUVA);
     gpuPtr = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0);
 

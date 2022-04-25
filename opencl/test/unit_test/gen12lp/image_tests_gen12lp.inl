@@ -75,7 +75,8 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenCanonicalAddresFor
     EXPECT_NO_THROW(EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm));
 
     uint64_t nonCanonicalAddress = ((static_cast<uint64_t>(surfaceState.getClearColorAddressHigh()) << 32) | surfaceState.getClearColorAddress());
-    EXPECT_EQ(GmmHelper::decanonize(canonicalAddress), nonCanonicalAddress);
+    auto gmmHelper = context.getDevice(0)->getGmmHelper();
+    EXPECT_EQ(gmmHelper->decanonize(canonicalAddress), nonCanonicalAddress);
 }
 
 GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMCSThenProgramAuxFieldsForCcs) {
@@ -119,7 +120,8 @@ GEN12LPTEST_F(gen12LpImageTests, givenCompressionThenSurfaceStateParamsAreSetFor
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
-    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState,
+                                                            imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_FALSE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -151,7 +153,8 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionThenSurfaceStateParamsAreS
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState,
+                                                            imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_TRUE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);

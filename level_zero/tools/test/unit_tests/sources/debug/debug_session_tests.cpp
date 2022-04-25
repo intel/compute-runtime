@@ -2044,7 +2044,8 @@ TEST(DebugSessionTest, givenCanonicalOrDecanonizedAddressWhenCheckingValidAddres
 
     EXPECT_TRUE(sessionMock->isValidGpuAddress(address));
 
-    auto decanonized = NEO::GmmHelper::decanonize(address);
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto decanonized = gmmHelper->decanonize(address);
     EXPECT_TRUE(sessionMock->isValidGpuAddress(decanonized));
 }
 

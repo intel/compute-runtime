@@ -60,8 +60,10 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurf
     auto gpuAddress = debugSurface->getGpuAddress();
     auto gfxPartition = memoryManager->getGfxPartition(0);
     EXPECT_NE(reinterpret_cast<uint64_t>(debugSurface->getUnderlyingBuffer()), gpuAddress);
-    EXPECT_GE(GmmHelper::decanonize(gpuAddress), gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD));
-    EXPECT_LT(GmmHelper::decanonize(gpuAddress), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD));
+
+    auto gmmHelper = device.get()->getGmmHelper();
+    EXPECT_GE(gmmHelper->decanonize(gpuAddress), gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD));
+    EXPECT_LT(gmmHelper->decanonize(gpuAddress), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD));
 
     auto &storageInfo = debugSurface->storageInfo;
     auto &bos = debugSurface->getBOs();

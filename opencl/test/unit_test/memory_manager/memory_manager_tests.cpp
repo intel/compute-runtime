@@ -1371,7 +1371,8 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocatingGraphicsMemor
 
     auto instructionHeapBaseAddress = memoryManager.getInternalHeapBaseAddress(0, false);
 
-    EXPECT_EQ(instructionHeapBaseAddress, GmmHelper::decanonize(allocation->getGpuBaseAddress()));
+    auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
+    EXPECT_EQ(instructionHeapBaseAddress, gmmHelper->decanonize(allocation->getGpuBaseAddress()));
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -1391,8 +1392,8 @@ TEST(OsAgnosticMemoryManager, givenForcedSystemMemoryForIsaAndEnabledLocalMemory
     ASSERT_NE(nullptr, allocation);
 
     auto instructionHeapBaseAddress = memoryManager.getInternalHeapBaseAddress(0, false);
-
-    EXPECT_EQ(instructionHeapBaseAddress, GmmHelper::decanonize(allocation->getGpuBaseAddress()));
+    auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
+    EXPECT_EQ(instructionHeapBaseAddress, gmmHelper->decanonize(allocation->getGpuBaseAddress()));
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -1644,8 +1645,10 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReserv
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
 
     auto addressRange = memoryManager.reserveGpuAddress(MemoryConstants::pageSize, 0);
-    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
-    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    auto gmmHelper = memoryManager.getGmmHelper(0);
+    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+
     memoryManager.freeGpuAddress(addressRange, 0);
 }
 

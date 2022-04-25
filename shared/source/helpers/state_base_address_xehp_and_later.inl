@@ -41,7 +41,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     if (setGeneralStateBaseAddress && is64bit) {
-        stateBaseAddress->setGeneralStateBaseAddress(GmmHelper::decanonize(internalHeapBase));
+        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(internalHeapBase));
     }
 
     if (overrideBindlessSurfaceStateBase && ssh) {

@@ -215,7 +215,8 @@ void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *glob
 
 ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
     if (baseAddress) {
-        *baseAddress = NEO::GmmHelper::decanonize(this->kernelImmData->getKernelInfo()->kernelAllocation->getGpuAddress());
+        auto gmmHelper = module->getDevice()->getNEODevice()->getGmmHelper();
+        *baseAddress = gmmHelper->decanonize(this->kernelImmData->getKernelInfo()->kernelAllocation->getGpuAddress());
     }
     return ZE_RESULT_SUCCESS;
 }

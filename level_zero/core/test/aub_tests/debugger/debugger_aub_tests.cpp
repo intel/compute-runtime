@@ -126,8 +126,9 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     expectMMIO<FamilyType>(CS_GPR_R15 + 4, high);
 
     auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
-    auto dynamicStateBaseAddress = NEO::GmmHelper::decanonize(commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE)->getGraphicsAllocation()->getGpuAddress());
-    auto surfaceStateBaseAddress = NEO::GmmHelper::decanonize(commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getGraphicsAllocation()->getGpuAddress());
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto dynamicStateBaseAddress = gmmHelper->decanonize(commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE)->getGraphicsAllocation()->getGpuAddress());
+    auto surfaceStateBaseAddress = gmmHelper->decanonize(commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getGraphicsAllocation()->getGpuAddress());
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress)),
                              &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));

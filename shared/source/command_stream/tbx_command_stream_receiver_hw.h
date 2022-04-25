@@ -40,6 +40,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::peekExecutionEnvironment;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 

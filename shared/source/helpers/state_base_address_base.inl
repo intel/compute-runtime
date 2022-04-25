@@ -86,7 +86,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         stateBaseAddress->setGeneralStateBaseAddressModifyEnable(true);
         stateBaseAddress->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        stateBaseAddress->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
+        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(generalStateBase));
         stateBaseAddress->setGeneralStateBufferSize(0xfffff);
     }
 

@@ -550,8 +550,11 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
 
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressRangeIsZero) {
     auto addressRange = memoryManager->reserveGpuAddress(MemoryConstants::pageSize, 0);
-    EXPECT_EQ(0u, GmmHelper::decanonize(addressRange.address));
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+
+    EXPECT_EQ(0u, gmmHelper->decanonize(addressRange.address));
     EXPECT_EQ(0u, addressRange.size);
+
     memoryManager->freeGpuAddress(addressRange, 0);
 }
 
@@ -852,8 +855,10 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled);
     if ((is32bit || rootDeviceEnvironment->isFullRangeSvm()) &&
         allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
-        EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), standard64kbRangeMinimumAddress);
-        EXPECT_LE(GmmHelper::decanonize(allocation->getGpuAddress()), standard64kbRangeMaximumAddress);
+        auto gmmHelper = memoryManager->getGmmHelper(0);
+
+        EXPECT_GE(gmmHelper->decanonize(allocation->getGpuAddress()), standard64kbRangeMinimumAddress);
+        EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), standard64kbRangeMaximumAddress);
     }
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -908,9 +913,10 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     EXPECT_FALSE(memoryManager->allocationGraphicsMemory64kbCreated);
     EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled);
     if (is32bit || rootDeviceEnvironment->isFullRangeSvm()) {
+        auto gmmHelper = memoryManager->getGmmHelper(0);
 
-        EXPECT_GE(GmmHelper::decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
-        EXPECT_LE(GmmHelper::decanonize(allocation->getGpuAddress()), svmRangeMaximumAddress);
+        EXPECT_GE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
+        EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMaximumAddress);
     }
     memoryManager->freeGraphicsMemory(allocation);
 }

@@ -359,7 +359,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
     EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
     if constexpr (is64bit) {
-        EXPECT_EQ(GmmHelper::decanonize(internalHeapBase), sbaCmd.getGeneralStateBaseAddress());
+        auto gmmHelper = pDevice->getGmmHelper();
+        EXPECT_EQ(gmmHelper->decanonize(internalHeapBase), sbaCmd.getGeneralStateBaseAddress());
     } else {
         EXPECT_EQ(generalStateBase, sbaCmd.getGeneralStateBaseAddress());
     }

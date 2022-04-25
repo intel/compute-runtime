@@ -209,7 +209,8 @@ uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceInde
 
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
     uint64_t graphicsAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
-    graphicsAddress = GmmHelper::decanonize(graphicsAddress);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    graphicsAddress = gmmHelper->decanonize(graphicsAddress);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     gfxPartition->freeGpuAddressRange(graphicsAddress, unmapSize);
 }
@@ -1415,7 +1416,8 @@ void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData,
     for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
         delete graphicsAllocation->getGmm(handleId);
     }
-    gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
@@ -1492,7 +1494,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
             delete allocation->getGmm(handleId);
         }
-        gfxPartition->freeGpuAddressRange(GmmHelper::decanonize(gpuAddress), sizeAllocated);
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+        gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
         status = AllocationStatus::Error;
         return nullptr;
     }

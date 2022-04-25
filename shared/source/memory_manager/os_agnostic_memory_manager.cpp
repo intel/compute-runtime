@@ -288,9 +288,9 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         delete gfxAllocation;
         return;
     }
-
     auto memoryAllocation = static_cast<MemoryAllocation *>(gfxAllocation);
     auto sizeToFree = memoryAllocation->sizeToFree;
+    auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
 
     if (sizeToFree) {
         auto gpuAddressToFree = GmmHelper::decanonize(memoryAllocation->getGpuAddress()) & ~MemoryConstants::pageMask;
@@ -302,8 +302,6 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     if (gfxAllocation->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     }
-
-    auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
 
     if (executionEnvironment.rootDeviceEnvironments.size() > rootDeviceIndex) {
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
@@ -453,7 +451,8 @@ AddressRange OsAgnosticMemoryManager::reserveGpuAddress(size_t size, uint32_t ro
 
 void OsAgnosticMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     uint64_t graphicsAddress = addressRange.address;
-    graphicsAddress = GmmHelper::decanonize(graphicsAddress);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    graphicsAddress = gmmHelper->decanonize(graphicsAddress);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     gfxPartition->freeGpuAddressRange(graphicsAddress, addressRange.size);
 }

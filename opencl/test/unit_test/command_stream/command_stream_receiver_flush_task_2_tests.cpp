@@ -712,7 +712,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
 
     if (sharedDeviceInfo.force32BitAddressess && is64bit) {
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
-        EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
+
+        auto gmmHelper = pDevice->getGmmHelper();
+        EXPECT_EQ(gmmHelper->decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
         EXPECT_EQ(ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, mediaVfeState->getScratchSpaceBasePointer());
         EXPECT_EQ(GSHaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, graphicsAllocationScratch->getGpuAddressToPatch());
@@ -824,7 +826,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNdRangeKer
 
     if (sharedDeviceInfo.force32BitAddressess && is64bit) {
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
-        EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
+
+        auto gmmHelper = pDevice->getGmmHelper();
+        EXPECT_EQ(gmmHelper->decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
         EXPECT_EQ(ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, mediaVfeState->getScratchSpaceBasePointer());
         EXPECT_EQ(GSHaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, graphicsAllocationScratch->getGpuAddressToPatch());
@@ -1203,6 +1207,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrWhenGen
     uint64_t generalStateBaseAddress = 0xffff800400010000ull;
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    auto gmmHelper = pDevice->getGmmHelper();
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(&sbaCmd,
@@ -1217,14 +1222,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrWhenGen
                                                                 0,
                                                                 true,
                                                                 false,
-                                                                pDevice->getGmmHelper(),
+                                                                gmmHelper,
                                                                 false,
                                                                 MemoryCompressionState::NotApplicable,
                                                                 false,
                                                                 1u);
 
     EXPECT_NE(generalStateBaseAddress, sbaCmd.getGeneralStateBaseAddress());
-    EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(gmmHelper->decanonize(generalStateBaseAddress), sbaCmd.getGeneralStateBaseAddress());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
@@ -1330,7 +1335,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
 
     EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
     EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
-    EXPECT_EQ(GmmHelper::decanonize(generalStateBase), sbaCmd.getGeneralStateBaseAddress());
+    auto gmmHelper = pDevice->getGmmHelper();
+    EXPECT_EQ(gmmHelper->decanonize(generalStateBase), sbaCmd.getGeneralStateBaseAddress());
     EXPECT_EQ(0xfffffu, sbaCmd.getGeneralStateBufferSize());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ void StateBaseAddressHelper<BDWFamily>::programStateBaseAddress(
         stateBaseAddress->setGeneralStateBaseAddressModifyEnable(true);
         stateBaseAddress->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        stateBaseAddress->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
+        stateBaseAddress->setGeneralStateBaseAddress(gmmHelper->decanonize(generalStateBase));
         stateBaseAddress->setGeneralStateBufferSize(0xfffff);
     }
 

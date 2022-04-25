@@ -33,6 +33,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using BaseClass::osContext;
 
   public:
+    using BaseClass::peekExecutionEnvironment;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;

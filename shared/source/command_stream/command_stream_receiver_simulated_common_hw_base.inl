@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
 template <typename GfxFamily>
 bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const {
     cpuAddress = graphicsAllocation.getUnderlyingBuffer();
-    gpuAddress = GmmHelper::decanonize(graphicsAllocation.getGpuAddress());
+    gpuAddress = peekExecutionEnvironment().rootDeviceEnvironments[graphicsAllocation.getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(graphicsAllocation.getGpuAddress());
     size = graphicsAllocation.getUnderlyingBufferSize();
 
     if (graphicsAllocation.isCompressionEnabled()) {

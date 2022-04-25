@@ -402,6 +402,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
     const _cl_context *ctxt;
     cl_uint refCount = 0;
     uint64_t nonCannonizedGpuAddress = 0llu;
+    auto gmmHelper = clDevice.getDevice().getGmmHelper();
 
     switch (paramName) {
     case CL_KERNEL_FUNCTION_NAME:
@@ -443,7 +444,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         srcSize = getKernelHeapSize();
         break;
     case CL_KERNEL_BINARY_GPU_ADDRESS_INTEL:
-        nonCannonizedGpuAddress = GmmHelper::decanonize(kernelInfo.kernelAllocation->getGpuAddress());
+        nonCannonizedGpuAddress = gmmHelper->decanonize(kernelInfo.kernelAllocation->getGpuAddress());
         pSrc = &nonCannonizedGpuAddress;
         srcSize = sizeof(nonCannonizedGpuAddress);
         break;

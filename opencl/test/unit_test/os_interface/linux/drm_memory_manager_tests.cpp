@@ -255,8 +255,10 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     auto addressRange = memoryManager->reserveGpuAddress(MemoryConstants::pageSize, 0);
-    EXPECT_LE(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
-    EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+
+    EXPECT_LE(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
+    EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
     memoryManager->freeGpuAddress(addressRange, 0);
 }
 
