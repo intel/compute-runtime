@@ -256,21 +256,10 @@ TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpecte
 TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
     struct DrmMock : public Drm {
         using Drm::ioctlStatistics;
-
-        int ioctl(unsigned long request, void *arg) override {
-            auto start = std::chrono::steady_clock::now();
-            std::chrono::steady_clock::time_point end;
-
-            do {
-                end = std::chrono::steady_clock::now();
-            } while (std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() == 0);
-
-            return Drm::ioctl(request, arg);
-        }
     };
 
     constexpr long long initialMin = std::numeric_limits<long long>::max();
-    constexpr long long initialMax = 0;
+    constexpr long long initialMax = std::numeric_limits<long long>::min();
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -278,6 +267,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlTimes.set(true);
+    VariableBackup<decltype(forceExtraIoctlDuration)> backupForceExtraIoctlDuration(&forceExtraIoctlDuration, true);
 
     EXPECT_TRUE(drm->ioctlStatistics.empty());
 
@@ -299,7 +289,8 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
     EXPECT_EQ(2u, euTotalData->second.count);
     EXPECT_NE(0, euTotalData->second.totalTime);
     EXPECT_NE(initialMin, euTotalData->second.minTime);
-    EXPECT_NE(initialMax, euTotalData->second.minTime);
+    EXPECT_LE(euTotalData->second.minTime, euTotalData->second.maxTime);
+    EXPECT_LE(initialMax, euTotalData->second.minTime);
     EXPECT_NE(initialMin, euTotalData->second.maxTime);
     EXPECT_NE(initialMax, euTotalData->second.maxTime);
     auto firstTime = euTotalData->second.totalTime;

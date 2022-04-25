@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ int failOnDrmVersion = 0;
 int accessCalledTimes = 0;
 int readLinkCalledTimes = 0;
 int fstatCalledTimes = 0;
+bool forceExtraIoctlDuration = 0;
 char providedDrmVersion[5] = {'i', '9', '1', '5', '\0'};
 uint64_t gpuTimestamp = 0;
 int ioctlSeq[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -270,6 +271,17 @@ int drmQueryItem(drm_i915_query *query) {
 }
 
 int ioctl(int fd, unsigned long int request, ...) throw() {
+    using namespace std::chrono_literals;
+
+    if (forceExtraIoctlDuration) {
+        auto start = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point end;
+
+        do {
+            end = std::chrono::steady_clock::now();
+        } while ((end - start) == 0ns);
+    }
+
     int res;
     va_list vl;
     va_start(vl, request);

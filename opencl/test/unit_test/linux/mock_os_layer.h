@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,3 +49,4 @@ extern uint32_t entryIndex;
 extern int accessCalledTimes;
 extern int readLinkCalledTimes;
 extern int fstatCalledTimes;
+extern bool forceExtraIoctlDuration;
