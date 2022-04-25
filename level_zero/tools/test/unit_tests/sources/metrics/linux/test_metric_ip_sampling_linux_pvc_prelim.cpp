@@ -155,6 +155,15 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyFailsWhenSt
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
 }
 
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyReturnsFrequencyEqualZeroWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
+
+    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
+
+    uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
+    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
+}
+
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenIoctlI915PerfOpenFailsWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;

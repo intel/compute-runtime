@@ -55,7 +55,7 @@ ze_result_t MetricIpSamplingLinuxImp::getNearestSupportedSamplingUnit(uint32_t &
     const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
     int32_t gpuTimeStampfrequency = 0;
     int32_t ret = drm->getTimestampFrequency(gpuTimeStampfrequency);
-    if (ret < 0) {
+    if (ret < 0 || gpuTimeStampfrequency == 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
