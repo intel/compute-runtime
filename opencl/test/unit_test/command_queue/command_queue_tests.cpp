@@ -1067,7 +1067,7 @@ struct WaitUntilCompletionTests : public ::testing::Test {
 
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
 
-        CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const override {
+        CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) override {
             return bcsCsrToReturn;
         }
 

@@ -77,19 +77,22 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
 
         UNRECOVERABLE_IF(gpgpuEngine->getEngineType() >= aub_stream::EngineType::NUM_ENGINES);
 
-        bool bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&
-                          hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
+        bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&
+                     hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
         if (bcsAllowed || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
             deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
-        if (bcsAllowed) {
-            auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
-            auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
-            auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
-            bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
-            bcsEngineTypes.push_back(bcsEngineType);
+
+        auto deferCmdQBcsInitialization = true;
+
+        if (DebugManager.flags.DeferCmdQBcsInitialization.get() != -1) {
+            deferCmdQBcsInitialization = DebugManager.flags.DeferCmdQBcsInitialization.get();
+        }
+
+        if (!deferCmdQBcsInitialization) {
+            this->initializeBcsEngine(internalUsage);
         }
     }
 
@@ -134,7 +137,8 @@ CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
     return *gpgpuEngine->commandStreamReceiver;
 }
 
-CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const {
+CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) {
+    initializeBcsEngine(isSpecial());
     const EngineControl *engine = this->bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)];
     if (engine == nullptr) {
         return nullptr;
@@ -143,7 +147,8 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver(aub_stream::Eng
     }
 }
 
-CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
+CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() {
+    initializeBcsEngine(isSpecial());
     for (const EngineControl *engine : this->bcsEngines) {
         if (engine != nullptr) {
             return engine->commandStreamReceiver;
@@ -152,7 +157,8 @@ CommandStreamReceiver *CommandQueue::getBcsForAuxTranslation() const {
     return nullptr;
 }
 
-CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const {
+CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelectionArgs &args) {
+    initializeBcsEngine(isSpecial());
     if (isCopyOnly) {
         return *getBcsCommandStreamReceiver(bcsEngineTypes[0]);
     }
@@ -220,6 +226,17 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     return *selectedCsr;
 }
 
+void CommandQueue::initializeBcsEngine(bool internalUsage) {
+    if (bcsAllowed && !bcsInitialized) {
+        auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
+        auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
+        bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+        bcsEngineTypes.push_back(bcsEngineType);
+        bcsInitialized = true;
+    }
+}
+
 Device &CommandQueue::getDevice() const noexcept {
     return device->getDevice();
 }
@@ -233,7 +250,7 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const {
+bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) {
     DEBUG_BREAK_IF(getHwTag() == CompletionStamp::notReady);
 
     if (getGpgpuCommandStreamReceiver().testTaskCountReady(getHwTagAddress(), gpgpuTaskCount)) {
@@ -981,6 +998,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
+        bcsInitialized = true;
     } else {
         gpgpuEngine = &device->getEngine(engineType, engineUsage);
     }

@@ -202,7 +202,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     volatile uint32_t *getHwTagAddress() const;
 
-    bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState) const;
+    bool isCompleted(uint32_t gpgpuTaskCount, CopyEngineState bcsState);
 
     bool isWaitForTimestampsEnabled() const;
     virtual bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount) = 0;
@@ -223,9 +223,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              const cl_event *eventWaitList);
 
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
-    MOCKABLE_VIRTUAL CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const;
-    CommandStreamReceiver *getBcsForAuxTranslation() const;
-    MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args) const;
+    MOCKABLE_VIRTUAL CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType);
+    CommandStreamReceiver *getBcsForAuxTranslation();
+    MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args);
+    void initializeBcsEngine(bool internalUsage);
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
@@ -408,6 +409,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool perfCountersEnabled = false;
 
     bool isCopyOnly = false;
+    bool bcsAllowed = false;
+    bool bcsInitialized = false;
 
     LinearStream *commandStream = nullptr;
 
