@@ -257,7 +257,6 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MockCommandQueueHw(Context *context,
                        ClDevice *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties, false) {
-        this->initializeBcsEngine(false);
     }
 
     void clearBcsEngines() {
