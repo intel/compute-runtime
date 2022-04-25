@@ -268,6 +268,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, MakeIndirectAllocationsResidentAsPack, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(int32_t, MakeEachAllocationResident, -1, "-1: default, 0: disabled, 1: bind every allocation at creation time, 2: bind all created allocations in flush")
 DECLARE_DEBUG_VARIABLE(int32_t, AssignBCSAtEnqueue, -1, "-1: default, 0:disabled, 1: enabled.")
 DECLARE_DEBUG_VARIABLE(int32_t, DeferCmdQGpgpuInitialization, -1, "-1: default, 0:disabled, 1: enabled.")
+DECLARE_DEBUG_VARIABLE(int32_t, DeferCmdQBcsInitialization, -1, "-1: default, 0:disabled, 1: enabled.")
 DECLARE_DEBUG_VARIABLE(int32_t, ReuseKernelBinaries, -1, "-1: default, 0:disabled, 1: enabled. If enabled, driver reuses kernel binaries.")
 
 /*DIRECT SUBMISSION FLAGS*/
