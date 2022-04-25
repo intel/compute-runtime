@@ -104,6 +104,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
+
     if (DebugManager.flags.MakeEachAllocationResident.get() == 2) {
         auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
 
@@ -117,15 +118,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContain
         return retVal;
     }
 
-    auto clearContainer = true;
-
-    if (DebugManager.flags.PassBoundBOToExec.get() != -1) {
-        clearContainer = !DebugManager.flags.PassBoundBOToExec.get();
-    }
-
-    if (clearContainer) {
-        residencyContainer.clear();
-    }
     return MemoryOperationsStatus::SUCCESS;
 }
 

@@ -22,6 +22,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -475,27 +476,30 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         csr->setLatestFlushedTaskCount(this->taskCount);
     }
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
-
+    ze_result_t retVal = ZE_RESULT_SUCCESS;
     if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
         const auto synchronizeResult = this->synchronize(std::numeric_limits<uint64_t>::max());
         if (synchronizeResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-            return ZE_RESULT_ERROR_DEVICE_LOST;
+            retVal = ZE_RESULT_ERROR_DEVICE_LOST;
         }
+    } else {
+        csr->pollForCompletion();
     }
-
     this->heapContainer.clear();
 
-    csr->pollForCompletion();
-
-    if (ret != NEO::SubmissionStatus::SUCCESS) {
-        if (ret == NEO::SubmissionStatus::OUT_OF_MEMORY) {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    if ((ret != NEO::SubmissionStatus::SUCCESS) || (retVal == ZE_RESULT_ERROR_DEVICE_LOST)) {
+        for (auto &gfx : csr->getResidencyAllocations()) {
+            gfx->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
         }
-        return ZE_RESULT_ERROR_UNKNOWN;
+        if (retVal != ZE_RESULT_ERROR_DEVICE_LOST) {
+            retVal = ZE_RESULT_ERROR_UNKNOWN;
+        }
+        if (ret == NEO::SubmissionStatus::OUT_OF_MEMORY) {
+            retVal = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
     }
-
-    return ZE_RESULT_SUCCESS;
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    return retVal;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -492,6 +492,28 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskC
     executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmittingBatchBufferAndFlushFailThenTaskCountIsNotIncremented) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiverWithFailingFlush csr(executionEnvironment, 0, deviceBitfield);
+    GraphicsAllocation *commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    ResidencyContainer residencyList;
+
+    auto expectedTaskCount = csr.peekTaskCount();
+    csr.submitBatchBuffer(batchBuffer, residencyList);
+
+    EXPECT_EQ(expectedTaskCount, csr.peekTaskCount());
+    EXPECT_EQ(expectedTaskCount, csr.peekLatestFlushedTaskCount());
+
+    executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);

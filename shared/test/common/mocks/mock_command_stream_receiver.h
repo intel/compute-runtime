@@ -197,6 +197,15 @@ class MockCommandStreamReceiverWithOutOfMemorySubmitBatch : public MockCommandSt
     }
 };
 
+class MockCommandStreamReceiverWithFailingFlush : public MockCommandStreamReceiver {
+  public:
+    MockCommandStreamReceiverWithFailingFlush(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        return SubmissionStatus::FAILED;
+    }
+};
+
 template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:

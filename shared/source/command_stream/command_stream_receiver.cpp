@@ -103,6 +103,10 @@ SubmissionStatus CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuff
     this->latestSentTaskCount = taskCount + 1;
 
     SubmissionStatus retVal = this->flush(batchBuffer, allocationsForResidency);
+
+    if (retVal != NEO::SubmissionStatus::SUCCESS) {
+        return retVal;
+    }
     if (!isUpdateTagFromWaitEnabled()) {
         this->latestFlushedTaskCount = taskCount + 1;
     }
