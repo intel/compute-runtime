@@ -2909,4 +2909,144 @@ TEST(OclocArgHelperTest, GivenNoOutputPrintMessages) {
     EXPECT_STREQ(printMsg.data(), capturedStdout.c_str());
 }
 
+TEST(OclocArgHelperTest, GivenDifferentRevisionIdsInDeviceMappingsWhenComparingThemThenFalseIsReturned) {
+    DeviceMapping lhs{};
+    DeviceMapping rhs{};
+    ASSERT_TRUE(lhs == rhs);
+
+    lhs.revId = 1;
+    rhs.revId = 2;
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(OclocArgHelperTest, GivenDifferentSetupFeatureAndWorkaroundTableFunctionsInDeviceMappingsWhenComparingThemThenFalseIsReturned) {
+    DeviceMapping lhs{};
+    DeviceMapping rhs{};
+    ASSERT_TRUE(lhs == rhs);
+
+    // Different lambdas are obligated to have different addresses.
+    lhs.setupFeatureAndWorkaroundTable = [](NEO::HardwareInfo *hwInfo) {};
+    rhs.setupFeatureAndWorkaroundTable = [](NEO::HardwareInfo *hwInfo) {};
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(OclocArgHelperTest, GivenDifferentHwInfosInDeviceMappingsWhenComparingThemThenFalseIsReturned) {
+    DeviceMapping lhs{};
+    DeviceMapping rhs{};
+    ASSERT_TRUE(lhs == rhs);
+
+    HardwareInfo firstHwInfo{};
+    lhs.hwInfo = &firstHwInfo;
+
+    HardwareInfo secondHwInfo{};
+    rhs.hwInfo = &secondHwInfo;
+
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(OclocArgHelperTest, GivenDifferentConfigsInDeviceMappingsWhenComparingThemThenFalseIsReturned) {
+    DeviceMapping lhs{};
+    DeviceMapping rhs{};
+    ASSERT_TRUE(lhs == rhs);
+
+    lhs.config = CONFIG_MAX_PLATFORM;
+    rhs.config = UNKNOWN_ISA;
+
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(OclocArgHelperTest, GivenValidHeaderFileWhenRequestingHeadersAsVectorOfStringsThenLinesAreStored) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockOclocArgHelper{mockArgHelperFilesMap};
+
+    mockOclocArgHelper.headers.push_back(source);
+
+    const auto lines = mockOclocArgHelper.headersToVectorOfStrings();
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+    EXPECT_EQ("Third", lines[2]);
+}
+
+TEST(OclocArgHelperTest, GivenValidSourceFileWhenLookingForItThenItIsReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockOclocArgHelper{mockArgHelperFilesMap};
+
+    mockOclocArgHelper.inputs.push_back(source);
+
+    const auto file = mockOclocArgHelper.findSourceFile("some_file.txt");
+    EXPECT_EQ(&mockOclocArgHelper.inputs[0], file);
+}
+
+TEST(OclocArgHelperTest, GivenValidSourceFileWhenLookingForAnotherOneThenNullptrIsReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockOclocArgHelper{mockArgHelperFilesMap};
+
+    mockOclocArgHelper.inputs.push_back(source);
+
+    const auto file = mockOclocArgHelper.findSourceFile("another_file.txt");
+    EXPECT_EQ(nullptr, file);
+}
+
+TEST(OclocArgHelperTest, GivenValidSourceFileWhenReadingItViaHelperAsVectorOfStringsThenLinesAreReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockOclocArgHelper{mockArgHelperFilesMap};
+
+    mockOclocArgHelper.callBaseReadFileToVectorOfStrings = true;
+    mockOclocArgHelper.inputs.push_back(source);
+
+    std::vector<std::string> lines{};
+    mockOclocArgHelper.readFileToVectorOfStrings("some_file.txt", lines);
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+    EXPECT_EQ("Third", lines[2]);
+}
+
+TEST(OclocArgHelperTest, GivenValidSourceFileWhenReadingItViaHelperAsBinaryThenItIsReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{};
+    MockOclocArgHelper mockOclocArgHelper{mockArgHelperFilesMap};
+
+    mockOclocArgHelper.callBaseReadBinaryFile = true;
+    mockOclocArgHelper.inputs.push_back(source);
+
+    const auto fileContent = mockOclocArgHelper.readBinaryFile("some_file.txt");
+    ASSERT_EQ(inputLength, fileContent.size());
+
+    const auto isContentIdentical = (0 == std::memcmp(input, fileContent.data(), inputLength));
+    EXPECT_TRUE(isContentIdentical);
+}
+
 } // namespace NEO

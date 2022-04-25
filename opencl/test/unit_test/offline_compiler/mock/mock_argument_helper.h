@@ -19,12 +19,17 @@
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
+    using OclocArgHelper::deviceProductTable;
     using OclocArgHelper::hasOutput;
+    using OclocArgHelper::headers;
+    using OclocArgHelper::inputs;
+
+    using OclocArgHelper::findSourceFile;
 
     using FileName = std::string;
     using FileData = std::string;
     using FilesMap = std::map<FileName, FileData>;
-    using OclocArgHelper::deviceProductTable;
+
     FilesMap &filesMap;
     bool interceptOutput{false};
     bool shouldLoadDataFromFileReturnZeroSize{false};
@@ -52,14 +57,6 @@ class MockOclocArgHelper : public OclocArgHelper {
         callBaseReadFileToVectorOfStrings = value;
     }
 
-  protected:
-    bool fileExists(const std::string &filename) const override {
-        if (callBaseFileExists) {
-            return OclocArgHelper::fileExists(filename);
-        }
-        return filesMap.find(filename) != filesMap.end();
-    }
-
     void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines) override {
         if (callBaseReadFileToVectorOfStrings) {
             return OclocArgHelper::readFileToVectorOfStrings(filename, lines);
@@ -76,6 +73,14 @@ class MockOclocArgHelper : public OclocArgHelper {
         }
         auto file = filesMap[filename];
         return std::vector<char>(file.begin(), file.end());
+    }
+
+  protected:
+    bool fileExists(const std::string &filename) const override {
+        if (callBaseFileExists) {
+            return OclocArgHelper::fileExists(filename);
+        }
+        return filesMap.find(filename) != filesMap.end();
     }
 
     std::unique_ptr<char[]> loadDataFromFile(const std::string &filename, size_t &retSize) override {
