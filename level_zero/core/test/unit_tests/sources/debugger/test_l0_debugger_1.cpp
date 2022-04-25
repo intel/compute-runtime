@@ -195,8 +195,6 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
     commandQueue->destroy();
 }
 
-using L0DebuggerSimpleTest = Test<DeviceFixture>;
-
 HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -226,7 +224,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceiIsProgrammedWithL3DisabledMOCS) {
+HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     Mock<::L0::Kernel> kernel;
@@ -246,6 +244,31 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugS
 
     EXPECT_EQ(actualMocs, mocsNoCache);
 }
+
+HWTEST_F(L0DebuggerTest, givenEnabledDebuggingWhenIsaTypeAllocatedOnMultitileDeviceThenSharedAllocationIsCreated) {
+    auto debugger = device->getL0Debugger();
+    ASSERT_NE(nullptr, debugger);
+
+    size_t kernelIsaSize = 0x1000;
+    NEO::AllocationType allocTypes[] = {NEO::AllocationType::KERNEL_ISA,
+                                        NEO::AllocationType::KERNEL_ISA_INTERNAL,
+                                        NEO::AllocationType::DEBUG_MODULE_AREA};
+
+    for (int i = 0; i < 3; i++) {
+        auto allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocTypes[i], neoDevice->getDeviceBitfield()});
+
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
+
+        EXPECT_TRUE(allocation->storageInfo.cloningOfPageTables);
+        EXPECT_FALSE(allocation->storageInfo.tileInstanced);
+
+        device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(allocation);
+    }
+}
+
+using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
 HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediateCommandListToInvokeNonKernelOperationsThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
