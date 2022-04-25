@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,11 @@ int main(int argc, char *argv[]) {
     useSyncQueue = isSyncQueueEnabled(argc, argv);
     bool outputValidationSuccessful = false;
     // 1. Set-up
-    constexpr size_t allocSize = 4096 + 7;
+    constexpr char srcInitValue = 7;
+    constexpr char dstInitValue = 3;
     constexpr size_t bytesPerThread = sizeof(char);
-    constexpr size_t numThreads = allocSize / bytesPerThread;
+    uint32_t allocSize = getBufferLength(argc, argv, 4096 + 7);
+    uint32_t numThreads = allocSize / bytesPerThread;
     ze_module_handle_t module;
     ze_kernel_handle_t kernel;
     ze_command_queue_handle_t cmdQueue;
@@ -130,11 +132,11 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE_BOOL(memProperties.type == ZE_MEMORY_TYPE_SHARED);
 
     // initialize the src buffer
-    memset(srcBuffer, 7, allocSize);
+    memset(srcBuffer, srcInitValue, allocSize);
 
     // Encode run user kernel
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
 
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = numThreads / groupSizeX;
@@ -152,7 +154,7 @@ int main(int argc, char *argv[]) {
     // initialize the dst buffer after appending the kernel but before executing the lists, to
     // ensure page-fault manager is correctly making resident the buffers in the GPU at
     // execution time
-    memset(dstBuffer, 3, allocSize);
+    memset(dstBuffer, dstInitValue, allocSize);
 
     // Dispatch and wait
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -162,9 +164,30 @@ int main(int argc, char *argv[]) {
     if (useSyncQueue == false)
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
 
-    // Validate
-    outputValidationSuccessful = (0 == memcmp(dstBuffer, srcBuffer, allocSize));
-    SUCCESS_OR_WARNING_BOOL(outputValidationSuccessful);
+    // Validate input / output
+    outputValidationSuccessful = true;
+    uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
+    uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+    for (size_t i = 0; i < allocSize; i++) {
+        if (dstCharBuffer[i] != srcCharBuffer[i]) {
+            outputValidationSuccessful = false;
+            std::cout << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                      << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
+        }
+        if (srcCharBuffer[i] != srcInitValue) {
+            outputValidationSuccessful = false;
+            std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                      << "value = " << static_cast<unsigned int>(srcInitValue) << "\n";
+        }
+        if (dstCharBuffer[i] != srcInitValue) {
+            outputValidationSuccessful = false;
+            std::cout << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
+                      << "value = " << static_cast<unsigned int>(srcInitValue) << "\n";
+        }
+        if (!outputValidationSuccessful) {
+            break;
+        }
+    }
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));

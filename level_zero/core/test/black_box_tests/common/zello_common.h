@@ -102,6 +102,17 @@ inline bool isSyncQueueEnabled(int argc, char *argv[]) {
     return true;
 }
 
+inline uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength) {
+    uint32_t length = getParamValue(argc, argv, "-l", "--length", defaultLength);
+    if (length == defaultLength) {
+        return defaultLength;
+    }
+
+    std::cerr << "Buffer length detected = " << length << std::endl;
+
+    return length;
+}
+
 uint32_t getCommandQueueOrdinal(ze_device_handle_t &device) {
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
