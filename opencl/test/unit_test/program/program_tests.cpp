@@ -1984,6 +1984,23 @@ kernels:
     }
 }
 
+TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
+    if (sizeof(void *) != 8U) {
+        GTEST_SKIP();
+    }
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.elfHeader->machine = defaultHwInfo->platform.eProductFamily;
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
+    cl_int retVal = program->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *device);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto expectedOptions = " " + NEO::CompilerOptions::allowZebin.str();
+    EXPECT_STREQ(expectedOptions.c_str(), program->options.c_str());
+}
+
 TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenReturnError) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm patchtokensProgram;
     patchtokensProgram.slmMutable->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);

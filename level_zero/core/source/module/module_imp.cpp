@@ -260,6 +260,9 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
         this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
         this->options = singleDeviceBinary.buildOptions.str();
+        if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::Zebin) {
+            this->options += " " + NEO::CompilerOptions::allowZebin.str();
+        }
 
         if (false == singleDeviceBinary.debugData.empty()) {
             this->debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());

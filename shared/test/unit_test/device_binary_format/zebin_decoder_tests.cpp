@@ -93,6 +93,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_SPIRV, NEO::Elf::SectionsNamesZebin::spv, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Elf::SectionsNamesZebin::gtpinInfo, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_VISA_ASM, NEO::Elf::SectionsNamesZebin::vIsaAsmPrefix.str() + "someKernel", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_MISC, NEO::Elf::SectionsNamesZebin::buildOptions, std::string{});
 
     elfEncoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + "someKernel", std::string{});
@@ -117,6 +118,7 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     ASSERT_EQ(1U, sections.zeInfoSections.size());
     ASSERT_EQ(1U, sections.symtabSections.size());
     ASSERT_EQ(1U, sections.spirvSections.size());
+    ASSERT_EQ(1U, sections.buildOptionsSection.size());
 
     auto stringSection = decodedElf.sectionHeaders[decodedElf.elfFileHeader->shStrNdx];
     const char *strings = stringSection.data.toArrayRef<const char>().begin();
@@ -151,6 +153,29 @@ TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitError
     auto stringSection = decodedElf.sectionHeaders[decodedElf.elfFileHeader->shStrNdx];
     const char *strings = stringSection.data.toArrayRef<const char>().begin();
     EXPECT_STREQ(".data.global_const", strings + sections.constDataSections[0]->header->name);
+}
+
+TEST(ExtractZebinSections, GivenUnknownMiscSectionThenEmitWarning) {
+    NEO::Elf::ElfEncoder<> elfEncoder;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "someKernel", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab, std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, std::string{});
+    ConstStringRef unknownMiscSectionName = "unknown_misc_section";
+    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_MISC, unknownMiscSectionName, std::string{});
+
+    auto encodedElf = elfEncoder.encode();
+    std::string elfDecodeErrors;
+    std::string elfDecodeWarnings;
+    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elfDecodeErrors, elfDecodeWarnings);
+
+    NEO::ZebinSections sections;
+    std::string errors;
+    std::string warnings;
+    auto decodeError = NEO::extractZebinSections(decodedElf, sections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
+    EXPECT_TRUE(errors.empty()) << errors;
+    const auto expectedWarning = "DeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : " + unknownMiscSectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::buildOptions.str() + ".\n";
+    EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
 }
 
 TEST(ValidateZebinSectionsCount, GivenEmptyZebinThenReturnSuccess) {

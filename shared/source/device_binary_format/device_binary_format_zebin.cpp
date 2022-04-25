@@ -38,7 +38,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
 
     switch (elf.elfFileHeader->type) {
     default:
-        outErrReason = "Unhandled elf type";
+        outErrReason.append("Unhandled elf type\n");
         return {};
     case NEO::Elf::ET_ZEBIN_EXE:
         break;
@@ -51,9 +51,13 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     ret.format = NEO::DeviceBinaryFormat::Zebin;
     ret.targetDevice = requestedTargetDevice;
 
-    for (auto &elfSH : elf.sectionHeaders) {
+    for (size_t sectionId = 0U; sectionId < elf.sectionHeaders.size(); sectionId++) {
+        auto &elfSH = elf.sectionHeaders[sectionId];
         if (elfSH.header->type == Elf::SHT_ZEBIN_SPIRV) {
             ret.intermediateRepresentation = elfSH.data;
+        } else if (elfSH.header->type == Elf::SHT_ZEBIN_MISC &&
+                   Elf::SectionsNamesZebin::buildOptions == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
+            ret.buildOptions = ConstStringRef(reinterpret_cast<const char *>(elfSH.data.begin()), elfSH.data.size());
         }
     }
 
@@ -71,10 +75,10 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
 
     if (false == validForTarget) {
         if (false == ret.intermediateRepresentation.empty()) {
-            ret.buildOptions = NEO::CompilerOptions::allowZebin;
             ret.deviceBinary = {};
+            outWarning.append("Invalid target device. Rebuilding from intermediate representation.\n");
         } else {
-            outErrReason = "Unhandled target device";
+            outErrReason.append("Unhandled target device\n");
             return {};
         }
     }

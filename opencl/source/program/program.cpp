@@ -180,6 +180,9 @@ cl_int Program::createProgramFromBinary(
             this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
+            if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::Zebin) {
+                this->options += " " + NEO::CompilerOptions::allowZebin.str();
+            }
 
             if (false == singleDeviceBinary.debugData.empty()) {
                 this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());

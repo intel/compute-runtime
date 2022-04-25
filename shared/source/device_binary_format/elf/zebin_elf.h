@@ -28,7 +28,8 @@ enum SHT_ZEBIN : uint32_t {
     SHT_ZEBIN_SPIRV = 0xff000009,      // .spv.kernel section, value the same as SHT_OPENCL_SPIRV
     SHT_ZEBIN_ZEINFO = 0xff000011,     // .ze_info section
     SHT_ZEBIN_GTPIN_INFO = 0xff000012, // .gtpin_info section
-    SHT_ZEBIN_VISA_ASM = 0xff000013    // .visaasm sections
+    SHT_ZEBIN_VISA_ASM = 0xff000013,   // .visaasm sections
+    SHT_ZEBIN_MISC = 0xff000014        // .misc section
 };
 
 enum RELOC_TYPE_ZEBIN : uint32_t {
@@ -54,6 +55,7 @@ static constexpr ConstStringRef debugAbbrev = ".debug_abbrev";
 static constexpr ConstStringRef zeInfo = ".ze_info";
 static constexpr ConstStringRef gtpinInfo = ".gtpin_info";
 static constexpr ConstStringRef noteIntelGT = ".note.intelgt.compat";
+static constexpr ConstStringRef buildOptions = ".misc.buildOptions";
 static constexpr ConstStringRef vIsaAsmPrefix = ".visaasm.";
 static constexpr ConstStringRef externalFunctions = "Intel_Symbol_Table_Void_Program";
 } // namespace SectionsNamesZebin

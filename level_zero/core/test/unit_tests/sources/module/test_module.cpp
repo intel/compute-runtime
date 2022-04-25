@@ -1874,6 +1874,19 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     EXPECT_FALSE(success);
 }
 
+HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    auto hwInfo = device->getNEODevice()->getHardwareInfo();
+
+    zebin.elfHeader->machine = hwInfo.platform.eProductFamily;
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    bool success = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
+    EXPECT_TRUE(success);
+
+    auto expectedOptions = " " + NEO::CompilerOptions::allowZebin.str();
+    EXPECT_STREQ(expectedOptions.c_str(), moduleTu.options.c_str());
+}
+
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryThenLinkerInputIsCreated) {
     std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
 kernels:

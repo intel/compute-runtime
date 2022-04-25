@@ -123,6 +123,13 @@ DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSect
                 outWarning.append("DeviceBinaryFormat::Zebin : Unhandled SHT_NOTE section : " + sectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::noteIntelGT.str() + ".\n");
             }
             break;
+        case NEO::Elf::SHT_ZEBIN_MISC:
+            if (sectionName == NEO::Elf::SectionsNamesZebin::buildOptions) {
+                out.buildOptionsSection.push_back(&elfSectionHeader);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : " + sectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::buildOptions.str() + ".\n");
+            }
+            break;
         case NEO::Elf::SHT_STRTAB:
             // ignoring intentionally - section header names
             continue;

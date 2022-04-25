@@ -30,6 +30,7 @@ struct ZebinSections {
     StackVec<SectionHeaderData *, 1> symtabSections;
     StackVec<SectionHeaderData *, 1> spirvSections;
     StackVec<SectionHeaderData *, 1> noteIntelGTSections;
+    StackVec<SectionHeaderData *, 1> buildOptionsSection;
 };
 
 using UniqueNode = StackVec<const NEO::Yaml::Node *, 1>;
