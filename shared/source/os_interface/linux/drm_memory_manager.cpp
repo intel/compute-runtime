@@ -1568,7 +1568,6 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
             OsContext *osContext = engine.osContext;
             CommandStreamReceiver *csr = engine.commandStreamReceiver;
 
-            uint32_t activeHwContexts = csr->getActivePartitions();
             auto osContextId = osContext->getContextId();
             auto allocationTaskCount = csr->getCompletionValue(*allocation);
             uint64_t completionFenceAddress = csr->getCompletionAddress();
@@ -1578,17 +1577,7 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
 
             if (allocation->isUsedByOsContext(osContextId)) {
                 Drm &drm = getDrm(csr->getRootDeviceIndex());
-                auto &ctxVector = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
-
-                for (uint32_t i = 0; i < activeHwContexts; i++) {
-                    uint32_t *fenceValue = reinterpret_cast<uint32_t *>(completionFenceAddress);
-                    if (*fenceValue < allocationTaskCount) {
-                        constexpr int64_t timeout = -1;
-                        constexpr uint16_t flags = 0;
-                        drm.waitUserFence(ctxVector[i], completionFenceAddress, allocationTaskCount, Drm::ValueWidth::U32, timeout, flags);
-                    }
-                    completionFenceAddress += csr->getPostSyncWriteOffset();
-                }
+                drm.waitOnUserFences(static_cast<const OsContextLinux &>(*osContext), completionFenceAddress, allocationTaskCount, csr->getActivePartitions(), csr->getPostSyncWriteOffset());
             }
         }
     } else {

@@ -61,20 +61,8 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->completionFenceAllocation) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
-        auto &drmContextIds = osContextLinux->getDrmContextIds();
-        uint32_t drmContextId = 0u;
         auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset;
-        for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
-            if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
-                if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < completionFenceValue) {
-                    constexpr int64_t timeout = -1;
-                    constexpr uint16_t flags = 0;
-                    drm.waitUserFence(drmContextIds[drmContextId], completionFenceCpuAddress, completionFenceValue, Drm::ValueWidth::U32, timeout, flags);
-                }
-                drmContextId++;
-                completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, this->postSyncOffset);
-            }
-        }
+        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
     }
     this->deallocateResources();
 }

@@ -248,6 +248,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         MockGraphicsAllocation workPartitionAllocation{};
         commandStreamReceiver.workPartitionAllocation = &workPartitionAllocation;
         {
+            DebugManager.flags.EnableImplicitScaling.set(1);
             MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
             directSubmission.completionFenceValue = expectedCompletionValueToWait;
         }

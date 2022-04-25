@@ -44,6 +44,7 @@ enum class AllocationType;
 class BufferObject;
 class DeviceFactory;
 class OsContext;
+class OsContextLinux;
 class Gmm;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
@@ -229,6 +230,8 @@ class Drm : public DriverModel {
         U64
     };
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags);
+
+    void waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, uint32_t postSyncOffset);
 
     void setNewResourceBoundToVM(uint32_t vmHandleId);
 

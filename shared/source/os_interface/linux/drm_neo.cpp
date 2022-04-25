@@ -1621,4 +1621,18 @@ PhyicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
 
     return pciSpeedInfo;
 }
+
+void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, uint32_t postSyncOffset) {
+    auto &drmContextIds = osContext.getDrmContextIds();
+    UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
+    auto completionFenceCpuAddress = address;
+    for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
+        if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
+            constexpr int64_t timeout = -1;
+            constexpr uint16_t flags = 0;
+            waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U32, timeout, flags);
+        }
+        completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
+    }
+}
 } // namespace NEO
