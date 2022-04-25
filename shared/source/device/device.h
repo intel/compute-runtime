@@ -168,7 +168,7 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual bool genericSubDevicesAllowed();
     bool engineInstancedSubDevicesAllowed();
     void setAsEngineInstanced();
-    MOCKABLE_VIRTUAL void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
+    void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
     void finalizeRayTracing();
 
     DeviceInfo deviceInfo = {};

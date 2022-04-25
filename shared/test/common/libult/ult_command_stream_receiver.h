@@ -277,12 +277,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     bool createPerDssBackedBuffer(Device &device) override {
         createPerDssBackedBufferCalled++;
-        bool result = BaseClass::createPerDssBackedBuffer(device);
-        if (!perDssBackedBuffer) {
-            AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::INTERNAL_HEAP, device.getDeviceBitfield()};
-            perDssBackedBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(properties);
-        }
-        return result;
+        return BaseClass::createPerDssBackedBuffer(device);
     }
 
     bool isMultiOsContextCapable() const override {

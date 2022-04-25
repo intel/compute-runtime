@@ -713,4 +713,41 @@ void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
     memcpy_s(&uuid[4], sizeof(uint32_t), &hardwareInfo.platform.usDeviceID, sizeof(hardwareInfo.platform.usDeviceID));
     memcpy_s(&uuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 }
+
+void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
+    DEBUG_BREAK_IF(rtDispatchGlobals.size() < maxBvhLevels + 1);
+    DEBUG_BREAK_IF(rtDispatchGlobals[maxBvhLevels] != nullptr);
+    uint32_t extraBytesLocal = 0;
+    uint32_t extraBytesGlobal = 0;
+    auto size = RayTracingHelper::getDispatchGlobalSize(*this, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
+    auto dispatchGlobalsAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
+
+    if (nullptr == dispatchGlobalsAllocation) {
+        return;
+    }
+
+    struct RTDispatchGlobals dispatchGlobals = {0};
+
+    auto numRtStacks = RayTracingHelper::getNumRtStacks(*this);
+    auto stackSizePerRay = RayTracingHelper::getStackSizePerRay(maxBvhLevels, 0);
+    size_t rtMemOffset = alignUp(stackSizePerRay * numRtStacks, MemoryConstants::cacheLineSize);
+
+    auto &hwInfo = getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    dispatchGlobals.rtMemBasePtr = rtMemOffset;
+    dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
+    dispatchGlobals.stackSizePerRay = stackSizePerRay / 64;
+    dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
+    dispatchGlobals.maxBVHLevels = maxBvhLevels;
+
+    MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *dispatchGlobalsAllocation),
+                                                     *this,
+                                                     dispatchGlobalsAllocation,
+                                                     0,
+                                                     &dispatchGlobals,
+                                                     sizeof(RTDispatchGlobals));
+
+    rtDispatchGlobals[maxBvhLevels] = dispatchGlobalsAllocation;
+}
 } // namespace NEO

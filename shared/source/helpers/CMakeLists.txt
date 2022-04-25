@@ -106,7 +106,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ray_tracing_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h

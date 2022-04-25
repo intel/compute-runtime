@@ -23,6 +23,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -845,6 +846,15 @@ const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() 
 uint32_t CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
     auto osContextId = osContext->getContextId();
     return gfxAllocation.getTaskCount(osContextId);
+}
+
+bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
+    UNRECOVERABLE_IF(perDssBackedBuffer != nullptr);
+    auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(device);
+
+    perDssBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::BUFFER, device.getDeviceBitfield()});
+
+    return perDssBackedBuffer != nullptr;
 }
 
 } // namespace NEO

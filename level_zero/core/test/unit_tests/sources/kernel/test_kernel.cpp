@@ -693,6 +693,8 @@ TEST_F(KernelImmutableDataTests, givenKernelWithPrivateMemoryBiggerThanGlobalMem
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized) {
+    static_cast<OsAgnosticMemoryManager *>(device->getNEODevice()->getMemoryManager())->turnOnFakingBigAllocations();
+
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
@@ -723,8 +725,6 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
         const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
-
-    neoDevice->setRTDispatchGlobalsForceAllocation();
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -853,6 +853,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatched) {
+    static_cast<OsAgnosticMemoryManager *>(device->getNEODevice()->getMemoryManager())->turnOnFakingBigAllocations();
+
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
@@ -860,10 +862,13 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
     }
 
+    constexpr uint16_t rtGlobalPointerPatchOffset = 8;
+
     std::unique_ptr<MockImmutableData> mockKernelImmutableData =
         std::make_unique<MockImmutableData>(32u);
     mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
-    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 8;
+    mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.stateless = rtGlobalPointerPatchOffset;
 
     ModuleBuildLog *moduleBuildLog = nullptr;
     module = std::make_unique<MockModule>(device,
@@ -888,16 +893,14 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
     kernel->crossThreadData.reset(reinterpret_cast<uint8_t *>(crossThreadData.get()));
     kernel->crossThreadDataSize = sizeof(uint32_t[4]);
 
-    neoDevice->setRTDispatchGlobalsForceAllocation();
-
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
 
-    auto dispatchGlobalsAddressPatched = *reinterpret_cast<uintptr_t *>(crossThreadData.get());
-    auto dispatchGlobalsGpuAddressOffset = static_cast<uintptr_t>(rtDispatchGlobals->getGpuAddressToPatch());
+    auto dispatchGlobalsAddressPatched = *reinterpret_cast<uint64_t *>(ptrOffset(crossThreadData.get(), rtGlobalPointerPatchOffset));
+    auto dispatchGlobalsGpuAddressOffset = static_cast<uint64_t>(rtDispatchGlobals->getGpuAddressToPatch());
     EXPECT_EQ(dispatchGlobalsGpuAddressOffset, dispatchGlobalsAddressPatched);
 
     kernel->crossThreadData.release();

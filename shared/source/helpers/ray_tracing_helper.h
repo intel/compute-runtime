@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+
+#include "ocl_igc_shared/raytracing/ocl_raytracing_structures.h"
 
 #include <cstdint>
 namespace NEO {
@@ -36,7 +38,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
         return static_cast<size_t>(Math::log2(memoryBackedFifoSizePerDss / KB) - 1);
     }
 
-    static size_t getRtGlobalsSize();
+    static size_t getRtGlobalsSize() { return sizeof(RTDispatchGlobals); }
 
     static uint32_t getNumRtStacks(const Device &device) {
         return device.getHardwareInfo().gtSystemInfo.DualSubSliceCount * stackDssMultiplier;

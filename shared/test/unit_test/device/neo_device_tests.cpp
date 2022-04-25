@@ -57,7 +57,6 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithUnsupportedBVHLevelsThenN
 }
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenRTDispatchGlobalsIsAllocated) {
-    pDevice->setRTDispatchGlobalsForceAllocation();
     pDevice->initializeRayTracing(5);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
@@ -65,7 +64,6 @@ TEST_F(DeviceTest, whenInitializeRayTracingIsCalledWithMockAllocatorThenRTDispat
 }
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledMultipleTimesWithMockAllocatorThenInitializeRayTracingIsIdempotent) {
-    pDevice->setRTDispatchGlobalsForceAllocation();
     pDevice->initializeRayTracing(5);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(5));
     pDevice->initializeRayTracing(5);
@@ -77,10 +75,15 @@ TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledBeforeInitializationThenNullP
 }
 
 TEST_F(DeviceTest, whenGetRTDispatchGlobalsIsCalledWithZeroSizeAndMockAllocatorThenDispatchGlobalsIsReturned) {
-    pDevice->setRTDispatchGlobalsForceAllocation();
     EXPECT_EQ(nullptr, pDevice->getRTDispatchGlobals(0));
     pDevice->initializeRayTracing(5);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(0));
+}
+
+TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocated) {
+    pDevice->initializeRayTracing(5);
+    pDevice->allocateRTDispatchGlobals(3);
+    EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
 }
 
 using DeviceGetCapsTest = Test<DeviceFixture>;
