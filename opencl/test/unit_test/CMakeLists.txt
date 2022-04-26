@@ -85,10 +85,6 @@ if(USE_ASAN)
   set(GTEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan_suppressions.txt")
 endif()
 
-if(COMPILER_SUPPORTS_SSE42)
-  set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
-endif()
-
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 

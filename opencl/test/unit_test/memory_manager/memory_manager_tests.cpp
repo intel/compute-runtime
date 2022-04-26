@@ -36,6 +36,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
+#include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -47,7 +48,6 @@
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
-#include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"

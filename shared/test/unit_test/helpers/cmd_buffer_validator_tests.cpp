@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/helpers/cmd_buffer_validator.h"
+#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
 
 using HwParseTest = ::testing::Test;
 

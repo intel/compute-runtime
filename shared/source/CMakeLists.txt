@@ -145,7 +145,7 @@ append_sources_from_properties(CORE_SOURCES
 if(WIN32)
   append_sources_from_properties(CORE_SOURCES
                                  NEO_CORE_GMM_HELPER_WINDOWS
-                                 NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
+                                 NEO_CORE_HELPERS_WINDOWS
                                  NEO_CORE_DIRECT_SUBMISSION_WINDOWS
                                  NEO_CORE_OS_INTERFACE_WINDOWS
                                  NEO_CORE_OS_INTERFACE_WDDM
@@ -167,7 +167,7 @@ else()
   )
   if(NOT DISABLE_WDDM_LINUX)
     append_sources_from_properties(CORE_SOURCES
-                                   NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
+                                   NEO_CORE_HELPERS_WINDOWS
                                    NEO_CORE_SRCS_HELPERS_WINDOWS
                                    NEO_CORE_GMM_HELPER_WINDOWS
                                    NEO_CORE_OS_INTERFACE_WDDM
