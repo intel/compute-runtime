@@ -2044,183 +2044,177 @@ TEST(LinkerTests, GivenDebugDataWhenApplyingDebugDataRelocationsThenRelocationsA
 }
 
 TEST(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
-    for (const auto &implicitArgsRelocationSymbolName : implicitArgsRelocationSymbolNames) {
-        NEO::LinkerInput linkerInput;
+    NEO::LinkerInput linkerInput;
 
-        vISA::GenRelocEntry reloc = {};
-        std::string relocationName = implicitArgsRelocationSymbolName;
-        memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
-        reloc.r_offset = 8;
-        reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+    vISA::GenRelocEntry reloc = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc.r_offset = 8;
+    reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-        vISA::GenRelocEntry relocs[] = {reloc};
-        constexpr uint32_t numRelocations = 1;
-        bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
-        EXPECT_TRUE(decodeRelocSuccess);
+    vISA::GenRelocEntry relocs[] = {reloc};
+    constexpr uint32_t numRelocations = 1;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
 
-        NEO::Linker linker(linkerInput);
-        NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
-        globalVarSegment.gpuAddress = 8;
-        globalVarSegment.segmentSize = 64;
-        globalConstSegment.gpuAddress = 128;
-        globalConstSegment.segmentSize = 256;
-        exportedFuncSegment.gpuAddress = 4096;
-        exportedFuncSegment.segmentSize = 1024;
-        NEO::Linker::UnresolvedExternals unresolvedExternals;
-        NEO::Linker::KernelDescriptorsT kernelDescriptors;
-        NEO::Linker::ExternalFunctionsT externalFunctions;
-        KernelDescriptor kernelDescriptor;
-        kernelDescriptors.push_back(&kernelDescriptor);
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
-        kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
 
-        UltDeviceFactory deviceFactory{1, 0};
+    UltDeviceFactory deviceFactory{1, 0};
 
-        std::vector<char> instructionSegment;
-        uint32_t initData = 0x77777777;
-        instructionSegment.resize(32, static_cast<char>(initData));
-        NEO::Linker::PatchableSegment seg0;
-        seg0.hostPointer = instructionSegment.data();
-        seg0.segmentSize = instructionSegment.size();
-        NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+    std::vector<char> instructionSegment;
+    uint32_t initData = 0x77777777;
+    instructionSegment.resize(32, static_cast<char>(initData));
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-        auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
-                                      nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
-                                      deviceFactory.rootDevices[0], nullptr, nullptr, kernelDescriptors, externalFunctions);
-        EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-        auto relocatedSymbols = linker.extractRelocatedSymbols();
-        EXPECT_EQ(0U, unresolvedExternals.size());
-        EXPECT_EQ(0U, relocatedSymbols.size());
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  deviceFactory.rootDevices[0], nullptr, nullptr, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    auto relocatedSymbols = linker.extractRelocatedSymbols();
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(0U, relocatedSymbols.size());
 
-        auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
-        EXPECT_EQ(initData, *(addressToPatch - 1));
-        EXPECT_EQ(initData, *(addressToPatch + 1));
-        EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-    }
+    auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+    EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+    EXPECT_EQ(initData, *(addressToPatch - 1));
+    EXPECT_EQ(initData, *(addressToPatch + 1));
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(LinkerTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
     if (!defaultHwInfo->capabilityTable.debuggerSupported) {
         GTEST_SKIP();
     }
-    for (const auto &implicitArgsRelocationSymbolName : implicitArgsRelocationSymbolNames) {
-        NEO::LinkerInput linkerInput;
+    NEO::LinkerInput linkerInput;
 
-        vISA::GenRelocEntry reloc = {};
-        std::string relocationName = implicitArgsRelocationSymbolName;
-        memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
-        reloc.r_offset = 8;
-        reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+    vISA::GenRelocEntry reloc = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc.r_offset = 8;
+    reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-        vISA::GenRelocEntry relocs[] = {reloc};
-        constexpr uint32_t numRelocations = 1;
-        bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
-        EXPECT_TRUE(decodeRelocSuccess);
+    vISA::GenRelocEntry relocs[] = {reloc};
+    constexpr uint32_t numRelocations = 1;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
 
-        NEO::Linker linker(linkerInput);
-        NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
-        globalVarSegment.gpuAddress = 8;
-        globalVarSegment.segmentSize = 64;
-        globalConstSegment.gpuAddress = 128;
-        globalConstSegment.segmentSize = 256;
-        exportedFuncSegment.gpuAddress = 4096;
-        exportedFuncSegment.segmentSize = 1024;
-        NEO::Linker::UnresolvedExternals unresolvedExternals;
-        NEO::Linker::KernelDescriptorsT kernelDescriptors;
-        NEO::Linker::ExternalFunctionsT externalFunctions;
-        KernelDescriptor kernelDescriptor;
-        kernelDescriptors.push_back(&kernelDescriptor);
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
-        kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
 
-        DebugManagerStateRestore restorer;
-        DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-        UltDeviceFactory deviceFactory{1, 0};
-        auto device = deviceFactory.rootDevices[0];
-        EXPECT_NE(nullptr, device->getDebugger());
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
+    UltDeviceFactory deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
+    EXPECT_NE(nullptr, device->getDebugger());
 
-        std::vector<char> instructionSegment;
-        uint32_t initData = 0x77777777;
-        instructionSegment.resize(32, static_cast<char>(initData));
-        NEO::Linker::PatchableSegment seg0;
-        seg0.hostPointer = instructionSegment.data();
-        seg0.segmentSize = instructionSegment.size();
-        NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+    std::vector<char> instructionSegment;
+    uint32_t initData = 0x77777777;
+    instructionSegment.resize(32, static_cast<char>(initData));
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-        auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
-                                      nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
-                                      device, nullptr, nullptr, kernelDescriptors, externalFunctions);
-        EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-        auto relocatedSymbols = linker.extractRelocatedSymbols();
-        EXPECT_EQ(0U, unresolvedExternals.size());
-        EXPECT_EQ(0U, relocatedSymbols.size());
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  device, nullptr, nullptr, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    auto relocatedSymbols = linker.extractRelocatedSymbols();
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(0U, relocatedSymbols.size());
 
-        auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
-        EXPECT_EQ(initData, *(addressToPatch - 1));
-        EXPECT_EQ(initData, *(addressToPatch + 1));
-        EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-    }
+    auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+    EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+    EXPECT_EQ(initData, *(addressToPatch - 1));
+    EXPECT_EQ(initData, *(addressToPatch + 1));
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(LinkerTests, givenImplicitArgRelocationWithoutStackCallsAndDisabledDebuggerThenPatchRelocationWithZeroAndUpdateKernelDescriptor) {
-    for (const auto &implicitArgsRelocationSymbolName : implicitArgsRelocationSymbolNames) {
-        NEO::LinkerInput linkerInput;
+    NEO::LinkerInput linkerInput;
 
-        vISA::GenRelocEntry reloc = {};
-        std::string relocationName = implicitArgsRelocationSymbolName;
-        memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
-        reloc.r_offset = 8;
-        reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+    vISA::GenRelocEntry reloc = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc.r_offset = 8;
+    reloc.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-        vISA::GenRelocEntry relocs[] = {reloc};
-        constexpr uint32_t numRelocations = 1;
-        bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
-        EXPECT_TRUE(decodeRelocSuccess);
+    vISA::GenRelocEntry relocs[] = {reloc};
+    constexpr uint32_t numRelocations = 1;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
 
-        NEO::Linker linker(linkerInput);
-        NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
-        globalVarSegment.gpuAddress = 8;
-        globalVarSegment.segmentSize = 64;
-        globalConstSegment.gpuAddress = 128;
-        globalConstSegment.segmentSize = 256;
-        exportedFuncSegment.gpuAddress = 4096;
-        exportedFuncSegment.segmentSize = 1024;
-        NEO::Linker::UnresolvedExternals unresolvedExternals;
-        NEO::Linker::KernelDescriptorsT kernelDescriptors;
-        NEO::Linker::ExternalFunctionsT externalFunctions;
-        KernelDescriptor kernelDescriptor;
-        kernelDescriptors.push_back(&kernelDescriptor);
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
-        kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
 
-        UltDeviceFactory deviceFactory{1, 0};
-        auto device = deviceFactory.rootDevices[0];
-        EXPECT_EQ(nullptr, device->getDebugger());
+    UltDeviceFactory deviceFactory{1, 0};
+    auto device = deviceFactory.rootDevices[0];
+    EXPECT_EQ(nullptr, device->getDebugger());
 
-        std::vector<char> instructionSegment;
-        uint32_t initData = 0x77777777;
-        instructionSegment.resize(32, static_cast<char>(initData));
-        NEO::Linker::PatchableSegment seg0;
-        seg0.hostPointer = instructionSegment.data();
-        seg0.segmentSize = instructionSegment.size();
-        NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+    std::vector<char> instructionSegment;
+    uint32_t initData = 0x77777777;
+    instructionSegment.resize(32, static_cast<char>(initData));
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-        auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
-                                      nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
-                                      device, nullptr, nullptr, kernelDescriptors, externalFunctions);
-        EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-        auto relocatedSymbols = linker.extractRelocatedSymbols();
-        EXPECT_EQ(0U, unresolvedExternals.size());
-        EXPECT_EQ(0U, relocatedSymbols.size());
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  device, nullptr, nullptr, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    auto relocatedSymbols = linker.extractRelocatedSymbols();
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(0U, relocatedSymbols.size());
 
-        auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(0u, *addressToPatch);
-        EXPECT_EQ(initData, *(addressToPatch - 1));
-        EXPECT_EQ(initData, *(addressToPatch + 1));
-        EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-    }
+    auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+    EXPECT_EQ(0u, *addressToPatch);
+    EXPECT_EQ(initData, *(addressToPatch - 1));
+    EXPECT_EQ(initData, *(addressToPatch + 1));
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
 TEST(LinkerTests, givenNoImplicitArgRelocationAndStackCallsThenImplicitArgsAreNotRequired) {
@@ -2317,62 +2311,60 @@ TEST(LinkerTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgs
 }
 
 TEST(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLinkingThenPatchAllOfThem) {
-    for (const auto &implicitArgsRelocationSymbolName : implicitArgsRelocationSymbolNames) {
-        NEO::LinkerInput linkerInput;
+    NEO::LinkerInput linkerInput;
 
-        vISA::GenRelocEntry reloc0 = {};
-        std::string relocationName = implicitArgsRelocationSymbolName;
-        memcpy_s(reloc0.r_symbol, 1024, relocationName.c_str(), relocationName.size());
-        reloc0.r_offset = 8;
-        reloc0.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
+    vISA::GenRelocEntry reloc0 = {};
+    std::string relocationName = implicitArgsRelocationSymbolName;
+    memcpy_s(reloc0.r_symbol, 1024, relocationName.c_str(), relocationName.size());
+    reloc0.r_offset = 8;
+    reloc0.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-        vISA::GenRelocEntry reloc1 = reloc0;
-        reloc1.r_offset = 24;
+    vISA::GenRelocEntry reloc1 = reloc0;
+    reloc1.r_offset = 24;
 
-        vISA::GenRelocEntry relocs[] = {reloc0, reloc1};
-        constexpr uint32_t numRelocations = 2;
-        bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
-        EXPECT_TRUE(decodeRelocSuccess);
+    vISA::GenRelocEntry relocs[] = {reloc0, reloc1};
+    constexpr uint32_t numRelocations = 2;
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    EXPECT_TRUE(decodeRelocSuccess);
 
-        NEO::Linker linker(linkerInput);
-        NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
-        globalVarSegment.gpuAddress = 8;
-        globalVarSegment.segmentSize = 64;
-        globalConstSegment.gpuAddress = 128;
-        globalConstSegment.segmentSize = 256;
-        exportedFuncSegment.gpuAddress = 4096;
-        exportedFuncSegment.segmentSize = 1024;
-        NEO::Linker::UnresolvedExternals unresolvedExternals;
-        NEO::Linker::ExternalFunctionsT externalFunctions;
-        NEO::Linker::KernelDescriptorsT kernelDescriptors;
-        KernelDescriptor kernelDescriptor;
-        kernelDescriptors.push_back(&kernelDescriptor);
-        kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
-        kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
+    NEO::Linker linker(linkerInput);
+    NEO::Linker::SegmentInfo globalVarSegment, globalConstSegment, exportedFuncSegment;
+    globalVarSegment.gpuAddress = 8;
+    globalVarSegment.segmentSize = 64;
+    globalConstSegment.gpuAddress = 128;
+    globalConstSegment.segmentSize = 256;
+    exportedFuncSegment.gpuAddress = 4096;
+    exportedFuncSegment.segmentSize = 1024;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::ExternalFunctionsT externalFunctions;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
 
-        UltDeviceFactory deviceFactory{1, 0};
+    UltDeviceFactory deviceFactory{1, 0};
 
-        std::vector<char> instructionSegment;
-        char initData = 0x77;
-        instructionSegment.resize(32, initData);
-        NEO::Linker::PatchableSegment seg0;
-        seg0.hostPointer = instructionSegment.data();
-        seg0.segmentSize = instructionSegment.size();
-        NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+    std::vector<char> instructionSegment;
+    char initData = 0x77;
+    instructionSegment.resize(32, initData);
+    NEO::Linker::PatchableSegment seg0;
+    seg0.hostPointer = instructionSegment.data();
+    seg0.segmentSize = instructionSegment.size();
+    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
-        auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
-                                      nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
-                                      deviceFactory.rootDevices[0], nullptr, nullptr, kernelDescriptors, externalFunctions);
-        EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-        auto relocatedSymbols = linker.extractRelocatedSymbols();
-        EXPECT_EQ(0U, unresolvedExternals.size());
-        EXPECT_EQ(0U, relocatedSymbols.size());
+    auto linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment, {},
+                                  nullptr, nullptr, patchableInstructionSegments, unresolvedExternals,
+                                  deviceFactory.rootDevices[0], nullptr, nullptr, kernelDescriptors, externalFunctions);
+    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
+    auto relocatedSymbols = linker.extractRelocatedSymbols();
+    EXPECT_EQ(0U, unresolvedExternals.size());
+    EXPECT_EQ(0U, relocatedSymbols.size());
 
-        for (const auto &reloc : relocs) {
-            auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-            EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
-            EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
-        }
+    for (const auto &reloc : relocs) {
+        auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
+        EXPECT_EQ(sizeof(ImplicitArgs), *addressToPatch);
+        EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
     }
 }
 

@@ -333,17 +333,11 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             }
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
-            bool isImplicitArgsRelocation = false;
-            for (const auto &implicitArgsRelocationSymbolName : implicitArgsRelocationSymbolNames) {
-                if (relocation.symbolName == implicitArgsRelocationSymbolName) {
-                    if (pImplicitArgsRelocationAddresses.find(segId) == pImplicitArgsRelocationAddresses.end()) {
-                        pImplicitArgsRelocationAddresses.insert({segId, {}});
-                    }
-                    pImplicitArgsRelocationAddresses[segId].push_back(reinterpret_cast<uint32_t *>(relocAddress));
-                    isImplicitArgsRelocation = true;
+            if (relocation.symbolName == implicitArgsRelocationSymbolName) {
+                if (pImplicitArgsRelocationAddresses.find(segId) == pImplicitArgsRelocationAddresses.end()) {
+                    pImplicitArgsRelocationAddresses.insert({segId, {}});
                 }
-            }
-            if (isImplicitArgsRelocation) {
+                pImplicitArgsRelocationAddresses[segId].push_back(reinterpret_cast<uint32_t *>(relocAddress));
                 continue;
             }
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);
