@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
@@ -34,6 +35,21 @@ auto searchInArchiveByFilename(const Ar::Ar &archive, const ConstStringRef &name
 
     const auto &arFiles = archive.files;
     return std::find_if(arFiles.begin(), arFiles.end(), isSearchedFile);
+}
+
+auto allFilesInArchiveExceptPaddingStartsWith(const Ar::Ar &archive, const ConstStringRef &prefix) {
+    const auto &arFiles = archive.files;
+    for (const auto &file : arFiles) {
+        if (file.fileName.startsWith("pad")) {
+            continue;
+        }
+
+        if (!file.fileName.startsWith(prefix.data())) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
@@ -347,7 +363,6 @@ TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonNullIGF
 }
 
 TEST(OclocFatBinaryAsGfxCoreIdList, GivenDisabledGfxCoreNameThenReturnsNullIGFX) {
-
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
 
     EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("genA").str()), 0u);
@@ -1140,6 +1155,122 @@ TEST_F(OclocFatBinaryTest, GivenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
     ASSERT_EQ(spirvFileContent.size() + 1, spirvSectionIt->header->size);
     const auto isSpirvDataEqualsInputFileData = std::memcmp(spirvFileContent.data(), spirvSectionIt->data.begin(), spirvFileContent.size()) == 0;
     EXPECT_TRUE(isSpirvDataEqualsInputFileData);
+}
+
+TEST_F(OclocFatBinaryTest, GivenDeviceFlagWithoutConsecutiveArgumentWhenBuildingFatbinaryThenErrorIsReported) {
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-device"};
+
+    ::testing::internal::CaptureStdout();
+    const auto result = buildFatBinary(args, &mockArgHelper);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+    const std::string expectedErrorMessage{"Error! Command does not contain device argument!\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST_F(OclocFatBinaryTest, GivenFlagsWhichRequireMoreArgsWithoutThemWhenBuildingFatbinaryThenErrorIsReported) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    const std::array<std::string, 3> flagsToTest = {"-file", "-output", "-out_dir"};
+
+    for (const auto &flag : flagsToTest) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "-device",
+            devices,
+            flag};
+
+        ::testing::internal::CaptureStdout();
+        const auto result = buildFatBinary(args, &mockArgHelper);
+        const auto output{::testing::internal::GetCapturedStdout()};
+
+        EXPECT_EQ(OclocErrorCode::INVALID_COMMAND_LINE, result);
+
+        const std::string expectedErrorMessage{"Invalid option (arg 3): " + flag + "\nError! Couldn't create OfflineCompiler. Exiting.\n"};
+        EXPECT_EQ(expectedErrorMessage, output);
+    }
+}
+
+TEST_F(OclocFatBinaryTest, GivenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveHaveCorrectPointerSize) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    using TestDescription = std::pair<std::string, std::string>;
+
+    const std::array<TestDescription, 4> flagsToTest{
+        TestDescription{"-32", "32"},
+        TestDescription{NEO::CompilerOptions::arch32bit.str(), "32"},
+        TestDescription{"-64", "64"},
+        TestDescription{NEO::CompilerOptions::arch64bit.str(), "64"}};
+
+    for (const auto &[flag, expectedFilePrefix] : flagsToTest) {
+        const std::vector<std::string> args = {
+            "ocloc",
+            "-output",
+            outputArchiveName,
+            "-file",
+            spirvFilename,
+            "-output_no_suffix",
+            "-spirv_input",
+            "-exclude_ir",
+            flag,
+            "-device",
+            devices};
+
+        const auto buildResult = buildFatBinary(args, &mockArgHelper);
+        ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+        ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
+
+        const auto &rawArchive = mockArgHelper.interceptedFiles[outputArchiveName];
+        const auto archiveBytes = ArrayRef<const std::uint8_t>::fromAny(rawArchive.data(), rawArchive.size());
+
+        std::string outErrReason{};
+        std::string outWarning{};
+        const auto decodedArchive = NEO::Ar::decodeAr(archiveBytes, outErrReason, outWarning);
+
+        ASSERT_NE(nullptr, decodedArchive.magic);
+        ASSERT_TRUE(outErrReason.empty());
+        ASSERT_TRUE(outWarning.empty());
+
+        EXPECT_TRUE(allFilesInArchiveExceptPaddingStartsWith(decodedArchive, expectedFilePrefix));
+    }
+}
+
+TEST_F(OclocFatBinaryTest, GivenOutputDirectoryFlagWhenBuildingFatbinaryThenArchiveIsStoredInThatDirectory) {
+    const auto devices = prepareTwoDevices(&mockArgHelper);
+    if (devices.empty()) {
+        GTEST_SKIP();
+    }
+
+    const std::string outputDirectory{"someOutputDir"};
+
+    const std::vector<std::string> args = {
+        "ocloc",
+        "-output",
+        outputArchiveName,
+        "-out_dir",
+        outputDirectory,
+        "-file",
+        spirvFilename,
+        "-output_no_suffix",
+        "-spirv_input",
+        "-device",
+        devices};
+
+    const auto buildResult = buildFatBinary(args, &mockArgHelper);
+    ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
+
+    const auto expectedArchivePath{outputDirectory + "/" + outputArchiveName};
+    ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(expectedArchivePath));
 }
 
 TEST_F(OclocFatBinaryTest, GivenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {

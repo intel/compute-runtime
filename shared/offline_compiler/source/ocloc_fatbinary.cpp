@@ -378,8 +378,12 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
         argsCopy.push_back("-exclude_ir");
     }
 
-    Ar::ArEncoder fatbinary(true);
+    if (deviceArgIndex == static_cast<size_t>(-1)) {
+        argHelper->printf("Error! Command does not contain device argument!\n");
+        return OclocErrorCode::INVALID_COMMAND_LINE;
+    }
 
+    Ar::ArEncoder fatbinary(true);
     if (isDeviceWithPlatformAbbreviation(ConstStringRef(args[deviceArgIndex]), argHelper)) {
         std::vector<ConstStringRef> targetPlatforms;
         targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
