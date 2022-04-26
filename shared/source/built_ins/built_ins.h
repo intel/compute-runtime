@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/built_ins/builtinops/built_in_ops.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"
 
-#include "built_in_ops.h"
 #include "compiler_options.h"
 
 #include <array>
@@ -46,7 +46,6 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
                                       const std::string &platformName = "", uint32_t deviceRevId = 0);
 std::string joinPath(const std::string &lhs, const std::string &rhs);
 const char *getBuiltinAsString(EBuiltInOps::Type builtin);
-const char *getUnknownBuiltinAsString(EBuiltInOps::Type builtin);
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin);
 
 class Storage {

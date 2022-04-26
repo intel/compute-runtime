@@ -149,9 +149,88 @@ HWTEST2_F(BuiltInTests, GivenBuiltinTypeBinaryWhenGettingAuxTranslationBuiltinTh
               mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size() != 0);
 }
 
+class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::AuxTranslation> {
+  public:
+    using BuiltinDispatchInfoBuilder::populate;
+    using BaseClass = BuiltInOp<EBuiltInOps::AuxTranslation>;
+    using BaseClass::baseKernel;
+    using BaseClass::convertToAuxKernel;
+    using BaseClass::convertToNonAuxKernel;
+    using BaseClass::resizeKernelInstances;
+    using BaseClass::usedKernels;
+
+    using BaseClass::BuiltInOp;
+};
+
 INSTANTIATE_TEST_CASE_P(,
                         AuxBuiltInTests,
                         testing::ValuesIn({KernelObjForAuxTranslation::Type::MEM_OBJ, KernelObjForAuxTranslation::Type::GFX_ALLOC}));
+
+HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
+        GTEST_SKIP();
+    }
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
+
+    BuiltinOpParams builtinOpParamsToAux;
+    builtinOpParamsToAux.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+
+    BuiltinOpParams builtinOpParamsToNonAux;
+    builtinOpParamsToNonAux.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+
+    std::unique_ptr<Buffer> buffer = nullptr;
+    std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
+
+    auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
+    if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
+        cl_int retVal = CL_SUCCESS;
+        buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::MEM_OBJ, buffer.get()});
+    } else {
+        gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
+        kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::GFX_ALLOC, gfxAllocation.get()});
+    }
+
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setKernelObjsForAuxTranslation(std::move(kernelObjsForAuxTranslation));
+
+    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToAux);
+    mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParamsToNonAux);
+
+    {
+        // read args
+        auto argNum = 0;
+        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+
+        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+    }
+
+    {
+        // write args
+        auto argNum = 1;
+        auto expectedMocs = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+        auto sshBase = mockAuxBuiltInOp.convertToAuxKernel[0]->getSurfaceStateHeap();
+        auto sshOffset = mockAuxBuiltInOp.convertToAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+        auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+
+        sshBase = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getSurfaceStateHeap();
+        sshOffset = mockAuxBuiltInOp.convertToNonAuxKernel[0]->getKernelInfo().getArgDescriptorAt(argNum).as<ArgDescPointer>().bindful;
+        surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(sshBase, sshOffset));
+        EXPECT_EQ(expectedMocs, surfaceState->getMemoryObjectControlState());
+    }
+}
 
 TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
     for (auto supportsImages : ::testing::Bool()) {
@@ -444,19 +523,6 @@ HWTEST2_P(AuxBuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispat
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::None;
     EXPECT_THROW(builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams), std::exception);
 }
-
-class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::AuxTranslation> {
-  public:
-    using BuiltinDispatchInfoBuilder::populate;
-    using BaseClass = BuiltInOp<EBuiltInOps::AuxTranslation>;
-    using BaseClass::baseKernel;
-    using BaseClass::convertToAuxKernel;
-    using BaseClass::convertToNonAuxKernel;
-    using BaseClass::resizeKernelInstances;
-    using BaseClass::usedKernels;
-
-    using BaseClass::BuiltInOp;
-};
 
 TEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
     MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pClDevice);
@@ -1228,11 +1294,6 @@ TEST_F(VmeBuiltInTests, WhenGettingBuiltinAsStringThenCorrectStringIsReturned) {
     EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_check_intel.builtin_kernel", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel)));
     EXPECT_EQ(0, strcmp("vme_block_advanced_motion_estimate_bidirectional_check_intel", getBuiltinAsString(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel)));
     EXPECT_EQ(0, strcmp("unknown", getBuiltinAsString(EBuiltInOps::COUNT)));
-}
-
-TEST_F(BuiltInTests, WhenUnknownOperationIsSpecifiedThenUnknownNameIsReturned) {
-    EXPECT_EQ(0, strcmp("unknown", getUnknownBuiltinAsString(EBuiltInOps::CopyImage3dToBuffer)));
-    EXPECT_EQ(0, strcmp("unknown", getUnknownBuiltinAsString(EBuiltInOps::COUNT)));
 }
 
 TEST_F(BuiltInTests, GivenEncodeTypeWhenGettingExtensionThenCorrectStringIsReturned) {

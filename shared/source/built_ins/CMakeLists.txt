@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,7 +14,6 @@ set(NEO_CORE_SRCS_BUILT_INS
     ${CMAKE_CURRENT_SOURCE_DIR}/sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sip_kernel_type.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}unknown_built_in_name.cpp
 )
 
 add_subdirectory(builtinops)

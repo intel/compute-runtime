@@ -77,7 +77,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers${BRANCH_DIR_SUFFIX}kernel_binary_helper_hash_value.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper_hash_value.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_binary_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/kernel_filename_helper.h

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     }
     switch (builtin) {
     default:
-        return getUnknownBuiltinAsString(builtin);
+        return "unknown";
     case EBuiltInOps::AuxTranslation:
         return "aux_translation.builtin_kernel";
     case EBuiltInOps::CopyBufferToBuffer:

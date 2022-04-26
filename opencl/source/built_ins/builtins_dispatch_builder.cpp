@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -776,7 +776,7 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::AuxTranslation>>(builtins, device); });
         break;
     default:
-        return getUnknownDispatchInfoBuilder(operation, device);
+        UNRECOVERABLE_IF("getBuiltinDispatchInfoBuilder failed");
     }
     return *operationBuilder.first;
 }

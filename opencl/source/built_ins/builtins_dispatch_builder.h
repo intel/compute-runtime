@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/builtinops/built_in_ops.h"
 #include "shared/source/helpers/vec.h"
 
 #include "opencl/source/kernel/multi_device_kernel.h"
 
 #include "CL/cl.h"
-#include "built_in_ops.h"
 
 #include <array>
 #include <cstdint>
@@ -113,7 +113,6 @@ class BuiltinDispatchInfoBuilder {
 class BuiltInDispatchBuilderOp {
   public:
     static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
-    static BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
 };
 
 class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {

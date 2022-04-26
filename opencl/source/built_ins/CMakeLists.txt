@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,6 @@ set(RUNTIME_SRCS_BUILT_INS
     ${CMAKE_CURRENT_SOURCE_DIR}/builtins_dispatch_builder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/built_in_ops_vme.h
     ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}unknown_built_in.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_builtin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_builtin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vme_dispatch_builder.h

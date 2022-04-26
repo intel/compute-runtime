@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "built_in_ops.h"
+#include "shared/source/built_ins/builtinops/built_in_ops.h"
 
 namespace NEO {
 namespace EBuiltInOps {
