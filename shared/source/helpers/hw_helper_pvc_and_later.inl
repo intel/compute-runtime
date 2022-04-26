@@ -65,4 +65,12 @@ bool HwHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const {
     return true;
 }
 
+template <>
+size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
+    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
+        return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
+    }
+    return 0xE00;
+}
+
 } // namespace NEO

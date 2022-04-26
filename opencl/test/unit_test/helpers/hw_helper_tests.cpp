@@ -83,7 +83,7 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForTimestampPacketAlignmentThenRet
     EXPECT_EQ(expectedAlignment, helper.getTimestampPacketAllocatorAlignment());
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned) {
+HWTEST2_F(HwHelperTest, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned, IsAtMostXeHpgCore) {
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 512u);
 }

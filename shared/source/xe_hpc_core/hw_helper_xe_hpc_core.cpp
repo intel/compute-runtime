@@ -166,14 +166,6 @@ uint32_t HwHelperHw<Family>::getMaxNumSamplers() const {
 }
 
 template <>
-size_t HwHelperHw<Family>::getPaddingForISAAllocation() const {
-    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
-        return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
-    }
-    return 0xE00;
-}
-
-template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);

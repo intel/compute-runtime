@@ -198,3 +198,8 @@ HWTEST2_F(HwHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrect
         }
     }
 }
+
+HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 0xE00u);
+}
