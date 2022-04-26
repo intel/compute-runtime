@@ -12,6 +12,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 #include "igfxfmid.h"
 #include "memory_properties_flags.h"
@@ -161,6 +162,8 @@ class Buffer : public MemObj {
     uint64_t getBufferAddress(uint32_t rootDeviceIndex) const;
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
+
+    static bool validateHandleType(MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
 
   protected:
     Buffer(Context *context,

@@ -266,3 +266,26 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 
 /* cl_command_queue_mdapi_properties_intel - bitfield */
 #define CL_QUEUE_MDAPI_ENABLE_INTEL (1 << 0)
+
+/************************************************
+ *   cl_khr_external_memory extension    *
+ *************************************************/
+
+/* clGetPlatformInfo */
+#define CL_PLATFORM_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR 0x2044
+
+/* clGetDeviceInfo */
+#define CL_DEVICE_EXTERNAL_MEMORY_IMPORT_HANDLE_TYPES_KHR 0x204F
+
+/* clCreateBufferWithProperties and clCreateImageWithProperties */
+#define CL_DEVICE_HANDLE_LIST_KHR 0x2051
+#define CL_DEVICE_HANDLE_LIST_END_KHR 0
+
+#define CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR 0x2060
+#define CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR 0x2061
+#define CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KMT_KHR 0x2062
+#define CL_EXTERNAL_MEMORY_HANDLE_D3D11_TEXTURE_KHR 0x2063
+#define CL_EXTERNAL_MEMORY_HANDLE_D3D11_TEXTURE_KMT_KHR 0x2064
+#define CL_EXTERNAL_MEMORY_HANDLE_D3D12_HEAP_KHR 0x2065
+#define CL_EXTERNAL_MEMORY_HANDLE_D3D12_RESOURCE_KHR 0x2066
+#define CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR 0x2067

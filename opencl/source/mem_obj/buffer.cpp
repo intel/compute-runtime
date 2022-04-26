@@ -141,13 +141,28 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
     }
 
     // create the buffer
-    auto buffer = create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
 
-    if (retVal == CL_SUCCESS) {
-        buffer->storeProperties(properties);
+    Buffer *pBuffer = nullptr;
+    UnifiedSharingMemoryDescription extMem{};
+
+    if (memoryProperties.handle) {
+        if (validateHandleType(memoryProperties, extMem)) {
+            extMem.handle = &memoryProperties.handle;
+            extMem.size = size;
+            pBuffer = UnifiedBuffer::createSharedUnifiedBuffer(pContext, flags, extMem, &retVal);
+        } else {
+            retVal = CL_INVALID_PROPERTY;
+            return nullptr;
+        }
+    } else {
+        pBuffer = create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
     }
 
-    return buffer;
+    if (retVal == CL_SUCCESS) {
+        pBuffer->storeProperties(properties);
+    }
+
+    return pBuffer;
 }
 
 Buffer *Buffer::create(Context *context,

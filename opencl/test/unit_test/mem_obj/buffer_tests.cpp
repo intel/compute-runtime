@@ -608,6 +608,7 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
         EXPECT_LT(taskCount, taskCountSent);
     }
 }
+
 struct CompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
@@ -1193,6 +1194,14 @@ TEST_P(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
         delete bufferSvm;
         context->getSVMAllocsManager()->freeSVMAlloc(ptr);
     }
+}
+
+TEST_P(ValidHostPtr, WhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, g_scTestBufferSizeInBytes, pHostPtr, retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, buffer);
+
+    clReleaseMemObject(buffer);
 }
 
 // Parameterized test that tests buffer creation with all flags that should be

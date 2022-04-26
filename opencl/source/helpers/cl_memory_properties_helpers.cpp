@@ -9,6 +9,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers_base.inl"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 namespace NEO {
 
@@ -16,6 +17,8 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
                                                      cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {
     Device *pDevice = &context.getDevice(0)->getDevice();
+    uint64_t handle = 0;
+    uint64_t handleType = 0;
     uintptr_t hostptr = 0;
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
@@ -32,6 +35,10 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
             case CL_MEM_ALLOC_USE_HOST_PTR_INTEL:
                 hostptr = static_cast<uintptr_t>(properties[i + 1]);
                 break;
+            case CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR:
+                handle = static_cast<uint64_t>(properties[i + 1]);
+                handleType = static_cast<uint64_t>(UnifiedSharingHandleType::LinuxFd);
+                break;
             default:
                 return false;
             }
@@ -39,6 +46,8 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     }
 
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, pDevice);
+    memoryProperties.handleType = handleType;
+    memoryProperties.handle = handle;
     memoryProperties.hostptr = hostptr;
 
     switch (objectType) {

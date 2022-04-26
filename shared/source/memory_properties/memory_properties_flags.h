@@ -13,6 +13,9 @@ namespace NEO {
 class Device;
 
 struct MemoryProperties {
+    uint64_t handle = 0;
+    uint64_t handleType = 0;
+    uintptr_t hostptr = 0;
     const Device *pDevice = nullptr;
     uint32_t memCacheClos = 0;
     union {
@@ -23,7 +26,6 @@ struct MemoryProperties {
         MemoryAllocFlags allocFlags;
         uint32_t allAllocFlags = 0;
     };
-    uintptr_t hostptr = 0;
     static_assert(sizeof(MemoryProperties::flags) == sizeof(MemoryProperties::allFlags) && sizeof(MemoryProperties::allocFlags) == sizeof(MemoryProperties::allAllocFlags), "");
 };
 } // namespace NEO

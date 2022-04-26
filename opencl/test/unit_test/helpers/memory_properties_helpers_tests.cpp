@@ -409,6 +409,18 @@ TEST_F(MemoryPropertiesHelperTests, givenMemFlagsWithFlagsAndPropertiesWhenParsi
     }
 }
 
+TEST_F(MemoryPropertiesHelperTests, givenDmaBufWhenParsePropertiesThenHandleIsSet) {
+    cl_mem_properties_intel properties[] = {
+        CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR,
+        0x1234u,
+        0};
+
+    EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                MemoryPropertiesHelper::ObjType::BUFFER, context));
+
+    EXPECT_EQ(memoryProperties.handle, 0x1234u);
+}
+
 TEST_F(MemoryPropertiesHelperTests, WhenAdjustingDeviceBitfieldThenCorrectBitfieldIsReturned) {
     UltClDeviceFactory deviceFactory{2, 4};
     auto memoryPropertiesRootDevice0 = ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &deviceFactory.rootDevices[0]->getDevice());
