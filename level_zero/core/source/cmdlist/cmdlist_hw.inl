@@ -297,6 +297,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     uint64_t baseAddr = event->getGpuAddress(this->device);
     uint32_t packetsToReset = event->getPacketsInUse();
+    bool appendPipeControlWithPostSync = false;
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -323,17 +324,31 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
-                                                          event->getGpuAddress(this->device),
+                                                          baseAddr,
                                                           Event::STATE_CLEARED, args, hwInfo);
     } else {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
-        size_t estimateSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) * packetsToReset;
-        if (this->partitionCount > 1) {
-            estimateSize += estimateBufferSizeMultiTileBarrier(hwInfo);
+        bool applyScope = event->signalScope;
+        uint32_t packetsToResetUsingSdi = packetsToReset;
+        if (applyScope || event->isEventTimestampFlagSet()) {
+            UNRECOVERABLE_IF(packetsToReset == 0);
+            packetsToResetUsingSdi = packetsToReset - 1;
+            appendPipeControlWithPostSync = true;
         }
 
-        for (uint32_t i = 0u; i < packetsToReset; i++) {
+        for (uint32_t i = 0u; i < packetsToResetUsingSdi; i++) {
+            NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
+                *commandContainer.getCommandStream(),
+                baseAddr,
+                Event::STATE_CLEARED,
+                0u,
+                false,
+                false);
+            baseAddr += event->getSinglePacketSize();
+        }
+
+        if (appendPipeControlWithPostSync) {
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -341,8 +356,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
                 Event::STATE_CLEARED,
                 hwInfo,
                 args);
-            baseAddr += event->getSinglePacketSize();
         }
+
         if (this->partitionCount > 1) {
             appendMultiTileBarrier(*neoDevice);
         }
