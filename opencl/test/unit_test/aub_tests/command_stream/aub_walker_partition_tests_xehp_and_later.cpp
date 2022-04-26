@@ -584,7 +584,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     expectMemory<FamilyType>(reinterpret_cast<void *>(writeAddress), &pipeControlNotExecutedValue, sizeof(pipeControlNotExecutedValue));
 }
 template <bool enableNesting>
-struct MultiLevelBatchAubFixture : public AubWalkerPartitionZeroFixture {
+struct MultiLevelBatchAubFixture : public AUBFixture {
     void SetUp() override {
         if (enableNesting) {
             //turn on Batch Buffer nesting
@@ -595,24 +595,54 @@ struct MultiLevelBatchAubFixture : public AubWalkerPartitionZeroFixture {
             DebugManager.flags.AubDumpAddMmioRegistersList.set(
                 "0x1A09C;0x10000000");
         }
-        AubWalkerPartitionZeroFixture::SetUp();
+        AUBFixture::SetUp(nullptr);
+
         auto memoryManager = this->device->getMemoryManager();
+
+        commandBufferProperties = std::make_unique<AllocationProperties>(device->getRootDeviceIndex(), true, MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, false, device->getDeviceBitfield());
+        streamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
+        helperSurface = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
+        memset(helperSurface->getUnderlyingBuffer(), 0, MemoryConstants::pageSize);
+        taskStream = std::make_unique<LinearStream>(streamAllocation);
+
         secondLevelBatch = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         thirdLevelBatch = memoryManager->allocateGraphicsMemoryWithProperties(*commandBufferProperties);
         secondLevelBatchStream = std::make_unique<LinearStream>(secondLevelBatch);
         thirdLevelBatchStream = std::make_unique<LinearStream>(thirdLevelBatch);
     };
     void TearDown() override {
-        debugRestorer.reset(nullptr);
         DebugManager.flags.AubDumpAddMmioRegistersList.getRef() = "unk";
         DebugManager.flags.AubDumpAddMmioRegistersList.getRef().shrink_to_fit();
 
         auto memoryManager = this->device->getMemoryManager();
         memoryManager->freeGraphicsMemory(thirdLevelBatch);
         memoryManager->freeGraphicsMemory(secondLevelBatch);
+        memoryManager->freeGraphicsMemory(streamAllocation);
+        memoryManager->freeGraphicsMemory(helperSurface);
 
-        AubWalkerPartitionZeroFixture::TearDown();
+        AUBFixture::TearDown();
     };
+
+    void flushStream() {
+        DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+        dispatchFlags.guardCommandBufferWithPipeControl = true;
+
+        csr->makeResident(*helperSurface);
+        csr->flushTask(*taskStream, 0,
+                       &csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
+                       &csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                       0u, dispatchFlags, device->getDevice());
+
+        csr->flushBatchedSubmissions();
+    }
+
+    DebugManagerStateRestore debugRestorer;
+
+    std::unique_ptr<LinearStream> taskStream;
+    GraphicsAllocation *streamAllocation = nullptr;
+    GraphicsAllocation *helperSurface = nullptr;
+    std::unique_ptr<AllocationProperties> commandBufferProperties;
 
     std::unique_ptr<LinearStream> secondLevelBatchStream;
     std::unique_ptr<LinearStream> thirdLevelBatchStream;
@@ -623,13 +653,16 @@ struct MultiLevelBatchAubFixture : public AubWalkerPartitionZeroFixture {
 
 using MultiLevelBatchTestsWithNesting = Test<MultiLevelBatchAubFixture<true>>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, DISABLED_givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBatchBufferEndWhenItExitsThirdLevelCommandBufferThenSecondLevelBatchIsResumed) {
     auto writeAddress = helperSurface->getGpuAddress();
     auto compareAddress = writeAddress;
 
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    getSimulatedCsr<FamilyType>()->initializeEngine();
+    writeMMIO<FamilyType>(0x1A09C, 0x10001000);
 
     //nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
