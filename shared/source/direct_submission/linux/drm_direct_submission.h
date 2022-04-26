@@ -20,6 +20,13 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     ~DrmDirectSubmission();
 
+    uint32_t *getCompletionValuePointer() override {
+        if (this->completionFenceAllocation) {
+            return &this->completionFenceValue;
+        }
+        return DirectSubmissionHw<GfxFamily, Dispatcher>::getCompletionValuePointer();
+    }
+
   protected:
     bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size) override;

@@ -849,6 +849,9 @@ const RootDeviceEnvironment &CommandStreamReceiver::peekRootDeviceEnvironment() 
 }
 
 uint32_t CommandStreamReceiver::getCompletionValue(const GraphicsAllocation &gfxAllocation) {
+    if (completionFenceValuePointer) {
+        return *completionFenceValuePointer;
+    }
     auto osContextId = osContext->getContextId();
     return gfxAllocation.getTaskCount(osContextId);
 }

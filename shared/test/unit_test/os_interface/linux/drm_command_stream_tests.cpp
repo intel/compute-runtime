@@ -19,6 +19,7 @@ template <typename GfxFamily>
 struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
     using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
     using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
+    using DrmCommandStreamReceiver<GfxFamily>::completionFenceValuePointer;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
@@ -32,6 +33,34 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionValueThenTaskCount
     uint32_t expectedValue = 0x1234;
     allocation.updateTaskCount(expectedValue, osContext->getContextId());
     EXPECT_EQ(expectedValue, csr->getCompletionValue(allocation));
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGettingCompletionValueThenCompletionFenceValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    DebugManager.flags.EnableDirectSubmission.set(1);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, gemCloseWorkerMode::gemCloseWorkerInactive);
+    csr.setupContext(*osContext);
+    EXPECT_EQ(nullptr, csr.completionFenceValuePointer);
+
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[osContext->getEngineType()].engineSupported = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[osContext->getEngineType()].submitOnInit = true;
+    hwInfo->capabilityTable.directSubmissionEngines.data[osContext->getEngineType()].useNonDefault = true;
+    csr.createGlobalFenceAllocation();
+    csr.initializeTagAllocation();
+    csr.initDirectSubmission();
+
+    EXPECT_NE(nullptr, csr.completionFenceValuePointer);
+
+    uint32_t expectedValue = 0x5678;
+    *csr.completionFenceValuePointer = expectedValue;
+    MockGraphicsAllocation allocation{};
+    uint32_t notExpectedValue = 0x1234;
+    allocation.updateTaskCount(notExpectedValue, osContext->getContextId());
+    EXPECT_EQ(expectedValue, csr.getCompletionValue(allocation));
+    *csr.completionFenceValuePointer = 0;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, whenGettingCompletionAddressThenOffsettedTagAddressIsReturned) {

@@ -388,6 +388,7 @@ class CommandStreamReceiver {
 
     IndirectHeap *indirectHeap[IndirectHeap::Type::NUM_TYPES];
     OsContext *osContext = nullptr;
+    uint32_t *completionFenceValuePointer = nullptr;
 
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
     std::atomic<uint32_t> taskLevel{0};
@@ -414,6 +415,7 @@ class CommandStreamReceiver {
     uint32_t activePartitionsConfig = 1;
     uint32_t postSyncWriteOffset = 0;
     uint32_t completionFenceOffset = 0;
+    uint32_t completionFenceValue = 0;
 
     const uint32_t rootDeviceIndex;
     const DeviceBitfield deviceBitfield;

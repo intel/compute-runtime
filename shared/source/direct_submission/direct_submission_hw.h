@@ -85,6 +85,8 @@ class DirectSubmissionHw {
 
     static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const DirectSubmissionInputParams &inputParams);
 
+    virtual uint32_t *getCompletionValuePointer() { return nullptr; }
+
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);

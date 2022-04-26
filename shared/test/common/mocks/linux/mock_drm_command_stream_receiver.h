@@ -17,6 +17,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
+    using CommandStreamReceiver::completionFenceValuePointer;
     using CommandStreamReceiver::createPreemptionAllocation;
     using CommandStreamReceiver::flushStamp;
     using CommandStreamReceiver::getTagAddress;

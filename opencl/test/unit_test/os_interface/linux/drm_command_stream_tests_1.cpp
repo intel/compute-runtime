@@ -732,8 +732,10 @@ struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSub
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFailsThenFlushReturnsError) {
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
-    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->completionFenceValuePointer = nullptr;
+    testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = testedCsr->directSubmission.get();
     static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferResult = false;
 
     auto &cs = csr->getCS();
@@ -749,8 +751,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFa
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDirectSubmissionFailsThenFlushReturnsError) {
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*csr);
-    auto blitterDirectSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->completionFenceValuePointer = nullptr;
+    testedCsr->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*csr);
+    auto blitterDirectSubmission = testedCsr->blitterDirectSubmission.get();
     static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferResult = false;
 
     auto &cs = csr->getCS();

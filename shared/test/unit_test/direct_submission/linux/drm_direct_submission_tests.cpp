@@ -140,6 +140,30 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportWhenCreateDrmDirect
     }
 }
 
+HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportWhenGettingCompletionFencePointerThenCompletionFenceValueAddressIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+
+    ASSERT_TRUE(drm->completionFenceSupport());
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+    EXPECT_EQ(&directSubmission.completionFenceValue, directSubmission.getCompletionValuePointer());
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenGettingCompletionFencePointerThenNullptrIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(0);
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+
+    ASSERT_FALSE(drm->completionFenceSupport());
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+    EXPECT_EQ(nullptr, directSubmission.getCompletionValuePointer());
+}
+
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenCreateDrmDirectSubmissionThenCompletionFenceAllocationIsNotSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDrmCompletionFence.set(0);

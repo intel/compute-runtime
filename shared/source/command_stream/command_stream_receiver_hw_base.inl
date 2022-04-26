@@ -44,6 +44,10 @@ namespace NEO {
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::~CommandStreamReceiverHw() {
     this->unregisterDirectSubmissionFromController();
+    if (completionFenceValuePointer) {
+        completionFenceValue = *completionFenceValuePointer;
+        completionFenceValuePointer = &completionFenceValue;
+    }
 }
 
 template <typename GfxFamily>
@@ -1334,10 +1338,12 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(*this);
                 ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                completionFenceValuePointer = blitterDirectSubmission->getCompletionValuePointer();
 
             } else {
                 directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(*this);
                 ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                completionFenceValuePointer = directSubmission->getCompletionValuePointer();
             }
             auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
             if (directSubmissionController) {
