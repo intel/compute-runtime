@@ -12,6 +12,8 @@
 
 namespace NEO {
 
+class CommandStreamReceiver;
+class LinearStream;
 struct KernelDescriptor;
 struct HardwareInfo;
 
@@ -71,6 +73,8 @@ struct UnitTestHelper {
     static void setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush);
 
     static void adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor);
+
+    static std::vector<bool> getProgrammedLargeGrfValues(CommandStreamReceiver &csr, LinearStream &linearStream);
 };
 
 } // namespace NEO

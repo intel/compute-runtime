@@ -66,4 +66,10 @@ inline void UnitTestHelper<GfxFamily>::adjustKernelDescriptorForImplicitArgs(Ker
     kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0u;
 }
+
+template <typename GfxFamily>
+std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(CommandStreamReceiver &csr, LinearStream &linearStream) {
+    return {};
+}
+
 } // namespace NEO

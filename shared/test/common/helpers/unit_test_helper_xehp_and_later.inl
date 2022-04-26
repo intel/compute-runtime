@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
@@ -83,4 +85,19 @@ template <typename GfxFamily>
 inline void UnitTestHelper<GfxFamily>::adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor) {
     kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
 }
+
+template <typename GfxFamily>
+std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(CommandStreamReceiver &csr, LinearStream &linearStream) {
+    using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
+
+    std::vector<bool> largeGrfValues;
+    HardwareParse hwParser;
+    hwParser.parseCommands<GfxFamily>(csr, linearStream);
+    auto commands = hwParser.getCommandsList<STATE_COMPUTE_MODE>();
+    for (auto &cmd : commands) {
+        largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+    }
+    return largeGrfValues;
+}
+
 } // namespace NEO

@@ -9,11 +9,14 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 using namespace NEO;
 
 void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy,
                                                const HardwareInfo &hwInfo) {
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
     clearIsDirty();
 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
@@ -48,7 +51,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     }
     this->threadArbitrationPolicy.set(threadArbitrationPolicy);
 
-    setPropertiesExtra();
+    setPropertiesExtra(hwInfoConfig.isGrfNumReportedWithScm());
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {

@@ -347,4 +347,17 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const 
     return false;
 }
 
-} // namespace NEO
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
+}
+
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf) {
+}
+
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isGrfNumReportedWithScm() const {
+    return false;
+}
+
+} //namespace NEO

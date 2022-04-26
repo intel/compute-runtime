@@ -50,6 +50,8 @@ class HwInfoConfig {
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
     virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
+    virtual void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) = 0;
+    virtual void updateIddCommand(void *const commandPtr, uint32_t numGrf) = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
@@ -99,6 +101,7 @@ class HwInfoConfig {
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool useChannelRedForUnusedShaderChannels() const = 0;
     virtual bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool isGrfNumReportedWithScm() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -133,6 +136,8 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
     void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) override;
+    void updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) override;
+    void updateIddCommand(void *const commandPtr, uint32_t numGrf) override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
@@ -182,6 +187,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
     bool useChannelRedForUnusedShaderChannels() const override;
     bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const override;
+    bool isGrfNumReportedWithScm() const override;
 
   protected:
     HwInfoConfigHw() = default;
