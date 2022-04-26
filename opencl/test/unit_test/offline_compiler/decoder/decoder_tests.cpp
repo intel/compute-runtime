@@ -8,8 +8,10 @@
 #include "shared/offline_compiler/source/decoder/translate_platform_base.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
+#include "opencl/test/unit_test/offline_compiler/stdout_capturer.h"
 #include "opencl/test/unit_test/test_files/patch_list.h"
 
 #include "gtest/gtest.h"
@@ -19,7 +21,13 @@
 
 #include <array>
 #include <fstream>
+#include <sstream>
+#include <string>
 #include <utility>
+
+static void abortOclocExecutionMock(int code) {
+    throw std::runtime_error{"Exit called with code = " + std::to_string(code)};
+}
 
 SProgramBinaryHeader createProgramBinaryHeader(const uint32_t numberOfKernels, const uint32_t patchListSize) {
     return SProgramBinaryHeader{MAGIC_CL, 0, 0, 0, numberOfKernels, 0, patchListSize};
@@ -35,6 +43,200 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 }
 
 namespace NEO {
+
+TEST(DecoderTests, GivenArgHelperWithHeadersWhenLoadingPatchListThenHeadersAreReturned) {
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder;
+    decoder.mockArgHelper->headers.push_back(source);
+
+    const auto lines = decoder.loadPatchList();
+    ASSERT_EQ(3u, lines.size());
+
+    EXPECT_EQ("First", lines[0]);
+    EXPECT_EQ("Second", lines[1]);
+    EXPECT_EQ("Third", lines[2]);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutProgramBinaryHeaderWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "First\nSecond\nThird";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutPatchTokenEnumWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutKernelBinaryHeaderWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};\nenum PATCH_TOKEN\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.", output);
+}
+
+TEST(DecoderTests, GivenHeadersWithoutKernelBinaryHeaderCommonWhenParsingTokensThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    const char input[] = "struct SProgramBinaryHeader\n{};\nenum PATCH_TOKEN\n{};struct SKernelBinaryHeader\n{};";
+    const auto inputLength{sizeof(input)};
+    const auto filename{"some_file.txt"};
+
+    Source source{reinterpret_cast<const uint8_t *>(input), inputLength, filename};
+
+    MockDecoder decoder{false};
+    decoder.mockArgHelper->headers.push_back(source);
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.parseTokens());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.", output);
+}
+
+TEST(DecoderTests, GivenFieldsWithSizeWhenDumpingThemThenTheyAreWrittenToPtmFileStream) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    // Raw data contains 4 variables:
+    // 1. UINT8_T = 0x01.
+    // 2. UINT16_T = 0x0202
+    // 3. UINT32_T = 0x03030303
+    // 4. UINT64_T = 0x0404040404040404
+    uint8_t rawData[] = {
+        0x1,
+        0x2, 0x2,
+        0x3, 0x3, 0x3, 0x3,
+        0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4};
+
+    MockDecoder decoder;
+    std::stringstream ptFileOutputStream;
+    ptFileOutputStream << std::hex;
+
+    const void *memoryPtr = rawData;
+    for (uint8_t varSize = 1; varSize <= 8; varSize *= 2) {
+        PTField field{varSize, "SomeUINT_" + std::to_string(varSize)};
+        decoder.dumpField(memoryPtr, field, ptFileOutputStream);
+    }
+
+    const std::string expectedPtFileContent{
+        "\t1 SomeUINT_1 1\n"
+        "\t2 SomeUINT_2 202\n"
+        "\t4 SomeUINT_4 3030303\n"
+        "\t8 SomeUINT_8 404040404040404\n"};
+    EXPECT_EQ(expectedPtFileContent, ptFileOutputStream.str());
+}
+
+TEST(DecoderTests, GivenInvalidFieldSizeWhenDumpingItThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    uint8_t rawData[] = {
+        0x1,
+        0x2, 0x2,
+        0x3, 0x3, 0x3, 0x3};
+
+    MockDecoder decoder{false};
+    std::stringstream ptFileOutputStream;
+
+    const void *memoryPtr = rawData;
+    PTField badField{7, "SomeUINT_7"};
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.dumpField(memoryPtr, badField, ptFileOutputStream));
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! Unknown size.\n", output);
+}
+
+TEST(DecoderTests, GivenPassingParsingAndNullptrDevBinaryWhenDecodingThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    decoder.callBaseParseTokens = false;
+    decoder.callBaseGetDevBinary = false;
+    decoder.devBinaryToReturn = nullptr;
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.decode());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! Device Binary section was not found.\n", output);
+}
+
+TEST(DecoderTests, GivenPassingParsingAndEmptyDevBinaryWhenDecodingThenWarningAboutZeroKernelIsPrinted) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    decoder.callBaseParseTokens = false;
+    decoder.callBaseGetDevBinary = false;
+    decoder.devBinaryToReturn = "";
+
+    int decodeReturnValue{-1};
+
+    StdoutCapturer capturer{};
+    ASSERT_NO_THROW(decodeReturnValue = decoder.decode());
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ(0, decodeReturnValue);
+    EXPECT_EQ("Warning! Number of Kernels is 0.\n", output);
+}
+
+TEST(DecoderTests, GivenEmptyKernelHeaderWhenProcessingKernelThenErrorIsRaised) {
+    VariableBackup oclocAbortBackup{&abortOclocExecution, &abortOclocExecutionMock};
+
+    MockDecoder decoder{false};
+    const void *memory = "abcdef";
+    std::stringstream ptFile;
+
+    StdoutCapturer capturer{};
+    EXPECT_ANY_THROW(decoder.processKernel(memory, ptFile));
+    const auto output{capturer.acquireOutput()};
+
+    EXPECT_EQ("Error! KernelNameSize was 0.\n", output);
+}
 
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     const std::vector<std::string> args = {

@@ -58,9 +58,9 @@ class BinaryDecoder {
 
     void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
-    const void *getDevBinary();
+    MOCKABLE_VIRTUAL const void *getDevBinary();
     std::vector<std::string> loadPatchList();
-    void parseTokens();
+    MOCKABLE_VIRTUAL void parseTokens();
     int processBinary(const void *&ptr, std::ostream &ptmFile);
     void processKernel(const void *&ptr, std::ostream &ptmFile);
     void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);

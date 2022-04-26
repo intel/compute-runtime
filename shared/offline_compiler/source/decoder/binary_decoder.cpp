@@ -44,7 +44,8 @@ int BinaryDecoder::decode() {
     auto devBinPtr = getDevBinary();
     if (devBinPtr == nullptr) {
         argHelper->printf("Error! Device Binary section was not found.\n");
-        exit(1);
+        abortOclocExecution(1);
+        return -1;
     }
     return processBinary(devBinPtr, ptmFile);
 }
@@ -74,7 +75,7 @@ void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std:
     }
     default:
         argHelper->printf("Error! Unknown size.\n");
-        exit(1);
+        abortOclocExecution(1);
     }
     binaryPtr = ptrOffset(binaryPtr, field.size);
 }
@@ -215,28 +216,25 @@ void BinaryDecoder::parseTokens() {
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
     if (pos == patchList.size()) {
         argHelper->printf("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.");
-        exit(1);
+        abortOclocExecution(1);
     }
-    pos = findPos(patchList, "enum PATCH_TOKEN");
-    if (pos == patchList.size()) {
+
+    size_t patchTokenEnumPos = findPos(patchList, "enum PATCH_TOKEN");
+    if (patchTokenEnumPos == patchList.size()) {
         argHelper->printf("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.");
-        exit(1);
+        abortOclocExecution(1);
     }
+
     pos = findPos(patchList, "struct SKernelBinaryHeader");
     if (pos == patchList.size()) {
         argHelper->printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.");
-        exit(1);
+        abortOclocExecution(1);
     }
+
     pos = findPos(patchList, "struct SKernelBinaryHeaderCommon :");
     if (pos == patchList.size()) {
         argHelper->printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.");
-        exit(1);
-    }
-
-    // Reading all Patch Tokens and according structs
-    size_t patchTokenEnumPos = findPos(patchList, "enum PATCH_TOKEN");
-    if (patchTokenEnumPos == patchList.size()) {
-        exit(1);
+        abortOclocExecution(1);
     }
 
     for (auto i = patchTokenEnumPos + 1; i < patchList.size(); ++i) {
@@ -396,7 +394,7 @@ void BinaryDecoder::processKernel(const void *&ptr, std::ostream &ptmFile) {
 
     if (KernelNameSize == 0) {
         argHelper->printf("Error! KernelNameSize was 0.\n");
-        exit(1);
+        abortOclocExecution(1);
     }
 
     ptmFile << "\tKernelName ";
