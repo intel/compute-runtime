@@ -650,7 +650,7 @@ HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenRes
     EXPECT_EQ(1u, header->reserved1);
 }
 
-HWTEST_F(L0DebuggerTest, givenBindfulSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsNotSet) {
+HWTEST_F(L0DebuggerTest, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseBindlessDebugSip.set(0);
 
@@ -667,7 +667,7 @@ HWTEST_F(L0DebuggerTest, givenBindfulSipWhenModuleHeapDebugAreaIsCreatedThenRese
     auto debugArea = debugger->getModuleDebugArea();
 
     DebugAreaHeader *header = reinterpret_cast<DebugAreaHeader *>(debugArea->getUnderlyingBuffer());
-    EXPECT_EQ(0u, header->reserved1);
+    EXPECT_EQ(1u, header->reserved1);
 }
 
 TEST(Debugger, givenNonLegacyDebuggerWhenInitializingDeviceCapsThenUnrecoverableIsCalled) {

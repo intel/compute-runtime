@@ -69,10 +69,8 @@ void DebuggerL0::initialize() {
                                              device->getDeviceBitfield()};
         moduleDebugArea = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
-        bool bindlessSip = NEO::DebugManager.flags.UseBindlessDebugSip.get();
-
         DebugAreaHeader debugArea = {};
-        debugArea.reserved1 = bindlessSip ? 1 : 0;
+        debugArea.reserved1 = 1;
         debugArea.size = sizeof(DebugAreaHeader);
         debugArea.pgsize = 1;
         debugArea.isShared = moduleDebugArea->storageInfo.getNumBanks() == 1;
