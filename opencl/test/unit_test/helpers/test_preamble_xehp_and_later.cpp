@@ -29,7 +29,7 @@ HWTEST2_F(ThreadArbitrationXeHPAndLater, whenGetDefaultThreadArbitrationPolicyIs
 }
 
 using ProgramPipelineXeHPAndLater = PreambleFixture;
-HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPAndLater, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded) {
+HWTEST2_F(ProgramPipelineXeHPAndLater, whenCleanStateInPreambleIsSetAndProgramPipelineSelectIsCalledThenExtraPipelineSelectAndTwoExtraPipeControlsAdded, IsWithinXeGfxFamily) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     DebugManagerStateRestore stateRestore;
@@ -47,7 +47,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPAndLater, whenCleanStateInPreamb
     EXPECT_EQ(2u, numPipelineSelect);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet) {
+HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSelectIsCalledThenItHasProperFieldsSet, IsWithinXeGfxFamily) {
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
@@ -532,7 +532,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PipelineSelectTest, whenCallingIsSpecialPipelineSel
     EXPECT_TRUE(result);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet) {
+HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
     LinearStream pipelineSelectStream(&cmd, sizeof(cmd));

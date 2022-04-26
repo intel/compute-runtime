@@ -316,7 +316,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, WhenReadingBufferThenInte
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, WhenReadingBufferThenOnePipelineSelectIsProgrammed) {
+HWTEST2_F(EnqueueReadBufferRectTest, WhenReadingBufferThenOnePipelineSelectIsProgrammed, IsAtMostXeHpcCore) {
     enqueueReadBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

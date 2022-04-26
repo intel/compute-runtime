@@ -35,7 +35,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     EXPECT_FALSE(cmd->getLargeGrfMode());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
     GenCmdList commands;
@@ -119,7 +119,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWithK
     EXPECT_TRUE(cmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithNoKernelDpasThenSystolicModeIsNotEnabled, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = false;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
@@ -133,7 +133,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWithN
     EXPECT_FALSE(cmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhenItIsSetThenPipelineSelectContainsProperBits) {
+HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToTrueWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(1);
 
@@ -150,7 +150,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDebugModeToOverrideSy
     EXPECT_TRUE(cmd->getSystolicModeEnable());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWhenItIsSetThenPipelineSelectContainsProperBits) {
+HWTEST2_F(CommandEncodeStatesTest, givenDebugModeToOverrideSystolicModeToFalseWhenItIsSetThenPipelineSelectContainsProperBits, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ namespace NEO {
 template <>
 bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo);
 
-template <>
+template <typename Family>
 void PreambleHelper<Family>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo) {
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
     auto command = static_cast<PIPELINE_SELECT *>(cmd);

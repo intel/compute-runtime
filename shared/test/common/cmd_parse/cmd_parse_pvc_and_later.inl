@@ -166,7 +166,7 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
         cmdPipelineSelect = *itorPipelineSelect;
     }
 
-    itorMediaVfeState = find<CFE_STATE *>(itorPipelineSelect, itorWalker);
+    itorMediaVfeState = find<CFE_STATE *>(requiresPipelineSelectBeforeMediaState<GenGfxFamily>() ? itorPipelineSelect : cmdList.begin(), itorWalker);
     if (itorMediaVfeState != itorWalker) {
         cmdMediaVfeState = *itorMediaVfeState;
     }

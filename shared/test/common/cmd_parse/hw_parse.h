@@ -53,6 +53,11 @@ struct HardwareParse {
     void findCsrBaseAddress();
 
     template <typename FamilyType>
+    bool requiresPipelineSelectBeforeMediaState() {
+        return true;
+    }
+
+    template <typename FamilyType>
     void findHardwareCommands();
 
     template <typename FamilyType>
