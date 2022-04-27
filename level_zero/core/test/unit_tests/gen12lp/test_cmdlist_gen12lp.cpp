@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,21 @@ struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProd
     using ::L0::CommandListProductFamily<productFamily>::applyMemoryRangesBarrier;
 };
 
+template <PRODUCT_FAMILY productFamily>
+class MockCommandListHw : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
+  public:
+    MockCommandListHw() : WhiteBox<::L0::CommandListProductFamily<productFamily>>(1) {}
+    using ::L0::CommandListProductFamily<productFamily>::applyMemoryRangesBarrier;
+
+    ze_result_t executeCommandListImmediate(bool performMigration) override {
+        ++executeCommandListImmediateCalledCount;
+        return executeCommandListImmediateReturnValue;
+    }
+
+    ze_result_t executeCommandListImmediateReturnValue{};
+    int executeCommandListImmediateCalledCount{};
+};
+
 HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhetherL3ControlIsProgrammed, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
@@ -56,6 +71,73 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhet
     } else {
         EXPECT_EQ(cmdList.end(), itor);
     }
+}
+
+HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroWhenAppendingMemoryBarrierThenInvalidArgumentErrorIsReturned,
+          IsDG1) {
+    ze_result_t result;
+    uint32_t numRanges = 1;
+    const size_t pRangeSizes = 1;
+    const char *_pRanges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+
+    auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
+    bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    ASSERT_FALSE(ret);
+
+    uint32_t numWaitEvents{1};
+    ze_event_handle_t *phWaitEvents{nullptr};
+
+    result = commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
+                                                    pRanges, nullptr, numWaitEvents,
+                                                    phWaitEvents);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    commandList->destroy();
+}
+
+HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndSuccessReturned,
+          IsDG1) {
+    ze_result_t result;
+    uint32_t numRanges = 1;
+    const size_t pRangeSizes = 1;
+    const char *_pRanges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+
+    auto cmdList = new MockCommandListHw<productFamily>;
+    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
+
+    result = cmdList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
+                                                pRanges, nullptr, 0,
+                                                nullptr);
+    EXPECT_EQ(1, cmdList->executeCommandListImmediateCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList->destroy();
+}
+
+HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndDeviceLostReturned,
+          IsDG1) {
+    ze_result_t result;
+    uint32_t numRanges = 1;
+    const size_t pRangeSizes = 1;
+    const char *_pRanges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+
+    auto cmdList = new MockCommandListHw<productFamily>;
+    cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    result = cmdList->appendMemoryRangesBarrier(numRanges, &pRangeSizes,
+                                                pRanges, nullptr, 0,
+                                                nullptr);
+    EXPECT_EQ(1, cmdList->executeCommandListImmediateCalledCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+
+    cmdList->destroy();
 }
 
 HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBarrierThenAdditionalCommandsNotAdded,
