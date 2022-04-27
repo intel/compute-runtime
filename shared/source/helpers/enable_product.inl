@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct EnableGfxProductHw {
         defaultHardwareInfoConfigTable[gfxProduct] = GfxProduct::defaultHardwareInfoConfig;
         hardwareInfoTable[gfxProduct] = &GfxProduct::hwInfo;
         hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
+        hardwareInfoBaseSetup[gfxProduct] = GfxProduct::setupHardwareInfoBase;
     }
 };
 } // namespace NEO

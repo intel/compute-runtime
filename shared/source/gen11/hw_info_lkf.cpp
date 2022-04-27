@@ -124,21 +124,9 @@ void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
 };
 
-const HardwareInfo LKF_1x8x8::hwInfo = {
-    &LKF::platform,
-    &LKF::featureTable,
-    &LKF::workaroundTable,
-    &LKF_1x8x8::gtSystemInfo,
-    LKF::capabilityTable,
-};
-GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
-void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void LKF::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * LKF::threadsPerEu;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->L3CacheSizeInKb = 2560;
-    gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
     gtSysInfo->TotalVsThreads = 448;
     gtSysInfo->TotalHsThreads = 448;
     gtSysInfo->TotalDsThreads = 448;
@@ -150,9 +138,29 @@ void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxSubSlicesSupported = LKF::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+}
+
+const HardwareInfo LKF_1x8x8::hwInfo = {
+    &LKF::platform,
+    &LKF::featureTable,
+    &LKF::workaroundTable,
+    &LKF_1x8x8::gtSystemInfo,
+    LKF::capabilityTable,
+};
+GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
+void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    LKF::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * LKF::threadsPerEu;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->L3CacheSizeInKb = 2560;
+    gtSysInfo->L3BankCount = 8;
+    gtSysInfo->MaxFillRate = 16;
 };
 
 const HardwareInfo LKF::hwInfo = LKF_1x8x8::hwInfo;

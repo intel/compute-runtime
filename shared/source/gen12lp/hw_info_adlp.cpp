@@ -120,6 +120,24 @@ void ADLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
+
+void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ADLP::threadsPerEu;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = ADLP::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
+    gtSysInfo->MaxDualSubSlicesSupported = ADLP::maxDualSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
+}
+
 const HardwareInfo ADLP_CONFIG::hwInfo = {
     &ADLP::platform,
     &ADLP::featureTable,
@@ -130,27 +148,17 @@ const HardwareInfo ADLP_CONFIG::hwInfo = {
 
 GT_SYSTEM_INFO ADLP_CONFIG::gtSystemInfo = {0};
 void ADLP_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->IsDynamicallyPopulated = false;
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     // non-zero values for unit tests
     if (gtSysInfo->SliceCount == 0) {
         gtSysInfo->SliceCount = 2;
         gtSysInfo->SubSliceCount = 8;
         gtSysInfo->EUCount = 40;
-        gtSysInfo->MaxEuPerSubSlice = ADLP::maxEuPerSubslice;
-        gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
-        gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
-
         gtSysInfo->L3BankCount = 1;
-
         gtSysInfo->CCSInfo.IsValid = true;
         gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-    }
-
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
     }
 };
 #include "hw_info_setup_adlp.inl"
