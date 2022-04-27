@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,13 +34,27 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             continue;
         }
 
-        auto sameCsr = (&event->getCommandQueue()->getGpgpuCommandStreamReceiver() == &currentCsr);
+        auto &dependentCsr = event->getCommandQueue()->getGpgpuCommandStreamReceiver();
+        auto sameCsr = (&dependentCsr == &currentCsr);
         bool pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
                               (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
                               (CsrDependencies::DependenciesType::All == depsType);
 
         if (pushDependency) {
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
+
+            if (!sameCsr) {
+                const auto &hwInfoConfig = *NEO::HwInfoConfig::get(event->getCommandQueue()->getDevice().getHardwareInfo().platform.eProductFamily);
+                if (hwInfoConfig.isDcFlushAllowed()) {
+                    if (!dependentCsr.isLatestTaskCountFlushed()) {
+                        auto csrOwnership = dependentCsr.obtainUniqueOwnership();
+                        dependentCsr.flushBatchedSubmissions();
+                        dependentCsr.updateTagFromWait();
+                        csrDeps.taskCountContainer.push_back({dependentCsr.peekTaskCount(), reinterpret_cast<uint64_t>(dependentCsr.getTagAddress())});
+                        currentCsr.makeResident(*dependentCsr.getTagAllocation());
+                    }
+                }
+            }
         }
     }
 }

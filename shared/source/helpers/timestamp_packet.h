@@ -147,7 +147,7 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static void programCsrDependenciesForForTaskCountContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
-        auto taskCountContainer = csrDependencies.taskCountContainer;
+        auto &taskCountContainer = csrDependencies.taskCountContainer;
 
         for (auto &[taskCountPreviousRootDevice, tagAddressPreviousRootDevice] : taskCountContainer) {
             using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;

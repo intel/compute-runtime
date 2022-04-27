@@ -341,3 +341,306 @@ HWTEST_F(TimestampPacketTests, givenKernelWhichRequiresFlushWhenEnqueueingKernel
     EXPECT_NE(nullptr, node2);
     EXPECT_NE(node1, node2);
 }
+
+HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
+    MockTagAllocator<TimestampPackets<uint32_t>> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
+                                                              sizeof(TimestampPackets<uint32_t>), false, device->getDeviceBitfield());
+
+    auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.timestampPacketWriteEnabled = true;
+    ultCsr.storeMakeResidentAllocations = true;
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
+    cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
+
+    MockTimestampPacketContainer node1(*ultCsr.getTimestampPacketAllocator(), 0);
+    MockTimestampPacketContainer node2(*ultCsr.getTimestampPacketAllocator(), 0);
+
+    auto tagNode1 = tagAllocator.getTag();
+    node1.add(tagNode1);
+    auto tagNode2 = tagAllocator.getTag();
+    node2.add(tagNode2);
+
+    Event event0(cmdQ1.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
+
+    EXPECT_NE(tagNode1->getBaseGraphicsAllocation(), tagNode2->getBaseGraphicsAllocation());
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), ultCsr.taskCount));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), ultCsr.taskCount));
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingNonBlockedThenMakeItResident) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.storeMakeResidentAllocations = true;
+
+    MockKernelWithInternals mockKernel(*device, context);
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    auto timestampPacketNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
+
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMakeItResidentOnSubmit) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockKernelWithInternals mockKernel(*device, context);
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+
+    csr.storeMakeResidentAllocations = true;
+
+    UserEvent userEvent;
+    cl_event clEvent = &userEvent;
+
+    cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
+    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
+
+    EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
+    cmdQ->isQueueBlocked();
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenVirtualEventIncrementsRefInternalAndDecrementsAfterCompleteEvent) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    MockKernelWithInternals mockKernelWithInternals(*device, context);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+
+    UserEvent userEvent;
+    cl_event waitlist = &userEvent;
+
+    auto internalCount = userEvent.getRefInternalCount();
+    cmdQ->enqueueKernel(mockKernel, 1, nullptr, gws, nullptr, 1, &waitlist, nullptr);
+    EXPECT_EQ(internalCount + 1, userEvent.getRefInternalCount());
+    userEvent.setStatus(CL_COMPLETE);
+    cmdQ->isQueueBlocked();
+    EXPECT_EQ(internalCount, mockKernel->getRefInternalCount());
+}
+
+TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObtainEnoughTags) {
+    size_t dispatchSize = 3;
+
+    mockCmdQ->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 0);
+    EXPECT_EQ(0u, mockCmdQ->timestampPacketContainer->peekNodes().size());
+
+    TimestampPacketContainer previousNodes;
+    mockCmdQ->obtainNewTimestampPacketNodes(dispatchSize, previousNodes, false, mockCmdQ->getGpgpuCommandStreamReceiver());
+    EXPECT_EQ(dispatchSize, mockCmdQ->timestampPacketContainer->peekNodes().size());
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutKernelThenInheritTimestampPacketsWithoutSubmitting) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+
+    MockKernelWithInternals mockKernel(*device, context);
+    cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
+
+    TimestampPacketContainer cmdQNodes;
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ->timestampPacketContainer);
+
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+    UserEvent userEvent;
+    Event eventWithoutContainer(nullptr, 0, 0, 0);
+
+    uint32_t numEventsWithContainer = 2;
+    uint32_t numEventsOnWaitlist = numEventsWithContainer + 2; // UserEvent + eventWithoutContainer
+
+    cl_event waitlist[] = {&event0, &event1, &userEvent, &eventWithoutContainer};
+
+    cl_event clOutEvent;
+    cmdQ->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, &clOutEvent);
+
+    auto outEvent = castToObject<Event>(clOutEvent);
+
+    EXPECT_EQ(cmdQ->timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // no new nodes obtained
+    EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
+
+    auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
+    EXPECT_EQ(numEventsWithContainer + 1, eventsNodes.size()); // numEventsWithContainer + command queue
+    EXPECT_EQ(cmdQNodes.peekNodes().at(0), eventsNodes.at(0));
+    EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
+    EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(2));
+
+    clReleaseEvent(clOutEvent);
+    userEvent.setStatus(CL_COMPLETE);
+    cmdQ->isQueueBlocked();
+}
+
+HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThenDispatchBlockedCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    device->resetCommandStreamReceiver(mockCsr);
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCsr->storeFlushedTaskStream = true;
+
+    auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+
+    auto &secondEngine = device->getEngine(getChosenEngineType(device->getHardwareInfo()), EngineUsage::LowPriority);
+    static_cast<UltCommandStreamReceiver<FamilyType> *>(secondEngine.commandStreamReceiver)->timestampPacketWriteEnabled = true;
+
+    auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ1->gpgpuEngine = &secondEngine;
+    cmdQ1->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    EXPECT_NE(&cmdQ0->getGpgpuCommandStreamReceiver(), &cmdQ1->getGpgpuCommandStreamReceiver());
+
+    MockTimestampPacketContainer node0(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ0.get(), 0, 0, 0); // on the same CSR
+    event0.addTimestampPacketNodes(node0);
+    Event event1(cmdQ1.get(), 0, 0, 0); // on different CSR
+    event1.addTimestampPacketNodes(node1);
+
+    uint32_t numEventsOnWaitlist = 3;
+
+    uint32_t commands[] = {CL_COMMAND_MARKER, CL_COMMAND_BARRIER};
+    for (int i = 0; i < 2; i++) {
+        UserEvent userEvent;
+        cl_event waitlist[] = {&event0, &event1, &userEvent};
+        if (commands[i] == CL_COMMAND_MARKER) {
+            cmdQ0->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+        } else if (commands[i] == CL_COMMAND_BARRIER) {
+            cmdQ0->enqueueBarrierWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+        } else {
+            EXPECT_TRUE(false);
+        }
+
+        auto initialCsrStreamOffset = mockCsr->commandStream.getUsed();
+        userEvent.setStatus(CL_COMPLETE);
+
+        HardwareParse hwParserCsr;
+        HardwareParse hwParserCmdQ;
+        LinearStream taskStream(mockCsr->storedTaskStream.get(), mockCsr->storedTaskStreamSize);
+        taskStream.getSpace(mockCsr->storedTaskStreamSize);
+        hwParserCsr.parseCommands<FamilyType>(mockCsr->commandStream, initialCsrStreamOffset);
+        hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
+
+        auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+        auto expectedQueueSemaphoresCount = 1u;
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+            expectedQueueSemaphoresCount += 1;
+        }
+        EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node0.getNode(0), 0);
+
+        auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+        EXPECT_EQ(1u, csrSemaphores.size());
+        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node1.getNode(0), 0);
+
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+        EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
+
+        cmdQ0->isQueueBlocked();
+    }
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context2(device2.get());
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+
+    uint32_t numEventsOnWaitlist = 2;
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+
+    HardwareParse hwParserCsr;
+    HardwareParse hwParserCmdQ;
+    hwParserCsr.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
+    hwParserCmdQ.parseCommands<FamilyType>(*cmdQ->commandStream, 0);
+
+    auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(1u, csrSemaphores.size());
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
+
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+    auto expectedQueueSemaphoresCount = 1u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+        expectedQueueSemaphoresCount += 1;
+    }
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context2(device2.get());
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+
+    uint32_t numEventsOnWaitlist = 2;
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ->enqueueBarrierWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+
+    HardwareParse hwParserCsr;
+    HardwareParse hwParserCmdQ;
+    hwParserCsr.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
+    hwParserCmdQ.parseCommands<FamilyType>(*cmdQ->commandStream, 0);
+
+    auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(1u, csrSemaphores.size());
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
+
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+    auto expectedQueueSemaphoresCount = 1u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+        expectedQueueSemaphoresCount += 1;
+    }
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
+}
