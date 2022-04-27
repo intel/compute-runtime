@@ -260,6 +260,7 @@ struct CrossDeviceDependenciesTests : public ::testing::Test {
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
         auto device1 = deviceFactory->rootDevices[1];
+
         auto device2 = deviceFactory->rootDevices[2];
 
         cl_device_id devices[] = {device1, device2};
@@ -631,6 +632,43 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     buffer->release();
     pCmdQ1->release();
     pCmdQ2->release();
+}
+
+HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenUnflushedQueueAndEventInMultiRootDeviceEnvironmentWhenTheyArePassedToSecondQueueThenFlushSubmissions) {
+    auto deviceFactory = std::make_unique<UltClDeviceFactory>(3, 0);
+    deviceFactory->rootDevices[1]->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    deviceFactory->rootDevices[1]->getUltCommandStreamReceiver<FamilyType>().useNewResourceImplicitFlush = false;
+
+    cl_device_id devices[] = {deviceFactory->rootDevices[1], deviceFactory->rootDevices[2]};
+
+    auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
+    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+
+    pCmdQ1->getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    cl_event outputEvent{};
+    cl_event inputEvent;
+
+    pCmdQ1->enqueueMarkerWithWaitList(
+        0,
+        nullptr,
+        &inputEvent);
+    pCmdQ1->enqueueMarkerWithWaitList(
+        1,
+        &inputEvent,
+        &outputEvent);
+
+    EXPECT_FALSE(pCmdQ1->getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed());
+
+    pCmdQ2->enqueueMarkerWithWaitList(
+        1,
+        &outputEvent,
+        nullptr);
+    EXPECT_TRUE(pCmdQ1->getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed());
+    castToObject<Event>(inputEvent)->release();
+    castToObject<Event>(outputEvent)->release();
+    pCmdQ1->finish();
+    pCmdQ2->finish();
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStaticPartitioningEnabledWhenFlushingTaskThenWorkPartitionAllocationIsMadeResident) {

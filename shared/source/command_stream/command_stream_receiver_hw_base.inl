@@ -1261,6 +1261,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::updateTagFromWait() {
+    flushBatchedSubmissions();
     if (isUpdateTagFromWaitEnabled()) {
         flushTagUpdate();
     }
