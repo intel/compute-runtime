@@ -728,7 +728,14 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleIsCreatedAndFullyL
 
     module->initialize(&moduleDesc, neoDevice);
 
-    EXPECT_EQ(5, memoryOperationsHandler->makeResidentCalledCount);
+    auto numIsaAllocations = static_cast<int>(module->getKernelImmutableDataVector().size());
+
+    auto expectedMakeResidentCallsCount = numIsaAllocations + 1; // const surface
+    if (module->getTranslationUnit()->programInfo.linkerInput) {
+        expectedMakeResidentCallsCount += numIsaAllocations;
+    }
+
+    EXPECT_EQ(expectedMakeResidentCallsCount, memoryOperationsHandler->makeResidentCalledCount);
 
     for (auto &ki : module->getKernelImmutableDataVector()) {
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
