@@ -438,7 +438,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    MockBuffer::setAllocationType(buffer.getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(buffer.getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
@@ -468,7 +468,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -501,7 +501,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
@@ -534,7 +534,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.mockKernel->initialize();
 
@@ -567,7 +567,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -594,7 +594,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -641,7 +641,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.mockKernel->initialize();
     mockKernel.mockKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
@@ -737,7 +737,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
+    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
     gmm->isCompressionEnabled = true;
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
@@ -807,7 +807,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto mockBuffer = std::unique_ptr<MockBuffer>(new MockBuffer());
     StorageInfo info;
     size_t t = 4;
-    auto gmm = new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
+    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, info, true);
     gmm->isCompressionEnabled = false;
 
     mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);

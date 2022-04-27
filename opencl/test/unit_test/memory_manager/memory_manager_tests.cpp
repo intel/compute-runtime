@@ -975,7 +975,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
     executionEnvironment.initGmm();
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
 
-    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 123, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 123, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
     allocation->setDefaultGmm(gmm);
 
@@ -1849,7 +1849,7 @@ TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateSharea
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturned) {
-    Gmm *gmm = new Gmm(device->getGmmClientContext(), nullptr, 65536, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    Gmm *gmm = new Gmm(device->getGmmHelper(), nullptr, 65536, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     EXPECT_NE(nullptr, gmm);
     delete gmm;
 }
@@ -2608,7 +2608,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
     GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
     allocation.setDefaultGmm(gmm.get());
@@ -2618,7 +2618,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{0, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
     allocation.setDefaultGmm(gmm.get());
@@ -2885,7 +2885,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     memoryManager->getRegisteredEngines()[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
@@ -2929,7 +2929,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
 
@@ -2961,7 +2961,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
     memoryManager->getRegisteredEngines()[0].commandStreamReceiver->pageTableManager.reset(nullptr);
 
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocation.setDefaultGmm(&gmm);
 
@@ -3004,7 +3004,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     MockGraphicsAllocation allocation(1u, AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull);
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmClientContext());
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
     allocation.setDefaultGmm(&gmm);
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();

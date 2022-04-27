@@ -593,14 +593,14 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
     if (kernelObjType == KernelObjForAuxTranslation::Type::MEM_OBJ) {
-        MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+        MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
         cl_mem clMem = mockKernelObjForAuxTranslation.mockBuffer.get();
         mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
     } else {
         auto gfxAllocation = mockKernelObjForAuxTranslation.mockGraphicsAllocation.get();
 
-        MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+        MockBuffer::setAllocationType(gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
         auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
         mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation, 0u);
@@ -703,7 +703,7 @@ HWTEST2_P(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
     std::unique_ptr<Buffer> buffer = nullptr;
     std::unique_ptr<GraphicsAllocation> gfxAllocation = nullptr;
 
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = true;
 
     auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -758,7 +758,7 @@ HWTEST2_P(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
     builtinOpParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
-    auto gmm = std::make_unique<Gmm>(pDevice->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
     gmm->isCompressionEnabled = true;
     if (kernelObjType == MockKernelObjForAuxTranslation::Type::MEM_OBJ) {
         mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());

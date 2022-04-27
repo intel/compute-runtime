@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
 
     MockBuffer buffer;
     auto allocation = buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    auto gmm1 = new MockGmm(pDevice->getGmmClientContext());
+    auto gmm1 = new MockGmm(pDevice->getGmmHelper());
     allocation->setGmm(gmm1, 0);
 
     cl_mem clMem = &buffer;
@@ -49,7 +49,7 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
     MockBuffer bufferMediaCompressed;
     bufferMediaCompressed.setSharingHandler(new SharingHandler());
     allocation = bufferMediaCompressed.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    auto gmm2 = new MockGmm(pDevice->getGmmClientContext());
+    auto gmm2 = new MockGmm(pDevice->getGmmHelper());
     allocation->setGmm(gmm2, 0);
     allocation->getGmm(0)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = 1;
     cl_mem clMem2 = &bufferMediaCompressed;

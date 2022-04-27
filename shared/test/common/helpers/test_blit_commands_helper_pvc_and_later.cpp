@@ -52,7 +52,7 @@ HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForVillBu
 
 HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForVillBufferThenDstCompressionDisabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->isCompressionEnabled = false;
 
     uint32_t pattern = 1;
@@ -76,7 +76,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForVill
 
 HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForVillBufferThenDstCompressionEnabled, IsPVC) {
     using MEM_SET = typename FamilyType::MEM_SET;
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->isCompressionEnabled = true;
 
     uint32_t pattern = 1;

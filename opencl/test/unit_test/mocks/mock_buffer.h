@@ -54,12 +54,12 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
     void setAllocationType(uint32_t rootDeviceIndex, bool compressed) {
         setAllocationType(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex),
-                          device->getRootDeviceEnvironment().getGmmClientContext(), compressed);
+                          device->getRootDeviceEnvironment().getGmmHelper(), compressed);
     }
 
-    static void setAllocationType(GraphicsAllocation *graphicsAllocation, GmmClientContext *gmmClientContext, bool compressed) {
+    static void setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHelper *gmmHelper, bool compressed) {
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmClientContext, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, compressed, {}, true));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, compressed, {}, true));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

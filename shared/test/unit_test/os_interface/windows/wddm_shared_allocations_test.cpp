@@ -68,7 +68,7 @@ TEST_F(WdmmSharedTests, WhenCreatingSharedAllocationAndGetNTHandleFailedThenAllo
     D3DKMT_HANDLE handle = 32u;
     D3DKMT_HANDLE resourceHandle = 32u;
     uint64_t ntHandle = 0u;
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, {}, true);
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 20, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, true, {}, true);
 
     EXPECT_NE(STATUS_SUCCESS, wddm->createAllocation(nullptr, &gmm, handle, resourceHandle, &ntHandle));
     EXPECT_EQ(wddm->destroyAllocationResult.called++, 1u);

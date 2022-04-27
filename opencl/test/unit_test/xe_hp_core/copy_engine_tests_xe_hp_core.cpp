@@ -565,7 +565,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenDebugFlagSetWhenCompressionIsUsedThe
     blitCmd.setDestinationX2CoordinateRight(1);
     blitCmd.setDestinationY2CoordinateBottom(1);
 
-    auto gmm = std::make_unique<MockGmm>(clDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(clDevice->getGmmHelper());
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);

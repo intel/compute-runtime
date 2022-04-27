@@ -250,7 +250,7 @@ Image *Image::create(Context *context,
             Gmm *gmm = nullptr;
             auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
             auto &hwHelper = HwHelper::get((&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
-            auto clientContext = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext();
+            auto gmmHelper = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
 
             if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
 
@@ -273,7 +273,7 @@ Image *Image::create(Context *context,
                 if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer() != 0)) {
                     // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                     auto queryGmmImgInfo(imgInfo);
-                    auto gmm = std::make_unique<Gmm>(clientContext, queryGmmImgInfo, StorageInfo{}, preferCompression);
+                    auto gmm = std::make_unique<Gmm>(gmmHelper, queryGmmImgInfo, StorageInfo{}, preferCompression);
                     auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                     if (gmmAllocationSize > allocationInfo[rootDeviceIndex].memory->getUnderlyingBufferSize()) {
                         allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationWithPadding(allocationInfo[rootDeviceIndex].memory, gmmAllocationSize);
@@ -304,7 +304,7 @@ Image *Image::create(Context *context,
                             }
                         }
                     } else {
-                        gmm = new Gmm(clientContext, imgInfo, StorageInfo{}, preferCompression);
+                        gmm = new Gmm(gmmHelper, imgInfo, StorageInfo{}, preferCompression);
                         allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                                                       false, // allocateMemory
                                                                                                                       imgInfo.size, AllocationType::SHARED_CONTEXT_IMAGE,
@@ -759,14 +759,14 @@ cl_int Image::getImageParams(Context *context,
                              size_t *imageRowPitch,
                              size_t *imageSlicePitch) {
     cl_int retVal = CL_SUCCESS;
-    auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
+    auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
 
     ImageInfo imgInfo = {};
     cl_image_desc imageDescriptor = *imageDesc;
     imgInfo.imgDesc = Image::convertDescriptor(imageDescriptor);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
 
-    auto gmm = std::make_unique<Gmm>(clientContext, imgInfo, StorageInfo{}, false);
+    auto gmm = std::make_unique<Gmm>(gmmHelper, imgInfo, StorageInfo{}, false);
 
     *imageRowPitch = imgInfo.rowPitch;
     *imageSlicePitch = imgInfo.slicePitch;

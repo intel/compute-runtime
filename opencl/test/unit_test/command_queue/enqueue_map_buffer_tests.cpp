@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -378,7 +378,7 @@ TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEv
     buffer->setSharingHandler(new SharingHandler());
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
     }
     buffer->forceDisallowCPUCopy = true;
 
@@ -426,7 +426,7 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
     buffer->setSharingHandler(new SharingHandler());
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
     }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer.get());

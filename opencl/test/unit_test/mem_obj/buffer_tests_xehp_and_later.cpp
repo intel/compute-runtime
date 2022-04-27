@@ -34,7 +34,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     uint32_t defaultCompressionFormat = gmmContext->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
 
     auto retVal = CL_SUCCESS;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm->isCompressionEnabled = true;
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -76,7 +76,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
 
     auto &device = context.getDevice(0)->getDevice();
     auto allocation = buffer->getGraphicsAllocation(device.getRootDeviceIndex());
-    auto gmm = new MockGmm(device.getGmmClientContext());
+    auto gmm = new MockGmm(device.getGmmHelper());
     gmm->isCompressionEnabled = true;
     allocation->setDefaultGmm(gmm);
 

@@ -58,7 +58,7 @@ class CreateFromGlTexture : public ::testing::Test {
 
     void updateImgInfoAndForceGmm() {
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmClientContext(), imgInfo, false);
+        gmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), imgInfo, false);
 
         tempMM.forceAllocationSize = imgInfo.size;
         tempMM.forceGmm = gmm.get();
@@ -70,7 +70,7 @@ class CreateFromGlTexture : public ::testing::Test {
             mcsImgDesc.imageWidth = 128;
             mcsImgDesc.imageType = ImageType::Image2D;
             auto mcsImgInfo = MockGmm::initImgInfo(mcsImgDesc, 0, nullptr);
-            mcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmClientContext(), mcsImgInfo, false);
+            mcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), mcsImgInfo, false);
             tempMM.forceMcsGmm = mcsGmm.get();
         }
     }

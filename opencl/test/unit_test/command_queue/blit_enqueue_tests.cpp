@@ -163,9 +163,9 @@ struct BlitEnqueueTests : public ::testing::Test {
         graphicsAllocation->setAllocationType(AllocationType::BUFFER);
 
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
-            auto clientContext = device->getRootDeviceEnvironment().getGmmClientContext();
+            auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();
 
-            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

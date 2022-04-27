@@ -23,10 +23,10 @@ class MockGmm : public Gmm {
     using Gmm::Gmm;
     using Gmm::setupImageResourceParams;
 
-    MockGmm(GmmClientContext *clientContext) : Gmm(clientContext, nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true){};
+    MockGmm(GmmHelper *gmmHelper) : Gmm(gmmHelper, nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true){};
 
-    static std::unique_ptr<Gmm> queryImgParams(GmmClientContext *clientContext, ImageInfo &imgInfo, bool preferCompression) {
-        return std::unique_ptr<Gmm>(new Gmm(clientContext, imgInfo, {}, preferCompression));
+    static std::unique_ptr<Gmm> queryImgParams(GmmHelper *gmmHelper, ImageInfo &imgInfo, bool preferCompression) {
+        return std::unique_ptr<Gmm>(new Gmm(gmmHelper, imgInfo, {}, preferCompression));
     }
 
     static ImageInfo initImgInfo(ImageDescriptor &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {

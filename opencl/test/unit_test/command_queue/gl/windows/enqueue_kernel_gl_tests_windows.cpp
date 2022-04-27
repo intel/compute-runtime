@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
 
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
-    MockGmm mockGmm(pDevice->getGmmClientContext());
+    MockGmm mockGmm(pDevice->getGmmHelper());
     glSharing.uploadDataToBufferInfo(1, 0, mockGmm.gmmResourceInfo->peekGmmResourceInfo());
     pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;

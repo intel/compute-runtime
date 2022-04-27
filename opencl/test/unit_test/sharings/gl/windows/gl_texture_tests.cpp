@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ class GlSharingTextureTests : public ::testing::Test {
         mockGlSharingFunctions = glSharing->sharingFunctions.release();
         clContext->setSharingFunctions(mockGlSharingFunctions);
 
-        tempMM->forceGmm = MockGmm::queryImgParams(device->getGmmClientContext(), imgInfo, false);
+        tempMM->forceGmm = MockGmm::queryImgParams(device->getGmmHelper(), imgInfo, false);
         tempMM->forceAllocationSize = textureSize;
         textureSize = imgInfo.size;
         textureId = 1;

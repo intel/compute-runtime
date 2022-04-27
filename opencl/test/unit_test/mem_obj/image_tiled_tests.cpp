@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info, false);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
     alloc->setDefaultGmm(gmm.release());
 
@@ -139,7 +139,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
     info.imgDesc = Image::convertDescriptor(imageDesc);
     info.plane = GMM_NO_PLANE;
 
-    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), info, false);
+    auto gmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), info, false);
 
     alloc->setDefaultGmm(gmm.release());
 

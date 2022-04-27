@@ -35,7 +35,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnC
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     gmm.isCompressionEnabled = true;
     allocPtr->setDefaultGmm(&gmm);
 
@@ -56,7 +56,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnU
     auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
+    MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
     gmm.isCompressionEnabled = false;
     allocPtr->setDefaultGmm(&gmm);
 

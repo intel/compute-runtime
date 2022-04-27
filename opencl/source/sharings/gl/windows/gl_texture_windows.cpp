@@ -31,7 +31,7 @@ namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
-    auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
+    auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
     auto memoryManager = context->getMemoryManager();
     cl_image_desc imgDesc = {};
     cl_image_format imgFormat = {};
@@ -65,7 +65,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     if (texInfo.pGmmResInfo) {
         DEBUG_BREAK_IF(alloc->getDefaultGmm() != nullptr);
-        alloc->setDefaultGmm(new Gmm(clientContext, texInfo.pGmmResInfo));
+        alloc->setDefaultGmm(new Gmm(gmmHelper, texInfo.pGmmResInfo));
     }
 
     auto gmm = alloc->getDefaultGmm();
@@ -129,7 +129,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, allocProperties, false, false);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
-            mcsAlloc->setDefaultGmm(new Gmm(clientContext, texInfo.pGmmResInfoMCS));
+            mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, texInfo.pGmmResInfoMCS));
         }
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
         mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();

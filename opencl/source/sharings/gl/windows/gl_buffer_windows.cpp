@@ -163,8 +163,8 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
         sharingFunctions->graphicsAllocationsForGlBufferReuse.push_back(std::make_pair(bufferId, graphicsAllocation));
         if (bufferInfo.pGmmResInfo) {
             DEBUG_BREAK_IF(graphicsAllocation->getDefaultGmm() != nullptr);
-            auto clientContext = context->getDevice(0)->getRootDeviceEnvironment().getGmmClientContext();
-            graphicsAllocation->setDefaultGmm(new Gmm(clientContext, bufferInfo.pGmmResInfo));
+            auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
+            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, bufferInfo.pGmmResInfo));
         }
     }
 

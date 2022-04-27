@@ -28,7 +28,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
-    MockWddmAllocation allocation(getGmmClientContext());
+    MockWddmAllocation allocation(getGmmHelper());
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
@@ -74,7 +74,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;

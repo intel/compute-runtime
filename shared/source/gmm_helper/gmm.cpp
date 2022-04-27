@@ -20,8 +20,8 @@
 #include "shared/source/memory_manager/allocation_type.h"
 
 namespace NEO {
-Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
-         bool preferCompressed, StorageInfo storageInfo, bool allowLargePages) : clientContext(clientContext) {
+Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
+         bool preferCompressed, StorageInfo storageInfo, bool allowLargePages) : gmmHelper(gmmHelper) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -57,24 +57,24 @@ Gmm::Gmm(GmmClientContext *clientContext, const void *alignedPtr, size_t aligned
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
-    gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &resourceParams));
+    gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), &resourceParams));
 }
 
-Gmm::Gmm(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmm) : clientContext(clientContext) {
-    gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, inputGmm));
+Gmm::Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm) : gmmHelper(gmmHelper) {
+    gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), inputGmm));
     applyDebugOverrides();
 }
 
 Gmm::~Gmm() = default;
 
-Gmm::Gmm(GmmClientContext *clientContext, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed) : clientContext(clientContext) {
+Gmm::Gmm(GmmHelper *gmmHelper, ImageInfo &inputOutputImgInfo, StorageInfo storageInfo, bool preferCompressed) : gmmHelper(gmmHelper) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo, preferCompressed);
     applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
-    this->gmmResourceInfo.reset(GmmResourceInfo::create(clientContext, &this->resourceParams));
+    this->gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), &this->resourceParams));
     UNRECOVERABLE_IF(this->gmmResourceInfo == nullptr);
 
     queryImageParams(inputOutputImgInfo);
@@ -113,11 +113,11 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
 
     resourceParams.Flags.Info.Linear = imgInfo.linearStorage;
 
-    auto &hwHelper = HwHelper::get(clientContext->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(gmmHelper->getClientContext()->getHardwareInfo()->platform.eRenderCoreFamily);
 
     resourceParams.NoGfxMemory = 1; // dont allocate, only query for params
 
-    resourceParams.Usage = CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, *clientContext->getHardwareInfo());
+    resourceParams.Usage = CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, *gmmHelper->getClientContext()->getHardwareInfo());
 
     resourceParams.Format = imgInfo.surfaceFormat->GMMSurfaceFormat;
     resourceParams.Flags.Gpu.Texture = 1;
@@ -136,7 +136,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
 }
 
 void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
-    auto hardwareInfo = clientContext->getHardwareInfo();
+    auto hardwareInfo = gmmHelper->getClientContext()->getHardwareInfo();
     bool allowCompression = HwHelper::compressedBuffersSupported(*hardwareInfo) &&
                             preferCompression;
 
@@ -153,13 +153,13 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
     uint8_t compressionFormat;
     if (this->resourceParams.Flags.Info.MediaCompressed) {
-        compressionFormat = clientContext->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
     } else {
-        compressionFormat = clientContext->getSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
+        compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(imgInfo.surfaceFormat->GMMSurfaceFormat);
     }
 
     bool compressionFormatSupported = false;
-    if (clientContext->getHardwareInfo()->featureTable.flags.ftrFlatPhysCCS) {
+    if (gmmHelper->getClientContext()->getHardwareInfo()->featureTable.flags.ftrFlatPhysCCS) {
         compressionFormatSupported = compressionFormat != GMM_FLATCCS_FORMAT::GMM_FLATCCS_FORMAT_INVALID;
     } else {
         compressionFormatSupported = compressionFormat != GMM_E2ECOMP_FORMAT::GMM_E2ECOMP_FORMAT_INVALID;
@@ -170,7 +170,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
                              imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_YVYU ||
                              imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_VYUY;
 
-    auto hwInfo = clientContext->getHardwareInfo();
+    auto hwInfo = gmmHelper->getClientContext()->getHardwareInfo();
 
     bool allowCompression = HwHelper::compressedImagesSupported(*hwInfo) &&
                             preferCompressed &&
@@ -248,7 +248,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
 }
 
 uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
-    if (clientContext->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
+    if (gmmHelper->getClientContext()->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 0;
     }
     return gmmResourceInfo->getQPitch();
@@ -332,7 +332,7 @@ uint32_t Gmm::getAuxQPitch() {
 }
 
 void Gmm::applyMemoryFlags(StorageInfo &storageInfo) {
-    auto hardwareInfo = clientContext->getHardwareInfo();
+    auto hardwareInfo = gmmHelper->getClientContext()->getHardwareInfo();
 
     if (hardwareInfo->featureTable.flags.ftrLocalMemory) {
         if (storageInfo.systemMemoryPlacement) {

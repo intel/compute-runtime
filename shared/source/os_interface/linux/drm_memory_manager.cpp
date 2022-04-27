@@ -506,7 +506,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     StorageInfo systemMemoryStorageInfo = {};
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr,
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
                                      allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
@@ -723,7 +723,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
             }
         }
 
-        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmClientContext(), *properties.imgInfo,
+        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo,
                            createStorageInfoFromProperties(properties), properties.flags.preferCompressed);
 
         drmAllocation->setDefaultGmm(gmm);
@@ -1222,7 +1222,7 @@ void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
     bo->setLockedAddress(nullptr);
 }
 
-void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
+void createColouredGmms(GmmHelper *gmmHelper, DrmAllocation &allocation, const StorageInfo &storageInfo, bool compression) {
     DEBUG_BREAK_IF(storageInfo.colouringPolicy == ColouringPolicy::DeviceCountBased && storageInfo.colouringGranularity != MemoryConstants::pageSize64k);
 
     auto remainingSize = alignUp(allocation.getUnderlyingBufferSize(), storageInfo.colouringGranularity);
@@ -1251,11 +1251,11 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
         remainingSize -= currentSize;
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= (1u << (handleId % banksCnt));
-        auto gmm = new Gmm(clientContext,
+        auto gmm = new Gmm(gmmHelper,
                            nullptr,
                            currentSize,
                            0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *clientContext->getHardwareInfo()),
+                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *gmmHelper->getHardwareInfo()),
                            compression,
                            limitedStorageInfo,
                            true);
@@ -1263,14 +1263,14 @@ void createColouredGmms(GmmClientContext *clientContext, DrmAllocation &allocati
     }
 }
 
-void fillGmmsInAllocation(GmmClientContext *clientContext, DrmAllocation *allocation, const StorageInfo &storageInfo) {
+void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation, const StorageInfo &storageInfo) {
     auto alignedSize = alignUp(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
-        auto gmm = new Gmm(clientContext, nullptr, alignedSize, 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, *clientContext->getHardwareInfo()), false, limitedStorageInfo, true);
+        auto gmm = new Gmm(gmmHelper, nullptr, alignedSize, 0u,
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()), false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1337,7 +1337,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     bool createSingleHandle = 1 == numHandles;
     if (allocationData.type == AllocationType::IMAGE) {
         allocationData.imgInfo->useLocalMemory = true;
-        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo,
+        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), *allocationData.imgInfo,
                                     allocationData.storageInfo, allocationData.flags.preferCompressed);
         sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
     } else {
@@ -1348,7 +1348,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         }
         if (createSingleHandle) {
 
-            gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+            gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                         nullptr,
                                         sizeAligned,
                                         0u,
@@ -1372,12 +1372,12 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if (createSingleHandle) {
         allocation->setDefaultGmm(gmm.release());
     } else if (allocationData.storageInfo.multiStorage) {
-        createColouredGmms(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+        createColouredGmms(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                            *allocation,
                            allocationData.storageInfo,
                            allocationData.flags.preferCompressed);
     } else {
-        fillGmmsInAllocation(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocation.get(), allocationData.storageInfo);
+        fillGmmsInAllocation(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocation.get(), allocationData.storageInfo);
     }
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(allocationData.flags.flushL3);

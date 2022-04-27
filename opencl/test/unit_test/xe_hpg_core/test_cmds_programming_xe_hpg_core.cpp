@@ -167,7 +167,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, imageDesc.image_height * imageDesc.image_width, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -241,7 +241,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, imageDesc.image_height * imageDesc.image_width, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm->isCompressionEnabled = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -284,7 +284,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, imageDesc.image_height * imageDesc.image_width, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm->isCompressionEnabled = false;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
@@ -327,7 +327,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
 
     imageDesc.mem_object = clCreateBuffer(&context, CL_MEM_READ_WRITE, imageDesc.image_height * imageDesc.image_width, nullptr, &retVal);
 
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper()->getClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm->isCompressionEnabled = true;
     gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
 

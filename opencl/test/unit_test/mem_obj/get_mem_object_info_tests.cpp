@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -341,7 +341,7 @@ TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(sizeof(cl_bool), sizeReturned);
 
-    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_USES_COMPRESSION_INTEL,
@@ -351,7 +351,7 @@ TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(cl_bool{CL_TRUE}, usesCompression);
 
-    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), false);
+    MockBuffer::setAllocationType(graphicsAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), false);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_USES_COMPRESSION_INTEL,

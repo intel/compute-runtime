@@ -257,7 +257,7 @@ HWTEST2_F(GmmTestsDG2, givenGmmForImageWithForceLocalMemThenNonLocalIsSetToFalse
     storageInfo.memoryBanks = 2;
     storageInfo.systemMemoryPlacement = false;
 
-    std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo, storageInfo, false));
+    std::unique_ptr<NEO::Gmm> gmm(new NEO::Gmm(mockExecEnv.rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, storageInfo, false));
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.NonLocalOnly, 0u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.LocalOnly, 1u);

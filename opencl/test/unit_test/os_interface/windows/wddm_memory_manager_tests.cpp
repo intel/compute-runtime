@@ -95,7 +95,7 @@ TEST(WddmMemoryManager, WhenWddmMemoryManagerIsCreatedThenItIsNonAssignable) {
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     MockOsContext osContext(1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular},
                                                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
@@ -106,7 +106,7 @@ TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGetting
 TEST(WddmAllocationTest, givenAllocationCreatedWithOsContextCountOneWhenItIsCreatedThenMaxOsContextCountIsUsedInstead) {
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     allocation.setTrimCandidateListPosition(1u, 700u);
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
@@ -115,7 +115,7 @@ TEST(WddmAllocationTest, givenAllocationCreatedWithOsContextCountOneWhenItIsCrea
 TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1000u));
 }
@@ -302,7 +302,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto osHandle = 1u;
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     D3DDDI_OPENALLOCATIONINFO allocationInfo;
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
@@ -322,7 +322,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocatio
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto osHandle = 1u;
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     D3DDDI_OPENALLOCATIONINFO allocationInfo;
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
@@ -348,7 +348,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto osHandle = 1u;
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
 
     D3DDDI_OPENALLOCATIONINFO allocationInfo;
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
@@ -556,7 +556,7 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     size_t size = 0x1000;
     uint64_t gpuPtr = 0x123;
 
-    MockWddmAllocation gfxAllocation(rootDeviceEnvironment->getGmmClientContext());
+    MockWddmAllocation gfxAllocation(rootDeviceEnvironment->getGmmHelper());
     HostPtrEntryKey key{cpuPtr, gfxAllocation.getRootDeviceIndex()};
     gfxAllocation.cpuPtr = cpuPtr;
     gfxAllocation.size = size;
@@ -623,7 +623,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, false, mockDeviceBitfield);
@@ -639,7 +639,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
 
 TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestroyedThenDestroyAllocationFromGdiIsNotInvoked) {
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     D3DDDI_OPENALLOCATIONINFO allocationInfo;
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
@@ -666,7 +666,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::SHARED_IMAGE);
@@ -698,7 +698,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitness
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
@@ -721,7 +721,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBit
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
@@ -743,7 +743,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, false, 0);
@@ -765,7 +765,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, size, AllocationType::SHARED_BUFFER, false, false, 0);
@@ -871,7 +871,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     wddm->failOpenSharedHandle = true;
@@ -1018,7 +1018,7 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    MockWddmAllocation alloc(rootDeviceEnvironment->getGmmClientContext()), allocOffseted(rootDeviceEnvironment->getGmmClientContext());
+    MockWddmAllocation alloc(rootDeviceEnvironment->getGmmHelper()), allocOffseted(rootDeviceEnvironment->getGmmHelper());
     // three pages
     void *ptr = alignedMalloc(4 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
@@ -1074,7 +1074,7 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
     auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, 3 * MemoryConstants::pageSize}, ptr);
@@ -1092,7 +1092,7 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
 }
 
 TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     uint32_t size = 4096;
     void *ptr = reinterpret_cast<void *>(4096);
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::BUFFER);
@@ -1102,7 +1102,7 @@ TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmC
 }
 
 TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext());
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     uint32_t size = 0x1001;
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, ptr, AllocationType::BUFFER);
@@ -1200,7 +1200,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
 
     osHandle0->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[0].freeTheFragment = true;
-    osHandle0->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    osHandle0->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
 
     storage.fragmentStorageData[1].osHandleStorage = osHandle1;
     osHandle1->handle = ALLOCATION_HANDLE;
@@ -1211,7 +1211,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     storage.fragmentStorageData[2].osHandleStorage = osHandle2;
     osHandle2->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[2].freeTheFragment = true;
-    osHandle2->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    osHandle2->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     storage.fragmentStorageData[2].residency = new ResidencyData(maxOsContextCount);
 
     memoryManager->cleanOsHandles(storage, 0);
@@ -1259,7 +1259,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestriction
 TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuVaFailThenFailToCreateAllocation) {
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
@@ -1273,7 +1273,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMapGpuVaFailSecondAfterDrainSuccessThenCreateAllocation) {
     void *ptr = reinterpret_cast<void *>(0x10000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
     memoryManager->setDeferredDeleter(deleter);
@@ -1289,7 +1289,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAndMapGpuVaFailSecondAfterDrainFailThenFailToCreateAllocation) {
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
 
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
     memoryManager->setDeferredDeleter(deleter);
@@ -1459,7 +1459,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -1497,7 +1497,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    osHandle->gmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), ptr, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -1929,7 +1929,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
         GTEST_SKIP();
     }
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[1].get());
@@ -1961,7 +1961,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
         GTEST_SKIP();
     }
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*executionEnvironment->rootDeviceEnvironments[1].get());
@@ -2062,7 +2062,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThen
 
 TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*rootDeviceEnvironment);
@@ -2088,7 +2088,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThe
 
 TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenReturnFalse) {
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[1].get();
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
     gmm->isCompressionEnabled = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm(*rootDeviceEnvironment);
@@ -2117,7 +2117,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
-    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     myGmm->isCompressionEnabled = false;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
@@ -2154,7 +2154,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenUpd
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
-    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     myGmm->isCompressionEnabled = true;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
@@ -2274,7 +2274,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithReservedGpuVirtu
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithReservedGpuVirtualAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext(), 1);
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1);
     allocation.setAllocationType(AllocationType::KERNEL_ISA);
     uint64_t gpuAddress = 0x123;
     uint64_t sizeForFree = 0x1234;
@@ -2296,7 +2296,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
     }
 
     uint32_t numGmms = 10;
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext(), numGmms);
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
     allocation.setAllocationType(AllocationType::BUFFER);
     allocation.storageInfo.multiStorage = true;
 
@@ -2600,7 +2600,7 @@ TEST(WddmMemoryManagerCopyMemoryToAllocationBanksTest, givenAllocationWithMultiT
     wddm->init();
     MemoryManagerCreate<WddmMemoryManager> memoryManager(true, true, executionEnvironment);
 
-    MockWddmAllocation mockAllocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
+    MockWddmAllocation mockAllocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
 
     mockAllocation.storageInfo.memoryBanks = 0b1111;
     DeviceBitfield memoryBanksToCopy = 0b1010;
@@ -2634,7 +2634,7 @@ class WddmMemoryManagerMock : public MockWddmMemoryManagerFixture, public ::test
 };
 
 TEST_F(WddmMemoryManagerMock, givenAllocationWithReservedGpuVirtualAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmClientContext(), 4);
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 4);
     allocation.setAllocationType(AllocationType::KERNEL_ISA);
     uint64_t gpuAddress = 0x123;
     uint64_t sizeForFree = 0x1234;

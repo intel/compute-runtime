@@ -900,7 +900,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpda
     auto mockMngr = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(mockMngr);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
     auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), true);
     EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
     EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);
@@ -915,7 +915,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapFalseWhenUpd
     auto mockMngr = new MockGmmPageTableMngr();
     csr->pageTableManager.reset(mockMngr);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
     auto result = csr->pageTableManager->updateAuxTable(0, gmm.get(), false);
     EXPECT_EQ(0ull, mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA);
     EXPECT_EQ(gmm->gmmResourceInfo->peekHandle(), mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseResInfo);

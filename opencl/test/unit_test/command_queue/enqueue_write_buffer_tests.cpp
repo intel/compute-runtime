@@ -444,7 +444,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
 
     allocation->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
-    MockBuffer::setAllocationType(allocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), true);
+    MockBuffer::setAllocationType(allocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
 
     retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),
                                           CL_FALSE,
@@ -460,7 +460,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
     EXPECT_FALSE(allocation->isLocked());
     EXPECT_FALSE(mockCmdQ->cpuDataTransferHandlerCalled);
 
-    MockBuffer::setAllocationType(allocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), false);
+    MockBuffer::setAllocationType(allocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), false);
 
     retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),
                                           CL_FALSE,

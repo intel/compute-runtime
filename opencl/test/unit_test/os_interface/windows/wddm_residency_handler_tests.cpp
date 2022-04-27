@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,8 @@ struct WddmMemoryOperationsHandlerTest : public WddmTest {
     void SetUp() override {
         WddmTest::SetUp();
         wddmMemoryOperationsHandler = std::make_unique<WddmMemoryOperationsHandler>(wddm);
-        wddmAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmClientContext());
-        wddmFragmentedAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmClientContext());
+        wddmAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmHelper());
+        wddmFragmentedAllocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmHelper());
         wddmAllocation->handle = 0x2u;
 
         osHandleStorageFirst = std::make_unique<OsHandleWin>();

@@ -77,7 +77,7 @@ HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsTh
 
 HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAdressAreCorectOffseted, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages);
@@ -174,7 +174,7 @@ struct MyMockResourecInfo : public GmmResourceInfo {
 
 HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromGmm, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
     myResourecInfo->pitch = 0x100;
@@ -205,7 +205,7 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
 
 HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromProperties, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmClientContext());
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
     myResourecInfo->pitch = 0x100;

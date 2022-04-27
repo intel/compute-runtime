@@ -1711,7 +1711,7 @@ HWTEST_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsProg
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     graphicsAllocation->setDefaultGmm(gmm);
     gmm->isCompressionEnabled = true;
 
@@ -1732,7 +1732,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfaceStateIsP
     auto retVal = CL_SUCCESS;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(gmm);
     gmm->isCompressionEnabled = false;
 
@@ -1894,7 +1894,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBl
 
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
+        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
     }
 
     auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);

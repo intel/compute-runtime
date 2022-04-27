@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
             buffer->setSharingHandler(new SharingHandler());
             auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
             for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-                gfxAllocation->setGmm(new MockGmm(pDevice->getGmmClientContext()), handleId);
+                gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
             }
         }
         return std::unique_ptr<MockBuffer<FamilyType>>(buffer);

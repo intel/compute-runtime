@@ -414,7 +414,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
         ASSERT_NE(nullptr, bufferAllocation);
 
-        MockBuffer::setAllocationType(bufferAllocation, pDevice->getRootDeviceEnvironment().getGmmClientContext(), isCompressed);
+        MockBuffer::setAllocationType(bufferAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), isCompressed);
 
         std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {
@@ -439,7 +439,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
         imgDesc.imageHeight = 1;
         imgDesc.imageType = ImageType::Image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        MockGmm::queryImgParams(pDevice->getGmmClientContext(), imgInfo, false);
+        MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
         AllocationData allocationData;
         allocationData.imgInfo = &imgInfo;
         auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);

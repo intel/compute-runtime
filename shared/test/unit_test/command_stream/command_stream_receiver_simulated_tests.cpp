@@ -327,7 +327,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
     csr->setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
-    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm.isCompressionEnabled = true;
 
     int dummy = 1;
@@ -357,7 +357,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     csr->setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
 
-    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
+    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
     gmm.isCompressionEnabled = false;
 
     int dummy = 1;
@@ -417,7 +417,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
 
     csr->multiOsContextCapable = true;
 
-    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     gmm.isCompressionEnabled = true;
 
     int dummy = 1;
@@ -456,7 +456,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
 
     csr->multiOsContextCapable = true;
 
-    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
+    MockGmm gmm(pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, false, {}, true);
     gmm.isCompressionEnabled = false;
 
     int dummy = 1;

@@ -340,7 +340,7 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
-    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo, false);
+    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imgInfo, false);
 
     EXPECT_TRUE(queryGmm->gmmResourceInfo->getSizeAllocation() >= this->size);
 
@@ -372,7 +372,7 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
-    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo, false);
+    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imgInfo, false);
 
     EXPECT_TRUE(queryGmm->gmmResourceInfo->getSizeAllocation() >= this->size);
 
@@ -412,7 +412,7 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     auto imageDescriptor = Image::convertDescriptor(imageDesc);
     auto imgInfo = MockGmm::initImgInfo(imageDescriptor, 0, &imageFromBuffer->getSurfaceFormatInfo().surfaceFormat);
-    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmClientContext(), imgInfo, false);
+    auto queryGmm = MockGmm::queryImgParams(context.getDevice(0)->getGmmHelper(), imgInfo, false);
 
     EXPECT_GT(queryGmm->gmmResourceInfo->getSizeAllocation(), bufferSize);
 

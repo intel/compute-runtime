@@ -256,7 +256,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
 TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUsedInGraphicsAllocation) {
     void *ptr = (void *)0x1000;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
-    auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), ptr, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
 
     mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
     mockGlSharing->uploadDataToBufferInfo();
@@ -902,7 +902,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
     }
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
@@ -946,7 +946,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmClientContext()), handleId);
+        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
     }
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);

@@ -657,7 +657,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
                                                                       {AllocationType::BUFFER_HOST_MEMORY, false},
                                                                       {AllocationType::SVM_GPU, true}}};
 
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
 
@@ -697,7 +697,7 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
                                                                       {AllocationType::BUFFER_HOST_MEMORY, false},
                                                                       {AllocationType::SVM_GPU, true}}};
 
-    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+    auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
 
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
