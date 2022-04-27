@@ -10,10 +10,10 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/helpers/cmd_buffer_validator.h"
 #include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
 
 using namespace NEO;

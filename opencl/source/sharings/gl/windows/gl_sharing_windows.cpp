@@ -7,9 +7,8 @@
 
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
-#include "shared/source/helpers/windows/gl_helper.h"
-
 #include "opencl/source/context/context.inl"
+#include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 
 namespace NEO {

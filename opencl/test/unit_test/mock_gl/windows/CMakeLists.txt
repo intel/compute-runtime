@@ -8,7 +8,7 @@ if(WIN32)
   set(IGDRCL_SRCS_mock_opengl32
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_opengl32.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/mock_opengl32.def
-      ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/windows/mock_function.cpp
+      ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/windows/mock_function.cpp
   )
 
   add_library(mock_opengl32 SHARED ${IGDRCL_SRCS_mock_opengl32})

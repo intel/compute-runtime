@@ -155,15 +155,14 @@ if(SUPPORT_PVC_AND_LATER)
   )
 endif()
 
-set(NEO_CORE_HELPERS_WINDOWS
-    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
+set(NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.h
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/windows/gmm_callbacks_tgllp_and_later.inl
 )
 
-set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_WINDOWS ${NEO_CORE_HELPERS_WINDOWS})
+set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS ${NEO_CORE_HELPERS_GMM_CALLBACKS_WINDOWS})
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})
 
 add_subdirectories()
