@@ -275,15 +275,19 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
 
 void CommandQueue::initializeBcsEngine(bool internalUsage) {
     if (bcsAllowed && !bcsInitialized) {
+        auto &hwInfo = device->getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &neoDevice = device->getNearestGenericSubDevice(0)->getDevice();
         auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
-        bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)] = neoDevice.tryGetEngine(bcsEngineType, EngineUsage::Regular);
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
+        auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
+        auto engineUsage = (internalUsage && hwHelper.preferInternalBcsEngine()) ? EngineUsage::Internal : EngineUsage::Regular;
+        bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
         bcsEngineTypes.push_back(bcsEngineType);
         bcsInitialized = true;
-        if (bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)]) {
-            bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)]->osContext->ensureContextInitialized();
-            bcsEngines[EngineHelpers::getBcsIndex(bcsEngineType)]->commandStreamReceiver->initDirectSubmission();
+        if (bcsEngines[bcsIndex]) {
+            bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
+            bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
         }
     }
 }

@@ -177,6 +177,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::Unsupported;
     }
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     UNRECOVERABLE_IF(memoryBanks.none());
 
@@ -189,10 +190,12 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
 
         UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
         auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
-
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
         auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
-        auto bcsEngine = pDeviceForBlit->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true), EngineUsage::Regular);
+        auto internalUsage = true;
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
         if (!bcsEngine) {
             return BlitOperationResult::Unsupported;
         }

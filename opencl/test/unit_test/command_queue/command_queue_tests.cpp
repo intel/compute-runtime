@@ -305,6 +305,32 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
     EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
 }
 
+TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngineIsUsed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    DebugManager.flags.DeferCmdQBcsInitialization.set(0);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto internalUsage = true;
+    auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(hwInfo, device->getDeviceBitfield())
+                                  ? aub_stream::EngineType::ENGINE_BCS2
+                                  : aub_stream::EngineType::ENGINE_BCS;
+
+    for (auto preferInternalBcsEngine : {0, 1}) {
+        DebugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
+        auto engineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        MockCommandQueue cmdQ(nullptr, device.get(), 0, internalUsage);
+        auto &bcsEngine = device->getEngine(expectedEngineType, engineUsage);
+
+        EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver(expectedEngineType));
+        EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver(expectedEngineType));
+    }
+}
+
 INSTANTIATE_TEST_CASE_P(uint32_t,
                         CommandQueueWithBlitOperationsTests,
                         ::testing::Values(CL_COMMAND_WRITE_BUFFER,

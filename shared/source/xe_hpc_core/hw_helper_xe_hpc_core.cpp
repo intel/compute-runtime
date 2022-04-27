@@ -69,13 +69,16 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
     if (hwInfo.capabilityTable.blitterOperationsSupported) {
         if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
             engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular});  // Main copy engine
-            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal}); // internal usage
+            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal}); // Internal usage
         }
 
         for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
             if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
                 engines.push_back({engineType, EngineUsage::Regular});
+                if (i == 2) {
+                    engines.push_back({engineType, EngineUsage::Internal}); // BCS2 for internal usage
+                }
             }
         }
     }

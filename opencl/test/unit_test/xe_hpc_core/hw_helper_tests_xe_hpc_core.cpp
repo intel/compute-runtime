@@ -208,7 +208,7 @@ HWTEST2_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProp
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndLinkCopyEngines) {
-    const size_t numEngines = 17;
+    const size_t numEngines = 18;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -240,6 +240,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
@@ -257,7 +258,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
-    const size_t numEngines = 17;
+    const size_t numEngines = 18;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -290,6 +291,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
@@ -306,7 +308,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenGetEnginesCalledThenChangeDefaultEngine) {
-    const size_t numEngines = 17;
+    const size_t numEngines = 18;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -339,6 +341,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenGetEngines
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},
         {aub_stream::ENGINE_BCS5, false, true},
@@ -355,7 +358,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenGetEngines
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenGetEnginesCalledThenCreateOnlyOneCcs) {
-    const size_t numEngines = 14;
+    const size_t numEngines = 15;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -384,6 +387,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenGetEnginesCalled
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS2, false, true},
         {aub_stream::ENGINE_BCS3, false, true},
         {aub_stream::ENGINE_BCS4, false, true},

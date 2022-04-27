@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,14 +122,12 @@ TEST(EngineNodeHelperTest, givenLinkBcsEngineIsReleasedWhenGettingBcsEngineTypeT
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, false));
 }
 
-TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettingBcsEngineThenAlwaysReturnLinkEngine) {
+TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettingBcsEngineThenUseBcs2only) {
     SelectorCopyEngine selectorCopyEngine{};
     HardwareInfo hwInfo = *::defaultHwInfo;
     DeviceBitfield deviceBitfield = 0b11;
     hwInfo.featureTable.ftrBcsInfo = 0b111;
-
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true));
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, true));
+    auto isInternalUsage = true;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, isInternalUsage));
 }

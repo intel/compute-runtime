@@ -143,7 +143,7 @@ class HwHelper {
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
     virtual size_t getSamplerStateSize() const = 0;
-
+    virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const = 0;
@@ -391,7 +391,7 @@ class HwHelperHw : public HwHelper {
     void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
 
     bool isScratchSpaceSurfaceStateAccessible() const override;
-
+    bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;

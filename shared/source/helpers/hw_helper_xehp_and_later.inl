@@ -214,4 +214,14 @@ inline bool HwHelperHw<GfxFamily>::isLinuxCompletionFenceSupported() const {
     return false;
 }
 
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::preferInternalBcsEngine() const {
+    auto preferInternalBcsEngine = true;
+    if (DebugManager.flags.PreferInternalBcsEngine.get() != -1) {
+        preferInternalBcsEngine = static_cast<bool>(DebugManager.flags.PreferInternalBcsEngine.get());
+    }
+
+    return preferInternalBcsEngine;
+}
+
 } // namespace NEO

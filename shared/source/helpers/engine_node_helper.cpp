@@ -103,7 +103,7 @@ aub_stream::EngineType getBcsEngineType(const HardwareInfo &hwInfo, const Device
             return DebugManager.flags.ForceBCSForInternalCopyEngine.get() == 0 ? aub_stream::EngineType::ENGINE_BCS
                                                                                : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + DebugManager.flags.ForceBCSForInternalCopyEngine.get() - 1);
         }
-        return selectLinkCopyEngine(hwInfo, deviceBitfield, selectorCopyEngine.selector);
+        return aub_stream::ENGINE_BCS2;
     }
 
     const bool isMainCopyEngineAlreadyUsed = selectorCopyEngine.isMainUsed.exchange(true);
