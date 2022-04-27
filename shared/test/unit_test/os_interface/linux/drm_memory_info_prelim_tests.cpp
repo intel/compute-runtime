@@ -373,7 +373,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
-    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle);
+    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle, std::numeric_limits<uint32_t>::max());
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -408,4 +408,95 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     ASSERT_EQ(1u, createExt->memoryRegions.size());
     EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExtWithSingleRegionThenValidVmIdIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    DebugManager.flags.EnablePrivateBO.set(true);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->setPerContextVMRequired(false);
+
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    const auto &createExt = drm->context.receivedCreateGemExt;
+    ASSERT_TRUE(createExt);
+    auto validVmId = drm->getVirtualMemoryAddressSpace(0);
+    EXPECT_EQ(validVmId, createExt->vmPrivateExt.vmId);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemExtWithSingleRegionThenVmIdIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    DebugManager.flags.EnablePrivateBO.set(false);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->setPerContextVMRequired(false);
+
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    const auto &createExt = drm->context.receivedCreateGemExt;
+    ASSERT_TRUE(createExt);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), createExt->vmPrivateExt.vmId);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextVMRequiredIsTrueWhenCreatingGemExtWithSingleRegionThenVmIdIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+    DebugManager.flags.EnablePrivateBO.set(true);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->setPerContextVMRequired(true);
+
+    uint32_t handle = 0;
+    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    const auto &createExt = drm->context.receivedCreateGemExt;
+    ASSERT_TRUE(createExt);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), createExt->vmPrivateExt.vmId);
 }

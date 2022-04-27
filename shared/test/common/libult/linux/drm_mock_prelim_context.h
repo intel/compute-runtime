@@ -43,6 +43,11 @@ struct CreateGemExt {
         uint16_t memoryInstance{0};
     };
     std::vector<MemoryClassInstance> memoryRegions{};
+
+    struct VmPrivate {
+        uint32_t vmId{std::numeric_limits<uint32_t>::max()};
+    };
+    VmPrivate vmPrivateExt{};
 };
 
 struct GemContextParamAcc {

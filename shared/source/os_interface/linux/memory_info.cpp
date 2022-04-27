@@ -53,8 +53,18 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) {
-    return drm->getIoctlHelper()->createGemExt(drm, memClassInstances, allocSize, handle);
+uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint32_t vmId) {
+    return drm->getIoctlHelper()->createGemExt(drm, memClassInstances, allocSize, handle, vmId);
+}
+
+uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank, const HardwareInfo &hwInfo) {
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto tileIndex = Math::log2(memoryBank);
+    tileIndex = hwHelper.isBankOverrideRequired(hwInfo) ? 0 : tileIndex;
+    if (DebugManager.flags.OverrideDrmRegion.get() != -1) {
+        tileIndex = DebugManager.flags.OverrideDrmRegion.get();
+    }
+    return tileIndex;
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
@@ -63,13 +73,7 @@ MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryB
         return systemMemoryRegion.region;
     }
 
-    auto index = Math::log2(memoryBank);
-
-    index = hwHelper.isBankOverrideRequired(hwInfo) ? 0 : index;
-
-    if (DebugManager.flags.OverrideDrmRegion.get() != -1) {
-        index = DebugManager.flags.OverrideDrmRegion.get();
-    }
+    auto index = getTileIndex(memoryBank, hwInfo);
 
     UNRECOVERABLE_IF(index >= localMemoryRegions.size());
 
@@ -105,7 +109,14 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks
     auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
-    auto ret = createGemExt(drm, region, allocSize, handle);
+    uint32_t vmId = std::numeric_limits<uint32_t>::max();
+    if (!drm->isPerContextVMRequired()) {
+        if (memoryBanks != 0 && DebugManager.flags.EnablePrivateBO.get()) {
+            auto tileIndex = getTileIndex(memoryBanks, *pHwInfo);
+            vmId = drm->getVirtualMemoryAddressSpace(tileIndex);
+        }
+    }
+    auto ret = createGemExt(drm, region, allocSize, handle, vmId);
     return ret;
 }
 

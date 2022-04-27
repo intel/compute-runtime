@@ -35,6 +35,12 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
             (setparamRegion.param.param != (PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS))) {
             return EINVAL;
         }
+        if (setparamRegion.base.next_extension != 0) {
+            auto vmPrivate = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(setparamRegion.base.next_extension);
+            if (vmPrivate->base.name != PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
+                return EINVAL;
+            }
+        }
         auto data = reinterpret_cast<MemoryClassInstance *>(setparamRegion.param.data);
         if (data == nullptr) {
             return EINVAL;

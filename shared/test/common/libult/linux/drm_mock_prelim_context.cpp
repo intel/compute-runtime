@@ -156,6 +156,14 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
             return EINVAL;
         }
 
+        prelim_drm_i915_gem_create_ext_vm_private *vmPrivateExt = nullptr;
+        if (extension->base.next_extension != 0) {
+            vmPrivateExt = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(extension->base.next_extension);
+            if (vmPrivateExt->base.name != PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
+                return EINVAL;
+            }
+        }
+
         auto data = reinterpret_cast<MemoryClassInstance *>(extension->param.data);
         if (!data) {
             return EINVAL;
@@ -165,6 +173,9 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         createExt->handle = createExtHandle;
         receivedCreateGemExt = CreateGemExt{createExt->size, createExtHandle};
         receivedCreateGemExt->setParamExt = CreateGemExt::SetParam{extension->param.handle, extension->param.size, extension->param.param};
+        if (vmPrivateExt != nullptr) {
+            receivedCreateGemExt->vmPrivateExt = CreateGemExt::VmPrivate{vmPrivateExt->vm_id};
+        }
 
         receivedCreateGemExt->memoryRegions.clear();
         for (uint32_t i = 0; i < extension->param.size; i++) {
