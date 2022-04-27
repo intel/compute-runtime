@@ -64,6 +64,10 @@ if(NOT NEO_SKIP_UNIT_TESTS)
     )
   endif()
 
+  if(COMPILER_SUPPORTS_SSE42)
+    set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
+  endif()
+
   add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
   add_subdirectory_unique(mocks)
 

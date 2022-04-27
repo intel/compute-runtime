@@ -7,12 +7,12 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/ult_limits.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/tracing/tracing_api.h"
 #include "opencl/source/tracing/tracing_notify.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/helpers/ult_limits.h"
 
 using namespace NEO;
 
