@@ -15,8 +15,6 @@
 
 #include "sysman/linux/firmware_util/firmware_util.h"
 
-#include <linux/pci_regs.h>
-
 namespace L0 {
 
 const std::string LinuxSysmanImp::deviceDir("device");
@@ -270,6 +268,12 @@ void LinuxSysmanImp::releaseSysmanDeviceResources() {
 }
 
 void LinuxSysmanImp::releaseDeviceResources() {
+    auto devicePtr = static_cast<DeviceImp *>(pDevice);
+    executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
+    devicePciBdf = devicePtr->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
+    rootDeviceIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
+
+    executionEnvironment->incRefInternal();
     releaseSysmanDeviceResources();
     auto device = static_cast<DeviceImp *>(getDeviceHandle());
     executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
@@ -286,8 +290,9 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
     getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
     getSysmanDeviceImp()->pEngineHandleContext->init();
     if (!diagnosticsReset) {
-        getSysmanDeviceImp()->pDiagnosticsHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+        getSysmanDeviceImp()->pDiagnosticsHandleContext->init();
     }
+    this->diagnosticsReset = false;
     getSysmanDeviceImp()->pFirmwareHandleContext->init();
 }
 
@@ -297,12 +302,16 @@ ze_result_t LinuxSysmanImp::initDevice() {
 
     auto neoDevice = NEO::DeviceFactory::createDevice(*executionEnvironment, devicePciBdf, rootDeviceIndex);
     if (neoDevice == nullptr) {
+        executionEnvironment->decRefInternal();
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
     static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
     static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->enableRootDeviceDebugger(neoDevice);
     Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
     reInitSysmanDeviceResources();
+
+    executionEnvironment->decRefInternal();
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -318,14 +327,14 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    auto device = static_cast<DeviceImp *>(pDevice);
-    executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
-    devicePciBdf = device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
-    rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 
-    ExecutionEnvironmentRefCountRestore restorer(executionEnvironment);
-    releaseDeviceResources();
+    std::string cardBusPath = getPciCardBusDirectoryPath(realRootPath);
+    result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
 
+    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
     rootPortPath = getPciRootPortDirectoryPathForReset(realRootPath);
 
     int fd, ret = 0;
@@ -340,28 +349,20 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     this->preadFunction(fd, &value, 0x01, offset);
     resetValue = value | PCI_BRIDGE_CTL_BUS_RESET;
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep for 100 milliseconds just to make sure the change is propagated.
+    this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
     this->pwriteFunction(fd, &value, 0x01, offset);
-    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Sleep for 500 milliseconds
+    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
     ret = this->closeFunction(fd);
     if (ret < 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    std::string cardBusPath;
-    cardBusPath = getPciCardBusDirectoryPath(realRootPath);
-    // write 1 to remove
-    result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
+    result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-
-    result = pFsAccess->write(realRootPath + '/' + "rescan", "1");
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    return initDevice();
+    this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+    return result;
 }
 
 std::string LinuxSysmanImp::getAddressFromPath(std::string &rootPortPath) {
@@ -378,13 +379,6 @@ ze_result_t LinuxSysmanImp::osColdReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    auto device = static_cast<DeviceImp *>(pDevice);
-    executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
-    devicePciBdf = device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
-    rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
-
-    ExecutionEnvironmentRefCountRestore restorer(executionEnvironment);
-    releaseDeviceResources();
 
     cardBusPath = getPciCardBusDirectoryPath(realRootPath);    // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
     std::string rootAddress = getAddressFromPath(cardBusPath); // e.g rootAddress = 0000:8a:00.0
@@ -410,7 +404,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
             }
-            return initDevice();
+            return ZE_RESULT_SUCCESS;
         }
     }
     return ZE_RESULT_ERROR_DEVICE_LOST; // incase the reset fails inform upper layers.
@@ -420,5 +414,4 @@ OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
     LinuxSysmanImp *pLinuxSysmanImp = new LinuxSysmanImp(pParentSysmanDeviceImp);
     return static_cast<OsSysman *>(pLinuxSysmanImp);
 }
-
 } // namespace L0

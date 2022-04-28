@@ -10,16 +10,6 @@ set(L0_SRCS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_diagnostics_imp.h
 )
 
-if(NEO_ENABLE_i915_PRELIM_DETECTION)
-  list(APPEND L0_SRCS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_diagnostics_helper_prelim.cpp
-  )
-else()
-  list(APPEND L0_SRCS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_diagnostics_helper.cpp
-  )
-endif()
-
 if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,10 +28,8 @@ ze_result_t DiagnosticsImp::diagnosticsRunTests(uint32_t start, uint32_t end, ze
     return pOsDiagnostics->osRunDiagTests(start, end, pResult);
 }
 
-DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsDiagnostics = OsDiagnostics::create(pOsSysman, initalizedDiagTest, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+DiagnosticsImp::DiagnosticsImp(OsSysman *pOsSysman, const std::string &initalizedDiagTest) {
+    pOsDiagnostics = OsDiagnostics::create(pOsSysman, initalizedDiagTest);
     UNRECOVERABLE_IF(nullptr == pOsDiagnostics);
 }
 

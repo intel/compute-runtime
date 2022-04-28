@@ -6,15 +6,9 @@
 
 set(L0_TESTS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}test_zes_sysman_diagnostics.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_diagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_zes_sysman_diagnostics.h
 )
-
-if((NEO_ENABLE_i915_PRELIM_DETECTION) AND ("${BRANCH_TYPE}" STREQUAL ""))
-  list(REMOVE_ITEM L0_TESTS_TOOLS_SYSMAN_DIAGNOSTICS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_diagnostics.cpp
-  )
-endif()
 
 if(UNIX)
   target_sources(${TARGET_NAME}

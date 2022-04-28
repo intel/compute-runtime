@@ -38,7 +38,7 @@ struct DiagnosticsHandleContext {
     void releaseDiagnosticsHandles();
     MOCKABLE_VIRTUAL ~DiagnosticsHandleContext();
 
-    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
+    MOCKABLE_VIRTUAL void init();
 
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     std::vector<std::string> supportedDiagTests = {};
@@ -46,7 +46,7 @@ struct DiagnosticsHandleContext {
     std::vector<Diagnostics *> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle, const std::string &diagTests);
+    void createHandle(const std::string &diagTests);
 };
 
 } // namespace L0

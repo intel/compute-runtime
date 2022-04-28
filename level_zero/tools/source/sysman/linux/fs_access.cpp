@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ static ze_result_t getResult(int err) {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     } else if (ENOENT == err) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if (EBUSY == err) {
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }

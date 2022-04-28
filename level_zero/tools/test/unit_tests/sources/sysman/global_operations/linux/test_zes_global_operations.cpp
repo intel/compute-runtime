@@ -51,6 +51,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     std::unique_ptr<Mock<GlobalOperationsSysfsAccess>> pSysfsAccess;
     std::unique_ptr<Mock<GlobalOperationsProcfsAccess>> pProcfsAccess;
     std::unique_ptr<Mock<GlobalOperationsFsAccess>> pFsAccess;
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp;
     EngineHandleContext *pEngineHandleContextOld = nullptr;
     DiagnosticsHandleContext *pDiagnosticsHandleContextOld = nullptr;
     FirmwareHandleContext *pFirmwareHandleContextOld = nullptr;
@@ -58,6 +59,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     SysfsAccess *pSysfsAccessOld = nullptr;
     ProcfsAccess *pProcfsAccessOld = nullptr;
     FsAccess *pFsAccessOld = nullptr;
+    LinuxSysmanImp *pLinuxSysmanImpOld = nullptr;
     OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
     L0::GlobalOperations *pGlobalOperationsPrev = nullptr;
     L0::GlobalOperationsImp *pGlobalOperationsImp;
@@ -75,6 +77,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pProcfsAccessOld = pLinuxSysmanImp->pProcfsAccess;
         pFsAccessOld = pLinuxSysmanImp->pFsAccess;
+        pLinuxSysmanImpOld = pLinuxSysmanImp;
 
         pEngineHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsEngineHandleContext>>>(pOsSysman);
         pSysfsAccess = std::make_unique<NiceMock<Mock<GlobalOperationsSysfsAccess>>>();
@@ -83,6 +86,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pDiagnosticsHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsDiagnosticsHandleContext>>>(pOsSysman);
         pFirmwareHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsFirmwareHandleContext>>>(pOsSysman);
         pRasHandleContext = std::make_unique<NiceMock<Mock<GlobalOperationsRasHandleContext>>>(pOsSysman);
+        pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
 
         pSysmanDeviceImp->pEngineHandleContext = pEngineHandleContext.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
@@ -96,8 +100,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pRasHandleContext.get(), &Mock<GlobalOperationsRasHandleContext>::initMock));
         ON_CALL(*pEngineHandleContext.get(), init())
             .WillByDefault(::testing::Invoke(pEngineHandleContext.get(), &Mock<GlobalOperationsEngineHandleContext>::initMock));
-        ON_CALL(*pDiagnosticsHandleContext.get(), init(_))
-            .WillByDefault(::testing::Invoke(pDiagnosticsHandleContext.get(), &Mock<GlobalOperationsDiagnosticsHandleContext>::initMock));
         ON_CALL(*pFirmwareHandleContext.get(), init())
             .WillByDefault(::testing::Invoke(pFirmwareHandleContext.get(), &Mock<GlobalOperationsFirmwareHandleContext>::initMock));
         ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
@@ -403,10 +405,16 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
     EXPECT_EQ(0u, deviceState.reset);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
+    pGlobalOperationsImp->init();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    ze_result_t result = zesDeviceReset(device, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenPermissionDeniedWhenCallingGetDeviceStateThenZeResultErrorInsufficientPermissionsIsReturned) {
 
-    ON_CALL(*pFsAccess.get(), canWrite(Matcher<std::string>(mockFunctionResetPath)))
-        .WillByDefault(::testing::Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS));
+    pSysfsAccess->isRootSet = false;
     pGlobalOperationsImp->init();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);

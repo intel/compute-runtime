@@ -105,6 +105,9 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     if (!pSysfsAccess->isRootUser()) {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    pDevice->getProperties(&deviceProperties);
+    pLinuxSysmanImp->releaseDeviceResources();
     std::string resetPath;
     std::string resetName;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -115,6 +118,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
+        executionEnvironment->decRefInternal();
         return result;
     }
     for (auto &&pid : processes) {
@@ -130,6 +134,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
             } else {
                 // Device is in use by another process.
                 // Don't reset while in use.
+                executionEnvironment->decRefInternal();
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -138,25 +143,22 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     pSysfsAccess->getRealPath(deviceDir, resetName);
     resetName = pFsAccess->getBaseName(resetName);
 
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    pDevice->getProperties(&deviceProperties);
     if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
         result = pSysfsAccess->unbindDevice(resetName);
         if (ZE_RESULT_SUCCESS != result) {
+            executionEnvironment->decRefInternal();
             return result;
         }
-        return pLinuxSysmanImp->osWarmReset();
-    }
-
-    pSysfsAccess->getRealPath(functionLevelReset, resetPath);
-    // Must run as root. Verify permission to perform reset.
-    result = pFsAccess->canWrite(resetPath);
-    if (ZE_RESULT_SUCCESS != result) {
+        result = pLinuxSysmanImp->osWarmReset();
+        if (ZE_RESULT_SUCCESS == result) {
+            return pLinuxSysmanImp->initDevice();
+        }
+        executionEnvironment->decRefInternal();
         return result;
     }
 
-    ExecutionEnvironmentRefCountRestore restorer(executionEnvironment);
-    pLinuxSysmanImp->releaseDeviceResources();
+    pSysfsAccess->getRealPath(functionLevelReset, resetPath);
+
     for (auto &&fd : myPidFds) {
         // Close open filedescriptors to the device
         // before unbinding device.
@@ -170,6 +172,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Unbind the device from the kernel driver.
     result = pSysfsAccess->unbindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
+        executionEnvironment->decRefInternal();
         return result;
     }
 
@@ -177,6 +180,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // after we check, kill them here.
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
+        executionEnvironment->decRefInternal();
         return result;
     }
     std::vector<::pid_t> deviceUsingPids;
@@ -200,6 +204,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     for (auto &&pid : deviceUsingPids) {
         while (pProcfsAccess->isAlive(pid)) {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() > resetTimeout) {
+                executionEnvironment->decRefInternal();
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
 
@@ -212,12 +217,14 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Reset the device.
     result = pFsAccess->write(resetPath, "1");
     if (ZE_RESULT_SUCCESS != result) {
+        executionEnvironment->decRefInternal();
         return result;
     }
 
     // Rebind the device to the kernel driver.
     result = pSysfsAccess->bindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
+        executionEnvironment->decRefInternal();
         return result;
     }
 

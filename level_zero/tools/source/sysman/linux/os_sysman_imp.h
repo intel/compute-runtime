@@ -17,9 +17,11 @@
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <linux/pci_regs.h>
 #include <map>
 
 namespace L0 {
+
 class PmuInterface;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
@@ -48,17 +50,18 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     void releaseLocalDrmHandle();
     PRODUCT_FAMILY getProductFamily();
     void releaseSysmanDeviceResources();
-    void releaseDeviceResources();
-    ze_result_t initDevice();
+    MOCKABLE_VIRTUAL void releaseDeviceResources();
+    MOCKABLE_VIRTUAL ze_result_t initDevice();
     void reInitSysmanDeviceResources();
-    void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
-    ze_result_t osWarmReset();
-    ze_result_t osColdReset();
+    MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
+    MOCKABLE_VIRTUAL ze_result_t osWarmReset();
+    MOCKABLE_VIRTUAL ze_result_t osColdReset();
     std::string getAddressFromPath(std::string &rootPortPath);
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
+    decltype(&L0::SysmanUtils::sleep) pSleepFunctionSecs = L0::SysmanUtils::sleep;
     std::string devicePciBdf = "";
     uint32_t rootDeviceIndex = 0u;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
@@ -80,16 +83,5 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
 };
-class ExecutionEnvironmentRefCountRestore {
-  public:
-    ExecutionEnvironmentRefCountRestore() = delete;
-    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
-        executionEnvironment = executionEnvironmentRecevied;
-        executionEnvironment->incRefInternal();
-    }
-    ~ExecutionEnvironmentRefCountRestore() {
-        executionEnvironment->decRefInternal();
-    }
-    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
-};
+
 } // namespace L0

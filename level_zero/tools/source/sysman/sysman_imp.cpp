@@ -140,7 +140,7 @@ ze_result_t SysmanDeviceImp::init() {
         pFirmwareHandleContext->init();
     }
     if (pDiagnosticsHandleContext) {
-        pDiagnosticsHandleContext->init(deviceHandles);
+        pDiagnosticsHandleContext->init();
     }
     if (pPerformanceHandleContext) {
         pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
@@ -260,4 +260,9 @@ ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newS
     return pEcc->setEccState(newState, pState);
 }
 
+namespace SysmanUtils {
+void sleep(int64_t seconds) {
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
+}
+} // namespace SysmanUtils
 } // namespace L0

@@ -312,6 +312,18 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturned
     EXPECT_EQ(pciRootPort2, "device");
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturnedPathIs1LevelUpThenTheCurrentPath) {
+    const std::string mockBdf = "0000:00:02.0";
+    const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
+    const std::string mockRealPath1LevelUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
+
+    std::string pciRootPort1 = pLinuxSysmanImp->getPciCardBusDirectoryPath(mockRealPath);
+    EXPECT_EQ(pciRootPort1, mockRealPath1LevelUp);
+
+    std::string pciRootPort2 = pLinuxSysmanImp->getPciCardBusDirectoryPath("device");
+    EXPECT_EQ(pciRootPort2, "device");
+}
+
 TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingRootPciPortThenReturnedPathIs1LevelAfterPCIePath) {
     const std::string mockBdf = "0000:00:02.0";
     const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;

@@ -86,5 +86,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
         }
     }
 };
-
+namespace SysmanUtils {
+void sleep(int64_t seconds);
+}
 } // namespace L0

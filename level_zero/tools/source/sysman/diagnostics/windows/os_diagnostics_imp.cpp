@@ -19,7 +19,7 @@ ze_result_t WddmDiagnosticsImp::osRunDiagTests(uint32_t start, uint32_t end, zes
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+std::unique_ptr<OsDiagnostics> OsDiagnostics::create(OsSysman *pOsSysman, const std::string &diagTests) {
     std::unique_ptr<WddmDiagnosticsImp> pWddmDiagnosticsImp = std::make_unique<WddmDiagnosticsImp>();
     return pWddmDiagnosticsImp;
 }
