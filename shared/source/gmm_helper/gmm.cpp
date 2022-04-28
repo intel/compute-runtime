@@ -324,6 +324,10 @@ bool Gmm::hasMultisampleControlSurface() const {
     return this->gmmResourceInfo->getResourceFlags()->Gpu.MCS;
 }
 
+GmmHelper *Gmm::getGmmHelper() const {
+    return this->gmmHelper;
+}
+
 uint32_t Gmm::getUnifiedAuxPitchTiles() {
     return this->gmmResourceInfo->getRenderAuxPitchTiles();
 }

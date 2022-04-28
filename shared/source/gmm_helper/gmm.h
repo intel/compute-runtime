@@ -38,6 +38,8 @@ class Gmm {
     bool unifiedAuxTranslationCapable() const;
     bool hasMultisampleControlSurface() const;
 
+    GmmHelper *getGmmHelper() const;
+
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
     void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
