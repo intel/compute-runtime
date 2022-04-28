@@ -318,10 +318,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
         createAllocationForHostSurfaceCalled++;
         cpuCopyForHostPtrSurfaceAllowed = surface.peekIsPtrCopyAllowed();
-        auto status = BaseClass::createAllocationForHostSurface(surface, requiresL3Flush);
-        if (status)
-            surface.getAllocation()->hostPtrTaskCountAssignment--;
-        return status;
+        return BaseClass::createAllocationForHostSurface(surface, requiresL3Flush);
     }
 
     void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) override {

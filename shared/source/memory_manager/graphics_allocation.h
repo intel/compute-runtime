@@ -43,7 +43,6 @@ constexpr auto nonSharedResource = 0u;
 
 class Gmm;
 class MemoryManager;
-class CommandStreamReceiver;
 
 struct AubInfo {
     uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
@@ -156,8 +155,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
-    MOCKABLE_VIRTUAL void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
-    MOCKABLE_VIRTUAL uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
+    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
+    uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
@@ -216,8 +215,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         this->reservedAddressRangeInfo.rangeSize = size;
     }
 
-    void prepareHostPtrForResidency(CommandStreamReceiver *csr);
-
     Gmm *getDefaultGmm() const {
         return getGmm(0u);
     }
@@ -255,7 +252,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectAlwaysResident = std::numeric_limits<uint32_t>::max() - 1;
-    std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
 
   protected:
     struct UsageInfo {

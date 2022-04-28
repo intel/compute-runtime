@@ -297,25 +297,3 @@ HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachi
 
     memoryManager->freeGraphicsMemory(allocationReusable.release());
 }
-TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsExpectationAndItHasBeenAssignedThenAllocIsRemoved) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    uint32_t expectedTaskCount = 10u;
-    *csr->getTagAddress() = expectedTaskCount;
-    allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
-    allocation->hostPtrTaskCountAssignment = 0;
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
-}
-
-TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenTaskCountMetsExpectationAndItHasNotBeenAssignedThenAllocIsNotRemoved) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    uint32_t expectedTaskCount = 10u;
-    *csr->getTagAddress() = expectedTaskCount;
-    allocation->updateTaskCount(expectedTaskCount, csr->getOsContext().getContextId());
-    allocation->hostPtrTaskCountAssignment = 1;
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    storage->cleanAllocationList(expectedTaskCount, TEMPORARY_ALLOCATION);
-    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
-    allocation->hostPtrTaskCountAssignment = 0;
-}

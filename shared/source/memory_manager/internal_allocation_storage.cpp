@@ -52,7 +52,7 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
     IDList<GraphicsAllocation, false, true> allocationsLeft;
     while (curr != nullptr) {
         auto *next = curr->next;
-        if (curr->getTaskCount(commandStreamReceiver.getOsContext().getContextId()) <= waitTaskCount && curr->hostPtrTaskCountAssignment == 0) {
+        if (curr->getTaskCount(commandStreamReceiver.getOsContext().getContextId()) <= waitTaskCount) {
             memoryManager->freeGraphicsMemory(curr);
         } else {
             allocationsLeft.pushTailOne(*curr);

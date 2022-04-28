@@ -51,20 +51,6 @@ class MockGraphicsAllocation : public MemoryAllocation {
     }
 };
 
-class MockGraphicsAllocationTaskCount : public MockGraphicsAllocation {
-  public:
-    uint32_t getTaskCount(uint32_t contextId) const override {
-        getTaskCountCalleedTimes++;
-        return MockGraphicsAllocation::getTaskCount(contextId);
-    }
-    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId) override {
-        updateTaskCountCalleedTimes++;
-        MockGraphicsAllocation::updateTaskCount(newTaskCount, contextId);
-    }
-    static uint32_t getTaskCountCalleedTimes;
-    uint32_t updateTaskCountCalleedTimes = 0;
-};
-
 namespace GraphicsAllocationHelper {
 
 static inline MultiGraphicsAllocation toMultiGraphicsAllocation(GraphicsAllocation *graphicsAllocation) {
