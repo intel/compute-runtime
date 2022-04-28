@@ -331,6 +331,9 @@ class CommandStreamReceiver {
     }
 
     uint32_t getCompletionValue(const GraphicsAllocation &gfxAllocation);
+    DispatchMode getDispatchMode() const {
+        return this->dispatchMode;
+    }
 
   protected:
     void cleanupResources();
