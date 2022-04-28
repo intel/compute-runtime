@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,7 +205,7 @@ TEST(YamlConsumeNumberOrSign, GivenInvalidCharacterThenReturnCurrentParsePositio
     EXPECT_EQ(plusPlusSeven.begin() + 1, NEO::Yaml::consumeNumberOrSign(plusPlusSeven, plusPlusSeven.begin()));
 
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
-        bool isSignOrNumber = NEO::Yaml::isSign(static_cast<char>(c)) | NEO::Yaml::isNumber(static_cast<char>(c));
+        bool isSignOrNumber = NEO::Yaml::isSign(static_cast<char>(c)) || NEO::Yaml::isNumber(static_cast<char>(c));
         char numberStr[] = {static_cast<char>(c), '\0'};
         auto expected = numberStr + (isSignOrNumber ? 1 : 0);
         EXPECT_EQ(expected, NEO::Yaml::consumeNumberOrSign(ConstStringRef::fromArray(numberStr), numberStr)) << c;

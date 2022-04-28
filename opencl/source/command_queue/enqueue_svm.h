@@ -356,7 +356,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     MultiDispatchInfo dispatchInfo;
     BuiltinOpParams operationParams;
     Surface *surfaces[2];
-    cl_command_type cmdType;
     cl_int dispatchResult = CL_SUCCESS;
 
     if (copyType == SvmToHost) {
@@ -385,7 +384,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
 
         HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size, true);
         GeneralSurface dstSvmSurf(dstAllocation);
-        cmdType = CL_COMMAND_WRITE_BUFFER;
         if (size != 0) {
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             if (!status) {
@@ -417,7 +415,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
 
         HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcGpuPtr), size);
         HostPtrSurface dstHostPtrSurf(dstGpuPtr, size);
-        cmdType = CL_COMMAND_WRITE_BUFFER;
         if (size != 0) {
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             status &= csr.createAllocationForHostSurface(dstHostPtrSurf, true);

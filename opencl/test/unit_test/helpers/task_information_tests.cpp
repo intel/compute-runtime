@@ -425,10 +425,6 @@ HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectD
     bool flushDC = false;
     bool slmUsed = false;
     bool ndRangeKernel = false;
-    bool requiresCoherency = false;
-    for (auto &surface : surfaces) {
-        requiresCoherency |= surface->IsCoherent;
-    }
     std::unique_ptr<Command> command(new CommandComputeKernel(*mockCmdQ, kernelOperation, surfaces, flushDC, slmUsed, ndRangeKernel, nullptr, preemptionMode, kernel, 1));
     command->submit(20, false);
 

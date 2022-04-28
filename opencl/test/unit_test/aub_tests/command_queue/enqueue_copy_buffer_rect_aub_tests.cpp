@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,23 +107,19 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     uint8_t src[rowPitch * slicePitch];
     memset(src, 0, sizeof(src));
 
-    auto tDst = pDestMemory;
     auto tSrc = ptrOffset(pSrcMemory, srcOrigin[0] + srcOrigin[1] * rowPitch + srcOrigin[2] * slicePitch);
     auto tRef = ptrOffset(src, dstOrigin[0] + dstOrigin[1] * rowPitch + dstOrigin[2] * slicePitch);
 
     for (unsigned int z = 0; z < regionZ; z++) {
-        auto pDst = tDst;
         auto pSrc = tSrc;
         auto pRef = tRef;
 
         for (unsigned int y = 0; y < regionY; y++) {
             memcpy(pRef, pSrc, region[0]);
 
-            pDst += rowPitch;
             pSrc += rowPitch;
             pRef += rowPitch;
         }
-        tDst += slicePitch;
         tSrc += slicePitch;
         tRef += slicePitch;
     }

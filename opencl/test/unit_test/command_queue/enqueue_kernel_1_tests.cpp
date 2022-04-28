@@ -1081,15 +1081,18 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushS
 
     auto status = clWaitForEvents(1, &event);
 
+    EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1, neoEvent->getRefInternalCount());
     EXPECT_EQ(1u, mockCsr->flushStamp->peekStamp());
     EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
     EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clFinish(pCmdQ);
+    EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clReleaseEvent(event);
+    EXPECT_EQ(CL_SUCCESS, status);
 }
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenNonBlockingMapFollowsNdrCallThenFlushStampIsUpdatedProperly) {
@@ -1133,15 +1136,18 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowed
 
     auto status = clWaitForEvents(1, &event);
 
+    EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1, neoEvent->getRefInternalCount());
     EXPECT_EQ(1u, mockCsr->flushStamp->peekStamp());
     EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
     EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clFinish(pCmdQ);
+    EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clReleaseEvent(event);
+    EXPECT_EQ(CL_SUCCESS, status);
 }
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenClFlushIsCalledThenQueueFlushStampIsUpdated) {

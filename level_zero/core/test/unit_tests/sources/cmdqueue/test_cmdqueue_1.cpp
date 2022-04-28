@@ -1311,8 +1311,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
 
     ze_command_queue_handle_t commandQueueHandle = {};
 
-    ze_result_t res{};
-    EXPECT_THROW(res = device->createCommandQueue(&desc, &commandQueueHandle), std::exception);
+    EXPECT_THROW(device->createCommandQueue(&desc, &commandQueueHandle), std::exception);
 }
 
 using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceFixture>;

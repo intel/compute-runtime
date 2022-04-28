@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,7 +235,7 @@ constexpr bool equalsCaseInsensitive(const ConstStringRef &lhs, const ConstStrin
     constexpr auto caseDiff = 'a' - 'A';
     for (size_t i = 0, e = lhs.size(); i < e; ++i) {
 
-        if ((lhs[i] != rhs[i]) & (lhs[i] + caseDiff != rhs[i]) & (lhs[i] != rhs[i] + caseDiff)) {
+        if ((lhs[i] != rhs[i]) && (lhs[i] + caseDiff != rhs[i]) && (lhs[i] != rhs[i] + caseDiff)) {
             return false;
         }
     }

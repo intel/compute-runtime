@@ -435,12 +435,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
 
-    bool buffersSwitched = false;
     getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
 
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
         switchRingBuffers();
-        buffersSwitched = true;
     }
 
     handleNewResourcesSubmission();

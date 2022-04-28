@@ -1727,11 +1727,9 @@ TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
         std::unique_ptr<Image> image1(ImageHelper<ImageVmeValidFormat>::create(pContext));
 
         cl_mem srcImgMem = 0;
-        cl_mem refImgMem = 0;
         EXPECT_EQ(CL_INVALID_KERNEL_ARGS, vmeBuilder.validateImages(Vec3<size_t>{3, 3, 0}, Vec3<size_t>{0, 0, 0}));
 
         srcImgMem = image1.get();
-        refImgMem = 0;
         vmeBuilder.setExplicitArg(srcImgArgNum, sizeof(srcImgMem), &srcImgMem, err);
         EXPECT_EQ(CL_INVALID_KERNEL_ARGS, vmeBuilder.validateImages(Vec3<size_t>{3, 3, 0}, Vec3<size_t>{0, 0, 0}));
     }

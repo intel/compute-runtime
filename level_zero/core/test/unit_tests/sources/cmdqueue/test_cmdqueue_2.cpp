@@ -184,7 +184,6 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
     queue->csr = csr.get();
 
     uint64_t timeout = 10;
-    int64_t timeoutMicrosecondsExpected = timeout;
 
     queue->synchronize(timeout);
 
@@ -193,7 +192,6 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
     EXPECT_TRUE(csr->enableTimeoutSet);
 
     timeout = std::numeric_limits<uint64_t>::max();
-    timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
 
     queue->synchronize(timeout);
 
@@ -276,8 +274,6 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     queue->csr = csr.get();
 
     uint64_t timeout = 10;
-    bool enableTimeoutExpected = true;
-    int64_t timeoutMicrosecondsExpected = timeout;
 
     queue->synchronize(timeout);
 
@@ -286,8 +282,6 @@ HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledWhenCallToSynchro
     EXPECT_TRUE(csr->enableTimeoutSet);
 
     timeout = std::numeric_limits<uint64_t>::max();
-    enableTimeoutExpected = false;
-    timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
 
     queue->synchronize(timeout);
 

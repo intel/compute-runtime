@@ -32,7 +32,7 @@ constexpr bool isWhitespace(char c) {
 }
 
 constexpr bool isLetter(char c) {
-    return ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z'));
+    return ((c >= 'a') & (c <= 'z')) || ((c >= 'A') & (c <= 'Z'));
 }
 
 constexpr bool isNumber(char c) {
@@ -40,19 +40,19 @@ constexpr bool isNumber(char c) {
 }
 
 constexpr bool isAlphaNumeric(char c) {
-    return isLetter(c) | isNumber(c);
+    return isLetter(c) || isNumber(c);
 }
 
 constexpr bool isNameIdentifierCharacter(char c) {
-    return isAlphaNumeric(c) | ('_' == c);
+    return isAlphaNumeric(c) || ('_' == c);
 }
 
 constexpr bool isNameIdentifierBeginningCharacter(char c) {
-    return isLetter(c) | ('_' == c);
+    return isLetter(c) || ('_' == c);
 }
 
 constexpr bool isSign(char c) {
-    return ('+' == c) | ('-' == c);
+    return ('+' == c) || ('-' == c);
 }
 
 inline bool isSpecificNameIdentifier(ConstStringRef wholeText, const char *parsePos, ConstStringRef pattern) {
@@ -60,7 +60,7 @@ inline bool isSpecificNameIdentifier(ConstStringRef wholeText, const char *parse
     bool hasEnoughText = (reinterpret_cast<uintptr_t>(parsePos) + pattern.size() <= reinterpret_cast<uintptr_t>(wholeText.end()));
     bool isEnd = (reinterpret_cast<uintptr_t>(parsePos) + pattern.size() == reinterpret_cast<uintptr_t>(wholeText.end()));
     bool matched = hasEnoughText &&
-                   ((pattern == ConstStringRef(parsePos, pattern.size())) & (isEnd || (false == isNameIdentifierCharacter(parsePos[pattern.size()]))));
+                   ((pattern == ConstStringRef(parsePos, pattern.size())) && (isEnd || (false == isNameIdentifierCharacter(parsePos[pattern.size()]))));
     return matched;
 }
 
@@ -77,7 +77,7 @@ constexpr const char *consumeNumberOrSign(ConstStringRef wholeText, const char *
     if (isNumber(*parsePos)) {
         auto it = parsePos + 1;
         while (it < parseEnd) {
-            if (false == (isNumber(*it) | ('.' == *it))) {
+            if (false == (isNumber(*it) || ('.' == *it))) {
                 break;
             }
             ++it;
@@ -644,7 +644,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
         case 1:
             return true;
         case 2:
-            return ((token.cstrref()[1] == 'o') | (token.cstrref()[1] == 'O'));
+            return ((token.cstrref()[1] == 'o') || (token.cstrref()[1] == 'O'));
         }
         break;
     }
@@ -671,7 +671,7 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
             return false;
         case 2:
             outValue = true;
-            return ((token.cstrref()[1] == 'n') | (token.cstrref()[1] == 'N'));
+            return ((token.cstrref()[1] == 'n') || (token.cstrref()[1] == 'N'));
         case 3:
             outValue = false;
             return equalsCaseInsensitive(ConstStringRef("ff"), ConstStringRef(token.cstrref().begin() + 1, 2));

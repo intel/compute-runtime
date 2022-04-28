@@ -113,7 +113,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttribute
     if (it != std::string::npos) {
         it += attributeReqdSubGroupSizeBeg.size();
         dst.kernelMetadata.requiredSubGroupSize = 0U;
-        while ((attributes[it] >= '0') & (attributes[it] <= '9')) {
+        while ((attributes[it] >= '0') && (attributes[it] <= '9')) {
             dst.kernelMetadata.requiredSubGroupSize *= 10;
             dst.kernelMetadata.requiredSubGroupSize += attributes[it] - '0';
             ++it;

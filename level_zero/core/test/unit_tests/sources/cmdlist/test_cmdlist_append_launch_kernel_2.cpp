@@ -872,7 +872,6 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
 
-    bool found;
     uint64_t originalThreadArbitrationPolicy = std::numeric_limits<uint64_t>::max();
     {
         GenCmdList parsedCommandList;
@@ -890,7 +889,6 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
                 EXPECT_EQ(NEO::DebugControlReg2::getRegData(NEO::ThreadArbitrationPolicy::RoundRobin),
                           cmd->getDataDword());
                 originalThreadArbitrationPolicy = cmd->getDataDword();
-                found = false;
             }
         }
     }

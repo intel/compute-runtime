@@ -58,7 +58,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
-    size_t sshOffset = 0;
 
     auto threadDims = static_cast<const uint32_t *>(args.pThreadGroupDimensions);
     const Vec3<size_t> threadStartVec{0, 0, 0};
@@ -94,7 +93,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {
             auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-            sshOffset = ssh->getUsed();
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
                 args.dispatchInterface->getSurfaceStateHeapData(),
