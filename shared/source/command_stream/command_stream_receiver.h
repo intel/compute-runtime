@@ -118,6 +118,7 @@ class CommandStreamReceiver {
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const;
     ExecutionEnvironment &peekExecutionEnvironment() const { return executionEnvironment; };
+    GmmHelper *peekGmmHelper() const;
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *getTagAllocation() const {

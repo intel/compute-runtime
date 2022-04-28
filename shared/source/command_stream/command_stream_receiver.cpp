@@ -236,6 +236,10 @@ OSInterface *CommandStreamReceiver::getOSInterface() const {
     return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
 }
 
+GmmHelper *CommandStreamReceiver::peekGmmHelper() const {
+    return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->gmmHelper.get();
+}
+
 uint64_t CommandStreamReceiver::getWorkPartitionAllocationGpuAddress() const {
     if (isStaticWorkPartitioningEnabled()) {
         return getWorkPartitionAllocation()->getGpuAddress();
