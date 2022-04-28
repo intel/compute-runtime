@@ -145,7 +145,7 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
 bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     auto &hwInfo = connectedDevice->getHwInfo();
     uint32_t deviceIndex = 0;
-    auto physicalThread = DebugSession::convertToPhysical(thread, deviceIndex);
+    auto physicalThread = convertToPhysical(thread, deviceIndex);
     auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
     bool requestedThreadsStopped = true;
 
