@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,7 @@ static int recvmsg_fd(int socket) {
     }
 
     struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    if (CMSG_DATA(controlHeader) == nullptr) {
+    if (!CMSG_DATA(controlHeader)) {
         return -1;
     }
     memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));

@@ -870,4 +870,8 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
     return userEventsDependencies;
 }
 
+uint32_t Event::peekTaskLevel() const {
+    return taskLevel;
+}
+
 } // namespace NEO

@@ -246,6 +246,7 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
         switch (blitProperties.bytesPerPixel) {
         default:
             UNRECOVERABLE_IF(true);
+            break;
         case 1:
             blitCmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
             break;

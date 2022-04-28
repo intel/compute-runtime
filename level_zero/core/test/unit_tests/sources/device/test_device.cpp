@@ -915,7 +915,9 @@ TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenA
     device->getKernelProperties(&kernelProperties);
 
     EXPECT_NE(kernelPropertiesBefore.spirvVersionSupported, kernelProperties.spirvVersionSupported);
-    EXPECT_NE(kernelPropertiesBefore.nativeKernelSupported.id, kernelProperties.nativeKernelSupported.id);
+    uint8_t *nativeKernelSupportedIdPointerBefore = kernelPropertiesBefore.nativeKernelSupported.id;
+    uint8_t *nativeKernelSupportedIdPointerNow = kernelProperties.nativeKernelSupported.id;
+    EXPECT_NE(nativeKernelSupportedIdPointerBefore, nativeKernelSupportedIdPointerNow);
 
     EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_FP16);
     if (hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {

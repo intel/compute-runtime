@@ -134,6 +134,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::atomic<uint32_t> taskLevel;
 
+    uint32_t peekTaskLevel() const;
     void addChild(Event &e);
 
     virtual bool setStatus(cl_int status);

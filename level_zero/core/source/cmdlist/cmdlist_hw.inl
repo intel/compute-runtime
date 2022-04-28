@@ -432,6 +432,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     switch (bytesPerPixel) {
     default:
         UNRECOVERABLE_IF(true);
+        break;
     case 1u:
         builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyBufferToImage3dBytes);
         break;
@@ -548,6 +549,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     switch (bytesPerPixel) {
     default:
         UNRECOVERABLE_IF(true);
+        break;
     case 1u:
         builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBufferBytes);
         break;
@@ -1700,6 +1702,7 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
     switch (imageType) {
     default:
         UNRECOVERABLE_IF(true);
+        break;
     case NEO::ImageType::Image1D:
     case NEO::ImageType::Image1DArray:
         return bytesPerPixel * region->width;

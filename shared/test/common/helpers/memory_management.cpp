@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,13 +213,13 @@ static void deallocate(void *p) {
 #endif
             eventDeallocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
         }
-        free(p);
 
         if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
             auto currentIndex = fastEventsDeallocatedCount++;
             fastEventsDeallocated[currentIndex] = p;
             assert(currentIndex <= fastEvents);
         }
+        free(p);
     }
 }
 int detectLeaks() {
