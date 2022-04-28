@@ -11,6 +11,11 @@
 
 namespace NEO {
 
+template <>
+bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
+    return true;
+}
+
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
