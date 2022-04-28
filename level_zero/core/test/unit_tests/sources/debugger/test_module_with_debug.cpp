@@ -883,7 +883,10 @@ HWTEST_F(NotifyModuleLoadTest, givenDebuggingEnabledWhenModuleWithUnresolvedSymb
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
-    EXPECT_EQ(4, memoryOperationsHandler->makeResidentCalledCount);
+    auto numIsaAllocations = module->getKernelImmutableDataVector().size();
+    EXPECT_NE(0u, numIsaAllocations);
+    auto expectedMakeResidentCallsCount = static_cast<int>(numIsaAllocations);
+    EXPECT_EQ(expectedMakeResidentCallsCount, memoryOperationsHandler->makeResidentCalledCount);
 }
 } // namespace ult
 } // namespace L0
