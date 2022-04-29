@@ -117,6 +117,7 @@ class OfflineCompiler {
     MOCKABLE_VIRTUAL void writeOutAllFiles();
     MOCKABLE_VIRTUAL void createDir(const std::string &path);
     void unifyExcludeIrFlags();
+    void enforceFormat(std::string &format);
     HardwareInfo hwInfo;
 
     PRODUCT_CONFIG deviceConfig = UNKNOWN_ISA;
@@ -131,6 +132,7 @@ class OfflineCompiler {
     std::string buildLog;
     std::string optionsReadFromFile = "";
     std::string internalOptionsReadFromFile = "";
+    std::string formatToEnforce = "";
 
     bool dumpFiles = true;
     bool useLlvmText = false;

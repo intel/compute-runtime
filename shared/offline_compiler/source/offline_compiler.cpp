@@ -487,6 +487,10 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return retVal;
     }
 
+    if (!formatToEnforce.empty()) {
+        enforceFormat(formatToEnforce);
+    }
+
     if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
         if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
@@ -615,6 +619,9 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             argIndex++;
         } else if ("-exclude_ir" == currArg) {
             excludeIr = true;
+        } else if ("--format" == currArg) {
+            formatToEnforce = argv[argIndex + 1];
+            argIndex++;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -947,6 +954,10 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -exclude_ir                   Excludes IR from the output binary file.
 
+  --format                      Enforce given binary format. The possible values are:
+                                --format zebin - Enforce generating zebin binary
+                                --format patchtokens - Enforce generating patchtokens (legacy) binary.
+
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
@@ -1122,6 +1133,17 @@ bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::strin
         options = options.substr(0, trimPos + 1);
     }
     return true;
+}
+
+void OfflineCompiler::enforceFormat(std::string &format) {
+    std::transform(format.begin(), format.end(), format.begin(),
+                   [](auto c) { return std::tolower(c); });
+    if (format == "zebin") {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::allowZebin);
+    } else if (format == "patchtokens") {
+    } else {
+        argHelper->printf("Invalid format passed: %s. Ignoring.\n", format.c_str());
+    }
 }
 
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension) {

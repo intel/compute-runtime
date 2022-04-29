@@ -2777,6 +2777,57 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
     EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "spv"));
 }
 
+TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedFormatAccordingly) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argvEnforcedFormatPatchtokens = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-spv_only",
+        "--format",
+        "patchtokens"};
+
+    std::vector<std::string> argvEnforcedFormatZebin = {
+        "ocloc",
+        "-q",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-spv_only",
+        "--format",
+        "zebin"};
+
+    int retVal = ocloc.initialize(argvEnforcedFormatZebin.size(), argvEnforcedFormatZebin);
+    ASSERT_EQ(0, retVal);
+    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
+
+    ocloc.internalOptions.clear();
+    retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
+    ASSERT_EQ(0, retVal);
+    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
+}
+
+TEST(OclocCompile, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argvUnknownFormatEnforced = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-spv_only",
+        "--format",
+        "banana"};
+
+    ::testing::internal::CaptureStdout();
+    int retVal = ocloc.initialize(argvUnknownFormatEnforced.size(), argvUnknownFormatEnforced);
+    const auto output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(0, retVal);
+
+    const auto expectedOutput{"Invalid format passed: banana. Ignoring.\n"};
+    EXPECT_EQ(expectedOutput, output);
+}
+
 TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefullBufferOffsetFlagThenStatelessToStatefullOptimizationIsSetCorrectly) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
