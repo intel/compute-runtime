@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,4 +10,9 @@ void HwInfoConfigHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uin
     *fp16 = 0u;
     *fp32 = FP_ATOMIC_EXT_FLAG_GLOBAL_ADD;
     *fp64 = 0u;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
 }

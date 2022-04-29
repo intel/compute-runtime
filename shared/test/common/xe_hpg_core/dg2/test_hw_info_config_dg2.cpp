@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,4 +57,10 @@ DG2TEST_F(TestDg2HwInfoConfig, givenSteppingWhenAskingForLocalMemoryAccessModeTh
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     EXPECT_EQ(LocalMemoryAccessMode::Default, hwInfoConfig.getLocalMemoryAccessMode(hwInfo));
+}
+
+DG2TEST_F(TestDg2HwInfoConfig, givenDG2HwInfoConfigWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isDirectSubmissionSupported(hwInfo));
 }
