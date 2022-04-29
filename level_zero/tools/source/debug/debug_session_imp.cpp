@@ -573,14 +573,13 @@ void DebugSessionImp::generateEventsAndResumeStoppedThreads() {
     }
 
     if (triggerEvents) {
-        generateEventsForPendingInterrupts();
-
         std::vector<EuThread::ThreadId> resumeThreads;
         std::vector<EuThread::ThreadId> stoppedThreadsToReport;
 
         fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreadsToReport);
 
         resumeAccidentallyStoppedThreads(resumeThreads);
+        generateEventsForPendingInterrupts();
         generateEventsForStoppedThreads(stoppedThreadsToReport);
 
         interruptSent = false;
