@@ -49,7 +49,7 @@ GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hw
 
 bool GmmHelper::isValidCanonicalGpuAddress(uint64_t address) {
     auto decanonizedAddress = NEO::GmmHelper::decanonize(address);
-    auto canonizedAddress = NEO::GmmHelper::canonize(decanonizedAddress);
+    auto canonizedAddress = this->canonize(decanonizedAddress);
 
     if (address == canonizedAddress) {
         return true;

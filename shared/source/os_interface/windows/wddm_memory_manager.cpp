@@ -395,7 +395,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         return nullptr;
     }
     auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow));
-    wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(baseAddress));
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper();
+    wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
 
     if (preferredAllocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr) {
         auto lockedPtr = lockResource(wddmAllocation.get());
@@ -438,7 +439,8 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation->setReservedAddressRange(ptr, size);
     } else if (requireSpecificBitness && this->force32bitAllocations) {
         allocation->set32BitAllocation(true);
-        allocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), false)));
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getGmmHelper();
+        allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocation->getRootDeviceIndex(), false)));
     }
     status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
@@ -773,7 +775,8 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
         allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
         allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                                                               allocation->reservedSizeForGpuVirtualAddress);
-        allocation->getGpuAddressToModify() = GmmHelper::canonize(allocation->reservedGpuVirtualAddress);
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getGmmHelper();
+        allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->reservedGpuVirtualAddress);
         addressToMap = allocation->reservedGpuVirtualAddress;
     }
 
@@ -1090,7 +1093,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         wddmAllocation->setCpuAddress(lockResource(wddmAllocation.get()));
     }
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
-        wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[wddmAllocation->getRootDeviceIndex()]->getGmmHelper();
+        wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(wddmAllocation->getRootDeviceIndex(), true)));
     }
 
     status = AllocationStatus::Success;

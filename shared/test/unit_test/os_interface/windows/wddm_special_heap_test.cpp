@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,8 @@ TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhen
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
-    EXPECT_EQ(allocation->getGpuBaseAddress(), GmmHelper::canonize(allocation->getGpuAddress()));
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[allocData.rootDeviceIndex]->getGmmHelper();
+    EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
     memManager->freeGraphicsMemory(allocation);
 }
 } // namespace NEO

@@ -441,7 +441,9 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     applyAdditionalMapGPUVAFields(MapGPUVA, gmm);
 
     NTSTATUS status = getGdi()->mapGpuVirtualAddress(&MapGPUVA);
-    gpuPtr = GmmHelper::canonize(MapGPUVA.VirtualAddress);
+
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    gpuPtr = gmmHelper->canonize(MapGPUVA.VirtualAddress);
 
     if (status == STATUS_PENDING) {
         updatePagingFenceValue(MapGPUVA.PagingFenceValue);

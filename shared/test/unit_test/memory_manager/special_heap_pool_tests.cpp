@@ -30,8 +30,11 @@ TEST_F(FrontWindowAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenAllocate
     allocData.size = MemoryConstants::kiloByte;
     auto allocation(memManager->allocate32BitGraphicsMemoryImpl(allocData, false));
     auto heap = memManager->heapAssigner.get32BitHeapIndex(allocData.type, false, *defaultHwInfo, true);
-    EXPECT_EQ(GmmHelper::canonize(memManager->getGfxPartition(0)->getHeapMinimalAddress(heap)), allocation->getGpuAddress());
-    EXPECT_LT(ptrOffset(allocation->getGpuAddress(), allocation->getUnderlyingBufferSize()), GmmHelper::canonize(memManager->getGfxPartition(0)->getHeapLimit(heap)));
+    auto gmmHelper = memManager.get()->peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()].get()->getGmmHelper();
+
+    EXPECT_EQ(gmmHelper->canonize(memManager->getGfxPartition(0)->getHeapMinimalAddress(heap)), allocation->getGpuAddress());
+    EXPECT_LT(ptrOffset(allocation->getGpuAddress(), allocation->getUnderlyingBufferSize()), gmmHelper->canonize(memManager->getGfxPartition(0)->getHeapLimit(heap)));
+
     memManager->freeGraphicsMemory(allocation);
 }
 

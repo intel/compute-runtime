@@ -240,7 +240,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     hwParse.parseCommands<FamilyType>(tmpCmdBuffer, usedSpace);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
-    uint64_t actualGpuVa = GmmHelper::canonize(bbStart->getBatchBufferStartAddress());
+    auto gmmHelper = device->getGmmHelper();
+    uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
 }
 
@@ -293,7 +294,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     hwParse.parseCommands<FamilyType>(tmpCmdBuffer, usedSpace);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
-    uint64_t actualGpuVa = GmmHelper::canonize(bbStart->getBatchBufferStartAddress());
+    auto gmmHelper = device->getGmmHelper();
+    uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
 
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);

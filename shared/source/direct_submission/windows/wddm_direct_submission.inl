@@ -115,8 +115,9 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionRingBuffer(uin
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    auto gmmHelper = wddm->getRootDeviceEnvironment().getGmmHelper();
 
-    tagData.tagAddress = GmmHelper::canonize(currentFence.gpuAddress);
+    tagData.tagAddress = gmmHelper->canonize(currentFence.gpuAddress);
     tagData.tagValue = currentFence.currentFenceValue;
 }
 

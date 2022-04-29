@@ -1952,7 +1952,8 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     scratchAllocationBase = sbaExpected[ZET_DEBUG_SBA_SCRATCH_SPACE_INTEL_GPU];
     uint64_t scratchAllocationBase2 = (1ULL << 47) + 0x12000u;
-    auto scratchAllocationBase2Canonized = NEO::GmmHelper::canonize(scratchAllocationBase2);
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto scratchAllocationBase2Canonized = gmmHelper->canonize(scratchAllocationBase2);
 
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;

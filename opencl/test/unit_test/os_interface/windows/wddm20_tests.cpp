@@ -339,8 +339,10 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
 
     bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress);
     EXPECT_TRUE(ret);
-    auto cannonizedHeapBase = GmmHelper::canonize(heapBase);
-    auto cannonizedHeapEnd = GmmHelper::canonize(heapLimit);
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto cannonizedHeapBase = gmmHelper->canonize(heapBase);
+    auto cannonizedHeapEnd = gmmHelper->canonize(heapLimit);
 
     EXPECT_GE(gpuAddress, cannonizedHeapBase);
     EXPECT_LE(gpuAddress, cannonizedHeapEnd);
@@ -435,7 +437,9 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     EXPECT_TRUE(ret);
 
     EXPECT_NE(0u, allocation.getGpuAddress());
-    EXPECT_EQ(allocation.getGpuAddress(), GmmHelper::canonize(allocation.getGpuAddress()));
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    EXPECT_EQ(allocation.getGpuAddress(), gmmHelper->canonize(allocation.getGpuAddress()));
 
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }

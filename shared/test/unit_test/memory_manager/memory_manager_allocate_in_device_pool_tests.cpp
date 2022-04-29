@@ -272,10 +272,12 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
     }
     auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     auto gpuAddress = moduleDebugArea->getGpuAddress();
-    EXPECT_LE(GmmHelper::canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), gpuAddress);
-    EXPECT_GT(GmmHelper::canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapLimit(expectedHeap)), gpuAddress);
-    EXPECT_EQ(GmmHelper::canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), moduleDebugArea->getGpuBaseAddress());
-    EXPECT_EQ(GmmHelper::canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(baseHeap)), moduleDebugArea->getGpuBaseAddress());
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[moduleDebugArea->getRootDeviceIndex()].get()->getGmmHelper();
+
+    EXPECT_LE(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapLimit(expectedHeap)), gpuAddress);
+    EXPECT_EQ(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(baseHeap)), moduleDebugArea->getGpuBaseAddress());
 
     osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
 }
