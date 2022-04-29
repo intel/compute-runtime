@@ -351,6 +351,9 @@ bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInf
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isGrfNumReportedWithScm() const {
+    if (DebugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
+        return DebugManager.flags.ForceGrfNumProgrammingWithScm.get();
+    }
     return true;
 }
 

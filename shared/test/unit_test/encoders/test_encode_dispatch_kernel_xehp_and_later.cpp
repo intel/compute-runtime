@@ -438,6 +438,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
+
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.setProperties(false, 128, 0u, *defaultHwInfo);
     streamProperties.stateComputeMode.setProperties(false, 128, 0u, *defaultHwInfo);

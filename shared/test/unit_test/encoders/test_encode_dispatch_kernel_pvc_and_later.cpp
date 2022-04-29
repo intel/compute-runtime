@@ -81,6 +81,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandContainerWhenNumGrfRequiredIsGreaterThanDefaultThenLargeGrfModeEnabled) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     StreamProperties streamProperties{};
     streamProperties.stateComputeMode.setProperties(false, GrfConfig::LargeGrfNumber, 0u, *defaultHwInfo);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, *defaultHwInfo);
@@ -91,7 +92,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     ASSERT_NE(itorCmd, commands.end());
 
     auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
-    EXPECT_TRUE(cmd->getLargeGrfMode());
+    EXPECT_EQ(hwInfoConfig.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
 }
 
 using CommandEncodeStatesTestHpc = Test<CommandEncodeStatesFixture>;

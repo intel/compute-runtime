@@ -69,11 +69,12 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
 
     int expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*defaultHwInfo);
     bool expectedIsCoherencyRequired = hwHelper.forceNonGpuCoherencyWA(true);
+    int expectedLargeGrfMode = hwInfoConfig.isGrfNumReportedWithScm() ? 1 : -1;
     EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(1, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(expectedDisableOverdispatch, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(expectedIsCoherencyRequired, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
-    EXPECT_EQ(1, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
+    EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 
     commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 0;
@@ -84,11 +85,12 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.requiredStreamState.stateComputeMode.threadArbitrationPolicy.value = NEO::ThreadArbitrationPolicy::AgeBased;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false);
 
+    expectedLargeGrfMode = hwInfoConfig.isGrfNumReportedWithScm() ? 0 : -1;
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableEUFusion.value);
     EXPECT_EQ(0, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(0, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
-    EXPECT_EQ(0, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
+    EXPECT_EQ(expectedLargeGrfMode, currentCsrStreamProperties.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 

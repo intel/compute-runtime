@@ -6855,7 +6855,8 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t ForceNonCoherent : BITFIELD_RANGE(3, 4);
             uint32_t FastClearDisabledOnCompressedSurface : BITFIELD_RANGE(5, 5);
             uint32_t DisableSlmReadMergeOptimization : BITFIELD_RANGE(6, 6);
-            uint32_t Reserved_39 : BITFIELD_RANGE(7, 10);
+            uint32_t Reserved_39 : BITFIELD_RANGE(7, 9);
+            uint32_t Reserved_42 : BITFIELD_RANGE(10, 10);
             uint32_t DisableAtomicOnClearData : BITFIELD_RANGE(11, 11);
             uint32_t Reserved_44 : BITFIELD_RANGE(12, 12);
             uint32_t EuThreadSchedulingModeOverride : BITFIELD_RANGE(13, 14);

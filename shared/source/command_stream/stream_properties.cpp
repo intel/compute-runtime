@@ -22,7 +22,8 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
     this->isCoherencyRequired.set(isCoherencyRequired);
 
-    if (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable) {
+    bool reportNumGrf = hwInfoConfig.isGrfNumReportedWithScm();
+    if (reportNumGrf && (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
         int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
         this->largeGrfMode.set(largeGrfMode);
     }
@@ -51,7 +52,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     }
     this->threadArbitrationPolicy.set(threadArbitrationPolicy);
 
-    setPropertiesExtra(hwInfoConfig.isGrfNumReportedWithScm());
+    setPropertiesExtra(reportNumGrf);
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {

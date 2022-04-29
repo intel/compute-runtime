@@ -13,6 +13,8 @@
 
 using Family = NEO::XE_HPC_COREFamily;
 
+#include "unit_test_helper_xe_hpc_core_extra.inl"
+
 namespace NEO {
 
 template <>
