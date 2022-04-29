@@ -1089,7 +1089,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseW
     cmdStream->waitForTaskCountReturnValue = WaitStatus::Ready;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
     constexpr uint32_t taskCount = 0u;
@@ -1109,7 +1109,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndCleanTemporaryAllocationListEq
     cmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::GpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
     constexpr uint32_t taskCount = 0u;
@@ -1128,7 +1128,7 @@ HWTEST_F(WaitUntilCompletionTests, givenEmptyBcsStatesAndSkipWaitEqualsTrueWhenW
     cmdStream->initializeTagAllocation();
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
     constexpr uint32_t taskCount = 0u;
@@ -1147,7 +1147,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaiting
     cmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
     constexpr uint32_t taskCount = 0u;
@@ -1174,7 +1174,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     bcsCmdStream->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
@@ -1207,7 +1207,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::GpuHang;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
@@ -1241,7 +1241,7 @@ HWTEST_F(WaitUntilCompletionTests, givenSuccessOnBcsCsrWhenWaitingUntilCompleteT
     bcsCmdStream->waitForTaskCountAndCleanTemporaryAllocationListReturnValue = WaitStatus::Ready;
 
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
@@ -2803,7 +2803,7 @@ TEST_F(MultiTileFixture, givenDefaultContextWithRootDeviceWhenQueueIsCreatedThen
     auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
 
     MockCommandQueue queue(&context, rootDevice, nullptr, false);
-    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    ASSERT_NE(nullptr, &queue.getGpgpuEngine());
     EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
     EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
 }
@@ -2814,7 +2814,7 @@ TEST_F(MultiTileFixture, givenDefaultContextWithSubdeviceWhenQueueIsCreatedThenQ
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
 
     MockCommandQueue queue(&context, subdevice, nullptr, false);
-    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    ASSERT_NE(nullptr, &queue.getGpgpuEngine());
     EXPECT_FALSE(queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
 }
 
@@ -2826,7 +2826,7 @@ TEST_F(MultiTileFixture, givenUnrestrictiveContextWithRootDeviceWhenQueueIsCreat
     auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
 
     MockCommandQueue queue(&context, rootDevice, nullptr, false);
-    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    ASSERT_NE(nullptr, &queue.getGpgpuEngine());
     EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
     EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
 }
@@ -2840,7 +2840,7 @@ TEST_F(MultiTileFixture, givenNotDefaultContextWithRootDeviceAndTileIdMaskWhenQu
     auto rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
 
     MockCommandQueue queue(&context, rootClDevice, nullptr, false);
-    ASSERT_NE(nullptr, queue.gpgpuEngine);
+    ASSERT_NE(nullptr, &queue.getGpgpuEngine());
     EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
     EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
 }

@@ -282,7 +282,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 
     UltCommandStreamReceiver<GfxFamily> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(*BaseClass::gpgpuEngine->commandStreamReceiver);
+        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(BaseClass::getGpgpuCommandStreamReceiver());
     }
 
     cl_int enqueueWriteImage(Image *dstImage,

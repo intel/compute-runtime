@@ -2135,7 +2135,7 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
     void *pSrcSVM = ptrSVM;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
@@ -2156,7 +2156,7 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
@@ -2178,7 +2178,7 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy

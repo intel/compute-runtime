@@ -32,11 +32,11 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSur
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
 
-    auto dbgSurface = device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
+    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
     EXPECT_NE(dbgSurface, nullptr);
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw2(context, device.get(), nullptr);
-    EXPECT_EQ(dbgSurface, device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
+    EXPECT_EQ(dbgSurface, mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
 }
 
 HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {
@@ -63,7 +63,7 @@ HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
 
-    auto dbgSurface = device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
+    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
     EXPECT_NE(dbgSurface, nullptr);
     auto mem = dbgSurface->getUnderlyingBuffer();
     ASSERT_NE(nullptr, mem);
@@ -96,7 +96,7 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingCommandQueueDebugOnButIgcDoesNotRet
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw1(context, device.get(), nullptr);
 
-    auto dbgSurface = device->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
+    auto dbgSurface = mockCmdQueueHw1.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
     EXPECT_NE(dbgSurface, nullptr);
 
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,7 @@ TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIs
 }
 
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
+    using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto clDevice = castToObject<ClDevice>(testedClDevice);
@@ -79,7 +80,8 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
-    EXPECT_EQ(DispatchMode::BatchedDispatch, csr.dispatchMode);
+    auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(cmdq));
+    EXPECT_EQ(DispatchMode::BatchedDispatch, queue->getGpgpuCommandStreamReceiver().getDispatchMode());
     retVal = clReleaseCommandQueue(cmdq);
 }
 
@@ -100,6 +102,7 @@ HWTEST_F(clCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQu
 }
 
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
+    using BaseType = typename CommandQueue::BaseType;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto clDevice = castToObject<ClDevice>(testedClDevice);
@@ -108,7 +111,8 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
     EXPECT_FALSE(csr.isNTo1SubmissionModelEnabled());
 
     auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
-    EXPECT_TRUE(csr.isNTo1SubmissionModelEnabled());
+    auto queue = castToObject<CommandQueue>(static_cast<BaseType *>(cmdq));
+    EXPECT_TRUE(queue->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled());
     retVal = clReleaseCommandQueue(cmdq);
 }
 

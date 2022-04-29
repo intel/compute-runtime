@@ -62,39 +62,8 @@ class CommandQueueHw : public CommandQueue {
             this->gpgpuEngine = &device->getInternalEngine();
         }
 
-        auto &hwInfo = device->getDevice().getHardwareInfo();
-        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-        auto assignEngineRoundRobin =
-            !internalUsage &&
-            !this->queueFamilySelected &&
-            !(clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
-            hwHelper.isAssignEngineRoundRobinSupported() &&
-            this->isAssignEngineRoundRobinEnabled();
-
-        if (assignEngineRoundRobin) {
-            this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
-        }
-
-        if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
-            getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-            if (DebugManager.flags.CsrDispatchMode.get() != 0) {
-                getGpgpuCommandStreamReceiver().overrideDispatchPolicy(static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get()));
-            }
-            getGpgpuCommandStreamReceiver().enableNTo1SubmissionModel();
-        }
-
-        if (device->getDevice().getDebugger() && !getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation()) {
-            auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
-            auto debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(maxDbgSurfaceSize);
-            memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
-
-            auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
-            if (stateSaveAreaHeader.size() > 0) {
-                NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
-                                                                      device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),
-                                                                      stateSaveAreaHeader.size());
-            }
+        if (gpgpuEngine) {
+            this->initializeGpgpuInternals();
         }
 
         uint64_t requestedSliceCount = getCmdQueueProperties<cl_command_queue_properties>(properties, CL_QUEUE_SLICE_COUNT_INTEL);
@@ -102,8 +71,16 @@ class CommandQueueHw : public CommandQueue {
             sliceCount = requestedSliceCount;
         }
 
-        gpgpuEngine->osContext->ensureContextInitialized();
-        gpgpuEngine->commandStreamReceiver->initDirectSubmission();
+        auto initializeGpgpu = false;
+
+        if (DebugManager.flags.DeferCmdQGpgpuInitialization.get() != -1) {
+            initializeGpgpu = !DebugManager.flags.DeferCmdQGpgpuInitialization.get();
+        }
+
+        if (initializeGpgpu) {
+            this->initializeGpgpu();
+        }
+
         for (const EngineControl *engine : bcsEngines) {
             if (engine != nullptr) {
                 engine->osContext->ensureContextInitialized();

@@ -108,7 +108,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfa
     auto failCsr = std::make_unique<CreateAllocationForHostSurfaceFailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     failCsr->setupContext(*pDevice->getDefaultEngine().osContext);
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
 
     auto srcImage = Image2dHelper<>::create(context);
@@ -132,7 +132,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndFailingAllocationForHostSurfa
     auto failCsr = std::make_unique<CreateAllocationForHostSurfaceFailCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
     failCsr->setupContext(*pDevice->getDefaultEngine().osContext);
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ.getGpgpuCommandStreamReceiver();
     cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
 
     auto srcImage = Image2dHelper<>::create(context);
@@ -175,7 +175,7 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueAndPtrCopyAllowedForHostSurfaceW
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
 
     csr->setupContext(*pDevice->getDefaultEngine().osContext);
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = csr.get();
     csr->initializeTagAllocation();
 
@@ -199,7 +199,7 @@ HWTEST_F(EnqueueReadImageTest, givenGpuHangAndCommandQueueAndPtrCopyAllowedForHo
     cmdQ->waitForAllEnginesReturnValue = WaitStatus::GpuHang;
 
     csr->setupContext(*pDevice->getDefaultEngine().osContext);
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ->gpgpuEngine->commandStreamReceiver;
+    CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = csr.get();
     csr->initializeTagAllocation();
 

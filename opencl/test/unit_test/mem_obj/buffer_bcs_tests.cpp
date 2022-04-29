@@ -500,7 +500,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWithGpgpuSubmissionWhe
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
 
-    auto queueCsr = cmdQ->gpgpuEngine->commandStreamReceiver;
+    auto queueCsr = &cmdQ->getGpgpuCommandStreamReceiver();
     auto initialTaskCount = queueCsr->peekTaskCount();
 
     cl_int retVal = CL_SUCCESS;
@@ -531,7 +531,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWithGpgpuSubmissionWhen
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
 
-    auto queueCsr = cmdQ->gpgpuEngine->commandStreamReceiver;
+    auto queueCsr = &cmdQ->getGpgpuCommandStreamReceiver();
     auto initialTaskCount = queueCsr->peekTaskCount();
 
     cl_int retVal = CL_SUCCESS;
@@ -627,7 +627,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
-    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
+    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ->getGpgpuCommandStreamReceiver());
     queueCsr->stallingCommandsOnNextFlushRequired = true;
 
     cl_int retVal = CL_SUCCESS;
@@ -726,7 +726,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlocked
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
-    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQ->gpgpuEngine->commandStreamReceiver);
+    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ->getGpgpuCommandStreamReceiver());
     queueCsr->stallingCommandsOnNextFlushRequired = true;
 
     cl_int retVal = CL_SUCCESS;

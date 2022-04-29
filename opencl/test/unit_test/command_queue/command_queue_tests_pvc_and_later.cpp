@@ -144,10 +144,46 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
         for (size_t i = 0; i < 4; i++) {
             propertiesCooperativeQueue[3] = i;
             auto pCommandQueue = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, pDevice.get(), propertiesCooperativeQueue);
-            EXPECT_EQ(aub_stream::ENGINE_CCS + i, pCommandQueue->gpgpuEngine->osContext->getEngineType());
-            EXPECT_EQ(EngineUsage::Cooperative, pCommandQueue->gpgpuEngine->osContext->getEngineUsage());
+            EXPECT_EQ(aub_stream::ENGINE_CCS + i, pCommandQueue->getGpgpuEngine().osContext->getEngineType());
+            EXPECT_EQ(EngineUsage::Cooperative, pCommandQueue->getGpgpuEngine().osContext->getEngineUsage());
         }
     }
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationEnabledWhenCreateCommandQueueThenGpgpuIsNullptr, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DeferCmdQGpgpuInitialization.set(1u);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto queue = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), &clDevice, nullptr);
+
+    EXPECT_EQ(nullptr, queue->gpgpuEngine);
+}
+
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQGpgpuInitializationDisabledWhenCreateCommandQueueThenGpgpuIsnotNullptr, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DeferCmdQGpgpuInitialization.set(0u);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    cl_device_id clDeviceId = static_cast<cl_device_id>(&clDevice);
+    ClDeviceVector clDevices{&clDeviceId, 1u};
+    cl_int retVal{};
+    auto context = std::unique_ptr<Context>{Context::create<Context>(nullptr, clDevices, nullptr, nullptr, retVal)};
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto queue = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), &clDevice, nullptr);
+
+    EXPECT_NE(nullptr, queue->gpgpuEngine);
 }
 
 struct BcsCsrSelectionCommandQueueTests : ::testing::Test {

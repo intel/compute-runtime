@@ -222,6 +222,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);
 
+    void initializeGpgpu() const;
+    void initializeGpgpuInternals() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType) const;
     CommandStreamReceiver *getBcsForAuxTranslation() const;
@@ -230,7 +232,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
     Context *getContextPtr() const { return context; }
-    EngineControl &getGpgpuEngine() const { return *gpgpuEngine; }
+    EngineControl &getGpgpuEngine() const {
+        this->initializeGpgpu();
+        return *gpgpuEngine;
+    }
 
     MOCKABLE_VIRTUAL LinearStream &getCS(size_t minRequiredSize);
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
@@ -387,7 +392,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
-    EngineControl *gpgpuEngine = nullptr;
+    mutable EngineControl *gpgpuEngine = nullptr;
     std::array<EngineControl *, bcsInfoMaskSize> bcsEngines = {};
     std::vector<aub_stream::EngineType> bcsEngineTypes = {};
 

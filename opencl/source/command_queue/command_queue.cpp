@@ -73,14 +73,10 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-        gpgpuEngine = &device->getDefaultEngine();
-
-        UNRECOVERABLE_IF(gpgpuEngine->getEngineType() >= aub_stream::EngineType::NUM_ENGINES);
-
         bool bcsAllowed = hwInfoConfig->isBlitterFullySupported(hwInfo) &&
                           hwHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
-        if (bcsAllowed || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
+        if (bcsAllowed || device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
             deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         }
@@ -104,9 +100,8 @@ CommandQueue::~CommandQueue() {
     }
 
     if (device) {
-        auto storageForAllocation = gpgpuEngine->commandStreamReceiver->getInternalAllocationStorage();
-
         if (commandStream) {
+            auto storageForAllocation = gpgpuEngine->commandStreamReceiver->getInternalAllocationStorage();
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
         }
         delete commandStream;
@@ -130,7 +125,59 @@ CommandQueue::~CommandQueue() {
     gtpinRemoveCommandQueue(this);
 }
 
+void CommandQueue::initializeGpgpu() const {
+    if (gpgpuEngine == nullptr) {
+        auto &hwInfo = device->getDevice().getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        auto assignEngineRoundRobin =
+            !this->isSpecialCommandQueue &&
+            !this->queueFamilySelected &&
+            !(getCmdQueueProperties<cl_queue_priority_khr>(propertiesVector.data(), CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
+            hwHelper.isAssignEngineRoundRobinSupported() &&
+            this->isAssignEngineRoundRobinEnabled();
+
+        if (assignEngineRoundRobin) {
+            this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
+        } else {
+            this->gpgpuEngine = &device->getDefaultEngine();
+        }
+
+        this->initializeGpgpuInternals();
+    }
+}
+
+void CommandQueue::initializeGpgpuInternals() const {
+    auto &hwInfo = device->getDevice().getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
+        this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+        if (DebugManager.flags.CsrDispatchMode.get() != 0) {
+            this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get()));
+        }
+        this->gpgpuEngine->commandStreamReceiver->enableNTo1SubmissionModel();
+    }
+
+    if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
+        auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+        auto debugSurface = this->gpgpuEngine->commandStreamReceiver->allocateDebugSurface(maxDbgSurfaceSize);
+        memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
+
+        auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
+        if (stateSaveAreaHeader.size() > 0) {
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+                                                                  device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),
+                                                                  stateSaveAreaHeader.size());
+        }
+    }
+
+    gpgpuEngine->osContext->ensureContextInitialized();
+    gpgpuEngine->commandStreamReceiver->initDirectSubmission();
+}
+
 CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
+    this->initializeGpgpu();
     return *gpgpuEngine->commandStreamReceiver;
 }
 
@@ -700,7 +747,7 @@ cl_uint CommandQueue::getQueueFamilyIndex() const {
     } else {
         const auto &hwInfo = device->getHardwareInfo();
         const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        const auto engineGroupType = hwHelper.getEngineGroupType(gpgpuEngine->getEngineType(), gpgpuEngine->getEngineUsage(), hwInfo);
+        const auto engineGroupType = hwHelper.getEngineGroupType(getGpgpuEngine().getEngineType(), getGpgpuEngine().getEngineUsage(), hwInfo);
         const auto familyIndex = device->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
         return static_cast<cl_uint>(familyIndex);
     }
