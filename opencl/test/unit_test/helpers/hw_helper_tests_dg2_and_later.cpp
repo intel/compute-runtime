@@ -154,12 +154,6 @@ HWTEST2_F(HwHelperTestsDg2AndLater, givenXeHPGAndLaterPlatformWhenCheckingIfUnTy
     EXPECT_TRUE(hwHelper.unTypedDataPortCacheFlushRequired());
 }
 
-HWTEST2_F(HwHelperTestsDg2AndLater, givenHwHelperWhenCheckIsUpdateTaskCountFromWaitSupportedThenReturnsTrue, IsAtLeastXeHpgCore) {
-    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-
-    EXPECT_TRUE(hwHelper.isUpdateTaskCountFromWaitSupported());
-}
-
 using HwInfoConfigTestDg2AndLater = ::testing::Test;
 
 HWTEST2_F(HwInfoConfigTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {
