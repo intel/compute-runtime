@@ -723,8 +723,8 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     size_t isaPadding = hwHelper.getPaddingForISAAllocation();
     if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
         auto &hwInfo = clDevice.getDevice().getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        status = MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation()),
+        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        status = MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation()),
                                                                   clDevice.getDevice(), pKernelInfo->getGraphicsAllocation(), 0, newKernelHeap,
                                                                   static_cast<size_t>(newKernelHeapSize));
     } else {

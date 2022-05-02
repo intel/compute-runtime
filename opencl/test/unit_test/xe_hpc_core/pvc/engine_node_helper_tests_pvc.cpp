@@ -477,3 +477,39 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
         EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
     }
 }
+
+PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequiredForLocalMemoryThenProperValueIsReturned) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    hwInfo.platform.usRevId = 0u;
+
+    bool expectedRetVal = true;
+
+    graphicsAllocation.storageInfo.cloningOfPageTables = false;
+    graphicsAllocation.storageInfo.memoryBanks = 0b11;
+    EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    graphicsAllocation.storageInfo.memoryBanks = 0b10;
+    EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+
+    {
+        VariableBackup<unsigned short> revisionId{&hwInfo.platform.usRevId};
+        revisionId = 0b111000;
+        EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    }
+    {
+        VariableBackup<bool> cloningOfPageTables{&graphicsAllocation.storageInfo.cloningOfPageTables};
+        cloningOfPageTables = true;
+        EXPECT_EQ(expectedRetVal, hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    }
+    {
+        VariableBackup<DeviceBitfield> memoryBanks{&graphicsAllocation.storageInfo.memoryBanks};
+        memoryBanks = 0b1;
+        EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    }
+}

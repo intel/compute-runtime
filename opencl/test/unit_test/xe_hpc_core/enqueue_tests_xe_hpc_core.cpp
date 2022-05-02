@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenPrefetchEnabledWhenEstimati
     size_t expected = sizeof(typename FamilyType::COMPUTE_WALKER) +
                       (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                       HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
-                      EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mockKernel->kernelInfo.heapInfo.KernelHeapSize);
+                      EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(mockKernel->kernelInfo.heapInfo.KernelHeapSize, clDevice->getHardwareInfo());
 
     EXPECT_EQ(expected, EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *commandQueue, mockKernel->mockKernel, {}));
 }

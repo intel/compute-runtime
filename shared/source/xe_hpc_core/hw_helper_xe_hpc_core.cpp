@@ -263,9 +263,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
     if (allocationData.flags.requiresCpuAccess && !allocationData.flags.useSystemMemory &&
         (allocationData.storageInfo.getMemoryBanks() > 1)) {
 
-        bool bdA0 = ((hwInfo.platform.usRevId & Family::pvcBaseDieRevMask) == Family::pvcBaseDieA0Masked);
-        bool applyWa = ((DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || bdA0);
-        applyWa &= (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != 0);
+        bool applyWa = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
 
         if (applyWa) {
             allocationData.storageInfo.memoryBanks = 1; // force Tile0
@@ -380,46 +378,12 @@ template <>
 bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     constexpr uint64_t tile1Bitfield = 0b10;
 
-    bool isBaseDieA0 = (hwInfo.platform.usRevId & Family::pvcBaseDieRevMask) == Family::pvcBaseDieA0Masked;
     bool affectedEngine = (deviceBitfield.to_ulong() == tile1Bitfield) &&
                           (aub_stream::ENGINE_BCS == engineType ||
                            aub_stream::ENGINE_BCS1 == engineType ||
                            aub_stream::ENGINE_BCS3 == engineType);
 
-    if (affectedEngine) {
-        if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
-            return !DebugManager.flags.DoNotReportTile1BscWaActive.get();
-        }
-
-        return !isBaseDieA0;
-    }
-
-    return true;
-}
-
-template <>
-inline bool HwHelperHw<Family>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
-    if (!allocation.isAllocatedInLocalMemoryPool()) {
-        return false;
-    }
-
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
-        // Regular L3 WA
-        return true;
-    }
-
-    if (!allocation.isAllocationLockable()) {
-        return true;
-    }
-
-    bool isBaseDieA0 = (hwInfo.platform.usRevId & Family::pvcBaseDieRevMask) == Family::pvcBaseDieA0Masked;
-    bool isOtherTileThan0Accessed = allocation.storageInfo.memoryBanks.to_ulong() > 1u;
-    if (isBaseDieA0 && isOtherTileThan0Accessed) {
-        // Tile1 CPU access
-        return true;
-    }
-
-    return false;
+    return affectedEngine ? !HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
 }
 
 template <>

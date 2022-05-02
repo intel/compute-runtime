@@ -818,7 +818,7 @@ template <typename Family>
 inline void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
 
 template <typename Family>
-inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size) { return 0u; }
+inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const HardwareInfo &hwInfo) { return 0u; }
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {

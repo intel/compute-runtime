@@ -12,6 +12,8 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -404,4 +406,76 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfUseChannelRedForUnusedSh
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgCore) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isTimestampWaitSupportedForEvents());
+}
+
+HWTEST_F(HwInfoConfigTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore restore{};
+
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    pInHwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    auto expectedDefaultValue = (hwInfoConfig.getLocalMemoryAccessMode(pInHwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    EXPECT_EQ(expectedDefaultValue, hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+    pInHwInfo.capabilityTable.blitterOperationsSupported = false;
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+
+    graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+    pInHwInfo.capabilityTable.blitterOperationsSupported = true;
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+}
+
+HWTEST_F(HwInfoConfigTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore restore{};
+    HardwareInfo hwInfo = pInHwInfo;
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(AllocationType::SVM_GPU);
+    EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    MockGmm mockGmm(pPlatform->getClDevice(0)->getGmmHelper(), nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    mockGmm.resourceParams.Flags.Info.NotLockable = true;
+    graphicsAllocation.setDefaultGmm(&mockGmm);
+
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    EXPECT_TRUE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+
+    graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {
+    auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
 }

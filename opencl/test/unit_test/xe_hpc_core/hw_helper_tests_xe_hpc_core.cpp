@@ -43,7 +43,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGe
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoreThemInProperMemoryPool) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};
@@ -57,7 +57,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpe
 
     auto clDevice = platform()->getClDevice(0);
     auto hwInfo = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0b111000; // not BD A0
+    hwInfo->platform.usRevId = 0x8; // not BD A0
 
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
@@ -76,7 +76,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpe
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInLocalMemoryPool) {
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoreThemInLocalMemoryPool) {
     const uint32_t numDevices = 4u;
     const DeviceBitfield tile0Mask{0x1};
     DebugManagerStateRestore restore;
@@ -90,7 +90,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpec
 
     auto clDevice = platform()->getClDevice(0);
     auto hwInfo = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0b111000; // not BD A0
+    hwInfo->platform.usRevId = 0x8; // not BD A0
 
     auto commandStreamReceiver = clDevice->getDefaultEngine().commandStreamReceiver;
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
@@ -112,7 +112,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpec
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
-    const DeviceBitfield tile0Mask = 1;
+    [[maybe_unused]] const DeviceBitfield tile0Mask = 1;
     DebugManagerStateRestore restore;
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
 
@@ -133,7 +133,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     } else {
         EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
     }
-    EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
+
+    if (HwInfoConfig::get(hwInfo->platform.eProductFamily)->isTilePlacementResourceWaRequired(*hwInfo)) {
+        EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
+    }
 
     commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
     auto commandBufferAllocation = heap.getGraphicsAllocation();
@@ -820,48 +823,15 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenGettingThreadsPerEUCo
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+using HwInfoConfigTestXeHpcCore = ::testing::Test;
+
+XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDefaultHwInfoConfigHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
+    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     MockGraphicsAllocation allocation;
     allocation.overrideMemoryPool(MemoryPool::LocalMemory);
     allocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, allocation));
+    EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, allocation));
 }
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNonTile0AccessWhenGettingIsBlitCopyRequiredForLocalMemoryThenTrueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
-    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
-
-    hwInfo.platform.usRevId = FamilyType::pvcBaseDieA0Masked;
-    graphicsAllocation.storageInfo.cloningOfPageTables = false;
-    graphicsAllocation.storageInfo.memoryBanks = 0b11;
-    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-    graphicsAllocation.storageInfo.memoryBanks = 0b10;
-    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-
-    {
-        VariableBackup<unsigned short> revisionId{&hwInfo.platform.usRevId};
-        revisionId = FamilyType::pvcBaseDieA0Masked ^ FamilyType::pvcBaseDieRevMask;
-        EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-    }
-    {
-        VariableBackup<bool> cloningOfPageTables{&graphicsAllocation.storageInfo.cloningOfPageTables};
-        cloningOfPageTables = true;
-        EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-    }
-    {
-        VariableBackup<DeviceBitfield> memoryBanks{&graphicsAllocation.storageInfo.memoryBanks};
-        memoryBanks = 0b1;
-        EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
-    }
-}
-
-using HwInfoConfigTestXeHpcCore = ::testing::Test;
 
 XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
@@ -929,6 +899,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsChec
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
 
@@ -948,7 +919,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsChec
                                            (aub_stream::ENGINE_BCS == engineTypeT ||
                                             aub_stream::ENGINE_BCS1 == engineTypeT ||
                                             aub_stream::ENGINE_BCS3 == engineTypeT));
-                    bool isBdA0 = ((rev & FamilyType::pvcBaseDieRevMask) == FamilyType::pvcBaseDieA0Masked);
+                    bool isBdA0 = hwInfoConfig->isBcsReportWaRequired(hwInfo);
 
                     bool applyWa = affectedEngine;
                     applyWa &= isBdA0 || (debugFlag == 1);
@@ -966,6 +937,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroTh
 
     HardwareInfo hwInfo = *defaultHwInfo;
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     constexpr uint8_t bdRev[4] = {0, 0b111001, 0b101001, 0b000101};
     constexpr DeviceBitfield originalTileMasks[4] = {0b1, 0b11, 0b10, 0b1011};
@@ -981,7 +953,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroTh
         for (auto rev : bdRev) {
             hwInfo.platform.usRevId = rev;
 
-            bool isBdA0 = ((hwInfo.platform.usRevId & FamilyType::pvcBaseDieRevMask) == FamilyType::pvcBaseDieA0Masked);
+            bool isBdA0 = hwInfoConfig->isTilePlacementResourceWaRequired(hwInfo);
 
             for (auto originalMask : originalTileMasks) {
                 AllocationData allocData;

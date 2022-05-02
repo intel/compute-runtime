@@ -733,7 +733,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     size_t rtMemOffset = alignUp(stackSizePerRay * numRtStacks, MemoryConstants::cacheLineSize);
 
     auto &hwInfo = getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     dispatchGlobals.rtMemBasePtr = rtMemOffset;
     dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
@@ -741,7 +741,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
     dispatchGlobals.maxBVHLevels = maxBvhLevels;
 
-    MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *dispatchGlobalsAllocation),
+    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *dispatchGlobalsAllocation),
                                                      *this,
                                                      dispatchGlobalsAllocation,
                                                      0,

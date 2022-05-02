@@ -26,7 +26,7 @@ HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevi
     uint32_t count = 0;
     auto device = driverHandle->devices[0];
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = FamilyType::pvcBaseDieA0Masked ^ FamilyType::pvcBaseDieRevMask;
+    hwInfo->platform.usRevId = 0x8; // not BD A0
 
     ze_result_t res = device->getMemoryProperties(&count, nullptr);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);

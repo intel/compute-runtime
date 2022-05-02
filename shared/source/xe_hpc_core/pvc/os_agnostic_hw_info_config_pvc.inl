@@ -83,16 +83,6 @@ PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const Hard
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
-    bool isBaseDieA0 = (hwInfo->platform.usRevId & XE_HPC_COREFamily::pvcBaseDieRevMask) == XE_HPC_COREFamily::pvcBaseDieA0Masked;
-    if (isBaseDieA0) {
-        // For IGFX_PVC REV A0 HBM frequency would be 3.2 GT/s = 3.2 * 1000 MT/s = 3200 MT/s
-        return 3200u;
-    }
-    return 0u;
-}
-
-template <>
 bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
@@ -120,4 +110,67 @@ bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(
 template <>
 bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
+}
+
+bool isBaseDieA0(const HardwareInfo &hwInfo) {
+    return (hwInfo.platform.usRevId & PVC::pvcBaseDieRevMask) == PVC::pvcBaseDieA0Masked;
+}
+
+template <>
+uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
+    bool isDieA0 = isBaseDieA0(hwInfo);
+    if (isDieA0) {
+        // For IGFX_PVC REV A0 HBM frequency would be 3.2 GT/s = 3.2 * 1000 MT/s = 3200 MT/s
+        return 3200u;
+    }
+    return 0u;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
+    bool baseDieA0 = isBaseDieA0(hwInfo);
+    bool applyWa = ((DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || baseDieA0);
+    applyWa &= (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != 0);
+    return applyWa;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
+    bool prefetch = !isBaseDieA0(hwInfo);
+    if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
+        prefetch = !!DebugManager.flags.EnableMemoryPrefetch.get();
+    }
+    return prefetch;
+}
+template <>
+bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
+        return DebugManager.flags.DoNotReportTile1BscWaActive.get();
+    }
+    return isBaseDieA0(hwInfo);
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+    if (!allocation.isAllocatedInLocalMemoryPool()) {
+        return false;
+    }
+
+    if (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
+        // Regular L3 WA
+        return true;
+    }
+
+    if (!allocation.isAllocationLockable()) {
+        return true;
+    }
+
+    bool isDieA0 = isBaseDieA0(hwInfo);
+    bool isOtherTileThan0Accessed = allocation.storageInfo.memoryBanks.to_ulong() > 1u;
+    if (isDieA0 && isOtherTileThan0Accessed) {
+        // Tile1 CPU access
+        return true;
+    }
+
+    return false;
 }

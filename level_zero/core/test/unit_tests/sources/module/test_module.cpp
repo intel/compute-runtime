@@ -151,8 +151,8 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegementsThenIsaIsTr
         EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
         EXPECT_EQ(5u, blitterCalled);
     } else {
         EXPECT_EQ(0u, blitterCalled);

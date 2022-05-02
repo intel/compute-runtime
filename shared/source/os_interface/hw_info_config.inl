@@ -10,6 +10,7 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -91,7 +92,7 @@ uint64_t HwInfoConfigHw<gfxProduct>::getSharedSystemMemCapabilities(const Hardwa
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
+uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
     return 0u;
 }
 
@@ -367,4 +368,34 @@ bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != -1) {
+        return DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get();
+    }
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
+        return !!DebugManager.flags.EnableMemoryPrefetch.get();
+    }
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
+        return DebugManager.flags.DoNotReportTile1BscWaActive.get();
+    }
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+    return allocation.isAllocatedInLocalMemoryPool() &&
+           (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
+            !allocation.isAllocationLockable());
+}
 } // namespace NEO

@@ -446,7 +446,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     auto &hwInfo = this->getHwInfo();
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, hwInfoConfig.getDeviceMemoryName().c_str());
-    pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(&hwInfo);
+    pMemProperties->maxClockRate = hwInfoConfig.getDeviceMemoryMaxClkRate(hwInfo);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;
     if (this->isImplicitScalingCapable() ||
         this->getNEODevice()->getNumGenericSubDevices() == 0) {
@@ -956,8 +956,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     }
 
     if (debugSurface && stateSaveAreaHeader.size() > 0) {
-        auto &hwInfo = neoDevice->getHardwareInfo();
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());
     }

@@ -734,7 +734,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
     }
 }
 
-HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsXeHpcCore) {
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageEnabledForAllEnginesWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsPVC) {
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(2);
     for (auto &multiTile : ::testing::Bool()) {
         for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {
@@ -752,7 +752,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
     }
 }
 
-HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDefaultModeWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsXeHpcCore) {
+HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissionForceLocalMemoryStorageDefaultModeWhenAllocatingMemoryForCommandOrRingOrSemaphoreBufferThenFirstBankIsSelected, IsPVC) {
     DebugManager.flags.DirectSubmissionForceLocalMemoryStorageMode.set(-1);
     for (auto &multiTile : ::testing::Bool()) {
         for (auto &allocationType : {AllocationType::COMMAND_BUFFER, AllocationType::RING_BUFFER, AllocationType::SEMAPHORE_BUFFER}) {

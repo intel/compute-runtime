@@ -44,7 +44,7 @@ class HwInfoConfig {
     virtual void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) = 0;
     virtual std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() = 0;
     virtual void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) = 0;
-    virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) = 0;
+    virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) = 0;
     virtual bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
@@ -104,6 +104,10 @@ class HwInfoConfig {
     virtual bool isGrfNumReportedWithScm() const = 0;
     virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isTimestampWaitSupportedForEvents() const = 0;
+    virtual bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -132,7 +136,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) override;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() override;
     void convertTimestampsFromOaToCsDomain(uint64_t &timestampData) override;
-    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) override;
+    uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) override;
     bool isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const override;
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
@@ -192,6 +196,10 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isGrfNumReportedWithScm() const override;
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
     bool isTimestampWaitSupportedForEvents() const override;
+    bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const override;
+    bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
+    bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
+    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 
   protected:
     HwInfoConfigHw() = default;

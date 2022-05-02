@@ -55,7 +55,7 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
 
 using CommandListStatePrefetchXeHpcCore = Test<ModuleFixture>;
 
-HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenDebugFlagSetWhenPrefetchApiCalledThenProgramStatePrefetch, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenDebugFlagSetWhenPrefetchApiCalledAndIsNotBaseDieA0ThenProgramStatePrefetch, IsXeHpcCore) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     DebugManagerStateRestore restore;
 
@@ -74,7 +74,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenDebugFlagSetWhenPrefetchApiCal
     EXPECT_NE(nullptr, ptr);
 
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId |= FamilyType::pvcBaseDieRevMask;
+    hwInfo->platform.usRevId = 0x8; // not BD A0
 
     auto cmdListBaseOffset = pCommandList->commandContainer.getCommandStream()->getUsed();
 
@@ -271,7 +271,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     context->freeMem(ptr);
 }
 
-HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenCommandBufferIsExhaustedWhenPrefetchApiCalledThenProgramStatePrefetch, IsXeHpcCore) {
+HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenCommandBufferIsExhaustedWhenPrefetchApiCalledAndIsNotBaseDieA0ThenProgramStatePrefetch, IsXeHpcCore) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
@@ -292,7 +292,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenCommandBufferIsExhaustedWhenPr
     EXPECT_NE(nullptr, ptr);
 
     auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId |= FamilyType::pvcBaseDieRevMask;
+    hwInfo->platform.usRevId = 0x8; // not BD A0
 
     auto firstBatchBufferAllocation = pCommandList->commandContainer.getCommandStream()->getGraphicsAllocation();
 

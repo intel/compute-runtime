@@ -153,6 +153,7 @@ void CommandQueue::initializeGpgpu() const {
 void CommandQueue::initializeGpgpuInternals() const {
     auto &hwInfo = device->getDevice().getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
         this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -169,7 +170,7 @@ void CommandQueue::initializeGpgpuInternals() const {
 
         auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice()).getStateSaveAreaHeader();
         if (stateSaveAreaHeader.size() > 0) {
-            NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
                                                                   device->getDevice(), debugSurface, 0, stateSaveAreaHeader.data(),
                                                                   stateSaveAreaHeader.size());
         }

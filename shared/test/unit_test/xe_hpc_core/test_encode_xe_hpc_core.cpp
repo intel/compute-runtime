@@ -100,7 +100,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
         uint32_t alignedSize = alignUp(expectedSize, MemoryConstants::pageSize64k);
         uint32_t expectedCmdsCount = std::max((alignedSize / static_cast<uint32_t>(MemoryConstants::pageSize64k)), 1u);
 
-        EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(expectedSize));
+        EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(expectedSize, hwInfo));
 
         EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, expectedSize, 0, hwInfo);
         EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, linearStream.getUsed());
@@ -134,7 +134,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingP
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 
-    EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1));
+    EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1, hwInfo));
 
     AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
 
@@ -171,7 +171,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
         LinearStream linearStream(buffer, sizeof(buffer));
 
         DebugManager.flags.EnableMemoryPrefetch.set(0);
-        EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(100));
+        EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(100, hwInfo));
         EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 100, 0, hwInfo);
         EXPECT_EQ(0u, linearStream.getUsed());
 
@@ -181,26 +181,6 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
         auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
         EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
     }
-}
-
-XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenSteppingWhenProgrammingPrefetchThenProgramOnlyAboveAzero) {
-    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.platform.usRevId = 0b0100'0111; // [3:5] - BaseDie == A0;
-
-    const GraphicsAllocation allocation(0, AllocationType::KERNEL_ISA,
-                                        nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
-    uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
-
-    LinearStream linearStream(buffer, sizeof(buffer));
-
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, hwInfo);
-    EXPECT_EQ(0u, linearStream.getUsed());
-
-    hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, hwInfo);
-    EXPECT_EQ(sizeof(STATE_PREFETCH), linearStream.getUsed());
 }
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPrefetchThenSetParserStall) {

@@ -33,6 +33,9 @@ struct PVC : public XE_HPC_COREFamily {
     static bool isXlA0(const HardwareInfo &hwInfo);
     static bool isAtMostXtA0(const HardwareInfo &hwInfo);
 
+    static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
+    static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
+
     static bool isXl(const HardwareInfo &hwInfo) {
         auto it = std::find(PVC_XL_IDS.begin(), PVC_XL_IDS.end(), hwInfo.platform.usDeviceID);
         return it != PVC_XL_IDS.end();

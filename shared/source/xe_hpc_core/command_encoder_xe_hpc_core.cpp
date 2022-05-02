@@ -99,12 +99,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
     using STATE_PREFETCH = typename Family::STATE_PREFETCH;
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
 
-    bool isBaseDieA0 = (hwInfo.platform.usRevId & Family::pvcBaseDieRevMask) == Family::pvcBaseDieA0Masked;
-
-    bool prefetch = !isBaseDieA0;
-    if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
-        prefetch = !!DebugManager.flags.EnableMemoryPrefetch.get();
-    }
+    bool prefetch = HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowMemoryPrefetch(hwInfo);
 
     if (!prefetch) {
         return;
@@ -143,11 +138,10 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 }
 
 template <>
-size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size) {
+size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const HardwareInfo &hwInfo) {
     if (DebugManager.flags.EnableMemoryPrefetch.get() == 0) {
         return 0;
     }
-
     size = alignUp(size, MemoryConstants::pageSize64k);
 
     size_t count = size / MemoryConstants::pageSize64k;

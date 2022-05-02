@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 namespace NEO {
-
-template <>
-int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    return 0;
-}
 
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();

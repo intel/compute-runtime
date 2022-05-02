@@ -139,9 +139,9 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         }
 
         auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-        MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+        MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                          device, sipAllocation, 0, alignedBuffer,
                                                          bytesRead);
 
@@ -191,6 +191,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     size_t kernelBinarySize = 0u;
     auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     hwHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
     const auto allocType = AllocationType::KERNEL_ISA_INTERNAL;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
@@ -200,8 +201,8 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     if (sipAllocation == nullptr) {
         return false;
     }
-
-    MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                      device, sipAllocation, 0, sipKernelBinary,
                                                      kernelBinarySize);
 

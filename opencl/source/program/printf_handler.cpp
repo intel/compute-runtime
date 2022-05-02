@@ -55,9 +55,9 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    MemoryTransferHelper::transferMemoryToAllocation(helper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
+    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
                                                      device.getDevice(), printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
                                                      sizeof(*printfSurfaceInitialDataSizePtr.get()));
 
@@ -94,9 +94,7 @@ bool PrintfHandler::printEnqueueOutput() {
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    if (hwInfoConfig.allowStatelessCompression(hwInfo) || helper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
+    if (hwInfoConfig.allowStatelessCompression(hwInfo) || hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(hwInfo, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);

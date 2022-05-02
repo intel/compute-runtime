@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,9 @@ template <typename PatchSizeT>
 void Linker::patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue) {
 
     auto &hwInfo = pDevice->getHardwareInfo();
-    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    bool useBlitter = helper.isBlitCopyRequiredForLocalMemory(hwInfo, *dstAllocation);
+    bool useBlitter = hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *dstAllocation);
 
     auto initValue = ptrOffset(initData, relocationOffset);
 

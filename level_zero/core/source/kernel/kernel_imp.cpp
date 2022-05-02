@@ -794,13 +794,13 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     auto neoDevice = module->getDevice()->getNEODevice();
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
     auto &kernelDescriptor = kernelImmData->getDescriptor();
 
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::KERNEL_ISA_INTERNAL) {
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
                                                               0,

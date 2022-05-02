@@ -486,13 +486,6 @@ inline uint32_t HwHelperHw<GfxFamily>::getMinimalSIMDSize() {
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
-    return allocation.isAllocatedInLocalMemoryPool() &&
-           (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
-            !allocation.isAllocationLockable());
-}
-
-template <typename GfxFamily>
 std::unique_ptr<TagAllocatorBase> HwHelperHw<GfxFamily>::createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                                         size_t initialTagCount, CommandStreamReceiverType csrType, DeviceBitfield deviceBitfield) const {
     bool doNotReleaseNodes = (csrType > CommandStreamReceiverType::CSR_HW) ||

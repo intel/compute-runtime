@@ -27,9 +27,6 @@ struct XE_HPC_CORE {
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
 
-    static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
-    static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
-
     static constexpr bool isUsingL3Control = false;
     static constexpr bool isUsingMediaSamplerDopClockGate = false;
     static constexpr bool supportsSampler = false;

@@ -58,7 +58,6 @@ class HwHelper {
     virtual bool preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool isBufferSizeSuitableForCompression(const size_t size, const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
-    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     static bool compressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool compressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -319,8 +318,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getGlobalTimeStampBits() const override;
 
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override;
-
-    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 

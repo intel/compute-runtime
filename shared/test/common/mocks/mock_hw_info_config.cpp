@@ -72,7 +72,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
 }
 
 template <>
-uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo *hwInfo) {
+uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
     return 0;
 }
 
@@ -348,6 +348,7 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const 
 }
 
 template <>
+
 void HwInfoConfigHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {
 }
 
@@ -358,6 +359,9 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint
 template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::isGrfNumReportedWithScm() const {
     return false;
+}
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::enableCompression(HardwareInfo *hwInfo) {
 }
 
 template <>
@@ -370,4 +374,12 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
     return false;
 }
 
-} //namespace NEO
+template <>
+uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() {
+    return 0;
+}
+} // namespace NEO
+
+#include "shared/source/os_interface/hw_info_config.inl"
+
+template class NEO::HwInfoConfigHw<IGFX_UNKNOWN>;
