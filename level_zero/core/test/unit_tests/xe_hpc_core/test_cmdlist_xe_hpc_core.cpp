@@ -323,15 +323,11 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenCommandBufferIsExhaustedWhenPr
     context->freeMem(ptr);
 }
 
-using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
+using CommandListEventFenceTestsPvc = Test<ModuleFixture>;
 
-HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded, IsXeHpcCore) {
+HWTEST2_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded, IsPVC) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -360,7 +356,9 @@ HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEven
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandOnPvcRev03ThenMiFenceIsAdded, IsXeHpcCore) {
+using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
+
+HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
@@ -391,7 +389,7 @@ HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEven
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithRegularEventAfterCommandOnPvcRev03ThenMiFenceIsAdded, IsXeHpcCore) {
+HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithRegularEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 

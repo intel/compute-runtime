@@ -256,16 +256,12 @@ struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamRece
     DebugManagerStateRestore restore;
 };
 
-XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest, whenEnqueueKernelIsCalledThenFenceCommandsCanBeGenerated) {
+HWTEST2_F(SystemMemoryFenceInDefaultConfigurationTest, whenEnqueueKernelIsCalledThenFenceCommandsCanBeGenerated, IsPVC) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     VariableBackup<unsigned short> revisionId(&defaultHwInfo->platform.usRevId);
-
-    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     unsigned short revisions[] = {0x0, 0x3};
     for (auto revision : revisions) {

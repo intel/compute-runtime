@@ -22,26 +22,6 @@ HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointers
 
 using DeviceTestXeHpc = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsXeHpcCore) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    if (defaultHwInfo->platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 3200u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
-}
-
 HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevisionIsNotA0ThenmaxClockRateReturnedIsZero, IsXeHpcCore) {
     uint32_t count = 0;
     auto device = driverHandle->devices[0];
@@ -58,30 +38,6 @@ HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevi
     EXPECT_EQ(1u, count);
 
     EXPECT_EQ(memProperties.maxClockRate, 0u);
-}
-
-HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled, IsXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
-    auto hwInfo = *NEO::defaultHwInfo;
-    hwInfo.platform.usRevId = 0x3;
-
-    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
-
-    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
-    ASSERT_NE(nullptr, device);
-
-    EXPECT_FALSE(device->isImplicitScalingCapable());
-
-    static_cast<DeviceImp *>(device)->releaseResources();
-    delete device;
 }
 
 HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
@@ -123,6 +79,44 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
 
     static_cast<DeviceImp *>(device)->releaseResources();
     delete device;
+}
+
+using DeviceTestPvc = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled, IsPVC) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.platform.usRevId = 0x3;
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
+    ASSERT_NE(nullptr, device);
+
+    EXPECT_FALSE(device->isImplicitScalingCapable());
+
+    static_cast<DeviceImp *>(device)->releaseResources();
+    delete device;
+}
+
+HWTEST2_F(DeviceTestPvc, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsPVC) {
+    uint32_t count = 0;
+    ze_result_t res = device->getMemoryProperties(&count, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    ze_device_memory_properties_t memProperties = {};
+    res = device->getMemoryProperties(&count, &memProperties);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(1u, count);
+
+    EXPECT_EQ(memProperties.maxClockRate, 3200u);
+    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
+    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 
 using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<9, 1>>;

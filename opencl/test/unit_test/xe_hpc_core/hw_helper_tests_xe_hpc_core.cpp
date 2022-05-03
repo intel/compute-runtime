@@ -24,7 +24,7 @@
 
 using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenPvcThenAuxTranslationIsNotRequired) {
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
     auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
     KernelInfo kernelInfo{};
 
@@ -144,7 +144,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCs
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenPvcWhenAskedForMinimialSimdThen16IsReturned) {
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenXeHpcWhenAskedForMinimialSimdThen16IsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(16u, helper.getMinimalSIMDSize());
 }
@@ -167,7 +167,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarr
     EXPECT_EQ(32u, hwHelper.getBarriersCountFromHasBarriers(7u));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
+HWTEST2_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned, IsPVC) {
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_B,
@@ -175,10 +175,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyType
         REVISION_D,
         CommonConstants::invalidStepping,
     };
-
-    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
@@ -617,24 +613,16 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskedIfFenceAllocatio
     EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+HWTEST2_F(HwHelperTestsXeHpcCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned, IsPVC) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
+HWTEST2_F(HwHelperTestsXeHpcCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned, IsPVC) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
 }
@@ -661,7 +649,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCom
     EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed) {
+HWTEST2_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhenAddingSynchronizationThenCorrectMethodIsUsed, IsPVC) {
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
@@ -680,10 +668,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMemorySynchronizationCommandsWhen
 
     DebugManagerStateRestore debugRestorer;
     auto hardwareInfo = *defaultHwInfo;
-
-    if (hardwareInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     uint8_t buffer[128] = {};
@@ -1033,14 +1017,10 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorr
     EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 8, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
+HWTEST2_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue, IsPVC) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.EUCount *= 2;
-
-    if (hwInfo.platform.eProductFamily != IGFX_PVC) {
-        GTEST_SKIP();
-    }
 
     uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
 

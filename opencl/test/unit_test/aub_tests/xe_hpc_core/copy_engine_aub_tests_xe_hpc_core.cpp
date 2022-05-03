@@ -13,7 +13,7 @@
 using namespace NEO;
 
 template <uint32_t numTiles, typename FamilyType, bool useLocalMemory = true>
-struct CopyEnginesPvcFixture : public CopyEngineXeHPAndLater<numTiles, useLocalMemory>, public ::testing::WithParamInterface<uint32_t /* EngineType */> {
+struct CopyEnginesXeHpcFixture : public CopyEngineXeHPAndLater<numTiles, useLocalMemory>, public ::testing::WithParamInterface<uint32_t /* EngineType */> {
     using MEM_COPY = typename FamilyType::MEM_COPY;
 
     void SetUp() override {
@@ -33,76 +33,76 @@ constexpr uint32_t allSupportedCopyEngines[] = {
     aub_stream::EngineType::ENGINE_BCS8,
 };
 
-using OneTilePvcTests = CopyEnginesPvcFixture<1, XE_HPC_COREFamily>;
+using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,
-    OneTilePvcTests,
+    OneTileXeHpcTests,
     testing::ValuesIn(allSupportedCopyEngines));
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolve) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolve) {
     givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolveImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopied) {
     givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
     givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenOffsetsWhenBltExecutedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenOffsetsWhenBltExecutedThenCopiedDataIsValid) {
     givenOffsetsWhenBltExecutedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompress) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompress) {
     givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompressImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
     givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-using OneTileSystemMemoryPvcTests = CopyEnginesPvcFixture<1, XE_HPC_COREFamily, false>;
+using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily, false>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,
-    OneTileSystemMemoryPvcTests,
+    OneTileSystemMemoryXeHpcTests,
     testing::ValuesIn(allSupportedCopyEngines));
 
-XE_HPC_CORETEST_P(OneTileSystemMemoryPvcTests, givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValid) {
+XE_HPC_CORETEST_P(OneTileSystemMemoryXeHpcTests, givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValid) {
     givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
     givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenWriteBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenWriteBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
     givenWriteBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-XE_HPC_CORETEST_P(OneTilePvcTests, givenCopyBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
     givenCopyBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }

@@ -214,7 +214,7 @@ HWTEST2_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBl
     }
 }
 
-struct BlitTestsTestPvc : BlitColorTests {};
+struct BlitTestsTestXeHpc : BlitColorTests {};
 
 template <typename FamilyType>
 class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammedPVC : public GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> {
@@ -246,7 +246,7 @@ typename FamilyType::XY_COLOR_BLT::COLOR_DEPTH getColorDepth(size_t patternSize)
     return depth;
 }
 
-HWTEST2_P(BlitTestsTestPvc, givenCommandStreamWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, IsXeHpcCore) {
+HWTEST2_P(BlitTestsTestXeHpc, givenCommandStreamWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, IsXeHpcCore) {
     auto patternSize = GetParam();
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammedPVC<FamilyType> test(pDevice);
@@ -254,7 +254,7 @@ HWTEST2_P(BlitTestsTestPvc, givenCommandStreamWhenCallToDispatchMemoryFillThenCo
 }
 
 INSTANTIATE_TEST_CASE_P(size_t,
-                        BlitTestsTestPvc,
+                        BlitTestsTestXeHpc,
                         testing::Values(2,
                                         4,
                                         8,
