@@ -371,8 +371,7 @@ class CommandQueueHw : public CommandQueue {
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       uint32_t taskLevel,
-                                      PrintfHandler *printfHandler,
-                                      CommandStreamReceiver *bcsCsr);
+                                      PrintfHandler *printfHandler);
 
     void enqueueBlocked(uint32_t commandType,
                         Surface **surfacesForResidency,

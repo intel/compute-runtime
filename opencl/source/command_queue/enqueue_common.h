@@ -288,8 +288,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventsRequest,
                 eventBuilder,
                 taskLevel,
-                printfHandler.get(),
-                getBcsForAuxTranslation());
+                printfHandler.get());
         } else if (enqueueProperties.isFlushWithoutKernelRequired()) {
             completionStamp = enqueueCommandWithoutKernel(
                 surfacesForResidency,
@@ -317,7 +316,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 }
             }
 
-            //inherit data from event_wait_list and previous packets
+            // inherit data from event_wait_list and previous packets
             completionStamp.flushStamp = this->flushStamp->peekStamp();
             completionStamp.taskCount = maxTaskCountCurrentRootDevice;
             completionStamp.taskLevel = taskLevel;
@@ -327,7 +326,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
 
-            //check if we have BCS associated, if so we need to make sure it is completed as well
+            // check if we have BCS associated, if so we need to make sure it is completed as well
             if (eventBuilder.getEvent() && this->bcsEngineTypes.size() > 0u) {
                 eventBuilder.getEvent()->setupBcs(this->getBcsCommandStreamReceiver(this->bcsEngineTypes[0u])->getOsContext().getEngineType());
             }
@@ -619,22 +618,22 @@ void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &ta
 template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
     bool updateTaskLevel = true;
-    //if we are blocked by user event then no update
+    // if we are blocked by user event then no update
     if (taskLevel == CompletionStamp::notReady) {
         updateTaskLevel = false;
     }
-    //if we are executing command without kernel then it will inherit state from
-    //previous commands, barrier is exception
+    // if we are executing command without kernel then it will inherit state from
+    // previous commands, barrier is exception
     if (isCommandWithoutKernel(commandType) && commandType != CL_COMMAND_BARRIER) {
         updateTaskLevel = false;
     }
-    //ooq special cases starts here
+    // ooq special cases starts here
     if (this->isOOQEnabled()) {
-        //if no wait list and barrier , do not update task level
+        // if no wait list and barrier , do not update task level
         if (eventWaitList == nullptr && commandType != CL_COMMAND_BARRIER) {
             updateTaskLevel = false;
         }
-        //if we have waitlist then deduce task level from waitlist and check if it is higher then current task level of queue
+        // if we have waitlist then deduce task level from waitlist and check if it is higher then current task level of queue
         if (eventWaitList != nullptr) {
             auto taskLevelFromEvents = getTaskLevelFromWaitList(0, numEventsInWaitList, eventWaitList);
             taskLevelFromEvents++;
@@ -661,8 +660,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     uint32_t taskLevel,
-    PrintfHandler *printfHandler,
-    CommandStreamReceiver *bcsCsr) {
+    PrintfHandler *printfHandler) {
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
 
@@ -755,35 +753,35 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto memoryCompressionState = getGpgpuCommandStreamReceiver().getMemoryCompressionState(auxTranslationRequired, device->getHardwareInfo());
 
     DispatchFlags dispatchFlags(
-        {},                                                                                         //csrDependencies
-        &timestampPacketDependencies.barrierNodes,                                                  //barrierTimestampPacketNodes
-        {},                                                                                         //pipelineSelectArgs
-        this->flushStamp->getStampReference(),                                                      //flushStampReference
-        getThrottle(),                                                                              //throttle
-        ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                     //preemptionMode
-        numGrfRequired,                                                                             //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
-        kernel->getThreadArbitrationPolicy(),                                                       //threadArbitrationPolicy
-        kernel->getAdditionalKernelExecInfo(),                                                      //additionalKernelExecInfo
-        kernel->getExecutionType(),                                                                 //kernelExecutionType
-        memoryCompressionState,                                                                     //memoryCompressionState
-        getSliceCount(),                                                                            //sliceCount
-        blocking,                                                                                   //blocking
-        shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
-        multiDispatchInfo.usesSlm(),                                                                //useSLM
-        !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),                              //guardCommandBufferWithPipeControl
-        commandType == CL_COMMAND_NDRANGE_KERNEL,                                                   //GSBA32BitRequired
-        requiresCoherency,                                                                          //requiresCoherency
-        (QueuePriority::LOW == priority),                                                           //lowPriority
-        implicitFlush,                                                                              //implicitFlush
-        !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        false,                                                                                      //epilogueRequired
-        false,                                                                                      //usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred(),                                                       //useSingleSubdevice
-        useGlobalAtomics,                                                                           //useGlobalAtomics
-        kernel->areMultipleSubDevicesInContext(),                                                   //areMultipleSubDevicesInContext
-        kernel->requiresMemoryMigration(),                                                          //memoryMigrationRequired
-        isTextureCacheFlushNeeded(commandType));                                                    //textureCacheFlush
+        {},                                                                                         // csrDependencies
+        &timestampPacketDependencies.barrierNodes,                                                  // barrierTimestampPacketNodes
+        {},                                                                                         // pipelineSelectArgs
+        this->flushStamp->getStampReference(),                                                      // flushStampReference
+        getThrottle(),                                                                              // throttle
+        ClPreemptionHelper::taskPreemptionMode(getDevice(), multiDispatchInfo),                     // preemptionMode
+        numGrfRequired,                                                                             // numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                               // l3CacheSettings
+        kernel->getThreadArbitrationPolicy(),                                                       // threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                                      // additionalKernelExecInfo
+        kernel->getExecutionType(),                                                                 // kernelExecutionType
+        memoryCompressionState,                                                                     // memoryCompressionState
+        getSliceCount(),                                                                            // sliceCount
+        blocking,                                                                                   // blocking
+        shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             // dcFlush
+        multiDispatchInfo.usesSlm(),                                                                // useSLM
+        !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),                              // guardCommandBufferWithPipeControl
+        commandType == CL_COMMAND_NDRANGE_KERNEL,                                                   // GSBA32BitRequired
+        requiresCoherency,                                                                          // requiresCoherency
+        (QueuePriority::LOW == priority),                                                           // lowPriority
+        implicitFlush,                                                                              // implicitFlush
+        !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
+        false,                                                                                      // epilogueRequired
+        false,                                                                                      // usePerDssBackedBuffer
+        kernel->isSingleSubdevicePreferred(),                                                       // useSingleSubdevice
+        useGlobalAtomics,                                                                           // useGlobalAtomics
+        kernel->areMultipleSubDevicesInContext(),                                                   // areMultipleSubDevicesInContext
+        kernel->requiresMemoryMigration(),                                                          // memoryMigrationRequired
+        isTextureCacheFlushNeeded(commandType));                                                    // textureCacheFlush
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = specialPipelineSelectMode;
@@ -818,6 +816,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
+        auto bcsCsr = getBcsForAuxTranslation();
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
         this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
         dispatchFlags.implicitFlush = true;
@@ -861,7 +860,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
-    //store previous virtual event as it will add dependecies to new virtual event
+    // store previous virtual event as it will add dependecies to new virtual event
     if (this->virtualEvent) {
         DBG_LOG(EventsDebugEnable, "enqueueBlocked", "previousVirtualEvent", this->virtualEvent);
     }
@@ -881,7 +880,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     }
     auto outEvent = eventBuilder->getEvent();
 
-    //update queue taskCount
+    // update queue taskCount
     taskCount = outEvent->getCompletionStamp();
 
     std::unique_ptr<Command> command;
@@ -900,7 +899,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     if (enqueueProperties.operation != EnqueueProperties::Operation::GpuKernel) {
         command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData);
     } else {
-        //store task data in event
+        // store task data in event
         std::vector<Surface *> allSurfaces;
         Kernel *kernel = nullptr;
         for (auto &dispatchInfo : multiDispatchInfo) {
@@ -992,35 +991,35 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
         auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         DispatchFlags dispatchFlags(
-            {},                                                                  //csrDependencies
-            &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
-            {},                                                                  //pipelineSelectArgs
-            flushStamp->getStampReference(),                                     //flushStampReference
-            getThrottle(),                                                       //throttle
-            device->getPreemptionMode(),                                         //preemptionMode
-            GrfConfig::NotApplicable,                                            //numGrfRequired
-            L3CachingSettings::NotApplicable,                                    //l3CacheSettings
-            ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
-            AdditionalKernelExecInfo::NotApplicable,                             //additionalKernelExecInfo
-            KernelExecutionType::NotApplicable,                                  //kernelExecutionType
-            MemoryCompressionState::NotApplicable,                               //memoryCompressionState
-            getSliceCount(),                                                     //sliceCount
-            blocking,                                                            //blocking
-            false,                                                               //dcFlush
-            false,                                                               //useSLM
-            !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       //guardCommandBufferWithPipeControl
-            false,                                                               //GSBA32BitRequired
-            false,                                                               //requiresCoherency
-            false,                                                               //lowPriority
-            (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
-            getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
-            false,                                                               //epilogueRequired
-            false,                                                               //usePerDssBackedBuffer
-            false,                                                               //useSingleSubdevice
-            false,                                                               //useGlobalAtomics
-            context->containsMultipleSubDevices(rootDeviceIndex),                //areMultipleSubDevicesInContext
-            false,                                                               //memoryMigrationRequired
-            false);                                                              //textureCacheFlush
+            {},                                                                  // csrDependencies
+            &timestampPacketDependencies.barrierNodes,                           // barrierTimestampPacketNodes
+            {},                                                                  // pipelineSelectArgs
+            flushStamp->getStampReference(),                                     // flushStampReference
+            getThrottle(),                                                       // throttle
+            device->getPreemptionMode(),                                         // preemptionMode
+            GrfConfig::NotApplicable,                                            // numGrfRequired
+            L3CachingSettings::NotApplicable,                                    // l3CacheSettings
+            ThreadArbitrationPolicy::NotPresent,                                 // threadArbitrationPolicy
+            AdditionalKernelExecInfo::NotApplicable,                             // additionalKernelExecInfo
+            KernelExecutionType::NotApplicable,                                  // kernelExecutionType
+            MemoryCompressionState::NotApplicable,                               // memoryCompressionState
+            getSliceCount(),                                                     // sliceCount
+            blocking,                                                            // blocking
+            false,                                                               // dcFlush
+            false,                                                               // useSLM
+            !getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       // guardCommandBufferWithPipeControl
+            false,                                                               // GSBA32BitRequired
+            false,                                                               // requiresCoherency
+            false,                                                               // lowPriority
+            (enqueueProperties.operation == EnqueueProperties::Operation::Blit), // implicitFlush
+            getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
+            false,                                                               // epilogueRequired
+            false,                                                               // usePerDssBackedBuffer
+            false,                                                               // useSingleSubdevice
+            false,                                                               // useGlobalAtomics
+            context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
+            false,                                                               // memoryMigrationRequired
+            false);                                                              // textureCacheFlush
 
         const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
