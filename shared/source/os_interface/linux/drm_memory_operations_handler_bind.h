@@ -27,6 +27,13 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
 
     MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
 
+    uint32_t getRootDeviceIndex() {
+        return this->rootDeviceIndex;
+    }
+    void setRootDeviceIndex(uint32_t index) {
+        this->rootDeviceIndex = index;
+    }
+
   protected:
     MOCKABLE_VIRTUAL int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield);
     MemoryOperationsStatus evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction, bool waitForCompletion);

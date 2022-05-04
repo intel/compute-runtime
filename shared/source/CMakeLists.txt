@@ -171,6 +171,7 @@ else()
                                    NEO_CORE_SRCS_HELPERS_WINDOWS
                                    NEO_CORE_GMM_HELPER_WINDOWS
                                    NEO_CORE_OS_INTERFACE_WDDM
+                                   NEO_CORE_EXECUTION_ENVIRONMENT_WDDM
                                    NEO_CORE_SKU_INFO_WINDOWS
     )
   endif()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,7 @@ set(NEO_CORE_EXECUTION_ENVIRONMENT
     ${CMAKE_CURRENT_SOURCE_DIR}/execution_environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/root_device_environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/root_device_environment.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/execution_environment_${DRIVER_MODEL}.cpp
 
 )
 

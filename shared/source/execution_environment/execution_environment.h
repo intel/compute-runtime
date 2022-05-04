@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit);
     void parseAffinityMask();
     void sortNeoDevices();
+    void sortNeoDevicesDRM();
+    void sortNeoDevicesWDDM();
     void setDebuggingEnabled() {
         debuggingEnabled = true;
     }

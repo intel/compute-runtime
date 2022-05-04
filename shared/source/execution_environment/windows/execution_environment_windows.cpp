@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace NEO {
 
-bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {
+bool comparePciIdBusNumberWDDM(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {
     // BDF sample format is : 00:02.0
     auto bdfDevice1 = rootDeviceEnvironment1.get()->osInterface->getDriverModel()->as<NEO::Wddm>()->getAdapterBDF();
 
@@ -32,10 +32,10 @@ bool comparePciIdBusNumber(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnv
     return bdfDevice1.Function < bdfDevice2.Function;
 }
 
-void ExecutionEnvironment::sortNeoDevices() {
+void ExecutionEnvironment::sortNeoDevicesWDDM() {
     const auto pciOrderVar = DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
     if (pciOrderVar) {
-        std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumber);
+        std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumberWDDM);
     }
 }
 
