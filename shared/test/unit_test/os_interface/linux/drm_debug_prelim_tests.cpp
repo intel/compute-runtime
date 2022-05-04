@@ -290,6 +290,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 
 HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtensionsAreNotSet) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.queryAndSetVmBindPatIndexProgrammingSupport();
 
     MockBufferObject bo(&drm, 3, 0, 0, 1);
     bo.addBindExtHandle(4);

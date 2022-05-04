@@ -45,6 +45,7 @@ class DrmMock : public Drm {
     using Drm::pagingFence;
     using Drm::preemptionSupported;
     using Drm::query;
+    using Drm::queryAndSetVmBindPatIndexProgrammingSupport;
     using Drm::requirePerContextVM;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;

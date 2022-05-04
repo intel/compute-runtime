@@ -4444,6 +4444,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFa
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenReturnTrue) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.queryAndSetVmBindPatIndexProgrammingSupport();
     drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
@@ -4458,6 +4459,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThenSetRegionInBufferObject) {
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.queryAndSetVmBindPatIndexProgrammingSupport();
     drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockBufferObject bo(&drm, 3, 0, 0, 1);
@@ -5479,7 +5481,11 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     ASSERT_NE(nullptr, drmAllocation->getBO());
 
-    if (HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+    auto isVmBindPatIndexProgrammingSupported = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+
+    EXPECT_EQ(isVmBindPatIndexProgrammingSupported, mock->isVmBindPatIndexProgrammingSupported());
+
+    if (isVmBindPatIndexProgrammingSupported) {
         auto expectedIndex = mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
 
         EXPECT_NE(CommonConstants::unsupportedPatIndex, drmAllocation->getBO()->peekPatIndex());

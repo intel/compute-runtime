@@ -259,6 +259,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL void notifyLastCommandQueueDestroyed(uint32_t handle);
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled) const;
+    bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -271,6 +272,7 @@ class Drm : public DriverModel {
     std::vector<uint8_t> query(uint32_t queryId, uint32_t queryItemFlags);
     void printIoctlStatistics();
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
+    void queryAndSetVmBindPatIndexProgrammingSupport();
 
 #pragma pack(1)
     struct PCIConfig {
@@ -344,6 +346,7 @@ class Drm : public DriverModel {
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;
+    bool vmBindPatIndexProgrammingSupported = false;
 
   private:
     int getParamIoctl(int param, int *dstValue);

@@ -205,6 +205,12 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
     fenceVal.fill(0u);
 }
 
+void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+
+    this->vmBindPatIndexProgrammingSupported = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+}
+
 int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     int returnedErrno;
@@ -1339,6 +1345,8 @@ bool Drm::isVmBindAvailable() {
         bindAvailable = ret;
 
         Drm::overrideBindSupport(bindAvailable);
+
+        queryAndSetVmBindPatIndexProgrammingSupport();
     });
 
     return bindAvailable;
@@ -1351,7 +1359,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    if (!HwInfoConfig::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+    if (!this->vmBindPatIndexProgrammingSupported) {
         return CommonConstants::unsupportedPatIndex;
     }
 
@@ -1411,9 +1419,6 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bindIterations = 1;
     }
 
-    auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
-
     int ret = 0;
     for (size_t i = 0; i < bindIterations; i++) {
 
@@ -1433,7 +1438,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
         VmBindExtSetPatT vmBindExtSetPat{};
 
-        if (hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
+        if (drm->isVmBindPatIndexProgrammingSupported()) {
             UNRECOVERABLE_IF(bo->peekPatIndex() == CommonConstants::unsupportedPatIndex);
             ioctlHelper->fillVmBindExtSetPat(vmBindExtSetPat, bo->peekPatIndex(), castToUint64(extensions.get()));
             vmBind.extensions = castToUint64(vmBindExtSetPat);
