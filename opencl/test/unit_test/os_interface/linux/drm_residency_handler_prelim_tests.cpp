@@ -729,6 +729,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
             auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached);
+            if (hwHelper.isPatIndexFallbackWaRequired()) {
+                expectedIndex = hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::WriteBack);
+            }
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
@@ -839,6 +842,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
 
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
+    auto &hwHelper = HwHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eRenderCoreFamily);
     auto hwInfoConfig = HwInfoConfig::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 
     if (!hwInfoConfig->isVmBindPatIndexProgrammingSupported()) {
@@ -851,6 +855,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&timestampStorageAlloc, 1));
 
     auto expectedIndex = static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached);
+    if (hwHelper.isPatIndexFallbackWaRequired()) {
+        expectedIndex = hwHelper.getPatIndex(CacheRegion::Default, CachePolicy::Uncached);
+    }
 
     EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 

@@ -1523,6 +1523,12 @@ HWTEST_F(HwHelperTest, GivenHwInfoWhenGetBatchBufferEndReferenceCalledThenCorrec
     EXPECT_EQ(hwHelper.getBatchBufferEndReference(), reinterpret_cast<const void *>(&FamilyType::cmdInitBatchBufferEnd));
 }
 
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForPatIndexWaThenReturnFalse) {
+    const auto &hwHelper = HwHelper::get(renderCoreFamily);
+
+    EXPECT_FALSE(hwHelper.isPatIndexFallbackWaRequired());
+}
+
 HWTEST_F(HwHelperTest, givenHwHelperWhenPassingCopyEngineTypeThenItsCopyOnly) {
     EXPECT_TRUE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Copy));
 }

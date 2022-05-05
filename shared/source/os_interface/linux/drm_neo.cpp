@@ -1363,6 +1363,8 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return CommonConstants::unsupportedPatIndex;
     }
 
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
     GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
 
@@ -1377,9 +1379,9 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         closEnabled = !!DebugManager.flags.ClosEnabled.get();
     }
 
-    if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled) {
+    if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled || hwHelper.isPatIndexFallbackWaRequired()) {
         DEBUG_BREAK_IF(true);
-        patIndex = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getPatIndex(cacheRegion, cachePolicy);
+        patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
     }
 
     return patIndex;

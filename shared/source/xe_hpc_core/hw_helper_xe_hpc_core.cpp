@@ -471,6 +471,11 @@ uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy ca
     return (static_cast<uint32_t>(cachePolicy) + (static_cast<uint16_t>(cacheRegion) * 2));
 }
 
+template <>
+bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"
