@@ -520,7 +520,8 @@ TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturn
     EXPECT_NE(std::string::npos, errorPosition);
 }
 
-TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {
+using MockOfflineCompilerTests = ::testing::Test;
+TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {
     MockOfflineCompiler mockOfflineCompiler;
     auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
     if (allEnabledDeviceConfigs.empty()) {
@@ -532,6 +533,7 @@ TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHard
         if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
             mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
             expectedRevId = deviceMapConfig.revId;
+            break;
         }
     }
 
@@ -541,10 +543,27 @@ TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHard
 
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, expectedRevId);
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.eProductFamily, productFamily);
-    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, 0u);
     EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxEuPerSubSlice, 0u);
     EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxSlicesSupported, 0u);
     EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxSubSlicesSupported, 0u);
+}
+
+HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, IsAtLeastGen12lp) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
+            break;
+        }
+    }
+
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
 
 TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
