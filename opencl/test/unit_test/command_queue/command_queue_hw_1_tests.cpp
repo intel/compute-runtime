@@ -430,7 +430,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenW
     struct MockEvent : UserEvent {
         MockEvent(Context *ctx, uint32_t updateCountBeforeCompleted)
             : UserEvent(ctx),
-              updateCount(0), updateCountBeforeCompleted(updateCountBeforeCompleted) {
+              updateCountBeforeCompleted(updateCountBeforeCompleted) {
             this->updateTaskCount(0, 0);
             this->taskLevel = 0;
         }
@@ -443,7 +443,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenW
             unblockEventsBlockedByThis(executionStatus);
         }
 
-        uint32_t updateCount;
+        uint32_t updateCount = 0;
         uint32_t updateCountBeforeCompleted;
     };
 

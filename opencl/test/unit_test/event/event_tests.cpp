@@ -1093,7 +1093,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
 HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThenFlushPreviousTasksBeforeMappingOrUnmapping) {
     struct MockNonZeroCopyBuff : UnalignedBuffer {
         MockNonZeroCopyBuff(int32_t &executionStamp)
-            : executionStamp(executionStamp), dataTransferedStamp(-1) {
+            : executionStamp(executionStamp) {
             hostPtr = &dataTransferedStamp;
             memoryStorage = &executionStamp;
             size = sizeof(executionStamp);
@@ -1108,7 +1108,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
         }
 
         int32_t &executionStamp;
-        int32_t dataTransferedStamp;
+        int32_t dataTransferedStamp = -1;
     };
 
     int32_t executionStamp = 0;
