@@ -146,34 +146,34 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
     MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
 
     {
-        DebugManager.flags.EnableTimestampWait.set(-1);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(-1);
         const auto &hwHelper = HwHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
         const auto &hwInfoConfig = *HwInfoConfig::get(mockDevice->getHardwareInfo().platform.eProductFamily);
-        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupported() && !hwInfoConfig.isDcFlushAllowed());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupportedForQueues() && !hwInfoConfig.isDcFlushAllowed());
     }
 
     {
-        DebugManager.flags.EnableTimestampWait.set(0);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(0);
         EXPECT_FALSE(cmdQ.isWaitForTimestampsEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWait.set(1);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(1);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWait.set(2);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(2);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWait.set(3);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(3);
         EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
     }
 
     {
-        DebugManager.flags.EnableTimestampWait.set(4);
+        DebugManager.flags.EnableTimestampWaitForQueues.set(4);
         EXPECT_TRUE(cmdQ.isWaitForTimestampsEnabled());
     }
 }

@@ -42,7 +42,7 @@ HWTEST_F(CommandQueueHwTest, WhenConstructingTwoCommandQueuesThenOnlyOneDebugSur
 HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableTimestampPacket.set(0);
-    DebugManager.flags.EnableTimestampWait.set(4);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;

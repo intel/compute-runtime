@@ -446,7 +446,12 @@ size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwI
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupported() const {
+bool HwHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
+    return true;
+}
+
+template <>
+bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents() const {
     return true;
 }
 

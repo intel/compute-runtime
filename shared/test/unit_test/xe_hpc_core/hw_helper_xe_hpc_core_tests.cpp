@@ -61,7 +61,8 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingIfRevisionSpeci
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.isTimestampWaitSupported());
+    EXPECT_TRUE(helper.isTimestampWaitSupportedForQueues());
+    EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
 }
 
 XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {

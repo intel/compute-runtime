@@ -819,7 +819,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThenEventHasCorrectTimestampsToCheckForCompletion) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
+    DebugManager.flags.EnableTimestampWaitForEvents.set(1);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -889,10 +890,10 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     *csr.getTagAddress() = csr.peekTaskCount();
 }
 
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueThenDoNotWaitOnTimestamp) {
+HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishWithoutEnqueueThenDoNotWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -910,10 +911,10 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishWithoutEnqueueT
     EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 1u);
 }
 
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenWaitOnTimestamp) {
+HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -940,10 +941,10 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenWaitOnTimes
     EXPECT_EQ(csr.waitForCompletionWithTimeoutTaskCountCalled, 0u);
 }
 
-HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitWhenFinishThenWaitOnTimestamp) {
+HWTEST_F(TimestampPacketTests, givenOOQAndEnableTimestampWaitForQueuesWhenFinishThenWaitOnTimestamp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
@@ -982,10 +983,10 @@ extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
 
-HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitWhenFinishThenCallWaitUtils) {
+HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCallWaitUtils) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);
-    DebugManager.flags.EnableTimestampWait.set(1);
+    DebugManager.flags.EnableTimestampWaitForQueues.set(1);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};

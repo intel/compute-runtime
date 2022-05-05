@@ -680,9 +680,35 @@ bool Event::isCompleted() {
     return cmdQueue->isCompleted(getCompletionStamp(), this->bcsState) || this->areTimestampsCompleted();
 }
 
+bool Event::isWaitForTimestampsEnabled() const {
+    const auto &hwHelper = HwHelper::get(cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto enabled = cmdQueue->isTimestampWaitEnabled();
+    enabled &= hwHelper.isTimestampWaitSupportedForEvents();
+
+    switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
+    case 0:
+        enabled = false;
+        break;
+    case 1:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled();
+        break;
+    case 2:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+        break;
+    case 3:
+        enabled = cmdQueue->getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled();
+        break;
+    case 4:
+        enabled = true;
+        break;
+    }
+
+    return enabled;
+}
+
 bool Event::areTimestampsCompleted() {
     if (this->timestampPacketContainer.get()) {
-        if (this->cmdQueue->isWaitForTimestampsEnabled()) {
+        if (this->isWaitForTimestampsEnabled()) {
             for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
                 for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
                     this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(this->cmdQueue->getGpgpuCommandStreamReceiver().getRootDeviceIndex()));

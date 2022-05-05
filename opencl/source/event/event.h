@@ -356,6 +356,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     static void setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last);
 
+    bool isWaitForTimestampsEnabled() const;
     bool areTimestampsCompleted();
 
     bool currentCmdQVirtualEvent;

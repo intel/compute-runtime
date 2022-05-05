@@ -1089,10 +1089,10 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     const auto &hwHelper = HwHelper::get(getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(getDevice().getHardwareInfo().platform.eProductFamily);
     auto enabled = CommandQueue::isTimestampWaitEnabled();
-    enabled &= hwHelper.isTimestampWaitSupported();
+    enabled &= hwHelper.isTimestampWaitSupportedForQueues();
     enabled &= !hwInfoConfig.isDcFlushAllowed();
 
-    switch (DebugManager.flags.EnableTimestampWait.get()) {
+    switch (DebugManager.flags.EnableTimestampWaitForQueues.get()) {
     case 0:
         enabled = false;
         break;

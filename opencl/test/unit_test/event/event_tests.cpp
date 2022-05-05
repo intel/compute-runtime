@@ -1708,7 +1708,7 @@ TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOffThenDoNotTrackParents) {
     event.setStatus(CL_COMPLETE);
 }
 
-TEST(CommandQueue, givenTimestampPacketWritesDisabledAndQueueHasTimestampPacketContainerThenCreateTheContainerForEvent) {
+TEST(EventTimestampTest, givenTimestampPacketWritesDisabledAndQueueHasTimestampPacketContainerThenCreateTheContainerForEvent) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableTimestampPacket.set(0);
 
@@ -1720,4 +1720,46 @@ TEST(CommandQueue, givenTimestampPacketWritesDisabledAndQueueHasTimestampPacketC
 
     MockEvent<Event> event{&queue, CL_COMMAND_MARKER, 0, 0};
     EXPECT_NE(nullptr, event.timestampPacketContainer);
+}
+
+TEST(EventTimestampTest, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenReturnProperValue) {
+    DebugManagerStateRestore restorer;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useWaitForTimestamps = true;
+    MockContext context{};
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+
+    MockEvent<Event> event{&cmdQ, CL_COMMAND_MARKER, 0, 0};
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(-1);
+        const auto &hwHelper = HwHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupportedForEvents());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(0);
+        EXPECT_FALSE(event.isWaitForTimestampsEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(1);
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(2);
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(3);
+        EXPECT_EQ(event.isWaitForTimestampsEnabled(), cmdQ.getGpgpuCommandStreamReceiver().isAnyDirectSubmissionEnabled());
+    }
+
+    {
+        DebugManager.flags.EnableTimestampWaitForEvents.set(4);
+        EXPECT_TRUE(event.isWaitForTimestampsEnabled());
+    }
 }
