@@ -269,10 +269,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
         receivedBlitProperties = blitPropertiesContainer;
-        return CommandStreamReceiverHw<GfxFamily>::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
+
+        if (callBaseFlushBcsTask) {
+            return CommandStreamReceiverHw<GfxFamily>::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
+        } else {
+            return flushBcsTaskReturnValue;
+        }
     }
 
     bool createPerDssBackedBuffer(Device &device) override {
@@ -368,6 +373,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::Ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
+    bool callBaseFlushBcsTask{true};
+    std::optional<uint32_t> flushBcsTaskReturnValue{};
 };
 
 } // namespace NEO

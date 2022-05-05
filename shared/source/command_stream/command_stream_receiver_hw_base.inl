@@ -1015,7 +1015,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::unregisterDirectSubmissionFromCo
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
+std::optional<uint32_t> CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -1128,8 +1128,12 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesCo
 
     lock.unlock();
     if (blocking) {
-        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, QueueThrottle::MEDIUM);
+        const auto waitStatus = waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, QueueThrottle::MEDIUM);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
+
+        if (waitStatus == WaitStatus::GpuHang) {
+            return std::nullopt;
+        }
     }
 
     return newTaskCount;

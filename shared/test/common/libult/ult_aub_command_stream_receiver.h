@@ -49,7 +49,7 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
         return csr;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         blitBufferCalled++;
         return BaseClass::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
     }

@@ -1140,7 +1140,9 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     const auto waitStatus = waitUntilComplete(taskCount, activeBcsStates, flushStamp->peekStamp(), false, cleanTemporaryAllocationsList, waitedOnTimestamps);
 
     if (printfHandler) {
-        printfHandler->printEnqueueOutput();
+        if (!printfHandler->printEnqueueOutput()) {
+            return WaitStatus::GpuHang;
+        }
     }
 
     return waitStatus;

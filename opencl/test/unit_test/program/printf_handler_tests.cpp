@@ -147,7 +147,7 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
         printfHandler->prepareDispatch(multiDispatchInfo);
         EXPECT_NE(nullptr, printfHandler->getSurface());
 
-        printfHandler->printEnqueueOutput();
+        EXPECT_TRUE(printfHandler->printEnqueueOutput());
 
         auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
@@ -159,6 +159,41 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
             EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
         }
     }
+}
+
+HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutputAndFalseIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableStatelessCompression.set(1);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    MockContext context(device.get());
+
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
+    kernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
+
+    auto program = std::make_unique<MockProgram>(&context, false, toClDeviceVector(*device));
+
+    uint64_t crossThread[10];
+    auto kernel = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+    kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    printfHandler->prepareDispatch(multiDispatchInfo);
+    EXPECT_NE(nullptr, printfHandler->getSurface());
+
+    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
+    bcsCsr->callBaseFlushBcsTask = false;
+    bcsCsr->flushBcsTaskReturnValue = std::nullopt;
+
+    EXPECT_FALSE(printfHandler->printEnqueueOutput());
+    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(BlitterConstants::BlitDirection::BufferToHostPtr, bcsCsr->receivedBlitProperties[0].blitDirection);
 }
 
 HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToCopyPrintfOutput) {

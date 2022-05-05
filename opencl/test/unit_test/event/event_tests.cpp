@@ -31,6 +31,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_printf_handler.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
@@ -585,6 +586,105 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
     EXPECT_FALSE(surface->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
+}
+
+TEST_F(InternalsEventTest, givenGpuHangOnCmdQueueWaitFunctionAndBlockedKernelWithPrintfWhenSubmittedThenEventIsAbortedAndHangIsReported) {
+    MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
+    mockCmdQueue.waitUntilCompleteReturnValue = WaitStatus::GpuHang;
+
+    testing::internal::CaptureStdout();
+    MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+
+    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
+
+    std::string testString = "test";
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
+    kernelInfo.addToPrintfStringsMap(0, testString);
+
+    uint64_t crossThread[10];
+    pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pClDevice));
+    printfHandler.get()->prepareDispatch(multiDispatchInfo);
+    auto surface = printfHandler.get()->getSurface();
+
+    auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
+    printfSurface[0] = 8;
+    printfSurface[1] = 0;
+
+    std::vector<Surface *> v;
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    event.setCommand(std::unique_ptr<Command>(cmd));
+
+    event.submitCommand(false);
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, event.peekExecutionStatus());
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ("test", output.c_str());
+}
+
+TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWithPrintfWhenSubmittedThenEventIsAbortedAndHangIsReported) {
+    MockCommandQueue mockCmdQueue(mockContext, pClDevice, nullptr, false);
+
+    testing::internal::CaptureStdout();
+    MockEvent<Event> event(&mockCmdQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
+    mockCmdQueue.allocateHeapMemory(IndirectHeap::Type::SURFACE_STATE, 4096u, ssh);
+
+    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
+
+    std::string testString = "test";
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
+    auto &kernelInfo = mockKernelWithInternals.kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    kernelInfo.setPrintfSurface(sizeof(uintptr_t), 0);
+    kernelInfo.addToPrintfStringsMap(0, testString);
+
+    uint64_t crossThread[10];
+    pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+    MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
+    std::unique_ptr<MockPrintfHandler> printfHandler(new MockPrintfHandler(*pClDevice));
+    printfHandler.get()->prepareDispatch(multiDispatchInfo);
+    auto surface = printfHandler.get()->getSurface();
+
+    auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
+    printfSurface[0] = 8;
+    printfSurface[1] = 0;
+
+    std::vector<Surface *> v;
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
+    auto cmd = new CommandComputeKernel(mockCmdQueue, blockedCommandsData, v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
+    event.setCommand(std::unique_ptr<Command>(cmd));
+
+    event.submitCommand(false);
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, event.peekExecutionStatus());
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.empty());
 }
 
 TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {

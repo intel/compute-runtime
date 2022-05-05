@@ -112,7 +112,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return WaitStatus::Ready;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
+    std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_HW;
@@ -277,7 +277,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         return completionStamp;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
+    std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override {
         if (!skipBlitCalls) {
             return CommandStreamReceiverHw<GfxFamily>::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
         }

@@ -85,7 +85,7 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     commandStreamReceiver.makeResident(*printfSurface);
 }
 
-void PrintfHandler::printEnqueueOutput() {
+bool PrintfHandler::printEnqueueOutput() {
     auto &hwInfo = device.getHardwareInfo();
 
     auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
@@ -108,11 +108,18 @@ void PrintfHandler::printEnqueueOutput() {
                                                             printfOutputDecompressed.get(),
                                                             printfSurface->getGpuAddress(),
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
-        bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device.getDevice());
+
+        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device.getDevice());
+        if (!newTaskCount) {
+            return false;
+        }
     }
 
     PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit(),
                                   usesStringMap ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);
     printFormatter.printKernelOutput();
+
+    return true;
 }
+
 } // namespace NEO

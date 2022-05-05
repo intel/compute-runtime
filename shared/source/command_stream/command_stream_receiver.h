@@ -30,6 +30,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace NEO {
 class AllocationsList;
@@ -227,7 +228,7 @@ class CommandStreamReceiver {
         this->latestFlushedTaskCount = latestFlushedTaskCount;
     }
 
-    virtual uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
+    virtual std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
 
     virtual void flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;

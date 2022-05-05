@@ -22,6 +22,7 @@ set(IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_platform.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_printf_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h

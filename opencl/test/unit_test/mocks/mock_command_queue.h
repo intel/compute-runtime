@@ -348,6 +348,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
     WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
+        if (waitUntilCompleteReturnValue.has_value()) {
+            return *waitUntilCompleteReturnValue;
+        }
+
         return BaseClass::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, cleanTemporaryAllocationList, skipWait);
     }
 
@@ -395,6 +399,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
     bool flushCalled = false;
     std::optional<WaitStatus> waitForAllEnginesReturnValue{};
+    std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitForAllEnginesCalledCount{0};
 
     LinearStream *peekCommandStream() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,11 +20,11 @@ class PrintfHandler {
   public:
     static PrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, ClDevice &deviceArg);
 
-    ~PrintfHandler();
+    MOCKABLE_VIRTUAL ~PrintfHandler();
 
     void prepareDispatch(const MultiDispatchInfo &multiDispatchInfo);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
-    void printEnqueueOutput();
+    MOCKABLE_VIRTUAL bool printEnqueueOutput();
 
     GraphicsAllocation *getSurface() {
         return printfSurface;

@@ -96,7 +96,8 @@ struct BlitProperties {
 enum class BlitOperationResult {
     Unsupported,
     Fail,
-    Success
+    Success,
+    GpuHang
 };
 
 namespace BlitHelperFunctions {

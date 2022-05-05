@@ -18,6 +18,8 @@
 
 #include "hw_cmds.h"
 
+#include <optional>
+
 namespace NEO {
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
@@ -96,7 +98,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    uint32_t flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
+    std::optional<uint32_t> flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
     void flushTagUpdate() override;
     void flushMiFlushDW();

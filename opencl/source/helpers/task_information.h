@@ -157,6 +157,6 @@ class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
-    void dispatchBlitOperation();
+    bool dispatchBlitOperation();
 };
 } // namespace NEO

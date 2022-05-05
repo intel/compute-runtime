@@ -606,29 +606,31 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     EXPECT_EQ(newTaskCount, csr.latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
-HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
-    class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
-      public:
-        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+template <typename FamilyType>
+class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
+  public:
+    using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-        WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
-                                                         bool useQuickKmdSleep, QueueThrottle throttle) override {
-            waitForTaskCountWithKmdNotifyFallbackCalled++;
-            taskCountToWaitPassed = taskCountToWait;
-            flushStampToWaitPassed = flushStampToWait;
-            useQuickKmdSleepPassed = useQuickKmdSleep;
-            throttlePassed = throttle;
-            return WaitStatus::Ready;
-        }
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                     bool useQuickKmdSleep, QueueThrottle throttle) override {
+        waitForTaskCountWithKmdNotifyFallbackCalled++;
+        taskCountToWaitPassed = taskCountToWait;
+        flushStampToWaitPassed = flushStampToWait;
+        useQuickKmdSleepPassed = useQuickKmdSleep;
+        throttlePassed = throttle;
+        return waitForTaskCountWithKmdNotifyFallbackReturnValue;
+    }
 
-        FlushStamp flushStampToWaitPassed = 0;
-        uint32_t taskCountToWaitPassed = 0;
-        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
-        bool useQuickKmdSleepPassed = false;
-        QueueThrottle throttlePassed = QueueThrottle::MEDIUM;
-    };
+    FlushStamp flushStampToWaitPassed = 0;
+    uint32_t taskCountToWaitPassed = 0;
+    uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+    bool useQuickKmdSleepPassed = false;
+    QueueThrottle throttlePassed = QueueThrottle::MEDIUM;
+    WaitStatus waitForTaskCountWithKmdNotifyFallbackReturnValue{WaitStatus::Ready};
+};
 
-    auto myMockCsr = std::make_unique<MyMockCsr>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+HWTEST_F(BcsTests, GivenNoneGpuHangWhenBlitFromHostPtrCalledThenCallWaitWithKmdFallbackAndNewTaskCountIsReturned) {
+    auto myMockCsr = std::make_unique<MyMockCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto &bcsOsContext = pDevice->getUltCommandStreamReceiver<FamilyType>().getOsContext();
     myMockCsr->initializeTagAllocation();
     myMockCsr->setupContext(bcsOsContext);
@@ -648,11 +650,52 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
                                                                           graphicsAllocation->getGpuAddress(), 0,
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
-    flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
+    const auto taskCount1 = flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
+    EXPECT_TRUE(taskCount1.has_value());
 
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
-    flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
+    const auto taskCount2 = flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
+    EXPECT_TRUE(taskCount2.has_value());
+
+    EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
+    EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
+    EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
+    EXPECT_EQ(myMockCsr->throttlePassed, QueueThrottle::MEDIUM);
+    EXPECT_EQ(1u, myMockCsr->activePartitions);
+}
+
+HWTEST_F(BcsTests, GivenGpuHangWhenBlitFromHostPtrCalledThenCallWaitWithKmdFallbackAndDoNotReturnNewTaskCount) {
+    auto myMockCsr = std::make_unique<MyMockCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    auto &bcsOsContext = pDevice->getUltCommandStreamReceiver<FamilyType>().getOsContext();
+    myMockCsr->initializeTagAllocation();
+    myMockCsr->setupContext(bcsOsContext);
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
+    auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                          *myMockCsr, graphicsAllocation, nullptr,
+                                                                          hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    const auto taskCount1 = flushBcsTask(myMockCsr.get(), blitProperties, false, *pDevice);
+    EXPECT_TRUE(taskCount1.has_value());
+
+    EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    myMockCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::GpuHang;
+
+    const auto taskCount2 = flushBcsTask(myMockCsr.get(), blitProperties, true, *pDevice);
+    EXPECT_FALSE(taskCount2.has_value());
 
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);

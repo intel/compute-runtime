@@ -22,7 +22,7 @@ struct BcsTests : public Test<ClDeviceFixture> {
         Test<ClDeviceFixture>::TearDown();
     }
 
-    uint32_t flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
+    std::optional<uint32_t> flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 

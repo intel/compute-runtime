@@ -337,6 +337,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         this->latestSentEnqueueType = enqueueProperties.operation;
     }
+
+    if (completionStamp.taskCount == CompletionStamp::gpuHang) {
+        return CL_OUT_OF_RESOURCES;
+    }
+
     updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
 
     if (blockQueue) {
@@ -819,7 +824,14 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
         auto bcsCsr = getBcsForAuxTranslation();
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
-        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
+        if (!newTaskCount) {
+            CompletionStamp completionStamp{};
+            completionStamp.taskCount = CompletionStamp::gpuHang;
+
+            return completionStamp;
+        }
+
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
         dispatchFlags.implicitFlush = true;
     }
 
@@ -1050,7 +1062,14 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
         const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
-        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
+        if (!newTaskCount) {
+            CompletionStamp completionStamp{};
+            completionStamp.taskCount = CompletionStamp::gpuHang;
+
+            return completionStamp;
+        }
+
+        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
     }
 
     return completionStamp;
@@ -1157,6 +1176,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,
                                                       enqueueProperties, timestampPacketDependencies, eventsRequest,
                                                       eventBuilder, taskLevel, csrDeps, &bcsCsr);
+        if (completionStamp.taskCount == CompletionStamp::gpuHang) {
+            return CL_OUT_OF_RESOURCES;
+        }
+
         if (gpgpuSubmission) {
             commandStreamReceiverOwnership.unlock();
         }

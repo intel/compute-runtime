@@ -29,6 +29,7 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_printf_handler.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
@@ -1119,6 +1120,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
 
     EXPECT_NE(itorPipeControl, cmdList.end());
     EXPECT_EQ(mockCsr->flushCalledCount, 1);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenGpuHangOnPrintEnqueueOutputWhenWaitingForEnginesThenGpuHangIsReported) {
+    MockCommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, nullptr);
+    commandQueue.waitUntilCompleteReturnValue = WaitStatus::Ready;
+
+    const auto blockedQueue{false};
+    const auto cleanTemporaryAllocationsList{false};
+    MockPrintfHandler printfHandler(*pClDevice);
+
+    const auto waitStatus = commandQueue.waitForAllEngines(blockedQueue, &printfHandler, cleanTemporaryAllocationsList);
+    EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdateTaskCountFromWaitSetWhenFlushTaskThenPipeControlAndBBSIsFlushed) {

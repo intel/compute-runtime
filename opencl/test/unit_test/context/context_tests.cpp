@@ -517,6 +517,55 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenLocalMemoryAllocationWhenB
     }
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLocalMemoryAllocationWhenBlitMemoryToAllocationIsCalledThenGpuHangIsReturned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::Default));
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    UltClDeviceFactory deviceFactory{1, 2};
+
+    auto testedDevice = deviceFactory.rootDevices[0];
+
+    MockContext context(testedDevice);
+    cl_int retVal;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, {}, 1, nullptr, retVal));
+    auto memory = buffer->getGraphicsAllocation(testedDevice->getRootDeviceIndex());
+
+    uint8_t hostMemory[1];
+    auto executionEnv = testedDevice->getExecutionEnvironment();
+    executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = false;
+
+    EXPECT_EQ(BlitOperationResult::Unsupported, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+
+    executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+    const auto rootDevice = testedDevice->getDevice().getRootDevice();
+    const auto blitDevice = rootDevice->getNearestGenericSubDevice(0);
+    auto &selectorCopyEngine = blitDevice->getSelectorCopyEngine();
+    auto deviceBitfield = blitDevice->getDeviceBitfield();
+
+    const auto &hwInfo = testedDevice->getDevice().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    auto internalUsage = true;
+    auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
+    auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+    auto bcsEngine = blitDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
+    ASSERT_NE(nullptr, bcsEngine);
+
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
+    ultBcsCsr->callBaseFlushBcsTask = false;
+    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+
+    EXPECT_EQ(BlitOperationResult::GpuHang, BlitHelper::blitMemoryToAllocation(buffer->getContext()->getDevice(0)->getDevice(), memory, buffer->getOffset(), hostMemory, {1, 1, 1}));
+}
+
 struct AllocationReuseContextTest : ContextTest {
     void addMappedPtr(Buffer &buffer, void *ptr, size_t ptrLength) {
         auto &handler = context->getMapOperationsStorage().getHandler(&buffer);
