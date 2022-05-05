@@ -7,6 +7,7 @@
 
 #include "graphics_allocation.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -100,6 +101,17 @@ bool GraphicsAllocation::isCompressionEnabled() const {
 
 bool GraphicsAllocation::isTbxWritable(uint32_t banks) const {
     return isAnyBitSet(aubInfo.tbxWritable, banks);
+}
+
+void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) {
+    if (hostPtrTaskCountAssignment > 0) {
+        auto allocTaskCount = getTaskCount(csr->getOsContext().getContextId());
+        auto currentTaskCount = csr->peekTaskCount() + 1;
+        if (currentTaskCount > allocTaskCount) {
+            updateTaskCount(currentTaskCount, csr->getOsContext().getContextId());
+            hostPtrTaskCountAssignment--;
+        }
+    }
 }
 
 constexpr uint32_t GraphicsAllocation::objectNotUsed;

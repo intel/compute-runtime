@@ -1502,6 +1502,50 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     EXPECT_EQ(allocationPtr, hostSurfaceAllocationPtr);
 }
 
+class MockCommandStreamReceiverHostPtrCreate : public MockCommandStreamReceiver {
+  public:
+    MockCommandStreamReceiverHostPtrCreate(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) override {
+        return CommandStreamReceiver::createAllocationForHostSurface(surface, requiresL3Flush);
+    }
+};
+TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenHostPtrTaskCountAssignmentWillIncrease) {
+    auto mockCsr = std::make_unique<MockCommandStreamReceiverHostPtrCreate>(executionEnvironment, 0u, device->getDeviceBitfield());
+    mockCsr->internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*mockCsr.get());
+    mockCsr->osContext = &commandStreamReceiver->getOsContext();
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    size_t size = 100;
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
+                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto allocationPtr = temporaryAllocation.get();
+    temporaryAllocation->updateTaskCount(0u, 0u);
+    mockCsr->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
+    *mockCsr->getTagAddress() = 1u;
+    HostPtrSurface hostSurface(hostPtr, size);
+
+    uint32_t valueBefore = allocationPtr->hostPtrTaskCountAssignment;
+    mockCsr->createAllocationForHostSurface(hostSurface, false);
+    EXPECT_EQ(valueBefore + 1, hostSurface.getAllocation()->hostPtrTaskCountAssignment);
+    allocationPtr->hostPtrTaskCountAssignment--;
+}
+
+TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenAllocTaskCountEqualZero) {
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    size_t size = 100;
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
+                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto allocationPtr = temporaryAllocation.get();
+    temporaryAllocation->updateTaskCount(10u, 0u);
+    commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
+    *commandStreamReceiver->getTagAddress() = 1u;
+    HostPtrSurface hostSurface(hostPtr, size);
+
+    EXPECT_EQ(allocationPtr->getTaskCount(0u), 10u);
+    commandStreamReceiver->createAllocationForHostSurface(hostSurface, false);
+    EXPECT_EQ(allocationPtr->getTaskCount(0u), 0u);
+}
+
 TEST_F(CreateAllocationForHostSurfaceTest, whenCreatingAllocationFromHostPtrSurfaceThenLockMutex) {
     const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     size_t size = sizeof(memory);
