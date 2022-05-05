@@ -42,6 +42,8 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enableAlarm = true;
     bool showTestStats = false;
+    bool dumpTestStats = false;
+    std::string dumpTestStatsFileName = "";
 
     std::string devicePrefix("skl");
     std::string familyNameWithType("Gen9core");
@@ -86,13 +88,12 @@ int main(int argc, char **argv) {
                 revId = argv[i];
             } else if (!strcmp("--show_test_stats", argv[i])) {
                 showTestStats = true;
+            } else if (!strcmp("--dump_test_stats", argv[i])) {
+                dumpTestStats = true;
+                ++i;
+                dumpTestStatsFileName = std::string(argv[i]);
             }
         }
-    }
-
-    if (showTestStats) {
-        std::cout << getTestStats() << std::endl;
-        return 0;
     }
 
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
@@ -147,6 +148,17 @@ int main(int argc, char **argv) {
         return sigOut;
 
     retVal = RUN_ALL_TESTS();
+
+    if (showTestStats) {
+        std::cout << getTestStats() << std::endl;
+    }
+
+    if (dumpTestStats) {
+        std::ofstream dumpTestStatsFile;
+        dumpTestStatsFile.open(dumpTestStatsFileName);
+        dumpTestStatsFile << getTestStatsJson();
+        dumpTestStatsFile.close();
+    }
 
     return retVal;
 }

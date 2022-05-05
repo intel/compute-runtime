@@ -158,6 +158,8 @@ int main(int argc, char **argv) {
     bool enableSegv = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
+    bool dumpTestStats = false;
+    std::string dumpTestStatsFileName = "";
     applyWorkarounds();
 
 #if defined(__linux__)
@@ -205,6 +207,10 @@ int main(int argc, char **argv) {
             enableAlarm = false;
         } else if (!strcmp("--show_test_stats", argv[i])) {
             showTestStats = true;
+        } else if (!strcmp("--dump_test_stats", argv[i])) {
+            dumpTestStats = true;
+            ++i;
+            dumpTestStatsFileName = std::string(argv[i]);
         } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
@@ -284,11 +290,6 @@ int main(int argc, char **argv) {
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
             DebugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
         }
-    }
-
-    if (showTestStats) {
-        std::cout << getTestStats() << std::endl;
-        return 0;
     }
 
     productFamily = hwInfoForTests.platform.eProductFamily;
@@ -416,6 +417,17 @@ int main(int argc, char **argv) {
     initializeTestHelpers(testMode);
 
     retVal = RUN_ALL_TESTS();
+
+    if (showTestStats) {
+        std::cout << getTestStats() << std::endl;
+    }
+
+    if (dumpTestStats) {
+        std::ofstream dumpTestStatsFile;
+        dumpTestStatsFile.open(dumpTestStatsFileName);
+        dumpTestStatsFile << getTestStatsJson();
+        dumpTestStatsFile.close();
+    }
 
     cleanTestHelpers();
     return retVal;
