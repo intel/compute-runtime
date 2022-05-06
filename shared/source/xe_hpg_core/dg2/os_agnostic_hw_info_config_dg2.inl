@@ -65,7 +65,7 @@ bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const Ha
 template <>
 bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
     uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    return REVISION_A0 == stepping;
+    return (REVISION_A0 == stepping && DG2::isG10(hwInfo));
 }
 
 template <>

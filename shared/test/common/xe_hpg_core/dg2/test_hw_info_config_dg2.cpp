@@ -36,8 +36,11 @@ DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithA0SteppingThenMaxThreadsForWorkgroupW
     const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
-    auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
-    EXPECT_TRUE(isWARequired);
+    for (const auto &devId : DG2_G10_IDS) {
+        hwInfo->platform.usDeviceID = devId;
+        auto isWARequired = hwInfoConfig.isMaxThreadsForWorkgroupWARequired(pDevice->getHardwareInfo());
+        EXPECT_TRUE(isWARequired);
+    }
 }
 
 DG2TEST_F(TestDg2HwInfoConfig, givenDG2WithBSteppingThenMaxThreadsForWorkgroupWAIsNotRequired) {

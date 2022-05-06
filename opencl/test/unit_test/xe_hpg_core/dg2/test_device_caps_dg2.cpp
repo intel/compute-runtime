@@ -26,7 +26,7 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ProductWhenCheckFp64SupportThenReturnFalse)
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }
 
-DG2TEST_F(Dg2UsDeviceIdTest, givenDeviceThatHasHighNumberOfExecutionUnitsAndA0SteppingWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo512) {
+DG2TEST_F(Dg2UsDeviceIdTest, givenDeviceThatHasHighNumberOfExecutionUnitsA0SteppingAndG10DevIdWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo512) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
@@ -37,13 +37,14 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenDeviceThatHasHighNumberOfExecutionUnitsAndA0St
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * 8;
     myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    myPlatform.usDeviceID = DG2_G10_IDS[0];
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(512u, device->sharedDeviceInfo.maxWorkGroupSize);
     EXPECT_EQ(device->sharedDeviceInfo.maxWorkGroupSize / 8, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
-DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuAndA0SteppingWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
+DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuA0SteppingAndG10DevIdWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
@@ -54,6 +55,7 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuAndA0SteppingWhenCalculating
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 1;
     myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    myPlatform.usDeviceID = DG2_G10_IDS[0];
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -65,6 +67,7 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuAndA0SteppingWhenCalculating
 
 DG2TEST_F(Dg2UsDeviceIdTest, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usDeviceID = DG2_G10_IDS[0];
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
     EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 
