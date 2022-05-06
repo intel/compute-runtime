@@ -84,12 +84,12 @@ Launching kernel:
 
 For sync mode immediate command lists, synchronization is performed implicitly, so it is not required to use events to synchronize.
 
-For mode code samples, please refer [compute-benchmarks](https://github.com/intel/compute-benchmarks/) repo. Scenarios such as  `create_command_list_immediate_l0.cpp` and `execute_command_list_immediate_l0.cpp` serve as good starting points.
+For more code samples, please refer [compute-benchmarks](https://github.com/intel/compute-benchmarks/) repo. Scenarios such as  `create_command_list_immediate_l0.cpp` and `execute_command_list_immediate_l0.cpp` serve as good starting points.
 
 # Availability
 
 * Level-Zero support for immediate command list is available for all platforms
-* Optimized support for immediate command lists is currently available by default on PVC only.
+* Optimized support for immediate command lists is currently available by default on DG2 and PVC only.
 * Immediate command lists support both Compute and Copy engines.
 
 # Debug Keys
