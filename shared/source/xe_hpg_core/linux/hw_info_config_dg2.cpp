@@ -29,6 +29,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
         enableCompression(hwInfo);
     }
 
+    DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;

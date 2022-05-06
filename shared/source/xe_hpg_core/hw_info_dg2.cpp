@@ -170,6 +170,7 @@ void DG2_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeat
         }
     }
 
+    adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         DG2::setupFeatureAndWorkaroundTable(hwInfo);
     }

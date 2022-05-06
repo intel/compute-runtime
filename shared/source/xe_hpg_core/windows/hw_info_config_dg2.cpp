@@ -27,7 +27,7 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }
-
+    DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;

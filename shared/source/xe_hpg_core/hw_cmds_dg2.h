@@ -27,6 +27,7 @@ struct DG2 : public XE_HPG_COREFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+    static void adjustHardwareInfo(HardwareInfo *hwInfo);
 
     static bool isG10(const HardwareInfo &hwInfo) {
         auto it = std::find(DG2_G10_IDS.begin(), DG2_G10_IDS.end(), hwInfo.platform.usDeviceID);
