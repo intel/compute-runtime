@@ -793,7 +793,7 @@ uint32_t CommandQueue::peekBcsTaskCount(aub_stream::EngineType bcsEngineType) co
 }
 
 bool CommandQueue::isTextureCacheFlushNeeded(uint32_t commandType) const {
-    return commandType == CL_COMMAND_COPY_IMAGE && getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
+    return (commandType == CL_COMMAND_COPY_IMAGE || commandType == CL_COMMAND_WRITE_IMAGE) && getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled();
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {

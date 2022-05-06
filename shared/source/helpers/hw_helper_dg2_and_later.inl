@@ -53,6 +53,11 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE_CONTRO
 }
 
 template <>
+bool HwHelperHw<Family>::isUpdateTaskCountFromWaitSupported() const {
+    return true;
+}
+
+template <>
 bool HwHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
     return true;
 }
