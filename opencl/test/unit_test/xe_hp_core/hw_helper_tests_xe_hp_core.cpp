@@ -189,6 +189,11 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWh
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
+XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported());
+}
+
 using HwInfoConfigTestXE_HP_CORE = ::testing::Test;
 
 XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {

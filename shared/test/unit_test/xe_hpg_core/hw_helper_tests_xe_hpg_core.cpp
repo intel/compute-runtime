@@ -122,6 +122,11 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, WhenCheckingSipWAThenFalseIsReturned) {
     EXPECT_FALSE(HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily).isSipWANeeded(pDevice->getHardwareInfo()));
 }
 
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported());
+}
+
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.isTimestampWaitSupported());

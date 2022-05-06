@@ -63,3 +63,8 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenCheckTimestampWaitSupp
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.isTimestampWaitSupported());
 }
+
+XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    EXPECT_TRUE(hwHelper.isAssignEngineRoundRobinSupported());
+}

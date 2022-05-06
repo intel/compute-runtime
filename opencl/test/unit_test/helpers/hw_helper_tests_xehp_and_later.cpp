@@ -84,11 +84,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatform
     EXPECT_TRUE(hwHelper.timestampPacketWriteSupported());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnTrue) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_TRUE(hwHelper.isAssignEngineRoundRobinSupported());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenAllFlagsSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesFourCcsEnginesAndOneBcsEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;

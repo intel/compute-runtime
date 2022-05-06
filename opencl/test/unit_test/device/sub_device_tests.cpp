@@ -989,6 +989,12 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
@@ -1002,7 +1008,6 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
@@ -1030,6 +1035,12 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
@@ -1043,7 +1054,6 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
@@ -1074,6 +1084,12 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
@@ -1087,7 +1103,6 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
@@ -1116,6 +1131,12 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
@@ -1129,7 +1150,6 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
@@ -1159,6 +1179,12 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
+    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    if (!hwHelper.isAssignEngineRoundRobinSupported()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
