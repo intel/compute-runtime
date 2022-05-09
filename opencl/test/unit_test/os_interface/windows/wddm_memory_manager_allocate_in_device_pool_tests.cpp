@@ -235,7 +235,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
     auto &partition = wddm->getGfxPartition();
 
     if (is64bit) {
-        auto gmmHelper = executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()].get()->getGmmHelper();
+        auto gmmHelper = memoryManager->getGmmHelper(graphicsAllocation->getRootDeviceIndex());
         if (executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
             EXPECT_GE(gpuAddress, gmmHelper->canonize(partition.Standard64KB.Base));
             EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard64KB.Limit));

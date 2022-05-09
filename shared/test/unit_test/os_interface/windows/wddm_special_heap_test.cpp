@@ -48,7 +48,7 @@ TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhen
     allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
-    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[allocData.rootDeviceIndex]->getGmmHelper();
+    auto gmmHelper = memManager->getGmmHelper(allocData.rootDeviceIndex);
     EXPECT_EQ(allocation->getGpuBaseAddress(), gmmHelper->canonize(allocation->getGpuAddress()));
     memManager->freeGraphicsMemory(allocation);
 }

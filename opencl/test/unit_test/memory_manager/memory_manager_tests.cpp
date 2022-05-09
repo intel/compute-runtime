@@ -1308,7 +1308,7 @@ TEST(OsAgnosticMemoryManager, givenDebugModuleAreaTypeWhenCreatingAllocationThen
     EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
     EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
 
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[moduleDebugArea->getRootDeviceIndex()].get()->getGmmHelper();
+    auto gmmHelper = memoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
     auto frontWindowBase = gmmHelper->canonize(memoryManager.getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager.selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
     EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
     EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
@@ -1346,7 +1346,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreating
     EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
     EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
 
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[moduleDebugArea->getRootDeviceIndex()].get()->getGmmHelper();
+    auto gmmHelper = memoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
     auto frontWindowBase = gmmHelper->canonize(memoryManager.getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager.selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
     EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
     EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());

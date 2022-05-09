@@ -272,7 +272,7 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
     }
     auto moduleDebugArea = osAgnosticMemoryManager.allocateGraphicsMemoryWithProperties(properties);
     auto gpuAddress = moduleDebugArea->getGpuAddress();
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[moduleDebugArea->getRootDeviceIndex()].get()->getGmmHelper();
+    auto gmmHelper = osAgnosticMemoryManager.getGmmHelper(moduleDebugArea->getRootDeviceIndex());
 
     EXPECT_LE(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapBase(expectedHeap)), gpuAddress);
     EXPECT_GT(gmmHelper->canonize(osAgnosticMemoryManager.getGfxPartition(0)->getHeapLimit(expectedHeap)), gpuAddress);

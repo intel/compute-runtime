@@ -1072,7 +1072,7 @@ TEST(MemoryManagerTest, givenEnabledLocalMemoryWhenAllocatingSharedResourceCopyT
     EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
     EXPECT_EQ(0u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly);
 
-    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[allocation->getRootDeviceIndex()].get()->getGmmHelper();
+    auto gmmHelper = memoryManager.getGmmHelper(allocation->getRootDeviceIndex());
     EXPECT_LT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
     EXPECT_GT(gmmHelper->canonize(memoryManager.getGfxPartition(allocation->getRootDeviceIndex())->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), allocation->getGpuAddress());
     EXPECT_EQ(0llu, allocation->getGpuBaseAddress());

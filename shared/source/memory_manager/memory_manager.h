@@ -207,6 +207,9 @@ class MemoryManager {
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
+    GmmHelper *getGmmHelper(uint32_t rootDeviceIndex) {
+        return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()->getGmmHelper();
+    }
     virtual AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
     static HeapIndex selectInternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL; }

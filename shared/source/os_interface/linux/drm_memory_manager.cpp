@@ -203,7 +203,7 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
 
 uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()->gmmHelper.get();
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
     return gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, size));
 }
 
@@ -596,7 +596,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         }
 
         bo->setAddress(gpuVirtualAddress);
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get()->gmmHelper.get();
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), const_cast<void *>(allocationData.hostPtr),
                                             gmmHelper->canonize(ptrOffset(gpuVirtualAddress, inputPointerOffset)),
                                             allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
@@ -632,7 +632,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     }
 
     bo->setAddress(gpuVA);
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get()->gmmHelper.get();
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
 
     // softpin to the GPU address, res if it uses limitedRange Allocation
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc,
@@ -810,7 +810,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex].get()->gmmHelper.get();
+        auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         drmAllocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(properties.rootDeviceIndex, drmAllocation->isAllocatedInLocalMemoryPool())));
     }
 
@@ -874,7 +874,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
         return nullptr;
     }
     bo->setAddress(gpuRange);
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()->gmmHelper.get();
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
     auto allocation = new DrmAllocation(rootDeviceIndex, inputGraphicsAllocation->getAllocationType(), bo.get(), srcPtr,
                                         gmmHelper->canonize(ptrOffset(gpuRange, offset)), sizeWithPadding,
                                         inputGraphicsAllocation->getMemoryPool());
@@ -1520,7 +1520,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
     }
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
-        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get()->gmmHelper.get();
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
         allocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
     if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
