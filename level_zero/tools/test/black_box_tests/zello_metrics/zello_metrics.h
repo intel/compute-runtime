@@ -147,9 +147,6 @@ class CopyBufferToBuffer : public Workload {
 
 class SingleMetricCollector : public Collector {
 
-  public:
-    void setVerboseLevel(uint32_t level) { verboseLevel = level; }
-
   protected:
     SingleMetricCollector(ExecutionContext *executionCtxt,
                           const char *metricGroupName,
@@ -165,8 +162,6 @@ class SingleMetricCollector : public Collector {
 
     zet_metric_group_handle_t metricGroup = {};
     zet_metric_group_sampling_type_flag_t samplingType = {};
-
-    uint32_t verboseLevel = 0;
 };
 
 class SingleMetricStreamerCollector : public SingleMetricCollector {

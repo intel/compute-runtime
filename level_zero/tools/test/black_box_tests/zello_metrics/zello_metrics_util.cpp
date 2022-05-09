@@ -10,6 +10,7 @@
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
 #include <cstring>
+#include <getopt.h>
 #include <iomanip>
 #include <mutex>
 #include <thread>
@@ -19,7 +20,6 @@ namespace ZelloMetricsUtility {
 /// createL0
 ///////////////////////////
 void createL0() {
-
     VALIDATECALL(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 }
 
@@ -63,7 +63,28 @@ bool getTestMachineConfiguration(TestMachineConfiguration &machineConfig) {
         VALIDATECALL(zeDeviceGetSubDevices(devices[deviceId], &subDevicesCount, nullptr));
         machineConfig.devices[deviceId].subDeviceCount = subDevicesCount;
     }
+
+    ze_device_properties_t deviceProperties;
+    VALIDATECALL(zeDeviceGetProperties(devices[0], &deviceProperties));
+    machineConfig.deviceId = deviceProperties.deviceId;
     return true;
+}
+
+bool isDeviceAvailable(uint32_t deviceIndex, int32_t subDeviceIndex) {
+    bool checkStatus = false;
+
+    TestMachineConfiguration config;
+    getTestMachineConfiguration(config);
+    if (deviceIndex < config.deviceCount) {
+        if (subDeviceIndex < static_cast<int32_t>(config.devices[deviceIndex].subDeviceCount)) {
+            checkStatus = true;
+        }
+    }
+
+    if (checkStatus == false) {
+        LOG(LogLevel::WARNING) << "Warning:: Unsupported Configuration: Device :" << deviceIndex << "  Sub Device :" << subDeviceIndex << "\n";
+    }
+    return checkStatus;
 }
 
 ze_device_handle_t getDevice(ze_driver_handle_t &driverHandle, uint32_t deviceIndex) {
@@ -103,7 +124,7 @@ ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &contextHandle,
     VALIDATECALL(zeDeviceGetCommandQueueGroupProperties(deviceHandle, &queueGroupsCount, nullptr));
 
     if (queueGroupsCount == 0) {
-        std::cout << "No queue groups found!\n";
+        LOG(LogLevel::ERROR) << "No queue groups found!\n";
         std::terminate();
     }
 
@@ -148,31 +169,31 @@ ze_command_list_handle_t createCommandList(ze_context_handle_t &contextHandle, z
 }
 
 void printMetricGroupProperties(const zet_metric_group_properties_t &properties) {
-    std::cout << "METRIC GROUP: "
-              << "name: " << properties.name << ", "
-              << "desc: " << properties.description << ", "
-              << "samplingType: " << properties.samplingType << ", "
-              << "domain: " << properties.domain << ", "
-              << "metricCount: " << properties.metricCount << std::endl;
+    LOG(LogLevel::DEBUG) << "METRIC GROUP: "
+                         << "name: " << properties.name << ", "
+                         << "desc: " << properties.description << ", "
+                         << "samplingType: " << properties.samplingType << ", "
+                         << "domain: " << properties.domain << ", "
+                         << "metricCount: " << properties.metricCount << std::endl;
 }
 
 ///////////////////////////
 /// printMetricProperties
 ///////////////////////////
 void printMetricProperties(const zet_metric_properties_t &properties) {
-    std::cout << "\tMETRIC: "
-              << "name: " << properties.name << ", "
-              << "desc: " << properties.description << ", "
-              << "component: " << properties.component << ", "
-              << "tier: " << properties.tierNumber << ", "
-              << "metricType: " << properties.metricType << ", "
-              << "resultType: " << properties.resultType << ", "
-              << "units: " << properties.resultUnits << std::endl;
+    LOG(LogLevel::DEBUG) << "\tMETRIC: "
+                         << "name: " << properties.name << ", "
+                         << "desc: " << properties.description << ", "
+                         << "component: " << properties.component << ", "
+                         << "tier: " << properties.tierNumber << ", "
+                         << "metricType: " << properties.metricType << ", "
+                         << "resultType: " << properties.resultType << ", "
+                         << "units: " << properties.resultUnits << std::endl;
 }
 
-///////////////////////////
+/////////
 /// wait
-///////////////////////////
+/////////
 void sleep(uint32_t milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
@@ -214,6 +235,8 @@ zet_metric_group_handle_t findMetricGroup(const char *groupName,
         }
     }
 
+    LOG(LogLevel::ERROR) << "Warning : Metric Group " << groupName << " with sampling type " << samplingType << " could not be found !\n";
+
     // Unable to find metric group.
     VALIDATECALL(ZE_RESULT_ERROR_UNKNOWN);
     return nullptr;
@@ -251,53 +274,26 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
     std::vector<uint32_t> metricCounts = {};
     std::vector<zet_typed_value_t> results = {};
     std::vector<zet_metric_handle_t> metrics = {};
-    ze_result_t result = ZE_RESULT_SUCCESS;
 
-    // Obtain maximum space for calculated metrics.
-    result = zetMetricGroupCalculateMetricValues(
+    // Try to use calculate for multiple metric values.
+    VALIDATECALL(zetMetricGroupCalculateMultipleMetricValuesExp(
         metricGroup,
         ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
         rawDataSize, rawData,
-        &totalCalculatedMetricCount,
-        nullptr);
+        &setCount, &totalCalculatedMetricCount,
+        nullptr, nullptr));
 
-    if (result == ZE_RESULT_ERROR_UNKNOWN) {
+    // Allocate space for calculated reports.
+    metricCounts.resize(setCount);
+    results.resize(totalCalculatedMetricCount);
 
-        // Try to use calculate for multiple metric values.
-        VALIDATECALL(zetMetricGroupCalculateMultipleMetricValuesExp(
-            metricGroup,
-            ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-            rawDataSize, rawData,
-            &setCount, &totalCalculatedMetricCount,
-            nullptr, nullptr));
-
-        // Allocate space for calculated reports.
-        metricCounts.resize(setCount);
-        results.resize(totalCalculatedMetricCount);
-
-        // Obtain calculated metrics and their count.
-        VALIDATECALL(zetMetricGroupCalculateMultipleMetricValuesExp(
-            metricGroup,
-            ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-            rawDataSize, rawData,
-            &setCount, &totalCalculatedMetricCount,
-            metricCounts.data(), results.data()));
-
-    } else {
-        // Allocate space for calculated reports.
-        setCount = 1;
-        metricCounts.resize(setCount);
-        results.resize(totalCalculatedMetricCount);
-
-        // Obtain calculated metrics and their count.
-        VALIDATECALL(zetMetricGroupCalculateMetricValues(
-            metricGroup,
-            ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
-            rawDataSize, rawData,
-            &totalCalculatedMetricCount, results.data()));
-
-        metricCounts[0] = totalCalculatedMetricCount;
-    }
+    // Obtain calculated metrics and their count.
+    VALIDATECALL(zetMetricGroupCalculateMultipleMetricValuesExp(
+        metricGroup,
+        ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
+        rawDataSize, rawData,
+        &setCount, &totalCalculatedMetricCount,
+        metricCounts.data(), results.data()));
 
     // Obtain metric group properties to show each metric.
     VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &properties));
@@ -310,7 +306,7 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
 
     for (uint32_t i = 0; i < setCount; ++i) {
 
-        std::cout << "\r\nSet " << i;
+        LOG(LogLevel::DEBUG) << "\r\nSet " << i;
 
         const uint32_t metricCount = properties.metricCount;
         const uint32_t metricCountForSet = metricCounts[i];
@@ -329,36 +325,36 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
             VALIDATECALL((results[resultIndex].type == metricProperties.resultType) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN)
 
             if (metricIndex == 0) {
-                std::cout << "\r\n";
+                LOG(LogLevel::DEBUG) << "\r\n";
             }
 
-            std::cout << "\r\n";
-            std::cout << std::setw(25) << metricProperties.name << ": ";
+            LOG(LogLevel::DEBUG) << "\r\n";
+            LOG(LogLevel::DEBUG) << std::setw(25) << metricProperties.name << ": ";
 
             switch (results[resultIndex].type) {
             case zet_value_type_t::ZET_VALUE_TYPE_BOOL8:
-                std::cout << std::setw(12);
-                std::cout << (results[resultIndex].value.b8 ? "true" : "false");
+                LOG(LogLevel::DEBUG) << std::setw(12);
+                LOG(LogLevel::DEBUG) << (results[resultIndex].value.b8 ? "true" : "false");
                 break;
 
             case zet_value_type_t::ZET_VALUE_TYPE_FLOAT32:
-                std::cout << std::setw(12);
-                std::cout << results[resultIndex].value.fp32;
+                LOG(LogLevel::DEBUG) << std::setw(12);
+                LOG(LogLevel::DEBUG) << results[resultIndex].value.fp32;
                 break;
 
             case zet_value_type_t::ZET_VALUE_TYPE_FLOAT64:
-                std::cout << std::setw(12);
-                std::cout << results[resultIndex].value.fp64;
+                LOG(LogLevel::DEBUG) << std::setw(12);
+                LOG(LogLevel::DEBUG) << results[resultIndex].value.fp64;
                 break;
 
             case zet_value_type_t::ZET_VALUE_TYPE_UINT32:
-                std::cout << std::setw(12);
-                std::cout << results[resultIndex].value.ui32;
+                LOG(LogLevel::DEBUG) << std::setw(12);
+                LOG(LogLevel::DEBUG) << results[resultIndex].value.ui32;
                 break;
 
             case zet_value_type_t::ZET_VALUE_TYPE_UINT64:
-                std::cout << std::setw(12);
-                std::cout << results[resultIndex].value.ui64;
+                LOG(LogLevel::DEBUG) << std::setw(12);
+                LOG(LogLevel::DEBUG) << results[resultIndex].value.ui64;
                 break;
 
             default:
@@ -366,8 +362,92 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
             }
         }
 
-        std::cout << "\r\n";
+        LOG(LogLevel::DEBUG) << "\r\n";
     }
 }
+
+////////////////
+// Test Settings
+////////////////
+void TestSettings::parseArguments(int argc, char *argv[]) {
+    int opt;
+
+    struct option long_opts[] = {
+        {"help", no_argument, nullptr, 'h'},
+        {"test", required_argument, nullptr, 't'},
+        {"device", required_argument, nullptr, 'd'},
+        {"subdevice", required_argument, nullptr, 's'},
+        {"verboseLevel", required_argument, nullptr, 'v'},
+        {"metricGroupName", required_argument, nullptr, 'm'},
+        {0, 0, 0, 0},
+    };
+
+    auto printUsage = []() {
+        std::cout << "\n set Environment variable ZET_ENABLE_METRICS=1"
+                     "\n"
+                     "\n zello_metrics [OPTIONS]"
+                     "\n"
+                     "\n OPTIONS:"
+                     "\n  -t,   --test <test name>              run the specific test(\"all\" runs all tests)"
+                     "\n  -d,   --device <deviceId>             device ID to run the test"
+                     "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
+                     "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug"
+                     "\n  -m,   --metricGroupName <name>        metric group name"
+                     "\n  -h,   --help                          display help message"
+                     "\n";
+    };
+
+    if (argc < 2) {
+        printUsage();
+        return;
+    }
+
+    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:", long_opts, nullptr)) != -1) {
+        switch (opt) {
+        case 't':
+            testName = optarg;
+            break;
+
+        case 'd':
+            deviceId = std::atoi(optarg);
+            break;
+
+        case 's':
+            subDeviceId = std::atoi(optarg);
+            break;
+
+        case 'v':
+            verboseLevel = std::atoi(optarg);
+            break;
+
+        case 'm':
+            metricGroupName = optarg;
+            break;
+
+        case 'h':
+            printUsage();
+            break;
+
+        default:
+            // Do not run tests in case of invalid option
+            testName.clear();
+            printUsage();
+            return;
+        }
+    }
+}
+
+TestSettings *TestSettings::get() {
+    if (!settings) {
+        settings = new TestSettings;
+    }
+    return settings;
+}
+
+TestSettings *TestSettings::settings = nullptr;
+
+class DummyStreamBuf : public std::streambuf {};
+DummyStreamBuf emptyStreamBuf;
+std::ostream emptyCout(&emptyStreamBuf);
 
 } // namespace ZelloMetricsUtility

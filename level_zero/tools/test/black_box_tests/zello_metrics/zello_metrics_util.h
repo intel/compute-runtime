@@ -7,9 +7,14 @@
 
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
+#include <iostream>
+
 #pragma once
 
 #define MAX_DEVICES_IN_MACHINE (64u)
+#define LOG(level) (((level) <= (ZelloMetricsUtility::TestSettings::get())->verboseLevel) \
+                        ? (std::cout)                                                     \
+                        : (ZelloMetricsUtility::emptyCout))
 
 namespace ZelloMetricsUtility {
 
@@ -20,11 +25,40 @@ struct TestMachineConfiguration {
         uint32_t subDeviceCount;
     } devices[MAX_DEVICES_IN_MACHINE];
     uint32_t deviceCount = 0;
+    uint32_t deviceId;
 };
+
+class TestSettings {
+  public:
+    static TestSettings *get();
+    void parseArguments(int argc, char *argv[]);
+
+    std::string testName = {};
+    int32_t deviceId = -1;
+    int32_t subDeviceId = -1;
+    int32_t verboseLevel = 0;
+    std::string metricGroupName = "TestOa";
+
+  private:
+    TestSettings() = default;
+    ~TestSettings() = default;
+    static TestSettings *settings;
+};
+
+struct LogLevel {
+    enum {
+        ERROR = -2,
+        WARNING = -1,
+        INFO = 0,
+        DEBUG = 1
+    };
+};
+extern std::ostream emptyCout;
 
 void createL0();
 ze_driver_handle_t getDriver();
 ze_context_handle_t createContext(ze_driver_handle_t &driverHandle);
+bool isDeviceAvailable(uint32_t deviceIndex, int32_t subDeviceIndex);
 ze_device_handle_t getDevice(ze_driver_handle_t &driverHandle, uint32_t deviceIndex);
 ze_device_handle_t getSubDevice(ze_device_handle_t &deviceHandle, uint32_t subDeviceIndex);
 ze_command_queue_handle_t createCommandQueue(ze_context_handle_t &contextHandle,
@@ -40,4 +74,5 @@ zet_metric_group_handle_t findMetricGroup(const char *groupName,
 ze_event_pool_handle_t createHostVisibleEventPool(ze_context_handle_t contextHandle, ze_device_handle_t deviceHandle);
 ze_event_handle_t createHostVisibleEvent(ze_event_pool_handle_t hostVisibleEventPool);
 void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *rawData, uint32_t rawDataSize);
+
 } // namespace ZelloMetricsUtility

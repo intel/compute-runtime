@@ -13,6 +13,8 @@
 #include <limits>
 #include <vector>
 
+namespace zmu = ZelloMetricsUtility;
+
 ///////////////////////////
 /////ExecutionContext
 ///////////////////////////
@@ -57,21 +59,21 @@ bool ExecutionContext::deactivateMetricGroups() {
 //////////////////////////////////////////
 bool SingleDeviceSingleQueueExecutionCtxt::initialize(uint32_t deviceIndex, int32_t subDeviceIndex) {
 
-    ZelloMetricsUtility::createL0();
-    driverHandle = ZelloMetricsUtility::getDriver();
+    zmu::createL0();
+    driverHandle = zmu::getDriver();
     EXPECT(driverHandle != nullptr);
-    contextHandle = ZelloMetricsUtility::createContext(driverHandle);
+    contextHandle = zmu::createContext(driverHandle);
     EXPECT(contextHandle != nullptr);
 
-    deviceHandle = ZelloMetricsUtility::getDevice(driverHandle, deviceIndex);
+    deviceHandle = zmu::getDevice(driverHandle, deviceIndex);
     EXPECT(deviceHandle != nullptr);
     if (subDeviceIndex != -1) {
-        deviceHandle = ZelloMetricsUtility::getSubDevice(deviceHandle, subDeviceIndex);
+        deviceHandle = zmu::getSubDevice(deviceHandle, subDeviceIndex);
         EXPECT(deviceHandle != nullptr);
     }
-    commandQueue = ZelloMetricsUtility::createCommandQueue(contextHandle, deviceHandle);
+    commandQueue = zmu::createCommandQueue(contextHandle, deviceHandle);
     EXPECT(commandQueue != nullptr);
-    commandList = ZelloMetricsUtility::createCommandList(contextHandle, deviceHandle);
+    commandList = zmu::createCommandList(contextHandle, deviceHandle);
     EXPECT(commandList != nullptr);
     return true;
 }
@@ -109,7 +111,7 @@ bool SingleDeviceSingleQueueExecutionCtxt::run() {
         runCount++;
     } while (diff < executionTimeInMilliSeconds);
 
-    std::cout << "CommandList Run count : " << runCount << "\n";
+    LOG(zmu::LogLevel::DEBUG) << "CommandList Run count : " << runCount << "\n";
 
     return true;
 }

@@ -6,10 +6,13 @@
  */
 
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
+#include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics_util.h"
 
 #include <cstring>
 #include <fstream>
 #include <memory>
+
+namespace zmu = ZelloMetricsUtility;
 
 ///////////////////////////////////////////////////
 /////AppendMemoryCopyFromHeapToDeviceAndBackToHost
@@ -89,7 +92,7 @@ void CopyBufferToBuffer::initialize() {
         auto length = file.tellg();
         file.seekg(0, file.beg);
 
-        std::cout << "Using copy_buffer_to_buffer.spv" << std::endl;
+        LOG(zmu::LogLevel::DEBUG) << "Using copy_buffer_to_buffer.spv" << std::endl;
 
         std::unique_ptr<char[]> spirvInput(new char[length]);
         file.read(spirvInput.get(), length);
@@ -107,8 +110,7 @@ void CopyBufferToBuffer::initialize() {
 
             char *strLog = (char *)malloc(szLog);
             zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            std::cout << "Build log:" << strLog << std::endl;
-
+            LOG(zmu::LogLevel::DEBUG) << "Build log:" << strLog << std::endl;
             free(strLog);
         }
         VALIDATECALL(zeModuleBuildLogDestroy(buildlog));
@@ -145,9 +147,7 @@ bool CopyBufferToBuffer::appendCommands() {
         VALIDATECALL(zeCommandListAppendLaunchKernel(executionCtxt->getCommandList(0), kernel, &dispatchTraits,
                                                      nullptr, 0, nullptr));
     } else {
-
-        std::cout << "Using zeCommandListAppendMemoryCopy" << std::endl;
-
+        LOG(zmu::LogLevel::DEBUG) << "Using zeCommandListAppendMemoryCopy" << std::endl;
         VALIDATECALL(zeCommandListAppendMemoryCopy(executionCtxt->getCommandList(0), destinationBuffer,
                                                    sourceBuffer, allocationSize, nullptr, 0, nullptr));
     }
@@ -166,16 +166,16 @@ bool CopyBufferToBuffer::validate() {
         uint8_t *dstCharBuffer = static_cast<uint8_t *>(destinationBuffer);
         for (size_t i = 0; i < allocationSize; i++) {
             if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
+                LOG(zmu::LogLevel::ERROR) << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
+                                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
                 break;
             }
         }
     }
 
-    std::cout << "\nResults validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
+    LOG(zmu::LogLevel::DEBUG) << "\nResults validation "
+                              << (outputValidationSuccessful ? "PASSED" : "FAILED")
+                              << std::endl;
 
     return outputValidationSuccessful;
 }

@@ -12,6 +12,8 @@
 #include <thread>
 #include <vector>
 
+namespace zmu = ZelloMetricsUtility;
+
 ///////////////////////////
 /////SingleMetricCollector
 ///////////////////////////
@@ -20,13 +22,13 @@ SingleMetricCollector::SingleMetricCollector(ExecutionContext *executionCtxt,
                                              const zet_metric_group_sampling_type_flag_t samplingType)
     : Collector(executionCtxt), samplingType(samplingType) {
 
-    metricGroup = ZelloMetricsUtility::findMetricGroup(metricGroupName, samplingType, executionCtxt->getDeviceHandle(0));
+    metricGroup = zmu::findMetricGroup(metricGroupName, samplingType, executionCtxt->getDeviceHandle(0));
 
-    if (verboseLevel >= 1) {
+    if (zmu::TestSettings::get()->verboseLevel >= zmu::LogLevel::DEBUG) {
         zet_metric_group_properties_t metricGroupProperties = {};
         // Obtain metric group properties to check the group name and sampling type.
         VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
-        ZelloMetricsUtility::printMetricGroupProperties(metricGroupProperties);
+        zmu::printMetricGroupProperties(metricGroupProperties);
 
         // Print metrics from metric group.
         uint32_t metricCount = 0;
@@ -45,7 +47,7 @@ SingleMetricCollector::SingleMetricCollector(ExecutionContext *executionCtxt,
             const zet_metric_handle_t metric = metrics[j];
             zet_metric_properties_t metricProperties = {};
             VALIDATECALL(zetMetricGetProperties(metric, &metricProperties));
-            ZelloMetricsUtility::printMetricProperties(metricProperties);
+            zmu::printMetricProperties(metricProperties);
         }
     }
 }
@@ -62,8 +64,8 @@ SingleMetricStreamerCollector::SingleMetricStreamerCollector(ExecutionContext *e
 
 bool SingleMetricStreamerCollector::start() {
 
-    eventPool = ZelloMetricsUtility::createHostVisibleEventPool(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0));
-    notificationEvent = ZelloMetricsUtility::createHostVisibleEvent(eventPool);
+    eventPool = zmu::createHostVisibleEventPool(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0));
+    notificationEvent = zmu::createHostVisibleEvent(eventPool);
 
     zet_metric_streamer_desc_t streamerProperties = {};
     streamerProperties.notifyEveryNReports = notifyReportCount;
@@ -107,14 +109,14 @@ void SingleMetricStreamerCollector::showResults() {
     std::vector<uint8_t> rawData{};
 
     VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, nullptr));
-    std::cout << "Streamer read requires: " << rawDataSize << " bytes buffer" << std::endl;
+    LOG(zmu::LogLevel::DEBUG) << "Streamer read requires: " << rawDataSize << " bytes buffer" << std::endl;
 
     // Read raw data.
     rawData.resize(rawDataSize, 0);
     VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
-    std::cout << "Streamer read raw bytes: " << rawDataSize << std::endl;
+    LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
 
-    ZelloMetricsUtility::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
+    zmu::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
 }
 
 ////////////////////////////////
@@ -129,8 +131,8 @@ SingleMetricQueryCollector::SingleMetricQueryCollector(ExecutionContext *executi
 
 bool SingleMetricQueryCollector::start() {
 
-    eventPool = ZelloMetricsUtility::createHostVisibleEventPool(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0));
-    notificationEvent = ZelloMetricsUtility::createHostVisibleEvent(eventPool);
+    eventPool = zmu::createHostVisibleEventPool(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0));
+    notificationEvent = zmu::createHostVisibleEvent(eventPool);
     queryPoolDesc.count = queryPoolCount;
     queryPoolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
 
@@ -186,5 +188,5 @@ void SingleMetricQueryCollector::showResults() {
     rawData.resize(rawDataSize);
     VALIDATECALL(zetMetricQueryGetData(queryHandle, &rawDataSize, rawData.data()));
 
-    ZelloMetricsUtility::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
+    zmu::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
 }
