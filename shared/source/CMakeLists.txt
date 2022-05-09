@@ -153,7 +153,7 @@ if(WIN32)
                                  NEO_CORE_SKU_INFO_WINDOWS
                                  NEO_CORE_SRCS_HELPERS_WINDOWS
                                  NEO_CORE_UTILITIES_WINDOWS
-                                 NEO_CORE_EXECUTION_ENVIRONMENT_WINDOWS
+                                 NEO_CORE_EXECUTION_ENVIRONMENT_WDDM
                                  NEO_CORE_AIL_WINDOWS
   )
 else()
@@ -162,7 +162,7 @@ else()
                                  NEO_CORE_OS_INTERFACE_LINUX
                                  NEO_CORE_PAGE_FAULT_MANAGER_LINUX
                                  NEO_CORE_UTILITIES_LINUX
-                                 NEO_CORE_EXECUTION_ENVIRONMENT_LINUX
+                                 NEO_CORE_EXECUTION_ENVIRONMENT_DRM
                                  NEO_CORE_AIL_LINUX
   )
   if(NOT DISABLE_WDDM_LINUX)
