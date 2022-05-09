@@ -1380,7 +1380,6 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     if (patIndex == static_cast<uint64_t>(GMM_PAT_ERROR) || closEnabled || hwHelper.isPatIndexFallbackWaRequired()) {
-        DEBUG_BREAK_IF(true);
         patIndex = hwHelper.getPatIndex(cacheRegion, cachePolicy);
     }
 
