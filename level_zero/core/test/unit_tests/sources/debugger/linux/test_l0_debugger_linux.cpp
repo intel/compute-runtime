@@ -198,12 +198,12 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
     kernelAllocs.push_back(&isaAllocation2);
 
     drmMock->registeredDataSize = 0;
-    drmMock->registeredClass = NEO::Drm::ResourceClass::MaxSize;
+    drmMock->registeredClass = NEO::DrmResourceClass::MaxSize;
 
     EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle));
 
     EXPECT_EQ(sizeof(uint32_t), drmMock->registeredDataSize);
-    EXPECT_EQ(NEO::Drm::ResourceClass::L0ZebinModule, drmMock->registeredClass);
+    EXPECT_EQ(NEO::DrmResourceClass::L0ZebinModule, drmMock->registeredClass);
 
     const auto containsModuleHandle = [handle](const auto &bufferObject) {
         const auto &bindExtHandles = bufferObject.getBindExtHandles();

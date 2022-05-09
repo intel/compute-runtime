@@ -241,6 +241,12 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         return uuidControlReturn;
     } break;
 
+    case PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: {
+        auto debugger_open = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(arg);
+        if (debugger_open->pid != 0 && debugger_open->events == 0) {
+            return debuggerOpenRetval;
+        }
+    } break;
     default:
         return -1;
     }

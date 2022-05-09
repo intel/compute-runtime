@@ -135,6 +135,9 @@ struct DrmMockPrelimContext {
     bool failDistanceInfoQuery{false};
     bool disableCcsSupport{false};
 
+    // Debugger ioctls
+    int debuggerOpenRetval = 10; // debugFd
+
     int handlePrelimRequest(unsigned long request, void *arg);
     bool handlePrelimQueryItem(void *arg);
     void storeVmBindExtensions(uint64_t ptr, bool bind);

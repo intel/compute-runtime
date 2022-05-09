@@ -437,6 +437,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceDefaultThreadArbitrationPolicyIfNotSpecified, 
 DECLARE_DEBUG_VARIABLE(int32_t, ProgramExtendedPipeControlPriorToNonPipelinedStateCommand, -1, "-1: default, 0: disable, 1: enable, Program additional extended version of PIPE CONTROL command before non pipelined state command")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDrmRegion, -1, "-1: disable, 0+: override to given memory region for all allocations")
 DECLARE_DEBUG_VARIABLE(bool, ForceAllResourcesUncached, false, "When set, all memory operations for all resources are forced to UC. This overrides all caching-related debug variables and globally disables all caches")
+DECLARE_DEBUG_VARIABLE(bool, EnableDebuggerMmapMemoryAccess, false, "Mmap used to access memory by debug api, valid only on Linux OS")
 
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")

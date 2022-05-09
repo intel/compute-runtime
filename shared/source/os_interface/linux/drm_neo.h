@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -65,16 +66,6 @@ class Drm : public DriverModel {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::DRM;
     static constexpr size_t completionFenceOffset = 1024;
-
-    enum class ResourceClass : uint32_t {
-        Elf,
-        Isa,
-        ModuleHeapDebugArea,
-        ContextSaveArea,
-        SbaTrackingBuffer,
-        L0ZebinModule,
-        MaxSize
-    };
 
     struct QueryTopologyData {
         int sliceCount;
@@ -174,7 +165,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL void queryPageFaultSupport();
     MOCKABLE_VIRTUAL bool hasPageFaultSupport() const;
 
-    MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, const void *data, size_t size);
+    MOCKABLE_VIRTUAL uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
 
@@ -318,7 +309,7 @@ class Drm : public DriverModel {
     std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
-    StackVec<uint32_t, size_t(ResourceClass::MaxSize)> classHandles;
+    StackVec<uint32_t, size_t(DrmResourceClass::MaxSize)> classHandles;
     std::vector<uint32_t> virtualMemoryIds;
 
     std::unique_ptr<HwDeviceIdDrm> hwDeviceId;

@@ -34,7 +34,7 @@ TEST(DrmUuidTest, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::Elf)].second;
+    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;
     std::string Uuid1stElfClass = elfClassUuid.substr(0, 18);
 
     char data[] = "abc";
@@ -53,25 +53,25 @@ TEST(DrmUuidTest, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned) {
 }
 
 TEST(DrmUuidTest, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreReturned) {
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::Elf)].first, "I915_UUID_CLASS_ELF_BINARY");
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::Isa)].first, "I915_UUID_CLASS_ISA_BYTECODE");
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::ContextSaveArea)].first, "I915_UUID_L0_SIP_AREA");
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::ModuleHeapDebugArea)].first, "I915_UUID_L0_MODULE_AREA");
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::SbaTrackingBuffer)].first, "I915_UUID_L0_SBA_AREA");
-    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::L0ZebinModule)].first, "L0_ZEBIN_MODULE");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].first, "I915_UUID_CLASS_ELF_BINARY");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Isa)].first, "I915_UUID_CLASS_ISA_BYTECODE");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ContextSaveArea)].first, "I915_UUID_L0_SIP_AREA");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ModuleHeapDebugArea)].first, "I915_UUID_L0_MODULE_AREA");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::SbaTrackingBuffer)].first, "I915_UUID_L0_SBA_AREA");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::L0ZebinModule)].first, "L0_ZEBIN_MODULE");
 }
 
 TEST(DrmUuidTest, givenUuidStringWhenGettingClassIndexThenCorrectIndexForValidStringsIsReturned) {
     uint32_t index = 100;
-    auto validUuid = DrmUuid::getClassUuidIndex(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::ContextSaveArea)].second, index);
+    auto validUuid = DrmUuid::getClassUuidIndex(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ContextSaveArea)].second, index);
 
     EXPECT_TRUE(validUuid);
-    EXPECT_EQ(static_cast<uint32_t>(Drm::ResourceClass::ContextSaveArea), index);
+    EXPECT_EQ(static_cast<uint32_t>(DrmResourceClass::ContextSaveArea), index);
 
-    validUuid = DrmUuid::getClassUuidIndex(classNamesToUuid[static_cast<uint32_t>(Drm::ResourceClass::ModuleHeapDebugArea)].second, index);
+    validUuid = DrmUuid::getClassUuidIndex(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ModuleHeapDebugArea)].second, index);
 
     EXPECT_TRUE(validUuid);
-    EXPECT_EQ(static_cast<uint32_t>(Drm::ResourceClass::ModuleHeapDebugArea), index);
+    EXPECT_EQ(static_cast<uint32_t>(DrmResourceClass::ModuleHeapDebugArea), index);
 
     index = 100;
     validUuid = DrmUuid::getClassUuidIndex("invalid", index);

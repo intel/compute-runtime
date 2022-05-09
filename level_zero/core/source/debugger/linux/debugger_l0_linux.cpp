@@ -28,7 +28,7 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
     if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-        auto handle = drm->registerResource(NEO::Drm::ResourceClass::Elf, debugData->vIsa, debugData->vIsaSize);
+        auto handle = drm->registerResource(NEO::DrmResourceClass::Elf, debugData->vIsa, debugData->vIsaSize);
         static_cast<NEO::DrmAllocation *>(isaAllocation)->linkWithRegisteredHandle(handle);
     }
 }
@@ -39,7 +39,7 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
     }
     auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
     uint32_t segmentCount = static_cast<uint32_t>(allocs.size());
-    moduleHandle = drm->registerResource(NEO::Drm::ResourceClass::L0ZebinModule, &segmentCount, sizeof(uint32_t));
+    moduleHandle = drm->registerResource(NEO::DrmResourceClass::L0ZebinModule, &segmentCount, sizeof(uint32_t));
 
     for (auto &allocation : allocs) {
         auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);

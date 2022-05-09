@@ -37,7 +37,7 @@ TEST_F(DrmDebugTest, whenRegisterResourceClassesCalledThenTrueIsReturned) {
 TEST_F(DrmDebugTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto handle = drmMock.registerResource(Drm::ResourceClass::MaxSize, nullptr, 0);
+    auto handle = drmMock.registerResource(DrmResourceClass::MaxSize, nullptr, 0);
     EXPECT_EQ(0u, handle);
     drmMock.unregisterResource(handle);
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);

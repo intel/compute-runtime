@@ -175,26 +175,26 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
         return;
     }
 
-    Drm::ResourceClass resourceClass = Drm::ResourceClass::MaxSize;
+    DrmResourceClass resourceClass = DrmResourceClass::MaxSize;
 
     switch (this->allocationType) {
     case AllocationType::DEBUG_CONTEXT_SAVE_AREA:
-        resourceClass = Drm::ResourceClass::ContextSaveArea;
+        resourceClass = DrmResourceClass::ContextSaveArea;
         break;
     case AllocationType::DEBUG_SBA_TRACKING_BUFFER:
-        resourceClass = Drm::ResourceClass::SbaTrackingBuffer;
+        resourceClass = DrmResourceClass::SbaTrackingBuffer;
         break;
     case AllocationType::KERNEL_ISA:
-        resourceClass = Drm::ResourceClass::Isa;
+        resourceClass = DrmResourceClass::Isa;
         break;
     case AllocationType::DEBUG_MODULE_AREA:
-        resourceClass = Drm::ResourceClass::ModuleHeapDebugArea;
+        resourceClass = DrmResourceClass::ModuleHeapDebugArea;
         break;
     default:
         break;
     }
 
-    if (resourceClass != Drm::ResourceClass::MaxSize) {
+    if (resourceClass != DrmResourceClass::MaxSize) {
         uint64_t gpuAddress = getGpuAddress();
         auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
         registeredBoBindHandles.push_back(handle);
@@ -205,7 +205,7 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
             if (bo) {
                 bo->addBindExtHandle(handle);
                 bo->markForCapture();
-                if (resourceClass == Drm::ResourceClass::Isa) {
+                if (resourceClass == DrmResourceClass::Isa) {
                     auto cookieHandle = drm->registerIsaCookie(handle);
                     bo->addBindExtHandle(cookieHandle);
                     registeredBoBindHandles.push_back(cookieHandle);

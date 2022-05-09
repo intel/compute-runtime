@@ -306,7 +306,7 @@ class DrmMockResources : public DrmMock {
         return true;
     }
 
-    uint32_t registerResource(ResourceClass classType, const void *data, size_t size) override {
+    uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override {
         registeredClass = classType;
         memcpy_s(registeredData, sizeof(registeredData), data, size);
         registeredDataSize = size;
@@ -339,7 +339,7 @@ class DrmMockResources : public DrmMock {
 
     uint32_t unregisteredHandle = 0;
     uint32_t unregisterCalledCount = 0;
-    ResourceClass registeredClass = ResourceClass::MaxSize;
+    DrmResourceClass registeredClass = DrmResourceClass::MaxSize;
     bool registerClassesCalled = false;
     uint64_t registeredData[128];
     size_t registeredDataSize;

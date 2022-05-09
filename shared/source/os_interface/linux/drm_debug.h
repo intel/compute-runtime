@@ -5,12 +5,22 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
+#pragma once
 
+#include <array>
 #include <string>
 #include <utility>
 
 namespace NEO {
+enum class DrmResourceClass : uint32_t {
+    Elf,
+    Isa,
+    ModuleHeapDebugArea,
+    ContextSaveArea,
+    SbaTrackingBuffer,
+    L0ZebinModule,
+    MaxSize
+};
 
 /*
 
@@ -44,7 +54,7 @@ UUID('285208b2-c5e0-5fcb-90bb-7576ed7a9697')
 
 */
 
-using ClassNamesArray = std::array<std::pair<const char *, const std::string>, size_t(Drm::ResourceClass::MaxSize)>;
+using ClassNamesArray = std::array<std::pair<const char *, const std::string>, size_t(DrmResourceClass::MaxSize)>;
 const ClassNamesArray classNamesToUuid = {std::make_pair("I915_UUID_CLASS_ELF_BINARY", "31203221-8069-5a0a-9d43-94a4d3395ee1"),
                                           std::make_pair("I915_UUID_CLASS_ISA_BYTECODE", "53baed0a-12c3-5d19-aa69-ab9c51aa1039"),
                                           std::make_pair("I915_UUID_L0_MODULE_AREA", "a411e82e-16c9-58b7-bfb5-b209b8601d5f"),
@@ -57,7 +67,7 @@ constexpr auto uuidL0CommandQueueHash = "285208b2-c5e0-5fcb-90bb-7576ed7a9697"; 
 
 struct DrmUuid {
     static bool getClassUuidIndex(std::string uuid, uint32_t &index) {
-        for (uint32_t i = 0; i < uint32_t(Drm::ResourceClass::MaxSize); i++) {
+        for (uint32_t i = 0; i < uint32_t(DrmResourceClass::MaxSize); i++) {
             if (uuid == classNamesToUuid[i].second) {
                 index = i;
                 return true;

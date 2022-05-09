@@ -40,6 +40,7 @@ constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
 int fstatFuncRetVal = 0;
 uint32_t preadFuncCalled = 0u;
+uint32_t pwriteFuncCalled = 0u;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
@@ -184,6 +185,7 @@ ssize_t pread(int fd, void *buf, size_t count, off_t offset) {
 }
 
 ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
+    pwriteFuncCalled++;
     return 0;
 }
 
