@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,8 +36,8 @@ TEST(DriverInfo, GivenDriverInfoWhenLinuxThenReturnDefault) {
     std::string defaultName = "testName";
     std::string defaultVersion = "testVersion";
 
-    auto resultName = driverInfo.get()->getDeviceName(defaultName);
-    auto resultVersion = driverInfo.get()->getVersion(defaultVersion);
+    auto resultName = driverInfo->getDeviceName(defaultName);
+    auto resultVersion = driverInfo->getVersion(defaultVersion);
 
     EXPECT_STREQ(defaultName.c_str(), resultName.c_str());
     EXPECT_STREQ(defaultVersion.c_str(), resultVersion.c_str());

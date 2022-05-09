@@ -77,8 +77,8 @@ void ClDevice::initializeCaps() {
     name = getClDeviceName(hwInfo);
 
     if (driverInfo) {
-        name.assign(driverInfo.get()->getDeviceName(name).c_str());
-        driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
+        name.assign(driverInfo->getDeviceName(name).c_str());
+        driverVersion.assign(driverInfo->getVersion(driverVersion).c_str());
         sharingFactory.verifyExtensionSupport(driverInfo.get());
     }
 

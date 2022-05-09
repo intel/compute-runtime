@@ -967,7 +967,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocationsWhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarkedResident) {
-    if (executionEnvironment->memoryManager.get()->isLimitedGPU(0)) {
+    if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
     MockWddmAllocation allocation1(gmmHelper);

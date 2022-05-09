@@ -475,8 +475,8 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKer
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -498,8 +498,8 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInterna
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module.get()->translationUnit->globalConstBuffer,
-                                  module.get()->translationUnit->globalVarBuffer,
+                                  module->translationUnit->globalConstBuffer,
+                                  module->translationUnit->globalVarBuffer,
                                   isInternal);
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
@@ -722,13 +722,13 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
     kernelDesc.pKernelName = "rt_test";
 
     auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, module.get()->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+    EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
@@ -766,13 +766,13 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueButKernelDoesNotHaveRTDGAll
     kernelDesc.pKernelName = "rt_test";
 
     auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, module.get()->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+    EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_EQ(nullptr, rtDispatchGlobals);
@@ -807,7 +807,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = "rt_test";
     auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
@@ -844,12 +844,12 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
     kernelDesc.pKernelName = "rt_test";
 
     auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&kernelDesc));
-    EXPECT_EQ(nullptr, module.get()->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+    EXPECT_EQ(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatched) {
@@ -885,7 +885,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
     kernelDesc.pKernelName = "rt_test";
 
     auto immDataVector =
-        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module.get()->getKernelImmutableDataVector());
+        const_cast<std::vector<std::unique_ptr<KernelImmutableData>> *>(&module->getKernelImmutableDataVector());
 
     immDataVector->push_back(std::move(mockKernelImmutableData));
 

@@ -3172,13 +3172,13 @@ TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
     void *ptr = nullptr;
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockHostMemoryManager = true;
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                4096u, 0u, &ptr);
-    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -3188,17 +3188,17 @@ TEST_F(AllocHostMemoryTest,
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockHostMemoryManager = true;
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
 
     void *ptr = nullptr;
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                4096u, 0u, &ptr);
-    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, 1u);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
     EXPECT_EQ(nullptr, ptr);
 }
@@ -3206,17 +3206,17 @@ TEST_F(AllocHostMemoryTest,
 TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockHostMemoryManager = true;
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
     void *ptr = nullptr;
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                4096u, 0u, &ptr);
-    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
     EXPECT_EQ(nullptr, ptr);
 }

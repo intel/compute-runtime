@@ -122,7 +122,7 @@ TEST(DrmTest, givenDistanceQueryFailsWhenQueryingDistanceInfoThenFailGracefully)
         EXPECT_EQ(3u, drm->ioctlCallsCount);
 
         for (uint32_t i = 0; i < hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount; i++) {
-            EXPECT_NO_THROW(drm->memoryInfo.get()->getMemoryRegionClassAndInstance((1 << i), *drm->context.hwInfo));
+            EXPECT_NO_THROW(drm->memoryInfo->getMemoryRegionClassAndInstance((1 << i), *drm->context.hwInfo));
         }
     } else {
         EXPECT_EQ(2u, drm->ioctlCallsCount);

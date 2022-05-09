@@ -1010,7 +1010,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     setCompressionEnabled(false, false);
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     MockWddmCsr<FamilyType> mockWddmCsr(*executionEnvironment, 1, device->getDeviceBitfield());
-    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines()) {
         EXPECT_EQ(nullptr, engine.commandStreamReceiver->pageTableManager.get());
     }
 }

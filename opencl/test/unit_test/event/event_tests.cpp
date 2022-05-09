@@ -566,8 +566,8 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     MockMultiDispatchInfo multiDispatchInfo(pClDevice, pKernel);
     std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pClDevice));
-    printfHandler.get()->prepareDispatch(multiDispatchInfo);
-    auto surface = printfHandler.get()->getSurface();
+    printfHandler->prepareDispatch(multiDispatchInfo);
+    auto surface = printfHandler->getSurface();
 
     auto printfSurface = reinterpret_cast<uint32_t *>(surface->getUnderlyingBuffer());
     printfSurface[0] = 8;
@@ -677,7 +677,7 @@ TEST_P(InternalsEventProfilingTest, GivenProfilingWhenEventCreatedThenProfilingS
     std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(mockContext, pClDevice, props, false));
 
     std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), GetParam(), 0, 0));
-    EXPECT_TRUE(event.get()->isProfilingEnabled());
+    EXPECT_TRUE(event->isProfilingEnabled());
 }
 
 INSTANTIATE_TEST_CASE_P(InternalsEventProfilingTest,
@@ -689,7 +689,7 @@ TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet
     std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(mockContext, pClDevice, props, false));
 
     std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), CL_COMMAND_USER, 0, 0));
-    EXPECT_FALSE(event.get()->isProfilingEnabled());
+    EXPECT_FALSE(event->isProfilingEnabled());
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseNotEnabledWhenGetEventProfilingInfoThenCpuTimestampIsReturned) {

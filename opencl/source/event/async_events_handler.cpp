@@ -96,7 +96,7 @@ void AsyncEventsHandler::closeThread() {
         allowAsyncProcess = false;
         asyncCond.notify_one();
         lock.unlock();
-        thread.get()->join();
+        thread->join();
         thread.reset(nullptr);
     }
 }

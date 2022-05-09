@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferSetSurfaceThatM
     Buffer::setSurfaceState(device.get(), &surfaceState, false, false, size, ptr, 0, nullptr, 0, 0, false, false);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
-    auto gmmHelper = device.get()->getGmmHelper();
+    auto gmmHelper = device->getGmmHelper();
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), mocs);
 
     alignedFree(ptr);

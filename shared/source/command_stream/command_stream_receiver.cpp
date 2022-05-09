@@ -399,8 +399,8 @@ MultiGraphicsAllocation &CommandStreamReceiver::createTagsMultiAllocation() {
         rootDeviceIndices.push_back(rootDeviceIndex);
     } else {
         for (auto index = 0u; index < this->executionEnvironment.rootDeviceEnvironments.size(); index++) {
-            if (this->executionEnvironment.rootDeviceEnvironments[index].get()->getHardwareInfo()->platform.eProductFamily ==
-                this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get()->getHardwareInfo()->platform.eProductFamily) {
+            if (this->executionEnvironment.rootDeviceEnvironments[index]->getHardwareInfo()->platform.eProductFamily ==
+                this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->getHardwareInfo()->platform.eProductFamily) {
                 rootDeviceIndices.push_back(index);
             }
         }

@@ -1583,7 +1583,7 @@ class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Tes
     void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
-        ze_result_t res = module.get()->createKernel(&kernelDesc, kernelHandle);
+        ze_result_t res = module->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};
@@ -1645,7 +1645,7 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
     void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
         ze_kernel_desc_t kernelDesc = {};
         kernelDesc.pKernelName = kernelName.c_str();
-        ze_result_t res = modules[rootDeviceIndex].get()->createKernel(&kernelDesc, kernelHandle);
+        ze_result_t res = modules[rootDeviceIndex]->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
         ze_host_mem_alloc_desc_t hostDesc = {};

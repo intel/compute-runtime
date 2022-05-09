@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ TEST(OSLibraryWinTest, GivenNoLastErrorOnWindowsThenErrorStringisEmpty) {
     auto lib = std::make_unique<Windows::OsLibrary>(Os::testDllName, &errorValue);
     EXPECT_NE(nullptr, lib);
     EXPECT_TRUE(errorValue.empty());
-    lib.get()->getLastErrorString(&errorValue);
+    lib->getLastErrorString(&errorValue);
     EXPECT_TRUE(errorValue.empty());
-    lib.get()->getLastErrorString(nullptr);
+    lib->getLastErrorString(nullptr);
 }

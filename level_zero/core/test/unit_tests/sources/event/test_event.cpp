@@ -535,8 +535,8 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
 
     std::unique_ptr<L0::Event> event(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
-    ASSERT_NE(nullptr, event.get()->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event.get()->csr);
+    ASSERT_NE(nullptr, event->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event->csr);
 }
 
 TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndOffsetAreSet) {
@@ -1482,7 +1482,7 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
 
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
-        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockEventPoolCreateMemoryManager = true;
+        static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockEventPoolCreateMemoryManager = true;
 
         device = driverHandle->devices[0];
 

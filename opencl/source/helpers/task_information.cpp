@@ -161,7 +161,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (printfHandler) {
-        printfHandler.get()->makeResident(commandStreamReceiver);
+        printfHandler->makeResident(commandStreamReceiver);
     }
     makeTimestampPacketsResident(commandStreamReceiver);
 
@@ -273,7 +273,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (printfHandler) {
         commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
-        printfHandler.get()->printEnqueueOutput();
+        printfHandler->printEnqueueOutput();
     }
 
     for (auto surface : surfaces) {

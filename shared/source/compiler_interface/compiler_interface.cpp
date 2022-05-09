@@ -333,8 +333,8 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
         return TranslationOutput::ErrorCode::UnknownError;
     }
 
-    auto systemRoutineBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
-    auto stateSaveAreaBuffer = igcMain.get()->CreateBuiltin<CIF::Builtins::BufferLatest>();
+    auto systemRoutineBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
+    auto stateSaveAreaBuffer = igcMain->CreateBuiltin<CIF::Builtins::BufferLatest>();
 
     auto result = deviceCtx->GetSystemRoutine(typeOfSystemRoutine,
                                               bindlessSip,
@@ -439,17 +439,17 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
-    igcFtrWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
-    igcFtrWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    igcFtrWa.get()->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa.get()->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa.get()->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
-    igcFtrWa.get()->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
-    igcFtrWa.get()->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
-    igcFtrWa.get()->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
-    igcFtrWa.get()->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
+    igcFtrWa->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
+    igcFtrWa->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
+    igcFtrWa->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
+    igcFtrWa->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
+    igcFtrWa->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
+    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
+    igcFtrWa->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
+    igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
+    igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
 
-    igcFtrWa.get()->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.flags.ftrResourceStreamer);
+    igcFtrWa->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.flags.ftrResourceStreamer);
 
     igcDeviceContexts[&device] = std::move(newDeviceCtx);
     return igcDeviceContexts[&device].get();

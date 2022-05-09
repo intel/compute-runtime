@@ -166,9 +166,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen2dCreatedThenRetur
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM.get()->verifyValue = false;
+    mockMM->verifyValue = false;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM.get()->verifyValue = true;
+    mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -183,9 +183,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreat
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM.get()->verifyValue = false;
+    mockMM->verifyValue = false;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM.get()->verifyValue = true;
+    mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -200,9 +200,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen2dCreatedThenRetur
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM.get()->failAlloc = true;
+    mockMM->failAlloc = true;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM.get()->failAlloc = false;
+    mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 
@@ -217,9 +217,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCrea
     this->mockSharingFcns->getTexture2dDescParamsSet.textureDesc = this->mockSharingFcns->mockTexture2dDesc;
 
     cl_int retCode = 0;
-    mockMM.get()->failAlloc = true;
+    mockMM->failAlloc = true;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
-    mockMM.get()->failAlloc = false;
+    mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 
@@ -833,14 +833,14 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
 
 TEST(D3D9, givenD3D9BuilderAndExtensionEnableTrueWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
-    builderFactory.get()->extensionEnabled = true;
+    builderFactory->extensionEnabled = true;
     EXPECT_TRUE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_intel_dx9_media_sharing")));
     EXPECT_TRUE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_dx9_media_sharing")));
 }
 
 TEST(D3D9, givenD3D9BuilderAndExtensionEnableFalseWhenGettingExtensionsThenDx9MediaSheringExtensionsAreNotReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
-    builderFactory.get()->extensionEnabled = false;
+    builderFactory->extensionEnabled = false;
     EXPECT_FALSE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_intel_dx9_media_sharing")));
     EXPECT_FALSE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_dx9_media_sharing")));
 }

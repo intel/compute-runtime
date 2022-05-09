@@ -208,7 +208,7 @@ class MemoryManager {
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
     GmmHelper *getGmmHelper(uint32_t rootDeviceIndex) {
-        return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get()->getGmmHelper();
+        return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     }
     virtual AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;

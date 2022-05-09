@@ -32,12 +32,12 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEventInMu
     size_t offset = 0;
     size_t size = 1;
 
-    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
-    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
+    auto pCmdQ1 = context->getSpecialQueue(1u);
+    auto pCmdQ2 = context->getSpecialQueue(2u);
 
-    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context.get()->getDevices(), &retVal));
+    std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context.get(), context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr, false);
-    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context.get()->getDevice(0), &retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), &retVal));
 
     size_t svmSize = 4096;
     void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
@@ -147,9 +147,9 @@ HWTEST_F(MultiRootDeviceCommandStreamReceiverTests, givenMultipleEventInMultiRoo
 
     auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 3), false);
 
-    auto pCmdQ1 = context.get()->getSpecialQueue(1u);
-    auto pCmdQ2 = context.get()->getSpecialQueue(2u);
-    auto pCmdQ3 = context.get()->getSpecialQueue(3u);
+    auto pCmdQ1 = context->getSpecialQueue(1u);
+    auto pCmdQ2 = context->getSpecialQueue(2u);
+    auto pCmdQ3 = context->getSpecialQueue(3u);
 
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);
@@ -266,8 +266,8 @@ struct CrossDeviceDependenciesTests : public ::testing::Test {
 
         context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
 
-        pCmdQ1 = context.get()->getSpecialQueue(1u);
-        pCmdQ2 = context.get()->getSpecialQueue(2u);
+        pCmdQ1 = context->getSpecialQueue(1u);
+        pCmdQ2 = context->getSpecialQueue(2u);
     }
 
     void TearDown() override {

@@ -372,18 +372,18 @@ TEST_F(GmmCanonizeTests, WhenCanonizingThenCorrectAddressIsReturned) {
 
     uint64_t testAddr1 = 0x7777777777777777;
     uint64_t goodAddr1 = 0x0000777777777777;
-    EXPECT_EQ(gmmHelper.get()->canonize(testAddr1), goodAddr1);
+    EXPECT_EQ(gmmHelper->canonize(testAddr1), goodAddr1);
 
     uint64_t testAddr2 = 0x7FFFFFFFFFFFFFFF;
     uint64_t goodAddr2 = 0xFFFFFFFFFFFFFFFF;
-    EXPECT_EQ(gmmHelper.get()->canonize(testAddr2), goodAddr2);
+    EXPECT_EQ(gmmHelper->canonize(testAddr2), goodAddr2);
 
     // 36 bit - also canonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36); // 0x0000000FFFFFFFFF;
     gmmHelper = std::make_unique<GmmHelper>(nullptr, &hwInfo);
 
-    EXPECT_EQ(gmmHelper.get()->canonize(testAddr1), goodAddr1);
-    EXPECT_EQ(gmmHelper.get()->canonize(testAddr2), goodAddr2);
+    EXPECT_EQ(gmmHelper->canonize(testAddr1), goodAddr1);
+    EXPECT_EQ(gmmHelper->canonize(testAddr2), goodAddr2);
 }
 
 TEST_F(GmmCanonizeTests, WhenDecanonizingThenCorrectAddressIsReturned) {

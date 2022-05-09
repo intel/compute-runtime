@@ -105,7 +105,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override {
         waitForEnginesCompletionCalled++;
         if (waitAllocations.get()) {
-            waitAllocations.get()->addAllocation(&graphicsAllocation);
+            waitAllocations->addAllocation(&graphicsAllocation);
         }
         MemoryManager::waitForEnginesCompletion(graphicsAllocation);
     }

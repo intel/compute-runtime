@@ -458,7 +458,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, MapGPUVA.VirtualAddress, getGdi()->escape);
     bool ret = true;
     if (gmm->isCompressionEnabled && HwInfoConfig::get(gfxPlatform->eProductFamily)->isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
-        for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager.get()->getRegisteredEngines()) {
+        for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines()) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
             }
@@ -1064,7 +1064,7 @@ WddmVersion Wddm::getWddmVersion() {
 uint32_t Wddm::getRequestedEUCount() const {
     DEBUG_BREAK_IF(!gtSystemInfo);
     // Always request even number od EUs
-    return (gtSystemInfo.get()->EUCount / gtSystemInfo.get()->SubSliceCount) & (~1u);
+    return (gtSystemInfo->EUCount / gtSystemInfo->SubSliceCount) & (~1u);
 };
 
 void Wddm::createPagingFenceLogger() {

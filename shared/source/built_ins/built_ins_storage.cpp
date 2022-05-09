@@ -206,7 +206,7 @@ BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, Buil
     for (auto &rn : resourcesToLookup) { // first look for dedicated version, only fallback to generic one
         for (auto &s : allStorages) {
             UNRECOVERABLE_IF(!rn);
-            bc = s.get()->load(*rn);
+            bc = s->load(*rn);
             if (bc.size() != 0) {
                 return bc;
             }

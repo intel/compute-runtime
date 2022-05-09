@@ -375,7 +375,7 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetedPtr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
-    auto mapAllocation = buffer->getMapAllocation(device.get()->getRootDeviceIndex());
+    auto mapAllocation = buffer->getMapAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
     EXPECT_EQ(AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
@@ -824,7 +824,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTransfer
     static_cast<MockMemoryManager *>(context->memoryManager)->forceCompressed = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, bufferSize, hostPtr, retVal));
     EXPECT_NE(nullptr, mockCmdQ->writeMapAllocation);
-    EXPECT_EQ(buffer->getMapAllocation(device.get()->getRootDeviceIndex()), mockCmdQ->writeMapAllocation);
+    EXPECT_EQ(buffer->getMapAllocation(device->getRootDeviceIndex()), mockCmdQ->writeMapAllocation);
 }
 
 TEST_F(CompressedBuffersCopyHostMemoryTests, givenNonCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
@@ -1790,13 +1790,13 @@ HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHw
     auto ptr = alignedMalloc(size, MemoryConstants::pageSize);
     MockGraphicsAllocation svmAlloc(ptr, size);
 
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(device.get()->getRootDeviceIndex());
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(&svmAlloc);
     auto buffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device.get(), 0, 0, size, ptr, ptr, multiGraphicsAllocation, 0, true, false, false));
 
-    EXPECT_EQ(device.get()->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(device->getRootDeviceIndex(), 0u);
     EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size(), multiGraphicsAllocation.getGraphicsAllocations().size());
-    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocation(device.get()->getRootDeviceIndex()), multiGraphicsAllocation.getGraphicsAllocation(device.get()->getRootDeviceIndex()));
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocation(device->getRootDeviceIndex()), multiGraphicsAllocation.getGraphicsAllocation(device->getRootDeviceIndex()));
 
     alignedFree(ptr);
 }

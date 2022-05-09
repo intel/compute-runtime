@@ -1188,7 +1188,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClHostMemAllocIntelIsCalle
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, unifiedMemoryHostAllocation);
 
-    auto allocationsManager = context.get()->getSVMAllocsManager();
+    auto allocationsManager = context->getSVMAllocsManager();
 
     EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
 
@@ -1225,7 +1225,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
 
-    auto allocationsManager = context.get()->getSVMAllocsManager();
+    auto allocationsManager = context->getSVMAllocsManager();
 
     EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
 
@@ -1263,7 +1263,7 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
 
-    auto allocationsManager = context.get()->getSVMAllocsManager();
+    auto allocationsManager = context->getSVMAllocsManager();
 
     EXPECT_EQ(allocationsManager->getNumAllocs(), 1u);
 
@@ -1280,8 +1280,8 @@ TEST_F(MultiRootDeviceClUnifiedSharedMemoryTests, WhenClSharedMemAllocIntelIsCal
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(mockMemoryManager->waitForEnginesCompletionCalled, 2u);
-    EXPECT_EQ(mockMemoryManager->waitAllocations.get()->getGraphicsAllocation(1u), graphicsAllocation1);
-    EXPECT_EQ(mockMemoryManager->waitAllocations.get()->getGraphicsAllocation(2u), graphicsAllocation2);
+    EXPECT_EQ(mockMemoryManager->waitAllocations->getGraphicsAllocation(1u), graphicsAllocation1);
+    EXPECT_EQ(mockMemoryManager->waitAllocations->getGraphicsAllocation(2u), graphicsAllocation2);
 
     EXPECT_EQ(allocationsManager->getNumAllocs(), 0u);
 

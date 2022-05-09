@@ -325,14 +325,14 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
         hwInfo[i] = *NEO::defaultHwInfo.get();
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo[i]);
     }
-    executionEnvironment->rootDeviceEnvironments[0].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    executionEnvironment->rootDeviceEnvironments[1].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    executionEnvironment->rootDeviceEnvironments[2].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    executionEnvironment->rootDeviceEnvironments[3].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-    executionEnvironment->rootDeviceEnvironments[4].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-    executionEnvironment->rootDeviceEnvironments[5].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    executionEnvironment->rootDeviceEnvironments[6].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    executionEnvironment->rootDeviceEnvironments[7].get()->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[2]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment->rootDeviceEnvironments[4]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment->rootDeviceEnvironments[5]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[6]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment->rootDeviceEnvironments[7]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     auto devices = DeviceFactory::createDevices(*executionEnvironment);
     for (auto iterator = 0u; iterator < 3; iterator++) {
         EXPECT_FALSE(devices[iterator]->getHardwareInfo().capabilityTable.isIntegratedDevice); // Initial entries would be for discrete devices
@@ -405,5 +405,5 @@ TEST_F(UltDeviceFactoryTest, givenExecutionEnvironmentWhenCreatingUltDeviceFacto
 
     EXPECT_EQ(2u, executionEnvironment->rootDeviceEnvironments.size());
     EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
-    EXPECT_EQ(true, executionEnvironment->memoryManager.get()->isInitialized());
+    EXPECT_EQ(true, executionEnvironment->memoryManager->isInitialized());
 }

@@ -1014,7 +1014,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     EXPECT_FALSE(gpuAlloc->isResident(csr.getOsContext().getContextId()));
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
 
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1059,7 +1059,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
 
     ze_group_count_t groupCount{1, 1, 1};
     result = commandList->appendLaunchKernel(kernel->toHandle(),
@@ -1109,7 +1109,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
-    static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;
 
     ze_group_count_t groupCount{1, 1, 1};
     result = commandList->appendLaunchKernel(kernel->toHandle(),

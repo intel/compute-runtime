@@ -1790,7 +1790,7 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
         EXPECT_EQ(4, wddmAlloc->getNumGmms());
         EXPECT_EQ(4, wddm->createAllocationResult.called);
 
-        auto gmmHelper = executionEnvironment->rootDeviceEnvironments[wddmAlloc->getRootDeviceIndex()].get()->getGmmHelper();
+        auto gmmHelper = executionEnvironment->rootDeviceEnvironments[wddmAlloc->getRootDeviceIndex()]->getGmmHelper();
         EXPECT_EQ(wddmAlloc->getGpuAddressToModify(), gmmHelper->canonize(wddmAlloc->reservedGpuVirtualAddress));
 
         memoryManager.freeGraphicsMemory(wddmAlloc);
@@ -1976,7 +1976,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
     auto mockMngr = new MockGmmPageTableMngr();
-    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
@@ -2009,7 +2009,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
     auto mockMngr = new MockGmmPageTableMngr();
-    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 
@@ -2020,7 +2020,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
     expectedDdiUpdateAuxTable.DoNotWait = true;
     expectedDdiUpdateAuxTable.Map = true;
 
-    auto expectedCallCount = executionEnvironment->memoryManager.get()->getRegisteredEnginesCount();
+    auto expectedCallCount = executionEnvironment->memoryManager->getRegisteredEnginesCount();
 
     auto hwInfoMock = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfoMock);
@@ -2111,7 +2111,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenMappedGpuVaThe
                                                                                                                             PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
 
     auto mockMngr = new MockGmmPageTableMngr();
-    for (auto engine : executionEnvironment->memoryManager.get()->getRegisteredEngines()) {
+    for (auto engine : executionEnvironment->memoryManager->getRegisteredEngines()) {
         engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
     }
 

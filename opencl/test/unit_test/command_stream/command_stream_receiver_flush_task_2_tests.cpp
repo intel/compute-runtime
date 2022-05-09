@@ -1596,7 +1596,7 @@ HWTEST_F(SingleRootDeviceCommandStreamReceiverTests, givenMultipleEventInSingleR
 
     auto context = std::make_unique<MockContext>(ClDeviceVector(devices, 1), false);
 
-    auto pCmdQ0 = context.get()->getSpecialQueue(0u);
+    auto pCmdQ0 = context->getSpecialQueue(0u);
 
     Event event1(pCmdQ0, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);

@@ -711,8 +711,8 @@ struct DeviceHostPointerTest : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
 
-        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->isMockHostMemoryManager = true;
-        static_cast<MockMemoryManager *>(driverHandle.get()->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+        static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+        static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
         device = driverHandle->devices[0];
     }
@@ -1278,7 +1278,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithLegacyDeviceProper
     EXPECT_NE(timerResolution, 0.0);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    ze_result_t res = driverHandle->devices[0]->getProperties(&deviceProps);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceProps.timerResolution, static_cast<uint64_t>(timerResolution));
 }
@@ -1294,7 +1294,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithDeviceProperties_1
     EXPECT_NE(timerClock, 0u);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
-    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    ze_result_t res = driverHandle->devices[0]->getProperties(&deviceProps);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceProps.timerResolution, timerClock);
 }
@@ -1313,7 +1313,7 @@ TEST_F(GlobalTimestampTest, whenQueryingForTimerResolutionWithUseCyclesPerSecond
     EXPECT_NE(timerClock, 0u);
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_result_t res = driverHandle.get()->devices[0]->getProperties(&deviceProps);
+    ze_result_t res = driverHandle->devices[0]->getProperties(&deviceProps);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceProps.timerResolution, timerClock);
 }

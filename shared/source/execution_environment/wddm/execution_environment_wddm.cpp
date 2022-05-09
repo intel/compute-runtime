@@ -17,9 +17,9 @@ namespace NEO {
 
 bool comparePciIdBusNumberWDDM(std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment1, std::unique_ptr<RootDeviceEnvironment> &rootDeviceEnvironment2) {
     // BDF sample format is : 00:02.0
-    auto bdfDevice1 = rootDeviceEnvironment1.get()->osInterface->getDriverModel()->as<NEO::Wddm>()->getAdapterBDF();
+    auto bdfDevice1 = rootDeviceEnvironment1->osInterface->getDriverModel()->as<NEO::Wddm>()->getAdapterBDF();
 
-    auto bdfDevice2 = rootDeviceEnvironment2.get()->osInterface->getDriverModel()->as<NEO::Wddm>()->getAdapterBDF();
+    auto bdfDevice2 = rootDeviceEnvironment2->osInterface->getDriverModel()->as<NEO::Wddm>()->getAdapterBDF();
 
     if (bdfDevice1.Bus != bdfDevice2.Bus) {
         return (bdfDevice1.Bus < bdfDevice2.Bus);

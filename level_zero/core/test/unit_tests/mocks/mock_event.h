@@ -80,7 +80,7 @@ class MockEvent : public ::L0::Event {
     }
 
     uint64_t getGpuAddress(L0::Device *device) override {
-        return mockAllocation.get()->getGpuAddress();
+        return mockAllocation->getGpuAddress();
     }
 
     ze_result_t destroy() override {

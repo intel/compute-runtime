@@ -1575,12 +1575,12 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenConstructPropertiesIsCalledThenValuesA
     builtinOpParams.size = {2, 3, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto expectedDstPtr = image.get()->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
-    auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto expectedDstPtr = image->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
+    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
     auto srcRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
-    auto dstRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
+    auto dstRowPitchExpected = image->getImageDesc().image_row_pitch;
     auto srcSlicePitchExpected = srcRowPitchExpected * builtinOpParams.size.y;
-    auto dstSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
+    auto dstSlicePitchExpected = image->getImageDesc().image_slice_pitch;
 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
                                                                 csr,
@@ -1613,11 +1613,11 @@ HWTEST_F(BcsTests, givenImageToHostPtrWhenConstructPropertiesIsCalledThenValuesA
     builtinOpParams.size = {2, 3, 1};
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto expectedSrcPtr = image.get()->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
-    auto expectedBytesPerPixel = image.get()->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-    auto srcRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
+    auto expectedSrcPtr = image->getGraphicsAllocation(csr.getRootDeviceIndex())->getGpuAddress();
+    auto expectedBytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
+    auto srcRowPitchExpected = image->getImageDesc().image_row_pitch;
     auto dstRowPitchExpected = expectedBytesPerPixel * builtinOpParams.size.x;
-    auto srcSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
+    auto srcSlicePitchExpected = image->getImageDesc().image_slice_pitch;
     auto dstSlicePitchExpected = dstRowPitchExpected * builtinOpParams.size.y;
 
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,
@@ -1651,8 +1651,8 @@ HWTEST_F(BcsTests, givenHostPtrToImageWithInputRowSlicePitchesWhenConstructPrope
     auto inputSlicePitch = 0x400u;
     builtinOpParams.srcRowPitch = inputRowPitch;
     builtinOpParams.srcSlicePitch = inputSlicePitch;
-    auto dstRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
-    auto dstSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
+    auto dstRowPitchExpected = image->getImageDesc().image_row_pitch;
+    auto dstSlicePitchExpected = image->getImageDesc().image_slice_pitch;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::HostPtrToImage,
@@ -1682,8 +1682,8 @@ HWTEST_F(BcsTests, givenImageToHostPtrWithInputRowSlicePitchesWhenConstructPrope
     builtinOpParams.dstRowPitch = inputRowPitch;
     builtinOpParams.dstSlicePitch = inputSlicePitch;
 
-    auto srcRowPitchExpected = image.get()->getImageDesc().image_row_pitch;
-    auto srcSlicePitchExpected = image.get()->getImageDesc().image_slice_pitch;
+    auto srcRowPitchExpected = image->getImageDesc().image_row_pitch;
+    auto srcSlicePitchExpected = image->getImageDesc().image_slice_pitch;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::ImageToHostPtr,

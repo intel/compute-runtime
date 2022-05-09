@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,11 +62,11 @@ std::string DriverInfoWindows::trimRegistryKey(std::string path) {
 }
 
 std::string DriverInfoWindows::getDeviceName(std::string defaultName) {
-    return registryReader.get()->getSetting("HardwareInformation.AdapterString", defaultName);
+    return registryReader->getSetting("HardwareInformation.AdapterString", defaultName);
 }
 
 std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
-    return registryReader.get()->getSetting("DriverVersion", defaultVersion);
+    return registryReader->getSetting("DriverVersion", defaultVersion);
 };
 
 bool DriverInfoWindows::isCompatibleDriverStore() const {
@@ -79,12 +79,12 @@ bool DriverInfoWindows::isCompatibleDriverStore() const {
         return input;
     };
     auto currentLibraryPath = toLowerAndUnifyDriverStore(getCurrentLibraryPath());
-    auto openclDriverName = registryReader.get()->getSetting("OpenCLDriverName", std::string{});
+    auto openclDriverName = registryReader->getSetting("OpenCLDriverName", std::string{});
     if (openclDriverName.empty()) {
         return false;
     }
 
-    auto driverStorePath = toLowerAndUnifyDriverStore(registryReader.get()->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath));
+    auto driverStorePath = toLowerAndUnifyDriverStore(registryReader->getSetting("DriverStorePathForComputeRuntime", currentLibraryPath));
     return currentLibraryPath.find(driverStorePath.c_str()) == 0u;
 }
 
@@ -98,6 +98,6 @@ decltype(DriverInfoWindows::createRegistryReaderFunc) DriverInfoWindows::createR
 };
 
 bool DriverInfoWindows::getMediaSharingSupport() {
-    return registryReader.get()->getSetting(is64bit ? "UserModeDriverName" : "UserModeDriverNameWOW", std::string("")) != "<>";
+    return registryReader->getSetting(is64bit ? "UserModeDriverName" : "UserModeDriverNameWOW", std::string("")) != "<>";
 }
 } // namespace NEO

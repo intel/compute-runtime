@@ -1214,7 +1214,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenInternalMemCreatedThenNew
     auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x80, true);
     EXPECT_EQ(deallocationSize + 1, commandList->commandContainer.getDeallocationContainer().size());
     EXPECT_NE(alloc, nullptr);
-    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(alloc);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
     commandList->commandContainer.getDeallocationContainer().clear();
 }
 
@@ -1229,7 +1229,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNew
     auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
     EXPECT_EQ(hostPtrMapSize + 1, commandList->getHostPtrMap().size());
     EXPECT_NE(alloc, nullptr);
-    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(alloc);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
     commandList->hostPtrMap.clear();
 }
 
@@ -1243,8 +1243,8 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDiffe
     auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
     auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
     EXPECT_NE(outData1.alloc, outData2.alloc);
-    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
-    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
     commandList->commandContainer.getDeallocationContainer().clear();
 }
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDifferentAllocThenReturnPreviouslyAllocatedMem, IsAtLeastSkl) {
@@ -1257,7 +1257,7 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDiffe
     auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
     auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
     EXPECT_EQ(outData1.alloc, outData2.alloc);
-    driverHandle.get()->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();
 }
 

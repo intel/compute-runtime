@@ -509,9 +509,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen3dCreatedThenRetur
     this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
-    mockMM.get()->verifyValue = false;
+    mockMM->verifyValue = false;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
-    mockMM.get()->verifyValue = true;
+    mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -529,9 +529,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreat
     this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
-    mockMM.get()->verifyValue = false;
+    mockMM->verifyValue = false;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
-    mockMM.get()->verifyValue = true;
+    mockMM->verifyValue = true;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
 
@@ -549,9 +549,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenRetur
     this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
-    mockMM.get()->failAlloc = true;
+    mockMM->failAlloc = true;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
-    mockMM.get()->failAlloc = false;
+    mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 
@@ -569,9 +569,9 @@ TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCrea
     this->mockSharingFcns->createTexture3dParamsSet.texture = reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging);
 
     cl_int retCode = 0;
-    mockMM.get()->failAlloc = true;
+    mockMM->failAlloc = true;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
-    mockMM.get()->failAlloc = false;
+    mockMM->failAlloc = false;
     EXPECT_EQ(nullptr, image.get());
     EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
 

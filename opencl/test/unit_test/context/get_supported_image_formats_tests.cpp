@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,7 +287,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
         nullptr,
         &numImageFormats);
 
-    auto supportsOcl20Features = device.get()->getHardwareInfo().capabilityTable.supportsOcl21Features;
+    auto supportsOcl20Features = device->getHardwareInfo().capabilityTable.supportsOcl21Features;
     size_t expectedNumReadOnlyFormats = (supportsOcl20Features) ? SurfaceFormats::readOnly20().size() : SurfaceFormats::readOnly12().size();
 
     if (Image::isImage2dOr2dArray(imageFormats) && imageFormatsFlags == CL_MEM_READ_ONLY) {

@@ -93,7 +93,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplImages, givenImageSupportThenEachBuiltinImag
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
-    if (mockDevicePtr.get()->getHwInfo().capabilityTable.supportsImages) {
+    if (mockDevicePtr->getHwInfo().capabilityTable.supportsImages) {
         for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
             EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
             EXPECT_NE(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
@@ -111,7 +111,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplImages, givenImageSupportAndWrongIdWhenCalli
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
-    if (mockDevicePtr.get()->getHwInfo().capabilityTable.supportsImages) {
+    if (mockDevicePtr->getHwInfo().capabilityTable.supportsImages) {
         uint32_t builtId = static_cast<uint32_t>(ImageBuiltin::COUNT) + 1;
         EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinImageKernel(static_cast<L0::ImageBuiltin>(builtId)), std::exception);
     }

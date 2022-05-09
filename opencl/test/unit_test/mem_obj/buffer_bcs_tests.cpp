@@ -1246,8 +1246,8 @@ HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenPro
                     pSrcPtr = ptrOffset(pSrcPtr, srcOffset);
                     pDstPtr = ptrOffset(pDstPtr, dstOffset);
 
-                    auto dstSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pDstPtr);
-                    auto srcSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pSrcPtr);
+                    auto dstSvmData = bcsMockContext->getSVMAllocsManager()->getSVMAlloc(pDstPtr);
+                    auto srcSvmData = bcsMockContext->getSVMAllocsManager()->getSVMAlloc(pSrcPtr);
 
                     auto srcGpuAllocation = srcSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
                     auto dstGpuAllocation = dstSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());

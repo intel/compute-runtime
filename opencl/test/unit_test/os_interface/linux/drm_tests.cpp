@@ -1031,7 +1031,7 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
 }
 
 TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
-    const auto productFamily = defaultHwInfo.get()->platform.eProductFamily;
+    const auto productFamily = defaultHwInfo->platform.eProductFamily;
     std::unique_ptr<IoctlHelper> ioctlHelper(IoctlHelper::get(productFamily, "-1"));
     EXPECT_NE(nullptr, ioctlHelper.get());
 }
