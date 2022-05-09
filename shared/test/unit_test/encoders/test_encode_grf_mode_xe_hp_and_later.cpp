@@ -105,7 +105,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenLargeGrfModeDisabledThenExpectedCommands
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled) {
+HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
     EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);

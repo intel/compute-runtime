@@ -1234,8 +1234,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhen
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, cmd->getPostSync().getOperation());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
-            givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded) {
+HWTEST2_F(CommandEncodeStatesTest,
+          givenDispatchInterfaceWhenDpasRequiredIsNotDefaultThenPipelineSelectCommandAdded, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1262,8 +1262,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
     EXPECT_EQ(cmd->getSystolicModeEnable(), dpasModeRequired);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
-            givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten) {
+HWTEST2_F(CommandEncodeStatesTest,
+          givenDebugVariableWhenEncodeStateIsCalledThenSystolicValueIsOverwritten, IsWithinXeGfxFamily) {
     DebugManagerStateRestore restorer;
 
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
