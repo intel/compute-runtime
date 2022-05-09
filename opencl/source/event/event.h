@@ -301,6 +301,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->cmdType = cmdType;
     }
 
+    void handleCompletionBeforeDestruction();
+
     std::vector<Event *> &getParentEvents() { return this->parentEvents; }
 
     virtual bool isExternallySynchronized() const {

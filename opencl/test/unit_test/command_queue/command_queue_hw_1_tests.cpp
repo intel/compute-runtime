@@ -861,7 +861,12 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
     EventsRequest eventsRequest(0, nullptr, &returnEvent);
     cmdQHw->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(CompletionStamp::notReady, castToObject<Event>(returnEvent)->peekTaskCount());
+
+    auto neoEvent = castToObject<Event>(returnEvent);
+
+    EXPECT_EQ(CompletionStamp::notReady, neoEvent->peekTaskCount());
+
+    neoEvent->updateTaskCount(1, 1);
     clReleaseEvent(returnEvent);
 }
 
