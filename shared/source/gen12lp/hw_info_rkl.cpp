@@ -120,9 +120,21 @@ void RKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
-void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+const HardwareInfo RKL_HW_CONFIG::hwInfo = {
+    &RKL::platform,
+    &RKL::featureTable,
+    &RKL::workaroundTable,
+    &RKL_HW_CONFIG::gtSystemInfo,
+    RKL::capabilityTable,
+};
+GT_SYSTEM_INFO RKL_HW_CONFIG::gtSystemInfo = {0};
+void RKL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * RKL::threadsPerEu;
+    gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
+    gtSysInfo->L3CacheSizeInKb = 1920;
+    gtSysInfo->L3BankCount = 4;
+    gtSysInfo->MaxFillRate = 8;
     gtSysInfo->TotalVsThreads = 0;
     gtSysInfo->TotalHsThreads = 0;
     gtSysInfo->TotalDsThreads = 0;
@@ -136,32 +148,13 @@ void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
-}
-
-const HardwareInfo RKL_HW_CONFIG::hwInfo = {
-    &RKL::platform,
-    &RKL::featureTable,
-    &RKL::workaroundTable,
-    &RKL_HW_CONFIG::gtSystemInfo,
-    RKL::capabilityTable,
-};
-
-GT_SYSTEM_INFO RKL_HW_CONFIG::gtSystemInfo = {0};
-void RKL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
-
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
-    gtSysInfo->L3CacheSizeInKb = 1920;
-    gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
-
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo RKL::hwInfo = RKL_HW_CONFIG::hwInfo;

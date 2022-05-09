@@ -45,10 +45,6 @@ void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool) = {
-    0x0,
-};
-
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
 

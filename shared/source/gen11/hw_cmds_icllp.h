@@ -23,7 +23,6 @@ struct ICLLP : public ICLFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
 class ICLLP_1x8x8 : public ICLLP {

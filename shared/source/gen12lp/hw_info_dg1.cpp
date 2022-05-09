@@ -130,9 +130,22 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
-void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+const HardwareInfo DG1_CONFIG::hwInfo = {
+    &DG1::platform,
+    &DG1::featureTable,
+    &DG1::workaroundTable,
+    &DG1_CONFIG::gtSystemInfo,
+    DG1::capabilityTable,
+};
+GT_SYSTEM_INFO DG1_CONFIG::gtSystemInfo = {0};
+void DG1_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * DG1::threadsPerEu;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->DualSubSliceCount = 6;
+    gtSysInfo->L3CacheSizeInKb = 16384;
+    gtSysInfo->L3BankCount = 8;
+    gtSysInfo->MaxFillRate = 16;
     gtSysInfo->TotalVsThreads = 672;
     gtSysInfo->TotalHsThreads = 672;
     gtSysInfo->TotalDsThreads = 672;
@@ -146,33 +159,13 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
-}
-
-const HardwareInfo DG1_CONFIG::hwInfo = {
-    &DG1::platform,
-    &DG1::featureTable,
-    &DG1::workaroundTable,
-    &DG1_CONFIG::gtSystemInfo,
-    DG1::capabilityTable,
-};
-
-GT_SYSTEM_INFO DG1_CONFIG::gtSystemInfo = {0};
-void DG1_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
-
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->DualSubSliceCount = 6;
-    gtSysInfo->L3CacheSizeInKb = 16384;
-    gtSysInfo->L3BankCount = 8;
-    gtSysInfo->MaxFillRate = 16;
-
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        DG1::setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo DG1::hwInfo = DG1_CONFIG::hwInfo;

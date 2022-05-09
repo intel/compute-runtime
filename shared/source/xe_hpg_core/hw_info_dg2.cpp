@@ -130,27 +130,6 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
-void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * DG2::threadsPerEu;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = DG2::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = DG2::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = DG2::maxSubslicesSupported;
-    gtSysInfo->MaxDualSubSlicesSupported = DG2::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
-}
-
 const HardwareInfo DG2_CONFIG::hwInfo = {
     &DG2::platform,
     &DG2::featureTable,
@@ -160,9 +139,15 @@ const HardwareInfo DG2_CONFIG::hwInfo = {
 };
 GT_SYSTEM_INFO DG2_CONFIG::gtSystemInfo = {0};
 void DG2_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+    DG2_CONFIG::setupHardwareInfoMultiTile(hwInfo, setupFeatureTableAndWorkaroundTable, false);
+}
 
+void DG2_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+
     // non-zero values for unit tests
     if (gtSysInfo->SliceCount == 0) {
         gtSysInfo->SliceCount = 2;
@@ -184,7 +169,11 @@ void DG2_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
             gtSysInfo->SliceInfo[slice].Enabled = true;
         }
     }
-}
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        DG2::setupFeatureAndWorkaroundTable(hwInfo);
+    }
+};
 
 #include "hw_info_setup_dg2.inl"
 } // namespace NEO

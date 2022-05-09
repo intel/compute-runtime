@@ -26,11 +26,11 @@ DG2TEST_F(HwInfoConfigTestDg2, whenConvertingTimestampsToCsDomainThenGpuTicksAre
     EXPECT_EQ(expectedGpuTicks, gpuTicks);
 }
 
-DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemInfoIsCorrect) {
+DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoMultiTileThenGtSystemInfoIsSetCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    DG2_CONFIG::setupHardwareInfo(&hwInfo, false);
+    DG2_CONFIG::setupHardwareInfoMultiTile(&hwInfo, false, false);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);

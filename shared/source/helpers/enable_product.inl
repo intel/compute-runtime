@@ -20,7 +20,6 @@ struct EnableGfxProductHw {
         defaultHardwareInfoConfigTable[gfxProduct] = GfxProduct::defaultHardwareInfoConfig;
         hardwareInfoTable[gfxProduct] = &GfxProduct::hwInfo;
         hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
-        hardwareInfoBaseSetup[gfxProduct] = GfxProduct::setupHardwareInfoBase;
     }
 };
 } // namespace NEO

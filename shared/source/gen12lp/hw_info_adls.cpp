@@ -121,23 +121,6 @@ void ADLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ADLS::threadsPerEu;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = ADLS::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = ADLS::maxSubslicesSupported;
-    gtSysInfo->MaxDualSubSlicesSupported = ADLS::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
-}
-
 const HardwareInfo ADLS_HW_CONFIG::hwInfo = {
     &ADLS::platform,
     &ADLS::featureTable,
@@ -148,9 +131,8 @@ const HardwareInfo ADLS_HW_CONFIG::hwInfo = {
 
 GT_SYSTEM_INFO ADLS_HW_CONFIG::gtSystemInfo = {0};
 void ADLS_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
-
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ADLS::threadsPerEu;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
@@ -159,12 +141,22 @@ void ADLS_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTa
     gtSysInfo->TotalHsThreads = 0;
     gtSysInfo->TotalDsThreads = 0;
     gtSysInfo->TotalGsThreads = 0;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = ADLS::maxSlicesSupported;
     gtSysInfo->MaxSubSlicesSupported = 1;
     gtSysInfo->MaxDualSubSlicesSupported = 2;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo ADLS::hwInfo = ADLS_HW_CONFIG::hwInfo;

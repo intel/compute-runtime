@@ -389,7 +389,7 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
 
                 auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
                 setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
-                hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
+                hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig);
                 setFamilyType();
                 retVal = SUCCESS;
                 break;

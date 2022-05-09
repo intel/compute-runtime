@@ -520,8 +520,7 @@ TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturn
     EXPECT_NE(std::string::npos, errorPosition);
 }
 
-using MockOfflineCompilerTests = ::testing::Test;
-TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {
+TEST(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenResetGtSystemInfo) {
     MockOfflineCompiler mockOfflineCompiler;
     auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
     if (allEnabledDeviceConfigs.empty()) {
@@ -540,30 +539,11 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHa
     EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
 
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    GT_SYSTEM_INFO expectedGtSystemInfo = {0};
 
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, expectedRevId);
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.eProductFamily, productFamily);
-    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxEuPerSubSlice, 0u);
-    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxSlicesSupported, 0u);
-    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxSubSlicesSupported, 0u);
-}
-
-HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, IsAtLeastGen12lp) {
-    MockOfflineCompiler mockOfflineCompiler;
-    auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.empty()) {
-        GTEST_SKIP();
-    }
-
-    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
-        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
-            mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
-            break;
-        }
-    }
-
-    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
-    EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, 0u);
+    EXPECT_EQ(memcmp(&mockOfflineCompiler.hwInfo.gtSystemInfo, &expectedGtSystemInfo, sizeof(GT_SYSTEM_INFO)), 0);
 }
 
 TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
@@ -2988,6 +2968,17 @@ TEST(OclocArgHelperTest, GivenDifferentRevisionIdsInDeviceMappingsWhenComparingT
 
     lhs.revId = 1;
     rhs.revId = 2;
+    EXPECT_FALSE(lhs == rhs);
+}
+
+TEST(OclocArgHelperTest, GivenDifferentSetupFeatureAndWorkaroundTableFunctionsInDeviceMappingsWhenComparingThemThenFalseIsReturned) {
+    DeviceMapping lhs{};
+    DeviceMapping rhs{};
+    ASSERT_TRUE(lhs == rhs);
+
+    // Different lambdas are obligated to have different addresses.
+    lhs.setupFeatureAndWorkaroundTable = [](NEO::HardwareInfo *hwInfo) {};
+    rhs.setupFeatureAndWorkaroundTable = [](NEO::HardwareInfo *hwInfo) {};
     EXPECT_FALSE(lhs == rhs);
 }
 

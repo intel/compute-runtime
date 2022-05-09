@@ -51,10 +51,11 @@ struct DeviceMapping {
     PRODUCT_CONFIG config;
     const NEO::HardwareInfo *hwInfo;
     const std::vector<unsigned short> *deviceIds;
+    void (*setupFeatureAndWorkaroundTable)(NEO::HardwareInfo *hwInfo);
     unsigned int revId;
 
     bool operator==(const DeviceMapping &rhs) {
-        return config == rhs.config && hwInfo == rhs.hwInfo && revId == rhs.revId;
+        return config == rhs.config && hwInfo == rhs.hwInfo && setupFeatureAndWorkaroundTable == rhs.setupFeatureAndWorkaroundTable && revId == rhs.revId;
     }
 };
 
