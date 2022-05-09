@@ -25,7 +25,7 @@ PVCTEST_F(PvcUnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithPvcProductCo
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
     std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(PVC_XL_A0);
-    std::string anotherProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(PVC_XL_B0);
+    std::string anotherProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(PVC_XL_A0P);
 
     programTokensWrongTokenVersion.headerMutable->Version -= 1;
     NEO::Ar::ArEncoder encoder;

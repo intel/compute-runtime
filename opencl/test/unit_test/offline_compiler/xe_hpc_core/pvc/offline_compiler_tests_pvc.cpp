@@ -10,9 +10,11 @@
 namespace NEO {
 static PRODUCT_CONFIG pvcProductConfig[] = {
     PVC_XL_A0,
-    PVC_XL_B0,
+    PVC_XL_A0P,
     PVC_XT_A0,
-    PVC_XT_B0};
+    PVC_XT_B0,
+    PVC_XT_B1,
+    PVC_XT_C0};
 
 INSTANTIATE_TEST_CASE_P(
     OclocProductConfigPvcTestsValues,

@@ -65,15 +65,19 @@ PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const Hard
             return PRODUCT_CONFIG::PVC_XL_A0;
         default:
         case 0x1:
-            return PRODUCT_CONFIG::PVC_XL_B0;
+            return PRODUCT_CONFIG::PVC_XL_A0P;
         }
     } else {
-        switch (stepping) {
-        case REVISION_A0:
+        switch (hwInfo.platform.usRevId) {
+        case 0x3:
             return PRODUCT_CONFIG::PVC_XT_A0;
-        default:
-        case REVISION_B:
+        case 0x5:
             return PRODUCT_CONFIG::PVC_XT_B0;
+        case 0x6:
+            return PRODUCT_CONFIG::PVC_XT_B1;
+        default:
+        case 0x7:
+            return PRODUCT_CONFIG::PVC_XT_C0;
         }
     }
 }
