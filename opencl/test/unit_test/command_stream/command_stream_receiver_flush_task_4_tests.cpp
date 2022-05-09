@@ -763,3 +763,77 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{true, true, 10}, taskCountToWait);
     EXPECT_EQ(NEO::WaitStatus::NotReady, ret);
 }
+
+HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdded) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.FlushAllCaches.set(true);
+
+    char buff[sizeof(PIPE_CONTROL) * 3];
+    LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
+
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+
+    parseCommands<FamilyType>(stream, 0);
+
+    PIPE_CONTROL *pipeControl = getCommand<PIPE_CONTROL>();
+
+    ASSERT_NE(nullptr, pipeControl);
+
+    // WA pipeControl added
+    if (cmdList.size() == 2) {
+        pipeControl++;
+    }
+
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+    EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getTlbInvalidate());
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPipeControlWithCacheFlushThenOverrideRequestAndDisableCacheFlushFlags) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DoNotFlushCaches.set(true);
+
+    char buff[sizeof(PIPE_CONTROL) * 3];
+    LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
+
+    PipeControlArgs args;
+    args.dcFlushEnable = true;
+    args.constantCacheInvalidationEnable = true;
+    args.instructionCacheInvalidateEnable = true;
+    args.pipeControlFlushEnable = true;
+    args.renderTargetCacheFlushEnable = true;
+    args.stateCacheInvalidationEnable = true;
+    args.textureCacheInvalidationEnable = true;
+    args.vfCacheInvalidationEnable = true;
+
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+
+    parseCommands<FamilyType>(stream, 0);
+
+    PIPE_CONTROL *pipeControl = getCommand<PIPE_CONTROL>();
+
+    ASSERT_NE(nullptr, pipeControl);
+
+    // WA pipeControl added
+    if (cmdList.size() == 2) {
+        pipeControl++;
+    }
+
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
+    EXPECT_FALSE(pipeControl->getRenderTargetCacheFlushEnable());
+    EXPECT_FALSE(pipeControl->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControl->getPipeControlFlushEnable());
+    EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControl->getConstantCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControl->getStateCacheInvalidationEnable());
+}
