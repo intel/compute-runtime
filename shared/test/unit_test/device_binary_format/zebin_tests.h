@@ -38,7 +38,7 @@ struct ValidEmptyProgram {
         enc.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
         enc.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "valid_empty_kernel", zeInfo);
         storage = enc.encode();
-        recalcPtr();
+        recalcPtr(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
     }
 
     virtual void recalcPtr() {

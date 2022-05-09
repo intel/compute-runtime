@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,6 @@ class KernelBinaryHelper {
     KernelBinaryHelper(const std::string &name = "copybuffer", bool appendOptionsToFileName = true);
     ~KernelBinaryHelper();
 
-    static const std::string BUILT_INS;
-    static const std::string BUILT_INS_WITH_IMAGES;
+    static const std::string BUILT_INS;             // NOLINT(readability-identifier-naming)
+    static const std::string BUILT_INS_WITH_IMAGES; // NOLINT(readability-identifier-naming)
 };

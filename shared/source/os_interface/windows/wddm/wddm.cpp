@@ -421,32 +421,32 @@ bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
 }
 
 bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
-    D3DDDI_MAPGPUVIRTUALADDRESS MapGPUVA = {};
+    D3DDDI_MAPGPUVIRTUALADDRESS mapGPUVA = {};
     D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {};
     protectionType.Write = TRUE;
 
     uint64_t size = gmm->gmmResourceInfo->getSizeAllocation();
 
-    MapGPUVA.hPagingQueue = pagingQueue;
-    MapGPUVA.hAllocation = handle;
-    MapGPUVA.Protection = protectionType;
+    mapGPUVA.hPagingQueue = pagingQueue;
+    mapGPUVA.hAllocation = handle;
+    mapGPUVA.Protection = protectionType;
 
-    MapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
-    MapGPUVA.OffsetInPages = 0;
+    mapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
+    mapGPUVA.OffsetInPages = 0;
 
-    MapGPUVA.BaseAddress = preferredAddress;
-    MapGPUVA.MinimumAddress = minimumAddress;
-    MapGPUVA.MaximumAddress = maximumAddress;
+    mapGPUVA.BaseAddress = preferredAddress;
+    mapGPUVA.MinimumAddress = minimumAddress;
+    mapGPUVA.MaximumAddress = maximumAddress;
 
-    applyAdditionalMapGPUVAFields(MapGPUVA, gmm);
+    applyAdditionalMapGPUVAFields(mapGPUVA, gmm);
 
-    NTSTATUS status = getGdi()->mapGpuVirtualAddress(&MapGPUVA);
+    NTSTATUS status = getGdi()->mapGpuVirtualAddress(&mapGPUVA);
 
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-    gpuPtr = gmmHelper->canonize(MapGPUVA.VirtualAddress);
+    gpuPtr = gmmHelper->canonize(mapGPUVA.VirtualAddress);
 
     if (status == STATUS_PENDING) {
-        updatePagingFenceValue(MapGPUVA.PagingFenceValue);
+        updatePagingFenceValue(mapGPUVA.PagingFenceValue);
         status = STATUS_SUCCESS;
     }
 
@@ -455,7 +455,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
         return false;
     }
 
-    kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, MapGPUVA.VirtualAddress, getGdi()->escape);
+    kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, mapGPUVA.VirtualAddress, getGdi()->escape);
     bool ret = true;
     if (gmm->isCompressionEnabled && HwInfoConfig::get(gfxPlatform->eProductFamily)->isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
         for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines()) {
@@ -1102,7 +1102,7 @@ void Wddm::createPagingFenceLogger() {
 
 PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
     if (adapterBDF.Data == std::numeric_limits<uint32_t>::max()) {
-        return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+        return PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
     }
     return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
 }

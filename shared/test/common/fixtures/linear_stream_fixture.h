@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,10 +19,10 @@ struct LinearStreamFixture {
         : gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer)), linearStream(&gfxAllocation) {
     }
 
-    virtual void SetUp(void) {
+    virtual void SetUp(void) { // NOLINT(readability-identifier-naming)
     }
 
-    virtual void TearDown(void) {
+    virtual void TearDown(void) { // NOLINT(readability-identifier-naming)
     }
     MockGraphicsAllocation gfxAllocation;
     LinearStream linearStream;

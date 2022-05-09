@@ -273,7 +273,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     size_t GWS = 1;
 
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data) {
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
             uint32_t *callbackCalled = static_cast<uint32_t *>(data);
             *callbackCalled = 1;
         }
@@ -331,7 +331,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     *pTagMemory += 4;
 
-    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)&callbackCalled);
+    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)&callbackCalled);
 
     //wait for events needs to flush DC as event requires this.
     retVal = clWaitForEvents(1, &mapEventReturned);

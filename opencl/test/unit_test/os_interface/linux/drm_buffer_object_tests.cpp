@@ -49,7 +49,7 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
     drm_i915_gem_exec_object2 execObjectsStorage = {};
     const auto result = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
 
-    EXPECT_EQ(BufferObject::GPU_HANG_DETECTED, result);
+    EXPECT_EQ(BufferObject::gpuHangDetected, result);
 }
 
 TEST_F(DrmBufferObjectTest, WhenSettingTilingThenCallSucceeds) {

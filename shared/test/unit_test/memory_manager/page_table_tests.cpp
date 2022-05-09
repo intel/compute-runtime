@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,11 +107,11 @@ class PageTableFixture {
     uint64_t startAddress = 0x1000;
 
   public:
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         startAddress = 0x1000;
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 };
 

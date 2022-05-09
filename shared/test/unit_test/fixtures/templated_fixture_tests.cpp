@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,12 +21,12 @@ struct TemplatedFixtureTests : public ::testing::Test {
     }
 
     template <typename T>
-    void SetUpT() {
+    void setUpT() {
         templateBaseSetUpCallId = callsOrder++;
     }
 
     template <typename T>
-    void TearDownT() {
+    void tearDownT() {
         templateBaseTearDownCallId = callsOrder++;
     }
 
@@ -49,15 +49,15 @@ HWTEST_TEMPLATED_F(TemplatedFixtureTests, whenExecutingTemplatedTestThenCallTemp
 
 struct DerivedTemplatedFixtureTests : public TemplatedFixtureTests {
     template <typename T>
-    void SetUpT() {
-        TemplatedFixtureTests::SetUpT<T>();
+    void setUpT() {
+        TemplatedFixtureTests::setUpT<T>();
         templateDerivedSetUpCallId = callsOrder++;
     }
 
     template <typename T>
-    void TearDownT() {
+    void tearDownT() {
         templateDerivedTearDownCallId = callsOrder++;
-        TemplatedFixtureTests::TearDownT<T>();
+        TemplatedFixtureTests::tearDownT<T>();
     }
 
     uint32_t templateDerivedSetUpCallId = -1;
@@ -76,12 +76,12 @@ HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenC
 
 struct TemplatedFixtureBaseTests : public ::testing::Test {
     template <typename T>
-    void SetUpT() {
+    void setUpT() {
         capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isPipeControlWArequired(*defaultHwInfo);
     }
 
     template <typename T>
-    void TearDownT() {}
+    void tearDownT() {}
 
     bool capturedPipeControlWaRequiredInSetUp = false;
 };

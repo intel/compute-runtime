@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
-    std::vector<zes_temp_handle_t> get_temp_handles(uint32_t count) {
+    std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {
         std::vector<zes_temp_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -153,7 +153,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZe
 }
 
 TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved) {
-    auto handles = get_temp_handles(handleComponentCountForSubDevices);
+    auto handles = getTempHandles(handleComponentCountForSubDevices);
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
@@ -172,7 +172,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempe
 }
 
 TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
-    auto handles = get_temp_handles(handleComponentCountForSubDevices);
+    auto handles = getTempHandles(handleComponentCountForSubDevices);
     for (auto handle : handles) {
         zes_temp_config_t config = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetConfig(handle, &config));
@@ -180,7 +180,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempe
 }
 
 TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned) {
-    auto handles = get_temp_handles(handleComponentCountForSubDevices);
+    auto handles = getTempHandles(handleComponentCountForSubDevices);
     for (auto handle : handles) {
         zes_temp_config_t config = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureSetConfig(handle, &config));
@@ -248,7 +248,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
-    std::vector<zes_temp_handle_t> get_temp_handles(uint32_t count) {
+    std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {
         std::vector<zes_temp_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -256,7 +256,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
-    auto handles = get_temp_handles(handleComponentCountForNoSubDevices);
+    auto handles = getTempHandles(handleComponentCountForNoSubDevices);
     for (auto &deviceHandle : deviceHandles) {
         ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
         Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
@@ -310,7 +310,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsW
     }
 
     pSysmanDeviceImp->pTempHandleContext->init(deviceHandles);
-    auto handles = get_temp_handles(handleComponentCountForNoSubDevices);
+    auto handles = getTempHandles(handleComponentCountForNoSubDevices);
     for (auto &handle : handles) {
         double temperature;
         ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));

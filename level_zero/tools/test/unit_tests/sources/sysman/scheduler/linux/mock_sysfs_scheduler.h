@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,7 +161,7 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
 
-        for (std::string mappedEngine : listOfMockedEngines) {
+        for (std::string mappedEngine : listOfMockedEngines) { // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
             if (file.find(mappedEngine) == std::string::npos) {
                 continue;
             }

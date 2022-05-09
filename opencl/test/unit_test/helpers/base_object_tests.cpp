@@ -145,7 +145,7 @@ TYPED_TEST(BaseObjectTests, WhenRetainingAndReleasingThenObjectReferenceIsUpdate
     EXPECT_EQ(2, object->getReference());
 
     object->release();
-    EXPECT_EQ(1, object->getReference());
+    EXPECT_EQ(1, object->getReference()); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 
     object->release();
 
@@ -331,7 +331,7 @@ TYPED_TEST(BaseObjectTests, WhenConvertingToInternalObjectThenRefApiCountIsSetTo
     EXPECT_EQ(1, object->getRefApiCount());
     EXPECT_EQ(1, object->getRefInternalCount());
     object->convertToInternalObject();
-    EXPECT_EQ(0, object->getRefApiCount());
+    EXPECT_EQ(0, object->getRefApiCount()); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     EXPECT_EQ(1, object->getRefInternalCount());
     object->decRefInternal();
 }

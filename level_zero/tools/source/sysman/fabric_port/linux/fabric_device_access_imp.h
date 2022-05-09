@@ -25,7 +25,7 @@ class FabricDeviceAccessNl : public FabricDeviceAccess {
   public:
     FabricDeviceAccessNl() = delete;
     FabricDeviceAccessNl(OsSysman *pOsSysman);
-    virtual ~FabricDeviceAccessNl();
+    ~FabricDeviceAccessNl() override;
 
     ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) override;
     ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) override;

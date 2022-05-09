@@ -262,7 +262,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     for (auto &device : devices) {
         if (!specialQueues[device->getRootDeviceIndex()]) {
-            auto commandQueue = CommandQueue::create(this, device, nullptr, true, errcodeRet); // NOLINT
+            auto commandQueue = CommandQueue::create(this, device, nullptr, true, errcodeRet); // NOLINT(clang-analyzer-cplusplus.NewDelete)
             DEBUG_BREAK_IF(commandQueue == nullptr);
             overrideSpecialQueueAndDecrementRefCount(commandQueue, device->getRootDeviceIndex());
         }

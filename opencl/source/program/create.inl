@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ T *Program::create(
 
     for (auto i = 0u; i < deviceVector.size(); i++) {
         auto device = deviceVector[i];
-        retVal = program->createProgramFromBinary(binaries[i], lengths[i], *device);
+        retVal = program->createProgramFromBinary(binaries[i], lengths[i], *device); // NOLINT(clang-analyzer-core.CallAndMessage)
         if (retVal != CL_SUCCESS) {
             break;
         }

@@ -28,10 +28,10 @@ struct HardwareParse {
         itorGpgpuCsrBaseAddress = cmdList.end();
     }
 
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
         cmdList.clear();
         lriList.clear();
         pipeControlList.clear();

@@ -25,10 +25,10 @@ class IafNlApi;
 class Operation {
   public:
     uint16_t cmdOp;
-    bool done;
+    bool done = false;
     void *pOutput;
-    ze_result_t result;
-    Operation(uint16_t cmdOp, void *pOutput) : cmdOp(cmdOp), done(false), pOutput(pOutput), result(ZE_RESULT_ERROR_UNKNOWN) {}
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
+    Operation(uint16_t cmdOp, void *pOutput) : cmdOp(cmdOp), pOutput(pOutput) {}
 };
 
 class IafNlApi {

@@ -18,7 +18,7 @@
 namespace L0 {
 namespace ult {
 
-void DeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
+void DeviceFixture::SetUp() {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
     setupWithExecutionEnvironment(*executionEnvironment);
 }
@@ -39,11 +39,11 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
-void DeviceFixture::TearDown() { // NOLINT(readability-identifier-naming)
+void DeviceFixture::TearDown() {
     context->destroy();
 }
 
-void PageFaultDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
+void PageFaultDeviceFixture::SetUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -65,12 +65,12 @@ void PageFaultDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
     device->getDriverHandle()->setMemoryManager(mockMemoryManager.get());
 }
 
-void PageFaultDeviceFixture::TearDown() { // NOLINT(readability-identifier-naming)
+void PageFaultDeviceFixture::TearDown() {
     device->getDriverHandle()->setMemoryManager(memoryManager);
     context->destroy();
 }
 
-void MultiDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
+void MultiDeviceFixture::SetUp() {
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
@@ -86,7 +86,7 @@ void MultiDeviceFixture::SetUp() { // NOLINT(readability-identifier-naming)
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
-void MultiDeviceFixture::TearDown() { // NOLINT(readability-identifier-naming)
+void MultiDeviceFixture::TearDown() {
     context->destroy();
 }
 

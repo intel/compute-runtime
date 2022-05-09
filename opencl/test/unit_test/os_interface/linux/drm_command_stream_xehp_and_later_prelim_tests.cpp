@@ -284,7 +284,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         const uint32_t expectedHandleId = std::numeric_limits<uint32_t>::max();
     };
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
         mock = new DrmMock(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -319,7 +319,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
+    void tearDownT() {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
         delete csr;

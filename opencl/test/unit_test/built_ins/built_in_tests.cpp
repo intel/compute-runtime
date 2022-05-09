@@ -82,7 +82,7 @@ class BuiltInTests
         ClDeviceFixture::TearDown();
     }
 
-    void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {
+    void appendBuiltInStringFromFile(std::string builtInFile, size_t &size) {
         std::string src;
         auto pData = loadDataFromFile(
             builtInFile.c_str(),
@@ -238,7 +238,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
         size_t size = 0;
 
         for (auto &fileName : getBuiltInFileNames(supportsImages)) {
-            AppendBuiltInStringFromFile(fileName, size);
+            appendBuiltInStringFromFile(fileName, size);
             ASSERT_NE(0u, size);
         }
 

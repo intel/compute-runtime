@@ -1252,7 +1252,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationIsP
 
 TEST(OsAgnosticMemoryManager, WhenPointerIsCreatedThenLeakIsDetected) {
     void *ptr = new int[10];
-    EXPECT_NE(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::EXPECT_TO_LEAK;
 }
 

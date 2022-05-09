@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 
-    std::vector<zes_fan_handle_t> get_fan_handles(uint32_t count) {
+    std::vector<zes_fan_handle_t> getFanHandles(uint32_t count) {
         std::vector<zes_fan_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumFans(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -68,7 +68,7 @@ TEST_F(SysmanDeviceFanFixture, GivenComponentCountZeroWhenEnumeratingFanDomainsT
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesThenCallSucceeds) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_properties_t properties;
@@ -77,7 +77,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesThenCa
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupportedIsReturned) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_config_t fanConfig;
@@ -86,7 +86,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupp
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingDefaultModeThenUnsupportedIsReturned) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanSetDefaultMode(handle));
@@ -94,7 +94,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingDefaultModeThenUnsu
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeThenUnsupportedIsReturned) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_speed_t fanSpeed = {0};
@@ -103,7 +103,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeThenU
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeThenUnsupportedIsReturned) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_speed_table_t fanSpeedTable = {0};
@@ -112,7 +112,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeTh
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithRPMUnitThenValidFanSpeedReadingsRetrieved) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_speed_units_t unit = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_RPM;
@@ -122,7 +122,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithRPMUnit
 }
 
 TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanSpeedWithPercentUnitThenUnsupportedIsReturned) {
-    auto handles = get_fan_handles(fanHandleComponentCount);
+    auto handles = getFanHandles(fanHandleComponentCount);
 
     for (auto handle : handles) {
         zes_fan_speed_units_t unit = zes_fan_speed_units_t::ZES_FAN_SPEED_UNITS_PERCENT;

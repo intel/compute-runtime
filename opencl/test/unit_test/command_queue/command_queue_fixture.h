@@ -40,10 +40,10 @@ struct CommandQueueHwFixture {
 
     static void forceMapBufferOnGpu(Buffer &buffer);
 
-    virtual void SetUp();
-    virtual void SetUp(ClDevice *pDevice, cl_command_queue_properties properties);
+    virtual void SetUp();                                                          // NOLINT(readability-identifier-naming)
+    virtual void SetUp(ClDevice *pDevice, cl_command_queue_properties properties); // NOLINT(readability-identifier-naming)
 
-    virtual void TearDown();
+    virtual void TearDown(); // NOLINT(readability-identifier-naming)
 
     CommandQueue *pCmdQ = nullptr;
     MockClDevice *device = nullptr;
@@ -58,11 +58,11 @@ struct OOQueueFixture : public CommandQueueHwFixture {
 };
 
 struct CommandQueueFixture {
-    virtual void SetUp(
+    virtual void SetUp( // NOLINT(readability-identifier-naming)
         Context *context,
         ClDevice *device,
         cl_command_queue_properties properties);
-    virtual void TearDown();
+    virtual void TearDown(); // NOLINT(readability-identifier-naming)
 
     CommandQueue *createCommandQueue(
         Context *context,

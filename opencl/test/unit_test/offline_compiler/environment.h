@@ -21,7 +21,7 @@ class Environment : public ::testing::Environment {
         : devicePrefix(devicePrefix), familyNameWithType(familyNameWithType) {
     }
 
-    void SetInputFileName(
+    void SetInputFileName( // NOLINT(readability-identifier-naming)
         const std::string filename) {
 
         retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");

@@ -248,7 +248,7 @@ struct EventPoolImp : public EventPool {
 
     ze_result_t initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *phDevices);
 
-    ~EventPoolImp();
+    ~EventPoolImp() override;
 
     ze_result_t destroy() override;
 

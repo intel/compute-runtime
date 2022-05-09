@@ -20,7 +20,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
 
   public:
     IpSamplingMetricSourceImp(const MetricDeviceContext &metricDeviceContext);
-    virtual ~IpSamplingMetricSourceImp() = default;
+    ~IpSamplingMetricSourceImp() override = default;
     void enable() override;
     bool isAvailable() override;
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override;
@@ -55,7 +55,7 @@ typedef std::map<uint64_t, StallSumIpData_t> StallSumIpDataMap_t;
 
 struct IpSamplingMetricGroupImp : public MetricGroup {
     IpSamplingMetricGroupImp(std::vector<IpSamplingMetricImp> &metrics);
-    virtual ~IpSamplingMetricGroupImp() = default;
+    ~IpSamplingMetricGroupImp() override = default;
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
@@ -94,7 +94,7 @@ struct IpSamplingMetricGroupImp : public MetricGroup {
 };
 
 struct IpSamplingMetricImp : public Metric {
-    virtual ~IpSamplingMetricImp() = default;
+    ~IpSamplingMetricImp() override = default;
     IpSamplingMetricImp(zet_metric_properties_t &properties);
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
 

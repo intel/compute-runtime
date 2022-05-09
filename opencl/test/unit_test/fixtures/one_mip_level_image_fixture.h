@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ struct OneMipLevelImageFixture {
         }
     };
 
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
         cl_image_desc imageDesc = Image3dDefaults::imageDesc;
@@ -40,7 +40,7 @@ struct OneMipLevelImageFixture {
         this->image.reset(createImage());
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     Image *createImage() {

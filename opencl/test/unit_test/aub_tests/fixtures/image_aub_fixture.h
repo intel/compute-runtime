@@ -48,7 +48,7 @@ struct ImageAubFixture : public ClDeviceFixture, public AUBCommandStreamFixture 
         CommandStreamFixture::SetUp(pCmdQ);
     }
 
-    void TearDown() {
+    void TearDown() override {
         if (pCmdQ) {
             auto blocked = pCmdQ->isQueueBlocked();
             UNRECOVERABLE_IF(blocked);

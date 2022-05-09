@@ -73,12 +73,11 @@ Image::Image(Context *context,
              zeroCopy,
              false,
              isObjectRedescribed),
-      createFunction(nullptr),
+
       imageFormat(std::move(imageFormat)),
       imageDesc(imageDesc),
       surfaceFormatInfo(surfaceFormatInfo),
-      cubeFaceIndex(__GMM_NO_CUBE_MAP),
-      mediaPlaneType(0),
+
       baseMipLevel(baseMipLevel),
       mipCount(mipCount) {
     magic = objectMagic;

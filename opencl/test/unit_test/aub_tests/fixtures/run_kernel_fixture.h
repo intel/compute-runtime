@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
     }
 
   protected:
-    Program *CreateProgramFromBinary(
+    Program *CreateProgramFromBinary( // NOLINT(readability-identifier-naming)
         const std::string &binaryFileName) {
         cl_int retVal = CL_SUCCESS;
 

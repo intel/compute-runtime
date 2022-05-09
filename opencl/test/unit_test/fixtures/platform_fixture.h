@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ namespace NEO {
 
 class PlatformFixture {
   protected:
-    void SetUp();
-    void TearDown();
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
 
     Platform *pPlatform = nullptr;
 

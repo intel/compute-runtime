@@ -1,7 +1,7 @@
 ---
 Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
-# WarningsAsErrors: '.*'
-HeaderFilterRegex: '^((?!^third_party\/).+)\.(h|hpp|inl)$'
+WarningsAsErrors: '.*'
+HeaderFilterRegex: '(shared|opencl|level_zero).+\.(h|hpp|inl)$'
 AnalyzeTemporaryDtors: false
 CheckOptions:
   - key:             google-readability-braces-around-statements.ShortStatementLines
@@ -15,8 +15,6 @@ CheckOptions:
   - key:             readability-identifier-naming.MethodCase
     value:           camelBack
   - key:             readability-identifier-naming.ParameterCase
-    value:           camelBack
-  - key:             readability-identifier-naming.StructMemberCase
     value:           camelBack
   - key:             readability-identifier-naming.ClassMemberCase
     value:           camelBack

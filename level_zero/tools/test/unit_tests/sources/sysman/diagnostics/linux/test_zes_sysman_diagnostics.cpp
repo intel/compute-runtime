@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,12 +59,7 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
     }
 
-    std::vector<zes_diag_handle_t> get_diagnostics_handles(uint32_t &count) {
-        std::vector<zes_diag_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-        return handles;
-    }
-    void clear_and_reinit_handles(std::vector<ze_device_handle_t> &deviceHandles) {
+    void clearAndReinitHandles(std::vector<ze_device_handle_t> &deviceHandles) {
         for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
             delete handle;
         }
@@ -156,7 +151,7 @@ TEST_F(ZesDiagnosticsFixture, GivenFwInterfaceAsNullWhenCallingzesDeviceEnumDiag
 
 TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingDiagnosticsContextThenexpectNoHandles) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
         .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwDeviceInitFail));
     pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
@@ -166,7 +161,7 @@ TEST_F(ZesDiagnosticsFixture, GivenFailedFirmwareInitializationWhenInitializingD
 
 TEST_F(ZesDiagnosticsFixture, GivenSupportedTestsWhenInitializingDiagnosticsContextThenExpectHandles) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.push_back(mockSupportedDiagTypes[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
     EXPECT_EQ(1u, pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.size());
@@ -174,7 +169,7 @@ TEST_F(ZesDiagnosticsFixture, GivenSupportedTestsWhenInitializingDiagnosticsCont
 
 TEST_F(ZesDiagnosticsFixture, GivenFirmwareInitializationFailureThenCreateHandleMustFail) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     ON_CALL(*pMockFwInterface.get(), fwDeviceInit())
         .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<DiagnosticsFwInterface>::mockFwDeviceInitFail));
     pSysmanDeviceImp->pDiagnosticsHandleContext->init(deviceHandles);
@@ -183,7 +178,7 @@ TEST_F(ZesDiagnosticsFixture, GivenFirmwareInitializationFailureThenCreateHandle
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 
@@ -194,7 +189,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsP
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsTestThenCallSucceeds) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 
@@ -209,7 +204,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsT
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsTestThenCallSucceeds) {
     std::vector<ze_device_handle_t> deviceHandles;
-    clear_and_reinit_handles(deviceHandles);
+    clearAndReinitHandles(deviceHandles);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0], deviceHandles[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
 

@@ -206,7 +206,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }
 
-    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
 
     if (driverInfo) {
         pciBusInfo = driverInfo->getPciBusInfo();

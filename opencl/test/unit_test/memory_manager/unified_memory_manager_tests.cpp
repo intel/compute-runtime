@@ -36,7 +36,7 @@ template <bool enableLocalMemory>
 struct SVMMemoryAllocatorFixture {
     SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
 
-    virtual void SetUp() {
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
         bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
         if (!svmSupported) {
             GTEST_SKIP();
@@ -48,7 +48,7 @@ struct SVMMemoryAllocatorFixture {
             memoryManager->pageFaultManager.reset(new MockPageFaultManager);
         }
     }
-    virtual void TearDown() {
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     MockExecutionEnvironment executionEnvironment;

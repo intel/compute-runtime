@@ -163,10 +163,10 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
   public:
     void SetUp() override {
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
-        SetUpImpl();
+        setUpImpl();
     }
 
-    void SetUpImpl() {
+    void setUpImpl() {
         platformsImpl->clear();
         MemoryManagementFixture::SetUp();
         constructPlatform();
@@ -2393,7 +2393,7 @@ class GTPinFixtureWithLocalMemory : public GTPinFixture {
     void SetUp() override {
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
-        GTPinFixture::SetUpImpl();
+        GTPinFixture::setUpImpl();
     }
     void TearDown() override {
         GTPinFixture::TearDown();

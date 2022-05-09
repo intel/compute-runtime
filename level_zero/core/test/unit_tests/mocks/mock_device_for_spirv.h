@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class MockDeviceForSpv : public Mock<DeviceImp> {
     }
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;
-    ~MockDeviceForSpv() {
+    ~MockDeviceForSpv() override {
     }
 };
 

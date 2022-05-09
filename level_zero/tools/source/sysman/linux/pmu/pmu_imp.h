@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
     PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp);
     ~PmuInterfaceImp() override = default;
     int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override;
-    MOCKABLE_VIRTUAL int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override;
+    int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override;
 
   protected:
     MOCKABLE_VIRTUAL int getErrorNo();

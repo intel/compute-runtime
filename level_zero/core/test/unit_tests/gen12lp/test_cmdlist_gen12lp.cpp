@@ -306,7 +306,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    ASSERT_NE(nullptr, commandList);
+    ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -339,7 +339,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
-    ASSERT_NE(nullptr, commandList);
+    ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 

@@ -15,7 +15,7 @@ namespace ult {
 struct MockBuiltinDataTimestamp : BuiltinFunctionsLibImpl::BuiltinData {
     using BuiltinFunctionsLibImpl::BuiltinData::BuiltinData;
 
-    ~MockBuiltinDataTimestamp() {
+    ~MockBuiltinDataTimestamp() override {
         module.release();
     }
 };
@@ -53,7 +53,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         auto builtInCodeType = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::Intermediate : BuiltInCodeType::Binary;
         auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
 
-        ze_result_t res;
+        [[maybe_unused]] ze_result_t res;
         std::unique_ptr<Module> module;
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};

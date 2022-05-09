@@ -435,11 +435,11 @@ struct TranslationCtxMock {
     CIF::Builtins::BufferSimple *receivedIntOpt = nullptr;
     CIF::Builtins::BufferSimple *receivedTracingOpt = nullptr;
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
                                                                  CIF::Builtins::BufferSimple *options,
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount) { // NOLINT(readability-identifier-naming)
+                                                                 uint32_t tracingOptionsCount) {
         this->receivedSrc = src;
         this->receivedOpt = options;
         this->receivedIntOpt = internalOptions;
@@ -467,22 +467,22 @@ struct TranslationCtxMock {
 
         return CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL>(ret);
     }
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
                                                                  CIF::Builtins::BufferSimple *options,
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
                                                                  uint32_t tracingOptionsCount,
-                                                                 void *gtpinInit) { // NOLINT(readability-identifier-naming)
+                                                                 void *gtpinInit) {
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src, // NOLINT(readability-identifier-naming)
                                                                  CIF::Builtins::BufferSimple *specConstantsIds,
                                                                  CIF::Builtins::BufferSimple *specConstantsValues,
                                                                  CIF::Builtins::BufferSimple *options,
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
                                                                  uint32_t tracingOptionsCount,
-                                                                 void *gtPinInput) { // NOLINT(readability-identifier-naming)
+                                                                 void *gtPinInput) {
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
 };
@@ -676,7 +676,7 @@ TEST(LoadCompilerTest, GivenZebinIgnoreIcbeVersionDebugFlagThenIgnoreIgcsIcbeVer
 template <typename DeviceCtxBase, typename TranslationCtx>
 struct MockCompilerDeviceCtx : DeviceCtxBase {
     TranslationCtx *CreateTranslationCtxImpl(CIF::Version_t ver, IGC::CodeType::CodeType_t inType,
-                                             IGC::CodeType::CodeType_t outType) override { // NOLINT(readability-identifier-naming)
+                                             IGC::CodeType::CodeType_t outType) override {
         returned = new TranslationCtx;
         return returned;
     }

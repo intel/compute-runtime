@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,8 @@ struct MemoryManagementFixture {
     virtual ~MemoryManagementFixture() { MemoryManagement::detailedAllocationLoggingActive = false; };
 
     // Typical Fixture methods
-    virtual void SetUp(void);
-    virtual void TearDown(void);
+    virtual void SetUp(void);    // NOLINT(readability-identifier-naming)
+    virtual void TearDown(void); // NOLINT(readability-identifier-naming)
 
     // Helper methods
     void setFailingAllocation(size_t allocation);

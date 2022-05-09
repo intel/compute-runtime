@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ struct OsSysman;
 
 class Diagnostics : _zes_diag_handle_t {
   public:
-    virtual ~Diagnostics() {}
+    ~Diagnostics() override {}
     virtual ze_result_t diagnosticsGetProperties(zes_diag_properties_t *pProperties) = 0;
     virtual ze_result_t diagnosticsGetTests(uint32_t *pCount, zes_diag_test_t *pTests) = 0;
     virtual ze_result_t diagnosticsRunTests(uint32_t start, uint32_t end, zes_diag_result_t *pResult) = 0;
@@ -46,7 +46,7 @@ struct DiagnosticsHandleContext {
     std::vector<Diagnostics *> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle, const std::string &DiagTests);
+    void createHandle(ze_device_handle_t deviceHandle, const std::string &diagTests);
 };
 
 } // namespace L0

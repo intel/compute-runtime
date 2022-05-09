@@ -22,7 +22,7 @@ extern const DeviceDescriptor NEO::deviceDescriptorTable[];
 
 class DrmNullDeviceTestsFixture {
   public:
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
@@ -35,7 +35,7 @@ class DrmNullDeviceTestsFixture {
         ASSERT_NE(drmNullDevice, nullptr);
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     std::unique_ptr<Drm> drmNullDevice;

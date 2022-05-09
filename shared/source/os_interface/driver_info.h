@@ -22,26 +22,26 @@ struct PhysicalDevicePciBusInfo {
     PhysicalDevicePciBusInfo(uint32_t domain, uint32_t bus, uint32_t device, uint32_t function)
         : pciDomain(domain), pciBus(bus), pciDevice(device), pciFunction(function) {}
 
-    static constexpr uint32_t InvalidValue = std::numeric_limits<uint32_t>::max();
+    static constexpr uint32_t invalidValue = std::numeric_limits<uint32_t>::max();
     static constexpr PhysicalDevicePciBusInfo invalid() { return {}; }
 
-    uint32_t pciDomain = InvalidValue;
-    uint32_t pciBus = InvalidValue;
-    uint32_t pciDevice = InvalidValue;
-    uint32_t pciFunction = InvalidValue;
+    uint32_t pciDomain = invalidValue;
+    uint32_t pciBus = invalidValue;
+    uint32_t pciDevice = invalidValue;
+    uint32_t pciFunction = invalidValue;
 };
 
 struct PhyicalDevicePciSpeedInfo {
-    static constexpr int32_t Unknown = -1;
-    int32_t genVersion = Unknown;
-    int32_t width = Unknown;
-    int64_t maxBandwidth = Unknown;
+    static constexpr int32_t unknown = -1;
+    int32_t genVersion = unknown;
+    int32_t width = unknown;
+    int64_t maxBandwidth = unknown;
 };
 
 class DriverInfo {
   public:
     DriverInfo()
-        : pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue) {}
+        : pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue) {}
 
     static DriverInfo *create(const HardwareInfo *hwInfo, const OSInterface *osInterface);
 

@@ -64,7 +64,7 @@ struct L3Range {
     }
 
     uint64_t getSizeInBytes() const {
-        return (1ULL << (minAlignmentBitOffset + getMask()));
+        return (1ULL << (minAlignmentBitOffset + getMask())); // NOLINT(clang-analyzer-core.UndefinedBinaryOperatorResult)
     }
 
     uint64_t getMaskedAddress() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace NEO {
 template <bool setupBlitter>
 struct DispatchFlagsTestsBase : public ::testing::Test {
     template <typename CsrType>
-    void SetUpImpl() {
+    void SetUpImpl() { // NOLINT(readability-identifier-naming)
         HardwareInfo hwInfo = *defaultHwInfo;
         if (setupBlitter) {
             hwInfo.capabilityTable.blitterOperationsSupported = true;

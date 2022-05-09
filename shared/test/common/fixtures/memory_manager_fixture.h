@@ -26,6 +26,6 @@ class MemoryManagerWithCsrFixture {
 
     ~MemoryManagerWithCsrFixture() = default;
 
-    void SetUp();
-    void TearDown();
+    void SetUp();    // NOLINT(readability-identifier-naming)
+    void TearDown(); // NOLINT(readability-identifier-naming)
 };

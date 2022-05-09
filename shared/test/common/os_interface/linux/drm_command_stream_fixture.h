@@ -23,7 +23,7 @@
 class DrmCommandStreamTest : public ::testing::Test {
   public:
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
 
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
@@ -63,7 +63,7 @@ class DrmCommandStreamTest : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
+    void tearDownT() {
         memoryManager->waitForDeletions();
         memoryManager->peekGemCloseWorker()->close(true);
         delete csr;
@@ -100,7 +100,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
     std::unique_ptr<MockDevice> device;
 
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
         executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();
         executionEnvironment->initGmm();
@@ -130,7 +130,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
+    void tearDownT() {
         executionEnvironment->decRefInternal();
         device.reset();
     }
@@ -181,7 +181,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
     std::unique_ptr<MockDevice> device;
 
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
         executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->incRefInternal();
         executionEnvironment->initGmm();
@@ -211,7 +211,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
+    void tearDownT() {
         executionEnvironment->decRefInternal();
     }
 

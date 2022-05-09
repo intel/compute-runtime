@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ class ConditionVariableWithCounter {
         --waitersCount;
     }
 
-    void notify_one() { // NOLINT
+    void notify_one() { // NOLINT(readability-identifier-naming)
         cond.notify_one();
     }
 

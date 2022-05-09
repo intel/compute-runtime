@@ -139,7 +139,7 @@ class BufferObject {
     uint64_t peekPatIndex() const { return patIndex; }
     void setPatIndex(uint64_t newPatIndex) { this->patIndex = newPatIndex; }
 
-    static constexpr int GPU_HANG_DETECTED{-7171};
+    static constexpr int gpuHangDetected{-7171};
 
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
@@ -151,7 +151,7 @@ class BufferObject {
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     int handle; // i915 gem object handle
     uint64_t size;
-    bool isReused;
+    bool isReused = false;
 
     uint32_t tilingMode;
     bool allowCapture = false;

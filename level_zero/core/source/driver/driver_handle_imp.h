@@ -57,11 +57,11 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t releaseImportedPointer(void *ptr) override;
     ze_result_t getHostPointerBaseAddress(void *ptr, void **baseAddress) override;
 
-    virtual NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
-    virtual NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
-                                                                     size_t size,
-                                                                     uint32_t rootDeviceIndex,
-                                                                     uintptr_t *gpuAddress) override;
+    NEO::GraphicsAllocation *findHostPointerAllocation(void *ptr, size_t size, uint32_t rootDeviceIndex) override;
+    NEO::GraphicsAllocation *getDriverSystemMemoryAllocation(void *ptr,
+                                                             size_t size,
+                                                             uint32_t rootDeviceIndex,
+                                                             uintptr_t *gpuAddress) override;
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,

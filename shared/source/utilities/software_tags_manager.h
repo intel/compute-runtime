@@ -39,8 +39,8 @@ class SWTagsManager {
     template <typename GfxFamily>
     static size_t estimateSpaceForSWTags();
 
-    static const unsigned int MAX_TAG_COUNT = 200;
-    static const unsigned int MAX_TAG_HEAP_SIZE = 16384;
+    static const unsigned int maxTagCount = 200;
+    static const unsigned int maxTagHeapSize = 16384;
     unsigned int currentCallCount = 0;
     unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
 
@@ -86,7 +86,7 @@ void SWTagsManager::insertTag(LinearStream &cmdStream, Device &device, Params...
 
     unsigned int tagSize = sizeof(Tag);
 
-    if (currentTagCount >= MAX_TAG_COUNT || getCurrentHeapOffset() + tagSize > MAX_TAG_HEAP_SIZE) {
+    if (currentTagCount >= maxTagCount || getCurrentHeapOffset() + tagSize > maxTagHeapSize) {
         return;
     }
     ++currentTagCount;
@@ -113,7 +113,7 @@ template <typename GfxFamily>
 size_t SWTagsManager::estimateSpaceForSWTags() {
     using MI_NOOP = typename GfxFamily::MI_NOOP;
 
-    return 2 * EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() + 2 * MAX_TAG_COUNT * sizeof(MI_NOOP);
+    return 2 * EncodeStoreMemory<GfxFamily>::getStoreDataImmSize() + 2 * maxTagCount * sizeof(MI_NOOP);
 }
 
 } // namespace NEO

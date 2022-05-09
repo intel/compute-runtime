@@ -804,7 +804,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     auto event1 = MockEventBuilder::createAndFinalize<EV>(&pCmdQ->getContext());
 
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data) {
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
             bool *called = (bool *)data;
             *called = true;
         }
@@ -819,7 +819,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     ASSERT_EQ(retVal, CL_SUCCESS);
 
     bool callbackCalled = false;
-    retVal = clSetEventCallback(event1, CL_COMPLETE, E2Clb::SignalEv2, &callbackCalled);
+    retVal = clSetEventCallback(event1, CL_COMPLETE, E2Clb::signalEv2, &callbackCalled);
     ASSERT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(1, event1->updated);
@@ -841,7 +841,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -857,7 +857,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
     retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::SignalEv2, &event1);
+    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::signalEv2, &event1);
 
     cl_event events[] = {&event1};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -872,7 +872,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1(context);
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -885,7 +885,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
     retVal = callOneWorkItemNDRKernel(nullptr, 0, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::SignalEv2, &event1);
+    clSetEventCallback(retEvent, CL_COMPLETE, E2Clb::signalEv2, &event1);
 
     cl_event events[] = {&event1};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -970,7 +970,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     UserEvent event1;
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data)
 
         {
             UserEvent *event2 = static_cast<UserEvent *>(data);
@@ -979,7 +979,7 @@ TEST_F(EventTest, GivenMultipleOutOfOrderCallbacksWhenWaitingForEventsThenSucces
     };
 
     UserEvent event2;
-    event2.addCallback(E2Clb::SignalEv2, CL_COMPLETE, &event1);
+    event2.addCallback(E2Clb::signalEv2, CL_COMPLETE, &event1);
     event2.setStatus(CL_COMPLETE);
     cl_event events[] = {&event1, &event2};
     auto result = UserEvent::waitForEvents(sizeof(events) / sizeof(events[0]), events);
@@ -990,7 +990,7 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectE
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     struct HelperClb {
-        static void CL_CALLBACK SetClbStatus(cl_event e, cl_int status, void *data)
+        static void CL_CALLBACK setClbStatus(cl_event e, cl_int status, void *data)
 
         {
             cl_int *ret = static_cast<cl_int *>(data);
@@ -1005,11 +1005,11 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackThenExecutionPassesCorrectE
     cl_int submittedClbExecStatus = -1;
     cl_int runningClbExecStatus = -1;
     cl_int completeClbExecStatus = -1;
-    retVal = clSetEventCallback(retEvent, CL_SUBMITTED, HelperClb::SetClbStatus, &submittedClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_SUBMITTED, HelperClb::setClbStatus, &submittedClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(retEvent, CL_RUNNING, HelperClb::SetClbStatus, &runningClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_RUNNING, HelperClb::setClbStatus, &runningClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(retEvent, CL_COMPLETE, HelperClb::SetClbStatus, &completeClbExecStatus);
+    retVal = clSetEventCallback(retEvent, CL_COMPLETE, HelperClb::setClbStatus, &completeClbExecStatus);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto result = UserEvent::waitForEvents(1, &retEvent);

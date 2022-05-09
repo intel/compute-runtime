@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,11 @@ using namespace NEO;
 
 class AddressMapperFixture {
   public:
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         mapper = new AddressMapper();
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
         delete mapper;
     }
     AddressMapper *mapper;

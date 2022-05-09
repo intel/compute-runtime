@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
-    std::vector<zes_mem_handle_t> get_memory_handles(uint32_t count) {
+    std::vector<zes_mem_handle_t> getMemoryHandles(uint32_t count) {
         std::vector<zes_mem_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -153,7 +153,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingProper
     pKmdSysManager->mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
     setLocalSupportedAndReinit(true);
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_properties_t properties;
@@ -173,7 +173,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingGettingProper
 
 TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_state_t state;
@@ -189,7 +189,7 @@ TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStat
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_bandwidth_t bandwidth;

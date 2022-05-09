@@ -103,7 +103,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
             mockKernelImmData->setDevice(device);
         }
 
-        ~MockModule() {
+        ~MockModule() override {
         }
 
         const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
@@ -317,7 +317,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
                                                                         MemoryPool::System4KBPages));
         }
 
-        ~MockImmutableData() {
+        ~MockImmutableData() override {
             delete kernelDescriptor;
         }
     };
@@ -363,7 +363,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
                      zebin.storage.data(), zebin.storage.size());
         }
 
-        ~MockModuleWithZebin() {
+        ~MockModuleWithZebin() override {
         }
 
         const char strings[12] = "Hello olleH";

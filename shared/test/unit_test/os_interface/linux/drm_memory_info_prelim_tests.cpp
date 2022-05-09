@@ -90,7 +90,7 @@ TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThe
 }
 
 struct DrmVmTestFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
@@ -112,7 +112,7 @@ struct DrmVmTestFixture {
         backupIoctlVmCreateExtensionArg = std::make_unique<VariableBackup<uint64_t>>(&NEO::SysCalls::ioctlVmCreateExtensionArg, 0ull);
     }
 
-    void TearDown() {}
+    void TearDown() {} // NOLINT(readability-identifier-naming)
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;

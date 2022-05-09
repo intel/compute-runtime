@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ TEST_P(CreateSampler, GivenModeWhenSamplerIsCreatedThenParamsAreSetCorrectly) {
         normalizedCoords,
         addressingMode,
         filterMode);
-    ASSERT_NE(nullptr, sampler);
+    ASSERT_NE(nullptr, sampler); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     EXPECT_EQ(context, sampler->getContext());
     EXPECT_EQ(normalizedCoords, sampler->getNormalizedCoordinates());

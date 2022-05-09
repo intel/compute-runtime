@@ -1605,7 +1605,7 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturn
 }
 
 struct DebugSessionRegistersAccess {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         zet_debug_config_t config = {};
         config.pid = 0x1234;
         auto hwInfo = *NEO::defaultHwInfo.get();
@@ -1616,7 +1616,7 @@ struct DebugSessionRegistersAccess {
         session = std::make_unique<MockDebugSession>(config, deviceImp.get());
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     void dumpRegisterState() {

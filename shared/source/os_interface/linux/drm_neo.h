@@ -50,7 +50,7 @@ struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SystemInfo;
 
-struct DeviceDescriptor { // NOLINT(clang-analyzer-optin.performance.Padding)
+struct DeviceDescriptor {
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
     void (*setupHardwareInfo)(HardwareInfo *, bool);
@@ -86,7 +86,7 @@ class Drm : public DriverModel {
         int maxEuCount;
     };
 
-    virtual ~Drm();
+    ~Drm() override;
 
     virtual int ioctl(unsigned long request, void *arg);
 

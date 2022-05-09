@@ -21,9 +21,6 @@ namespace NEO {
 
 ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution) : commandStreamReceiver(csr),
                                                                                                                     currentStream(nullptr),
-                                                                                                                    timestampsOffset(0),
-                                                                                                                    experimentalAllocationOffset(0),
-                                                                                                                    defaultPrint(true),
                                                                                                                     timerResolution(profilingTimerResolution) {
     auto rootDeviceIndex = csr->getRootDeviceIndex();
     timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::INTERNAL_HOST_MEMORY, csr->getOsContext().getDeviceBitfield()});

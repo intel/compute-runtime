@@ -117,7 +117,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     Kernel &operator=(const Kernel &) = delete;
     Kernel(const Kernel &) = delete;
 
-    virtual ~Kernel();
+    ~Kernel() override;
 
     static bool isMemObj(kernelArgType kernelArg) {
         return kernelArg == BUFFER_OBJ || kernelArg == IMAGE_OBJ || kernelArg == PIPE_OBJ;

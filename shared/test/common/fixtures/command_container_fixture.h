@@ -61,7 +61,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
 } // namespace NEO
 
 struct WalkerThreadFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         startWorkGroup[0] = startWorkGroup[1] = startWorkGroup[2] = 0u;
         numWorkGroups[0] = numWorkGroups[1] = numWorkGroups[2] = 1u;
         workGroupSizes[0] = 32u;
@@ -70,7 +70,7 @@ struct WalkerThreadFixture {
         localIdDimensions = 3u;
         requiredWorkGroupOrder = 0u;
     }
-    void TearDown() {}
+    void TearDown() {} // NOLINT(readability-identifier-naming)
 
     uint32_t startWorkGroup[3];
     uint32_t numWorkGroups[3];

@@ -64,7 +64,7 @@ static int recvmsgForIpcHandle(int socket, char *payload) {
         return -1;
     }
     struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));
+    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int)); // NOLINT(clang-analyzer-core.NonNullParamChecker)
     memmove(payload, recvBuf, sizeof(recvBuf));
     return fd;
 }

@@ -56,11 +56,11 @@ class LinuxRasSources : NEO::NonCopyableOrMovableClass {
 
 class LinuxRasSourceGt : public LinuxRasSources {
   public:
-    virtual ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
+    ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
     LinuxRasSourceGt(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasSourceGt() = default;
-    virtual ~LinuxRasSourceGt();
+    ~LinuxRasSourceGt() override;
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
@@ -94,7 +94,7 @@ class LinuxRasSourceFabric : public LinuxRasSources {
   public:
     static ze_result_t getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
     LinuxRasSourceFabric(OsSysman *pOsSysman, zes_ras_error_type_t type, uint32_t subDeviceId);
-    ~LinuxRasSourceFabric() = default;
+    ~LinuxRasSourceFabric() override = default;
 
     ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
 
@@ -108,11 +108,11 @@ class LinuxRasSourceFabric : public LinuxRasSources {
 
 class LinuxRasSourceHbm : public LinuxRasSources {
   public:
-    virtual ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
+    ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
     LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId);
     LinuxRasSourceHbm() = default;
-    virtual ~LinuxRasSourceHbm() override{};
+    ~LinuxRasSourceHbm() override{};
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;

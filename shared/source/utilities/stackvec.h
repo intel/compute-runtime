@@ -31,9 +31,9 @@ struct StackVecSize {
 
 template <typename DataType, size_t OnStackCapacity,
           typename StackSizeT = typename StackVecSize<OnStackCapacity>::SizeT>
-class StackVec {
+class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
   public:
-    using value_type = DataType; // NOLINT
+    using value_type = DataType;
     using SizeT = StackSizeT;
     using iterator = DataType *;
     using const_iterator = const DataType *;
@@ -226,7 +226,7 @@ class StackVec {
         clearStackObjects();
     }
 
-    void push_back(const DataType &v) { // NOLINT
+    void push_back(const DataType &v) { // NOLINT(readability-identifier-naming)
         if (onStackSize == onStackCaps) {
             ensureDynamicMem();
         }
@@ -244,7 +244,7 @@ class StackVec {
         std::sort(this->begin(), this->end());
     }
 
-    void remove_duplicates() {
+    void remove_duplicates() { // NOLINT(readability-identifier-naming)
         if (1 >= this->size()) {
             return;
         }
@@ -256,7 +256,7 @@ class StackVec {
         }
     }
 
-    void pop_back() { // NOLINT
+    void pop_back() { // NOLINT(readability-identifier-naming)
         if (usesDynamicMem()) {
             dynamicMem->pop_back();
             return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@ namespace NEO {
 class CommandQueue;
 
 struct IndirectHeapFixture {
-    virtual void SetUp(CommandQueue *pCmdQ);
-    virtual void TearDown() {
+    virtual void SetUp(CommandQueue *pCmdQ); // NOLINT(readability-identifier-naming)
+    virtual void TearDown() {                // NOLINT(readability-identifier-naming)
     }
 
     IndirectHeap *pDSH = nullptr;

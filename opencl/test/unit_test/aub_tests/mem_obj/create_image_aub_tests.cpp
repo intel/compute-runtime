@@ -351,7 +351,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
     }
 
     if (readMemory)
-        delete readMemory;
+        delete[] readMemory;
 }
 
 HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThenExpectationsMet) {
@@ -511,6 +511,6 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
 
     alignedFree(host_ptr);
     if (readMemory) {
-        delete readMemory;
+        delete[] readMemory;
     }
 }

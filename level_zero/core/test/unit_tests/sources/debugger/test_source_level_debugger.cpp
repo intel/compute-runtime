@@ -243,12 +243,12 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenSldDebuggerWhenGettingL0DebuggerThenN
 }
 
 struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public ::testing::Test {
-    void SetUp() override { // NOLINT(readability-identifier-naming)
+    void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
         ActiveDebuggerFixture::SetUp();
     }
-    void TearDown() override { // NOLINT(readability-identifier-naming)
+    void TearDown() override {
         ActiveDebuggerFixture::TearDown();
     }
     DebugManagerStateRestore restorer;

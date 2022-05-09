@@ -66,7 +66,7 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
 
     EnqueueKernelTypeTest() {
     }
-    void FillValues() {
+    void fillValues() {
         globalWorkSize[0] = 1;
         globalWorkSize[1] = 1;
         globalWorkSize[2] = 1;
@@ -84,7 +84,7 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
         cl_event *eventWaitList = nullptr;
         cl_event *event = nullptr;
 
-        FillValues();
+        fillValues();
         // Compute # of expected work items
         expectedWorkItems = 1;
         for (auto i = 0u; i < workDim; i++) {
@@ -131,7 +131,7 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
 };
 
 template <>
-void EnqueueKernelTypeTest<TestParam>::FillValues() {
+void EnqueueKernelTypeTest<TestParam>::fillValues() {
     const TestParam &param = GetParam();
     globalWorkSize[0] = param.globalWorkSizeX;
     globalWorkSize[1] = param.globalWorkSizeY;
@@ -562,7 +562,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    FillValues();
+    fillValues();
     // Compute # of expected work items
     expectedWorkItems = 1;
     for (auto i = 0u; i < workDim; i++) {
@@ -601,7 +601,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
 
-    FillValues();
+    fillValues();
 
     cl_event blockedEvent = &userEvent;
     auto retVal = mockCommandQueue.enqueueKernel(
@@ -640,7 +640,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
 
-    FillValues();
+    fillValues();
 
     cl_event blockedEvent = userEvent.get();
     cl_event outEvent{};
@@ -687,7 +687,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
 
-    FillValues();
+    fillValues();
 
     cl_event blockedEvent = userEvent.get();
     cl_event outEvent{};

@@ -183,8 +183,8 @@ struct ContextFixture : DeviceFixture {
 };
 
 struct MultipleDevicesWithCustomHwInfo {
-    void SetUp();
-    void TearDown() {}
+    void SetUp();      // NOLINT(readability-identifier-naming)
+    void TearDown() {} // NOLINT(readability-identifier-naming)
     NEO::HardwareInfo hwInfo;
     const uint32_t numSubslicesPerSlice = 4;
     const uint32_t numEuPerSubslice = 8;
@@ -222,7 +222,7 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public MultiDeviceFi
     uint32_t numEngineGroups = 0;
     uint32_t subDeviceNumEngineGroups = 0;
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void SetUp() {
         DebugManagerStateRestore restorer;
         DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
@@ -283,7 +283,7 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public MultiDeviceFi
         }
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void TearDown() {
         context->destroy();
     }
 };

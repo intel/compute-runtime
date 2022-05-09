@@ -146,7 +146,7 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
     programBinaryHeader.PatchListSize = programPatchListSize;
 
     char *pProgramData = new char[headerSize + programBinaryHeader.PatchListSize];
-    ASSERT_NE(nullptr, pProgramData);
+    ASSERT_NE(nullptr, pProgramData); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     pCurPtr = pProgramData;
 

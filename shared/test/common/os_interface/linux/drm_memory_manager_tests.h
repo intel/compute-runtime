@@ -58,7 +58,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
-    }
+    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
         ASSERT_NE(nullptr, executionEnvironment);
@@ -177,11 +177,11 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
     DrmMockCustom *mock;
 
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         SetUp(false);
     }
 
-    void SetUp(bool enableLocalMem) {
+    void SetUp(bool enableLocalMem) { // NOLINT(readability-identifier-naming)
         DebugManager.flags.DeferOsContextInitialization.set(0);
 
         executionEnvironment = new ExecutionEnvironment;
@@ -212,7 +212,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
   protected:

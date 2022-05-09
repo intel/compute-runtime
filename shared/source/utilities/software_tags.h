@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,60 +88,60 @@ struct KernelNameTag : public BaseTag {
   public:
     KernelNameTag(const char *name, uint32_t callId)
         : BaseTag(OpCode::KernelName, sizeof(KernelNameTag)) {
-        strcpy_s(kernelName, KENEL_NAME_STR_LENGTH, name);
+        strcpy_s(kernelName, kenelNameStrLength, name);
     }
 
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int KENEL_NAME_STR_LENGTH = sizeof(uint32_t) * 16; // Dword aligned
-    char kernelName[KENEL_NAME_STR_LENGTH] = {};
+    static constexpr unsigned int kenelNameStrLength = sizeof(uint32_t) * 16; // Dword aligned
+    char kernelName[kenelNameStrLength] = {};
 };
 
 struct PipeControlReasonTag : public BaseTag {
   public:
     PipeControlReasonTag(const char *reason, uint32_t callId)
         : BaseTag(OpCode::PipeControlReason, sizeof(PipeControlReasonTag)) {
-        strcpy_s(reasonString, REASON_STR_LENGTH, reason);
+        strcpy_s(reasonString, reasonStrLength, reason);
     }
 
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int REASON_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
-    char reasonString[REASON_STR_LENGTH] = {};
+    static constexpr unsigned int reasonStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    char reasonString[reasonStrLength] = {};
 };
 
 struct CallNameBeginTag : public BaseTag {
   public:
     CallNameBeginTag(const char *name, uint32_t callId)
         : BaseTag(OpCode::CallNameBegin, sizeof(CallNameBeginTag)) {
-        strcpy_s(zeCallName, ZE_CALL_NAME_STR_LENGTH, name);
+        strcpy_s(zeCallName, zeCallNameStrLength, name);
         snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
     }
 
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int ZE_CALL_NAME_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
-    char zeCallName[ZE_CALL_NAME_STR_LENGTH] = {};
-    char zeCallId[ZE_CALL_NAME_STR_LENGTH] = {};
+    static constexpr unsigned int zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    char zeCallName[zeCallNameStrLength] = {};
+    char zeCallId[zeCallNameStrLength] = {};
 };
 
 struct CallNameEndTag : public BaseTag {
   public:
     CallNameEndTag(const char *name, uint32_t callId)
         : BaseTag(OpCode::CallNameEnd, sizeof(CallNameEndTag)) {
-        strcpy_s(zeCallName, ZE_CALL_NAME_STR_LENGTH, name);
+        strcpy_s(zeCallName, zeCallNameStrLength, name);
         snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
     }
 
     static void bxml(std::ostream &os);
 
   private:
-    static constexpr unsigned int ZE_CALL_NAME_STR_LENGTH = sizeof(uint32_t) * 32; // Dword aligned
-    char zeCallName[ZE_CALL_NAME_STR_LENGTH] = {};
-    char zeCallId[ZE_CALL_NAME_STR_LENGTH] = {};
+    static constexpr unsigned int zeCallNameStrLength = sizeof(uint32_t) * 32; // Dword aligned
+    char zeCallName[zeCallNameStrLength] = {};
+    char zeCallId[zeCallNameStrLength] = {};
 };
 
 struct SWTagBXML {

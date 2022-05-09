@@ -149,7 +149,7 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
     GraphicsAllocation *preemptionAllocation = nullptr;
 
     template <typename FamilyType>
-    void SetUpT() {
+    void setUpT() {
         HardwareInfo *hwInfo = nullptr;
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
@@ -169,7 +169,7 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void TearDownT() {
+    void tearDownT() {
         wddm = nullptr;
     }
 };

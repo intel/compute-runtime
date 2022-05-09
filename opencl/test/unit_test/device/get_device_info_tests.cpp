@@ -1028,7 +1028,7 @@ TEST(GetDeviceInfoTest, givenPciBusInfoWhenGettingPciBusInfoForDeviceThenPciBusI
 }
 
 TEST(GetDeviceInfoTest, givenPciBusInfoIsNotAvailableWhenGettingPciBusInfoForDeviceThenInvalidValueIsReturned) {
-    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
 
     auto driverInfo = new DriverInfoMock();
     driverInfo->setPciBusInfo(pciBusInfo);

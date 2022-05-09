@@ -29,7 +29,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed(Device *device) : device(device) {}
-    void TestBodyImpl(size_t patternSize, COLOR_DEPTH expectedDepth) {
+    void TestBodyImpl(size_t patternSize, COLOR_DEPTH expectedDepth) { // NOLINT(readability-identifier-naming)
         uint32_t streamBuffer[100] = {};
         LinearStream stream(streamBuffer, sizeof(streamBuffer));
         MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,

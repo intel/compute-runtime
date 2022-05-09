@@ -35,7 +35,7 @@ struct Context : _ze_context_handle_t {
         return ZE_MEMORY_TYPE_UNKNOWN;
     }
 
-    virtual ~Context() = default;
+    ~Context() override = default;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getStatus() = 0;
     virtual DriverHandle *getDriverHandle() = 0;

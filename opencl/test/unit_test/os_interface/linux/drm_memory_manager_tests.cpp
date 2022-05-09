@@ -1338,7 +1338,7 @@ struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
 
         executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         DrmMemoryManagerFixture::SetUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
-        pClDevice = new MockClDevice{device};
+        pClDevice = new MockClDevice{device}; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         device->incRefInternal();
     }
     void TearDown() override {

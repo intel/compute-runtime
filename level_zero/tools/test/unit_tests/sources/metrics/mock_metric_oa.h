@@ -59,22 +59,22 @@ using MetricsLibraryApi::ValueType;
 struct MockMetricsLibraryApi {
 
     // Original api functions.
-    static StatusCode ML_STDCALL ContextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle);
-    static StatusCode ML_STDCALL ContextDelete(const ContextHandle_1_0 handle);
-    static StatusCode ML_STDCALL GetParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);
-    static StatusCode ML_STDCALL CommandBufferGet(const CommandBufferData_1_0 *data);
-    static StatusCode ML_STDCALL CommandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);
-    static StatusCode ML_STDCALL QueryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);
-    static StatusCode ML_STDCALL QueryDelete(const QueryHandle_1_0 handle);
-    static StatusCode ML_STDCALL OverrideCreate(const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle);
-    static StatusCode ML_STDCALL OverrideDelete(const OverrideHandle_1_0 handle);
-    static StatusCode ML_STDCALL MarkerCreate(const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle);
-    static StatusCode ML_STDCALL MarkerDelete(const MarkerHandle_1_0 handle);
-    static StatusCode ML_STDCALL ConfigurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);
-    static StatusCode ML_STDCALL ConfigurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData);
-    static StatusCode ML_STDCALL ConfigurationDeactivate(const ConfigurationHandle_1_0 handle);
-    static StatusCode ML_STDCALL ConfigurationDelete(const ConfigurationHandle_1_0 handle);
-    static StatusCode ML_STDCALL GetData(GetReportData_1_0 *data);
+    static StatusCode ML_STDCALL ContextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle);         // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ContextDelete(const ContextHandle_1_0 handle);                                                                  // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);                            // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGet(const CommandBufferData_1_0 *data);                                                            // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL CommandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);                           // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);                                    // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL QueryDelete(const QueryHandle_1_0 handle);                                                                      // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL OverrideCreate(const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle);                           // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL OverrideDelete(const OverrideHandle_1_0 handle);                                                                // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL MarkerCreate(const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle);                                 // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL MarkerDelete(const MarkerHandle_1_0 handle);                                                                    // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);            // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData); // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDeactivate(const ConfigurationHandle_1_0 handle);                                                  // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL ConfigurationDelete(const ConfigurationHandle_1_0 handle);                                                      // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL GetData(GetReportData_1_0 *data);                                                                               // NOLINT(readability-identifier-naming)
 
     // Mocked api functions.
     MOCK_METHOD(StatusCode, MockContextCreate, (ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle));
@@ -122,7 +122,7 @@ struct Mock<MetricsLibrary> : public MetricsLibrary {
     // Mocked metrics library api version.
     // We cannot use a static instance here since the gtest validates memory usage,
     // and mocked functions will stay in memory longer than the test.
-    static MockMetricsLibraryApi *g_mockApi;
+    static MockMetricsLibraryApi *g_mockApi; // NOLINT(readability-identifier-naming)
 };
 
 template <>

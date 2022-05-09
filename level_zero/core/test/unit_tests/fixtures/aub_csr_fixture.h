@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,14 @@ namespace L0 {
 namespace ult {
 struct AubCsrFixture : public ContextFixture {
     template <typename T>
-    void SetUpT() {
+    void setUpT() {
         auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
         variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
         *csrCreateFcn = UltAubCommandStreamReceiver<T>::create;
         ContextFixture::SetUp();
     }
     template <typename T>
-    void TearDownT() {
+    void tearDownT() {
         ContextFixture::TearDown();
     }
 

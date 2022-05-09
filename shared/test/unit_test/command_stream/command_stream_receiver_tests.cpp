@@ -618,7 +618,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenCheckIfEnabl
 }
 
 struct InitDirectSubmissionFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         DebugManager.flags.EnableDirectSubmission.set(1);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
@@ -628,7 +628,7 @@ struct InitDirectSubmissionFixture {
         device.reset(new MockDevice(executionEnvironment, 0u));
     }
 
-    void TearDown() {}
+    void TearDown() {} // NOLINT(readability-identifier-naming)
 
     DebugManagerStateRestore restore;
     MockExecutionEnvironment *executionEnvironment;

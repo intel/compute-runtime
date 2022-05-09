@@ -87,7 +87,7 @@ struct MockModule : public L0::ModuleImp {
         maxGroupSize = 32;
     };
 
-    ~MockModule() = default;
+    ~MockModule() override = default;
 
     const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
         return kernelImmData;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     size_t elementSize = perChannelDataSize * numChannels;
     auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
     auto srcMemory = new (std::nothrow) uint8_t[sizeMemory];
-    ASSERT_NE(nullptr, srcMemory);
+    ASSERT_NE(nullptr, srcMemory); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     for (unsigned i = 0; i < sizeMemory; ++i) {
         uint8_t origValue = i;

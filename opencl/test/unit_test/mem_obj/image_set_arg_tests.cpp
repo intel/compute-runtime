@@ -39,7 +39,7 @@ class ImageSetArgTest : public ClDeviceFixture,
 
   protected:
     template <typename FamilyType>
-    void SetupChannels(int imgChannelOrder) {
+    void setupChannels(int imgChannelOrder) {
         typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
         expectedChannelRed = RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED;
@@ -362,7 +362,7 @@ HWTEST_F(ImageSetArgTest, WhenSettingKernelArgThenPropertiesAreSetCorrectly) {
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 
-    SetupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
+    setupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
 
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(srcAllocation->getGpuAddress(), surfaceAddress);
@@ -435,7 +435,7 @@ HWTEST_F(ImageSetArgTest, Given2dArrayWhenSettingKernelArgThenPropertiesAreSetCo
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 
-    SetupChannels<FamilyType>(image2Darray->getImageFormat().image_channel_order);
+    setupChannels<FamilyType>(image2Darray->getImageFormat().image_channel_order);
 
     EXPECT_EQ(graphicsAllocation->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(image2Darray->getImageDesc().image_width, surfaceState->getWidth());
@@ -481,7 +481,7 @@ HWTEST_F(ImageSetArgTest, Given1dArrayWhenSettingKernelArgThenPropertiesAreSetCo
                   pKernelInfo->argAsImg(0).bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
-    SetupChannels<FamilyType>(image1Darray->getImageFormat().image_channel_order);
+    setupChannels<FamilyType>(image1Darray->getImageFormat().image_channel_order);
 
     EXPECT_EQ(graphicsAllocation->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(image1Darray->getImageDesc().image_width, surfaceState->getWidth());
@@ -978,7 +978,7 @@ HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCo
 
     uint32_t element_size = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
 
-    SetupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
+    setupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
 
     EXPECT_EQ(srcImage->getImageDesc().image_width * element_size / sizeof(uint32_t), surfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, surfaceState->getHeight());

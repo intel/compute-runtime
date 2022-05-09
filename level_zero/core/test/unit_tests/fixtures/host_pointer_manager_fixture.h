@@ -25,7 +25,7 @@ namespace L0 {
 namespace ult {
 
 struct HostPointerManagerFixure {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         NEO::MockCompilerEnableGuard mock(true);
         NEO::DeviceVector devices;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
@@ -51,7 +51,7 @@ struct HostPointerManagerFixure {
         context = L0::Context::fromHandle(hContext);
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
         context->destroy();
 
         hostDriverHandle->getMemoryManager()->freeSystemMemory(heapPointer);

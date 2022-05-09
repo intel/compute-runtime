@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 TEST(FlushStampTest, WhenAddingRemovingReferencesThenRefCountIsUpdated) {
     FlushStampTracker *flushStampTracker = new FlushStampTracker(true);
     auto flushStampSharedHandle = flushStampTracker->getStampReference();
-    ASSERT_NE(nullptr, flushStampSharedHandle);
+    ASSERT_NE(nullptr, flushStampSharedHandle); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     EXPECT_EQ(1, flushStampSharedHandle->getRefInternalCount());
     EXPECT_EQ(0, flushStampSharedHandle->getRefApiCount());

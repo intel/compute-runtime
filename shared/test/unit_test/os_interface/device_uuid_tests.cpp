@@ -113,10 +113,10 @@ HWTEST2_F(MultipleDeviceBdfUuidTest, GivenIncorrectBdfWhenRetrievingDeviceUuidFr
 
     setupMockHwInfoConfig<productFamily>();
     VariableBackup<HwInfoConfig *> backupHwInfoConfig(&hwInfoConfigFactory[productFamily], mockHwInfoConfig.get());
-    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue,
-                                        PhysicalDevicePciBusInfo::InvalidValue,
-                                        PhysicalDevicePciBusInfo::InvalidValue,
-                                        PhysicalDevicePciBusInfo::InvalidValue);
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue,
+                                        PhysicalDevicePciBusInfo::invalidValue,
+                                        PhysicalDevicePciBusInfo::invalidValue,
+                                        PhysicalDevicePciBusInfo::invalidValue);
     const auto deviceFactory = createDevices(pciBusInfo, 2);
 
     std::array<uint8_t, 16> uuid;

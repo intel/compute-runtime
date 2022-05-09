@@ -149,7 +149,7 @@ class Image : public MemObj {
 
     Image *redescribe();
     Image *redescribeFillImage();
-    ImageCreatFunc createFunction;
+    ImageCreatFunc createFunction = nullptr;
 
     uint32_t getQPitch() { return qPitch; }
     void setQPitch(uint32_t qPitch) { this->qPitch = qPitch; }
@@ -234,8 +234,8 @@ class Image : public MemObj {
     size_t hostPtrRowPitch = 0;
     size_t hostPtrSlicePitch = 0;
     size_t imageCount = 0;
-    uint32_t cubeFaceIndex;
-    cl_uint mediaPlaneType;
+    uint32_t cubeFaceIndex = __GMM_NO_CUBE_MAP;
+    cl_uint mediaPlaneType = 0;
     SurfaceOffsets surfaceOffsets = {0};
     uint32_t baseMipLevel = 0;
     uint32_t mipCount = 1;

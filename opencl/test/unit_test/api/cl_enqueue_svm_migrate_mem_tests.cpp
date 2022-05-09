@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSvmPointerIsHostPtrWhenMigratingSvmThen
         GTEST_SKIP();
     }
     char *ptrHost = new char[10];
-    ASSERT_NE(nullptr, ptrHost);
+    ASSERT_NE(nullptr, ptrHost); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     const void *svmPtrs[] = {ptrHost};
     auto retVal = clEnqueueSVMMigrateMem(

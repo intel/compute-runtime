@@ -57,10 +57,10 @@ using MetricsDiscovery::TTypedValue_1_0;
 struct MockMetricsDiscoveryApi {
 
     // Original api functions.
-    static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDeviceLatest **device);
-    static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDeviceLatest *device);
-    static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDeviceLatest *device);
-    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroupLatest **adapterGroup);
+    static TCompletionCode MD_STDCALL OpenMetricsDeviceFromFile(const char *fileName, void *openParams, IMetricsDeviceLatest **device); // NOLINT(readability-identifier-naming)
+    static TCompletionCode MD_STDCALL CloseMetricsDevice(IMetricsDeviceLatest *device);                                                 // NOLINT(readability-identifier-naming)
+    static TCompletionCode MD_STDCALL SaveMetricsDeviceToFile(const char *fileName, void *saveParams, IMetricsDeviceLatest *device);    // NOLINT(readability-identifier-naming)
+    static TCompletionCode MD_STDCALL OpenAdapterGroup(IAdapterGroupLatest **adapterGroup);                                             // NOLINT(readability-identifier-naming)
 
     // Mocked api functions.
     MOCK_METHOD(TCompletionCode, MockOpenMetricsDeviceFromFile, (const char *, void *, IMetricsDevice_1_5 **));
@@ -189,7 +189,7 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     ze_result_t baseLoadMetricsDiscovery() { return MetricEnumeration::loadMetricsDiscovery(); }
 
     // Mock metrics discovery api.
-    static MockMetricsDiscoveryApi *g_mockApi;
+    static MockMetricsDiscoveryApi *g_mockApi; // NOLINT(readability-identifier-naming)
 
     // Original metric enumeration obtained from metric context.
     ::L0::MetricEnumeration *metricEnumeration = nullptr;

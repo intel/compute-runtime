@@ -133,7 +133,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
     template <typename FamilyType>
     void givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValidImpl();
     template <typename FamilyType>
-    void GivenReadOnlyMultiStorageWhenAllocatingBufferThenAllocationIsCopiedWithBlitterToEveryTileImpl();
+    void GivenReadOnlyMultiStorageWhenAllocatingBufferThenAllocationIsCopiedWithBlitterToEveryTileImpl(); // NOLINT(readability-identifier-naming)
     template <typename FamilyType>
     void givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl();
     template <typename FamilyType>

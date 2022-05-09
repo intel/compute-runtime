@@ -41,7 +41,7 @@ class DrmTipMock : public DrmMock {
         prelimVersion = "";
     }
 
-    virtual int handleRemainingRequests(unsigned long request, void *arg) override {
+    int handleRemainingRequests(unsigned long request, void *arg) override {
         if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {
             if (i915QuerySuccessCount == 0) {
                 return EINVAL;

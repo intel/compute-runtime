@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ TEST(getInfoHelper, GivenPointerWhenSettingValueThenValueIsSetCorrectly) {
 
     getValue = new uint32_t(0);
     GetInfoHelper::set(getValue, expectedValue);
-    ASSERT_NE(nullptr, getValue);
+    ASSERT_NE(nullptr, getValue); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     EXPECT_EQ(*getValue, expectedValue);
 
     delete getValue;

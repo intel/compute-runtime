@@ -28,7 +28,7 @@
 using namespace NEO;
 
 struct DrmCommandStreamMultiTileMemExecFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         DebugManager.flags.CreateMultipleSubDevices.set(2u);
         DebugManager.flags.EnableImplicitScaling.set(1);
         DebugManager.flags.EnableForcePin.set(false);
@@ -57,7 +57,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
         executionEnvironment->decRefInternal();
     }
 

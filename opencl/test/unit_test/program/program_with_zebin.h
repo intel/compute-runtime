@@ -24,5 +24,5 @@ class ProgramWithZebinFixture : public ProgramTests {
     void TearDown() override;
     void addEmptyZebin(MockProgram *program);
     void populateProgramWithSegments(MockProgram *program);
-    ~ProgramWithZebinFixture() = default;
+    ~ProgramWithZebinFixture() override = default;
 };

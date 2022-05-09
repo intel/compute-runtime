@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
     DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     bool apply() override;
-    ~DeferrableDeletionImpl();
+    ~DeferrableDeletionImpl() override;
 
     DeferrableDeletionImpl(const DeferrableDeletionImpl &) = delete;
     DeferrableDeletionImpl &operator=(const DeferrableDeletionImpl &) = delete;

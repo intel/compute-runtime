@@ -133,7 +133,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
             this->downloadAllocationUlt(graphicsAllocation);
         };
     }
-    ~UltCommandStreamReceiver() {
+    ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;
     }
     static CommandStreamReceiver *create(bool withAubDump,

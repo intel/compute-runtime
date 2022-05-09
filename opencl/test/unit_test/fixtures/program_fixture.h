@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,29 +18,29 @@ namespace NEO {
 
 class ProgramFixture {
   public:
-    void CreateProgramFromBinary(Context *pContext,
+    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  cl_int &retVal,
                                  const std::string &options = "");
 
-    void CreateProgramFromBinary(Context *pContext,
+    void CreateProgramFromBinary(Context *pContext, // NOLINT(readability-identifier-naming)
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
 
-    void CreateProgramWithSource(Context *pContext,
+    void CreateProgramWithSource(Context *pContext, // NOLINT(readability-identifier-naming)
                                  const std::string &sourceFileName);
 
   protected:
-    virtual void SetUp() {
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
     }
 
-    virtual void TearDown() {
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
         Cleanup();
     }
 
-    void Cleanup() {
+    void Cleanup() { // NOLINT(readability-identifier-naming)
         if (pProgram != nullptr) {
             pProgram->release();
         }

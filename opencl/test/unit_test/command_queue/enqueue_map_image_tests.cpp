@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,7 +336,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     EXPECT_TRUE(pTagMemory == tag_address);
 
     struct E2Clb {
-        static void CL_CALLBACK SignalEv2(cl_event e, cl_int status, void *data) {
+        static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
             uint32_t *pTagMem = static_cast<uint32_t *>(data);
             *pTagMem = 4;
         }
@@ -371,7 +371,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(3u, taskCount);
 
-    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)pTagMemory);
+    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)pTagMemory);
 
     retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);

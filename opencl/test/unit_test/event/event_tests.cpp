@@ -360,7 +360,7 @@ TEST_F(EventTest, GivenRetainAndReleaseEventWhenGettingClEventReferenceCountThen
     uint32_t tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
-    ASSERT_NE(nullptr, pEvent);
+    ASSERT_NE(nullptr, pEvent); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     pEvent->retain();
     auto retVal = pEvent->getReference();
@@ -374,7 +374,7 @@ TEST_F(EventTest, GivenRetainAndReleaseEventWhenGettingClEventReferenceCountThen
     EXPECT_EQ(2u, refCount);
 
     pEvent->release();
-    retVal = pEvent->getReference();
+    retVal = pEvent->getReference(); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     EXPECT_EQ(1, retVal);
 
     delete pEvent;
@@ -384,7 +384,7 @@ TEST_F(EventTest, WhenGettingClEventContextThenCorrectValueIsReturned) {
     uint32_t tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
-    ASSERT_NE(nullptr, pEvent);
+    ASSERT_NE(nullptr, pEvent); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     cl_context context;
     size_t sizeReturned = 0;
@@ -1154,13 +1154,13 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
 
 TEST(EventCallback, WhenOverridingStatusThenEventUsesNewStatus) {
     struct ClbFuncTempStruct {
-        static void CL_CALLBACK ClbFuncT(cl_event e, cl_int status, void *retStatus) {
+        static void CL_CALLBACK clbFuncT(cl_event e, cl_int status, void *retStatus) {
             *((cl_int *)retStatus) = status;
         }
     };
 
     cl_int retStatus = 7;
-    Event::Callback clb(nullptr, ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, &retStatus);
+    Event::Callback clb(nullptr, ClbFuncTempStruct::clbFuncT, CL_COMPLETE, &retStatus);
     EXPECT_EQ(CL_COMPLETE, clb.getCallbackExecutionStatusTarget());
     clb.execute();
     EXPECT_EQ(CL_COMPLETE, retStatus);
@@ -1388,7 +1388,7 @@ TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTr
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     struct ClbFuncTempStruct {
-        static void CL_CALLBACK ClbFuncT(cl_event, cl_int, void *) {
+        static void CL_CALLBACK clbFuncT(cl_event, cl_int, void *) {
         }
     };
 
@@ -1406,38 +1406,29 @@ TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTr
 
     {
         SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_SUBMITTED, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_SUBMITTED, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
         ev.decRefInternal();
     }
 
     {
         SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_RUNNING, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
         ev.decRefInternal();
     }
 
     {
         SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
         ev.decRefInternal();
     }
 
     {
         SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_SUBMITTED, nullptr);
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
-        EXPECT_TRUE(ev.peekHasCallbacks());
-        ev.decRefInternal();
-        ev.decRefInternal();
-    }
-
-    {
-        SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_SUBMITTED, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
         ev.decRefInternal();
         ev.decRefInternal();
@@ -1445,9 +1436,18 @@ TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTr
 
     {
         SmallMockEvent ev;
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_SUBMITTED, nullptr);
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
-        ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_RUNNING, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_COMPLETE, nullptr);
+        EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
+        ev.decRefInternal();
+    }
+
+    {
+        SmallMockEvent ev;
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_SUBMITTED, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_RUNNING, nullptr);
+        ev.addCallback(ClbFuncTempStruct::clbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
         ev.decRefInternal();
         ev.decRefInternal();

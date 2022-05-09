@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
     }
 
-    std::vector<zes_firmware_handle_t> get_firmware_handles(uint32_t count) {
+    std::vector<zes_firmware_handle_t> getFirmwareHandles(uint32_t count) {
         std::vector<zes_firmware_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumFirmwares(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -113,7 +113,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareProperties
     ON_CALL(*pMockFwInterface.get(), getFwVersion(_, _))
         .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockGetFwVersion));
 
-    auto handles = get_firmware_handles(mockHandleCount);
+    auto handles = getFirmwareHandles(mockHandleCount);
 
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
@@ -131,7 +131,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenGettingOpromPropertiesThe
     ON_CALL(*pMockFwInterface.get(), getFwVersion(_, _))
         .WillByDefault(::testing::Invoke(pMockFwInterface.get(), &Mock<FirmwareInterface>::mockGetFwVersion));
 
-    auto handles = get_firmware_handles(mockHandleCount);
+    auto handles = getFirmwareHandles(mockHandleCount);
 
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[1], &properties));
@@ -175,7 +175,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSu
     ON_CALL(*pMockFwInterface.get(), flashFirmware(_, _, _))
         .WillByDefault(::testing::Return(ZE_RESULT_SUCCESS));
 
-    auto handles = get_firmware_handles(mockHandleCount);
+    auto handles = getFirmwareHandles(mockHandleCount);
     uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
     for (auto handle : handles) {
@@ -225,7 +225,7 @@ TEST_F(ZesFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhe
         .WillByDefault(::testing::Return(ZE_RESULT_ERROR_UNINITIALIZED));
 
     pSysmanDeviceImp->pFirmwareHandleContext->init();
-    auto handles = get_firmware_handles(mockHandleCount);
+    auto handles = getFirmwareHandles(mockHandleCount);
 
     zes_firmware_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));

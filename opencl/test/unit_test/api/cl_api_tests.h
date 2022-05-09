@@ -29,7 +29,7 @@ namespace NEO {
 template <uint32_t rootDeviceIndex = 1u>
 struct ApiFixture {
 
-    virtual void SetUp() {
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
@@ -54,7 +54,7 @@ struct ApiFixture {
         ASSERT_NE(nullptr, pKernel);
     }
 
-    virtual void TearDown() {
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
         pMultiDeviceKernel->release();
         pCommandQueue->release();
         pContext->release();
@@ -102,8 +102,8 @@ struct api_tests : public ApiFixture<>,
 
 struct api_fixture_using_aligned_memory_manager {
   public:
-    virtual void SetUp();
-    virtual void TearDown();
+    virtual void SetUp();    // NOLINT(readability-identifier-naming)
+    virtual void TearDown(); // NOLINT(readability-identifier-naming)
 
     cl_int retVal;
     size_t retSize;

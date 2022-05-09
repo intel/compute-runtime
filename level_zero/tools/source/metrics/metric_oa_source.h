@@ -22,7 +22,7 @@ class OaMetricSourceImp : public MetricSource {
 
   public:
     OaMetricSourceImp(const MetricDeviceContext &metricDeviceContext);
-    virtual ~OaMetricSourceImp();
+    ~OaMetricSourceImp() override;
     void enable() override;
     bool isAvailable() override;
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override;

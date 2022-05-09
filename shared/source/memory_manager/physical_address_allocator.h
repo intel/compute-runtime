@@ -64,9 +64,9 @@ class PhysicalAddressAllocatorHw : public PhysicalAddressAllocator {
         }
     }
 
-    virtual ~PhysicalAddressAllocatorHw() override {
+    ~PhysicalAddressAllocatorHw() override {
         if (bankAllocators) {
-            delete bankAllocators;
+            delete[] bankAllocators;
         }
     }
 

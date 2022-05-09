@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,9 @@ namespace NEO {
 struct HardwareInfo;
 
 struct DeviceFixture {
-    void SetUp();
-    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo);
-    void TearDown();
+    void SetUp();                                          // NOLINT(readability-identifier-naming)
+    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo); // NOLINT(readability-identifier-naming)
+    void TearDown();                                       // NOLINT(readability-identifier-naming)
 
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 

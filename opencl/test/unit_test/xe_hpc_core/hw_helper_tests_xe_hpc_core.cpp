@@ -783,7 +783,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCCSEngineWhenCallingIsCooperative
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
     ASSERT_NE(nullptr, device);
     auto clDevice = new MockClDevice{device};
-    ASSERT_NE(nullptr, clDevice);
+    ASSERT_NE(nullptr, clDevice); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     auto context = new NEO::MockContext(clDevice);
     auto commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, clDevice, 0));
 

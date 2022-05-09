@@ -33,7 +33,7 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
+BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size) {
     this->tilingMode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
     this->patIndex = patIndex;
@@ -172,8 +172,8 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     if (ret != 0) {
         const auto status = evictUnusedAllocations(true, true);
         if (status == MemoryOperationsStatus::GPU_HANG_DETECTED_DURING_OPERATION) {
-            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", GPU_HANG_DETECTED);
-            return GPU_HANG_DETECTED;
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Error! GPU hang detected in BufferObject::exec(). Returning %d\n", gpuHangDetected);
+            return gpuHangDetected;
         }
 
         ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);

@@ -26,7 +26,7 @@ TEST(QueueHelpersTest, givenCommandQueueWithoutVirtualEventWhenReleaseQueueIsCal
 
     releaseQueue(cmdQ, retVal);
 
-    EXPECT_EQ(1, cmdQ->getRefInternalCount());
+    EXPECT_EQ(1, cmdQ->getRefInternalCount()); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     cmdQ->decRefInternal();
 }
 

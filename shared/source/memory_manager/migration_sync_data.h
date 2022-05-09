@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ class MigrationSyncData : public ReferenceTrackedObject<MigrationSyncData> {
     static constexpr uint32_t locationUndefined = std::numeric_limits<uint32_t>::max();
 
     MigrationSyncData(size_t size);
-    ~MigrationSyncData();
+    ~MigrationSyncData() override;
     uint32_t getCurrentLocation() const;
     void startMigration();
     void setCurrentLocation(uint32_t rootDeviceIndex);

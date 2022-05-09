@@ -354,7 +354,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThen
     // CommandQueue has retained this event, release it
     returnEvent->release();
     pHwQ->virtualEvent = nullptr;
-    delete returnEvent;
+    delete returnEvent; // NOLINT(clang-analyzer-cplusplus.NewDelete)
     buffer->decRefInternal();
 }
 
@@ -794,14 +794,14 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
 
     struct ClbFuncTempStruct {
-        static void CL_CALLBACK ClbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
+        static void CL_CALLBACK clbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
             *((cl_int *)valueForUpdate) = 1;
         }
     };
     auto Value = 0u;
 
     auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
-    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &Value);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::clbFuncT, &Value);
 
     auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     EXPECT_GT(3u, csr.peekTaskCount());
@@ -827,14 +827,14 @@ HWTEST_F(CommandQueueHwTest, GivenMultiTileQueueWhenEventNotCompletedAndFinishIs
     *ptrOffset(tagAddress, 32) = *tagAddress;
 
     struct ClbFuncTempStruct {
-        static void CL_CALLBACK ClbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
+        static void CL_CALLBACK clbFuncT(cl_event e, cl_int execStatus, void *valueForUpdate) {
             *static_cast<cl_int *>(valueForUpdate) = 1;
         }
     };
     auto value = 0u;
 
     auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
-    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &value);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::clbFuncT, &value);
     EXPECT_GT(3u, csr.peekTaskCount());
 
     *tagAddress = CompletionStamp::notReady + 1;

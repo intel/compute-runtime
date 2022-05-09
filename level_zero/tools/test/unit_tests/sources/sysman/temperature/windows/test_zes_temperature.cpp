@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         }
     }
 
-    std::vector<zes_temp_handle_t> get_temp_handles(uint32_t count) {
+    std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {
         std::vector<zes_temp_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -99,7 +99,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTem
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     uint32_t sensorTypeIndex = 0;
     for (auto handle : handles) {
         zes_temp_properties_t properties;
@@ -118,21 +118,21 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperatu
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_MEMORY], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempMemory));
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GPU], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGPU));
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGlobal));
@@ -146,7 +146,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupporte
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     for (auto handle : handles) {
         zes_temp_config_t config = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetConfig(handle, &config));
@@ -154,7 +154,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatur
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned) {
-    auto handles = get_temp_handles(temperatureHandleComponentCount);
+    auto handles = getTempHandles(temperatureHandleComponentCount);
     for (auto handle : handles) {
         zes_temp_config_t config = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureSetConfig(handle, &config));

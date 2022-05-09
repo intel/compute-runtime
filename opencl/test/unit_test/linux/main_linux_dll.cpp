@@ -53,7 +53,7 @@ using namespace NEO;
 
 class DrmTestsFixture {
   public:
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
@@ -62,7 +62,7 @@ class DrmTestsFixture {
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
     ExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;

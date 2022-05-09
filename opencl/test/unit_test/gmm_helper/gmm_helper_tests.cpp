@@ -120,7 +120,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
 
     auto gmmRes = new Gmm(getGmmHelper(), pSysMem, maxSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
 
-    ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr);
+    ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     EXPECT_EQ(gmmRes->resourceParams.Flags.Gpu.NoRestriction, 1u);
 

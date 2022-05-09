@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,10 +75,10 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,
                                                         &this->gfxAllocation);
-    ASSERT_NE(nullptr, surface);
+    ASSERT_NE(nullptr, surface); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     Surface *duplicatedSurface = surface->duplicate();
-    ASSERT_NE(nullptr, duplicatedSurface);
+    ASSERT_NE(nullptr, duplicatedSurface); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     surface->makeResident(*csr);
 

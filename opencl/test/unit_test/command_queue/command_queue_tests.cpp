@@ -1502,7 +1502,7 @@ TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestam
     queue.timestampPacketContainer.reset(new MockTimestampPacketContainer(*context));
     EXPECT_EQ(2, context->getRefInternalCount());
     context->release();
-    EXPECT_EQ(1, context->getRefInternalCount());
+    EXPECT_EQ(1, context->getRefInternalCount()); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 }
 
 TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned) {

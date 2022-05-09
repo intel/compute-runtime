@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -928,12 +928,12 @@ extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 
 extern CL_API_ENTRY cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(
-    cl_command_queue command_queue,
+    cl_command_queue commandQueue,
     cl_kernel kernel,
-    cl_uint work_dim,
-    const size_t *global_work_offset,
-    const size_t *global_work_size,
-    size_t *suggested_local_work_size) CL_API_SUFFIX__VERSION_3_0;
+    cl_uint workDim,
+    const size_t *globalWorkOffset,
+    const size_t *globalWorkSize,
+    size_t *suggestedLocalWorkSize) CL_API_SUFFIX__VERSION_3_0;
 
 void *clHostMemAllocINTEL(
     cl_context context,
@@ -1101,5 +1101,5 @@ cl_mem CL_API_CALL clCreateImageWithProperties(
 
 cl_int CL_API_CALL clSetContextDestructorCallback(
     cl_context context,
-    void(CL_CALLBACK *pfn_notify)(cl_context /* context */, void * /* user_data */),
-    void *user_data);
+    void(CL_CALLBACK *pfnNotify)(cl_context /* context */, void * /* user_data */),
+    void *userData);

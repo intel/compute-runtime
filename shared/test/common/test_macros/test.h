@@ -281,7 +281,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
 
 #define HWTEST_TEMPLATED_F(test_fixture, test_name)     \
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
-                 ::testing::internal::GetTypeId<test_fixture>(), SetUpT, TearDownT)
+                 ::testing::internal::GetTypeId<test_fixture>(), setUpT, tearDownT)
 
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to SKLFamily

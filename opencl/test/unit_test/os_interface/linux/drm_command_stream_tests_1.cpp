@@ -231,7 +231,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucceeds) {
     //allocate command buffer manually
     char *commandBuffer = new (std::nothrow) char[1024];
-    ASSERT_NE(nullptr, commandBuffer);
+    ASSERT_NE(nullptr, commandBuffer); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     DrmAllocation commandBufferAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, commandBuffer, 1024, static_cast<osHandle>(1u), MemoryPool::MemoryNull);
     LinearStream cs(&commandBufferAllocation);
 
@@ -415,14 +415,14 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
     DrmAllocation *preemptionAllocation;
 
     template <typename GfxFamily>
-    void SetUpT() {
-        DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
+    void setUpT() {
+        DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         preemptionAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
-        DrmCommandStreamEnhancedTest::TearDownT<GfxFamily>();
+    void tearDownT() {
+        DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
     }
 };
 
@@ -600,10 +600,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
 struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
         DebugManager.flags.EnableDirectSubmission.set(1u);
         DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-        DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
+        DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();
         hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
@@ -611,9 +611,9 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
+    void tearDownT() {
         this->dbgState.reset();
-        DrmCommandStreamEnhancedTest::TearDownT<GfxFamily>();
+        DrmCommandStreamEnhancedTest::tearDownT<GfxFamily>();
     }
 
     DebugManagerStateRestore restorer;
@@ -621,12 +621,12 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
 
 struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDirectSubmissionTest {
     template <typename GfxFamily>
-    void SetUpT() {
+    void setUpT() {
         DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1u);
         DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0u);
         DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0u);
 
-        DrmCommandStreamDirectSubmissionTest::SetUpT<GfxFamily>();
+        DrmCommandStreamDirectSubmissionTest::setUpT<GfxFamily>();
         executionEnvironment->incRefInternal();
 
         osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), 0,
@@ -639,10 +639,10 @@ struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDire
     }
 
     template <typename GfxFamily>
-    void TearDownT() {
-        DrmCommandStreamDirectSubmissionTest::TearDownT<GfxFamily>();
+    void tearDownT() {
+        DrmCommandStreamDirectSubmissionTest::tearDownT<GfxFamily>();
         osContext.reset();
-        executionEnvironment->decRefInternal();
+        executionEnvironment->decRefInternal(); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     }
 
     std::unique_ptr<OsContext> osContext;
@@ -661,10 +661,10 @@ struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily,
     }
     ~MockDrmDirectSubmissionToTestDtor() override {
         if (ringStart) {
-            stopRingBuffer();
-            wait(static_cast<uint32_t>(this->currentTagData.tagValue));
+            stopRingBuffer();                                           // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+            wait(static_cast<uint32_t>(this->currentTagData.tagValue)); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
         }
-        deallocateResources();
+        deallocateResources(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
     }
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
     bool stopRingBuffer() override {

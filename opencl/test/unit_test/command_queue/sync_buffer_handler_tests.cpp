@@ -64,7 +64,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     void TearDown() override {}
 
     template <typename FamilyType>
-    void SetUpT() {
+    void setUpT() {
         SyncBufferEnqueueHandlerTest::SetUp();
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernelInternals->kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
@@ -78,7 +78,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     template <typename FamilyType>
-    void TearDownT() {
+    void tearDownT() {
         commandQueue->release();
         kernelInternals.reset();
         SyncBufferEnqueueHandlerTest::TearDown();

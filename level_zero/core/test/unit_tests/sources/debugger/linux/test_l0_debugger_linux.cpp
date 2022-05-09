@@ -24,7 +24,7 @@ namespace L0 {
 namespace ult {
 
 struct L0DebuggerLinuxFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -48,7 +48,7 @@ struct L0DebuggerLinuxFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;

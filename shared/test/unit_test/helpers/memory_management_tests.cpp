@@ -40,7 +40,7 @@ TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllo
     failingAllocation = -1;
 
     EXPECT_NE(nullptr, ptr1);
-    EXPECT_EQ(nullptr, ptr2);
+    EXPECT_EQ(nullptr, ptr2); // NOLINT(clang-analyzer-cplusplus.NewDelete)
     EXPECT_EQ(previousAllocations, currentAllocations);
     MemoryManagement::detailedAllocationLoggingActive = false;
 }
@@ -65,7 +65,7 @@ TEST_F(MemoryManagementTest, GivenFailingAllocationOneWhenCreatingAllocationsThe
     clearFailingAllocation();
 
     EXPECT_NE(nullptr, ptr1);
-    EXPECT_EQ(nullptr, ptr2);
+    EXPECT_EQ(nullptr, ptr2); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 }
 
 TEST_F(MemoryManagementTest, GivenNoFailingAllocationWhenCreatingAllocationThenMemoryIsNotLeaked) {
@@ -80,7 +80,7 @@ TEST_F(MemoryManagementTest, GivenOneFailingAllocationWhenCreatingAllocationThen
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
@@ -98,7 +98,7 @@ TEST_F(MemoryManagementTest, GivenFourEventsWhenCreatingAllocationThenMemoryIsLe
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
@@ -116,7 +116,7 @@ TEST_F(MemoryManagementTest, GivenTwoFailingAllocationsWhenCreatingAllocationThe
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex1 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
     auto leakIndex2 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex1);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex1); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
     EXPECT_EQ(ptr1, eventsAllocated[leakIndex1].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex1].size);
 
@@ -144,9 +144,9 @@ TEST_F(MemoryManagementTest, WhenPointerIsDeletedThenAllocationShouldbeVisible) 
     EXPECT_EQ(sizeBuffer, eventsAllocated[index].size);
 
     index = MemoryManagement::indexDeallocation;
-    auto ptrCopy = ptr;
+    uintptr_t ptrCopy = reinterpret_cast<uintptr_t>(ptr);
     delete[] ptr;
-    EXPECT_EQ(ptrCopy, eventsDeallocated[index].address);
+    EXPECT_EQ(ptrCopy, reinterpret_cast<uintptr_t>(eventsDeallocated[index].address));
 }
 
 #if ENABLE_ME_FOR_LEAK_TESTING

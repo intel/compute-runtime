@@ -72,7 +72,7 @@ TEST_F(SoftwareTagsManagerTests, whenSWTagsMangerIsInitializedThenHeapAllocation
     auto memoryMgr = pDevice->getMemoryManager();
     SWTagBXML bxml;
     BXMLHeapInfo bxmlInfo((sizeof(BXMLHeapInfo) + bxml.str.size() + 1) / sizeof(uint32_t));
-    SWTagHeapInfo tagInfo(SWTagsManager::MAX_TAG_HEAP_SIZE / sizeof(uint32_t));
+    SWTagHeapInfo tagInfo(SWTagsManager::maxTagHeapSize / sizeof(uint32_t));
     auto bxmlHeap = tagsManager->getBXMLHeapAllocation();
     auto tagHeap = tagsManager->getSWTagHeapAllocation();
 
@@ -160,17 +160,17 @@ HWTEST_F(SoftwareTagsManagerTests, givenSoftwareManagerWithMaxTagsReachedWhenTag
 
     initializeTestCmdStream<FamilyType>();
 
-    EXPECT_TRUE(tagsManager->MAX_TAG_HEAP_SIZE > (tagsManager->MAX_TAG_COUNT + 1) * sizeof(TestTag));
+    EXPECT_TRUE(tagsManager->maxTagHeapSize > (tagsManager->maxTagCount + 1) * sizeof(TestTag));
 
-    for (unsigned int i = 0; i <= tagsManager->MAX_TAG_COUNT; ++i) {
+    for (unsigned int i = 0; i <= tagsManager->maxTagCount; ++i) {
         tagsManager->insertTag<FamilyType, TestTag>(*testCmdStream.get(), *pDevice);
     }
 
-    EXPECT_EQ(testCmdStream->getUsed(), tagsManager->MAX_TAG_COUNT * 2 * sizeof(MI_NOOP));
+    EXPECT_EQ(testCmdStream->getUsed(), tagsManager->maxTagCount * 2 * sizeof(MI_NOOP));
 
     tagsManager->insertTag<FamilyType, TestTag>(*testCmdStream.get(), *pDevice);
 
-    EXPECT_EQ(testCmdStream->getUsed(), tagsManager->MAX_TAG_COUNT * 2 * sizeof(MI_NOOP));
+    EXPECT_EQ(testCmdStream->getUsed(), tagsManager->maxTagCount * 2 * sizeof(MI_NOOP));
 
     freeTestCmdStream();
 }
@@ -183,7 +183,7 @@ HWTEST_F(SoftwareTagsManagerTests, givenSoftwareManagerWithMaxHeapReachedWhenTag
     size_t prevHeapOffset = tagsManager->getCurrentHeapOffset();
 
     uint32_t i = 0;
-    while (tagsManager->getCurrentHeapOffset() + sizeof(VeryLargeTag) <= NEO::SWTagsManager::MAX_TAG_HEAP_SIZE) {
+    while (tagsManager->getCurrentHeapOffset() + sizeof(VeryLargeTag) <= NEO::SWTagsManager::maxTagHeapSize) {
         tagsManager->insertTag<FamilyType, VeryLargeTag>(*testCmdStream.get(), *pDevice);
         i++;
     }

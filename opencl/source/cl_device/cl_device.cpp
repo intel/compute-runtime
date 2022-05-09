@@ -264,8 +264,8 @@ Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(platformId);
 }
 bool ClDevice::isPciBusInfoValid() const {
-    return deviceInfo.pciBusInfo.pci_domain != PhysicalDevicePciBusInfo::InvalidValue && deviceInfo.pciBusInfo.pci_bus != PhysicalDevicePciBusInfo::InvalidValue &&
-           deviceInfo.pciBusInfo.pci_device != PhysicalDevicePciBusInfo::InvalidValue && deviceInfo.pciBusInfo.pci_function != PhysicalDevicePciBusInfo::InvalidValue;
+    return deviceInfo.pciBusInfo.pci_domain != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_bus != PhysicalDevicePciBusInfo::invalidValue &&
+           deviceInfo.pciBusInfo.pci_device != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_function != PhysicalDevicePciBusInfo::invalidValue;
 }
 
 } // namespace NEO

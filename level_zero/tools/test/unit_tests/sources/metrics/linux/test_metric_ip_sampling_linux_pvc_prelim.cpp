@@ -46,7 +46,7 @@ class DrmPrelimMock : public DrmMock {
         rootDeviceEnvironment.setHwInfo(customHwInfo.get());
         setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
         if (invokeQueryEngineInfo) {
-            queryEngineInfo();
+            queryEngineInfo(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
         }
     }
 

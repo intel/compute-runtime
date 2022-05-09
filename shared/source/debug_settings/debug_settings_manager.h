@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,13 +74,13 @@ struct DebugVarBase {
     T value;
 };
 
-struct DebugVariables {
+struct DebugVariables { // NOLINT(clang-analyzer-optin.performance.Padding)
     struct DEBUGGER_LOG_BITMASK {
-        constexpr static int32_t LOG_INFO{1};
-        constexpr static int32_t LOG_ERROR{1 << 1};
-        constexpr static int32_t LOG_THREADS{1 << 2};
-        constexpr static int32_t LOG_MEM{1 << 3};
-        constexpr static int32_t DUMP_ELF{1 << 10};
+        constexpr static int32_t LOG_INFO{1};         // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_ERROR{1 << 1};   // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_THREADS{1 << 2}; // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_MEM{1 << 3};     // NOLINT(readability-identifier-naming)
+        constexpr static int32_t DUMP_ELF{1 << 10};   // NOLINT(readability-identifier-naming)
     };
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \

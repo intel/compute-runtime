@@ -821,7 +821,7 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
 }
 
 PhysicalDevicePciBusInfo Drm::getPciBusInfo() const {
-    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+    PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
 
     if (adapterBDF.Data != std::numeric_limits<uint32_t>::max()) {
         pciBusInfo.pciDomain = this->pciDomain;

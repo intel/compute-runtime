@@ -67,7 +67,7 @@ class DrmMock : public Drm {
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
 
-    ~DrmMock() {
+    ~DrmMock() override {
         if (expectIoctlCallsOnDestruction) {
             EXPECT_EQ(expectedIoctlCallsOnDestruction, ioctlCallsCount);
         }

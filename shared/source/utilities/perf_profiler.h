@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ class PerfProfiler {
     static PerfProfiler *objects[PerfProfiler::objectsNumber];
     Timer ApiTimer;
     Timer SystemTimer;
-    unsigned long long totalSystemTime;
+    unsigned long long totalSystemTime = 0;
     std::unique_ptr<std::ostream> logFile;
     std::unique_ptr<std::ostream> sysLogFile;
     std::vector<SystemLog> systemLogs;

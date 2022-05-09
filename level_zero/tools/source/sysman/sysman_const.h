@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ struct steadyClock {
     typedef duration::rep rep;
     typedef duration::period period;
     typedef std::chrono::time_point<steadyClock> time_point;
-    static constexpr bool is_steady = true;
     static time_point now() noexcept {
         static auto epoch = std::chrono::steady_clock::now();
         return time_point(std::chrono::duration_cast<duration>(std::chrono::steady_clock::now() - epoch));

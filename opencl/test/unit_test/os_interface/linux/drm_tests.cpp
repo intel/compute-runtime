@@ -88,10 +88,10 @@ TEST(DrmTest, GivenInvalidPciPathWhenGettingAdapterBdfThenInvalidPciInfoIsReturn
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), adapterBdf.Data);
 
     auto pciInfo = drm.getPciBusInfo();
-    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciDomain);
-    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciBus);
-    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciDevice);
-    EXPECT_EQ(PhysicalDevicePciBusInfo::InvalidValue, pciInfo.pciFunction);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::invalidValue, pciInfo.pciDomain);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::invalidValue, pciInfo.pciBus);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::invalidValue, pciInfo.pciDevice);
+    EXPECT_EQ(PhysicalDevicePciBusInfo::invalidValue, pciInfo.pciFunction);
 }
 
 TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {

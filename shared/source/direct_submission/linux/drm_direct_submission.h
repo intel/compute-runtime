@@ -18,7 +18,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     DrmDirectSubmission(const DirectSubmissionInputParams &inputParams);
 
-    ~DrmDirectSubmission();
+    ~DrmDirectSubmission() override;
 
     uint32_t *getCompletionValuePointer() override {
         if (this->completionFenceAllocation) {

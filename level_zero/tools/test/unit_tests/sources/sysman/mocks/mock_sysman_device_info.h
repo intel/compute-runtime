@@ -21,7 +21,7 @@ namespace ult {
 
 class SysmanMultiDeviceInfoFixture : public ::testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
@@ -39,7 +39,7 @@ class SysmanMultiDeviceInfoFixture : public ::testing::Test {
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
     }
-    void TearDown() {}
+    void TearDown() override {}
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;

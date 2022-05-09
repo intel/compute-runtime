@@ -30,8 +30,8 @@ struct MulticontextAubFixture {
         All,    // RCS + CCS0-3
     };
 
-    void SetUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression);
-    void TearDown();
+    void SetUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression); // NOLINT(readability-identifier-naming)
+    void TearDown();                                                                                             // NOLINT(readability-identifier-naming)
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {

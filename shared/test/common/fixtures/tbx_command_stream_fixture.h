@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ class MemoryManager;
 
 class TbxCommandStreamFixture {
   public:
-    void SetUp(MockDevice *pDevice);
-    void TearDown();
+    void SetUp(MockDevice *pDevice); // NOLINT(readability-identifier-naming)
+    void TearDown();                 // NOLINT(readability-identifier-naming)
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
 

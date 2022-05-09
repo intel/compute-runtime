@@ -691,7 +691,7 @@ bool Device::getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
 }
 
 bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
-    if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::InvalidValue) {
+    if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
 
         uuid.fill(0);
         memcpy_s(&uuid[0], 2, &pciBusInfo.pciDomain, 2);

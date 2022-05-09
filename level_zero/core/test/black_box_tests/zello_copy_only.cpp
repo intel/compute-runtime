@@ -30,7 +30,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup < 0) {
-        std::cout << "No Copy queue group found. Skipping test run\n";
+        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
     }
@@ -105,7 +105,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup < 0) {
-        std::cout << "No Copy queue group found. Skipping test run\n";
+        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
     }
@@ -310,7 +310,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup < 0) {
-        std::cout << "No Copy queue group found. Skipping test run\n";
+        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct OsSysman;
 
 class Frequency : _zes_freq_handle_t {
   public:
-    virtual ~Frequency() {}
+    ~Frequency() override {}
 
     virtual ze_result_t frequencyGetProperties(zes_freq_properties_t *pProperties) = 0;
     virtual ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) = 0;

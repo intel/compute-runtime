@@ -23,7 +23,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
 
   public:
     WddmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield);
-    virtual ~WddmCommandStreamReceiver();
+    ~WddmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;

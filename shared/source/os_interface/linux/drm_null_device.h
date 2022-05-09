@@ -39,9 +39,9 @@ class DrmNullDevice : public Drm {
         }
     }
 
-    DrmNullDevice(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::move(hwDeviceId), rootDeviceEnvironment), gpuTimestamp(0){};
+    DrmNullDevice(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::move(hwDeviceId), rootDeviceEnvironment){};
 
   protected:
-    uint64_t gpuTimestamp;
+    uint64_t gpuTimestamp = 0;
 };
 } // namespace NEO

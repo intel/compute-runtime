@@ -45,7 +45,7 @@ class MockOclocArgHelper : public OclocArgHelper {
     MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
                                              filesMap(filesMap){};
 
-    ~MockOclocArgHelper() {
+    ~MockOclocArgHelper() override {
         cleanUpOutput();
     }
 

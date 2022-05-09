@@ -126,10 +126,10 @@ TEST_F(DeviceTest, WhenRetainingThenReferenceIsOneAndApiIsUsed) {
 
 TEST_F(DeviceTest, givenNoPciBusInfoThenIsPciBusInfoValidReturnsFalse) {
     PhysicalDevicePciBusInfo invalidPciBusInfoList[] = {
-        PhysicalDevicePciBusInfo(0, 1, 2, PhysicalDevicePciBusInfo::InvalidValue),
-        PhysicalDevicePciBusInfo(0, 1, PhysicalDevicePciBusInfo::InvalidValue, 3),
-        PhysicalDevicePciBusInfo(0, PhysicalDevicePciBusInfo::InvalidValue, 2, 3),
-        PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, 1, 2, 3)};
+        PhysicalDevicePciBusInfo(0, 1, 2, PhysicalDevicePciBusInfo::invalidValue),
+        PhysicalDevicePciBusInfo(0, 1, PhysicalDevicePciBusInfo::invalidValue, 3),
+        PhysicalDevicePciBusInfo(0, PhysicalDevicePciBusInfo::invalidValue, 2, 3),
+        PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, 1, 2, 3)};
 
     for (auto pciBusInfo : invalidPciBusInfoList) {
         auto driverInfo = new DriverInfoMock();

@@ -71,7 +71,7 @@ struct BlitEnqueueTests : public ::testing::Test {
     };
 
     template <typename FamilyType>
-    void SetUpT() {
+    void setUpT() {
         if (is32bit) {
             GTEST_SKIP();
         }
@@ -111,7 +111,7 @@ struct BlitEnqueueTests : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void TearDownT() {}
+    void tearDownT() {}
 
     template <size_t N>
     void setMockKernelArgs(std::array<Buffer *, N> buffers) {
@@ -1284,12 +1284,12 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
     };
 
     template <typename T>
-    void SetUpT() {
+    void setUpT() {
         auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + defaultHwInfo->platform.eRenderCoreFamily];
         variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
         *csrCreateFcn = MyUltCsr<T>::create;
 
-        BlitEnqueueTests<1>::SetUpT<T>();
+        BlitEnqueueTests<1>::setUpT<T>();
     }
 
     std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;

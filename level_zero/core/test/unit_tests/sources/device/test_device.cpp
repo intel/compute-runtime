@@ -1146,7 +1146,7 @@ TEST_F(DeviceTest, givenValidPciExtPropertiesWhenPciPropertiesIsCalledThenSucces
 }
 
 TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitializedErrorIsReturned) {
-    constexpr uint32_t INVALID = NEO::PhysicalDevicePciBusInfo::InvalidValue;
+    constexpr uint32_t INVALID = NEO::PhysicalDevicePciBusInfo::invalidValue;
     auto deviceImp = static_cast<L0::DeviceImp *>(device);
     ze_pci_ext_properties_t pciProperties = {};
     std::vector<NEO::PhysicalDevicePciBusInfo> pciBusInfos;

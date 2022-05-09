@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -412,7 +412,7 @@ struct EnqueueReadBufferHelper {
                                     const cl_event *eventWaitList = Traits::eventWaitList,
                                     cl_event *event = Traits::event) {
 
-        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size;
+        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size; // NOLINT(clang-analyzer-core.CallAndMessage)
 
         cl_int retVal = pCmdQ->enqueueReadBuffer(buffer,
                                                  blockingRead,
@@ -518,7 +518,7 @@ struct EnqueueWriteBufferHelper {
                                      const cl_event *eventWaitList = Traits::eventWaitList,
                                      cl_event *event = Traits::event) {
 
-        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size;
+        size = size == static_cast<size_t>(-1) ? buffer->getSize() : size; // NOLINT(clang-analyzer-core.CallAndMessage)
 
         cl_int retVal = pCmdQ->enqueueWriteBuffer(buffer,
                                                   blockingWrite,

@@ -20,8 +20,8 @@ using namespace NEO;
 
 class MemoryAllocatorMultiDeviceSystemSpecificFixture {
   public:
-    void SetUp(ExecutionEnvironment &executionEnvironment);
-    void TearDown(ExecutionEnvironment &executionEnvironment);
+    void SetUp(ExecutionEnvironment &executionEnvironment);    // NOLINT(readability-identifier-naming)
+    void TearDown(ExecutionEnvironment &executionEnvironment); // NOLINT(readability-identifier-naming)
 
     std::unique_ptr<Gmm> gmm;
 };

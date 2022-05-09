@@ -30,7 +30,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
             this->downloadAllocationTbxMock(gfxAllocation);
         };
     }
-    ~MockTbxCsr() {
+    ~MockTbxCsr() override {
         this->downloadAllocationImpl = nullptr;
     }
 
@@ -89,7 +89,7 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
             this->downloadAllocationTbxMock(gfxAllocation);
         };
     }
-    ~MockTbxCsrRegisterDownloadedAllocations() {
+    ~MockTbxCsrRegisterDownloadedAllocations() override {
         this->downloadAllocationImpl = nullptr;
     }
     void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {

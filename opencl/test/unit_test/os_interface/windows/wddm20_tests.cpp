@@ -1748,8 +1748,8 @@ TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsInvalidAdapterBDF
 
     auto pciBusInfo = wddm->getPciBusInfo();
 
-    EXPECT_EQ(pciBusInfo.pciDomain, PhysicalDevicePciBusInfo::InvalidValue);
-    EXPECT_EQ(pciBusInfo.pciBus, PhysicalDevicePciBusInfo::InvalidValue);
-    EXPECT_EQ(pciBusInfo.pciDevice, PhysicalDevicePciBusInfo::InvalidValue);
-    EXPECT_EQ(pciBusInfo.pciFunction, PhysicalDevicePciBusInfo::InvalidValue);
+    EXPECT_EQ(pciBusInfo.pciDomain, PhysicalDevicePciBusInfo::invalidValue);
+    EXPECT_EQ(pciBusInfo.pciBus, PhysicalDevicePciBusInfo::invalidValue);
+    EXPECT_EQ(pciBusInfo.pciDevice, PhysicalDevicePciBusInfo::invalidValue);
+    EXPECT_EQ(pciBusInfo.pciFunction, PhysicalDevicePciBusInfo::invalidValue);
 }

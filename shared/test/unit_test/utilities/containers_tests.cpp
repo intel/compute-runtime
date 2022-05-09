@@ -790,7 +790,7 @@ void iDListTestDetachSequence() {
 
     ASSERT_EQ(nodes[4], nodes[0]->next);
     ASSERT_NE(nullptr, nodes[4]);
-    ASSERT_EQ(nodes[0], nodes[4]->prev); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+    ASSERT_EQ(nodes[0], nodes[4]->prev);
     ASSERT_EQ(nodes[0], list.peekHead());
     ASSERT_EQ(nodes[9], list.peekTail());
 

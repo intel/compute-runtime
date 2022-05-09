@@ -233,7 +233,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsRe
         ClbHelper(bool &callbackWasCalled)
             : callbackWasCalled(callbackWasCalled) {}
 
-        static void CL_CALLBACK Clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
+        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
             ClbHelper *data = (ClbHelper *)usrData;
             data->callbackWasCalled = true;
         }
@@ -244,7 +244,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackThenSuccessIsRe
     retVal = this->pCmdQ->enqueueSVMFree(
         1,              // cl_uint num_svm_pointers
         svmPtrs,        // void *svm_pointers[]
-        ClbHelper::Clb, // (CL_CALLBACK  *pfn_free_func) (cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
+        ClbHelper::clb, // (CL_CALLBACK  *pfn_free_func) (cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
         &userData,      // void *user_data
         0,              // cl_uint num_events_in_wait_list
         nullptr,        // const cl_event *event_wait_list
@@ -263,7 +263,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuc
         ClbHelper(bool &callbackWasCalled)
             : callbackWasCalled(callbackWasCalled) {}
 
-        static void CL_CALLBACK Clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
+        static void CL_CALLBACK clb(cl_command_queue queue, cl_uint numSvmPointers, void *svmPointers[], void *usrData) {
             ClbHelper *data = (ClbHelper *)usrData;
             data->callbackWasCalled = true;
         }
@@ -275,7 +275,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenFreeingSvmWithCallbackAndEventThenSuc
     retVal = this->pCmdQ->enqueueSVMFree(
         1,              // cl_uint num_svm_pointers
         svmPtrs,        // void *svm_pointers[]
-        ClbHelper::Clb, // (CL_CALLBACK  *pfn_free_func) (cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
+        ClbHelper::clb, // (CL_CALLBACK  *pfn_free_func) (cl_command_queue queue, cl_uint num_svm_pointers, void *svm_pointers[])
         &userData,      // void *user_data
         0,              // cl_uint num_events_in_wait_list
         nullptr,        // const cl_event *event_wait_list

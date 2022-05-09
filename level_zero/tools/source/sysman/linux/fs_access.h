@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,14 +105,14 @@ class SysfsAccess : protected FsAccess {
     ze_result_t write(const std::string file, std::vector<std::string> val);
 
     MOCKABLE_VIRTUAL ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list);
-    MOCKABLE_VIRTUAL ze_result_t readSymLink(const std::string path, std::string &buf) override;
+    ze_result_t readSymLink(const std::string path, std::string &buf) override;
     ze_result_t getRealPath(const std::string path, std::string &buf) override;
     MOCKABLE_VIRTUAL ze_result_t bindDevice(const std::string device);
     MOCKABLE_VIRTUAL ze_result_t unbindDevice(const std::string device);
-    MOCKABLE_VIRTUAL bool fileExists(const std::string file) override;
+    bool fileExists(const std::string file) override;
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
-    MOCKABLE_VIRTUAL bool directoryExists(const std::string path) override;
-    MOCKABLE_VIRTUAL bool isRootUser() override;
+    bool directoryExists(const std::string path) override;
+    bool isRootUser() override;
 
   private:
     SysfsAccess(const std::string file);

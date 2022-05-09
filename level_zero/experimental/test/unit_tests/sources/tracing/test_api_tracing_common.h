@@ -40,14 +40,14 @@ class ZeAPITracingCoreTestsFixture {
     ZeAPITracingCoreTestsFixture(){};
 
   protected:
-    virtual void SetUp() { //NOLINT
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
         driver_ddiTable.enableTracing = true;
         myThreadPrivateTracerData.onList = false;
         myThreadPrivateTracerData.isInitialized = false;
         myThreadPrivateTracerData.testAndSetThreadTracerDataInitializedAndOnList();
     }
 
-    virtual void TearDown() { //NOLINT
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
         myThreadPrivateTracerData.removeThreadTracerDataFromList();
         driver_ddiTable.enableTracing = false;
     }
@@ -56,11 +56,11 @@ class ZeAPITracingCoreTestsFixture {
 class zeAPITracingCoreTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
 
   protected:
-    void SetUp() override { //NOLINT
+    void SetUp() override {
         ZeAPITracingCoreTestsFixture::SetUp();
     }
 
-    void TearDown() override { //NOLINT
+    void TearDown() override {
         ZeAPITracingCoreTestsFixture::TearDown();
     }
 };
@@ -75,7 +75,7 @@ class zeAPITracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     int defaultUserData = 0;
     void *userData;
 
-    void SetUp() override { //NOLINT
+    void SetUp() override {
         ze_result_t result;
 
         ZeAPITracingCoreTestsFixture::SetUp();
@@ -86,7 +86,7 @@ class zeAPITracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
         EXPECT_NE(nullptr, apiTracerHandle);
     }
 
-    void TearDown() override { //NOLINT
+    void TearDown() override {
         ze_result_t result;
 
         result = zetTracerExpSetEnabled(apiTracerHandle, false);
@@ -135,7 +135,7 @@ class zeAPITracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
     int defaultUserData3 = 31;
     void *pUserData3;
 
-    void SetUp() override { //NOLINT
+    void SetUp() override {
         ze_result_t result;
 
         ZeAPITracingCoreTestsFixture::SetUp();
@@ -165,7 +165,7 @@ class zeAPITracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFi
         EXPECT_NE(nullptr, apiTracerHandle3);
     }
 
-    void TearDown() override { //NOLINT
+    void TearDown() override {
         ze_result_t result;
         result = zetTracerExpSetEnabled(apiTracerHandle0, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

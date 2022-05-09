@@ -414,10 +414,10 @@ ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties)
     }
     auto pciBusInfo = driverInfo->getPciBusInfo();
     auto isPciValid = [&](auto pci) -> bool {
-        return (pci.pciDomain != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
-                pci.pciBus != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
-                pci.pciDevice != NEO::PhysicalDevicePciBusInfo::InvalidValue &&
-                pci.pciFunction != NEO::PhysicalDevicePciBusInfo::InvalidValue);
+        return (pci.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue &&
+                pci.pciBus != NEO::PhysicalDevicePciBusInfo::invalidValue &&
+                pci.pciDevice != NEO::PhysicalDevicePciBusInfo::invalidValue &&
+                pci.pciFunction != NEO::PhysicalDevicePciBusInfo::invalidValue);
     };
     if (!isPciValid(pciBusInfo)) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

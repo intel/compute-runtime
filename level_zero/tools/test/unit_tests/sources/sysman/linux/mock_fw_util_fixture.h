@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct MockLinuxFwUtilInterface : public LinuxFwUtilInterface {
 class LinuxOsLibrary : public OsLibrary {};
 struct MockOsLibrary : public LinuxOsLibrary {
   public:
-    virtual ~MockOsLibrary() = default;
+    ~MockOsLibrary() override = default;
     void *getProcAddress(const std::string &procName) override {
         return nullptr;
     }

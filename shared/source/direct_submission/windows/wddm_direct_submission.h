@@ -21,7 +21,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
     WddmDirectSubmission(const DirectSubmissionInputParams &inputParams);
 
-    ~WddmDirectSubmission();
+    ~WddmDirectSubmission() override;
 
   protected:
     bool allocateOsResources() override;

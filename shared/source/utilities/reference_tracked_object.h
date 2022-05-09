@@ -98,7 +98,7 @@ class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType 
     }
 
     static void doDelete(DataType *ptr) {
-        delete ptr;
+        delete ptr; // NOLINT(clang-analyzer-cplusplus.NewDelete)
     }
 
     static void dontDelete(DataType *ptr) {

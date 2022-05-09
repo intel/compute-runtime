@@ -377,7 +377,7 @@ class UnknownDriverModel : public DriverModel {
     void setGmmInputArgs(void *args) override {}
     uint32_t getDeviceHandle() const override { return 0u; }
     PhysicalDevicePciBusInfo getPciBusInfo() const override {
-        PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue, PhysicalDevicePciBusInfo::InvalidValue);
+        PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
         return pciBusInfo;
     }
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }

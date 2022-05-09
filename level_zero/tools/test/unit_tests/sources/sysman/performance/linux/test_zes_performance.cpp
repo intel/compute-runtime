@@ -43,12 +43,6 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
         }
         SysmanMultiDeviceFixture::TearDown();
     }
-
-    std::vector<zes_perf_handle_t> get_perf_handles(uint32_t count) {
-        std::vector<zes_perf_handle_t> handles(count, nullptr);
-        EXPECT_EQ(zesDeviceEnumPerformanceFactorDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-        return handles;
-    }
 };
 
 TEST_F(ZesPerformanceFixture, GivenValidSysmanHandleWhenRetrievingPerfThenZeroHandlesInReturn) {

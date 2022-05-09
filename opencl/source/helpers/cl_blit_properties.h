@@ -32,7 +32,7 @@ struct ClBlitProperties {
             GraphicsAllocation *srcAllocation = nullptr;
 
             if (!builtinOpParams.dstSvmAlloc) {
-                dstOffset += builtinOpParams.dstMemObj->getOffset();
+                dstOffset += builtinOpParams.dstMemObj->getOffset(); // NOLINT(clang-analyzer-core.CallAndMessage)
                 srcOffset += builtinOpParams.srcMemObj->getOffset();
                 dstAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex);
                 srcAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation(rootDeviceIndex);

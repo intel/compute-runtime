@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace L0 {
 namespace ult {
 
 struct L0DebuggerFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         NEO::MockCompilerEnableGuard mock(true);
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
@@ -51,7 +51,7 @@ struct L0DebuggerFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;

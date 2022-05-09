@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ TEST(ContextMultiDevice, GivenMultipleDevicesWhenCreatingContextThenContextIsCre
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)},
         new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)}};
     auto numDevices = static_cast<cl_uint>(arrayCount(devices));
-    ASSERT_EQ(8u, numDevices);
+    ASSERT_EQ(8u, numDevices); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     auto retVal = CL_SUCCESS;
     auto pContext = Context::create<Context>(nullptr, ClDeviceVector(devices, numDevices),

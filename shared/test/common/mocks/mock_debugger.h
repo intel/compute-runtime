@@ -14,7 +14,7 @@ class CommandContainer;
 class MockDebugger : public Debugger {
   public:
     MockDebugger() = default;
-    ~MockDebugger() = default;
+    ~MockDebugger() override = default;
     void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba) override{};
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override {
         return 0;

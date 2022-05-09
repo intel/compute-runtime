@@ -84,7 +84,7 @@ class SingleDeviceSingleQueueExecutionCtxt : public ExecutionContext {
 
   public:
     SingleDeviceSingleQueueExecutionCtxt(uint32_t deviceIndex, int32_t subDeviceIndex = -1) { initialize(deviceIndex, subDeviceIndex); }
-    virtual ~SingleDeviceSingleQueueExecutionCtxt() { finalize(); }
+    ~SingleDeviceSingleQueueExecutionCtxt() override { finalize(); }
     bool run() override;
 
     ze_driver_handle_t getDriverHandle(uint32_t index) override { return driverHandle; }
@@ -110,7 +110,7 @@ class SingleDeviceSingleQueueExecutionCtxt : public ExecutionContext {
 class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
   public:
     AppendMemoryCopyFromHeapToDeviceAndBackToHost(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(); }
-    virtual ~AppendMemoryCopyFromHeapToDeviceAndBackToHost() { finalize(); };
+    ~AppendMemoryCopyFromHeapToDeviceAndBackToHost() override { finalize(); };
     bool appendCommands() override;
     bool validate() override;
 
@@ -128,7 +128,7 @@ class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
 class CopyBufferToBuffer : public Workload {
   public:
     CopyBufferToBuffer(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(); }
-    virtual ~CopyBufferToBuffer() { finalize(); };
+    ~CopyBufferToBuffer() override { finalize(); };
     bool appendCommands() override;
     bool validate() override;
 
@@ -151,14 +151,14 @@ class SingleMetricCollector : public Collector {
     SingleMetricCollector(ExecutionContext *executionCtxt,
                           const char *metricGroupName,
                           const zet_metric_group_sampling_type_flag_t samplingType);
-    virtual ~SingleMetricCollector() = default;
+    ~SingleMetricCollector() override = default;
 
-    virtual bool prefixCommands() override = 0;
-    virtual bool suffixCommands() override = 0;
-    virtual bool isDataAvailable() override = 0;
-    virtual bool start() override = 0;
-    virtual bool stop() override = 0;
-    virtual void showResults() override = 0;
+    bool prefixCommands() override = 0;
+    bool suffixCommands() override = 0;
+    bool isDataAvailable() override = 0;
+    bool start() override = 0;
+    bool stop() override = 0;
+    void showResults() override = 0;
 
     zet_metric_group_handle_t metricGroup = {};
     zet_metric_group_sampling_type_flag_t samplingType = {};
@@ -170,7 +170,7 @@ class SingleMetricStreamerCollector : public SingleMetricCollector {
     SingleMetricStreamerCollector(ExecutionContext *executionCtxt,
                                   const char *metricGroupName);
 
-    virtual ~SingleMetricStreamerCollector() = default;
+    ~SingleMetricStreamerCollector() override = default;
 
     bool prefixCommands() override;
     bool suffixCommands() override;
@@ -183,7 +183,7 @@ class SingleMetricStreamerCollector : public SingleMetricCollector {
     void setSamplingPeriod(uint32_t period) { samplingPeriod = period; }
     void setMaxRequestRawReportCount(uint32_t reportCount) { maxRequestRawReportCount = reportCount; }
 
-    virtual void showResults() override;
+    void showResults() override;
 
   protected:
     zet_metric_streamer_handle_t metricStreamer = {};
@@ -200,7 +200,7 @@ class SingleMetricQueryCollector : public SingleMetricCollector {
     SingleMetricQueryCollector(ExecutionContext *executionCtxt,
                                const char *metricGroupName);
 
-    virtual ~SingleMetricQueryCollector() = default;
+    ~SingleMetricQueryCollector() override = default;
 
     bool prefixCommands() override;
     bool suffixCommands() override;

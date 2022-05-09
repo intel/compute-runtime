@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
-    std::vector<zes_mem_handle_t> get_memory_handles(uint32_t count) {
+    std::vector<zes_mem_handle_t> getMemoryHandles(uint32_t count) {
         std::vector<zes_mem_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumMemoryModules(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
@@ -180,7 +180,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingPropertiesWithLocalMemoryThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_properties_t properties;
@@ -201,7 +201,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingPropertiesWit
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_state_t state;
@@ -221,7 +221,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoFail
     ON_CALL(*pDrm, queryMemoryInfo())
         .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFalse));
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_state_t state;
@@ -235,7 +235,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoAndI
     ON_CALL(*pDrm, queryMemoryInfo())
         .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFakeTrue));
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_state_t state;
@@ -246,7 +246,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoAndI
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthThenZeResultErrorUnsupportedFeatureIsReturned) {
     setLocalSupportedAndReinit(true);
 
-    auto handles = get_memory_handles(memoryHandleComponentCount);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_bandwidth_t bandwidth;

@@ -413,7 +413,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
         if (debugVars.internalOptionsExpected) {
-            if (internalOptions->GetSizeRaw() < 1 || internalOptions->GetMemoryRaw() == nullptr) {
+            if (internalOptions->GetSizeRaw() < 1 || internalOptions->GetMemoryRaw() == nullptr) { // NOLINT(clang-analyzer-core.CallAndMessage)
                 if (out) {
                     out->setError();
                 }

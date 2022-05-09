@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool isCompatibleDriverStore(std::string &&deviceRegistryPath);
 class DriverInfoWindows : public DriverInfo {
   public:
     DriverInfoWindows(const std::string &path, const PhysicalDevicePciBusInfo &pciBusInfo);
-    ~DriverInfoWindows();
+    ~DriverInfoWindows() override;
     std::string getDeviceName(std::string defaultName) override;
     std::string getVersion(std::string defaultVersion) override;
     bool isCompatibleDriverStore() const;

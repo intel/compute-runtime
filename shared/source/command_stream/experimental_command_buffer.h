@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,12 +54,12 @@ class ExperimentalCommandBuffer {
     std::unique_ptr<LinearStream> currentStream;
 
     GraphicsAllocation *timestamps;
-    uint32_t timestampsOffset;
+    uint32_t timestampsOffset = 0;
 
     GraphicsAllocation *experimentalAllocation;
-    uint32_t experimentalAllocationOffset;
+    uint32_t experimentalAllocationOffset = 0;
 
-    bool defaultPrint;
+    bool defaultPrint = true;
     double timerResolution;
 };
 

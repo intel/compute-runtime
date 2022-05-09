@@ -63,7 +63,7 @@ struct BcsBufferTests : public ::testing::Test {
     };
 
     template <typename FamilyType>
-    void SetUpT() {
+    void setUpT() {
         if (is32bit) {
             GTEST_SKIP();
         }
@@ -86,7 +86,7 @@ struct BcsBufferTests : public ::testing::Test {
     }
 
     template <typename FamilyType>
-    void TearDownT() {}
+    void tearDownT() {}
 
     template <typename FamilyType>
     void waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType> &commandQueue);
@@ -1181,12 +1181,12 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSV
 struct BcsSvmTests : public BcsBufferTests {
 
     template <typename FamilyType>
-    void SetUpT() {
+    void setUpT() {
         if (is32bit) {
             GTEST_SKIP();
         }
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        BcsBufferTests::SetUpT<FamilyType>();
+        BcsBufferTests::setUpT<FamilyType>();
         if (IsSkipped()) {
             GTEST_SKIP();
         }
@@ -1209,11 +1209,11 @@ struct BcsSvmTests : public BcsBufferTests {
     }
 
     template <typename FamilyType>
-    void TearDownT() {
+    void tearDownT() {
         if (IsSkipped()) {
             return;
         }
-        BcsBufferTests::TearDownT<FamilyType>();
+        BcsBufferTests::tearDownT<FamilyType>();
 
         clMemFreeINTEL(bcsMockContext.get(), sharedMemAlloc);
         clMemFreeINTEL(bcsMockContext.get(), hostMemAlloc);

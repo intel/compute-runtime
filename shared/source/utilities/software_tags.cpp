@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ void KernelNameTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::KernelName, sizeof(KernelNameTag), "KERNEL_NAME");
 
-    unsigned int stringDWORDSize = KENEL_NAME_STR_LENGTH / sizeof(uint32_t);
+    unsigned int stringDWORDSize = kenelNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"KernelName\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Name of the kernel.</Description>\n";
@@ -118,7 +118,7 @@ void PipeControlReasonTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::PipeControlReason, sizeof(PipeControlReasonTag), "PIPE_CONTROL_REASON");
 
-    unsigned int stringDWORDSize = REASON_STR_LENGTH / sizeof(uint32_t);
+    unsigned int stringDWORDSize = reasonStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"PipeControlReason\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Reason of the PIPE_CONTROL.</Description>\n";
@@ -134,7 +134,7 @@ void CallNameBeginTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::CallNameBegin, sizeof(CallNameBeginTag), "ZE_CALL_NAME_BEGIN");
 
-    unsigned int stringDWORDSize = ZE_CALL_NAME_STR_LENGTH / sizeof(uint32_t);
+    unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"CallNameBegin\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Entry of ZE Call where the GPU originated from.</Description>\n";
@@ -155,7 +155,7 @@ void CallNameEndTag::bxml(std::ostream &os) {
 
     BaseTag::bxml(os, OpCode::CallNameEnd, sizeof(CallNameEndTag), "ZE_CALL_NAME_END");
 
-    unsigned int stringDWORDSize = ZE_CALL_NAME_STR_LENGTH / sizeof(uint32_t);
+    unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
     os << "    <BitField Name=\"CallNameEnd\" HighBit=\"" << 32 * stringDWORDSize - 1 << "\" LowBit=\"0\" Format=\"string\">\n";
     os << "      <Description>Exit of ZE Call where the GPU originated from.</Description>\n";

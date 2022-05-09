@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,13 +111,13 @@ TEST(UniquePtrIfUnused, GivenNoCustomDeleterAtCreationWhenDeletingThenUseDefault
 TEST(UniquePtrIfUnused, GivenCustomDeleterAtCreationWhenDeletingThenUseProvidedDeleter) {
     struct CustomDeleterTestStruct {
         bool customDeleterWasCalled;
-        static void Delete(CustomDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
+        static void deleter(CustomDeleterTestStruct *ptr) {
             ptr->customDeleterWasCalled = true;
         }
     } customDeleterObj;
     customDeleterObj.customDeleterWasCalled = false;
     {
-        unique_ptr_if_unused<CustomDeleterTestStruct> uptr(&customDeleterObj, true, &CustomDeleterTestStruct::Delete);
+        unique_ptr_if_unused<CustomDeleterTestStruct> uptr(&customDeleterObj, true, &CustomDeleterTestStruct::deleter);
     }
     ASSERT_TRUE(customDeleterObj.customDeleterWasCalled);
 }
@@ -126,11 +126,11 @@ TEST(UniquePtrIfUnused, GivenIntializedWithDerivativeOfReferenceCounterWhenDestr
     struct ObtainedDeleterTestStruct : public ReferenceTrackedObject<ObtainedDeleterTestStruct> {
         using DeleterFuncType = void (*)(ObtainedDeleterTestStruct *);
         DeleterFuncType getCustomDeleter() const {
-            return &ObtainedDeleterTestStruct::Delete;
+            return &ObtainedDeleterTestStruct::deleter;
         }
 
         bool obtainedDeleterWasCalled;
-        static void Delete(ObtainedDeleterTestStruct *ptr) { // NOLINT(readability-identifier-naming)
+        static void deleter(ObtainedDeleterTestStruct *ptr) {
             ptr->obtainedDeleterWasCalled = true;
         }
     } obtainedDeleterObj;
