@@ -429,6 +429,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     //for now workloads requiring cache coherency are not supported
     UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
 
+    if (batchBuffer.ringBufferRestartRequest) {
+        this->stopRingBuffer();
+    }
+
     this->startRingBuffer();
 
     size_t dispatchSize = getSizeDispatch();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,7 @@ struct BatchBuffer {
     void *endCmdPtr = nullptr;
 
     bool useSingleSubdevice = false;
+    bool ringBufferRestartRequest = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {

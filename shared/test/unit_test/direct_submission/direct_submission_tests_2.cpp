@@ -830,6 +830,23 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(expectedValue, directSubmission.reserved);
 }
 
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDispatchCommandBuffer) {
+    FlushStampTracker flushStamp(true);
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    bool ret = directSubmission.initialize(true, true);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(directSubmission.submitCount, 1u);
+
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(directSubmission.submitCount, 1u);
+
+    batchBuffer.ringBufferRestartRequest = true;
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(directSubmission.submitCount, 2u);
+}
+
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWorkloadThenProgramSfenceInstruction) {
     DebugManagerStateRestore restorer{};
 
