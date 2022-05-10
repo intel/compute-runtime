@@ -29,7 +29,8 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(maxOsContextCount) {
+      usageInfos(maxOsContextCount),
+      residency(maxOsContextCount) {
     gmms.resize(numGmms);
 }
 
@@ -41,7 +42,8 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(maxOsContextCount) {
+      usageInfos(maxOsContextCount),
+      residency(maxOsContextCount) {
     sharingInfo.sharedHandle = sharedHandleIn;
     gmms.resize(numGmms);
 }

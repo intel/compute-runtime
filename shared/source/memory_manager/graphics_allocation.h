@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -258,6 +259,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     bool isCompressionEnabled() const;
 
+    ResidencyData &getResidencyData() {
+        return residency;
+    }
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 
@@ -327,5 +332,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     StackVec<UsageInfo, 32> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
     StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
+    ResidencyData residency;
 };
 } // namespace NEO
