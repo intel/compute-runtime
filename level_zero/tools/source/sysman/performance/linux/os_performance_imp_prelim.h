@@ -29,6 +29,7 @@ class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    Device *pDevice = nullptr;
     zes_engine_type_flag_t domain = ZES_ENGINE_TYPE_FLAG_OTHER;
 
   private:

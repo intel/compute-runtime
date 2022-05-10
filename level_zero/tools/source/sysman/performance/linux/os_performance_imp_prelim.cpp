@@ -67,6 +67,8 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         if (multiplier == 1) {
             *pFactor = maxPerformanceFactor;
         } else if (multiplier == 0.5) {
+            *pFactor = halfOfMaxPerformanceFactor;
+        } else if (multiplier == 0) {
             *pFactor = minPerformanceFactor;
         } else {
             result = ZE_RESULT_ERROR_UNKNOWN;
@@ -99,6 +101,8 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
     if (pFactor < minPerformanceFactor || pFactor > maxPerformanceFactor) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    auto productFamily = pDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
         if (pFactor <= halfOfMaxPerformanceFactor) {
@@ -109,10 +113,20 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         result = pSysfsAccess->write(sysPwrBalance, multiplier);
         break;
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
-        if (pFactor < halfOfMaxPerformanceFactor) {
-            multiplier = 0.5;
+        if (productFamily == IGFX_PVC) {
+            if (pFactor >= halfOfMaxPerformanceFactor) {
+                multiplier = 1;
+            } else {
+                multiplier = 0.5;
+            }
         } else {
-            multiplier = 1;
+            if (pFactor >= halfOfMaxPerformanceFactor) {
+                multiplier = 1;
+            } else if (pFactor > minPerformanceFactor) {
+                multiplier = 0.5;
+            } else {
+                multiplier = 0; // dynamic control mode is not supported on PVC
+            }
         }
         multiplier = multiplier / mediaScaleReading; // Divide by scale factor and then round off to convert from decimal to U format
         multiplier = std::round(multiplier);
@@ -177,6 +191,7 @@ void LinuxPerformanceImp::init() {
 LinuxPerformanceImp::LinuxPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
                                          zes_engine_type_flag_t domain) : domain(domain), subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pDevice = pLinuxSysmanImp->getDeviceHandle();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     init();
 }
