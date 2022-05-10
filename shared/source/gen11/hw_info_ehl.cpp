@@ -124,21 +124,9 @@ void EHL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
 };
 
-const HardwareInfo EHL_HW_CONFIG::hwInfo = {
-    &EHL::platform,
-    &EHL::featureTable,
-    &EHL::workaroundTable,
-    &EHL_HW_CONFIG::gtSystemInfo,
-    EHL::capabilityTable,
-};
-GT_SYSTEM_INFO EHL_HW_CONFIG::gtSystemInfo = {0};
-void EHL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void EHL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * EHL::threadsPerEu;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->L3CacheSizeInKb = 1280;
-    gtSysInfo->L3BankCount = 4;
-    gtSysInfo->MaxFillRate = 8;
     gtSysInfo->TotalVsThreads = 0;
     gtSysInfo->TotalHsThreads = 0;
     gtSysInfo->TotalDsThreads = 0;
@@ -150,9 +138,29 @@ void EHL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->MaxSubSlicesSupported = EHL::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+}
+
+const HardwareInfo EHL_HW_CONFIG::hwInfo = {
+    &EHL::platform,
+    &EHL::featureTable,
+    &EHL::workaroundTable,
+    &EHL_HW_CONFIG::gtSystemInfo,
+    EHL::capabilityTable,
+};
+
+GT_SYSTEM_INFO EHL_HW_CONFIG::gtSystemInfo = {0};
+void EHL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    EHL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->L3CacheSizeInKb = 1280;
+    gtSysInfo->L3BankCount = 4;
+    gtSysInfo->MaxFillRate = 8;
 };
 
 const HardwareInfo EHL::hwInfo = EHL_HW_CONFIG::hwInfo;

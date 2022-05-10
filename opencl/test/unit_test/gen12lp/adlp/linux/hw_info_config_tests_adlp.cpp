@@ -62,6 +62,17 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, GivenInvalidDeviceIdWhenConfiguringHwInfoT
     EXPECT_EQ(-1, ret);
 }
 
+ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    ADLP::setupHardwareInfoBase(&hwInfo, false);
+
+    EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
+    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
+    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+}
+
 template <typename T>
 using AdlpConfigHwInfoTests = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<ADLP_CONFIG>;

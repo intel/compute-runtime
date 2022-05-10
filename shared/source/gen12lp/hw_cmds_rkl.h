@@ -20,6 +20,7 @@ struct RKL : public TGLLPFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 class RKL_HW_CONFIG : public RKL {
   public:

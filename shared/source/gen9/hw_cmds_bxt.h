@@ -24,6 +24,7 @@ struct BXT : public SKLFamily {
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
 class BXT_1x2x6 : public BXT {

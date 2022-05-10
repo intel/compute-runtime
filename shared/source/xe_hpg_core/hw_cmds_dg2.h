@@ -28,6 +28,7 @@ struct DG2 : public XE_HPG_COREFamily {
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void adjustHardwareInfo(HardwareInfo *hwInfo);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
     static bool isG10(const HardwareInfo &hwInfo) {
         auto it = std::find(DG2_G10_IDS.begin(), DG2_G10_IDS.end(), hwInfo.platform.usDeviceID);
@@ -43,7 +44,6 @@ struct DG2 : public XE_HPG_COREFamily {
 class DG2_CONFIG : public DG2 {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
-    static void setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile);
     static const HardwareInfo hwInfo;
 
   private:

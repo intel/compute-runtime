@@ -141,7 +141,7 @@ void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
     hwInfo->capabilityTable.sharedSystemMemCapabilities = (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS | UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS);
 }
 
-void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
+void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * PVC::threadsPerEu;
     gtSysInfo->MaxFillRate = 128;
@@ -158,14 +158,21 @@ void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
+    PVC::adjustHardwareInfo(hwInfo);
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
+}
+
+void PVC::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTile) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->MultiTileArchInfo.IsValid = setupMultiTile;
     gtSysInfo->MultiTileArchInfo.TileCount = 1;
     if (DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
         gtSysInfo->MultiTileArchInfo.TileCount = DebugManager.flags.CreateMultipleSubDevices.get();
     }
     gtSysInfo->MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(gtSysInfo->MultiTileArchInfo.TileCount));
-
-    PVC::adjustHardwareInfo(hwInfo);
 }
 
 FeatureTable PVC::featureTable;
@@ -181,9 +188,6 @@ const HardwareInfo PVC_CONFIG::hwInfo = {
 
 GT_SYSTEM_INFO PVC_CONFIG::gtSystemInfo = {0};
 void PVC_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    PVC_CONFIG::setupHardwareInfoMultiTile(hwInfo, setupFeatureTableAndWorkaroundTable, false);
-}
-void PVC_CONFIG::setupHardwareInfoMultiTile(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, bool setupMultiTile) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;

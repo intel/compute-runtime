@@ -120,6 +120,24 @@ void ADLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
+
+void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ADLP::threadsPerEu;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = ADLP::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
+    gtSysInfo->MaxDualSubSlicesSupported = ADLP::maxDualSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
+}
+
 const HardwareInfo ADLP_CONFIG::hwInfo = {
     &ADLP::platform,
     &ADLP::featureTable,

@@ -141,21 +141,10 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
         workaroundTable->flags.waCSRUncachable = true;
     }
 }
-const HardwareInfo SKL_1x2x6::hwInfo = {
-    &SKL::platform,
-    &SKL::featureTable,
-    &SKL::workaroundTable,
-    &SKL_1x2x6::gtSystemInfo,
-    SKL::capabilityTable,
-};
-GT_SYSTEM_INFO SKL_1x2x6::gtSystemInfo = {0};
-void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+
+void SKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->L3CacheSizeInKb = 384;
-    gtSysInfo->L3BankCount = 2;
-    gtSysInfo->MaxFillRate = 8;
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -167,9 +156,28 @@ void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxSubSlicesSupported = SKL::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+}
+
+const HardwareInfo SKL_1x2x6::hwInfo = {
+    &SKL::platform,
+    &SKL::featureTable,
+    &SKL::workaroundTable,
+    &SKL_1x2x6::gtSystemInfo,
+    SKL::capabilityTable,
+};
+GT_SYSTEM_INFO SKL_1x2x6::gtSystemInfo = {0};
+void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->L3CacheSizeInKb = 384;
+    gtSysInfo->L3BankCount = 2;
+    gtSysInfo->MaxFillRate = 8;
 };
 
 const HardwareInfo SKL_1x3x6::hwInfo = {
@@ -181,26 +189,13 @@ const HardwareInfo SKL_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_1x3x6::gtSystemInfo = {0};
 void SKL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = SKL::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = SKL::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = SKL::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo SKL_1x3x8::hwInfo = {
@@ -212,26 +207,13 @@ const HardwareInfo SKL_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_1x3x8::gtSystemInfo = {0};
 void SKL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = SKL::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = SKL::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = SKL::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo SKL_2x3x8::hwInfo = {
@@ -243,26 +225,13 @@ const HardwareInfo SKL_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_2x3x8::gtSystemInfo = {0};
 void SKL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 1536;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = SKL::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = SKL::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = SKL::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo SKL_3x3x8::hwInfo = {
@@ -274,26 +243,13 @@ const HardwareInfo SKL_3x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_3x3x8::gtSystemInfo = {0};
 void SKL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 2304;
     gtSysInfo->L3BankCount = 12;
     gtSysInfo->MaxFillRate = 24;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = SKL::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = SKL::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = SKL::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo SKL::hwInfo = SKL_1x3x8::hwInfo;

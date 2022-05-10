@@ -77,3 +77,18 @@ XEHPTEST_F(XeHPHwInfoTest, givenAlreadyInitializedHwInfoWhenSetupCalledThenDontO
 
     EXPECT_EQ(expectedValue, hwInfo.gtSystemInfo.SliceCount);
 }
+
+XEHPTEST_F(XeHPHwInfoTest, givenXeHpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    XE_HP_SDV::setupHardwareInfoBase(&hwInfo, false);
+
+    EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
+    EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
+    EXPECT_EQ(336u, gtSystemInfo.TotalDsThreads);
+    EXPECT_EQ(336u, gtSystemInfo.TotalGsThreads);
+    EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
+    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
+    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+}

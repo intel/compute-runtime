@@ -115,22 +115,9 @@ void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
-const HardwareInfo BDW_1x2x6::hwInfo = {
-    &BDW::platform,
-    &BDW::featureTable,
-    &BDW::workaroundTable,
-    &BDW_1x2x6::gtSystemInfo,
-    BDW::capabilityTable,
-};
-
-GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
-void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void BDW::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
-    gtSysInfo->SliceCount = 1;
-    gtSysInfo->L3CacheSizeInKb = 384;
-    gtSysInfo->L3BankCount = 2;
-    gtSysInfo->MaxFillRate = 8;
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -142,9 +129,29 @@ void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxSubSlicesSupported = BDW::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
+}
+
+const HardwareInfo BDW_1x2x6::hwInfo = {
+    &BDW::platform,
+    &BDW::featureTable,
+    &BDW::workaroundTable,
+    &BDW_1x2x6::gtSystemInfo,
+    BDW::capabilityTable,
+};
+
+GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
+void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->L3CacheSizeInKb = 384;
+    gtSysInfo->L3BankCount = 2;
+    gtSysInfo->MaxFillRate = 8;
 };
 
 const HardwareInfo BDW_1x3x6::hwInfo = {
@@ -156,26 +163,13 @@ const HardwareInfo BDW_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x6::gtSystemInfo = {0};
 void BDW_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 768;
     gtSysInfo->L3BankCount = 4;
     gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = BDW::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = BDW::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = BDW::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo BDW_1x3x8::hwInfo = {
@@ -187,26 +181,13 @@ const HardwareInfo BDW_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x8::gtSystemInfo = {0};
 void BDW_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 2;
     gtSysInfo->MaxFillRate = 8;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = BDW::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = BDW::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = BDW::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo BDW_2x3x8::hwInfo = {
@@ -218,26 +199,13 @@ const HardwareInfo BDW_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_2x3x8::gtSystemInfo = {0};
 void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 2;
     gtSysInfo->L3CacheSizeInKb = 1536;
     gtSysInfo->L3BankCount = 8;
     gtSysInfo->MaxFillRate = 16;
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = BDW::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = BDW::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = BDW::maxSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-    if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
-    }
 };
 
 const HardwareInfo BDW::hwInfo = BDW_1x3x8::hwInfo;
