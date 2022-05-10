@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,6 +142,39 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     EXPECT_EQ(numEntries, numDevices);
     for (auto i = 0u; i < numEntries; i++) {
         EXPECT_EQ(devices[i], platform()->getClDevice(i));
+    }
+    EXPECT_EQ(devices[numEntries], dummyDevice);
+}
+
+TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsClDeviceIDsWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
+    platformsImpl->clear();
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.CreateMultipleSubDevices.set(numRootDevices);
+    DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.set(1);
+    cl_uint maxNumDevices;
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(numRootDevices * numRootDevices, maxNumDevices);
+
+    cl_uint numDevices = 0;
+    cl_uint numEntries = maxNumDevices - 1;
+    cl_device_id devices[numRootDevices * numRootDevices];
+
+    const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+    for (auto i = 0u; i < maxNumDevices; i++) {
+        devices[i] = dummyDevice;
+    }
+
+    retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_LT(numDevices, maxNumDevices);
+    EXPECT_EQ(numEntries, numDevices);
+    for (auto i = 0u; i < numEntries; i++) {
+        EXPECT_EQ(devices[i], platform()->getClDevice(i / numRootDevices)->getSubDevice(i % numRootDevices));
     }
     EXPECT_EQ(devices[numEntries], dummyDevice);
 }

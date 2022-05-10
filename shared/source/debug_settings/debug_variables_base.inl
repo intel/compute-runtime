@@ -326,6 +326,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memo
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(bool, EngineInstancedSubDevices, false, "Create subdevices assigned to specific engine")
 DECLARE_DEBUG_VARIABLE(bool, AllowSingleTileEngineInstancedSubDevices, false, "Create subdevices assigned to specific engine on single tile config")
+DECLARE_DEBUG_VARIABLE(int32_t, ReturnSubDevicesAsClDeviceIDs, -1, "Expose each subdevice as a separate device during clGetDeviceIDs API call")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableKernelTunning, -1, "Perform a tunning of enqueue kernel, -1:default(disabled), 0:disable, 1:enable simple kernel tunning, 2:enable full kernel tunning")

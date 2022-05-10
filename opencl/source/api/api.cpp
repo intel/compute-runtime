@@ -160,6 +160,19 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
     return retVal;
 }
 
+bool checkDeviceTypeAndFillDeviceID(ClDevice &device, cl_device_type deviceType, cl_device_id *devices, cl_uint numEntries, cl_uint &retNum) {
+    if (deviceType & device.getDeviceInfo().deviceType) {
+        if (devices) {
+            if (retNum >= numEntries) {
+                return false;
+            }
+            devices[retNum] = &device;
+        }
+        retNum++;
+    }
+    return true;
+}
+
 cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_device_type deviceType,
                                   cl_uint numEntries,
@@ -233,18 +246,33 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
 
         cl_uint retNum = 0;
         for (auto platformDeviceIndex = 0u; platformDeviceIndex < numDev; platformDeviceIndex++) {
+            bool exposeSubDevices = false;
+
+            if (DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.get() != -1) {
+                exposeSubDevices = DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.get();
+            }
 
             ClDevice *device = pPlatform->getClDevice(platformDeviceIndex);
             UNRECOVERABLE_IF(device == nullptr);
 
-            if (deviceType & device->getDeviceInfo().deviceType) {
-                if (devices) {
-                    if (retNum >= numEntries) {
+            exposeSubDevices &= device->getNumGenericSubDevices() > 0u;
+
+            if (exposeSubDevices) {
+                bool numEntriesReached = false;
+                for (uint32_t subDeviceIndex = 0u; subDeviceIndex < device->getNumGenericSubDevices(); subDeviceIndex++) {
+                    auto subDevice = device->getSubDevice(subDeviceIndex);
+                    numEntriesReached = checkDeviceTypeAndFillDeviceID(*subDevice, deviceType, devices, numEntries, retNum);
+                    if (!numEntriesReached) {
                         break;
                     }
-                    devices[retNum] = device;
                 }
-                retNum++;
+                if (!numEntriesReached) {
+                    break;
+                }
+            } else {
+                if (!checkDeviceTypeAndFillDeviceID(*device, deviceType, devices, numEntries, retNum)) {
+                    break;
+                }
             }
         }
 
@@ -2058,10 +2086,10 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
 
         if (neoEvent->isUserEvent()) {
             auto executionStatus = neoEvent->peekExecutionStatus();
-            //Spec requires initial state to be queued
-            //our current design relies heavily on SUBMITTED status which directly corresponds
-            //to command being able to be submitted, to overcome this we set initial status to queued
-            //and we override the value stored with the value required by the spec.
+            // Spec requires initial state to be queued
+            // our current design relies heavily on SUBMITTED status which directly corresponds
+            // to command being able to be submitted, to overcome this we set initial status to queued
+            // and we override the value stored with the value required by the spec.
             if (executionStatus == CL_QUEUED) {
                 executionStatus = CL_SUBMITTED;
             }
@@ -4371,7 +4399,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
 
-    //perf counters
+    // perf counters
     RETURN_FUNC_PTR_IF_EXIST(clCreatePerfCountersCommandQueueINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clSetPerformanceConfigurationINTEL);
     // Support device extensions
