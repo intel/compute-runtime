@@ -149,6 +149,7 @@ void Event::handleCompletionBeforeDestruction() {
         return;
     }
 
+    this->deletionDeferredToAsyncThread = true;
     cmdQueue->flush();
     ctx->getAsyncEventsHandler().registerEvent(this);
 }

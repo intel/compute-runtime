@@ -309,6 +309,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return false;
     }
 
+    bool isDeletionDeferred() const { return deletionDeferredToAsyncThread; }
+
     static bool checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList);
 
     static void getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS);
@@ -381,6 +383,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool profilingEnabled;
     bool profilingCpuPath;
     bool dataCalculated;
+    bool deletionDeferredToAsyncThread = false;
     TimeStampData queueTimeStamp;
     TimeStampData submitTimeStamp;
     uint64_t startTimeStamp;

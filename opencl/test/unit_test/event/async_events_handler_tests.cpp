@@ -316,7 +316,7 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
     userEvent.decRefInternal();
 }
 
-TEST_F(AsyncEventsHandlerTests, givenNotReadyEventWhenReleasingThenRegister) {
+TEST_F(AsyncEventsHandlerTests, givenNotReadyEventWhenReleasingThenRegisterAndTrackUntilCompleted) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
     auto myHandler = new MockHandler(false);
     context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
@@ -329,6 +329,10 @@ TEST_F(AsyncEventsHandlerTests, givenNotReadyEventWhenReleasingThenRegister) {
     EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
     clReleaseEvent(mockEvent);
     EXPECT_FALSE(myHandler->peekIsRegisterListEmpty());
+
+    EXPECT_TRUE(myHandler->peekIsListEmpty());
+    myHandler->process();
+    EXPECT_FALSE(myHandler->peekIsListEmpty());
 
     setTagValue(eventTaskCount);
     myHandler->process();
