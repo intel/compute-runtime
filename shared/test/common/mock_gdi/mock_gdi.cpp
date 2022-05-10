@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,19 @@ NTSTATUS __stdcall D3DKMTCreateContextVirtual(IN D3DKMT_CREATECONTEXTVIRTUAL *cr
         return STATUS_INVALID_PARAMETER;
     }
     createContext->hContext = CONTEXT_HANDLE;
+    return STATUS_SUCCESS;
+}
+
+static bool failOnSetContextSchedulingPriority = false;
+static D3DKMT_SETCONTEXTSCHEDULINGPRIORITY setContextSchedulingPriorityData = {};
+
+NTSTATUS __stdcall D3DKMTSetContextSchedulingPriority(_In_ CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *setContextSchedulingPriority) {
+    setContextSchedulingPriorityData = *setContextSchedulingPriority;
+
+    if (failOnSetContextSchedulingPriority) {
+        return STATUS_INVALID_PARAMETER;
+    }
+
     return STATUS_SUCCESS;
 }
 
@@ -566,4 +579,12 @@ uint32_t getLastPriority() {
 
 void setAdapterBDF(ADAPTER_BDF &adapterBDF) {
     gAdapterBDF = adapterBDF;
+}
+
+bool *getFailOnSetContextSchedulingPriorityCall() {
+    return &failOnSetContextSchedulingPriority;
+}
+
+D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *getSetContextSchedulingPriorityDataCall() {
+    return &setContextSchedulingPriorityData;
 }

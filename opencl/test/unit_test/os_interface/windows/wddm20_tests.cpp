@@ -665,6 +665,62 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     EXPECT_FALSE(!!privateData->NoRingFlushes);
 }
 
+struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWithoutWddmInit {
+    void initContext(bool lowPriority) {
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        wddmMockInterface = static_cast<WddmMockInterface20 *>(wddm->wddmInterface.release());
+        wddm->init();
+        wddm->wddmInterface.reset(wddmMockInterface);
+
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+
+        auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
+        engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::LowPriority : EngineUsage::Regular;
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, engineDescriptor);
+        osContext->ensureContextInitialized();
+    }
+};
+
+TEST_F(WddmContextSchedulingPriorityTests, givenLowPriorityContextWhenInitializingThenCallSetPriority) {
+    initContext(true);
+
+    auto createContextParams = this->getSetContextSchedulingPriorityDataCallFcn();
+
+    EXPECT_EQ(osContext->getWddmContextHandle(), createContextParams->hContext);
+    EXPECT_EQ(1, createContextParams->Priority);
+}
+
+TEST_F(WddmContextSchedulingPriorityTests, givenLowPriorityContextWhenFailingDuringSetSchedulingPriorityThenThrow) {
+    *this->getFailOnSetContextSchedulingPriorityCallFcn() = true;
+
+    EXPECT_ANY_THROW(initContext(true));
+}
+
+TEST_F(WddmContextSchedulingPriorityTests, givenDebugFlagSetWhenInitializingLowPriorityContextThenSetPriorityValue) {
+    DebugManagerStateRestore dbgRestore;
+
+    constexpr int32_t newPriority = 3;
+
+    DebugManager.flags.ForceWddmLowPriorityContextValue.set(newPriority);
+
+    initContext(true);
+
+    auto createContextParams = this->getSetContextSchedulingPriorityDataCallFcn();
+
+    EXPECT_EQ(osContext->getWddmContextHandle(), createContextParams->hContext);
+    EXPECT_EQ(newPriority, createContextParams->Priority);
+}
+
+TEST_F(WddmContextSchedulingPriorityTests, givenRegularContextWhenInitializingThenDontCallSetPriority) {
+    initContext(false);
+
+    auto createContextParams = this->getSetContextSchedulingPriorityDataCallFcn();
+
+    EXPECT_EQ(0, createContextParams->hContext);
+    EXPECT_EQ(0, createContextParams->Priority);
+}
+
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenCreateContextCallWhenDriverHintsThenItPointsToOpenCL) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,8 @@ D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *getDestroySynchronizationObjectData();
 void InitGfxPartition();
 VOID *getMonitorFenceCpuFenceAddress();
 bool *getCreateSynchronizationObject2FailCall();
+bool *getFailOnSetContextSchedulingPriorityCall();
+D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *getSetContextSchedulingPriorityDataCall();
 bool *getRegisterTrimNotificationFailCall();
 uint32_t getLastPriority();
 void setAdapterBDF(ADAPTER_BDF &adapterBDF);

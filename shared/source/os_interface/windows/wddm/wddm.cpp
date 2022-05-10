@@ -792,6 +792,25 @@ void Wddm::kmDafLock(D3DKMT_HANDLE handle) {
     kmDafListener->notifyLock(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, 0, getGdi()->escape);
 }
 
+bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
+    D3DKMT_SETCONTEXTSCHEDULINGPRIORITY contextPriority = {};
+
+    contextPriority.hContext = contextHandle;
+    contextPriority.Priority = 1;
+
+    if (DebugManager.flags.ForceWddmLowPriorityContextValue.get() != -1) {
+        contextPriority.Priority = static_cast<INT>(DebugManager.flags.ForceWddmLowPriorityContextValue.get());
+    }
+
+    auto status = getGdi()->setSchedulingPriority(&contextPriority);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                       "\nSet scheduling priority for Wddm context. Status: :%lu, context handle: %u, priority: %d \n",
+                       status, contextHandle, contextPriority.Priority);
+
+    return (status == STATUS_SUCCESS);
+}
+
 bool Wddm::createContext(OsContextWin &osContext) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {};
@@ -838,7 +857,15 @@ bool Wddm::createContext(OsContextWin &osContext) {
                        "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
                        status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
 
-    return status == STATUS_SUCCESS;
+    if (status != STATUS_SUCCESS) {
+        return false;
+    }
+
+    if (osContext.isLowPriority()) {
+        return setLowPriorityContextParam(osContext.getWddmContextHandle());
+    }
+
+    return true;
 }
 
 bool Wddm::destroyContext(D3DKMT_HANDLE context) {

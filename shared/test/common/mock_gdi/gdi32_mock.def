@@ -54,6 +54,7 @@ D3DKMTCreateHwQueue
 D3DKMTDestroyHwQueue
 D3DKMTSubmitCommandToHwQueue
 D3DKMTSetAllocationPriority
+D3DKMTSetContextSchedulingPriority
 MockSetAdapterInfo
 MockSetSizes
 GetMockSizes
@@ -73,6 +74,8 @@ getSubmitCommandToHwQueueData
 getDestroySynchronizationObjectData
 getMonitorFenceCpuFenceAddress
 getCreateSynchronizationObject2FailCall
+getFailOnSetContextSchedulingPriorityCall
+getSetContextSchedulingPriorityDataCall
 getRegisterTrimNotificationFailCall
 getLastPriority
 setAdapterBDF

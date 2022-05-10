@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,10 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&getMonitorFenceCpuFenceAddress)>(mockGdiDll->getProcAddress("getMonitorFenceCpuFenceAddress"));
         getCreateSynchronizationObject2FailCallFcn =
             reinterpret_cast<decltype(&getCreateSynchronizationObject2FailCall)>(mockGdiDll->getProcAddress("getCreateSynchronizationObject2FailCall"));
+        getFailOnSetContextSchedulingPriorityCallFcn =
+            reinterpret_cast<decltype(&getFailOnSetContextSchedulingPriorityCall)>(mockGdiDll->getProcAddress("getFailOnSetContextSchedulingPriorityCall"));
+        getSetContextSchedulingPriorityDataCallFcn =
+            reinterpret_cast<decltype(&getSetContextSchedulingPriorityDataCall)>(mockGdiDll->getProcAddress("getSetContextSchedulingPriorityDataCall"));
         getRegisterTrimNotificationFailCallFcn =
             reinterpret_cast<decltype(&getRegisterTrimNotificationFailCall)>(mockGdiDll->getProcAddress("getRegisterTrimNotificationFailCall"));
         getLastPriorityFcn =
@@ -56,6 +60,8 @@ struct GdiDllFixture {
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
+        *getFailOnSetContextSchedulingPriorityCallFcn() = false;
+        *getSetContextSchedulingPriorityDataCallFcn() = {};
         *getRegisterTrimNotificationFailCallFcn() = false;
     }
 
@@ -66,6 +72,8 @@ struct GdiDllFixture {
         *getDestroySynchronizationObjectDataFcn() = {};
         setMapGpuVaFailConfigFcn(0, 0);
         *getCreateSynchronizationObject2FailCallFcn() = false;
+        *getFailOnSetContextSchedulingPriorityCallFcn() = false;
+        *getSetContextSchedulingPriorityDataCallFcn() = {};
         *getRegisterTrimNotificationFailCallFcn() = false;
     }
 
@@ -89,6 +97,8 @@ struct GdiDllFixture {
     decltype(&getDestroySynchronizationObjectData) getDestroySynchronizationObjectDataFcn = nullptr;
     decltype(&getMonitorFenceCpuFenceAddress) getMonitorFenceCpuFenceAddressFcn = nullptr;
     decltype(&getCreateSynchronizationObject2FailCall) getCreateSynchronizationObject2FailCallFcn = nullptr;
+    decltype(&getFailOnSetContextSchedulingPriorityCall) getFailOnSetContextSchedulingPriorityCallFcn = nullptr;
+    decltype(&getSetContextSchedulingPriorityDataCall) getSetContextSchedulingPriorityDataCallFcn = nullptr;
     decltype(&getRegisterTrimNotificationFailCall) getRegisterTrimNotificationFailCallFcn = nullptr;
     decltype(&getLastPriority) getLastPriorityFcn = nullptr;
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;

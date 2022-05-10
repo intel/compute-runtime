@@ -243,6 +243,7 @@ class Wddm : public DriverModel {
     bool destroyDevice();
     void getDeviceState();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
+    bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
 
     static GetSystemInfoFcn getSystemInfo;
 
