@@ -18,8 +18,6 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using HwHelperTestsXeHpcCore = Test<ClDeviceFixture>;
@@ -207,12 +205,124 @@ HWTEST2_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProp
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndLinkCopyEngines) {
-    const size_t numEngines = 18;
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(13u, device->allEngines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(13u, engines.size());
+
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[4].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[5].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[7].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[8].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[9].first);  // low priority
+    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[10].first); // internal
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[11].first);  // internal
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[12].first);
+}
+
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenDontSetCccs) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(12u, device->allEngines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(12u, engines.size());
+
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[4].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[5].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[6].first);
+    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[7].first);
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[8].first); // low priority
+    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[9].first); // internal
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[10].first);
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[11].first);
+}
+
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenDontCreateAnyBcs) {
+    const size_t numEngines = 11;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(numEngines, device->allEngines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    EXPECT_EQ(numEngines, engines.size());
+
+    struct EnginePropertiesMap {
+        aub_stream::EngineType engineType;
+        bool isCcs;
+        bool isBcs;
+    };
+
+    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
+        {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+    }};
+
+    for (size_t i = 0; i < numEngines; i++) {
+        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
+        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
+        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
+    }
+}
+
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneBcs) {
+    const size_t numEngines = 13;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -231,23 +341,18 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
 
     const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS4, false, true},
-        {aub_stream::ENGINE_BCS5, false, true},
-        {aub_stream::ENGINE_BCS6, false, true},
-        {aub_stream::ENGINE_BCS7, false, true},
-        {aub_stream::ENGINE_BCS8, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -257,157 +362,12 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEn
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
-    const size_t numEngines = 18;
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenIsCooperativeEngineSupportedEnabledAndSettingEngineTableThenDontAddUnsupported) {
+    const size_t numEngines = 10;
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
-    EXPECT_EQ(numEngines, engines.size());
-
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isCcs;
-        bool isBcs;
-    };
-
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS1, true, false},
-        {aub_stream::ENGINE_CCS2, true, false},
-        {aub_stream::ENGINE_CCS3, true, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS4, false, true},
-        {aub_stream::ENGINE_BCS5, false, true},
-        {aub_stream::ENGINE_BCS6, false, true},
-        {aub_stream::ENGINE_BCS7, false, true},
-        {aub_stream::ENGINE_BCS8, false, true},
-    }};
-
-    for (size_t i = 0; i < numEngines; i++) {
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
-        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
-        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
-    }
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenGetEnginesCalledThenChangeDefaultEngine) {
-    const size_t numEngines = 18;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
-    EXPECT_EQ(numEngines, engines.size());
-
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isCcs;
-        bool isBcs;
-    };
-
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS1, true, false},
-        {aub_stream::ENGINE_CCS2, true, false},
-        {aub_stream::ENGINE_CCS3, true, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS4, false, true},
-        {aub_stream::ENGINE_BCS5, false, true},
-        {aub_stream::ENGINE_BCS6, false, true},
-        {aub_stream::ENGINE_BCS7, false, true},
-        {aub_stream::ENGINE_BCS8, false, true},
-    }};
-
-    for (size_t i = 0; i < numEngines; i++) {
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
-        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
-        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
-    }
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenGetEnginesCalledThenCreateOnlyOneCcs) {
-    const size_t numEngines = 15;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
-    EXPECT_EQ(numEngines, engines.size());
-
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isCcs;
-        bool isBcs;
-    };
-
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCCS, false, false},
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_CCS, true, false},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS, false, true},
-        {aub_stream::ENGINE_BCS1, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS2, false, true},
-        {aub_stream::ENGINE_BCS3, false, true},
-        {aub_stream::ENGINE_BCS4, false, true},
-        {aub_stream::ENGINE_BCS5, false, true},
-        {aub_stream::ENGINE_BCS6, false, true},
-        {aub_stream::ENGINE_BCS7, false, true},
-        {aub_stream::ENGINE_BCS8, false, true},
-    }};
-
-    for (size_t i = 0; i < numEngines; i++) {
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
-        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
-        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
-    }
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenSettingEngineTableThenDontAddUnsupported) {
-    const size_t numEngines = 9;
-
-    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.featureTable.ftrBcsInfo.set(0, false);
@@ -432,6 +392,7 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenSettingEngin
 
     const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
@@ -449,12 +410,120 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNotAllCopyEnginesWhenSettingEngin
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenGetEnginesCalledThenCreateOnlyOneBcs) {
-    const size_t numEngines = 9;
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneCcsEnabledWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenCreateOnlyOneCcs) {
+    const size_t numEngines = 16;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(numEngines, device->allEngines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    EXPECT_EQ(numEngines, engines.size());
+
+    struct EnginePropertiesMap {
+        aub_stream::EngineType engineType;
+        bool isCcs;
+        bool isBcs;
+    };
+
+    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
+        {aub_stream::ENGINE_BCS4, false, true},
+        {aub_stream::ENGINE_BCS5, false, true},
+        {aub_stream::ENGINE_BCS6, false, true},
+        {aub_stream::ENGINE_BCS7, false, true},
+        {aub_stream::ENGINE_BCS8, false, true},
+    }};
+
+    for (size_t i = 0; i < numEngines; i++) {
+        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
+        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
+        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
+    }
+}
+
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsAsDefaultEngineWhenIsCooperativeEngineSupportedEnabledAndGetEnginesCalledThenChangeDefaultEngine) {
+    const size_t numEngines = 22;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(numEngines, device->allEngines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(device->getHardwareInfo());
+    EXPECT_EQ(numEngines, engines.size());
+
+    struct EnginePropertiesMap {
+        aub_stream::EngineType engineType;
+        bool isCcs;
+        bool isBcs;
+    };
+
+    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
+        {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_CCCS, false, false},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
+        {aub_stream::ENGINE_BCS4, false, true},
+        {aub_stream::ENGINE_BCS5, false, true},
+        {aub_stream::ENGINE_BCS6, false, true},
+        {aub_stream::ENGINE_BCS7, false, true},
+        {aub_stream::ENGINE_BCS8, false, true},
+    }};
+
+    for (size_t i = 0; i < numEngines; i++) {
+        EXPECT_EQ(enginePropertiesMap[i].engineType, engines[i].first);
+        EXPECT_EQ(enginePropertiesMap[i].isCcs, EngineHelpers::isCcs(enginePropertiesMap[i].engineType));
+        EXPECT_EQ(enginePropertiesMap[i].isBcs, EngineHelpers::isBcs(enginePropertiesMap[i].engineType));
+    }
+}
+
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
+    const size_t numEngines = 22;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
@@ -473,14 +542,27 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenGetEnginesCalled
 
     const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_BCS, false, true},
         {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
+        {aub_stream::ENGINE_BCS4, false, true},
+        {aub_stream::ENGINE_BCS5, false, true},
+        {aub_stream::ENGINE_BCS6, false, true},
+        {aub_stream::ENGINE_BCS7, false, true},
+        {aub_stream::ENGINE_BCS8, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -490,12 +572,15 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenOneBcsEnabledWhenGetEnginesCalled
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs) {
-    const size_t numEngines = 7;
+XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, whenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndLinkCopyEngines) {
+    const size_t numEngines = 22;
 
     HardwareInfo hwInfo = *defaultHwInfo;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
@@ -513,12 +598,27 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenBcsDisabledWhenGetEnginesCalledTh
 
     const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS1, true, false},
         {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCCS, false, false},
         {aub_stream::ENGINE_CCS, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS, false, true},
+        {aub_stream::ENGINE_BCS1, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS2, false, true},
+        {aub_stream::ENGINE_BCS3, false, true},
+        {aub_stream::ENGINE_BCS4, false, true},
+        {aub_stream::ENGINE_BCS5, false, true},
+        {aub_stream::ENGINE_BCS6, false, true},
+        {aub_stream::ENGINE_BCS7, false, true},
+        {aub_stream::ENGINE_BCS8, false, true},
     }};
 
     for (size_t i = 0; i < numEngines; i++) {
@@ -761,45 +861,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenNonTile0AccessWhenGettingIsBlitCo
     }
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    auto context = new NEO::MockContext(pClDevice);
-    auto commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
-
-    auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                     commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    auto retVal = helper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo);
-    EXPECT_TRUE(retVal);
-
-    auto &hwConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
-    retVal = helper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo);
-    EXPECT_FALSE(retVal);
-    commandQueue->release();
-    context->decRefInternal();
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-    uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-    hardwareInfoSetup[productFamily](&hwInfo, true, hwInfoConfig);
-    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
-    ASSERT_NE(nullptr, device);
-    auto clDevice = new MockClDevice{device};
-    ASSERT_NE(nullptr, clDevice); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    auto context = new NEO::MockContext(clDevice);
-    auto commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, clDevice, 0));
-
-    auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                     commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    auto retVal = helper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
-    ASSERT_TRUE(retVal);
-    commandQueue->release();
-    context->decRefInternal();
-    delete clDevice;
-}
-
 using HwInfoConfigTestXeHpcCore = ::testing::Test;
 
 XE_HPC_CORETEST_F(HwInfoConfigTestXeHpcCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
@@ -853,60 +914,6 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
     EXPECT_EQ(lri, stream.getCpuBase());
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledWhenGetGpgpuEnginesCalledThenDontSetCccs) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    EXPECT_EQ(8u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
-    EXPECT_EQ(8u, engines.size());
-
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[4].first); // low priority
-    EXPECT_EQ(hwInfo.capabilityTable.defaultEngineType, engines[5].first); // internal
-    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[6].first);
-    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetCccs) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    hwInfo.featureTable.ftrBcsInfo = 1;
-    hwInfo.featureTable.flags.ftrRcsNode = false;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS));
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-
-    EXPECT_EQ(9u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
-    EXPECT_EQ(9u, engines.size());
-
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS1, engines[1].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS2, engines[2].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCS3, engines[3].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[4].first);
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[5].first); // low priority
-    EXPECT_EQ(aub_stream::ENGINE_CCCS, engines[6].first); // internal
-    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);  // internal
-    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsReturned) {

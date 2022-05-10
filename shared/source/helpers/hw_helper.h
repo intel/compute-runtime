@@ -119,7 +119,6 @@ class HwHelper {
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getDefaultRevisionId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
@@ -345,8 +344,6 @@ class HwHelperHw : public HwHelper {
     size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const override;
 
     bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
-
-    bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
 
     bool isSipWANeeded(const HardwareInfo &hwInfo) const override;
 

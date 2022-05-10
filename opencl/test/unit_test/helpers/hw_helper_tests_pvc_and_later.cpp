@@ -78,41 +78,6 @@ HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenCheckIsUpdateTaskCountFromWa
     EXPECT_TRUE(hwHelper.isUpdateTaskCountFromWaitSupported());
 }
 
-HWTEST2_F(HwHelperTestPvcAndLater, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsAtLeastXeHpcCore) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-    hwInfo.featureTable.flags.ftrCCSNode = true;
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    uint32_t revisions[] = {REVISION_A0, REVISION_B};
-    for (auto &revision : revisions) {
-        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
-        if (hwRevId == CommonConstants::invalidStepping) {
-            continue;
-        }
-        hwInfo.platform.usRevId = hwRevId;
-        auto engineInstances = hwHelper.getGpgpuEngineInstances(hwInfo);
-        size_t ccsCount = 0u;
-        size_t cooperativeCcsCount = 0u;
-        for (auto &engineInstance : engineInstances) {
-            if (EngineHelpers::isCcs(engineInstance.first)) {
-                if (engineInstance.second == EngineUsage::Regular) {
-                    ccsCount++;
-                } else if (engineInstance.second == EngineUsage::Cooperative) {
-                    cooperativeCcsCount++;
-                }
-            }
-        }
-        EXPECT_EQ(2u, ccsCount);
-        if (hwHelper.isCooperativeEngineSupported(hwInfo)) {
-            EXPECT_EQ(ccsCount, cooperativeCcsCount);
-        } else {
-            EXPECT_EQ(0u, cooperativeCcsCount);
-        }
-    }
-}
-
 HWTEST2_F(HwHelperTestPvcAndLater, givenComputeEngineAndCooperativeUsageWhenGetEngineGroupTypeIsCalledThenCooperativeComputeGroupTypeIsReturned, IsAtLeastXeHpcCore) {
     auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     auto hwInfo = *::defaultHwInfo;
@@ -160,20 +125,26 @@ HWTEST2_F(HwHelperTestPvcAndLater, WhenIsRcsAvailableIsCalledThenCorrectValueIsR
 
 HWTEST2_F(HwHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
     struct MockHwHelper : NEO::HwHelperHw<FamilyType> {
-        bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override {
-            return isCooperativeEngineSupportedValue;
-        }
         bool isRcsAvailable(const HardwareInfo &hwInfo) const override {
             return isRcsAvailableValue;
         }
-        bool isCooperativeEngineSupportedValue = true;
         bool isRcsAvailableValue = true;
     };
+    struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
+        bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override {
+            return isCooperativeEngineSupportedValue;
+        }
+        bool isCooperativeEngineSupportedValue = true;
+    };
+    MockHwInfoConfig hwInfoConfig{};
+    auto hwInfo = *::defaultHwInfo;
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
+    hwInfoConfigFactoryBackup = &hwInfoConfig;
+
     MockHwHelper hwHelper{};
 
-    auto hwInfo = *::defaultHwInfo;
     for (auto isCooperativeEngineSupported : ::testing::Bool()) {
-        hwHelper.isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
+        hwInfoConfig.isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
         for (auto isRcsAvailable : ::testing::Bool()) {
             hwHelper.isRcsAvailableValue = isRcsAvailable;
             for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute,
@@ -202,4 +173,40 @@ HWTEST2_F(HwHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCorrect
 HWTEST2_F(HwHelperTestPvcAndLater, givenHwHelperWhenGettingISAPaddingThenCorrectValueIsReturned, IsAtLeastXeHpcCore) {
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     EXPECT_EQ(hwHelper.getPaddingForISAAllocation(), 0xE00u);
+}
+
+using HwHelperTestCooperativeEngine = HwHelperTestPvcAndLater;
+HWTEST2_F(HwHelperTestCooperativeEngine, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsXeHpcCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    auto &hwHelper = HwHelperHw<FamilyType>::get();
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+
+    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    for (auto &revision : revisions) {
+        auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
+        if (hwRevId == CommonConstants::invalidStepping) {
+            continue;
+        }
+        hwInfo.platform.usRevId = hwRevId;
+        auto engineInstances = hwHelper.getGpgpuEngineInstances(hwInfo);
+        size_t ccsCount = 0u;
+        size_t cooperativeCcsCount = 0u;
+        for (auto &engineInstance : engineInstances) {
+            if (EngineHelpers::isCcs(engineInstance.first)) {
+                if (engineInstance.second == EngineUsage::Regular) {
+                    ccsCount++;
+                } else if (engineInstance.second == EngineUsage::Cooperative) {
+                    cooperativeCcsCount++;
+                }
+            }
+        }
+        EXPECT_EQ(2u, ccsCount);
+        if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+            EXPECT_EQ(ccsCount, cooperativeCcsCount);
+        } else {
+            EXPECT_EQ(0u, cooperativeCcsCount);
+        }
+    }
 }

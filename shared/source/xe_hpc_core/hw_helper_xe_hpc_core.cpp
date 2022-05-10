@@ -39,20 +39,16 @@ uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers)
 }
 
 template <>
-bool HwHelperHw<Family>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
-    return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
-}
-
-template <>
 const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     EngineInstancesContainer engines;
 
     if (hwInfo.featureTable.flags.ftrCCSNode) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Regular});
-            if (isCooperativeEngineSupported(hwInfo)) {
+            if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
                 engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Cooperative});
             }
         }

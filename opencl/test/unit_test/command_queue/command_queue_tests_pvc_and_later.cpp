@@ -164,7 +164,6 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
@@ -172,7 +171,7 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCooperativeEngineUsageHintAndCcsWhe
         auto hwRevId = hwInfoConfig.getHwRevIdFromStepping(revision, hwInfo);
         hwInfo.platform.usRevId = hwRevId;
         if (hwRevId == CommonConstants::invalidStepping ||
-            !hwHelper.isCooperativeEngineSupported(hwInfo)) {
+            !hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
             continue;
         }
 

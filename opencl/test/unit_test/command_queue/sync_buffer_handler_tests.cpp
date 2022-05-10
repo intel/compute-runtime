@@ -71,8 +71,9 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel = kernelInternals->mockKernel;
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
-        hwHelper = &HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper->isCooperativeEngineSupported(pClDevice->getHardwareInfo())) {
+        auto &hwInfo = pClDevice->getHardwareInfo();
+        auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
             commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
         }
     }
@@ -97,9 +98,10 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        auto engineGroupType = hwHelper->getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                            commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        return hwHelper->isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
+        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
+                                                           commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        return hwHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
     }
 
     const cl_uint workDim = 1;
@@ -110,7 +112,6 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     std::unique_ptr<MockKernelWithInternals> kernelInternals;
     MockKernel *kernel;
     MockCommandQueue *commandQueue;
-    HwHelper *hwHelper;
 };
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {

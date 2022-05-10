@@ -24,7 +24,8 @@ bool HwHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
 
 template <>
 bool HwHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
-    if (isCooperativeEngineSupported(hwInfo)) {
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
         if (engineGroupType == EngineGroupType::RenderCompute) {
             return false;
         }
@@ -47,8 +48,8 @@ uint32_t HwHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount,
     if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {
         return 1u;
     }
-
-    bool requiresLimitation = this->isCooperativeEngineSupported(hwInfo) &&
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    bool requiresLimitation = hwInfoConfig.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::CooperativeCompute) &&
                               (!isEngineInstanced) &&
                               (DebugManager.flags.OverrideMaxWorkGroupCount.get() == -1);

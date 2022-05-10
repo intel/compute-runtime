@@ -360,4 +360,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isGrfNumReportedWithScm() const {
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } //namespace NEO

@@ -357,4 +357,9 @@ bool HwInfoConfigHw<gfxProduct>::isGrfNumReportedWithScm() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO
