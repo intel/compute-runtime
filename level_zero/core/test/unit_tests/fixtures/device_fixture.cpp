@@ -124,6 +124,7 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
     hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
     hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 3;
 
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);

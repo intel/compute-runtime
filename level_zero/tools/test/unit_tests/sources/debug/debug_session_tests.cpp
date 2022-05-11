@@ -114,6 +114,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override {
         resumeImpCalled++;
         resumeThreadCount = threads.size();
+        resumedThreads.push_back(std::move(threads));
+        resumedDevices.push_back(deviceIndex);
         return resumeImpResult;
     }
 
@@ -240,6 +242,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     std::vector<zet_debug_event_t> events;
     std::vector<uint32_t> interruptedDevices;
+    std::vector<uint32_t> resumedDevices;
+    std::vector<std::vector<ze_device_thread_t>> resumedThreads;
 
     SbaTrackedAddresses sba;
     uint64_t readMemoryBuffer[64];
@@ -1358,6 +1362,9 @@ TEST_F(MultiTileDebugSessionTest, givenThreadFromSingleTileWhenResumeCalledThenT
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, deviceImp);
 
+    EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
+    sessionMock->allThreads[threadTile0]->stopThread(1u);
+
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
     sessionMock->allThreads[threadTile1]->stopThread(1u);
 
@@ -1369,6 +1376,31 @@ TEST_F(MultiTileDebugSessionTest, givenThreadFromSingleTileWhenResumeCalledThenT
     EXPECT_TRUE(sessionMock->allThreads[threadTile1]->isRunning());
 
     EXPECT_EQ(1u, sessionMock->resumeImpCalled);
+    EXPECT_EQ(1u, sessionMock->resumedDevices[0]);
+
+    ze_device_thread_t resumedThreadExpected = {0, 0, 0, 0};
+    EXPECT_EQ(resumedThreadExpected.slice, sessionMock->resumedThreads[0][0].slice);
+    EXPECT_EQ(resumedThreadExpected.subslice, sessionMock->resumedThreads[0][0].subslice);
+    EXPECT_EQ(resumedThreadExpected.eu, sessionMock->resumedThreads[0][0].eu);
+    EXPECT_EQ(resumedThreadExpected.thread, sessionMock->resumedThreads[0][0].thread);
+
+    thread = {0, 0, 0, 0};
+    sessionMock->resumeImpCalled = 0;
+    sessionMock->resumedDevices.clear();
+
+    result = sessionMock->resume(thread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(sessionMock->allThreads[threadTile1]->isRunning());
+
+    EXPECT_EQ(1u, sessionMock->resumeImpCalled);
+    EXPECT_EQ(0u, sessionMock->resumedDevices[0]);
+
+    resumedThreadExpected = {0, 0, 0, 0};
+    EXPECT_EQ(resumedThreadExpected.slice, sessionMock->resumedThreads[0][0].slice);
+    EXPECT_EQ(resumedThreadExpected.subslice, sessionMock->resumedThreads[0][0].subslice);
+    EXPECT_EQ(resumedThreadExpected.eu, sessionMock->resumedThreads[0][0].eu);
+    EXPECT_EQ(resumedThreadExpected.thread, sessionMock->resumedThreads[0][0].thread);
 }
 
 TEST_F(MultiTileDebugSessionTest, givenRunningThreadsWhenResumeCalledThenThreadsNotResumedAndErrorNotAvailableReturned) {

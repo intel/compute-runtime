@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -28,6 +29,7 @@
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -326,13 +328,22 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::writeRegisters(thread, type, start, count, pRegisterValues);
     }
 
+    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override {
+        resumedThreads.push_back(threads);
+        resumedDevices.push_back(deviceIndex);
+        return L0::DebugSessionLinux::resumeImp(threads, deviceIndex);
+    }
+
     void handleEvent(prelim_drm_i915_debug_event *event) override {
         handleEventCalledCount++;
         L0::DebugSessionLinux::handleEvent(event);
     }
 
     bool areRequestedThreadsStopped(ze_device_thread_t thread) override {
-        return allThreadsStopped;
+        if (allThreadsStopped) {
+            return allThreadsStopped;
+        }
+        return L0::DebugSessionLinux::areRequestedThreadsStopped(thread);
     }
 
     void ensureThreadStopped(ze_device_thread_t thread) {
@@ -384,6 +395,9 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t writeResumeCommandCalled = 0;
     bool skipcheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
+
+    std::vector<uint32_t> resumedDevices;
+    std::vector<std::vector<ze_device_thread_t>> resumedThreads;
 
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
 };
@@ -479,6 +493,42 @@ struct DebugApiLinuxFixture : public DeviceFixture {
     static constexpr uint8_t bufferSize = 16;
 };
 
+struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {
+    void SetUp() {
+        MultipleDevicesWithCustomHwInfo::SetUp();
+        neoDevice = driverHandle->devices[0]->getNEODevice();
+
+        L0::Device *device = driverHandle->devices[0];
+        deviceImp = static_cast<DeviceImp *>(device);
+
+        mockDrm = new DrmQueryMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0], neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getHardwareInfo());
+        mockDrm->allowDebugAttach = true;
+
+        // set config from HwInfo to have correct topology requested by tests
+        mockDrm->storedSVal = hwInfo.gtSystemInfo.SliceCount;
+        mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
+        mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
+
+        mockDrm->queryEngineInfo();
+        auto engineInfo = mockDrm->getEngineInfo();
+        ASSERT_NE(nullptr, engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType));
+
+        NEO::Drm::QueryTopologyData topologyData = {};
+        mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    }
+
+    void TearDown() {
+        MultipleDevicesWithCustomHwInfo::TearDown();
+    }
+    NEO::Device *neoDevice = nullptr;
+    L0::DeviceImp *deviceImp = nullptr;
+    DrmQueryMock *mockDrm = nullptr;
+    static constexpr uint8_t bufferSize = 16;
+};
+
 TEST(IoctlHandler, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
     L0::DebugSessionLinux::IoctlHandler handler;
     NEO::SysCalls::preadFuncCalled = 0;
@@ -567,7 +617,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
 
     uint32_t deviceIndex = 1;
 
-    auto physicalThread = sessionMock->convertToPhysical(thread, deviceIndex);
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(1u, deviceIndex);
     EXPECT_EQ(0u, physicalThread.slice);
@@ -576,7 +626,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
     EXPECT_EQ(0u, physicalThread.thread);
 
     thread.slice = UINT32_MAX;
-    physicalThread = sessionMock->convertToPhysical(thread, deviceIndex);
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(1u, deviceIndex);
     EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.slice);
@@ -588,13 +638,142 @@ TEST(DebugSessionTest, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
     thread.subslice = UINT32_MAX;
     thread.eu = 1;
     thread.thread = 3;
-    physicalThread = sessionMock->convertToPhysical(thread, deviceIndex);
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(1u, deviceIndex);
     EXPECT_EQ(0u, physicalThread.slice);
     EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.subslice);
     EXPECT_EQ(1u, physicalThread.eu);
     EXPECT_EQ(3u, physicalThread.thread);
+}
+
+TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    hwInfo.gtSystemInfo.SliceCount = 1;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+
+    mockDrm->storedSVal = 2; // slice 0 disabled in topology
+    mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
+    mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
+    mockDrm->disableSomeTopology = true;
+
+    NEO::Drm::QueryTopologyData topologyData = {};
+    mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
+    uint32_t deviceIndex = 0;
+
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = 0;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+}
+
+TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    hwInfo.gtSystemInfo.SliceCount = 8;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+
+    mockDrm->storedSVal = hwInfo.gtSystemInfo.SliceCount;
+    mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
+    mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
+    mockDrm->disableSomeTopology = true;
+
+    NEO::Drm::QueryTopologyData topologyData = {};
+    mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
+    uint32_t deviceIndex = 0;
+
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(UINT32_MAX, physicalThread.slice);
+    EXPECT_EQ(thread.subslice, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = 0;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(thread.subslice, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+}
+
+TEST(DebugSessionTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    hwInfo.gtSystemInfo.SliceCount = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    mockDrm->storedSVal = 1;
+    mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
+    mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
+
+    NEO::Drm::QueryTopologyData topologyData = {};
+    mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    ze_device_thread_t thread = {UINT32_MAX, 0, 0, 0};
+
+    auto stopped = sessionMock->areRequestedThreadsStopped(thread);
+    EXPECT_FALSE(stopped);
+
+    EuThread::ThreadId threadId(0, 0, 0, 0, 0);
+    sessionMock->allThreads[threadId]->stopThread(1u);
+
+    uint32_t subDeviceCount = std::max(1u, neoDevice->getNumSubDevices());
+    for (uint32_t i = 0; i < subDeviceCount; i++) {
+        EuThread::ThreadId threadId(i, 0, 0, 0, 0);
+        sessionMock->allThreads[threadId]->stopThread(1u);
+    }
+    stopped = sessionMock->areRequestedThreadsStopped(thread);
+    EXPECT_TRUE(stopped);
 }
 
 TEST(DebugSessionTest, WhenEnqueueApiEventCalledThenEventPushed) {
@@ -4614,7 +4793,9 @@ TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
-    EXPECT_EQ(device->getHwInfo().gtSystemInfo.MaxSlicesSupported, sessionMock->numThreadsPassedToThreadControl);
+
+    auto sliceCount = mockDrm->getTopologyMap().at(0).sliceIndices.size();
+    EXPECT_EQ(sliceCount, sessionMock->numThreadsPassedToThreadControl);
 }
 
 TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingResumeThenErrorUnknownIsReturned) {
@@ -5951,5 +6132,125 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
+using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
+
+TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
+
+    zet_debug_session_handle_t session = sessionMock->toHandle();
+    ze_device_thread_t thread = {0, 0, 0, 0};
+
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+
+    ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
+    auto result = L0::DebugApiHandlers::debugResume(session, allSlices);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(2, handler->ioctlCalled);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
+
+    ASSERT_EQ(2u, sessionMock->resumedDevices.size());
+    ASSERT_EQ(2u, sessionMock->resumedThreads.size());
+    EXPECT_EQ(0u, sessionMock->resumedDevices[0]);
+    EXPECT_EQ(1u, sessionMock->resumedDevices[1]);
+
+    EXPECT_EQ(thread.slice, sessionMock->resumedThreads[0][0].slice);
+    EXPECT_EQ(thread.subslice, sessionMock->resumedThreads[0][0].subslice);
+    EXPECT_EQ(thread.eu, sessionMock->resumedThreads[0][0].eu);
+    EXPECT_EQ(thread.thread, sessionMock->resumedThreads[0][0].thread);
+
+    EXPECT_EQ(thread.slice, sessionMock->resumedThreads[1][0].slice);
+    EXPECT_EQ(thread.subslice, sessionMock->resumedThreads[1][0].subslice);
+    EXPECT_EQ(thread.eu, sessionMock->resumedThreads[1][0].eu);
+    EXPECT_EQ(thread.thread, sessionMock->resumedThreads[1][0].thread);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDeviceIndexThenCorrectValueReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+    ASSERT_NE(nullptr, debugSession);
+
+    ze_device_thread_t thread = {sliceCount * 2 - 1, 0, 0, 0};
+
+    uint32_t deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(1u, deviceIndex);
+
+    thread = {sliceCount - 1, 0, 0, 0};
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(0u, deviceIndex);
+
+    thread.slice = UINT32_MAX;
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(UINT32_MAX, deviceIndex);
+
+    debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, deviceImp->subDevices[0], 10);
+
+    thread = {sliceCount - 1, 0, 0, 0};
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(0u, deviceIndex);
+
+    debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, deviceImp->subDevices[1], 10);
+
+    thread = {sliceCount - 1, 0, 0, 0};
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(1u, deviceIndex);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingAreRequestedThreadsStoppedThenCorrectValueIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
+
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+
+    auto stopped = sessionMock->areRequestedThreadsStopped(thread);
+    EXPECT_TRUE(stopped);
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_FALSE(stopped);
+
+    for (uint32_t i = 0; i < sliceCount; i++) {
+        EuThread::ThreadId threadId(0, i, 0, 0, 0);
+        sessionMock->allThreads[threadId]->stopThread(1u);
+    }
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_FALSE(stopped);
+
+    for (uint32_t i = 0; i < sliceCount; i++) {
+        EuThread::ThreadId threadId(1, i, 0, 0, 0);
+        sessionMock->allThreads[threadId]->stopThread(1u);
+    }
+
+    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
+    EXPECT_TRUE(stopped);
+}
 } // namespace ult
 } // namespace L0

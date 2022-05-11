@@ -43,14 +43,28 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
     }
 }
 
-ze_device_thread_t DebugSession::convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex) {
+uint32_t DebugSession::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
+    uint32_t deviceIndex = 0;
     auto &hwInfo = connectedDevice->getHwInfo();
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
         deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    } else if (thread.slice != UINT32_MAX) {
-        deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
+    } else {
+        if (thread.slice != UINT32_MAX) {
+            deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
+        } else if (deviceCount > 1) {
+            deviceIndex = UINT32_MAX;
+        }
+    }
+    return deviceIndex;
+}
+
+ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
+    auto &hwInfo = connectedDevice->getHwInfo();
+
+    if (thread.slice != UINT32_MAX) {
         thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
     }
 
@@ -144,17 +158,24 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
 
 bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     auto &hwInfo = connectedDevice->getHwInfo();
-    uint32_t deviceIndex = 0;
-    auto physicalThread = convertToPhysical(thread, deviceIndex);
-    auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
     bool requestedThreadsStopped = true;
 
-    for (auto &threadId : singleThreads) {
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    uint32_t deviceIndex = getDeviceIndexFromApiThread(thread);
 
-        if (allThreads[threadId]->isStopped()) {
-            continue;
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        if (i == deviceIndex || deviceIndex == UINT32_MAX) {
+            auto physicalThread = convertToPhysicalWithinDevice(thread, i);
+            auto singleThreads = getSingleThreadsForDevice(i, physicalThread, hwInfo);
+
+            for (auto &threadId : singleThreads) {
+
+                if (allThreads[threadId]->isStopped()) {
+                    continue;
+                }
+                return false;
+            }
         }
-        requestedThreadsStopped = false;
     }
 
     return requestedThreadsStopped;
@@ -186,8 +207,7 @@ void DebugSession::fillDevicesFromThread(ze_device_thread_t thread, std::vector<
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     UNRECOVERABLE_IF(devices.size() < deviceCount);
 
-    uint32_t deviceIndex = 0;
-    convertToPhysical(thread, deviceIndex);
+    uint32_t deviceIndex = getDeviceIndexFromApiThread(thread);
     bool singleDevice = (thread.slice != UINT32_MAX && deviceCount > 1) || deviceCount == 1;
 
     if (singleDevice) {
@@ -386,15 +406,19 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
 }
 
 ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
-    uint32_t deviceIndex = 0;
-    auto physicalThread = convertToPhysical(thread, deviceIndex);
 
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     bool singleDevice = (thread.slice != UINT32_MAX && deviceCount > 1) || deviceCount == 1;
     ze_result_t retVal = ZE_RESULT_SUCCESS;
 
     if (singleDevice) {
+        uint32_t deviceIndex = 0;
+        if (thread.slice != UINT32_MAX) {
+            deviceIndex = getDeviceIndexFromApiThread(thread);
+        }
+        auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
         auto result = resumeThreadsWithinDevice(deviceIndex, physicalThread);
+
         if (result == Error::ThreadsRunning) {
             retVal = ZE_RESULT_ERROR_NOT_AVAILABLE;
         } else if (result != Error::Success) {
@@ -404,6 +428,8 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
         bool allThreadsRunning = true;
 
         for (uint32_t deviceId = 0; deviceId < deviceCount; deviceId++) {
+
+            auto physicalThread = convertToPhysicalWithinDevice(thread, deviceId);
             auto result = resumeThreadsWithinDevice(deviceId, physicalThread);
 
             if (result == Error::ThreadsRunning) {

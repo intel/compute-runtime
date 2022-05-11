@@ -1448,15 +1448,50 @@ void DebugSessionLinux::applyResumeWa(std::vector<ze_device_thread_t> threads, u
     return;
 }
 
-ze_device_thread_t DebugSessionLinux::convertToPhysical(ze_device_thread_t thread, uint32_t &deviceIndex) {
+uint32_t DebugSessionLinux::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
+    uint32_t deviceIndex = 0;
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    const auto &topologyMap = DrmHelper::getTopologyMap(connectedDevice);
+
+    if (connectedDevice->getNEODevice()->isSubDevice()) {
+        auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+        return Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    }
+
+    if (deviceCount > 1) {
+
+        if (thread.slice == UINT32_MAX) {
+            deviceIndex = UINT32_MAX;
+        } else {
+            uint32_t sliceId = thread.slice;
+            for (uint32_t i = 0; i < topologyMap.size(); i++) {
+                if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                    deviceIndex = i;
+                }
+                sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
+            }
+        }
+    }
+
+    return deviceIndex;
+}
+
+ze_device_thread_t DebugSessionLinux::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
     auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
+    const auto &topologyMap = DrmHelper::getTopologyMap(connectedDevice);
+
+    // set slice for single slice config to allow subslice remapping
+    auto mapping = topologyMap.find(deviceIndex);
+    if (thread.slice == UINT32_MAX && mapping != topologyMap.end() && mapping->second.sliceIndices.size() == 1) {
+        thread.slice = 0;
+    }
 
     if (thread.slice != UINT32_MAX) {
         if (thread.subslice != UINT32_MAX) {
-            deviceImp->toPhysicalSliceId(DrmHelper::getTopologyMap(connectedDevice), thread.slice, thread.subslice, deviceIndex);
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
         } else {
             uint32_t dummy = 0;
-            deviceImp->toPhysicalSliceId(DrmHelper::getTopologyMap(connectedDevice), thread.slice, dummy, deviceIndex);
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
         }
     }
 
