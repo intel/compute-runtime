@@ -94,6 +94,7 @@ class WddmMock : public Wddm {
         }
         return verifyAdapterLuidReturnValue;
     }
+    LUID getAdapterLuid() { return hwDeviceId->getAdapterLuid(); }
     bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
 
     bool configureDeviceAddressSpace() {
@@ -164,6 +165,7 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
     bool verifyAdapterLuidReturnValue = true;
     bool callBaseVerifyAdapterLuid = false;
+    LUID mockAdaperLuid = {0, 0};
     bool mapGpuVaStatus = true;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;

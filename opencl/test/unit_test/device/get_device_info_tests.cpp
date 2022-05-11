@@ -970,6 +970,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_VENDOR_ID,
     CL_DEVICE_VERSION,
     CL_DRIVER_VERSION,
+    CL_DRIVER_UUID_KHR,
 };
 
 INSTANTIATE_TEST_CASE_P(
@@ -1043,7 +1044,7 @@ TEST(GetDeviceInfoTest, givenPciBusInfoIsNotAvailableWhenGettingPciBusInfoForDev
 }
 
 TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuid) {
-    std::array<uint8_t, HwInfoConfig::uuidSize> generateDeviceUuid, deviceUuidKHR;
+    std::array<uint8_t, CL_UUID_SIZE_KHR> generateDeviceUuid, deviceUuidKHR;
     size_t retSize = 0;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

@@ -138,6 +138,9 @@ class Device : public ReferenceTrackedObject<Device> {
     const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
     bool getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
     void generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
+    void getAdapterLuid(std::array<uint8_t, HwInfoConfig::luidSize> &luid);
+    MOCKABLE_VIRTUAL bool verifyAdapterLuid();
+    void getAdapterMask(uint32_t &nodeMask);
 
   protected:
     Device() = delete;

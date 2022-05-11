@@ -114,6 +114,14 @@ TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
     EXPECT_EQ(-1, speedInfo.maxBandwidth);
 }
 
+TEST_F(WddmTests, whenGetAdapterLuidThenLuidIsReturned) {
+    HwDeviceIdWddm *hwDeviceId = new HwDeviceIdWddm(0, {0, 0}, executionEnvironment->osEnvironment.get(), nullptr);
+    wddm->hwDeviceId.reset(hwDeviceId);
+
+    auto luid = wddm->getAdapterLuid();
+    EXPECT_TRUE(luid.HighPart == 0 && luid.LowPart == 0);
+}
+
 uint64_t waitForSynchronizationObjectFromCpuCounter = 0u;
 
 NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOp(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {

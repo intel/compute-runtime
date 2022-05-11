@@ -45,6 +45,7 @@ class HwInfoConfig {
         return hwInfoConfigFactory[product];
     }
     static constexpr uint32_t uuidSize = 16u;
+    static constexpr uint32_t luidSize = 8u;
     int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;

@@ -171,6 +171,7 @@ template<> struct Map<CL_DEVICE_TYPE                                        > : 
 template<> struct Map<CL_DEVICE_VENDOR                                      > : public ClMapBase<CL_DEVICE_VENDOR,                                      const char *,                    &ClDeviceInfo::vendor> {};
 template<> struct Map<CL_DEVICE_VERSION                                     > : public ClMapBase<CL_DEVICE_VERSION,                                     const char *,                    &ClDeviceInfo::clVersion> {};
 template<> struct Map<CL_DRIVER_VERSION                                     > : public ClMapBase<CL_DRIVER_VERSION,                                     const char *,                    &ClDeviceInfo::driverVersion> {};
+template<> struct Map<CL_DRIVER_UUID_KHR                                    > : public ClMapBase<CL_DRIVER_UUID_KHR,                                    const char *,                    &ClDeviceInfo::driverVersion> {};
 template<> struct Map<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT     > : public ClMapBase<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT,     uint32_t,                        &ClDeviceInfo::workGroupCollectiveFunctionsSupport> {};
 // clang-format on
 

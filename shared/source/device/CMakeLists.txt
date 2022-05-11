@@ -16,6 +16,15 @@ set(NEO_CORE_DEVICE
     ${CMAKE_CURRENT_SOURCE_DIR}/sub_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_get_device_name.cpp
 )
+if(WIN32)
+  list(APPEND NEO_CORE_DEVICE
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/device_windows.cpp
+  )
+else()
+  list(APPEND NEO_CORE_DEVICE
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/device_linux.cpp
+  )
+endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_DEVICE ${NEO_CORE_DEVICE})
 add_subdirectories()

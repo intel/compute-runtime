@@ -715,6 +715,12 @@ void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
     memcpy_s(&uuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 }
 
+void Device::getAdapterMask(uint32_t &nodeMask) {
+    if (verifyAdapterLuid()) {
+        nodeMask = 1;
+    }
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     DEBUG_BREAK_IF(rtDispatchGlobals.size() < maxBvhLevels + 1);
     DEBUG_BREAK_IF(rtDispatchGlobals[maxBvhLevels] != nullptr);

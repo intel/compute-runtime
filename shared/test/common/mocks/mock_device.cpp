@@ -98,6 +98,12 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     }
 }
 
+bool MockDevice::verifyAdapterLuid() {
+    if (callBaseVerifyAdapterLuid)
+        return Device::verifyAdapterLuid();
+    return verifyAdapterLuidReturnValue;
+}
+
 bool MockSubDevice::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
     if (failOnCreateEngine) {
         return false;

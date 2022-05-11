@@ -163,11 +163,15 @@ class MockDevice : public RootDevice {
         return isDebuggerActiveReturn;
     }
 
+    bool verifyAdapterLuid() override;
+
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool isDebuggerActiveParentCall = true;
     bool isDebuggerActiveReturn = false;
     bool callBaseGetMaxParameterSizeFromIGC = false;
+    bool callBaseVerifyAdapterLuid = true;
+    bool verifyAdapterLuidReturnValue = true;
     size_t maxParameterSizeFromIGC = 0u;
 };
 
