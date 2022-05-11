@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,14 +176,14 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupp
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingDefaultModeThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingDefaultModeThenSupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
     auto handles = get_fan_handles();
 
     for (auto handle : handles) {
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
     }
 }
 
@@ -199,7 +199,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingFixedSpeedModeThenU
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeWithNumberOfPointsZeroThenUnsupportedIsReturned) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -207,6 +207,19 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeTh
 
     for (auto handle : handles) {
         zes_fan_speed_table_t fanSpeedTable = {0};
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesFanSetSpeedTableMode(handle, &fanSpeedTable));
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenSettingTheSpeedTableModeWithGreaterThanMaxNumberOfPointsThenUnsupportedIsReturned) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = get_fan_handles();
+
+    for (auto handle : handles) {
+        zes_fan_speed_table_t fanSpeedTable = {0};
+        fanSpeedTable.numPoints = 20; // Setting number of control points greater than max number of control points (10)
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesFanSetSpeedTableMode(handle, &fanSpeedTable));
     }
 }

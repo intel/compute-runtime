@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,18 @@ ze_result_t WddmFanImp::getConfig(zes_fan_config_t *pConfig) {
 }
 
 ze_result_t WddmFanImp::setDefaultMode() {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    // Passing current number of control points as zero will reset pcode to default fan curve
+    uint32_t value = 0; // 0 to reset to default
+    request.commandId = KmdSysman::Command::Set;
+    request.componentId = KmdSysman::Component::FanComponent;
+    request.requestId = KmdSysman::Requests::Fans::CurrentNumOfControlPoints;
+    request.dataSize = sizeof(uint32_t);
+    memcpy_s(request.dataBuffer, sizeof(uint32_t), &value, sizeof(uint32_t));
+
+    return pKmdSysManager->requestSingle(request, response);
 }
 
 ze_result_t WddmFanImp::setFixedSpeedMode(const zes_fan_speed_t *pSpeed) {

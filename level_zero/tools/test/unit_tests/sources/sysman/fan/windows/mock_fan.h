@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,13 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             mockFanCurrentFanPoints = *pValue;
             pResponse->outDataSize = 0;
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            if ((mockFanCurrentFanPoints % 2 == 0) && (mockFanCurrentFanPoints > 0) && (mockFanCurrentFanPoints <= mockFanMaxPoints)) {
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            } else if (mockFanCurrentFanPoints == 0) {
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            } else {
+                pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            }
         } break;
         default: {
             pResponse->outDataSize = 0;
