@@ -1354,6 +1354,57 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
 
 using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
+TEST_F(EventPoolCreateMultiDevice, givenReturnSubDevicesAsApiDevicesWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
+
+    uint32_t deviceCount = 0;
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(deviceCount, numRootDevices * numSubDevices);
+
+    ze_device_handle_t *devices = new ze_device_handle_t[deviceCount];
+    result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t i = 0u;
+    for (const auto device : driverHandle->devices) {
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        for (const auto subdevice : deviceImpl->subDevices) {
+            EXPECT_EQ(devices[i], subdevice);
+            i++;
+        }
+    }
+
+    static_cast<DeviceImp *>(driverHandle->devices[1])->numSubDevices = 0;
+    uint32_t deviceCount2 = 0;
+    result = zeDeviceGet(driverHandle.get(), &deviceCount2, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(deviceCount2, (numRootDevices - 1) * numSubDevices + 1);
+    ze_device_handle_t *devices2 = new ze_device_handle_t[deviceCount2];
+
+    result = zeDeviceGet(driverHandle.get(), &deviceCount2, devices2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    i = 0u;
+    for (const auto device : driverHandle->devices) {
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        if (deviceImpl->numSubDevices > 0) {
+            for (const auto subdevice : deviceImpl->subDevices) {
+                EXPECT_EQ(devices2[i], subdevice);
+                i++;
+            }
+        } else {
+            EXPECT_EQ(devices2[i], device);
+            i++;
+        }
+    }
+
+    static_cast<DeviceImp *>(driverHandle->devices[1])->numSubDevices = numSubDevices;
+    delete[] devices2;
+    delete[] devices;
+}
+
 TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenEventPoolCreateSucceeds) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;

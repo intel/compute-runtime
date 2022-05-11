@@ -248,8 +248,8 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         for (auto platformDeviceIndex = 0u; platformDeviceIndex < numDev; platformDeviceIndex++) {
             bool exposeSubDevices = false;
 
-            if (DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.get() != -1) {
-                exposeSubDevices = DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.get();
+            if (DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
+                exposeSubDevices = DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
             }
 
             ClDevice *device = pPlatform->getClDevice(platformDeviceIndex);

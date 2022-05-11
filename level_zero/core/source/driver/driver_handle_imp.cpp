@@ -254,8 +254,22 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 }
 
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
+    bool exposeSubDevices = false;
+
+    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
+        exposeSubDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    }
+
     if (*pCount == 0) {
-        *pCount = this->numDevices;
+        if (exposeSubDevices) {
+            for (auto &device : this->devices) {
+                auto deviceImpl = static_cast<DeviceImp *>(device);
+                *pCount += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
+            }
+        } else {
+            *pCount = this->numDevices;
+        }
+
         return ZE_RESULT_SUCCESS;
     }
 
@@ -263,8 +277,22 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
 
-    for (uint32_t i = 0; i < *pCount; i++) {
-        phDevices[i] = this->devices[i];
+    uint32_t i = 0;
+    for (auto device : devices) {
+        auto deviceImpl = static_cast<DeviceImp *>(device);
+        if (deviceImpl->numSubDevices > 0 && exposeSubDevices) {
+            for (auto subdevice : deviceImpl->subDevices) {
+                phDevices[i++] = subdevice;
+                if (i == *pCount) {
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
+        } else {
+            phDevices[i++] = device;
+            if (i == *pCount) {
+                return ZE_RESULT_SUCCESS;
+            }
+        }
     }
 
     return ZE_RESULT_SUCCESS;

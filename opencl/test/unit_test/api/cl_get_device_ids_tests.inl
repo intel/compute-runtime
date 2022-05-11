@@ -146,7 +146,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     EXPECT_EQ(devices[numEntries], dummyDevice);
 }
 
-TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsClDeviceIDsWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
+TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsApiDevicesWhenCallClGetDeviceIDsThenSubDevicesAreReturnedAsSeparateClDevices) {
     platformsImpl->clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -154,7 +154,7 @@ TEST(clGetDeviceIDsTest, givenReturnSubDevicesAsClDeviceIDsWhenCallClGetDeviceID
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numRootDevices);
-    DebugManager.flags.ReturnSubDevicesAsClDeviceIDs.set(1);
+    DebugManager.flags.ReturnSubDevicesAsApiDevices.set(1);
     cl_uint maxNumDevices;
     auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, 0, nullptr, &maxNumDevices);
     EXPECT_EQ(retVal, CL_SUCCESS);
