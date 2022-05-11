@@ -69,7 +69,7 @@ class BufferObject {
     int peekHandle() const { return handle; }
     const Drm *peekDrm() const { return drm; }
     uint64_t peekAddress() const { return gpuAddress; }
-    void setAddress(uint64_t address) { this->gpuAddress = GmmHelper::canonize(address); }
+    void setAddress(uint64_t address);
     void *peekLockedAddress() const { return lockedAddress; }
     void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }

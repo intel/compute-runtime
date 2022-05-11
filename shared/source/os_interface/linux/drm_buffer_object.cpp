@@ -56,6 +56,12 @@ uint32_t BufferObject::getRefCount() const {
     return this->refCount.load();
 }
 
+void BufferObject::setAddress(uint64_t address) {
+    auto gmmHelper = drm->getRootDeviceEnvironment().getGmmHelper();
+
+    this->gpuAddress = gmmHelper->canonize(address);
+}
+
 bool BufferObject::close() {
     drm_gem_close close = {};
     close.handle = this->handle;
