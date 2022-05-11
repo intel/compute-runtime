@@ -83,6 +83,11 @@ TEST_F(WddmTests, whenCreatingContextWithPowerHintSuccessIsReturned) {
     EXPECT_TRUE(wddm->createContext(*newContext));
 }
 
+TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
+    init();
+    EXPECT_FALSE(wddm->isDebugAttachAvailable());
+}
+
 TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
