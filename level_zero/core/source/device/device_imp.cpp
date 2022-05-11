@@ -655,6 +655,9 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     memset(pDeviceProperties->name, 0, ZE_MAX_DEVICE_NAME);
 
     std::string name = getNEODevice()->getDeviceInfo().name;
+    if (driverInfo) {
+        name.assign(driverInfo->getDeviceName(name).c_str());
+    }
     memcpy_s(pDeviceProperties->name, name.length(), name.c_str(), name.length());
 
     return ZE_RESULT_SUCCESS;

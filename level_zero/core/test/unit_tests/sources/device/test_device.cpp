@@ -993,6 +993,28 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
 }
 
+TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsEmptyThenDeviceNameTheSameAsInDeviceInfo) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    ze_device_properties_t deviceProperties;
+    auto name = device->getNEODevice()->getDeviceInfo().name;
+    deviceImp->driverInfo.reset();
+    deviceImp->getProperties(&deviceProperties);
+    EXPECT_STREQ(deviceProperties.name, name.c_str());
+}
+
+TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsNotEmptyThenDeviceNameTheSameAsInDriverInfo) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    ze_device_properties_t deviceProperties;
+    auto driverInfo = std::make_unique<DriverInfoMock>();
+    std::string customDevName = "Custom device name";
+    auto name = device->getNEODevice()->getDeviceInfo().name;
+    driverInfo->setDeviceName(customDevName);
+    deviceImp->driverInfo.reset(driverInfo.release());
+    deviceImp->getProperties(&deviceProperties);
+    EXPECT_STREQ(deviceProperties.name, customDevName.c_str());
+    EXPECT_STRNE(deviceProperties.name, name.c_str());
+}
+
 TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;
