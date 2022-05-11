@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,6 @@ class CsrDependencies {
     StackVec<TimestampPacketContainer *, 32> timestampPacketContainer;
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;
+    void copyNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
 };
 } // namespace NEO

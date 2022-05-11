@@ -816,6 +816,34 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
 }
 
+HWTEST_F(TimestampPacketTests, givenWaitlistWithTimestampPacketWhenEnqueueingThenDeferWaitlistNodes) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    TimestampPacketContainer *deferredTimestampPackets = cmdQ->deferredTimestampPackets.get();
+
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event waitlistEvent(cmdQ.get(), 0, 0, 0);
+    waitlistEvent.addTimestampPacketNodes(timestamp);
+
+    cl_event waitlist[] = {&waitlistEvent};
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 1, waitlist, nullptr);
+
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+
+    EXPECT_EQ(timestamp.peekNodes()[0]->getGpuAddress(), deferredTimestampPackets->peekNodes()[0]->getGpuAddress());
+
+    cmdQ->flush();
+    EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
+    EXPECT_EQ(timestamp.peekNodes()[0]->getGpuAddress(), deferredTimestampPackets->peekNodes()[0]->getGpuAddress());
+
+    cmdQ->finish();
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+}
+
 HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThenEventHasCorrectTimestampsToCheckForCompletion) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UpdateTaskCountFromWait.set(3);

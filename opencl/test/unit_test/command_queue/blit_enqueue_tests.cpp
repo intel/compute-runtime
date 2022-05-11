@@ -1571,6 +1571,44 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     clReleaseEvent(outEvent1);
 }
 
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenWaitlistWithTimestampPacketWhenEnqueueingThenDeferWaitlistNodes) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto buffer = createBuffer(1, false);
+
+    auto mockCmdQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    TimestampPacketContainer *deferredTimestampPackets = mockCmdQueue->deferredTimestampPackets.get();
+
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event waitlistEvent(mockCmdQueue, 0, 0, 0);
+    waitlistEvent.addTimestampPacketNodes(timestamp);
+
+    cl_event waitlist[] = {&waitlistEvent};
+
+    mockCmdQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, waitlist, nullptr);
+
+    auto deferredNodesCount = deferredTimestampPackets->peekNodes().size();
+
+    EXPECT_TRUE(deferredNodesCount >= 1);
+
+    bool waitlistNodeFound = false;
+    for (auto &node : deferredTimestampPackets->peekNodes()) {
+        if (node->getGpuAddress() == timestamp.peekNodes()[0]->getGpuAddress()) {
+            waitlistNodeFound = true;
+        }
+    }
+
+    EXPECT_TRUE(waitlistNodeFound);
+
+    mockCmdQueue->flush();
+    EXPECT_EQ(deferredNodesCount, deferredTimestampPackets->peekNodes().size());
+
+    mockCmdQueue->finish();
+    EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
+}
+
 HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperationWhenItIsWaitedItHasProperDependenciesOnWait) {
     auto buffer = createBuffer(1, false);
     int hostPtr = 0;

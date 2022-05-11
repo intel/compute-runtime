@@ -355,6 +355,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (deferredTimestampPackets.get()) {
         timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
+        csrDeps.copyNodesToNewContainer(*deferredTimestampPackets);
     }
 
     commandStreamReceiverOwnership.unlock();
@@ -1179,6 +1180,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
 
     timestampPacketDependencies.moveNodesToNewContainer(*deferredTimestampPackets);
+    csrDeps.copyNodesToNewContainer(*deferredTimestampPackets);
 
     queueOwnership.unlock();
     bcsCommandStreamReceiverOwnership.unlock();
