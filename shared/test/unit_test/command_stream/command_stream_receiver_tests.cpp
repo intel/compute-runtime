@@ -356,6 +356,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
     csr.gpuHangCheckPeriod = 0us;
 
     volatile std::uint32_t tasksCount[16] = {};
+    VariableBackup<volatile std::uint32_t *> csrTagAddressBackup(&csr.tagAddress);
     csr.tagAddress = tasksCount;
 
     auto hostPtr = reinterpret_cast<void *>(0x1234);
