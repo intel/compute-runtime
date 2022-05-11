@@ -48,7 +48,6 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <iostream>

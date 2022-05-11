@@ -15,7 +15,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_null_device.h"
 
-#include "drm/i915_drm.h"
 #include "hw_cmds.h"
 
 #include <array>

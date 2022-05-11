@@ -20,7 +20,6 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <iostream>

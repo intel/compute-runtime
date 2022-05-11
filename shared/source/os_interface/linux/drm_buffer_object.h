@@ -13,8 +13,6 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "drm/i915_drm.h"
-
 #include <array>
 #include <atomic>
 #include <cstddef>
@@ -23,6 +21,7 @@
 
 struct drm_i915_gem_exec_object2;
 struct drm_i915_gem_relocation_entry;
+struct drm_i915_gem_execbuffer2;
 
 namespace NEO {
 
