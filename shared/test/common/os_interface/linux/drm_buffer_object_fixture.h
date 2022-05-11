@@ -12,8 +12,6 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
-#include "drm/i915_drm.h"
-
 #include <memory>
 
 class TestedBufferObject : public BufferObject {
@@ -29,7 +27,7 @@ class TestedBufferObject : public BufferObject {
         this->tilingMode = mode;
     }
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
+    void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
         BufferObject::fillExecObject(execObject, osContext, vmHandleId, drmContextId);
         execObjectPointerFilled = &execObject;
     }
@@ -39,7 +37,7 @@ class TestedBufferObject : public BufferObject {
     }
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-             BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) override {
+             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) override {
         this->receivedCompletionGpuAddress = completionGpuAddress;
         this->receivedCompletionValue = completionValue;
         this->execCalled++;
@@ -59,7 +57,7 @@ class TestedBufferObject : public BufferObject {
     }
 
     uint64_t receivedCompletionGpuAddress = 0;
-    drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
+    ExecObject *execObjectPointerFilled = nullptr;
     uint32_t receivedCompletionValue = 0;
     uint32_t execCalled = 0;
     bool callBaseEvictUnusedAllocations{true};
@@ -70,7 +68,7 @@ class DrmBufferObjectFixture {
   public:
     std::unique_ptr<DrmClass> mock;
     TestedBufferObject *bo;
-    drm_i915_gem_exec_object2 execObjectsStorage[256];
+    ExecObject execObjectsStorage[256];
     std::unique_ptr<OsContextLinux> osContext;
 
     void SetUp() { // NOLINT(readability-identifier-naming)

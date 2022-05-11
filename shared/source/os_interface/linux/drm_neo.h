@@ -20,7 +20,6 @@
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "igfxfmid.h"
 

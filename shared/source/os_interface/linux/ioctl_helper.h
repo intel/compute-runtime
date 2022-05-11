@@ -75,6 +75,10 @@ using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
 
+struct ExecObject {
+    uint8_t data[56];
+};
+
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
@@ -127,6 +131,9 @@ class IoctlHelper {
     virtual bool isContextDebugSupported(Drm *drm) = 0;
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
+
+    void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
+    void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
 };
 
 class IoctlHelperUpstream : public IoctlHelper {

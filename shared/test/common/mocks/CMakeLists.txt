@@ -107,6 +107,8 @@ else()
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_wrappers.h
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_context_linux.h
   )
 endif()

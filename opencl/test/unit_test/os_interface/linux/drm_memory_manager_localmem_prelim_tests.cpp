@@ -15,6 +15,7 @@
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -2086,13 +2087,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindSetWhenFlus
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    const auto boRequirments = [&allocation](const auto &bo) {
-        return (static_cast<int>(bo.handle) == 0u &&
-                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    const auto execObjectRequirements = [&allocation](const auto &execObject) {
+        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
+        return (mockExecObject.getHandle() == 0 &&
+                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
     };
 
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
-    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) == residency.end());
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) == residency.end());
     EXPECT_EQ(residency.size(), 1u);
 
     residency.clear();
@@ -2115,13 +2117,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindAndPassBoun
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    const auto boRequirments = [&allocation](const auto &bo) {
-        return (static_cast<int>(bo.handle) == 0 &&
-                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    const auto execObjectRequirements = [&allocation](const auto &execObject) {
+        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
+        return (mockExecObject.getHandle() == 0 &&
+                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
     };
 
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
-    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
+    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
     EXPECT_EQ(residency.size(), 1u);
 
     residency.clear();
@@ -2144,13 +2147,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedPrelimTest, givenUseVmBindAndPassBoun
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    const auto boRequirments = [&allocation](const auto &bo) {
-        return (static_cast<int>(bo.handle) == 0 &&
-                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    const auto execObjectRequirements = [&allocation](const auto &execObject) {
+        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
+        return (mockExecObject.getHandle() == 0 &&
+                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
     };
 
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
-    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
     EXPECT_EQ(residency.size(), 2u);
 
     residency.clear();

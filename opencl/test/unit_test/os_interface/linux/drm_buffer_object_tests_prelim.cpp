@@ -25,7 +25,7 @@ TEST_F(DrmBufferObjectPrelimTest, GivenCompletionAddressWhenCallingExecThenRetur
     constexpr uint32_t completionValue = 33;
     constexpr uint64_t expectedCompletionValue = completionValue;
 
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, completionAddress, completionValue);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(completionAddress, mock->context.completionAddress);

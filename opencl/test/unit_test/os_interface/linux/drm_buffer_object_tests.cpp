@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
@@ -25,7 +26,7 @@ TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
@@ -35,7 +36,7 @@ TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturne
     mock->ioctl_expected.total = 3;
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
     EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0));
 }
 
@@ -46,7 +47,7 @@ TEST_F(DrmBufferObjectTest, GivenDetectedGpuHangDuringEvictUnusedAllocationsWhen
 
     bo->callBaseEvictUnusedAllocations = false;
 
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
     const auto result = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
 
     EXPECT_EQ(BufferObject::gpuHangDetected, result);
@@ -80,25 +81,25 @@ TEST_F(DrmBufferObjectTest, givenBindAvailableWhenCallWaitThenNoIoctlIsCalled) {
 }
 
 TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryWhenExecIsCalledThen48BitFlagIsSet) {
-    drm_i915_gem_exec_object2 execObject;
+    MockExecObject execObject{};
 
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0x1000);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
     //base address + size > size of 32bit address space
-    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
+    EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 
 TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWhenExecIsCalledThen48BitFlagSet) {
-    drm_i915_gem_exec_object2 execObject;
+    MockExecObject execObject{};
 
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0xFFF);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
     //base address + size < size of 32bit address space
-    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
+    EXPECT_TRUE(execObject.has48BAddressSupportFlag());
 }
 
 TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
@@ -179,7 +180,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     mock->ioctl_expected.total = 1;
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintExecutionBuffer.set(true);
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
 
     testing::internal::CaptureStdout();
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
@@ -369,7 +370,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     std::unique_ptr<OsContextLinux> osContext;
     osContext.reset(new OsContextLinux(*drm, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
 
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    ExecObject execObjectsStorage = {};
     auto ret = bo.exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
     EXPECT_NE(0, ret);
 }
@@ -538,7 +539,7 @@ TEST(DrmBufferObject, whenMarkForCapturedCalledThenIsMarkedForCaptureReturnsTrue
 }
 
 TEST_F(DrmBufferObjectTest, givenBoMarkedForCaptureWhenFillingExecObjectThenCaptureFlagIsSet) {
-    drm_i915_gem_exec_object2 execObject;
+    MockExecObject execObject{};
 
     memset(&execObject, 0, sizeof(execObject));
     bo->markForCapture();
@@ -546,11 +547,11 @@ TEST_F(DrmBufferObjectTest, givenBoMarkedForCaptureWhenFillingExecObjectThenCapt
     bo->setSize(0x1000);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
 
-    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_CAPTURE);
+    EXPECT_TRUE(execObject.hasCaptureFlag());
 }
 
 TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSet) {
-    drm_i915_gem_exec_object2 execObject;
+    MockExecObject execObject{};
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAsyncDrmExec.set(1);
 
@@ -559,7 +560,7 @@ TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSe
     bo->setSize(0x1000);
     bo->fillExecObject(execObject, osContext.get(), 0, 1);
 
-    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_ASYNC);
+    EXPECT_TRUE(execObject.hasAsyncFlag());
 }
 
 TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {

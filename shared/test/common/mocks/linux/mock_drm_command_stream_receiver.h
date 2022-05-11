@@ -35,6 +35,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using DrmCommandStreamReceiver<GfxFamily>::useContextForUserFenceWait;
     using DrmCommandStreamReceiver<GfxFamily>::useUserFenceWait;
+    using DrmCommandStreamReceiver<GfxFamily>::execObjectsStorage;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
@@ -73,10 +74,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
         this->submissionAggregator.reset(newSubmissionsAggregator);
-    }
-
-    std::vector<drm_i915_gem_exec_object2> &getExecStorage() {
-        return this->execObjectsStorage;
     }
 
     bool createPreemptionAllocation() override {

@@ -83,7 +83,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     auto execFlags = osContextLinux->getEngineFlag() | I915_EXEC_NO_RELOC;
     auto &drmContextIds = osContextLinux->getDrmContextIds();
 
-    drm_i915_gem_exec_object2 execObject{};
+    ExecObject execObject{};
 
     this->handleResidency();
 

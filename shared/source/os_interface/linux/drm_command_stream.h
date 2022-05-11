@@ -8,8 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
-
-#include "drm/i915_drm.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <vector>
 
@@ -74,7 +73,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     bool isUserFenceWaitActive();
 
     std::vector<BufferObject *> residency;
-    std::vector<drm_i915_gem_exec_object2> execObjectsStorage;
+    std::vector<ExecObject> execObjectsStorage;
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
 

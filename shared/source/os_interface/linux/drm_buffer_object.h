@@ -19,12 +19,12 @@
 #include <stdint.h>
 #include <vector>
 
-struct drm_i915_gem_exec_object2;
 struct drm_i915_gem_relocation_entry;
 struct drm_i915_gem_execbuffer2;
 
 namespace NEO {
 
+struct ExecObject;
 class DrmMemoryManager;
 class Drm;
 class OsContext;
@@ -47,12 +47,12 @@ class BufferObject {
     MOCKABLE_VIRTUAL int validateHostPtr(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
 
     MOCKABLE_VIRTUAL int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                              BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue);
+                              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue);
 
     int bind(OsContext *osContext, uint32_t vmHandleId);
     int unbind(OsContext *osContext, uint32_t vmHandleId);
 
-    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]);
+    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]);
 
     int wait(int64_t timeoutNs);
     bool close();
@@ -159,7 +159,7 @@ class BufferObject {
     bool requiresExplicitResidency = false;
 
     uint32_t getOsContextId(OsContext *osContext);
-    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
 
     void *lockedAddress; // CPU side virtual address

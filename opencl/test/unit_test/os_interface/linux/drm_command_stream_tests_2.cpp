@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
@@ -72,7 +73,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWhenItIsFlush
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenTaskThatRequiresLargeResourceCountWhenItIsFlushedThenExecStorageIsResized) {
     std::vector<GraphicsAllocation *> graphicsAllocations;
 
-    auto &execStorage = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
+    auto &execStorage = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
     execStorage.resize(0);
 
     for (auto id = 0; id < 10; id++) {
@@ -1585,18 +1586,19 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInt
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    const auto boRequirments = [&allocation](const auto &bo) {
-        return (static_cast<int>(bo.handle) == static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle() &&
-                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    const auto execObjectRequirements = [&allocation](const auto &execObject) {
+        auto mockExecObject = static_cast<const MockExecObject &>(execObject);
+        return (static_cast<int>(mockExecObject.getHandle()) == static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle() &&
+                mockExecObject.getOffset() == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
     };
 
-    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
-    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->execObjectsStorage;
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
     EXPECT_EQ(residency.size(), 2u);
     residency.clear();
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
     EXPECT_EQ(residency.size(), 2u);
     residency.clear();
 
@@ -1605,7 +1607,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInt
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), execObjectRequirements) != residency.end());
     EXPECT_EQ(residency.size(), 1u);
 
     mm->freeGraphicsMemory(allocation);

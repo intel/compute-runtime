@@ -115,32 +115,15 @@ uint32_t BufferObject::getOsContextId(OsContext *osContext) {
     return perContextVmsUsed ? osContext->getContextId() : 0u;
 }
 
-void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
-    execObject.handle = this->handle;
-    execObject.relocation_count = 0; //No relocations, we are SoftPinning
-    execObject.relocs_ptr = 0ul;
-    execObject.alignment = 0;
-    execObject.offset = this->gpuAddress;
-    execObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
-
-    if (DebugManager.flags.UseAsyncDrmExec.get() == 1) {
-        execObject.flags |= EXEC_OBJECT_ASYNC;
-    }
-
-    if (this->isMarkedForCapture()) {
-        execObject.flags |= EXEC_OBJECT_CAPTURE;
-    }
-    execObject.rsvd1 = drmContextId;
-    execObject.rsvd2 = 0;
-
+void BufferObject::fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     const auto osContextId = drm->isPerContextVMRequired() ? osContext->getContextId() : 0;
-    if (this->bindInfo[osContextId][vmHandleId]) {
-        execObject.handle = 0u;
-    }
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    ioctlHelper->fillExecObject(execObject, this->handle, this->gpuAddress, drmContextId, this->bindInfo[osContextId][vmHandleId], this->isMarkedForCapture());
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                       BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) {
+                       BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) {
     for (size_t i = 0; i < residencyCount; i++) {
         residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }
@@ -249,7 +232,8 @@ int BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     return retVal;
 }
 
-void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]) {
+void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]) {
+    auto ioctlHelper = drm->getIoctlHelper();
     std::stringstream logger;
     logger << "drm_i915_gem_execbuffer2 { "
            << "buffer_ptr: " + std::to_string(execbuf.buffers_ptr)
@@ -262,17 +246,10 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
 
     size_t i;
     for (i = 0; i < residencyCount; i++) {
-        logger << "Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
-               << ", address range: 0x" << (void *)execObjectsStorage[i].offset
-               << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, residency[i]->peekSize())
-               << ", flags: " << std::hex << execObjectsStorage[i].flags << std::dec
-               << ", size: " << residency[i]->peekSize() << " }\n";
+        ioctlHelper->logExecObject(execObjectsStorage[i], logger, residency[i]->peekSize());
     }
-    logger << "Command Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
-           << ", address range: 0x" << (void *)execObjectsStorage[i].offset
-           << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, this->peekSize())
-           << ", flags: " << std::hex << execObjectsStorage[i].flags << std::dec
-           << ", size: " << this->peekSize() << " }\n";
+    logger << "Command ";
+    ioctlHelper->logExecObject(execObjectsStorage[i], logger, this->peekSize());
 
     printf("%s\n", logger.str().c_str());
 }
@@ -297,7 +274,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
     if (this->drm->isVmBindAvailable()) {
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
-        StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
+        StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
     }
 
@@ -315,7 +292,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             }
         }
     } else {
-        StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
+        StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
     }
 
