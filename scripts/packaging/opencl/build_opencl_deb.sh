@@ -14,6 +14,7 @@ REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
 BUILD_DIR="${REPO_DIR}/../build_opencl"
 NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
+SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
@@ -53,11 +54,11 @@ fi
 rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR/debian
 
-COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/copyright"
-CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/control"
-SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${OS_TYPE}/shlibs.local"
+COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${SPEC_FILE}/copyright"
+CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${SPEC_FILE}/control"
+SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/${SPEC_FILE}/shlibs.local"
 
-cp -pR ${REPO_DIR}/scripts/packaging/opencl/${OS_TYPE}/debian/* $BUILD_DIR/debian/
+cp -pR ${REPO_DIR}/scripts/packaging/opencl/${SPEC_FILE}/debian/* $BUILD_DIR/debian/
 cp $COPYRIGHT $BUILD_DIR/debian/
 cp $CONTROL $BUILD_DIR/debian/
 if [ -f "${SHLIBS}" ]; then
