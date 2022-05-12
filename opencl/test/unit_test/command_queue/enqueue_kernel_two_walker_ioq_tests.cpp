@@ -43,14 +43,14 @@ HWTEST_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
 
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto WaNeeded = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo());
+    auto waNeeded = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo());
 
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
     ASSERT_NE(itorWalker2, itorCmd);
 
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorCmd);
 
-    if (WaNeeded) {
+    if (waNeeded) {
         EXPECT_EQ(0u, pipeControl->getPostSyncOperation());
         itorCmd++;
         itorCmd = find<PIPE_CONTROL *>(itorCmd, itorWalker2);

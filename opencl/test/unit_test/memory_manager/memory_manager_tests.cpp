@@ -1698,7 +1698,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocatio
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenOsEnabled64kbPagesFalseThenIs64kbPagesEnabledReturnTrue) {
     MockExecutionEnvironment executionEnvironment;
-    VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+    VariableBackup<bool> osEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hwInfo = *defaultHwInfo;
     OSInterface::osEnabled64kbPages = false;
@@ -1710,7 +1710,7 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenOsEnabled64kbPages
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenCheckIs64kbPagesEnabledThenOsEnabled64PkbPagesIsNotAffectedReturnedValue) {
     MockExecutionEnvironment executionEnvironment;
-    VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+    VariableBackup<bool> osEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     auto hwInfo = *defaultHwInfo;
     OSInterface::osEnabled64kbPages = true;

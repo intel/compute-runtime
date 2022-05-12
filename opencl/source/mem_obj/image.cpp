@@ -865,8 +865,8 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     auto imageDesc = getImageDesc();
     auto surfFmtInfo = getSurfaceFormatInfo();
     size_t retParam;
-    size_t array_size = imageDesc.image_array_size * (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY);
-    size_t SlicePitch = hostPtrSlicePitch * !(imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER);
+    size_t arraySize = imageDesc.image_array_size * (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY);
+    size_t slicePitch = hostPtrSlicePitch * !(imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER);
 
     switch (paramName) {
     case CL_IMAGE_FORMAT:
@@ -891,7 +891,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
 
     case CL_IMAGE_SLICE_PITCH:
         srcParamSize = sizeof(size_t);
-        srcParam = &SlicePitch;
+        srcParam = &slicePitch;
         break;
 
     case CL_IMAGE_WIDTH:
@@ -926,7 +926,7 @@ cl_int Image::getImageInfo(cl_image_info paramName,
 
     case CL_IMAGE_ARRAY_SIZE:
         srcParamSize = sizeof(size_t);
-        srcParam = &(array_size);
+        srcParam = &(arraySize);
         break;
 
     case CL_IMAGE_BUFFER:

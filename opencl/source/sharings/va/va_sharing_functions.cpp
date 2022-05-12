@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,10 +123,10 @@ cl_int VASharingFunctions::getSupportedFormats(cl_mem_flags flags,
     } else if (plane < 2) {
         if (formats != nullptr && (supported2PlaneFormats.size() > 0 || supported3PlaneFormats.size() > 0)) {
             uint32_t elementsToCopy = std::min(numEntries, static_cast<uint32_t>(supported2PlaneFormats.size() + supported3PlaneFormats.size()));
-            std::vector<VAImageFormat> tmp_formats;
-            tmp_formats.insert(tmp_formats.end(), supported2PlaneFormats.begin(), supported2PlaneFormats.end());
-            tmp_formats.insert(tmp_formats.end(), supported3PlaneFormats.begin(), supported3PlaneFormats.end());
-            memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &tmp_formats[0], elementsToCopy * sizeof(VAImageFormat));
+            std::vector<VAImageFormat> tmpFormats;
+            tmpFormats.insert(tmpFormats.end(), supported2PlaneFormats.begin(), supported2PlaneFormats.end());
+            tmpFormats.insert(tmpFormats.end(), supported3PlaneFormats.begin(), supported3PlaneFormats.end());
+            memcpy_s(formats, elementsToCopy * sizeof(VAImageFormat), &tmpFormats[0], elementsToCopy * sizeof(VAImageFormat));
         }
     }
 

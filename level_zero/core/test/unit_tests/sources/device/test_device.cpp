@@ -1169,15 +1169,15 @@ TEST_F(DeviceTest, givenValidPciExtPropertiesWhenPciPropertiesIsCalledThenSucces
 }
 
 TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitializedErrorIsReturned) {
-    constexpr uint32_t INVALID = NEO::PhysicalDevicePciBusInfo::invalidValue;
+    constexpr uint32_t invalid = NEO::PhysicalDevicePciBusInfo::invalidValue;
     auto deviceImp = static_cast<L0::DeviceImp *>(device);
     ze_pci_ext_properties_t pciProperties = {};
     std::vector<NEO::PhysicalDevicePciBusInfo> pciBusInfos;
 
-    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, 2, INVALID));
-    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, INVALID, 3));
-    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, INVALID, 2, 3));
-    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(INVALID, 1, 2, 3));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, 2, invalid));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, 1, invalid, 3));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(0, invalid, 2, 3));
+    pciBusInfos.push_back(NEO::PhysicalDevicePciBusInfo(invalid, 1, 2, 3));
 
     for (auto pciBusInfo : pciBusInfos) {
         NEO::DriverInfoMock *driverInfo = new DriverInfoMock();
@@ -2168,13 +2168,13 @@ TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccess
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ze_bool_t canAccess = false;
-    L0::Device *subDevice0_0 = Device::fromHandle(subDevices0[0]);
-    subDevice0_0->canAccessPeer(subDevices0[1], &canAccess);
+    L0::Device *subDevice00 = Device::fromHandle(subDevices0[0]);
+    subDevice00->canAccessPeer(subDevices0[1], &canAccess);
     EXPECT_TRUE(canAccess);
 
     canAccess = false;
-    L0::Device *subDevice1_0 = Device::fromHandle(subDevices1[0]);
-    subDevice1_0->canAccessPeer(subDevices1[1], &canAccess);
+    L0::Device *subDevice10 = Device::fromHandle(subDevices1[0]);
+    subDevice10->canAccessPeer(subDevices1[1], &canAccess);
     EXPECT_TRUE(canAccess);
 }
 

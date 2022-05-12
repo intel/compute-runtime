@@ -1526,9 +1526,9 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
     mock->ioctl_res_ext = &ioctlResExt;
 
     auto size = 10u;
-    void *host_ptr = reinterpret_cast<void *>(0x1000);
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, host_ptr, AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, size, hostPtr, AllocationType::BUFFER);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -2826,8 +2826,8 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     // now ask for 3 pages, this will give ptr from chunks
     size_t pages3size = 3 * MemoryConstants::pageSize;
 
-    void *host_ptr = reinterpret_cast<void *>(0x1000);
-    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, pages3size, host_ptr, AllocationType::BUFFER);
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, pages3size, hostPtr, AllocationType::BUFFER);
 
     auto bo = graphicsAlloaction->getBO();
     EXPECT_EQ(pages3size, bo->peekSize());
@@ -3530,8 +3530,8 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledThenPinn
     ASSERT_NE(nullptr, memoryManager->memoryForPinBBs[rootDeviceIndex]);
 
     uint32_t *buffer = reinterpret_cast<uint32_t *>(memoryManager->memoryForPinBBs[rootDeviceIndex]);
-    uint32_t bb_end = 0x05000000;
-    EXPECT_EQ(bb_end, buffer[0]);
+    uint32_t bbEnd = 0x05000000;
+    EXPECT_EQ(bbEnd, buffer[0]);
     EXPECT_EQ(0ul, buffer[1]);
 }
 

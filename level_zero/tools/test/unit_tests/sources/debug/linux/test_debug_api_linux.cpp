@@ -6065,18 +6065,18 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     EXPECT_EQ(sbaExpected.BindlessSurfaceStateBaseAddress, sba[5]);
     EXPECT_EQ(sbaExpected.BindlessSamplerStateBaseAddress, sba[6]);
 
-    uint64_t ExpectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
-    uint64_t ExpectedScratchSpaceBaseAddress = 0;
+    uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
+    uint64_t expectedScratchSpaceBaseAddress = 0;
 
     auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
-        ExpectedScratchSpaceBaseAddress = 0xBA5EBA5E;
+        expectedScratchSpaceBaseAddress = 0xBA5EBA5E;
     } else {
-        ExpectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.GeneralStateBaseAddress;
+        expectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.GeneralStateBaseAddress;
     }
 
-    EXPECT_EQ(ExpectedBindingTableBaseAddress, sba[7]);
-    EXPECT_EQ(ExpectedScratchSpaceBaseAddress, sba[8]);
+    EXPECT_EQ(expectedBindingTableBaseAddress, sba[7]);
+    EXPECT_EQ(expectedScratchSpaceBaseAddress, sba[8]);
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
@@ -6122,8 +6122,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
 
     EXPECT_EQ(sbaExpected.SurfaceStateBaseAddress, sba[1]);
 
-    const uint64_t ExpectedScratchSpaceBaseAddress = 0;
-    EXPECT_EQ(ExpectedScratchSpaceBaseAddress, sba[8]);
+    const uint64_t expectedScratchSpaceBaseAddress = 0;
+    EXPECT_EQ(expectedScratchSpaceBaseAddress, sba[8]);
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {

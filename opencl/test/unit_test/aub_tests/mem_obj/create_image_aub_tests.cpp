@@ -461,10 +461,10 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
 
     imageDesc.image_slice_pitch = inputSlicePitch;
 
-    auto host_ptr = alignedMalloc(inputSlicePitch * imageDesc.image_depth, 4096);
+    auto hostPtr = alignedMalloc(inputSlicePitch * imageDesc.image_depth, 4096);
 
     auto counter = 0;
-    char *data = (char *)host_ptr;
+    char *data = (char *)hostPtr;
     auto depthToCopy = imageDesc.image_depth;
 
     while (depthToCopy--) {
@@ -477,11 +477,11 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                              flags, 0, surfaceFormat, &imageDesc, host_ptr, retVal));
+                              flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal));
 
     depthToCopy = imageDesc.image_depth;
     auto imageStorage = (uint8_t *)image->getCpuAddress();
-    data = (char *)host_ptr;
+    data = (char *)hostPtr;
 
     uint8_t *readMemory = nullptr;
     bool isGpuCopy = image->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(
@@ -509,7 +509,7 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
         imageStorage += computedSlicePitch;
     }
 
-    alignedFree(host_ptr);
+    alignedFree(hostPtr);
     if (readMemory) {
         delete[] readMemory;
     }

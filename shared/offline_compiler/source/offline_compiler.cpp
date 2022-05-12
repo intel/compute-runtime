@@ -433,9 +433,9 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     if (options.empty()) {
         // try to read options from file if not provided by commandline
-        size_t ext_start = inputFile.find_last_of(".");
-        if (ext_start != std::string::npos) {
-            std::string oclocOptionsFileName = inputFile.substr(0, ext_start);
+        size_t extStart = inputFile.find_last_of(".");
+        if (extStart != std::string::npos) {
+            std::string oclocOptionsFileName = inputFile.substr(0, extStart);
             oclocOptionsFileName.append("_ocloc_options.txt");
 
             std::string oclocOptionsFromFile;
@@ -455,7 +455,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
                 }
             }
 
-            std::string optionsFileName = inputFile.substr(0, ext_start);
+            std::string optionsFileName = inputFile.substr(0, extStart);
             optionsFileName.append("_options.txt");
 
             bool optionsRead = readOptionsFromFile(options, optionsFileName, argHelper);
@@ -466,7 +466,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
                 argHelper->printf("Building with options:\n%s\n", options.c_str());
             }
 
-            std::string internalOptionsFileName = inputFile.substr(0, ext_start);
+            std::string internalOptionsFileName = inputFile.substr(0, extStart);
             internalOptionsFileName.append("_internal_options.txt");
 
             std::string internalOptionsFromFile;
@@ -1003,30 +1003,30 @@ bool OfflineCompiler::generateElfBinary() {
     std::string packWarnings;
 
     using namespace NEO::Elf;
-    ElfEncoder<EI_CLASS_64> ElfEncoder;
-    ElfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;
     if (binary.buildOptions.empty() == false) {
-        ElfEncoder.appendSection(SHT_OPENCL_OPTIONS, SectionNamesOpenCl::buildOptions,
+        elfEncoder.appendSection(SHT_OPENCL_OPTIONS, SectionNamesOpenCl::buildOptions,
                                  ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.buildOptions.data()), binary.buildOptions.size()));
     }
 
     if (!binary.intermediateRepresentation.empty() && !excludeIr) {
         if (isSpirV) {
-            ElfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
+            elfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
         } else {
-            ElfEncoder.appendSection(SHT_OPENCL_LLVM_BINARY, SectionNamesOpenCl::llvmObject, binary.intermediateRepresentation);
+            elfEncoder.appendSection(SHT_OPENCL_LLVM_BINARY, SectionNamesOpenCl::llvmObject, binary.intermediateRepresentation);
         }
     }
 
     if (binary.debugData.empty() == false) {
-        ElfEncoder.appendSection(SHT_OPENCL_DEV_DEBUG, SectionNamesOpenCl::deviceDebug, binary.debugData);
+        elfEncoder.appendSection(SHT_OPENCL_DEV_DEBUG, SectionNamesOpenCl::deviceDebug, binary.debugData);
     }
 
     if (binary.deviceBinary.empty() == false) {
-        ElfEncoder.appendSection(SHT_OPENCL_DEV_BINARY, SectionNamesOpenCl::deviceBinary, binary.deviceBinary);
+        elfEncoder.appendSection(SHT_OPENCL_DEV_BINARY, SectionNamesOpenCl::deviceBinary, binary.deviceBinary);
     }
 
-    this->elfBinary = ElfEncoder.encode();
+    this->elfBinary = elfEncoder.encode();
 
     return true;
 }

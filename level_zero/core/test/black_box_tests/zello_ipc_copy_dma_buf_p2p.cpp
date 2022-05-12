@@ -220,13 +220,13 @@ void run_client(int commSocket) {
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // get the dma_buf from the other process
-    int dma_buf_fd = recvmsg_fd(commSocket);
-    if (dma_buf_fd < 0) {
+    int dmaBufFd = recvmsg_fd(commSocket);
+    if (dmaBufFd < 0) {
         std::cerr << "Failing to get dma_buf fd from server\n";
         std::terminate();
     }
     ze_ipc_mem_handle_t pIpcHandle;
-    memcpy(&pIpcHandle, static_cast<void *>(&dma_buf_fd), sizeof(dma_buf_fd));
+    memcpy(&pIpcHandle, static_cast<void *>(&dmaBufFd), sizeof(dmaBufFd));
 
     // get a memory pointer to the BO associated with the dma_buf
     void *zeIpcBuffer;
@@ -278,9 +278,9 @@ void run_server(int commSocket, bool &validRet) {
     SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
 
     // Pass the dma_buf to the other process
-    int dma_buf_fd;
-    memcpy(static_cast<void *>(&dma_buf_fd), &pIpcHandle, sizeof(dma_buf_fd));
-    if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd)) < 0) {
+    int dmaBufFd;
+    memcpy(static_cast<void *>(&dmaBufFd), &pIpcHandle, sizeof(dmaBufFd));
+    if (sendmsg_fd(commSocket, static_cast<int>(dmaBufFd)) < 0) {
         std::cerr << "Failing to send dma_buf fd to client\n";
         std::terminate();
     }
@@ -291,8 +291,8 @@ void run_server(int commSocket, bool &validRet) {
     }
 
     // Wait for child to exit
-    int child_status;
-    pid_t clientPId = wait(&child_status);
+    int childStatus;
+    pid_t clientPId = wait(&childStatus);
     if (clientPId <= 0) {
         std::cerr << "Client terminated abruptly with error code " << strerror(errno) << "\n";
         std::terminate();

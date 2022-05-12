@@ -1085,7 +1085,7 @@ int main(int argc, char *argv[]) {
     getDeviceHandles(driver, devices, argc, argv);
     int opt;
 
-    static struct option long_opts[] = {
+    static struct option longOpts[] = {
         {"help", no_argument, nullptr, 'h'},
         {"pci", no_argument, nullptr, 'p'},
         {"frequency", no_argument, nullptr, 'f'},
@@ -1106,7 +1106,7 @@ int main(int argc, char *argv[]) {
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEi:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hdpPfsectogmrFEi:", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();

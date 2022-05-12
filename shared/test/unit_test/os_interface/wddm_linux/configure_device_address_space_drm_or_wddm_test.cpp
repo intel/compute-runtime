@@ -675,7 +675,7 @@ class MockDeviceTimeWddm : public NEO::DeviceTimeWddm {
 
 TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsTimeWasCalled) {
 
-    NEO::TimeStampData CPUGPUTime01 = {0};
+    NEO::TimeStampData cpuGpuTime01 = {0};
 
     std::unique_ptr<NEO::HwDeviceIdWddm> hwDeviceIdIn;
     auto osEnvironment = std::make_unique<NEO::OsEnvironmentWin>();
@@ -694,6 +694,6 @@ TEST(OSTimeWinLinuxTests, givenOSInterfaceWhenGetCpuGpuTimeThenGetCpuTimeFromOsT
     osInterface->setDriverModel(std::move(wddm));
     std::unique_ptr<NEO::DeviceTime> deviceTime = std::unique_ptr<NEO::DeviceTime>(mockDeviceTimeWddm.release());
     auto osTime = std::unique_ptr<MockOsTimeLinux>(new MockOsTimeLinux(osInterface.get(), std::move(deviceTime)));
-    osTime->getCpuGpuTime(&CPUGPUTime01);
+    osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_TRUE(osTime->osTimeGetCpuTimeWasCalled);
 }

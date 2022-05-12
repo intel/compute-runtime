@@ -60,16 +60,16 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
     if (newMax == -1 && newMin == -1) {
-        double MaxDefault = 0, MinDefault = 0;
+        double maxDefault = 0, minDefault = 0;
         ze_result_t result1, result2, result;
-        result1 = pSysfsAccess->read(maxDefaultFreqFile, MaxDefault);
-        result2 = pSysfsAccess->read(minDefaultFreqFile, MinDefault);
+        result1 = pSysfsAccess->read(maxDefaultFreqFile, maxDefault);
+        result2 = pSysfsAccess->read(minDefaultFreqFile, minDefault);
         if (result1 == ZE_RESULT_SUCCESS && result2 == ZE_RESULT_SUCCESS) {
-            result = setMax(MaxDefault);
+            result = setMax(maxDefault);
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
             }
-            return setMin(MinDefault);
+            return setMin(minDefault);
         }
     }
     double currentMax = 0.0;

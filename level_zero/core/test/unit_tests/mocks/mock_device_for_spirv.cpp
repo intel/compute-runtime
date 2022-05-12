@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,8 @@ namespace ult {
 template <bool useImagesBuiltins, bool isStateless>
 ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                                                                            ze_module_build_log_handle_t *buildLog, ModuleType type) {
-    const std::string BUILTIN_COPYFILL("builtin_copyfill");
-    const std::string BUILTIN_IMAGES("builtin_images");
+    const std::string builtinCopyfill("builtin_copyfill");
+    const std::string builtinImages("builtin_images");
     if ((wasModuleCreated) && ((useImagesBuiltins != useImagesBuiltins_prev) || (isStateless != isStateless_prev)))
         wasModuleCreated = false;
 
@@ -28,7 +28,7 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
 
         std::string kernelName;
 
-        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? BUILTIN_IMAGES : BUILTIN_COPYFILL) + (isStateless ? "_stateless_" : "_"), ".gen");
+        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? builtinImages : builtinCopyfill) + (isStateless ? "_stateless_" : "_"), ".gen");
 
         size_t size = 0;
         auto src = loadDataFromFile(

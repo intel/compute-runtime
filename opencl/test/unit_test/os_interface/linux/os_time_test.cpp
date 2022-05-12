@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,59 +100,59 @@ TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingGpuTimeThenFails) {
 }
 
 TEST_F(DrmTimeTest, WhenGettingCpuGpuTimeThenSucceeds) {
-    TimeStampData CPUGPUTime01 = {0, 0};
-    TimeStampData CPUGPUTime02 = {0, 0};
+    TimeStampData cpuGpuTime01 = {0, 0};
+    TimeStampData cpuGpuTime02 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
+    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0ULL, CPUGPUTime01.GPUTimeStamp);
-    error = osTime->getCpuGpuTime(&CPUGPUTime02);
+    EXPECT_NE(0ULL, cpuGpuTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime01.GPUTimeStamp);
+    error = osTime->getCpuGpuTime(&cpuGpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0ULL, CPUGPUTime02.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.GPUTimeStamp);
+    EXPECT_GT(cpuGpuTime02.GPUTimeStamp, cpuGpuTime01.GPUTimeStamp);
+    EXPECT_GT(cpuGpuTime02.CPUTimeinNS, cpuGpuTime01.CPUTimeinNS);
 }
 
 TEST_F(DrmTimeTest, GivenDrmWhenGettingCpuGpuTimeThenSucceeds) {
-    TimeStampData CPUGPUTime01 = {0, 0};
-    TimeStampData CPUGPUTime02 = {0, 0};
+    TimeStampData cpuGpuTime01 = {0, 0};
+    TimeStampData cpuGpuTime02 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
+    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0ULL, CPUGPUTime01.GPUTimeStamp);
-    error = osTime->getCpuGpuTime(&CPUGPUTime02);
+    EXPECT_NE(0ULL, cpuGpuTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime01.GPUTimeStamp);
+    error = osTime->getCpuGpuTime(&cpuGpuTime02);
     EXPECT_TRUE(error);
-    EXPECT_NE(0ULL, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0ULL, CPUGPUTime02.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.CPUTimeinNS);
+    EXPECT_NE(0ULL, cpuGpuTime02.GPUTimeStamp);
+    EXPECT_GT(cpuGpuTime02.GPUTimeStamp, cpuGpuTime01.GPUTimeStamp);
+    EXPECT_GT(cpuGpuTime02.CPUTimeinNS, cpuGpuTime01.CPUTimeinNS);
 }
 
 TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
-    TimeStampData CPUGPUTime = {0, 0};
-    auto error = osTime->getCpuGpuTime(&CPUGPUTime);
+    TimeStampData cpuGpuTime = {0, 0};
+    auto error = osTime->getCpuGpuTime(&cpuGpuTime);
     EXPECT_FALSE(error);
 }
 
 TEST_F(DrmTimeTest, GivenInvalidDrmWhenGettingCpuGpuTimeThenFails) {
-    TimeStampData CPUGPUTime01 = {0, 0};
+    TimeStampData cpuGpuTime01 = {0, 0};
     auto pDrm = new DrmMockFail(*executionEnvironment.rootDeviceEnvironments[0]);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
+    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_FALSE(error);
 }
 
 TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingCpuGpuTimeCpuThenFails) {
-    TimeStampData CPUGPUTime01 = {0, 0};
+    TimeStampData cpuGpuTime01 = {0, 0};
     auto pDrm = new DrmMockTime(mockFd, *executionEnvironment.rootDeviceEnvironments[0]);
     osTime->setGetTimeFunc(getTimeFuncFalse);
     osTime->updateDrm(pDrm);
-    auto error = osTime->getCpuGpuTime(&CPUGPUTime01);
+    auto error = osTime->getCpuGpuTime(&cpuGpuTime01);
     EXPECT_FALSE(error);
 }
 

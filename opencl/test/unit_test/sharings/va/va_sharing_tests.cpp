@@ -791,7 +791,7 @@ using ApiVaSharingTests = VaSharingTests;
 
 TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormatsThenCorrectListIsReturned) {
     cl_mem_flags flags[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
@@ -807,7 +807,7 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
             cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
                 &context,
                 flag,
-                image_type,
+                imageType,
                 plane,
                 arrayCount(vaApiFormats),
                 vaApiFormats,
@@ -825,7 +825,7 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
 
 TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThenNumFormatsIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
 
     for (auto plane : {0, 1}) {
@@ -833,7 +833,7 @@ TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThe
         cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
             &context,
             flags,
-            image_type,
+            imageType,
             plane,
             0,
             nullptr,
@@ -846,12 +846,12 @@ TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThe
 
 TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiFormatsThenNumFormatsIsNotDereferenced) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
         0,
         0,
         nullptr,
@@ -862,14 +862,14 @@ TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiForma
 
 TEST_F(ApiVaSharingTests, givenOtherThanImage2DImageTypeWhenGettingSupportedVAApiFormatsThenSuccessAndZeroFormatsAreReturned) {
     cl_mem_flags flags = CL_MEM_KERNEL_READ_AND_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE3D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE3D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
         0,
         arrayCount(vaApiFormats),
         vaApiFormats,
@@ -881,14 +881,14 @@ TEST_F(ApiVaSharingTests, givenOtherThanImage2DImageTypeWhenGettingSupportedVAAp
 
 TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenIvalidValueErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_NO_ACCESS_INTEL;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &context,
         flags,
-        image_type,
+        imageType,
         0,
         arrayCount(vaApiFormats),
         vaApiFormats,
@@ -900,7 +900,7 @@ TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenI
 
 TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThenIvalidContextErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     VAImageFormat vaApiFormats[10] = {};
     cl_uint numImageFormats = 0;
 
@@ -908,7 +908,7 @@ TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThe
     cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
         &contextWihtoutVASharing,
         flags,
-        image_type,
+        imageType,
         0,
         arrayCount(vaApiFormats),
         vaApiFormats,
@@ -955,13 +955,13 @@ TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormats
     EXPECT_EQ(0u, sharingFunctions.supported2PlaneFormats.size());
     EXPECT_EQ(0u, sharingFunctions.supported3PlaneFormats.size());
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
     VAImageFormat vaApiFormats[10] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         10,
         vaApiFormats,
@@ -980,13 +980,13 @@ TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
     EXPECT_EQ(2u, sharingFunctions.supported2PlaneFormats.size());
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 0;
     VAImageFormat vaApiFormats[3] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         1,
         vaApiFormats,
@@ -1034,13 +1034,13 @@ TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithEmptySupported3PlaneFormatsV
     EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 4;
     VAImageFormat vaApiFormats[4] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         2,
         1,
         vaApiFormats,
@@ -1059,13 +1059,13 @@ TEST_F(VaSharingTests, givenPlaneArgumentGreaterThan2ThenNoFormatIsReturned) {
     sharingFunctions.supported2PlaneFormats.emplace_back(imageFormat);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 2;
     VAImageFormat vaApiFormats[2] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         3,
         1,
         vaApiFormats,
@@ -1083,13 +1083,13 @@ TEST_F(VaSharingTests, givenPlaneArgumentEquals2ThenOnlyRGBPFormatIsReturned) {
     sharingFunctions.supported3PlaneFormats.emplace_back(imageFormat);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 1;
     VAImageFormat vaApiFormats[3] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         2,
         1,
         vaApiFormats,
@@ -1104,13 +1104,13 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndEmptySuppo
     EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 1;
     VAImageFormat vaApiFormats[3] = {};
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         1,
         vaApiFormats,
@@ -1124,7 +1124,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndEmptySuppo
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         1,
         nullptr,
@@ -1139,7 +1139,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndSupportedF
     EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 4;
     VAImageFormat vaApiFormats[4] = {};
 
@@ -1150,7 +1150,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndSupportedF
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         4,
         vaApiFormats,
@@ -1167,7 +1167,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly3Plane
     EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 4;
     VAImageFormat vaApiFormats[4] = {};
 
@@ -1176,7 +1176,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly3Plane
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         4,
         vaApiFormats,
@@ -1193,7 +1193,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly2Plane
     EXPECT_EQ(sharingFunctions.supported2PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 4;
     VAImageFormat vaApiFormats[4] = {};
 
@@ -1204,7 +1204,7 @@ TEST_F(VaSharingTests, givenPlaneArgumentLessThan2WithProperFormatsAndOnly2Plane
 
     sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         0,
         4,
         vaApiFormats,
@@ -1222,14 +1222,14 @@ TEST_F(VaSharingTests, givenPlaneArgumentEquals2WithoutNoProperFormatsThenReturn
     EXPECT_EQ(sharingFunctions.supported3PlaneFormats.size(), 0u);
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_object_type imageType = CL_MEM_OBJECT_IMAGE2D;
     cl_uint numImageFormats = 1;
 
     sharingFunctions.supported3PlaneFormats.push_back(VAImageFormat{VA_FOURCC_RGBP, VA_LSB_FIRST, 0, 0, 0, 0, 0, 0});
 
     cl_int result = sharingFunctions.getSupportedFormats(
         flags,
-        image_type,
+        imageType,
         2,
         4,
         nullptr,

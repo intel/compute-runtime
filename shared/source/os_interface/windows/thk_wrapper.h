@@ -83,10 +83,10 @@ class ThkWrapper {
     inline NTSTATUS operator()(Param param) const {
         if (KMD_PROFILING) {
             SYSTEM_ENTER()
-            NTSTATUS Status;
-            Status = mFunc(param);
+            NTSTATUS status;
+            status = mFunc(param);
             SYSTEM_LEAVE(getId<Param>());
-            return Status;
+            return status;
         } else {
             return mFunc(param);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,8 +99,8 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         size_t gwHeightInBlk = 0;
         getBlkTraits(inGws, gwWidthInBlk, gwHeightInBlk);
 
-        size_t BlkNum = gwWidthInBlk * gwHeightInBlk;
-        size_t BlkMul = 1;
+        size_t blkNum = gwWidthInBlk * gwHeightInBlk;
+        size_t blkMul = 1;
         IntelAccelerator *accelerator = castToObject<IntelAccelerator>((cl_accelerator_intel)vmeKernel->getKernelArg(acceleratorArgNum));
         if (accelerator == nullptr) {
             return CL_INVALID_KERNEL_ARGS; // accelerator was not set
@@ -109,16 +109,16 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
         const cl_motion_estimation_desc_intel *acceleratorDesc = reinterpret_cast<const cl_motion_estimation_desc_intel *>(accelerator->getDescriptor());
         switch (acceleratorDesc->mb_block_type) {
         case CL_ME_MB_TYPE_8x8_INTEL:
-            BlkMul = 4;
+            blkMul = 4;
             break;
         case CL_ME_MB_TYPE_4x4_INTEL:
-            BlkMul = 16;
+            blkMul = 16;
             break;
         default:
             break;
         }
 
-        return validateVmeDispatch(inGws, inOffset, BlkNum, BlkMul);
+        return validateVmeDispatch(inGws, inOffset, blkNum, blkMul);
     }
 
     // notes on corner cases :
@@ -323,8 +323,8 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
 
     size_t getIntraSearchPredictorModesBuffExpSize(size_t blkNum) const {
         // vector size is 22 - 1 (16x16 luma block) +  4 (8x8 luma block) + 16 (4x4 luma block) + 1 (8x8 chroma block)
-        int VectorSize = 22;
-        size_t intraSearchPredictorModesBuffExpSize = blkNum * VectorSize;
+        int vectorSize = 22;
+        size_t intraSearchPredictorModesBuffExpSize = blkNum * vectorSize;
         return intraSearchPredictorModesBuffExpSize;
     }
 

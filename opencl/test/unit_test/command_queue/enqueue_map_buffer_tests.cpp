@@ -270,7 +270,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     cl_event unmapEventReturned = nullptr;
     *pTagMemory = 0;
     MockKernelWithInternals kernel(*pClDevice);
-    size_t GWS = 1;
+    size_t gws = 1;
 
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
@@ -295,7 +295,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that can be finished...
-    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel.mockMultiDeviceKernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
@@ -466,7 +466,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     uint32_t tagHW = 0;
     *pTagMemory = tagHW;
     MockKernelWithInternals kernel(*pClDevice);
-    size_t GWS = 1;
+    size_t gws = 1;
 
     auto buffer = clCreateBuffer(
         BufferDefaults::context,
@@ -482,13 +482,13 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that map buffer needs to wait for
-    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    auto NDRcompletionStamp = commandStreamReceiver.peekTaskCount();
+    auto ndRcompletionStamp = commandStreamReceiver.peekTaskCount();
 
     //simulate that NDR is done and DC was flushed
-    auto forcedLatestSentDC = NDRcompletionStamp + 1;
+    auto forcedLatestSentDC = ndRcompletionStamp + 1;
     *pTagMemory = forcedLatestSentDC;
 
     auto ptrResult = clEnqueueMapBuffer(
@@ -533,7 +533,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     auto localSize = bufferSize;
     char misaligned[bufferSize] = {1};
     MockKernelWithInternals kernel(*pClDevice);
-    size_t GWS = 1;
+    size_t gws = 1;
 
     uintptr_t address = (uintptr_t)&misaligned[0];
 
@@ -557,7 +557,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
     // enqueue something that can be finished
-    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel.mockMultiDeviceKernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(&mockCmdQueue, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();

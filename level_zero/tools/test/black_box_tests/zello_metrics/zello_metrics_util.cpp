@@ -372,7 +372,7 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
 void TestSettings::parseArguments(int argc, char *argv[]) {
     int opt;
 
-    struct option long_opts[] = {
+    struct option longOpts[] = {
         {"help", no_argument, nullptr, 'h'},
         {"test", required_argument, nullptr, 't'},
         {"device", required_argument, nullptr, 'd'},
@@ -402,7 +402,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         return;
     }
 
-    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 't':
             testName = optarg;

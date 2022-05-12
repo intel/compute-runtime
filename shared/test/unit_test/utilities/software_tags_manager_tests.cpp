@@ -128,16 +128,16 @@ HWTEST_F(SoftwareTagsManagerTests, whenTestTagIsInsertedThenItIsSuccessful) {
     EXPECT_EQ(testCmdStream->getUsed(), 2 * sizeof(MI_NOOP));
 
     void *bufferBase = testCmdStream->getCpuBase();
-    auto marker_noop = reinterpret_cast<MI_NOOP *>(bufferBase);
-    auto offset_noop = reinterpret_cast<MI_NOOP *>(ptrOffset(bufferBase, sizeof(MI_NOOP)));
+    auto markerNoop = reinterpret_cast<MI_NOOP *>(bufferBase);
+    auto offsetNoop = reinterpret_cast<MI_NOOP *>(ptrOffset(bufferBase, sizeof(MI_NOOP)));
 
-    EXPECT_EQ(BaseTag::getMarkerNoopID(static_cast<OpCode>(testOpCode)), marker_noop->getIdentificationNumber());
-    EXPECT_EQ(true, marker_noop->getIdentificationNumberRegisterWriteEnable());
+    EXPECT_EQ(BaseTag::getMarkerNoopID(static_cast<OpCode>(testOpCode)), markerNoop->getIdentificationNumber());
+    EXPECT_EQ(true, markerNoop->getIdentificationNumberRegisterWriteEnable());
 
     uint32_t firstTagOffset = sizeof(SWTagHeapInfo); // SWTagHeapInfo is always on offset 0, first tag is inserted immediately after.
 
-    EXPECT_EQ(BaseTag::getOffsetNoopID(firstTagOffset), offset_noop->getIdentificationNumber());
-    EXPECT_EQ(false, offset_noop->getIdentificationNumberRegisterWriteEnable());
+    EXPECT_EQ(BaseTag::getOffsetNoopID(firstTagOffset), offsetNoop->getIdentificationNumber());
+    EXPECT_EQ(false, offsetNoop->getIdentificationNumberRegisterWriteEnable());
 
     auto memoryMgr = pDevice->getMemoryManager();
     auto tagHeap = tagsManager->getSWTagHeapAllocation();

@@ -976,11 +976,11 @@ HWTEST_F(ImageMediaBlockSetArgTest, WhenSettingKernelArgImageThenPropertiesAreCo
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     EXPECT_EQ(srcAllocation->getGpuAddress(), surfaceAddress);
 
-    uint32_t element_size = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
+    uint32_t elementSize = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes);
 
     setupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
 
-    EXPECT_EQ(srcImage->getImageDesc().image_width * element_size / sizeof(uint32_t), surfaceState->getWidth());
+    EXPECT_EQ(srcImage->getImageDesc().image_width * elementSize / sizeof(uint32_t), surfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getDepth());
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getRenderTargetViewExtent());

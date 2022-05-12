@@ -339,7 +339,7 @@ bool stream_mt_collection_workload_different_threads() {
     zmu::TestMachineConfiguration machineConfig = {};
     zmu::getTestMachineConfiguration(machineConfig);
 
-    auto stream_mt = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+    auto streamMt = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
         constexpr uint32_t threadCount = 2;
         constexpr uint32_t collectorIndex = 0;
         constexpr uint32_t workloadIndex = 1;
@@ -401,14 +401,14 @@ bool stream_mt_collection_workload_different_threads() {
         for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
             // Run for all subdevices
             for (uint32_t subDeviceId = 0; subDeviceId < machineConfig.devices[deviceId].subDeviceCount; subDeviceId++) {
-                status &= stream_mt(deviceId, subDeviceId, testSettings->metricGroupName);
+                status &= streamMt(deviceId, subDeviceId, testSettings->metricGroupName);
             }
             // Run for root device
-            status &= stream_mt(deviceId, -1, testSettings->metricGroupName);
+            status &= streamMt(deviceId, -1, testSettings->metricGroupName);
         }
     } else {
         //Run for specific device
-        status &= stream_mt(testSettings->deviceId, testSettings->subDeviceId, testSettings->metricGroupName);
+        status &= streamMt(testSettings->deviceId, testSettings->subDeviceId, testSettings->metricGroupName);
     }
 
     return status;
@@ -490,7 +490,7 @@ bool stream_mp_collection_workload_different_process() {
     // One process collects metrics and other runs the workload
 
     bool status = true;
-    auto stream_mp = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+    auto streamMp = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
         LOG(zmu::LogLevel::INFO) << "Running Multi Process Stream Test : Device [" << deviceId << ", " << subDeviceId << " ] : Metric Group :" << metricGroupName.c_str() << "\n";
         constexpr uint32_t processCount = 2;
         bool status = true;
@@ -570,10 +570,10 @@ bool stream_mp_collection_workload_different_process() {
     auto testSettings = zmu::TestSettings::get();
 
     if (testSettings->deviceId == -1) {
-        status &= stream_mp(0, 0, testSettings->metricGroupName);
+        status &= streamMp(0, 0, testSettings->metricGroupName);
     } else {
         //Run for specific device
-        status &= stream_mp(testSettings->deviceId, testSettings->subDeviceId, testSettings->metricGroupName);
+        status &= streamMp(testSettings->deviceId, testSettings->subDeviceId, testSettings->metricGroupName);
     }
 
     return status;

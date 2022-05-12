@@ -266,8 +266,8 @@ void run_server(bool &validRet) {
         }
 
         // Wait for child to exit
-        int child_status;
-        pid_t clientPId = wait(&child_status);
+        int childStatus;
+        pid_t clientPId = wait(&childStatus);
         if (clientPId <= 0) {
             std::cerr << "Client terminated abruptly with error code " << strerror(errno) << "\n";
             std::terminate();

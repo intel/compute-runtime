@@ -808,8 +808,8 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
         return ret;
     }
 
-    uint64_t BindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
-    uint64_t ScratchSpaceBaseAddress = 0;
+    uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
+    uint64_t scratchSpaceBaseAddress = 0;
 
     auto &hwHelper = NEO::HwHelper::get(connectedDevice->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
@@ -831,13 +831,13 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
             auto scratchAllocationBase = gmmHelper->decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
             if (scratchAllocationBase != 0) {
-                ScratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
+                scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }
         }
     } else {
         auto scratchPointer = ((r0[5] >> 10) << 10);
         if (scratchPointer != 0) {
-            ScratchSpaceBaseAddress = scratchPointer + sbaBuffer.GeneralStateBaseAddress;
+            scratchSpaceBaseAddress = scratchPointer + sbaBuffer.GeneralStateBaseAddress;
         }
     }
 
@@ -849,8 +849,8 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     packed.push_back(sbaBuffer.InstructionBaseAddress);
     packed.push_back(sbaBuffer.BindlessSurfaceStateBaseAddress);
     packed.push_back(sbaBuffer.BindlessSamplerStateBaseAddress);
-    packed.push_back(BindingTableBaseAddress);
-    packed.push_back(ScratchSpaceBaseAddress);
+    packed.push_back(bindingTableBaseAddress);
+    packed.push_back(scratchSpaceBaseAddress);
 
     size_t size = count * sbaRegDesc->bytes;
     memcpy_s(pRegisterValues, size, &packed[start], size);

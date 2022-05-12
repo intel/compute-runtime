@@ -26,12 +26,12 @@ TEST(UnifiedSharingTests, givenContextCreatedWithExternalDeviceHandlePropertyWhe
     ClDeviceVector allDevs(&deviceId, 1);
     cl_int retVal{};
 
-    const cl_context_properties context_props[] = {
+    const cl_context_properties contextProps[] = {
         static_cast<cl_context_properties>(UnifiedSharingContextType::DeviceHandle), 0,
         CL_CONTEXT_INTEROP_USER_SYNC, 1,
         0};
 
-    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(context_props, allDevs,
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(contextProps, allDevs,
                                                                              nullptr, nullptr, retVal));
     auto sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
     EXPECT_NE(nullptr, sharingFunctions);

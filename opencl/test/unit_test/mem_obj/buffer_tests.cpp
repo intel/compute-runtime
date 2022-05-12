@@ -895,10 +895,10 @@ TEST_P(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
 }
 
 TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
-    BufferFactoryFuncs BufferFuncsBackup[IGFX_MAX_CORE];
+    BufferFactoryFuncs bufferFuncsBackup[IGFX_MAX_CORE];
 
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        BufferFuncsBackup[i] = bufferFactory[i];
+        bufferFuncsBackup[i] = bufferFactory[i];
         bufferFactory[i].createBufferFunction =
             [](Context *,
                MemoryProperties,
@@ -924,7 +924,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     EXPECT_EQ(nullptr, buffer);
 
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        bufferFactory[i] = BufferFuncsBackup[i];
+        bufferFactory[i] = bufferFuncsBackup[i];
     }
 }
 

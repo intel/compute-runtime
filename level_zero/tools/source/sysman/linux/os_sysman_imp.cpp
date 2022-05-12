@@ -107,11 +107,11 @@ SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
 ze_result_t LinuxSysmanImp::initLocalDeviceAndDrmHandles() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     DEBUG_BREAK_IF(nullptr == pDevice);
-    NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    if (OsInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
+    NEO::OSInterface &osInterface = pDevice->getOsInterface();
+    if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    pDrm = OsInterface.getDriverModel()->as<NEO::Drm>();
+    pDrm = osInterface.getDriverModel()->as<NEO::Drm>();
     return ZE_RESULT_SUCCESS;
 }
 

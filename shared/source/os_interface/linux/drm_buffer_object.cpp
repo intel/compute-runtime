@@ -97,18 +97,18 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
         return true;
     }
 
-    drm_i915_gem_set_tiling set_tiling = {};
-    set_tiling.handle = this->handle;
-    set_tiling.tiling_mode = mode;
-    set_tiling.stride = stride;
+    drm_i915_gem_set_tiling setTiling = {};
+    setTiling.handle = this->handle;
+    setTiling.tiling_mode = mode;
+    setTiling.stride = stride;
 
-    if (this->drm->ioctl(DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling) != 0) {
+    if (this->drm->ioctl(DRM_IOCTL_I915_GEM_SET_TILING, &setTiling) != 0) {
         return false;
     }
 
-    this->tilingMode = set_tiling.tiling_mode;
+    this->tilingMode = setTiling.tiling_mode;
 
-    return set_tiling.tiling_mode == mode;
+    return setTiling.tiling_mode == mode;
 }
 
 uint32_t BufferObject::getOsContextId(OsContext *osContext) {

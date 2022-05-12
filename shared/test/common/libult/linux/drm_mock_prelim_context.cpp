@@ -67,8 +67,8 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         return 0;
     } break;
     case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
-        auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
-        mmap_arg->offset = 0;
+        auto mmapArg = static_cast<drm_i915_gem_mmap_offset *>(arg);
+        mmapArg->offset = 0;
         return mmapOffsetReturn;
     } break;
     case PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE: {
@@ -242,8 +242,8 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
     } break;
 
     case PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: {
-        auto debugger_open = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(arg);
-        if (debugger_open->pid != 0 && debugger_open->events == 0) {
+        auto debuggerOpen = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(arg);
+        if (debuggerOpen->pid != 0 && debuggerOpen->events == 0) {
             return debuggerOpenRetval;
         }
     } break;

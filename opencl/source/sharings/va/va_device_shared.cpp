@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,10 @@
 
 namespace NEO {
 ClDevice *VADevice::getRootDeviceFromVaDisplay(Platform *pPlatform, VADisplay vaDisplay) {
-    VADisplayContextP pDisplayContext_test = reinterpret_cast<VADisplayContextP>(vaDisplay);
-    UNRECOVERABLE_IF(pDisplayContext_test->vadpy_magic != 0x56414430);
-    VADriverContextP pDriverContext_test = pDisplayContext_test->pDriverContext;
-    int deviceFd = *static_cast<int *>(pDriverContext_test->drm_state);
+    VADisplayContextP pDisplayContextTest = reinterpret_cast<VADisplayContextP>(vaDisplay);
+    UNRECOVERABLE_IF(pDisplayContextTest->vadpy_magic != 0x56414430);
+    VADriverContextP pDriverContextTest = pDisplayContextTest->pDriverContext;
+    int deviceFd = *static_cast<int *>(pDriverContextTest->drm_state);
 
     UNRECOVERABLE_IF(deviceFd < 0);
 

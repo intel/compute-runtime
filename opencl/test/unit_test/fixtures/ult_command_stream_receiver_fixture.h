@@ -131,7 +131,7 @@ struct UltCommandStreamReceiverTest
             slmUsed = true;
         }
 
-        uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, slmUsed);
+        uint32_t l3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, slmUsed);
 
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;
@@ -144,7 +144,7 @@ struct UltCommandStreamReceiverTest
         auto mocsIndex = hwHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
-        commandStreamReceiver.lastSentL3Config = L3Config;
+        commandStreamReceiver.lastSentL3Config = l3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 

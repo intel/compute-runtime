@@ -766,16 +766,16 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
 }
 
 HWTEST_F(HwHelperTest, WhenTestingIfL3ConfigProgrammableThenCorrectValueIsReturned) {
-    bool PreambleHelperL3Config;
+    bool preambleHelperL3Config;
     bool isL3Programmable;
     const HardwareInfo &hwInfo = *defaultHwInfo;
 
-    PreambleHelperL3Config =
+    preambleHelperL3Config =
         PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
     isL3Programmable =
         HwHelperHw<FamilyType>::get().isL3Configurable(hwInfo);
 
-    EXPECT_EQ(PreambleHelperL3Config, isL3Programmable);
+    EXPECT_EQ(preambleHelperL3Config, isL3Programmable);
 }
 
 TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformDoesNotSupportThenOverrideAndReturnSupportTrue) {

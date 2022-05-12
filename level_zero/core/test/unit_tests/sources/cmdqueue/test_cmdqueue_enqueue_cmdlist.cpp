@@ -363,10 +363,10 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
                                           usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
-    ASSERT_EQ(1u, GSBAStates.size());
+    ASSERT_EQ(1u, gsbaStates.size());
 
     CommandList::fromHandle(commandLists[0])->reset();
     CommandList::fromHandle(commandLists[1])->reset();
@@ -389,10 +389,10 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
                                           usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
-    ASSERT_EQ(2u, GSBAStates.size());
+    ASSERT_EQ(2u, gsbaStates.size());
 
     commandQueue->destroy();
 }

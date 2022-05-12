@@ -184,10 +184,10 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, WhenRetrievingImageFormatsPa
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
-    bool YUYVFormatFound = false;
-    bool UYVYFormatFound = false;
-    bool YVYUFormatFound = false;
-    bool VYUYFormatFound = false;
+    bool yuyvFormatFound = false;
+    bool uyvyFormatFound = false;
+    bool yvyuFormatFound = false;
+    bool vyuyFormatFound = false;
     bool isReadOnly = false;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
 
@@ -222,32 +222,32 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, WhenRetrievingImageFormatsPa
         EXPECT_NE(0u, imageFormatList[entry].image_channel_data_type);
 
         if (imageFormatList[entry].image_channel_order == CL_YUYV_INTEL) {
-            YUYVFormatFound = true;
+            yuyvFormatFound = true;
         }
 
         if (imageFormatList[entry].image_channel_order == CL_UYVY_INTEL) {
-            UYVYFormatFound = true;
+            uyvyFormatFound = true;
         }
 
         if (imageFormatList[entry].image_channel_order == CL_YVYU_INTEL) {
-            YVYUFormatFound = true;
+            yvyuFormatFound = true;
         }
 
         if (imageFormatList[entry].image_channel_order == CL_VYUY_INTEL) {
-            VYUYFormatFound = true;
+            vyuyFormatFound = true;
         }
     }
 
     if (isReadOnly && imageFormats == CL_MEM_OBJECT_IMAGE2D) {
-        EXPECT_TRUE(YUYVFormatFound);
-        EXPECT_TRUE(UYVYFormatFound);
-        EXPECT_TRUE(YVYUFormatFound);
-        EXPECT_TRUE(VYUYFormatFound);
+        EXPECT_TRUE(yuyvFormatFound);
+        EXPECT_TRUE(uyvyFormatFound);
+        EXPECT_TRUE(yvyuFormatFound);
+        EXPECT_TRUE(vyuyFormatFound);
     } else {
-        EXPECT_FALSE(YUYVFormatFound);
-        EXPECT_FALSE(UYVYFormatFound);
-        EXPECT_FALSE(YVYUFormatFound);
-        EXPECT_FALSE(VYUYFormatFound);
+        EXPECT_FALSE(yuyvFormatFound);
+        EXPECT_FALSE(uyvyFormatFound);
+        EXPECT_FALSE(yvyuFormatFound);
+        EXPECT_FALSE(vyuyFormatFound);
     }
 
     delete[] imageFormatList;
@@ -273,7 +273,7 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
-    bool Nv12FormatFound = false;
+    bool nv12FormatFound = false;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
 
     device->deviceInfo.nv12Extension = true;
@@ -327,14 +327,14 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
         EXPECT_NE(0u, imageFormatList[entry].image_channel_data_type);
 
         if (imageFormatList[entry].image_channel_order == CL_NV12_INTEL) {
-            Nv12FormatFound = true;
+            nv12FormatFound = true;
         }
     }
 
     if (imageFormats == CL_MEM_OBJECT_IMAGE2D) {
-        EXPECT_TRUE(Nv12FormatFound);
+        EXPECT_TRUE(nv12FormatFound);
     } else {
-        EXPECT_FALSE(Nv12FormatFound);
+        EXPECT_FALSE(nv12FormatFound);
     }
 
     delete[] imageFormatList;
@@ -344,7 +344,7 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
-    bool Nv12FormatFound = false;
+    bool nv12FormatFound = false;
     std::tie(imageFormatsFlags, imageFormats) = GetParam();
 
     device->deviceInfo.nv12Extension = true;
@@ -392,11 +392,11 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
         EXPECT_NE(0u, imageFormatList[entry].image_channel_data_type);
 
         if (imageFormatList[entry].image_channel_order == CL_NV12_INTEL) {
-            Nv12FormatFound = true;
+            nv12FormatFound = true;
         }
     }
 
-    EXPECT_FALSE(Nv12FormatFound);
+    EXPECT_FALSE(nv12FormatFound);
 
     delete[] imageFormatList;
 }

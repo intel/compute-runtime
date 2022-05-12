@@ -78,80 +78,80 @@ TEST_F(GetMemObjectInfo, GivenMemTypeWhenGettingMemObjectInfoThenCorrectValueIsR
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_mem_object_type), sizeReturned);
 
-    cl_mem_object_type object_type = 0;
+    cl_mem_object_type objectType = 0;
     retVal = buffer->getMemObjectInfo(
         CL_MEM_TYPE,
         sizeof(cl_mem_object_type),
-        &object_type,
+        &objectType,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(static_cast<cl_mem_object_type>(CL_MEM_OBJECT_BUFFER), object_type);
+    EXPECT_EQ(static_cast<cl_mem_object_type>(CL_MEM_OBJECT_BUFFER), objectType);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemFlagsWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    cl_mem_flags mem_flags = 0;
+    cl_mem_flags memFlags = 0;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_FLAGS,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(mem_flags), sizeReturned);
+    EXPECT_EQ(sizeof(memFlags), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_FLAGS,
-        sizeof(mem_flags),
-        &mem_flags,
+        sizeof(memFlags),
+        &memFlags,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), mem_flags);
+    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), memFlags);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemSizeWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    size_t mem_size = 0;
+    size_t memSize = 0;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_SIZE,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(mem_size), sizeReturned);
+    EXPECT_EQ(sizeof(memSize), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_SIZE,
-        sizeof(mem_size),
-        &mem_size,
+        sizeof(memSize),
+        &memSize,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer->getSize(), mem_size);
+    EXPECT_EQ(buffer->getSize(), memSize);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemHostPtrWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     size_t sizeReturned = 0;
-    void *host_ptr = nullptr;
+    void *hostPtr = nullptr;
     auto retVal = buffer->getMemObjectInfo(
         CL_MEM_HOST_PTR,
         0,
         nullptr,
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(host_ptr), sizeReturned);
+    EXPECT_EQ(sizeof(hostPtr), sizeReturned);
 
     retVal = buffer->getMemObjectInfo(
         CL_MEM_HOST_PTR,
-        sizeof(host_ptr),
-        &host_ptr,
+        sizeof(hostPtr),
+        &hostPtr,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(buffer->getHostPtr(), host_ptr);
+    EXPECT_EQ(buffer->getHostPtr(), hostPtr);
 }
 
 TEST_F(GetMemObjectInfo, GivenMemContextWhenGettingMemObjectInfoThenCorrectValueIsReturned) {

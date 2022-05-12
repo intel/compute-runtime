@@ -600,7 +600,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet) const {
     size_t numDimensions = 0;
-    size_t WGS = 1;
+    size_t wgs = 1;
     auto maxSimdSize = static_cast<size_t>(kernelInfo.getMaxSimdSize());
     auto maxRequiredWorkGroupSize = static_cast<size_t>(kernelInfo.getMaxRequiredWorkGroupSize(getMaxKernelWorkGroupSize()));
     auto largestCompiledSIMDSize = static_cast<size_t>(kernelInfo.getMaxSimdSize());
@@ -650,10 +650,10 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
     }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR: {
         for (size_t i = 0; i < numDimensions; i++) {
-            WGS *= ((size_t *)inputValue)[i];
+            wgs *= ((size_t *)inputValue)[i];
         }
         return changeGetInfoStatusToCLResultType(
-            info.set<size_t>((WGS / maxSimdSize) + std::min(static_cast<size_t>(1), WGS % maxSimdSize))); // add 1 if WGS % maxSimdSize != 0
+            info.set<size_t>((wgs / maxSimdSize) + std::min(static_cast<size_t>(1), wgs % maxSimdSize))); // add 1 if WGS % maxSimdSize != 0
     }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT: {
         auto subGroupsNum = *(size_t *)inputValue;

@@ -119,33 +119,33 @@ TEST_F(KernelDataTest, GivenPrintfStringWhenBuildingThenProgramIsCorrect) {
 }
 
 TEST_F(KernelDataTest, GivenMediaVfeStateWhenBuildingThenProgramIsCorrect) {
-    iOpenCL::SPatchMediaVFEState MediaVFEState;
-    MediaVFEState.Token = PATCH_TOKEN_MEDIA_VFE_STATE;
-    MediaVFEState.Size = sizeof(SPatchMediaVFEState);
-    MediaVFEState.PerThreadScratchSpace = 1; // lets say 1KB of perThreadScratchSpace
-    MediaVFEState.ScratchSpaceOffset = 0;
+    iOpenCL::SPatchMediaVFEState mediaVfeState;
+    mediaVfeState.Token = PATCH_TOKEN_MEDIA_VFE_STATE;
+    mediaVfeState.Size = sizeof(SPatchMediaVFEState);
+    mediaVfeState.PerThreadScratchSpace = 1; // lets say 1KB of perThreadScratchSpace
+    mediaVfeState.ScratchSpaceOffset = 0;
 
-    pPatchList = &MediaVFEState;
-    patchListSize = MediaVFEState.Size;
+    pPatchList = &mediaVfeState;
+    patchListSize = mediaVfeState.Size;
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ_VAL(mediaVfeState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
 }
 
 TEST_F(KernelDataTest, WhenMediaVfeStateSlot1TokenIsParsedThenCorrectValuesAreSet) {
-    iOpenCL::SPatchMediaVFEState MediaVFEState;
-    MediaVFEState.Token = PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1;
-    MediaVFEState.Size = sizeof(SPatchMediaVFEState);
-    MediaVFEState.PerThreadScratchSpace = 1;
-    MediaVFEState.ScratchSpaceOffset = 0;
+    iOpenCL::SPatchMediaVFEState mediaVfeState;
+    mediaVfeState.Token = PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1;
+    mediaVfeState.Size = sizeof(SPatchMediaVFEState);
+    mediaVfeState.PerThreadScratchSpace = 1;
+    mediaVfeState.ScratchSpaceOffset = 0;
 
-    pPatchList = &MediaVFEState;
-    patchListSize = MediaVFEState.Size;
+    pPatchList = &mediaVfeState;
+    patchListSize = mediaVfeState.Size;
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ_VAL(mediaVfeState.PerThreadScratchSpace, pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 }
 
 TEST_F(KernelDataTest, GivenSyncBufferTokenWhenParsingProgramThenTokenIsFound) {

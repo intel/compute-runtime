@@ -798,10 +798,10 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
             *((cl_int *)valueForUpdate) = 1;
         }
     };
-    auto Value = 0u;
+    auto value = 0u;
 
     auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
-    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::clbFuncT, &Value);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::clbFuncT, &value);
 
     auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     EXPECT_GT(3u, csr.peekTaskCount());
@@ -810,7 +810,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     ASSERT_EQ(CL_SUCCESS, ret);
 
     ev->updateExecutionStatus();
-    EXPECT_EQ(1u, Value);
+    EXPECT_EQ(1u, value);
     ev->decRefInternal();
 }
 

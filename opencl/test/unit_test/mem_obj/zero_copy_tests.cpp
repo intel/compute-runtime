@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,17 +70,17 @@ std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tup
 
 TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
 
-    char *PassedPtr = (char *)host_ptr;
+    char *passedPtr = (char *)host_ptr;
     //misalign the pointer
-    if (MisalignPointer && PassedPtr) {
-        PassedPtr += 1;
+    if (MisalignPointer && passedPtr) {
+        passedPtr += 1;
     }
 
     auto buffer = Buffer::create(
         &context,
         flags,
         size,
-        PassedPtr,
+        passedPtr,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(ShouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
@@ -104,17 +104,17 @@ INSTANTIATE_TEST_CASE_P(
 TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedWhenAskedForBufferCreationThenAlwaysResultsInZeroCopy) {
 
     MockContext context;
-    auto host_ptr = reinterpret_cast<void *>(0x1001);
+    auto hostPtr = reinterpret_cast<void *>(0x1001);
     auto size = 64;
     auto retVal = CL_SUCCESS;
 
     context.isSharedContext = true;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, host_ptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
 
     if (buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation() == false) {
-        EXPECT_EQ(host_ptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
+        EXPECT_EQ(hostPtr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
     }
 }
 
@@ -123,12 +123,12 @@ TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedAndDisableZero
     DebugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
 
     MockContext context;
-    auto host_ptr = reinterpret_cast<void *>(0x1001);
+    auto hostPtr = reinterpret_cast<void *>(0x1001);
     auto size = 64;
     auto retVal = CL_SUCCESS;
 
     context.isSharedContext = true;
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, host_ptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
 }
@@ -137,29 +137,29 @@ TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndUseHostptrDis
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DisableZeroCopyForUseHostPtr.set(true);
     MockContext context;
-    auto host_ptr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;
     auto retVal = CL_SUCCESS;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, host_ptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
-    alignedFree(host_ptr);
+    alignedFree(hostPtr);
 }
 
 TEST(ZeroCopyWithDebugFlag, GivenInputsThatWouldResultInZeroCopyAndDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.DisableZeroCopyForBuffers.set(true);
     MockContext context;
-    auto host_ptr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;
     auto retVal = CL_SUCCESS;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, host_ptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
     EXPECT_FALSE(buffer->mappingOnCpuAllowed());
-    alignedFree(host_ptr);
+    alignedFree(hostPtr);
 }
 
 TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisableZeroCopyFlagWhenBufferIsCreatedThenNonZeroCopyBufferIsReturned) {
@@ -184,16 +184,16 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
-    auto host_ptr = (void *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtr = (void *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize;
     auto retVal = CL_SUCCESS;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, host_ptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if constexpr (is64bit) {
         EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
     }
-    alignedFree(host_ptr);
+    alignedFree(hostPtr);
 }

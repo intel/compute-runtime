@@ -323,12 +323,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedBeforeSSH = ssh.getUsed();
 
     dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
-    size_t IDToffset = dsh.getUsed();
+    size_t idToffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
     HardwareCommandsHelper<FamilyType>::sendMediaInterfaceDescriptorLoad(
         commandStream,
-        IDToffset,
+        idToffset,
         sizeof(INTERFACE_DESCRIPTOR_DATA));
     uint32_t interfaceDescriptorIndex = 0;
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
@@ -343,7 +343,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         kernel->getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
-        IDToffset,
+        idToffset,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
         pWalkerCmd,
@@ -497,7 +497,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
 
     dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
-    size_t IDToffset = dsh.getUsed();
+    size_t idToffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
     KernelInfo modifiedKernelInfo = {};
@@ -523,7 +523,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         mockKernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
         modifiedKernelInfo.getMaxSimdSize(),
         localWorkSizes,
-        IDToffset,
+        idToffset,
         interfaceDescriptorIndex,
         pDevice->getPreemptionMode(),
         pWalkerCmd,

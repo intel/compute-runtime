@@ -388,8 +388,8 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
     std::vector<PTField> fields;
     MockDecoder decoder;
     size_t pos = 4;
-    uint32_t full_size = decoder.readStructFields(lines, pos, fields);
-    EXPECT_EQ(static_cast<uint32_t>(15), full_size);
+    uint32_t fullSize = decoder.readStructFields(lines, pos, fields);
+    EXPECT_EQ(static_cast<uint32_t>(15), fullSize);
 
     EXPECT_EQ(static_cast<uint8_t>(8), fields[0].size);
     EXPECT_EQ("SomeField", fields[0].name);
@@ -507,12 +507,12 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     MockDecoder decoder;
     std::stringstream out;
-    auto PTptr = std::make_unique<PatchToken>();
-    PTptr->size = 20;
-    PTptr->name = "Example patchtoken";
-    PTptr->fields.push_back(PTField{4, "First"});
-    PTptr->fields.push_back(PTField{4, "Second"});
-    decoder.patchTokens.insert(std::pair<uint8_t, std::unique_ptr<PatchToken>>(4, std::move(PTptr)));
+    auto patchToken = std::make_unique<PatchToken>();
+    patchToken->size = 20;
+    patchToken->name = "Example patchtoken";
+    patchToken->fields.push_back(PTField{4, "First"});
+    patchToken->fields.push_back(PTField{4, "Second"});
+    decoder.patchTokens.insert(std::pair<uint8_t, std::unique_ptr<PatchToken>>(4, std::move(patchToken)));
     const void *ptr = reinterpret_cast<void *>(binary.data());
     decoder.readPatchTokens(ptr, 28, out);
     std::string s = "Example patchtoken:\n\t4 Token 4\n\t4 Size 16\n\t4 First 1234\n\t4 Second 5678\nUnidentified PatchToken:\n\t4 Token 2\n\t4 Size 12\n\tHex ff ff ff ff\n";

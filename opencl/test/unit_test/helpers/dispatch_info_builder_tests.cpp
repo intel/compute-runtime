@@ -883,13 +883,13 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     builder2D.setKernel(pKernel);
     builder3D.setKernel(pKernel);
 
-    Vec3<size_t> GWS(256, 256, 256);
-    Vec3<size_t> ELWS(16, 16, 16);
+    Vec3<size_t> gws(256, 256, 256);
+    Vec3<size_t> elws(16, 16, 16);
     Vec3<size_t> offset(0, 0, 0);
 
-    builder1D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, GWS, ELWS, offset);
-    builder2D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, GWS, ELWS, offset);
-    builder3D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, GWS, ELWS, offset);
+    builder1D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, gws, elws, offset);
+    builder2D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, gws, elws, offset);
+    builder3D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, gws, elws, offset);
     MultiDispatchInfo mdi1D;
     MultiDispatchInfo mdi2D;
     MultiDispatchInfo mdi3D;

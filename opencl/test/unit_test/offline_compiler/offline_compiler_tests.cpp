@@ -1754,13 +1754,13 @@ TEST(OfflineCompilerTest, givenErrorStringsWithoutExtraNullCharactersWhenUpdatin
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    std::string ErrorString = "Error: undefined variable";
-    mockOfflineCompiler->updateBuildLog(ErrorString.c_str(), ErrorString.length());
-    EXPECT_EQ(0, ErrorString.compare(mockOfflineCompiler->getBuildLog()));
+    std::string errorString = "Error: undefined variable";
+    mockOfflineCompiler->updateBuildLog(errorString.c_str(), errorString.length());
+    EXPECT_EQ(0, errorString.compare(mockOfflineCompiler->getBuildLog()));
 
-    std::string FinalString = "Build failure";
-    mockOfflineCompiler->updateBuildLog(FinalString.c_str(), FinalString.length());
-    EXPECT_EQ(0, (ErrorString + "\n" + FinalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
+    std::string finalString = "Build failure";
+    mockOfflineCompiler->updateBuildLog(finalString.c_str(), finalString.length());
+    EXPECT_EQ(0, (errorString + "\n" + finalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
 }
 
 TEST(OfflineCompilerTest, givenErrorStringsWithExtraNullCharactersWhenUpdatingBuildLogThenMessageIsCorrect) {

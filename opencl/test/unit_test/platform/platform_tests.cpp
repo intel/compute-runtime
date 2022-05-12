@@ -309,15 +309,15 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
 }
 
 TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFillMatchingSubstringAndFillMandatoryTrailingSpace) {
-    HardwareInfo TesthwInfo = *defaultHwInfo;
-    TesthwInfo.capabilityTable.ftrSupportsFP64 = false;
-    TesthwInfo.capabilityTable.clVersionSupport = 10;
-    TesthwInfo.capabilityTable.supportsOcl21Features = false;
+    HardwareInfo testHwInfo = *defaultHwInfo;
+    testHwInfo.capabilityTable.ftrSupportsFP64 = false;
+    testHwInfo.capabilityTable.clVersionSupport = 10;
+    testHwInfo.capabilityTable.supportsOcl21Features = false;
 
-    std::string extensionsList = getExtensionsList(TesthwInfo);
+    std::string extensionsList = getExtensionsList(testHwInfo);
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features);
-    if (TesthwInfo.capabilityTable.supportsImages) {
+    if (testHwInfo.capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(extensionsList, std::string("cl_khr_3d_image_writes")));
     }
 

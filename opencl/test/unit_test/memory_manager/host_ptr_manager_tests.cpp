@@ -442,17 +442,17 @@ TEST_F(HostPtrManagerTest, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPop
 
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
 
-    auto OsHandles = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
+    auto osHandles = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
 
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
     for (int i = 0; i < maxFragmentsCount; i++) {
-        EXPECT_EQ(OsHandles.fragmentStorageData[i].cpuPtr, reqs.allocationFragments[i].allocationPtr);
-        EXPECT_EQ(OsHandles.fragmentStorageData[i].fragmentSize, reqs.allocationFragments[i].allocationSize);
+        EXPECT_EQ(osHandles.fragmentStorageData[i].cpuPtr, reqs.allocationFragments[i].allocationPtr);
+        EXPECT_EQ(osHandles.fragmentStorageData[i].fragmentSize, reqs.allocationFragments[i].allocationSize);
         auto fragment = hostPtrManager.getFragment({const_cast<void *>(reqs.allocationFragments[i].allocationPtr),
                                                     rootDeviceIndex});
         ASSERT_NE(nullptr, fragment);
         EXPECT_EQ(2, fragment->refCount);
-        EXPECT_EQ(OsHandles.fragmentStorageData[i].cpuPtr, fragment->fragmentCpuPointer);
+        EXPECT_EQ(osHandles.fragmentStorageData[i].cpuPtr, fragment->fragmentCpuPointer);
     }
 
     for (int i = 0; i < maxFragmentsCount; i++) {

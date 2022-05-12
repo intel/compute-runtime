@@ -126,14 +126,14 @@ void getBarBaseAndSize(std::string readBytes, uint64_t &baseAddr, uint64_t &barS
 }
 
 ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) {
-    std::vector<std::string> ReadBytes;
-    ze_result_t result = pSysfsAccess->read(resourceFile, ReadBytes);
+    std::vector<std::string> readBytes;
+    ze_result_t result = pSysfsAccess->read(resourceFile, readBytes);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
     for (uint32_t i = 0; i <= maxPciBars; i++) {
         uint64_t baseAddr, barSize, barFlags;
-        getBarBaseAndSize(ReadBytes[i], baseAddr, barSize, barFlags);
+        getBarBaseAndSize(readBytes[i], baseAddr, barSize, barFlags);
         if (baseAddr && !(barFlags & 0x1)) { // we do not update for I/O ports
             zes_pci_bar_properties_t *pBarProp = new zes_pci_bar_properties_t;
             memset(pBarProp, 0, sizeof(zes_pci_bar_properties_t));

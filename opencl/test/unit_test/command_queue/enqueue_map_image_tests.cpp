@@ -122,10 +122,10 @@ HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCal
 typedef EnqueueMapImageParamsTest MipMapMapImageParamsTest;
 
 TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMapsAreCalledThenReturnDifferentPointers) {
-    auto image_type = (cl_mem_object_type)GetParam();
+    auto imageType = (cl_mem_object_type)GetParam();
     cl_int retVal = CL_SUCCESS;
     cl_image_desc imageDesc = {};
-    imageDesc.image_type = image_type;
+    imageDesc.image_type = imageType;
     imageDesc.num_mip_levels = 10;
     imageDesc.image_width = 4;
     imageDesc.image_height = 1;
@@ -134,7 +134,7 @@ TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMap
     size_t origin2[4] = {0, 0, 0, 0};
     std::unique_ptr<Image> image;
     size_t mapOffset = 16u;
-    switch (image_type) {
+    switch (imageType) {
     case CL_MEM_OBJECT_IMAGE1D:
         origin2[1] = 1;
         image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &imageDesc));
@@ -327,13 +327,13 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
-    size_t GWS = 1;
+    size_t gws = 1;
 
     MockKernelWithInternals kernel(*pClDevice);
     *pTagMemory = tagHW;
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    auto tag_address = commandStreamReceiver.getTagAddress();
-    EXPECT_TRUE(pTagMemory == tag_address);
+    auto tagAddress = commandStreamReceiver.getTagAddress();
+    EXPECT_TRUE(pTagMemory == tagAddress);
 
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
@@ -346,7 +346,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     EXPECT_EQ(1u, taskCount);
 
     // enqueue something that can be finished...
-    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &GWS, nullptr, 0, nullptr, nullptr);
+    retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     *pTagMemory = tagHW += 3;
@@ -506,14 +506,14 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.taskCount = forceTaskCount;
 
-    std::unique_ptr<Image> zero_copy_image(ImageHelper<ImageWriteOnly<Image1dDefaults>>::create(context));
+    std::unique_ptr<Image> zeroCopyImage(ImageHelper<ImageWriteOnly<Image1dDefaults>>::create(context));
 
-    ASSERT_TRUE(zero_copy_image->isMemObjZeroCopy());
+    ASSERT_TRUE(zeroCopyImage->isMemObjZeroCopy());
     pCmdQ->taskCount = 40u;
 
     auto ptr = clEnqueueMapImage(
         pCmdQ,
-        zero_copy_image.get(),
+        zeroCopyImage.get(),
         CL_FALSE,
         mapFlags,
         origin,
@@ -529,7 +529,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, eventReturned);
 
-    EXPECT_EQ(ptr, zero_copy_image->getCpuAddressForMemoryTransfer());
+    EXPECT_EQ(ptr, zeroCopyImage->getCpuAddressForMemoryTransfer());
 
     auto eventObject = castToObject<Event>(eventReturned);
     EXPECT_EQ(pCmdQ->taskCount, eventObject->peekTaskCount());
@@ -537,7 +537,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
 
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,
-        zero_copy_image.get(),
+        zeroCopyImage.get(),
         ptr,
         0,
         nullptr,
@@ -572,12 +572,12 @@ TEST_F(EnqueueMapImageTest, GivenNonZeroCopyImageWhenMappedWithOffsetThenCorrect
         nullptr,
         &retVal);
 
-    float *HostPtrOffseted = (float *)Image1dDefaults::hostPtr + 1; //
+    float *hostPtrOffseted = (float *)Image1dDefaults::hostPtr + 1; //
 
     EXPECT_NE(nullptr, ptr);
 
     if (!image->isTiledAllocation()) {
-        EXPECT_EQ(HostPtrOffseted, ptr); // Returned pointer should be offseted
+        EXPECT_EQ(hostPtrOffseted, ptr); // Returned pointer should be offseted
     }
 
     EXPECT_EQ(CL_SUCCESS, retVal);

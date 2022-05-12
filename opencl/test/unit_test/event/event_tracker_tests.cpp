@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,12 +87,12 @@ TEST(EventsTracker, whenCallLabelFunctionThenGetStringWithProperCmdqId) {
 }
 
 TEST(EventsTracker, givenNullptrCmdqThenNotDumping) {
-    MockCommandQueue *cmdq_ptr = nullptr;
+    MockCommandQueue *cmdqPtr = nullptr;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
 
-    EventsTracker::dumpQueue(cmdq_ptr, stream, dumped);
+    EventsTracker::dumpQueue(cmdqPtr, stream, dumped);
 
     EXPECT_STREQ("", stream.str().c_str());
 }
@@ -656,8 +656,8 @@ TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
     class EventsTrackerMockMT : public EventsTrackerMock {
       public:
         TrackedEvent *getNodes() override {
-            auto TrackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
-            return TrackedEventsMock->detachNodes();
+            auto trackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
+            return trackedEventsMock->detachNodes();
         }
         std::shared_ptr<IFList<TrackedEvent, true, true>> *TrackedEventsMock;
     };

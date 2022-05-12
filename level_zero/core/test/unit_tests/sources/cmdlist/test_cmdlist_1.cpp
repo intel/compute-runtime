@@ -880,16 +880,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEvent
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendSignalEvent(event);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -920,16 +920,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendBarrier(nullptr, 1, &event);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
 }
@@ -997,9 +997,9 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1050,9 +1050,9 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
@@ -1098,9 +1098,9 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
@@ -1149,9 +1149,9 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -1162,9 +1162,9 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = event_object->hostSignal();
+    returnValue = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event_object->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObject->queryStatus());
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
@@ -1211,9 +1211,9 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
@@ -1255,16 +1255,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventT
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendEventReset(event);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEventThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -1295,16 +1295,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendSignalEvent(event);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThenUpdateTaskCountNeededFlagIsEnabled) {
@@ -1335,16 +1335,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
 }
@@ -1378,16 +1378,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndApp
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendBarrier(event, 0, nullptr);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
 }
@@ -1420,16 +1420,16 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     commandList->appendEventReset(event);
 
-    auto result = event_object->hostSignal();
+    auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCommandListWithSyncModeThenSuccessIsReturned) {

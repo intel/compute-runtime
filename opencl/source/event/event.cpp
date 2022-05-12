@@ -248,20 +248,20 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 
     auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
 
-    cl_ulong Max = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
-    cl_ulong Delta = 0;
+    cl_ulong max = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+    cl_ulong delta = 0;
 
-    startTime &= Max;
-    endTime &= Max;
+    startTime &= max;
+    endTime &= max;
 
     if (startTime > endTime) {
-        Delta = Max - startTime;
-        Delta += endTime;
+        delta = max - startTime;
+        delta += endTime;
     } else {
-        Delta = endTime - startTime;
+        delta = endTime - startTime;
     }
 
-    return Delta;
+    return delta;
 }
 
 void Event::calculateSubmitTimestampData() {

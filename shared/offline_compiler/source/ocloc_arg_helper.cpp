@@ -273,27 +273,27 @@ int OclocArgHelper::parseProductConfigFromString(const std::string &device, size
 
 std::vector<uint32_t> OclocArgHelper::getMajorMinorRevision(const std::string &device) {
     std::vector<uint32_t> numeration;
-    auto major_pos = device.find(".");
-    auto major = parseProductConfigFromString(device, 0, major_pos);
+    auto majorPos = device.find(".");
+    auto major = parseProductConfigFromString(device, 0, majorPos);
     if (major == CONFIG_STATUS::MISMATCHED_VALUE) {
         return {};
     }
     numeration.push_back(major);
-    if (major_pos == std::string::npos) {
+    if (majorPos == std::string::npos) {
         return numeration;
     }
 
-    auto minor_pos = device.find(".", ++major_pos);
-    auto minor = parseProductConfigFromString(device, major_pos, minor_pos);
+    auto minorPos = device.find(".", ++majorPos);
+    auto minor = parseProductConfigFromString(device, majorPos, minorPos);
 
     if (minor == CONFIG_STATUS::MISMATCHED_VALUE) {
         return {};
     }
     numeration.push_back(minor);
-    if (minor_pos == std::string::npos) {
+    if (minorPos == std::string::npos) {
         return numeration;
     }
-    auto revision = parseProductConfigFromString(device, minor_pos + 1, device.size());
+    auto revision = parseProductConfigFromString(device, minorPos + 1, device.size());
     if (revision == CONFIG_STATUS::MISMATCHED_VALUE) {
         return {};
     }

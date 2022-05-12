@@ -147,23 +147,23 @@ void OnExitCommandListCloseWithoutUserDataAndReadInstanceData(
 TEST(zeAPITracingCoreTestsNoSetup, WhenCreateTracerAndNoZetInitThenReturnFailure) {
     ze_result_t result;
 
-    zet_tracer_exp_handle_t APITracerHandle;
-    zet_tracer_exp_desc_t tracer_desc = {};
+    zet_tracer_exp_handle_t apiTracerHandle;
+    zet_tracer_exp_desc_t tracerDesc = {};
 
-    result = zetTracerExpCreate(nullptr, &tracer_desc, &APITracerHandle);
+    result = zetTracerExpCreate(nullptr, &tracerDesc, &apiTracerHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
 }
 
 TEST_F(zeAPITracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAndDisableTracingAndDestroyTracerThenReturnSuccess) {
     ze_result_t result;
 
-    zet_tracer_exp_handle_t APITracerHandle;
-    zet_tracer_exp_desc_t tracer_desc = {};
+    zet_tracer_exp_handle_t apiTracerHandle;
+    zet_tracer_exp_desc_t tracerDesc = {};
 
-    result = zetTracerExpCreate(nullptr, &tracer_desc, &APITracerHandle);
+    result = zetTracerExpCreate(nullptr, &tracerDesc, &apiTracerHandle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, APITracerHandle);
+    ASSERT_NE(nullptr, apiTracerHandle);
 
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
@@ -171,39 +171,39 @@ TEST_F(zeAPITracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAnd
     prologCbs.CommandList.pfnAppendLaunchKernelCb = OnEnterCommandListAppendLaunchFunction;
     epilogCbs.CommandList.pfnAppendLaunchKernelCb = OnExitCommandListAppendLaunchFunction;
 
-    result = zetTracerExpSetPrologues(APITracerHandle, &prologCbs);
+    result = zetTracerExpSetPrologues(apiTracerHandle, &prologCbs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zetTracerExpSetEpilogues(APITracerHandle, &epilogCbs);
+    result = zetTracerExpSetEpilogues(apiTracerHandle, &epilogCbs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zetTracerExpSetEnabled(APITracerHandle, true);
+    result = zetTracerExpSetEnabled(apiTracerHandle, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zetTracerExpSetEnabled(APITracerHandle, false);
+    result = zetTracerExpSetEnabled(apiTracerHandle, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zetTracerExpDestroy(APITracerHandle);
+    result = zetTracerExpDestroy(apiTracerHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWithUserDataAndUserDataMatchingInPrologThenReturnSuccess) {
     MockCommandList commandList;
     ze_result_t result;
-    int user_data = 5;
+    int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
 
     prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserData;
 
-    ze_command_list_handle_t command_list_handle = commandList.toHandle();
-    tracerParams.phCommandList = &command_list_handle;
+    ze_command_list_handle_t commandListHandle = commandList.toHandle();
+    tracerParams.phCommandList = &commandListHandle;
 
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> prologCallback;
     prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
-    prologCallback.pUserData = &user_data;
+    prologCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
@@ -214,7 +214,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWi
 TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithUserDataAndUserDataMatchingInPrologAndEpilogThenReturnSuccess) {
     MockCommandList commandList;
     ze_result_t result;
-    int user_data = 5;
+    int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
@@ -222,8 +222,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserData;
     epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserData;
 
-    ze_command_list_handle_t command_list_handle = commandList.toHandle();
-    tracerParams.phCommandList = &command_list_handle;
+    ze_command_list_handle_t commandListHandle = commandList.toHandle();
+    tracerParams.phCommandList = &commandListHandle;
 
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
@@ -231,8 +231,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
     prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
     epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
-    prologCallback.pUserData = &user_data;
-    epilogCallback.pUserData = &user_data;
+    prologCallback.pUserData = &userData;
+    epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
@@ -244,7 +244,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
 TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithUserDataAndInstanceDataUserDataMatchingInPrologAndEpilogThenReturnSuccess) {
     MockCommandList commandList;
     ze_result_t result;
-    int user_data = 5;
+    int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
@@ -252,8 +252,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserDataAndAllocateInstanceData;
     epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserDataAndReadInstanceData;
 
-    ze_command_list_handle_t command_list_handle = commandList.toHandle();
-    tracerParams.phCommandList = &command_list_handle;
+    ze_command_list_handle_t commandListHandle = commandList.toHandle();
+    tracerParams.phCommandList = &commandListHandle;
 
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
@@ -261,8 +261,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
     prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
     epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
-    prologCallback.pUserData = &user_data;
-    epilogCallback.pUserData = &user_data;
+    prologCallback.pUserData = &userData;
+    epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
@@ -281,8 +281,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithoutUserDataAndAllocateInstanceData;
     epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithoutUserDataAndReadInstanceData;
 
-    ze_command_list_handle_t command_list_handle = commandList.toHandle();
-    tracerParams.phCommandList = &command_list_handle;
+    ze_command_list_handle_t commandListHandle = commandList.toHandle();
+    tracerParams.phCommandList = &commandListHandle;
 
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
@@ -303,7 +303,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
 TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsWithRecursionHandledThenSuccessIsReturned) {
     MockCommandList commandList;
     ze_result_t result;
-    int user_data = 5;
+    int userData = 5;
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
@@ -311,8 +311,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserDataRecursion;
     epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserDataRecursion;
 
-    ze_command_list_handle_t command_list_handle = commandList.toHandle();
-    tracerParams.phCommandList = &command_list_handle;
+    ze_command_list_handle_t commandListHandle = commandList.toHandle();
+    tracerParams.phCommandList = &commandListHandle;
 
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> prologCallbacks;
     std::vector<APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t>> epilogCallbacks;
@@ -320,22 +320,22 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     APITracerCallbackStateImp<ze_pfnCommandListCloseCb_t> epilogCallback;
     prologCallback.current_api_callback = prologCbs.CommandList.pfnCloseCb;
     epilogCallback.current_api_callback = epilogCbs.CommandList.pfnCloseCb;
-    prologCallback.pUserData = &user_data;
-    epilogCallback.pUserData = &user_data;
+    prologCallback.pUserData = &userData;
+    epilogCallback.pUserData = &userData;
     prologCallbacks.push_back(prologCallback);
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
-    result = callHandleTracerRecursion(zeCommandListClose, command_list_handle);
+    result = callHandleTracerRecursion(zeCommandListClose, commandListHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
     result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = callHandleTracerRecursion(zeCommandListClose, command_list_handle);
+    result = callHandleTracerRecursion(zeCommandListClose, commandListHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
-    result = callHandleTracerRecursion(zeCommandListClose, command_list_handle);
+    result = callHandleTracerRecursion(zeCommandListClose, commandListHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     L0::tracingInProgress = 0;

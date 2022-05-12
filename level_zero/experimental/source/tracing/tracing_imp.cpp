@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -201,9 +201,9 @@ size_t APITracerContextImp::updateTracerArrays() {
     // there is logically no transfer of other memory context between
     // threads in this case.
     //
-    tracer_array_t *active_tracer_array_shadow = activeTracerArray.load(std::memory_order_relaxed);
-    if (active_tracer_array_shadow != &emptyTracerArray) {
-        retiringTracerArrayList.push_back(active_tracer_array_shadow);
+    tracer_array_t *activeTracerArrayShadow = activeTracerArray.load(std::memory_order_relaxed);
+    if (activeTracerArrayShadow != &emptyTracerArray) {
+        retiringTracerArrayList.push_back(activeTracerArrayShadow);
     }
     //
     // This active_tracer_array.store must use memory_order_release.

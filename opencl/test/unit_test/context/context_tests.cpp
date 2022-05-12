@@ -467,8 +467,8 @@ TEST(Context, givenContextAndDevicesWhenIsTileOnlyThenProperValueReturned) {
 }
 
 TEST(InvalidExtraPropertiesTests, givenInvalidExtraPropertiesWhenCreatingContextThenContextIsNotCreated) {
-    constexpr cl_context_properties INVALID_PROPERTY_TYPE = (1 << 31);
-    constexpr cl_context_properties INVALID_CONTEXT_FLAG = (1 << 31);
+    constexpr cl_context_properties invalidPropertyType = (1 << 31);
+    constexpr cl_context_properties invalidContextFlag = (1 << 31);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
@@ -476,7 +476,7 @@ TEST(InvalidExtraPropertiesTests, givenInvalidExtraPropertiesWhenCreatingContext
     std::unique_ptr<Context> context;
 
     {
-        cl_context_properties properties[] = {INVALID_PROPERTY_TYPE, INVALID_CONTEXT_FLAG, 0};
+        cl_context_properties properties[] = {invalidPropertyType, invalidContextFlag, 0};
         context.reset(Context::create<Context>(properties, ClDeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
         EXPECT_EQ(nullptr, context.get());

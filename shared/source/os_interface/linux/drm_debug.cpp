@@ -85,8 +85,8 @@ std::string Drm::generateUUID() {
 }
 
 std::string Drm::generateElfUUID(const void *data) {
-    std::string elf_class_uuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;
-    std::string UUID1st = elf_class_uuid.substr(0, 18);
+    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;
+    std::string uuiD1st = elfClassUuid.substr(0, 18);
 
     const char uuidString[] = "%s-%04" SCNx64 "-%012" SCNx64;
     char buffer[36 + 1] = "00000000-0000-0000-0000-000000000000";
@@ -94,7 +94,7 @@ std::string Drm::generateElfUUID(const void *data) {
     uint64_t parts[2] = {0, 0};
     parts[0] = reinterpret_cast<uintptr_t>(data) & 0xFFFFFFFFFFFF;
     parts[1] = (reinterpret_cast<uintptr_t>(data) & 0xFFFF000000000000) >> 48;
-    snprintf(buffer, sizeof(buffer), uuidString, UUID1st.c_str(), parts[1], parts[0]);
+    snprintf(buffer, sizeof(buffer), uuidString, uuiD1st.c_str(), parts[1], parts[0]);
 
     return std::string(buffer, 36);
 }

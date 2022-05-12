@@ -78,8 +78,8 @@ HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroW
     ze_result_t result;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
-    const char *_pRanges[pRangeSizes];
-    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+    const char *ranges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -101,8 +101,8 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingM
     ze_result_t result;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
-    const char *_pRanges[pRangeSizes];
-    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+    const char *ranges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto cmdList = new MockCommandListHw<productFamily>;
     cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
@@ -123,8 +123,8 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryB
     ze_result_t result;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
-    const char *_pRanges[pRangeSizes];
-    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+    const char *ranges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto cmdList = new MockCommandListHw<productFamily>;
     cmdList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
@@ -145,8 +145,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBa
     ze_result_t result;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
-    const char *_pRanges[pRangeSizes];
-    const void **pRanges = reinterpret_cast<const void **>(&_pRanges[0]);
+    const char *ranges[pRangeSizes];
+    const void **pRanges = reinterpret_cast<const void **>(&ranges[0]);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -172,16 +172,16 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     ze_result_t result;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
-    void *_pRanges;
+    void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     result = context->allocDeviceMem(device->toHandle(),
                                      &deviceDesc,
                                      pRangeSizes,
                                      4096u,
-                                     &_pRanges);
+                                     &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    const void **pRanges = const_cast<const void **>(&_pRanges);
+    const void **pRanges = const_cast<const void **>(&ranges);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -223,28 +223,28 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     }
 
     commandList->destroy();
-    context->freeMem(_pRanges);
+    context->freeMem(ranges);
 }
 
 HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddressMisalignmentCorrected,
           IsDG1) {
     ze_result_t result;
     uint32_t numRanges = 1;
-    const size_t misalignment_factor = 761;
+    const size_t misalignmentFactor = 761;
     const size_t pRangeSizes = 4096;
-    void *_pRanges;
+    void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     result = context->allocDeviceMem(device->toHandle(),
                                      &deviceDesc,
                                      pRangeSizes,
                                      4096u,
-                                     &_pRanges);
+                                     &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    unsigned char *c_pRanges = reinterpret_cast<unsigned char *>(_pRanges);
-    c_pRanges += misalignment_factor;
-    _pRanges = static_cast<void *>(c_pRanges);
-    const void **pRanges = const_cast<const void **>(&_pRanges);
+    unsigned char *cPRanges = reinterpret_cast<unsigned char *>(ranges);
+    cPRanges += misalignmentFactor;
+    ranges = static_cast<void *>(cPRanges);
+    const void **pRanges = const_cast<const void **>(&ranges);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -278,7 +278,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
-        EXPECT_EQ(reinterpret_cast<uint64_t>(*pRanges) - misalignment_factor,
+        EXPECT_EQ(reinterpret_cast<uint64_t>(*pRanges) - misalignmentFactor,
                   static_cast<uint64_t>(maskedAddress));
 
         EXPECT_EQ(
@@ -287,7 +287,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     }
 
     commandList->destroy();
-    context->freeMem(_pRanges);
+    context->freeMem(ranges);
 }
 
 HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressSizeThenL3ControlIsNotProgrammed, IsDG1) {
@@ -296,13 +296,13 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
 
     ze_result_t result;
     const size_t pRangeSizes = 4096;
-    void *_pRanges;
+    void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     result = context->allocDeviceMem(device->toHandle(),
                                      &deviceDesc,
                                      pRangeSizes,
                                      4096u,
-                                     &_pRanges);
+                                     &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
@@ -310,9 +310,9 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
-    const void *ranges[] = {_pRanges};
+    const void *pRanges[] = {ranges};
     const size_t sizes[] = {2 * pRangeSizes};
-    commandList->applyMemoryRangesBarrier(1, sizes, ranges);
+    commandList->applyMemoryRangesBarrier(1, sizes, pRanges);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
@@ -320,7 +320,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     EXPECT_EQ(cmdList.end(), itor);
 
     commandList->destroy();
-    context->freeMem(_pRanges);
+    context->freeMem(ranges);
 }
 
 HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressThenL3ControlIsNotProgrammed, IsDG1) {
@@ -329,13 +329,13 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
 
     ze_result_t result;
     const size_t pRangeSizes = 4096;
-    void *_pRanges;
+    void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     result = context->allocDeviceMem(device->toHandle(),
                                      &deviceDesc,
                                      pRangeSizes,
                                      4096u,
-                                     &_pRanges);
+                                     &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandList = new CommandListAdjustStateComputeMode<productFamily>();
@@ -343,9 +343,9 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
 
-    const void *ranges[] = {nullptr};
+    const void *pRanges[] = {nullptr};
     const size_t sizes[] = {pRangeSizes};
-    commandList->applyMemoryRangesBarrier(1, sizes, ranges);
+    commandList->applyMemoryRangesBarrier(1, sizes, pRanges);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
@@ -353,7 +353,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     EXPECT_EQ(cmdList.end(), itor);
 
     commandList->destroy();
-    context->freeMem(_pRanges);
+    context->freeMem(ranges);
 }
 
 } // namespace ult

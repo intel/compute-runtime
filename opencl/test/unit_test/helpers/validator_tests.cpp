@@ -69,9 +69,9 @@ INSTANTIATE_TYPED_TEST_CASE_P(Validator, ValidatorFixture, ValidatorParams);
 
 TEST(GenericValidator, GivenNullCtxAndNullCqWhenValidatingThenInvalidContextIsReturned) {
     cl_context context = nullptr;
-    cl_command_queue command_queue = nullptr;
+    cl_command_queue commandQueue = nullptr;
 
-    EXPECT_EQ(CL_INVALID_CONTEXT, validateObjects(context, command_queue));
+    EXPECT_EQ(CL_INVALID_CONTEXT, validateObjects(context, commandQueue));
 }
 
 TEST(UserPointer, GivenNullPtrWhenValidatingThenInvalidValueIsReturned) {

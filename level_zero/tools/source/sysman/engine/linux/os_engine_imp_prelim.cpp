@@ -57,10 +57,10 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
         uint32_t subDeviceId = engineInfo->getEngineTileIndex(itr->engine);
         auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
-        for (auto L0EngineEntryInMap = i915ToEngineMapRange.first; L0EngineEntryInMap != i915ToEngineMapRange.second; L0EngineEntryInMap++) {
-            auto L0EngineType = L0EngineEntryInMap->second;
-            engineGroupInstance.insert({L0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), subDeviceId}});
-            engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(L0EngineType), {0u, subDeviceId}});
+        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
+            auto l0EngineType = l0EngineEntryInMap->second;
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), subDeviceId}});
+            engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, subDeviceId}});
             engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, subDeviceId}});
         }
     }

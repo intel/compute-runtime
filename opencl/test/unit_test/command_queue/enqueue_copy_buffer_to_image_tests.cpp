@@ -209,7 +209,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferToImageTest, WhenCopyingBufferToIma
 typedef EnqueueCopyBufferToImageMipMapTest MipMapCopyBufferToImageTest;
 
 HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet) {
-    auto image_type = (cl_mem_object_type)GetParam();
+    auto imageType = (cl_mem_object_type)GetParam();
     auto builtIns = new MockBuiltins();
     pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
@@ -225,7 +225,7 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
     cl_int retVal = CL_SUCCESS;
     cl_image_desc imageDesc = {};
     uint32_t expectedMipLevel = 3;
-    imageDesc.image_type = image_type;
+    imageDesc.image_type = imageType;
     imageDesc.num_mip_levels = 10;
     imageDesc.image_width = 4;
     imageDesc.image_height = 1;
@@ -233,7 +233,7 @@ HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBuffe
     size_t origin[] = {0, 0, 0, 0};
     size_t region[] = {imageDesc.image_width, 1, 1};
     std::unique_ptr<Image> image;
-    switch (image_type) {
+    switch (imageType) {
     case CL_MEM_OBJECT_IMAGE1D:
         origin[1] = expectedMipLevel;
         image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &imageDesc));

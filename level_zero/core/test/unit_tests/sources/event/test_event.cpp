@@ -241,9 +241,9 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 }
 
 TEST_F(EventPoolCreate, GivenNoDeviceThenEventPoolIsCreated) {

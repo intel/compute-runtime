@@ -48,12 +48,12 @@ HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenPropertiesSetCorrectly, IsX
 HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    L0::Image *image_ptr;
+    L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &image_ptr);
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(image_ptr);
+    auto image = whitebox_cast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     result = zeImageDestroy(image->toHandle());
@@ -63,12 +63,12 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
 HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    L0::Image *image_ptr;
+    L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &image_ptr);
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(image_ptr);
+    auto image = whitebox_cast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     image->destroy();
@@ -77,12 +77,12 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
 HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenReturnNullPointer, IsXeHpgCore) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    L0::Image *image_ptr;
+    L0::Image *imagePtr;
 
-    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &image_ptr);
+    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(image_ptr);
+    auto image = whitebox_cast(imagePtr);
     ASSERT_EQ(nullptr, image);
 }
 
@@ -98,11 +98,11 @@ HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
     desc.height = 10;
     desc.depth = 10;
 
-    L0::Image *image_ptr;
+    L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &image_ptr);
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(image_ptr);
+    auto image = whitebox_cast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     auto alloc = image->getAllocation();

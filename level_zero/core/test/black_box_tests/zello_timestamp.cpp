@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@ inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
     const size_t length = static_cast<size_t>(stream.tellg());
     stream.seekg(0, stream.beg);
 
-    std::vector<uint8_t> binary_file(length);
-    stream.read(reinterpret_cast<char *>(binary_file.data()), length);
-    return binary_file;
+    std::vector<uint8_t> binaryFile(length);
+    stream.read(reinterpret_cast<char *>(binaryFile.data()), length);
+    return binaryFile;
 }
 
 void createCmdQueueAndCmdList(ze_context_handle_t &context,

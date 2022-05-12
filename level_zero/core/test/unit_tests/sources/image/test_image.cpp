@@ -48,10 +48,10 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
                      ZE_IMAGE_FORMAT_SWIZZLE_B,
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-    Image *image_ptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    std::unique_ptr<L0::Image> image(image_ptr);
+    std::unique_ptr<L0::Image> image(imagePtr);
 
     ASSERT_NE(image, nullptr);
 
@@ -85,11 +85,11 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedI
 
     zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_P216};
 
-    Image *image_ptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
 
     ASSERT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
-    ASSERT_EQ(image_ptr, nullptr);
+    ASSERT_EQ(imagePtr, nullptr);
 }
 
 class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std::pair<ze_image_format_layout_t, ze_image_format_type_t>> {
@@ -525,43 +525,43 @@ HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThen
     imageHW->initialize(device, &zeDesc);
 
     EXPECT_EQ(imageHW->getAllocation()->getAllocationType(), NEO::AllocationType::IMAGE);
-    auto RSS = imageHW->surfaceState;
-    EXPECT_EQ(RSS.getSurfaceType(), FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
-    EXPECT_EQ(RSS.getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-    EXPECT_EQ(RSS.getRenderTargetViewExtent(), 1u);
+    auto rss = imageHW->surfaceState;
+    EXPECT_EQ(rss.getSurfaceType(), FamilyType::RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    EXPECT_EQ(rss.getAuxiliarySurfaceMode(), FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+    EXPECT_EQ(rss.getRenderTargetViewExtent(), 1u);
 
     auto hAlign = static_cast<typename FamilyType::RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(imageHW->getAllocation()->getDefaultGmm()->gmmResourceInfo->getHAlignSurfaceState());
     auto vAlign = static_cast<typename FamilyType::RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(imageHW->getAllocation()->getDefaultGmm()->gmmResourceInfo->getVAlignSurfaceState());
 
-    EXPECT_EQ(RSS.getSurfaceHorizontalAlignment(), hAlign);
-    EXPECT_EQ(RSS.getSurfaceVerticalAlignment(), vAlign);
+    EXPECT_EQ(rss.getSurfaceHorizontalAlignment(), hAlign);
+    EXPECT_EQ(rss.getSurfaceVerticalAlignment(), vAlign);
 
     auto isMediaFormatLayout = imageHW->isMediaFormat(params.first);
     if (isMediaFormatLayout) {
         auto imgInfo = imageHW->getImageInfo();
-        EXPECT_EQ(RSS.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
-        EXPECT_EQ(RSS.getYOffsetForUOrUvPlane(), imgInfo.yOffsetForUVPlane);
-        EXPECT_EQ(RSS.getXOffsetForUOrUvPlane(), imgInfo.xOffset);
+        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+        EXPECT_EQ(rss.getYOffsetForUOrUvPlane(), imgInfo.yOffsetForUVPlane);
+        EXPECT_EQ(rss.getXOffsetForUOrUvPlane(), imgInfo.xOffset);
     } else {
-        EXPECT_EQ(RSS.getYOffsetForUOrUvPlane(), 0u);
-        EXPECT_EQ(RSS.getXOffsetForUOrUvPlane(), 0u);
+        EXPECT_EQ(rss.getYOffsetForUOrUvPlane(), 0u);
+        EXPECT_EQ(rss.getXOffsetForUOrUvPlane(), 0u);
     }
 
-    EXPECT_EQ(RSS.getSurfaceMinLod(), 0u);
-    EXPECT_EQ(RSS.getMipCountLod(), 0u);
+    EXPECT_EQ(rss.getSurfaceMinLod(), 0u);
+    EXPECT_EQ(rss.getMipCountLod(), 0u);
 
     if (!isMediaFormatLayout) {
-        EXPECT_EQ(RSS.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
-        EXPECT_EQ(RSS.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
-        EXPECT_EQ(RSS.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
-        EXPECT_EQ(RSS.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ALPHA);
+        EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
+        EXPECT_EQ(rss.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
+        EXPECT_EQ(rss.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
+        EXPECT_EQ(rss.getShaderChannelSelectAlpha(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_ALPHA);
     } else {
-        EXPECT_EQ(RSS.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
-        EXPECT_EQ(RSS.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
-        EXPECT_EQ(RSS.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
+        EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);
+        EXPECT_EQ(rss.getShaderChannelSelectGreen(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_GREEN);
+        EXPECT_EQ(rss.getShaderChannelSelectBlue(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_BLUE);
     }
 
-    EXPECT_EQ(RSS.getNumberOfMultisamples(), FamilyType::RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
+    EXPECT_EQ(rss.getNumberOfMultisamples(), FamilyType::RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
 }
 
 std::pair<ze_image_format_layout_t, ze_image_format_type_t> validFormats[] = {
@@ -814,10 +814,10 @@ HWTEST2_F(ImageGetMemoryProperties, givenImageMemoryPropertiesExpStructureWhenGe
                      ZE_IMAGE_FORMAT_SWIZZLE_B,
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-    Image *image_ptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    Image *imagePtr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    std::unique_ptr<L0::Image> image(image_ptr);
+    std::unique_ptr<L0::Image> image(imagePtr);
 
     ASSERT_NE(image, nullptr);
 
@@ -855,11 +855,11 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
     {
-        Image *image_ptr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        Image *imagePtr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_NE(nullptr, image_ptr);
-        std::unique_ptr<L0::Image> image(image_ptr);
+        EXPECT_NE(nullptr, imagePtr);
+        std::unique_ptr<L0::Image> image(imagePtr);
 
         EXPECT_EQ(L0HwHelperHw<FamilyType>::get().imageCompressionSupported(device->getHwInfo()), image->getAllocation()->isCompressionEnabled());
     }
@@ -873,11 +873,11 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
 
         zeDesc.pNext = &compressionHint;
 
-        Image *image_ptr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        Image *imagePtr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_NE(nullptr, image_ptr);
-        std::unique_ptr<L0::Image> image(image_ptr);
+        EXPECT_NE(nullptr, imagePtr);
+        std::unique_ptr<L0::Image> image(imagePtr);
 
         EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
 
@@ -887,11 +887,11 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     {
         NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(1);
 
-        Image *image_ptr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        Image *imagePtr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_NE(nullptr, image_ptr);
-        std::unique_ptr<L0::Image> image(image_ptr);
+        EXPECT_NE(nullptr, imagePtr);
+        std::unique_ptr<L0::Image> image(imagePtr);
 
         EXPECT_TRUE(image->getAllocation()->isCompressionEnabled());
     }
@@ -899,11 +899,11 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingImageThenEnable
     {
         NEO::DebugManager.flags.RenderCompressedImagesEnabled.set(0);
 
-        Image *image_ptr = nullptr;
-        auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+        Image *imagePtr = nullptr;
+        auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_NE(nullptr, image_ptr);
-        std::unique_ptr<L0::Image> image(image_ptr);
+        EXPECT_NE(nullptr, imagePtr);
+        std::unique_ptr<L0::Image> image(imagePtr);
 
         EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
     }
@@ -931,11 +931,11 @@ HWTEST2_F(ImageGetMemoryProperties, givenDebugFlagSetWhenCreatingLinearImageThen
                      ZE_IMAGE_FORMAT_SWIZZLE_B,
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-    Image *image_ptr = nullptr;
-    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    Image *imagePtr = nullptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &imagePtr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_NE(nullptr, image_ptr);
-    std::unique_ptr<L0::Image> image(image_ptr);
+    EXPECT_NE(nullptr, imagePtr);
+    std::unique_ptr<L0::Image> image(imagePtr);
 
     EXPECT_FALSE(image->getAllocation()->isCompressionEnabled());
 }
@@ -952,11 +952,11 @@ HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgC
     desc.height = 0;
     desc.depth = 0;
 
-    L0::Image *image_ptr;
+    L0::Image *imagePtr;
 
-    auto result = Image::create(productFamily, device, &desc, &image_ptr);
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(image_ptr);
+    auto image = whitebox_cast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     auto alloc = image->getAllocation();

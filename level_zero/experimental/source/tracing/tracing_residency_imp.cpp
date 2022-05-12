@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,15 +22,15 @@ zeContextCreate_Tracing(ze_driver_handle_t hDriver,
     tracerParams.pdesc = &desc;
     tracerParams.pphContext = &phContext;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextCreateCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextCreateCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextCreateCb_t, Context, pfnCreateCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextCreateCb_t, Context, pfnCreateCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnCreate,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDriver,
                                    *tracerParams.pdesc,
                                    *tracerParams.pphContext);
@@ -45,15 +45,15 @@ zeContextDestroy_Tracing(ze_context_handle_t hContext) {
     ze_context_destroy_params_t tracerParams;
     tracerParams.phContext = &hContext;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextDestroyCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextDestroyCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextDestroyCb_t, Context, pfnDestroyCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextDestroyCb_t, Context, pfnDestroyCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnDestroy,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext);
 }
 
@@ -66,15 +66,15 @@ zeContextGetStatus_Tracing(ze_context_handle_t hContext) {
     ze_context_get_status_params_t tracerParams;
     tracerParams.phContext = &hContext;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextGetStatusCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextGetStatusCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextGetStatusCb_t, Context, pfnGetStatusCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextGetStatusCb_t, Context, pfnGetStatusCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnGetStatus,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext);
 }
 
@@ -90,15 +90,15 @@ zeContextSystemBarrier_Tracing(ze_context_handle_t hContext,
     tracerParams.phContext = &hContext;
     tracerParams.phDevice = &hDevice;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextSystemBarrierCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextSystemBarrierCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextSystemBarrierCb_t, Context, pfnSystemBarrierCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextSystemBarrierCb_t, Context, pfnSystemBarrierCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext,
                                    *tracerParams.phDevice);
 }
@@ -121,15 +121,15 @@ zeContextMakeMemoryResident_Tracing(ze_context_handle_t hContext,
     tracerParams.pptr = &ptr;
     tracerParams.psize = &size;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextMakeMemoryResidentCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextMakeMemoryResidentCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextMakeMemoryResidentCb_t, Context, pfnMakeMemoryResidentCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextMakeMemoryResidentCb_t, Context, pfnMakeMemoryResidentCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnMakeMemoryResident,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext,
                                    *tracerParams.phDevice,
                                    *tracerParams.pptr,
@@ -154,15 +154,15 @@ zeContextEvictMemory_Tracing(ze_context_handle_t hContext,
     tracerParams.pptr = &ptr;
     tracerParams.psize = &size;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextEvictMemoryCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextEvictMemoryCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextEvictMemoryCb_t, Context, pfnEvictMemoryCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextEvictMemoryCb_t, Context, pfnEvictMemoryCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnEvictMemory,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext,
                                    *tracerParams.phDevice,
                                    *tracerParams.pptr,
@@ -184,15 +184,15 @@ zeContextMakeImageResident_Tracing(ze_context_handle_t hContext,
     tracerParams.phDevice = &hDevice;
     tracerParams.phImage = &hImage;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextMakeImageResidentCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextMakeImageResidentCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextMakeImageResidentCb_t, Context, pfnMakeImageResidentCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextMakeImageResidentCb_t, Context, pfnMakeImageResidentCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnMakeImageResident,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext,
                                    *tracerParams.phDevice,
                                    *tracerParams.phImage);
@@ -213,15 +213,15 @@ zeContextEvictImage_Tracing(ze_context_handle_t hContext,
     tracerParams.phDevice = &hDevice;
     tracerParams.phImage = &hImage;
 
-    L0::APITracerCallbackDataImp<ze_pfnContextEvictImageCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnContextEvictImageCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextEvictImageCb_t, Context, pfnEvictImageCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnContextEvictImageCb_t, Context, pfnEvictImageCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnEvictImage,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phContext,
                                    *tracerParams.phDevice,
                                    *tracerParams.phImage);

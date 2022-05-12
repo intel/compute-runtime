@@ -199,9 +199,9 @@ TEST_F(Nv12ImageTest, given1DImageWhenPassedAsParentImageThenValidateImageTraits
 }
 
 TEST_F(Nv12ImageTest, givenBufferWhenPassedAsNV12ParentImageThenValidateImageTraitsReturnsInvalidDesriptor) {
-    MockBuffer Buffer;
+    MockBuffer buffer;
 
-    imageDesc.mem_object = &Buffer;
+    imageDesc.mem_object = &buffer;
     imageDesc.image_depth = 0; // Plane of NV12 image
 
     retVal = Image::validateImageTraits(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,30 +181,30 @@ TEST(AlignDown, GivenPtrAlignedToPageWhenAligningDownToPageSizeThenReturnTheSame
 }
 TEST(AlignDown, GivenPtrNotAlignedToPageWhenAligningDownToPageSizeThenPageAlignedPointerIsReturned) {
     void *ptr = (void *)0x1001;
-    void *expected_ptr = (void *)0x1000;
+    void *expectedPtr = (void *)0x1000;
     auto alignedDownPtr = alignDown(ptr, MemoryConstants::pageSize);
-    EXPECT_EQ(expected_ptr, alignedDownPtr);
+    EXPECT_EQ(expectedPtr, alignedDownPtr);
 }
 
 TEST(AlignDown, GivenPtrNotAlignedToTwoPageWhenAligningDownToPageSizeThenReturnAlignedPointerToPreviousPage) {
     void *ptr = (void *)0x1241;
-    void *expected_ptr = (void *)0x1000;
+    void *expectedPtr = (void *)0x1000;
     auto alignedDownPtr = alignDown(ptr, MemoryConstants::pageSize);
-    EXPECT_EQ(expected_ptr, alignedDownPtr);
+    EXPECT_EQ(expectedPtr, alignedDownPtr);
 }
 
 TEST(AlignDown, GivenPtrNotAlignedToThreePageWhenAligningDownToPageSizeThenReturnAlignedPointerToPreviousPage) {
     void *ptr = (void *)0x3241;
-    void *expected_ptr = (void *)0x3000;
+    void *expectedPtr = (void *)0x3000;
     auto alignedDownPtr = alignDown(ptr, MemoryConstants::pageSize);
-    EXPECT_EQ(expected_ptr, alignedDownPtr);
+    EXPECT_EQ(expectedPtr, alignedDownPtr);
 }
 
 TEST(AlignDown, GivenPtrNotAlignedToDwordWhenAligningDownToDwordThenDwordAlignedPointerIsReturned) {
     void *ptr = (void *)0x3241;
-    void *expected_ptr = (void *)0x3240;
+    void *expectedPtr = (void *)0x3240;
     auto alignedDownPtr = alignDown(ptr, 4);
-    EXPECT_EQ(expected_ptr, alignedDownPtr);
+    EXPECT_EQ(expectedPtr, alignedDownPtr);
 }
 
 TEST(AlignDown, WhenAligningDownThen64BitIsPreserved) {

@@ -75,7 +75,7 @@ struct CommandStreamReceiverHwTestXeHPAndLater : public ClDeviceFixture,
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    size_t GWS = 1;
+    size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
@@ -90,7 +90,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenPream
     commandStreamReceiver->isPreambleSent = true;
     commandStreamReceiver->lastSentL3Config = 0;
 
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
+    commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
 
     parseCommands<FamilyType>(commandStreamCSR, 0);
     auto itorCmd = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -166,7 +166,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     const HardwareInfo &hwInfo = *defaultHwInfo;
-    size_t GWS = 1;
+    size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pClDevice, 0, false);
@@ -181,7 +181,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     uint32_t computeUnits = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
     size_t scratchSpaceSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] * computeUnits;
 
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
+    commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
     commandQueue.flush();
 
     parseCommands<FamilyType>(commandStreamCSR, 0);

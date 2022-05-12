@@ -85,8 +85,8 @@ bool Buffer::isValidSubBufferOffset(size_t offset) {
             return false;
         }
     }
-    cl_uint address_align = 32; // 4 byte alignment
-    if ((offset & (address_align / 8 - 1)) == 0) {
+    cl_uint addressAlign = 32; // 4 byte alignment
+    if ((offset & (addressAlign / 8 - 1)) == 0) {
         return true;
     }
 

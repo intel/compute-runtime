@@ -193,14 +193,14 @@ ze_result_t APITracerWrapperImp(TFunction_pointer zeApiPtr,
                                 TTracerEpilogCallbacks epilogCallbacks,
                                 Args &&...args) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
-    std::vector<APITracerCallbackStateImp<TTracer>> *callbacks_prologs = &prologCallbacks;
+    std::vector<APITracerCallbackStateImp<TTracer>> *callbacksPrologs = &prologCallbacks;
 
     std::vector<void *> ppTracerInstanceUserData;
-    ppTracerInstanceUserData.resize(callbacks_prologs->size());
+    ppTracerInstanceUserData.resize(callbacksPrologs->size());
 
-    for (size_t i = 0; i < callbacks_prologs->size(); i++) {
-        if (callbacks_prologs->at(i).current_api_callback != nullptr)
-            callbacks_prologs->at(i).current_api_callback(paramsStruct, ret, callbacks_prologs->at(i).pUserData, &ppTracerInstanceUserData[i]);
+    for (size_t i = 0; i < callbacksPrologs->size(); i++) {
+        if (callbacksPrologs->at(i).current_api_callback != nullptr)
+            callbacksPrologs->at(i).current_api_callback(paramsStruct, ret, callbacksPrologs->at(i).pUserData, &ppTracerInstanceUserData[i]);
     }
     ret = zeApiPtr(args...);
     std::vector<APITracerCallbackStateImp<TTracer>> *callbacksEpilogs = &epilogCallbacks;

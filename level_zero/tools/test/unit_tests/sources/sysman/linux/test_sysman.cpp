@@ -230,18 +230,18 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInval
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {
-    auto FsAccess = pLinuxSysmanImp->getFsAccess();
+    auto fsAccess = pLinuxSysmanImp->getFsAccess();
 
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
-    EXPECT_TRUE(FsAccess.fileExists(path));
+    EXPECT_TRUE(fsAccess.fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErrorIsReturned) {
-    auto FsAccess = pLinuxSysmanImp->getFsAccess();
+    auto fsAccess = pLinuxSysmanImp->getFsAccess();
 
     std::string path = "noSuchFileOrDirectory";
-    EXPECT_FALSE(FsAccess.fileExists(path));
+    EXPECT_FALSE(fsAccess.fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
@@ -265,15 +265,15 @@ TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAcc
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessIsAliveThenSuccessIsReturned) {
-    auto ProcfsAccess = pLinuxSysmanImp->getProcfsAccess();
+    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_TRUE(ProcfsAccess.isAlive(getpid()));
+    EXPECT_TRUE(procfsAccess.isAlive(getpid()));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPidWhenCallingProcfsAccessIsAliveThenErrorIsReturned) {
-    auto ProcfsAccess = pLinuxSysmanImp->getProcfsAccess();
+    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_FALSE(ProcfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)));
+    EXPECT_FALSE(procfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleThenSameHandleIsRetrievedFromOsSpecificCode) {

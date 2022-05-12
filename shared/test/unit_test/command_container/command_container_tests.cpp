@@ -237,11 +237,11 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
 
 TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemoryFailsThenErrorIsReturned) {
     CommandContainer cmdContainer;
-    auto temp_memoryManager = pDevice->executionEnvironment->memoryManager.release();
+    auto tempMemoryManager = pDevice->executionEnvironment->memoryManager.release();
     pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *pDevice->executionEnvironment));
     auto status = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
-    delete temp_memoryManager;
+    delete tempMemoryManager;
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocationThenAllocationIsSet) {

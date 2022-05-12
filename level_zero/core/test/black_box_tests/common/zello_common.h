@@ -231,8 +231,8 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
     }
 
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-    ze_context_desc_t context_desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &context_desc, &context));
+    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
 
     uint32_t deviceCount = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));

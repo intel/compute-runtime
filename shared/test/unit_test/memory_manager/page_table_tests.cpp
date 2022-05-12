@@ -390,8 +390,8 @@ TEST_F(PageTableTests48, givenPageTableWhenMappingTheSameAddressMultipleTimesThe
     auto phys1 = pageTable->map(address, pageSize, 0, MemoryBanks::MainBank);
     EXPECT_EQ(startAddress, phys1);
 
-    auto phys1_1 = pageTable->map(address, 1, 0, MemoryBanks::MainBank);
-    EXPECT_EQ(startAddress, phys1_1);
+    auto phys11 = pageTable->map(address, 1, 0, MemoryBanks::MainBank);
+    EXPECT_EQ(startAddress, phys11);
 
     auto phys2 = pageTable->map(address, pageSize, 0, MemoryBanks::MainBank);
     EXPECT_EQ(phys1, phys2);
@@ -425,8 +425,8 @@ TEST_F(PageTableTests48, WhenMappingThenAddressesAreCorrect) {
     EXPECT_EQ(startAddress, phys1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.mainAllocator);
 
-    auto phys1_1 = pageTable->map(addr1, 1, 0, MemoryBanks::MainBank);
-    EXPECT_EQ(startAddress, phys1_1);
+    auto phys11 = pageTable->map(addr1, 1, 0, MemoryBanks::MainBank);
+    EXPECT_EQ(startAddress, phys11);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.mainAllocator);
 }
 
@@ -438,8 +438,8 @@ TEST_F(PageTableTests48, GivenMultipleCallsWhenMappingThenAddressesAreCorrect) {
     EXPECT_EQ(startAddress, phys1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.mainAllocator);
 
-    auto phys1_1 = pageTable->map(addr1, 1, 0, MemoryBanks::MainBank);
-    EXPECT_EQ(startAddress, phys1_1);
+    auto phys11 = pageTable->map(addr1, 1, 0, MemoryBanks::MainBank);
+    EXPECT_EQ(startAddress, phys11);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.mainAllocator);
 
     auto phys2 = pageTable->map(addr1, pageSize, 0, MemoryBanks::MainBank);

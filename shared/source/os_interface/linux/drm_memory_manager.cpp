@@ -854,13 +854,13 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     auto drmInputAllocation = static_cast<DrmAllocation *>(inputGraphicsAllocation);
     if (drmInputAllocation->getMmapPtr()) {
         auto bo = drmInputAllocation->getBO();
-        drm_i915_gem_mmap mmap_arg = {};
-        mmap_arg.handle = bo->peekHandle();
-        mmap_arg.size = bo->peekSize();
-        if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
+        drm_i915_gem_mmap mmapArg = {};
+        mmapArg.handle = bo->peekHandle();
+        mmapArg.size = bo->peekSize();
+        if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
             return nullptr;
         }
-        srcPtr = addrToPtr(mmap_arg.addr_ptr);
+        srcPtr = addrToPtr(mmapArg.addr_ptr);
         inputGraphicsAllocation->lock(srcPtr);
     } else {
         srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
@@ -1076,12 +1076,12 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
         return false;
 
     // move a buffer object to the CPU read, and possibly write domain, including waiting on flushes to occur
-    drm_i915_gem_set_domain set_domain = {};
-    set_domain.handle = bo->peekHandle();
-    set_domain.read_domains = I915_GEM_DOMAIN_CPU;
-    set_domain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
+    drm_i915_gem_set_domain setDomain = {};
+    setDomain.handle = bo->peekHandle();
+    setDomain.read_domains = I915_GEM_DOMAIN_CPU;
+    setDomain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
 
-    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain) == 0;
+    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &setDomain) == 0;
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
@@ -1100,14 +1100,14 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     if (bo == nullptr)
         return nullptr;
 
-    drm_i915_gem_mmap mmap_arg = {};
-    mmap_arg.handle = bo->peekHandle();
-    mmap_arg.size = bo->peekSize();
-    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
+    drm_i915_gem_mmap mmapArg = {};
+    mmapArg.handle = bo->peekHandle();
+    mmapArg.size = bo->peekSize();
+    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
         return nullptr;
     }
 
-    bo->setLockedAddress(reinterpret_cast<void *>(mmap_arg.addr_ptr));
+    bo->setLockedAddress(reinterpret_cast<void *>(mmapArg.addr_ptr));
 
     [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
     DEBUG_BREAK_IF(!success);

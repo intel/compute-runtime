@@ -1605,10 +1605,10 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
         cmdList1, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
-    ASSERT_EQ(1u, GSBAStates.size());
+    ASSERT_EQ(1u, gsbaStates.size());
 
     commandQueue->destroy();
 }
@@ -1742,10 +1742,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
-    ASSERT_EQ(1u, GSBAStates.size());
+    ASSERT_EQ(1u, gsbaStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(0u);
@@ -1772,10 +1772,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have no state added
     ASSERT_EQ(0u, mediaVfeStates.size());
-    ASSERT_EQ(0u, GSBAStates.size());
+    ASSERT_EQ(0u, gsbaStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
@@ -1814,10 +1814,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
-    ASSERT_EQ(2u, GSBAStates.size());
+    ASSERT_EQ(2u, gsbaStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(512u);
@@ -1844,10 +1844,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have no state added
     ASSERT_EQ(0u, mediaVfeStates.size());
-    ASSERT_EQ(0u, GSBAStates.size());
+    ASSERT_EQ(0u, gsbaStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
@@ -1886,10 +1886,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
-    ASSERT_EQ(1u, GSBAStates.size());
+    ASSERT_EQ(1u, gsbaStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(1024u);
@@ -1916,10 +1916,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have only 1 state added
     ASSERT_EQ(1u, mediaVfeStates.size());
-    ASSERT_EQ(1u, GSBAStates.size());
+    ASSERT_EQ(1u, gsbaStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();
@@ -1958,10 +1958,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     auto mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
-    auto GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    auto gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
-    ASSERT_EQ(2u, GSBAStates.size());
+    ASSERT_EQ(2u, gsbaStates.size());
 
     commandList0->reset();
     commandList0->setCommandListPerThreadScratchSize(1024u);
@@ -1987,10 +1987,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
         cmdList1, ptrOffset(commandQueue1->commandStream->getCpuBase(), 0), usedSpaceAfter));
 
     mediaVfeStates = findAll<MEDIA_VFE_STATE *>(cmdList1.begin(), cmdList1.end());
-    GSBAStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
+    gsbaStates = findAll<STATE_BASE_ADDRESS *>(cmdList1.begin(), cmdList1.end());
     // We should have 2 states added
     ASSERT_EQ(2u, mediaVfeStates.size());
-    ASSERT_EQ(2u, GSBAStates.size());
+    ASSERT_EQ(2u, gsbaStates.size());
 
     commandQueue->destroy();
     commandQueue1->destroy();

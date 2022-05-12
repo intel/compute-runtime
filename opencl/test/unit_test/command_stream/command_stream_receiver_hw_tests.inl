@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ template <typename GfxFamily>
 void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl() {
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    size_t GWS = 1;
+    size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
@@ -46,7 +46,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     static_cast<MockKernel *>(kernel)->setTotalSLMSize(1024);
 
     cmdList.clear();
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
+    commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
 
     // Parse command list to verify that PC was added to taskCS
     parseCommands<GfxFamily>(commandStreamCSR, 0);
@@ -63,15 +63,15 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     auto cmdPC = genCmdCast<PIPE_CONTROL *>(*itorCmd);
     ASSERT_NE(nullptr, cmdPC);
 
-    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
-    EXPECT_EQ(L3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
+    uint32_t l3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
+    EXPECT_EQ(l3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl() {
 
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t GWS = 1;
+    size_t gws = 1;
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
     CommandQueueHw<GfxFamily> commandQueue(&ctx, pClDevice, 0, false);
@@ -83,7 +83,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
 
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
-    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, false);
+    uint32_t l3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, false);
 
     // Mark Pramble as sent, override L3Config to SLM config
     commandStreamReceiver->isPreambleSent = true;
@@ -91,7 +91,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
 
     static_cast<MockKernel *>(kernel)->setTotalSLMSize(1024);
 
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 1, &blockingEvent, nullptr);
+    commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 1, &blockingEvent, nullptr);
 
     // Expect nothing was sent
     EXPECT_EQ(0u, commandStreamCSR.getUsed());
@@ -110,6 +110,6 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
     auto cmdMILoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorCmd);
     ASSERT_NE(nullptr, cmdMILoad);
 
-    L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
-    EXPECT_EQ(L3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
+    l3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
+    EXPECT_EQ(l3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
 }

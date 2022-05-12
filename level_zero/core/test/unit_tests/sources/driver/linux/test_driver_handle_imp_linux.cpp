@@ -87,9 +87,9 @@ TEST_F(DriverLinuxWithPciOrderTests, GivenEnvironmentVariableForDeviceOrderAccor
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -117,9 +117,9 @@ TEST_F(DriverLinuxWithouthPciOrderTests, GivenNoEnvironmentVariableForDeviceOrde
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_FALSE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -176,9 +176,9 @@ TEST_F(DriverPciOrderWitSimilarBusLinuxFixture, GivenEnvironmentVariableForDevic
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -235,9 +235,9 @@ TEST_F(DriverPciOrderWitDifferentDeviceLinuxFixture, GivenEnvironmentVariableFor
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -294,9 +294,9 @@ TEST_F(DriverPciOrderWitSimilarBusAndDeviceLinuxFixture, GivenEnvironmentVariabl
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -353,9 +353,9 @@ TEST_F(DriverPciOrderWitSimilarBDFLinuxFixture, GivenEnvironmentVariableForDevic
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }
@@ -412,9 +412,9 @@ TEST_F(DriverPciOrderSortDoesNothing, GivenEnvironmentVariableForDeviceOrderAcco
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->initialize(std::move(devices)));
 
     for (uint32_t i = 0; i < numRootDevices; i++) {
-        auto L0Device = driverHandle->devices[i];
-        if (L0Device != nullptr) {
-            auto pDrm = L0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[L0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
+        auto l0Device = driverHandle->devices[i];
+        if (l0Device != nullptr) {
+            auto pDrm = l0Device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[l0Device->getRootDeviceIndex()]->osInterface->getDriverModel()->as<Drm>();
             EXPECT_NE(pDrm, nullptr);
             EXPECT_TRUE(!pDrm->getPciPath().compare(sortedBdf[i]));
         }

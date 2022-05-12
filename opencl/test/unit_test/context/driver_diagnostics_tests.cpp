@@ -188,13 +188,13 @@ TEST_F(PerformanceHintTest, GivenContextWhenSVMAllocIsCreatingThenContextProvide
 
         size_t size = 4096;
 
-        auto SVMPtr = clSVMAlloc(context, flg, size, 128);
-        EXPECT_NE(nullptr, SVMPtr);
+        auto svmPtr = clSVMAlloc(context, flg, size, 128);
+        EXPECT_NE(nullptr, svmPtr);
 
-        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS], SVMPtr, size);
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS], svmPtr, size);
         EXPECT_TRUE(containsHint(expectedHint, userData));
 
-        clSVMFree(context, SVMPtr);
+        clSVMFree(context, svmPtr);
     }
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeNDIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {

@@ -1031,10 +1031,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
 
     EXPECT_NE(nullptr, cmd);
 
-    auto IDStartAddress = cmd->getInterfaceDescriptorDataStartAddress();
-    auto IDSize = cmd->getInterfaceDescriptorTotalLength();
-    EXPECT_EQ(dshBeforeMultiDisptach, IDStartAddress);
-    EXPECT_EQ(interfaceDesriptorTableSize, IDSize);
+    auto idStartAddress = cmd->getInterfaceDescriptorDataStartAddress();
+    auto idSize = cmd->getInterfaceDescriptorTotalLength();
+    EXPECT_EQ(dshBeforeMultiDisptach, idStartAddress);
+    EXPECT_EQ(interfaceDesriptorTableSize, idSize);
 
     memoryManager->freeGraphicsMemory(kernelIsaAllocation);
     memoryManager->freeGraphicsMemory(kernelIsaWithSamplerAllocation);
@@ -1076,8 +1076,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
         ASSERT_NE(hwParser.cmdList.end(), walkerItor);
 
         auto *gpgpuWalker = (GPGPU_WALKER *)*walkerItor;
-        auto IDIndex = gpgpuWalker->getInterfaceDescriptorOffset();
-        EXPECT_EQ(index, IDIndex);
+        auto idIndex = gpgpuWalker->getInterfaceDescriptorOffset();
+        EXPECT_EQ(index, idIndex);
 
         // move walker iterator
         walkerItor++;

@@ -26,23 +26,23 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(SvmAllocationData alloc
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
-    SvmAllocationContainer::iterator Iter, End;
+    SvmAllocationContainer::iterator iter, end;
     SvmAllocationData *svmAllocData;
     if ((ptr == nullptr) || (allocations.size() == 0)) {
         return nullptr;
     }
-    End = allocations.end();
-    Iter = allocations.lower_bound(ptr);
-    if (((Iter != End) && (Iter->first != ptr)) ||
-        (Iter == End)) {
-        if (Iter == allocations.begin()) {
-            Iter = End;
+    end = allocations.end();
+    iter = allocations.lower_bound(ptr);
+    if (((iter != end) && (iter->first != ptr)) ||
+        (iter == end)) {
+        if (iter == allocations.begin()) {
+            iter = end;
         } else {
-            Iter--;
+            iter--;
         }
     }
-    if (Iter != End) {
-        svmAllocData = &Iter->second;
+    if (iter != end) {
+        svmAllocData = &iter->second;
         char *charPtr = reinterpret_cast<char *>(svmAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
         if (ptr < (charPtr + svmAllocData->size)) {
             return svmAllocData;

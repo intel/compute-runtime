@@ -307,9 +307,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -320,9 +320,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = event_object->hostSignal();
+    returnValue = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -370,9 +370,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
 
     eventPool->createEvent(&eventDesc, &event);
 
-    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
-    ASSERT_NE(nullptr, event_object->csr);
-    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, event_object->csr);
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     returnValue = commandList->appendWaitOnEvents(1, &event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
@@ -383,9 +383,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = event_object->hostSignal();
+    returnValue = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(event_object->queryStatus(), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);

@@ -954,8 +954,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenCreatingProgr
     auto clSubSubDevice0 = clSubDevice->getSubDevice(0);
     auto clSubSubDevice1 = clSubDevice->getSubDevice(1);
 
-    cl_device_id device_ids[] = {clSubDevice, clSubSubDevice0, clSubSubDevice1};
-    ClDeviceVector deviceVector{device_ids, 3};
+    cl_device_id deviceIds[] = {clSubDevice, clSubSubDevice0, clSubSubDevice1};
+    ClDeviceVector deviceVector{deviceIds, 3};
     MockContext context(deviceVector);
 
     cl_int retVal = CL_INVALID_PROGRAM;
@@ -998,8 +998,8 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    cl_device_id device_ids[] = {clRootDevice.get()};
-    ClDeviceVector deviceVector{device_ids, 1};
+    cl_device_id deviceIds[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{deviceIds, 1};
     MockContext context(deviceVector);
 
     std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
@@ -1044,8 +1044,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    cl_device_id device_ids[] = {clRootDevice.get()};
-    ClDeviceVector deviceVector{device_ids, 1};
+    cl_device_id deviceIds[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{deviceIds, 1};
     MockContext context(deviceVector);
 
     std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
@@ -1093,8 +1093,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    cl_device_id device_ids[] = {clRootDevice.get()};
-    ClDeviceVector deviceVector{device_ids, 1};
+    cl_device_id deviceIds[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{deviceIds, 1};
     MockContext context(deviceVector);
 
     std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
@@ -1140,8 +1140,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    cl_device_id device_ids[] = {clRootDevice.get()};
-    ClDeviceVector deviceVector{device_ids, 1};
+    cl_device_id deviceIds[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{deviceIds, 1};
     MockContext context(deviceVector);
 
     std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;
@@ -1188,8 +1188,8 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     EXPECT_EQ(ccsCount, hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
 
     auto clRootDevice = std::make_unique<ClDevice>(*rootDevice, nullptr);
-    cl_device_id device_ids[] = {clRootDevice.get()};
-    ClDeviceVector deviceVector{device_ids, 1};
+    cl_device_id deviceIds[] = {clRootDevice.get()};
+    ClDeviceVector deviceVector{deviceIds, 1};
     MockContext context(deviceVector);
 
     std::array<std::unique_ptr<MockCommandQueueHw<FamilyType>>, 24> cmdQs;

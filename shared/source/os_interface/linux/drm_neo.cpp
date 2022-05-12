@@ -334,13 +334,13 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
-        drm_i915_reset_stats reset_stats{};
-        reset_stats.ctx_id = drmContextId;
+        drm_i915_reset_stats resetStats{};
+        resetStats.ctx_id = drmContextId;
 
-        const auto retVal{ioctl(DRM_IOCTL_I915_GET_RESET_STATS, &reset_stats)};
+        const auto retVal{ioctl(DRM_IOCTL_I915_GET_RESET_STATS, &resetStats)};
         UNRECOVERABLE_IF(retVal != 0);
 
-        if (reset_stats.batch_active > 0 || reset_stats.batch_pending > 0) {
+        if (resetStats.batch_active > 0 || resetStats.batch_pending > 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             return true;
         }

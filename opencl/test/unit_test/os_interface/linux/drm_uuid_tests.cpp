@@ -35,21 +35,21 @@ TEST(DrmUuidTest, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;
-    std::string Uuid1stElfClass = elfClassUuid.substr(0, 18);
+    std::string uuid1stElfClass = elfClassUuid.substr(0, 18);
 
     char data[] = "abc";
     auto uuid1 = drm.generateElfUUID(static_cast<const void *>(data));
-    std::string Uuid1stElfBin1 = uuid1.substr(0, 18);
-    EXPECT_STREQ(Uuid1stElfClass.c_str(), Uuid1stElfBin1.c_str());
+    std::string uuid1stElfBin1 = uuid1.substr(0, 18);
+    EXPECT_STREQ(uuid1stElfClass.c_str(), uuid1stElfBin1.c_str());
 
     char data2[] = "123";
     auto uuid2 = drm.generateElfUUID(static_cast<const void *>(data2));
-    std::string Uuid1stElfBin2 = uuid2.substr(0, 18);
-    EXPECT_STREQ(Uuid1stElfClass.c_str(), Uuid1stElfBin2.c_str());
+    std::string uuid1stElfBin2 = uuid2.substr(0, 18);
+    EXPECT_STREQ(uuid1stElfClass.c_str(), uuid1stElfBin2.c_str());
 
     auto uuid3 = drm.generateElfUUID(reinterpret_cast<const void *>(0xFFFFFFFFFFFFFFFF));
-    std::string UuidElf = Uuid1stElfClass + "-ffff-ffffffffffff";
-    EXPECT_STREQ(UuidElf.c_str(), uuid3.c_str());
+    std::string uuidElf = uuid1stElfClass + "-ffff-ffffffffffff";
+    EXPECT_STREQ(uuidElf.c_str(), uuid3.c_str());
 }
 
 TEST(DrmUuidTest, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreReturned) {

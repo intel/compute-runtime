@@ -34,10 +34,10 @@ TEST(localWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrectM
 
     auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     bool fusedDispatchEnabled = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
-    auto WGSMultiple = fusedDispatchEnabled ? 2 : 1;
+    auto wgsMultiple = fusedDispatchEnabled ? 2 : 1;
 
     uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
-    uint32_t expectedMinWGS = WGSMultiple * simdSize * numThreadsPerSubS / maxBarriersPerHSlice;
+    uint32_t expectedMinWGS = wgsMultiple * simdSize * numThreadsPerSubS / maxBarriersPerHSlice;
     EXPECT_EQ(expectedMinWGS, wsInfo.minWorkGroupSize);
 }
 

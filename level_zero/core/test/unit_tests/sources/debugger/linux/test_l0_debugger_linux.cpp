@@ -169,7 +169,7 @@ TEST_F(L0DebuggerLinuxTest, whenRegisterElfisCalledInAllocationWithNoBOThenItReg
 }
 
 TEST_F(L0DebuggerLinuxTest, givenNoOSInterfaceThenRegisterElfDoesNothing) {
-    NEO::OSInterface *OSInterface_tmp = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.release();
+    NEO::OSInterface *osInterfaceTmp = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.release();
     NEO::DebugData debugData;
     debugData.vIsa = "01234567890";
     debugData.vIsaSize = 10;
@@ -179,7 +179,7 @@ TEST_F(L0DebuggerLinuxTest, givenNoOSInterfaceThenRegisterElfDoesNothing) {
     device->getL0Debugger()->registerElf(&debugData, &isaAllocation);
 
     EXPECT_EQ(static_cast<size_t>(0u), drmMock->registeredDataSize);
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(OSInterface_tmp);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterfaceTmp);
 }
 
 TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandle) {

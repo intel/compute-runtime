@@ -683,14 +683,14 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                                result));
     ASSERT_NE(nullptr, commandList0);
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dst_buffer);
+    result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     int one = 1;
-    result = commandList0->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+    result = commandList0->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                             nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -702,7 +702,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     context->freeMem(ptr);
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
@@ -753,13 +753,13 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     commandContainer.addToResidencyContainer(gpuAllocation);
     commandContainer.addToResidencyContainer(allocation->cpuAllocation);
 
-    void *dst_buffer = nullptr;
+    void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
-    result = context->allocHostMem(&hostDesc, 4096u, 0u, &dst_buffer);
+    result = context->allocHostMem(&hostDesc, 4096u, 0u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     int one = 1;
-    result = commandList0->appendMemoryFill(dst_buffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
+    result = commandList0->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                             nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -767,7 +767,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
 
     context->freeMem(ptr);
     svmManager->freeSVMAlloc(sharedPtr);
-    context->freeMem(dst_buffer);
+    context->freeMem(dstBuffer);
 }
 
 TEST_F(ContextTest, whenGettingDriverThenDriverIsRetrievedSuccessfully) {

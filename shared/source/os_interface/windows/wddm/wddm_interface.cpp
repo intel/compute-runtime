@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,17 +18,17 @@ using namespace NEO;
 
 bool WddmInterface::createMonitoredFence(MonitoredFence &monitorFence) {
     NTSTATUS status = STATUS_SUCCESS;
-    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
-    CreateSynchronizationObject.hDevice = wddm.getDeviceHandle();
-    CreateSynchronizationObject.Info.Type = D3DDDI_MONITORED_FENCE;
-    CreateSynchronizationObject.Info.MonitoredFence.InitialFenceValue = 0;
+    D3DKMT_CREATESYNCHRONIZATIONOBJECT2 createSynchronizationObject = {0};
+    createSynchronizationObject.hDevice = wddm.getDeviceHandle();
+    createSynchronizationObject.Info.Type = D3DDDI_MONITORED_FENCE;
+    createSynchronizationObject.Info.MonitoredFence.InitialFenceValue = 0;
 
-    status = wddm.getGdi()->createSynchronizationObject2(&CreateSynchronizationObject);
+    status = wddm.getGdi()->createSynchronizationObject2(&createSynchronizationObject);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 
-    monitorFence.fenceHandle = CreateSynchronizationObject.hSyncObject;
-    monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress);
-    monitorFence.gpuAddress = CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress;
+    monitorFence.fenceHandle = createSynchronizationObject.hSyncObject;
+    monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(createSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress);
+    monitorFence.gpuAddress = createSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress;
 
     return status == STATUS_SUCCESS;
 }
@@ -63,14 +63,14 @@ bool WddmInterface20::hwQueuesSupported() {
 }
 
 bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) {
-    D3DKMT_SUBMITCOMMAND SubmitCommand = {0};
+    D3DKMT_SUBMITCOMMAND submitCommand = {0};
     NTSTATUS status = STATUS_SUCCESS;
 
-    SubmitCommand.Commands = commandBuffer;
-    SubmitCommand.CommandLength = static_cast<UINT>(size);
-    SubmitCommand.BroadcastContextCount = 1;
-    SubmitCommand.BroadcastContext[0] = submitArguments.contextHandle;
-    SubmitCommand.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
+    submitCommand.Commands = commandBuffer;
+    submitCommand.CommandLength = static_cast<UINT>(size);
+    submitCommand.BroadcastContextCount = 1;
+    submitCommand.BroadcastContext[0] = submitArguments.contextHandle;
+    submitCommand.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
@@ -83,14 +83,14 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
         internalRepresentation.resize(wddm.getHwDeviceId()->getUmKmDataTranslator()->getSizeForCommandBufferHeaderDataInternalRepresentation());
         bool translated = wddm.getHwDeviceId()->getUmKmDataTranslator()->translateCommandBufferHeaderDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), *pHeader);
         UNRECOVERABLE_IF(false == translated);
-        SubmitCommand.pPrivateDriverData = internalRepresentation.data();
-        SubmitCommand.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+        submitCommand.pPrivateDriverData = internalRepresentation.data();
+        submitCommand.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
     } else {
-        SubmitCommand.pPrivateDriverData = pHeader;
-        SubmitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+        submitCommand.pPrivateDriverData = pHeader;
+        submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
     }
 
-    status = wddm.getGdi()->submitCommand(&SubmitCommand);
+    status = wddm.getGdi()->submitCommand(&submitCommand);
 
     return STATUS_SUCCESS == status;
 }

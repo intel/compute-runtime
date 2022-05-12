@@ -243,15 +243,15 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
         }
 
         // convert /r/n to /n
-        size_t start_pos = 0;
-        while ((start_pos = allBuiltIns.find("\r\n", start_pos)) != std::string::npos) {
-            allBuiltIns.replace(start_pos, 2, "\n");
+        size_t startPos = 0;
+        while ((startPos = allBuiltIns.find("\r\n", startPos)) != std::string::npos) {
+            allBuiltIns.replace(startPos, 2, "\n");
         }
 
         // convert /r to /n
-        start_pos = 0;
-        while ((start_pos = allBuiltIns.find("\r", start_pos)) != std::string::npos) {
-            allBuiltIns.replace(start_pos, 1, "\n");
+        startPos = 0;
+        while ((startPos = allBuiltIns.find("\r", startPos)) != std::string::npos) {
+            allBuiltIns.replace(startPos, 1, "\n");
         }
 
         uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());

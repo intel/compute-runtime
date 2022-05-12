@@ -756,15 +756,15 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     gEnvironment->fclPopDebugVars();
 
     // get build log
-    size_t param_value_size_ret = 0u;
+    size_t paramValueSizeRet = 0u;
     retVal = pProgram->getBuildInfo(
         device,
         CL_PROGRAM_BUILD_LOG,
         0,
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(param_value_size_ret, 0u);
+    EXPECT_NE(paramValueSizeRet, 0u);
 
     // get build log when the log does not exist
     pMockProgram->clearLog(device->getRootDeviceIndex());
@@ -773,9 +773,9 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
         CL_PROGRAM_BUILD_LOG,
         0,
         nullptr,
-        &param_value_size_ret);
+        &paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(param_value_size_ret, 0u);
+    EXPECT_NE(paramValueSizeRet, 0u);
 
     // build successfully - build kernel but do not write it to Kernel Cache (kernel is already in the Cache)
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
@@ -1386,10 +1386,10 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     ASSERT_NE(nullptr, pProgram->getConstantSurface(pClDevice->getRootDeviceIndex()));
 
-    uint32_t expected_values[] = {0xabcd5432u, 0xaabb5533u};
+    uint32_t expectedValues[] = {0xabcd5432u, 0xaabb5533u};
     uint32_t *constBuff = reinterpret_cast<uint32_t *>(pProgram->getConstantSurface(pClDevice->getRootDeviceIndex())->getUnderlyingBuffer());
-    EXPECT_EQ(expected_values[0], constBuff[0]);
-    EXPECT_EQ(expected_values[1], constBuff[1]);
+    EXPECT_EQ(expectedValues[0], constBuff[0]);
+    EXPECT_EQ(expectedValues[1], constBuff[1]);
 
     std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram, *pKernelInfo, *pClDevice, &retVal));
 

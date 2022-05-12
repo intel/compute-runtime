@@ -124,8 +124,8 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgToFatBinaryWhenConfigMatche
     auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
 
     std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2].config);
-    auto major_pos = configNum0.find(".");
-    auto cutMinorAndRevision = configNum0.substr(0, major_pos);
+    auto majorPos = configNum0.find(".");
+    auto cutMinorAndRevision = configNum0.substr(0, majorPos);
     auto matchedConfigs = getAllMatchedConfigs(cutMinorAndRevision, argHelper.get());
 
     if (matchedConfigs.size() < 2) {
@@ -1083,9 +1083,9 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNum
     }
 
     std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    auto major_pos = configNum0.find(".");
-    auto minor_pos = configNum0.find(".", ++major_pos);
-    auto cutRevision = configNum0.substr(0, minor_pos);
+    auto majorPos = configNum0.find(".");
+    auto minorPos = configNum0.find(".", ++majorPos);
+    auto cutRevision = configNum0.substr(0, minorPos);
 
     auto got = NEO::getTargetConfigsForFatbinary(ConstStringRef(cutRevision), oclocArgHelperWithoutInput.get());
     EXPECT_FALSE(got.empty());
@@ -1098,8 +1098,8 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNum
     }
 
     std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    auto major_pos = configNum0.find(".");
-    auto cutMinorAndRevision = configNum0.substr(0, major_pos);
+    auto majorPos = configNum0.find(".");
+    auto cutMinorAndRevision = configNum0.substr(0, majorPos);
 
     auto got = NEO::getTargetConfigsForFatbinary(ConstStringRef(cutMinorAndRevision), oclocArgHelperWithoutInput.get());
     EXPECT_FALSE(got.empty());

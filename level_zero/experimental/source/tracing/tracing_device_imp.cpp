@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,15 +22,15 @@ zeDeviceGet_Tracing(ze_driver_handle_t hDriver,
     tracerParams.ppCount = &pCount;
     tracerParams.pphDevices = &phDevices;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetCb_t, Device, pfnGetCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetCb_t, Device, pfnGetCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGet,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDriver,
                                    *tracerParams.ppCount,
                                    *tracerParams.pphDevices);
@@ -48,15 +48,15 @@ zeDeviceGetProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppDeviceProperties = &pDeviceProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetPropertiesCb_t, Device, pfnGetPropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetPropertiesCb_t, Device, pfnGetPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppDeviceProperties);
 }
@@ -73,15 +73,15 @@ zeDeviceGetComputeProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppComputeProperties = &pComputeProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetComputePropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetComputePropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetComputePropertiesCb_t, Device, pfnGetComputePropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetComputePropertiesCb_t, Device, pfnGetComputePropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetComputeProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppComputeProperties);
 }
@@ -101,15 +101,15 @@ zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.ppCount = &pCount;
     tracerParams.ppMemProperties = &pMemProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetMemoryPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetMemoryPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetMemoryPropertiesCb_t, Device, pfnGetMemoryPropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetMemoryPropertiesCb_t, Device, pfnGetMemoryPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetMemoryProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppCount,
                                    *tracerParams.ppMemProperties);
@@ -130,15 +130,15 @@ zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.ppCount = &pCount;
     tracerParams.ppCacheProperties = &pCacheProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCachePropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCachePropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetCachePropertiesCb_t, Device, pfnGetCachePropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetCachePropertiesCb_t, Device, pfnGetCachePropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetCacheProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppCount,
                                    *tracerParams.ppCacheProperties);
@@ -156,15 +156,15 @@ zeDeviceGetImageProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppImageProperties = &pImageProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetImagePropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetImagePropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetImagePropertiesCb_t, Device, pfnGetImagePropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetImagePropertiesCb_t, Device, pfnGetImagePropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetImageProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppImageProperties);
 }
@@ -184,15 +184,15 @@ zeDeviceGetSubDevices_Tracing(ze_device_handle_t hDevice,
     tracerParams.ppCount = &pCount;
     tracerParams.pphSubdevices = &phSubdevices;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetSubDevicesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetSubDevicesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetSubDevicesCb_t, Device, pfnGetSubDevicesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetSubDevicesCb_t, Device, pfnGetSubDevicesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetSubDevices,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppCount,
                                    *tracerParams.pphSubdevices);
@@ -213,15 +213,15 @@ zeDeviceGetP2PProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phPeerDevice = &hPeerDevice;
     tracerParams.ppP2PProperties = &pP2PProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetP2PPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetP2PPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetP2PPropertiesCb_t, Device, pfnGetP2PPropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetP2PPropertiesCb_t, Device, pfnGetP2PPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetP2PProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.phPeerDevice,
                                    *tracerParams.ppP2PProperties);
@@ -242,15 +242,15 @@ zeDeviceCanAccessPeer_Tracing(ze_device_handle_t hDevice,
     tracerParams.phPeerDevice = &hPeerDevice;
     tracerParams.pvalue = &value;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceCanAccessPeerCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceCanAccessPeerCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceCanAccessPeerCb_t, Device, pfnCanAccessPeerCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceCanAccessPeerCb_t, Device, pfnCanAccessPeerCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnCanAccessPeer,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.phPeerDevice,
                                    *tracerParams.pvalue);
@@ -268,15 +268,15 @@ zeKernelSetCacheConfig_Tracing(ze_kernel_handle_t hKernel,
     tracerParams.phKernel = &hKernel;
     tracerParams.pflags = &flags;
 
-    L0::APITracerCallbackDataImp<ze_pfnKernelSetCacheConfigCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnKernelSetCacheConfigCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnKernelSetCacheConfigCb_t, Kernel, pfnSetCacheConfigCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnKernelSetCacheConfigCb_t, Kernel, pfnSetCacheConfigCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Kernel.pfnSetCacheConfig,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phKernel,
                                    *tracerParams.pflags);
 }
@@ -293,16 +293,16 @@ zeDeviceGetMemoryAccessProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppMemAccessProperties = &pMemAccessProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetMemoryAccessPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetMemoryAccessPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetMemoryAccessPropertiesCb_t, Device,
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetMemoryAccessPropertiesCb_t, Device,
                                   pfnGetMemoryAccessPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetMemoryAccessProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppMemAccessProperties);
 }
@@ -319,15 +319,15 @@ zeDeviceGetModuleProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppModuleProperties = &pModuleProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetModulePropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetModulePropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetModulePropertiesCb_t, Device, pfnGetModulePropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetModulePropertiesCb_t, Device, pfnGetModulePropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetModuleProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppModuleProperties);
 }
@@ -347,15 +347,15 @@ zeDeviceGetCommandQueueGroupProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.ppCount = &pCount;
     tracerParams.ppCommandQueueGroupProperties = &pCommandQueueGroupProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCommandQueueGroupPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetCommandQueueGroupPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetCommandQueueGroupPropertiesCb_t, Device, pfnGetCommandQueueGroupPropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetCommandQueueGroupPropertiesCb_t, Device, pfnGetCommandQueueGroupPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetCommandQueueGroupProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppCount,
                                    *tracerParams.ppCommandQueueGroupProperties);
@@ -373,15 +373,15 @@ zeDeviceGetExternalMemoryProperties_Tracing(ze_device_handle_t hDevice,
     tracerParams.phDevice = &hDevice;
     tracerParams.ppExternalMemoryProperties = &pExternalMemoryProperties;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetExternalMemoryPropertiesCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetExternalMemoryPropertiesCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetExternalMemoryPropertiesCb_t, Device, pfnGetExternalMemoryPropertiesCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetExternalMemoryPropertiesCb_t, Device, pfnGetExternalMemoryPropertiesCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetExternalMemoryProperties,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice,
                                    *tracerParams.ppExternalMemoryProperties);
 }
@@ -395,14 +395,14 @@ zeDeviceGetStatus_Tracing(ze_device_handle_t hDevice) {
     ze_device_get_status_params_t tracerParams;
     tracerParams.phDevice = &hDevice;
 
-    L0::APITracerCallbackDataImp<ze_pfnDeviceGetStatusCb_t> api_callbackData;
+    L0::APITracerCallbackDataImp<ze_pfnDeviceGetStatusCb_t> apiCallbackData;
 
-    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnDeviceGetStatusCb_t, Device, pfnGetStatusCb);
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceGetStatusCb_t, Device, pfnGetStatusCb);
 
     return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnGetStatus,
                                    &tracerParams,
-                                   api_callbackData.apiOrdinal,
-                                   api_callbackData.prologCallbacks,
-                                   api_callbackData.epilogCallbacks,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
                                    *tracerParams.phDevice);
 }

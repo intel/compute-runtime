@@ -120,17 +120,17 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrWhenCallingExecuteCommandListsThenPoll
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     ASSERT_NE(nullptr, commandQueue);
 
-    auto aub_csr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
+    auto aubCsr = static_cast<NEO::UltAubCommandStreamReceiver<FamilyType> *>(csr);
     CommandQueue *queue = static_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
     queue->setCommandQueuePreemptionMode(PreemptionMode::Disabled);
-    EXPECT_EQ(aub_csr->pollForCompletionCalled, 0u);
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     ASSERT_NE(nullptr, commandList);
 
     auto commandListHandle = commandList->toHandle();
     queue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    EXPECT_EQ(aub_csr->pollForCompletionCalled, 1u);
+    EXPECT_EQ(aubCsr->pollForCompletionCalled, 1u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }

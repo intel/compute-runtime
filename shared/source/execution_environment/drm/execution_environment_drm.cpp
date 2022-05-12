@@ -44,18 +44,18 @@ bool comparePciIdBusNumberDRM(std::unique_ptr<RootDeviceEnvironment> &rootDevice
 void ExecutionEnvironment::sortNeoDevicesDRM() {
     const auto pciOrderVar = DebugManager.flags.ZE_ENABLE_PCI_ID_DEVICE_ORDER.get();
     if (pciOrderVar) {
-        std::vector<uint32_t> presort_index;
+        std::vector<uint32_t> presortIndex;
         for (uint32_t i = 0; i < rootDeviceEnvironments.size(); i++) {
             NEO::DrmMemoryOperationsHandlerBind *drm = static_cast<DrmMemoryOperationsHandlerBind *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
-            presort_index.push_back(drm->getRootDeviceIndex());
+            presortIndex.push_back(drm->getRootDeviceIndex());
         }
 
         std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumberDRM);
 
         for (uint32_t i = 0; i < rootDeviceEnvironments.size(); i++) {
             NEO::DrmMemoryOperationsHandlerBind *drm = static_cast<DrmMemoryOperationsHandlerBind *>(rootDeviceEnvironments[i]->memoryOperationsInterface.get());
-            if (drm->getRootDeviceIndex() != presort_index[i]) {
-                drm->setRootDeviceIndex(presort_index[i]);
+            if (drm->getRootDeviceIndex() != presortIndex[i]) {
+                drm->setRootDeviceIndex(presortIndex[i]);
             }
         }
     }
