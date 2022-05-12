@@ -3,7 +3,7 @@ components:
     dest_dir: gmmlib
     type: git
     branch: gmmlib
-    revision: intel-gmmlib-22.1.2
+    revision: intel-gmmlib-22.1.3
     repository: https://github.com/intel/gmmlib.git
   igc:
     dest_dir: igc
