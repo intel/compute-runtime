@@ -17,9 +17,11 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 
 #include <bitset>
@@ -657,5 +659,66 @@ TEST(zeDriverGetIpcProperties, whenZeDriverGetIpcPropertiesIsCalledThenGetIPCPro
     EXPECT_EQ(expectedResult, result);
     EXPECT_EQ(1u, driverHandle.getIPCPropertiesCalled);
 }
+
+struct HostImportApiFixture : public HostPointerManagerFixure {
+    void SetUp() {
+        HostPointerManagerFixure::SetUp();
+
+        driverHandle = hostDriverHandle->toHandle();
+    }
+
+    void TearDown() {
+        HostPointerManagerFixure::TearDown();
+    }
+
+    ze_driver_handle_t driverHandle;
+};
+
+using DriverExperimentalApiTest = Test<HostImportApiFixture>;
+
+TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
+    decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
+    decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
+    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
+    decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = zexKernelGetBaseAddress;
+
+    void *funPtr = nullptr;
+
+    auto result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedImport, reinterpret_cast<decltype(&zexDriverImportExternalPointer)>(funPtr));
+
+    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverReleaseImportedPointer", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedRelease, reinterpret_cast<decltype(&zexDriverReleaseImportedPointer)>(funPtr));
+
+    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedGet, reinterpret_cast<decltype(&zexDriverGetHostPointerBaseAddress)>(funPtr));
+
+    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));
+}
+
+TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {
+    void *basePtr = nullptr;
+    size_t offset = 0x20u;
+    size_t size = 0x100;
+    void *testPtr = ptrOffset(heapPointer, offset);
+
+    auto result = zexDriverImportExternalPointer(driverHandle, testPtr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *offsetPtr = ptrOffset(testPtr, offset);
+
+    result = zexDriverGetHostPointerBaseAddress(driverHandle, offsetPtr, &basePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testPtr, basePtr);
+
+    result = zexDriverReleaseImportedPointer(driverHandle, testPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0
