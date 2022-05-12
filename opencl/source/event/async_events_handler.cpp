@@ -44,11 +44,7 @@ Event *AsyncEventsHandler::processList() {
 
     for (auto event : list) {
         event->updateExecutionStatus();
-
-        bool eventNotReady = (event->peekExecutionStatus() > CL_COMPLETE);
-        bool trackDeferredDeletion = event->isDeletionDeferred() && eventNotReady;
-
-        if (event->peekHasCallbacks() || (event->isExternallySynchronized() && eventNotReady) || trackDeferredDeletion) {
+        if (event->peekHasCallbacks() || (event->isExternallySynchronized() && (event->peekExecutionStatus() > CL_COMPLETE))) {
             pendingList.push_back(event);
             if (event->peekTaskCount() < lowestTaskCount) {
                 sleepCandidate = event;

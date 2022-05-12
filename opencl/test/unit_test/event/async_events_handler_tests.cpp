@@ -18,7 +18,6 @@
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 
 using namespace NEO;
 using namespace ::testing;
@@ -55,10 +54,6 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         ++(*(int *)data);
     }
 
-    void setTagValue(uint32_t newValue) {
-        *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = newValue;
-    }
-
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
@@ -67,7 +62,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
 
         commandQueue = make_releaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
-        setTagValue(0);
+        *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = 0;
 
         event1 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
         event2 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
@@ -314,75 +309,6 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
     EXPECT_TRUE(handler->peekIsRegisterListEmpty());
     EXPECT_TRUE(userEvent.peekHasCallbacks());
     userEvent.decRefInternal();
-}
-
-TEST_F(AsyncEventsHandlerTests, givenNotReadyEventWhenReleasingThenRegisterAndTrackUntilCompleted) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
-    auto myHandler = new MockHandler(false);
-    context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
-
-    constexpr uint32_t eventTaskCount = 1;
-    setTagValue(0);
-
-    auto mockEvent = new MockEvent<Event>(context.get(), commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 0, eventTaskCount);
-
-    EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
-    clReleaseEvent(mockEvent);
-    EXPECT_FALSE(myHandler->peekIsRegisterListEmpty());
-
-    EXPECT_TRUE(myHandler->peekIsListEmpty());
-    myHandler->process();
-    EXPECT_FALSE(myHandler->peekIsListEmpty());
-
-    setTagValue(eventTaskCount);
-    myHandler->process();
-    EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
-    EXPECT_TRUE(myHandler->peekIsListEmpty());
-}
-
-TEST_F(AsyncEventsHandlerTests, givenTerminatedEventWhenReleasingThenDontRegister) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
-    auto myHandler = new MockHandler(false);
-    context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
-
-    constexpr uint32_t eventTaskCount = 1;
-    setTagValue(0);
-
-    auto mockEvent = new MockEvent<Event>(context.get(), commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 0, eventTaskCount);
-    mockEvent->setStatus(-1);
-
-    clReleaseEvent(mockEvent);
-    EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
-}
-
-TEST_F(AsyncEventsHandlerTests, givenNotReadyEventWithRefCountWhenReleasingThenDontRegister) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
-    auto myHandler = new MockHandler(false);
-    context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
-
-    constexpr uint32_t eventTaskCount = 1;
-    setTagValue(0);
-
-    auto mockEvent = new MockEvent<Event>(context.get(), commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 0, eventTaskCount);
-    mockEvent->incRefInternal();
-
-    clReleaseEvent(mockEvent);
-    EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
-
-    setTagValue(eventTaskCount);
-    mockEvent->decRefInternal();
-}
-
-TEST_F(AsyncEventsHandlerTests, givenEventWithoutCommandQueueWhenReleasingThenDontRegister) {
-    DebugManager.flags.EnableAsyncEventsHandler.set(true);
-    auto myHandler = new MockHandler(false);
-    context->getAsyncEventsHandlerUniquePtr().reset(myHandler);
-
-    auto userEvent = new UserEvent(context.get());
-    userEvent->setStatus(CL_QUEUED);
-
-    clReleaseEvent(userEvent);
-    EXPECT_TRUE(myHandler->peekIsRegisterListEmpty());
 }
 
 TEST_F(AsyncEventsHandlerTests, givenRegistredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {

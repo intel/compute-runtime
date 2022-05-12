@@ -144,16 +144,6 @@ Event::~Event() {
     unblockEventsBlockedByThis(executionStatus);
 }
 
-void Event::handleCompletionBeforeDestruction() {
-    if (!cmdQueue || isCompleted() || peekExecutionStatus() < 0 || (getRefInternalCount() > 1)) {
-        return;
-    }
-
-    this->deletionDeferredToAsyncThread = true;
-    cmdQueue->flush();
-    ctx->getAsyncEventsHandler().registerEvent(this);
-}
-
 cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
                                     size_t paramValueSize,
                                     void *paramValue,

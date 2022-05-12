@@ -2159,7 +2159,6 @@ cl_int CL_API_CALL clReleaseEvent(cl_event event) {
     DBG_LOG_INPUTS("cl_event", event, "Event", pEvent);
 
     if (pEvent) {
-        pEvent->handleCompletionBeforeDestruction();
         pEvent->release();
         TRACING_EXIT(clReleaseEvent, &retVal);
         return retVal;

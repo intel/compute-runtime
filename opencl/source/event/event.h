@@ -301,15 +301,11 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->cmdType = cmdType;
     }
 
-    void handleCompletionBeforeDestruction();
-
     std::vector<Event *> &getParentEvents() { return this->parentEvents; }
 
     virtual bool isExternallySynchronized() const {
         return false;
     }
-
-    bool isDeletionDeferred() const { return deletionDeferredToAsyncThread; }
 
     static bool checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList);
 
@@ -383,7 +379,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool profilingEnabled;
     bool profilingCpuPath;
     bool dataCalculated;
-    bool deletionDeferredToAsyncThread = false;
     TimeStampData queueTimeStamp;
     TimeStampData submitTimeStamp;
     uint64_t startTimeStamp;

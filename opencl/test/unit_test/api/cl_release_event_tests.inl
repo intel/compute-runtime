@@ -9,7 +9,6 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 
 #include "cl_api_tests.h"
 
@@ -36,7 +35,7 @@ TEST_F(clEventTests, GivenNullEventWhenReleasingEventThenClInvalidEventErrorIsRe
 }
 
 TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
-    auto *pEvent = new MockEvent<Event>(pContext, pCommandQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
@@ -46,7 +45,7 @@ TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
 }
 
 TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsUpdated) {
-    auto *pEvent = new MockEvent<Event>(pContext, pCommandQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
@@ -62,7 +61,7 @@ TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsU
 }
 
 TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedTwiceThenClSuccessIsReturned) {
-    auto *pEvent = new MockEvent<Event>(pContext, pCommandQueue, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
