@@ -101,7 +101,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence);
 
-    NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
+    MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     MOCKABLE_VIRTUAL VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController);
     void unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle);
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
@@ -111,6 +111,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void virtualFree(void *ptr, size_t size);
 
     MOCKABLE_VIRTUAL bool isShutdownInProgress();
+    MOCKABLE_VIRTUAL bool isDebugAttachAvailable();
 
     bool isGpuHangDetected(OsContext &osContext) override;
 
