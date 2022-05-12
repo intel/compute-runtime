@@ -535,11 +535,16 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListsWithCooperativeAndNo
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandListWithCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, true);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
 
     auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandListWithNonCooperativeKernels->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, false);
+
+    launchParams.isCooperative = false;
+    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
 
     {
         ze_command_list_handle_t commandLists[] = {pCommandListWithCooperativeKernels->toHandle(),
@@ -601,7 +606,10 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListWithCooperativeKernel
     ze_group_count_t threadGroupDimensions{1, 1, 1};
     auto pCommandListWithCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandListWithCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
-    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, true);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+    pCommandListWithCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
     ze_command_list_handle_t commandListCooperative[] = {pCommandListWithCooperativeKernels->toHandle()};
     auto result = pCommandQueue->executeCommandLists(1, commandListCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -610,7 +618,9 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandListWithCooperativeKernel
 
     auto pCommandListWithNonCooperativeKernels = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandListWithNonCooperativeKernels->initialize(&device, NEO::EngineGroupType::Compute, 0u);
-    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, false, false, false);
+
+    launchParams.isCooperative = false;
+    pCommandListWithNonCooperativeKernels->appendLaunchKernelWithParams(&kernel, &threadGroupDimensions, nullptr, launchParams);
     ze_command_list_handle_t commandListNonCooperative[] = {pCommandListWithNonCooperativeKernels->toHandle()};
     result = pCommandQueue->executeCommandLists(1, commandListNonCooperative, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

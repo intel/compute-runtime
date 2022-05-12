@@ -49,9 +49,7 @@ class AppendFillFixture : public DeviceFixture {
         ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                  const ze_group_count_t *pThreadGroupDimensions,
                                                  ze_event_handle_t hEvent,
-                                                 bool isIndirect,
-                                                 bool isPredicate,
-                                                 bool isCooperative) override {
+                                                 const CmdListKernelLaunchParams &launchParams) override {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
@@ -60,9 +58,7 @@ class AppendFillFixture : public DeviceFixture {
             return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(hKernel,
                                                                                       pThreadGroupDimensions,
                                                                                       hEvent,
-                                                                                      isIndirect,
-                                                                                      isPredicate,
-                                                                                      isCooperative);
+                                                                                      launchParams);
         }
 
         uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();

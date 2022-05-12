@@ -198,8 +198,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ret;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
     auto res = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
-                                            hEvent, false, false, false);
+                                            hEvent, launchParams);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -224,8 +225,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         return ret;
     }
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
     return appendLaunchKernelWithParams(hKernel, pLaunchFuncArgs,
-                                        hSignalEvent, false, false, true);
+                                        hSignalEvent, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -240,8 +243,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         return ret;
     }
     appendEventForProfiling(hEvent, true, false);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isIndirect = true;
     ret = appendLaunchKernelWithParams(hKernel, pDispatchArgumentsBuffer,
-                                       nullptr, true, false, false);
+                                       nullptr, launchParams);
     appendSignalEventPostWalker(hEvent, false);
 
     return ret;
@@ -269,9 +274,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     for (uint32_t i = 0; i < numKernels; i++) {
         NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i);
 
+        CmdListKernelLaunchParams launchParams = {};
+        launchParams.isIndirect = true;
+        launchParams.isPredicate = true;
         ret = appendLaunchKernelWithParams(phKernels[i],
                                            haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
-                                           nullptr, true, true, false);
+                                           nullptr, launchParams);
         if (ret) {
             return ret;
         }

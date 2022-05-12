@@ -34,8 +34,9 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
     auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
     kernelAttributes.flags.usesSyncBuffer = true;
     kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
-    bool isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     {
@@ -43,11 +44,11 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
         VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
         engineGroupType = EngineGroupType::RenderCompute;
         hwRevId = hwConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         ze_group_count_t groupCount1{1, 1, 1};
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount1, nullptr, false, false, isCooperative);
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount1, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     }
 }

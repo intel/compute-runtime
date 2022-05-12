@@ -297,7 +297,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
     kernelAttributes.flags.usesSyncBuffer = true;
     kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
-    bool isCooperative = true;
+
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     auto engineGroupType = NEO::EngineGroupType::Compute;
@@ -310,7 +310,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, engineGroupType, 0u);
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     {
@@ -318,7 +320,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         usesSyncBuffer = {};
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     }
     {
@@ -328,13 +330,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         pCommandList->initialize(device, engineGroupType, 0u);
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
     {
-        VariableBackup<bool> cooperative{&isCooperative};
+        VariableBackup<bool> cooperative{&launchParams.isCooperative};
         cooperative = false;
-        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+        result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
 }
@@ -370,16 +372,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchC
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    bool isCooperative = false;
-    auto result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = false;
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(pCommandList->containsAnyKernel);
     EXPECT_FALSE(pCommandList->containsCooperativeKernelsFlag);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(pCommandList->containsAnyKernel);
     EXPECT_TRUE(pCommandList->containsCooperativeKernelsFlag);
@@ -394,20 +397,21 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllow
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
 
-    bool isCooperative = false;
-    auto result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = false;
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(pCommandList->containsAnyKernel);
     EXPECT_FALSE(pCommandList->containsCooperativeKernelsFlag);
 
-    isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(pCommandList->containsAnyKernel);
     EXPECT_TRUE(pCommandList->containsCooperativeKernelsFlag);
 
-    isCooperative = false;
-    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = false;
+    result = pCommandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(pCommandList->containsAnyKernel);
     EXPECT_TRUE(pCommandList->containsCooperativeKernelsFlag);
@@ -425,20 +429,21 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    bool isCooperative = false;
-    auto result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = false;
+    auto result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = true;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    isCooperative = false;
-    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, false, false, isCooperative);
+    launchParams.isCooperative = false;
+    result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

@@ -36,9 +36,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
                                                                                ze_event_handle_t hEvent,
-                                                                               bool isIndirect,
-                                                                               bool isPredicate,
-                                                                               bool isCooperative) {
+                                                                               const CmdListKernelLaunchParams &launchParams) {
     const auto kernel = Kernel::fromHandle(hKernel);
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
     UNRECOVERABLE_IF(kernel == nullptr);
@@ -64,13 +62,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
     }
 
-    if (!isIndirect) {
+    if (!launchParams.isIndirect) {
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,
                               pThreadGroupDimensions->groupCountY,
                               pThreadGroupDimensions->groupCountZ);
     }
 
-    if (isIndirect && pThreadGroupDimensions) {
+    if (launchParams.isIndirect && pThreadGroupDimensions) {
         prepareIndirectParams(pThreadGroupDimensions);
     }
 
@@ -92,13 +90,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     bool isMixingRegularAndCooperativeKernelsAllowed = NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
     if ((!containsAnyKernel) || isMixingRegularAndCooperativeKernelsAllowed) {
-        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || isCooperative);
-    } else if (containsCooperativeKernelsFlag != isCooperative) {
+        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || launchParams.isCooperative);
+    } else if (containsCooperativeKernelsFlag != launchParams.isCooperative) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     if (kernel->usesSyncBuffer()) {
-        auto retVal = (isCooperative
+        auto retVal = (launchParams.isCooperative
                            ? programSyncBuffer(*kernel, *device->getNEODevice(), pThreadGroupDimensions)
                            : ZE_RESULT_ERROR_INVALID_ARGUMENT);
         if (retVal) {
@@ -119,7 +117,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    updateStreamProperties(*kernel, false, isCooperative);
+    updateStreamProperties(*kernel, false, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                                      // eventAddress
         neoDevice,                                              // device
@@ -127,14 +125,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         reinterpret_cast<const void *>(pThreadGroupDimensions), // pThreadGroupDimensions
         commandListPreemptionMode,                              // preemptionMode
         0,                                                      // partitionCount
-        isIndirect,                                             // isIndirect
-        isPredicate,                                            // isPredicate
+        launchParams.isIndirect,                                // isIndirect
+        launchParams.isPredicate,                               // isPredicate
         false,                                                  // isTimestampEvent
         false,                                                  // L3FlushEnable
         this->containsStatelessUncachedResource,                // requiresUncachedMocs
         false,                                                  // useGlobalAtomics
         internalUsage,                                          // isInternal
-        isCooperative                                           // isCooperative
+        launchParams.isCooperative                              // isCooperative
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
@@ -205,7 +203,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
                                                                           const ze_group_count_t *pThreadGroupDimensions,
                                                                           ze_event_handle_t hEvent) {
-    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, false, false, false);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isKernelSplitOperation = true;
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, nullptr, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

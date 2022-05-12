@@ -38,6 +38,13 @@ struct AlignedAllocationData {
     bool needsFlush = false;
 };
 
+struct CmdListKernelLaunchParams {
+    bool isIndirect = false;
+    bool isPredicate = false;
+    bool isCooperative = false;
+    bool isKernelSplitOperation = false;
+};
+
 struct EventPool;
 struct Event;
 
@@ -216,9 +223,7 @@ struct CommandListCoreFamily : CommandListImp {
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                               const ze_group_count_t *pThreadGroupDimensions,
                                                               ze_event_handle_t hEvent,
-                                                              bool isIndirect,
-                                                              bool isPredicate,
-                                                              bool isCooperative);
+                                                              const CmdListKernelLaunchParams &launchParams);
     ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
