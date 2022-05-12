@@ -25,6 +25,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
+    using BaseClass::importedSymbolAllocations;
     using BaseClass::isFullyLinked;
     using BaseClass::kernelImmDatas;
     using BaseClass::symbols;

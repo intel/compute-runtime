@@ -937,19 +937,6 @@ ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
-void ModuleImp::moduleDependencyWalker(std::map<void *, std::map<void *, void *>> inDeps, void *moduleHandle, std::list<ModuleImp *> *outDeps) {
-    std::map<void *, std::map<void *, void *>>::iterator it;
-    it = inDeps.find(moduleHandle);
-    if (it != inDeps.end()) {
-        std::map<void *, void *> dependencies = it->second;
-        inDeps.erase(it);
-        for (auto const &dependency : dependencies) {
-            moduleDependencyWalker(inDeps, dependency.first, outDeps);
-            outDeps->push_back(static_cast<ModuleImp *>(dependency.first));
-        }
-    }
-}
-
 ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                                           ze_module_handle_t *phModules,
                                           ze_module_build_log_handle_t *phLinkLog) {
@@ -961,10 +948,26 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
     }
     for (auto i = 0u; i < numModules; i++) {
         auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+        // Add all provided Module's Exported Functions Surface to each Module to allow for all symbols
+        // to be accessed from any module either directly thru Unresolved symbol resolution below or indirectly
+        // thru function pointers or callbacks between the Modules.
+        for (auto i = 0u; i < numModules; i++) {
+            auto moduleHandle = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
+            if (nullptr != moduleHandle->exportedFunctionsSurface) {
+                moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
+            }
+        }
+        for (auto &kernImmData : moduleId->kernelImmDatas) {
+            kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), moduleId->importedSymbolAllocations.begin(),
+                                                        moduleId->importedSymbolAllocations.end());
+        }
+
+        // If the Module is fully linked, this means no Unresolved Symbols Exist that require patching.
         if (moduleId->isFullyLinked) {
             continue;
         }
-        std::map<void *, void *> moduleDeps;
+
+        // Resolve Unresolved Symbols in the Relocation Table between the Modules if Required.
         NEO::Linker::PatchableSegments isaSegmentsForPatching;
         std::vector<std::vector<char>> patchedIsaTempStorage;
         uint32_t numPatchedSymbols = 0u;
@@ -993,12 +996,6 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
 
                         NEO::Linker::patchAddress(relocAddress, symbolIt->second.gpuAddress, unresolvedExternal.unresolvedRelocation);
                         numPatchedSymbols++;
-                        moduleId->importedSymbolAllocations.insert(moduleHandle->exportedFunctionsSurface);
-                        std::map<void *, void *>::iterator it;
-                        it = moduleDeps.find(moduleHandle);
-                        if ((it == moduleDeps.end()) && (nullptr != moduleHandle->exportedFunctionsSurface)) {
-                            moduleDeps.insert(std::pair<void *, void *>(moduleHandle, moduleHandle));
-                        }
 
                         if (moduleLinkLog) {
                             std::stringstream logMessage;
@@ -1019,37 +1016,8 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }
-        dependencies.insert(std::pair<void *, std::map<void *, void *>>(moduleId, moduleDeps));
         moduleId->copyPatchedSegments(isaSegmentsForPatching);
         moduleId->isFullyLinked = true;
-    }
-
-    for (auto i = 0u; i < numModules; i++) {
-        static std::mutex depWalkMutex;
-        std::lock_guard<std::mutex> autolock(depWalkMutex);
-
-        auto moduleId = static_cast<ModuleImp *>(Module::fromHandle(phModules[i]));
-        std::map<void *, std::map<void *, void *>>::iterator it;
-        std::list<ModuleImp *> dependentModules;
-
-        // Walk the dependencies for each Module and dependent Module to determine
-        // the dependency exportedFunctionsSurfaces that must be resident for a given Module's kernels
-        // to execute on the device using Dynamic Module Linking.
-        it = dependencies.find(moduleId);
-        if (it != dependencies.end()) {
-            moduleDependencyWalker(dependencies, moduleId, &dependentModules);
-            // Apply the exported functions surface state from the export module(s) to the import module if it exists.
-            // Enables import modules to access the exported function(s) during kernel execution.
-            for (auto &kernImmData : moduleId->kernelImmDatas) {
-                for (auto const &dependency : dependentModules) {
-                    kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
-                                                                 1 + moduleId->importedSymbolAllocations.size());
-                    kernImmData->getResidencyContainer().push_back(dependency->exportedFunctionsSurface);
-                }
-                kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), moduleId->importedSymbolAllocations.begin(),
-                                                            moduleId->importedSymbolAllocations.end());
-            }
-        }
     }
 
     {

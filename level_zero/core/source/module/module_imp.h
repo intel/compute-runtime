@@ -140,8 +140,6 @@ struct ModuleImp : public Module {
         return this->translationUnit.get();
     }
 
-    void moduleDependencyWalker(std::map<void *, std::map<void *, void *>> inDeps, void *moduleHandle, std::list<ModuleImp *> *outDeps);
-
   protected:
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
