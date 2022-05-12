@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,10 +43,12 @@ SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat du
     SurfaceInfo *surfaceInfo = nullptr;
 
     if (isBufferDumpFormat(dumpFormat)) {
+        auto gmmHelper = gfxAllocation.getDefaultGmm()->getGmmHelper();
+
         using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
         using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
         surfaceInfo = new SurfaceInfo();
-        surfaceInfo->address = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+        surfaceInfo->address = gmmHelper->decanonize(gfxAllocation.getGpuAddress());
         surfaceInfo->width = static_cast<uint32_t>(gfxAllocation.getUnderlyingBufferSize());
         surfaceInfo->height = 1;
         surfaceInfo->pitch = static_cast<uint32_t>(gfxAllocation.getUnderlyingBufferSize());
@@ -57,11 +59,13 @@ SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat du
         surfaceInfo->dumpType = (AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? dumpType::tre : dumpType::bin;
     } else if (isImageDumpFormat(dumpFormat)) {
         auto gmm = gfxAllocation.getDefaultGmm();
+        auto gmmHelper = gmm->getGmmHelper();
+
         if (gmm->gmmResourceInfo->getNumSamples() > 1) {
             return nullptr;
         }
         surfaceInfo = new SurfaceInfo();
-        surfaceInfo->address = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+        surfaceInfo->address = gmmHelper->decanonize(gfxAllocation.getGpuAddress());
         surfaceInfo->width = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth());
         surfaceInfo->height = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight());
         surfaceInfo->pitch = static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch());

@@ -402,7 +402,7 @@ struct AubSurfaceDumpTests : public AubAllocDumpTests,
         AubAllocDumpTests::TearDown();
     }
 
-    bool isCompressed = false;
+    bool isCompressed = true;
     AubAllocDump::DumpFormat dumpFormat = AubAllocDump::DumpFormat::NONE;
 };
 
@@ -413,6 +413,8 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
 
     if (AubAllocDump::isBufferDumpFormat(dumpFormat)) {
         auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+        bufferAllocation->setDefaultGmm(new Gmm(pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true));
+
         ASSERT_NE(nullptr, bufferAllocation);
 
         MockBuffer::setAllocationType(bufferAllocation, gmmHelper, isCompressed);
