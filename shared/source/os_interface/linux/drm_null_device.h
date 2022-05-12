@@ -23,12 +23,11 @@ class DrmNullDevice : public Drm {
         if (request == DRM_IOCTL_I915_GETPARAM || request == DRM_IOCTL_I915_QUERY) {
             return Drm::ioctl(request, arg);
         } else if (request == DRM_IOCTL_I915_REG_READ) {
-            struct drm_i915_reg_read *regArg = static_cast<struct drm_i915_reg_read *>(arg);
-
+            auto *regArg = static_cast<RegisterRead *>(arg);
             // Handle only 36b timestamp
             if (regArg->offset == (REG_GLOBAL_TIMESTAMP_LDW | 1)) {
                 gpuTimestamp += 1000;
-                regArg->val = gpuTimestamp & 0x0000000FFFFFFFFF;
+                regArg->value = gpuTimestamp & 0x0000000FFFFFFFFF;
             } else if (regArg->offset == REG_GLOBAL_TIMESTAMP_LDW || regArg->offset == REG_GLOBAL_TIMESTAMP_UN) {
                 return -1;
             }

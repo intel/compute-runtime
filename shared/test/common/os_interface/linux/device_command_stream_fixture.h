@@ -12,13 +12,11 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
-#include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "gtest/gtest.h"
 
 #include <atomic>
 #include <cstdint>
-#include <iostream>
 
 using NEO::Drm;
 using NEO::HwDeviceIdDrm;
@@ -76,8 +74,8 @@ class DrmMockTime : public DrmMockSuccess {
   public:
     using DrmMockSuccess::DrmMockSuccess;
     int ioctl(unsigned long request, void *arg) override {
-        drm_i915_reg_read *reg = reinterpret_cast<drm_i915_reg_read *>(arg);
-        reg->val = getVal() << 32;
+        auto *reg = reinterpret_cast<NEO::RegisterRead *>(arg);
+        reg->value = getVal() << 32;
         return 0;
     };
 

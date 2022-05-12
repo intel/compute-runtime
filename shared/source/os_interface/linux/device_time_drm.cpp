@@ -25,7 +25,7 @@ DeviceTimeDrm::DeviceTimeDrm(OSInterface *osInterface) {
 }
 
 void DeviceTimeDrm::timestampTypeDetect() {
-    struct drm_i915_reg_read reg = {};
+    RegisterRead reg = {};
     int err;
 
     if (pDrm == nullptr)
@@ -47,50 +47,50 @@ void DeviceTimeDrm::timestampTypeDetect() {
 }
 
 bool DeviceTimeDrm::getGpuTime32(uint64_t *timestamp) {
-    struct drm_i915_reg_read reg = {};
+    RegisterRead reg = {};
 
     reg.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
     if (pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg)) {
         return false;
     }
-    *timestamp = reg.val >> 32;
+    *timestamp = reg.value >> 32;
     return true;
 }
 
 bool DeviceTimeDrm::getGpuTime36(uint64_t *timestamp) {
-    struct drm_i915_reg_read reg = {};
+    RegisterRead reg = {};
 
     reg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
 
     if (pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg)) {
         return false;
     }
-    *timestamp = reg.val;
+    *timestamp = reg.value;
     return true;
 }
 
 bool DeviceTimeDrm::getGpuTimeSplitted(uint64_t *timestamp) {
-    struct drm_i915_reg_read reg_hi = {};
-    struct drm_i915_reg_read reg_lo = {};
-    uint64_t tmp_hi;
+    RegisterRead regHi = {};
+    RegisterRead regLo = {};
+    uint64_t tmpHi;
     int err = 0, loop = 3;
 
-    reg_hi.offset = REG_GLOBAL_TIMESTAMP_UN;
-    reg_lo.offset = REG_GLOBAL_TIMESTAMP_LDW;
+    regHi.offset = REG_GLOBAL_TIMESTAMP_UN;
+    regLo.offset = REG_GLOBAL_TIMESTAMP_LDW;
 
-    err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg_hi);
+    err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &regHi);
     do {
-        tmp_hi = reg_hi.val;
-        err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg_lo);
-        err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &reg_hi);
-    } while (err == 0 && reg_hi.val != tmp_hi && --loop);
+        tmpHi = regHi.value;
+        err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &regLo);
+        err += pDrm->ioctl(DRM_IOCTL_I915_REG_READ, &regHi);
+    } while (err == 0 && regHi.value != tmpHi && --loop);
 
     if (err) {
         return false;
     }
 
-    *timestamp = reg_lo.val | (reg_hi.val << 32);
+    *timestamp = regLo.value | (regHi.value << 32);
     return true;
 }
 

@@ -18,6 +18,10 @@ uint32_t IoctlHelper::ioctl(Drm *drm, unsigned long request, void *arg) {
     return drm->ioctl(request, arg);
 }
 
+static_assert(sizeof(RegisterRead) == sizeof(drm_i915_reg_read));
+static_assert(offsetof(RegisterRead, offset) == offsetof(drm_i915_reg_read, offset));
+static_assert(offsetof(RegisterRead, value) == offsetof(drm_i915_reg_read, val));
+
 static_assert(sizeof(ExecObject) == sizeof(drm_i915_gem_exec_object2));
 
 void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) {

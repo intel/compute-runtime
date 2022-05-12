@@ -71,6 +71,11 @@ struct UuidRegisterResult {
     uint32_t handle;
 };
 
+struct RegisterRead {
+    uint64_t offset;
+    uint64_t value;
+};
+
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
