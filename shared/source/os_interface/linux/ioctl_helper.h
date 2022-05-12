@@ -19,7 +19,6 @@
 
 struct drm_i915_query_item;
 struct drm_i915_gem_context_create_ext;
-struct drm_i915_gem_execbuffer2;
 
 namespace NEO {
 class Drm;
@@ -84,6 +83,10 @@ struct ExecObject {
     uint8_t data[56];
 };
 
+struct ExecBuffer {
+    uint8_t data[64];
+};
+
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
@@ -114,7 +117,7 @@ class IoctlHelper {
     virtual uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual int32_t getComputeEngineClass() = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
-    virtual int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
+    virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) = 0;
     virtual std::optional<int> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
@@ -139,6 +142,9 @@ class IoctlHelper {
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
+
+    void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
+    void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -168,7 +174,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
@@ -232,7 +238,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
-    int execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
+    int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;

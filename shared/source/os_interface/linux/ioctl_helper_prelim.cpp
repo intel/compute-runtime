@@ -235,16 +235,17 @@ uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
     return PRELIM_I915_UFENCE_WAIT_SOFT;
 };
 
-int IoctlHelperPrelim20::execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
+int IoctlHelperPrelim20::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
     prelim_drm_i915_gem_execbuffer_ext_user_fence fenceObject = {};
     if (completionGpuAddress != 0) {
         fenceObject.base.name = PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE;
         fenceObject.addr = completionGpuAddress;
         fenceObject.value = counterValue;
 
-        execBuffer->flags |= I915_EXEC_USE_EXTENSIONS;
-        execBuffer->num_cliprects = 0;
-        execBuffer->cliprects_ptr = castToUint64(&fenceObject);
+        auto &drmExecBuffer = *reinterpret_cast<drm_i915_gem_execbuffer2 *>(execBuffer->data);
+        drmExecBuffer.flags |= I915_EXEC_USE_EXTENSIONS;
+        drmExecBuffer.num_cliprects = 0;
+        drmExecBuffer.cliprects_ptr = castToUint64(&fenceObject);
     }
 
     return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);

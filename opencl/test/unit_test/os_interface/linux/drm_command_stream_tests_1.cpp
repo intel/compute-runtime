@@ -139,8 +139,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenFlushingThenAvailableSpaceDoesNotCh
     EXPECT_EQ(1, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(0u, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
@@ -194,11 +194,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
     EXPECT_EQ(1, mock->ioctlCount.contextCreate);
     EXPECT_EQ(1, mock->ioctlCount.execbuffer2);
 
-    EXPECT_EQ(numAllocations, mock->execBuffers.back().buffer_count);
-    EXPECT_EQ(expectedDrmContextId, mock->execBuffers.back().rsvd1);
+    EXPECT_EQ(numAllocations, mock->execBuffers.back().getBufferCount());
+    EXPECT_EQ(expectedDrmContextId, mock->execBuffers.back().getReserved());
 
     for (uint32_t i = 0; i < mock->receivedBos.size(); i++) {
-        EXPECT_EQ(expectedDrmContextId, mock->receivedBos[i].rsvd1);
+        EXPECT_EQ(expectedDrmContextId, mock->receivedBos[i].getReserved());
     }
 }
 
@@ -224,8 +224,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(0u, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucceeds) {
@@ -268,8 +268,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyBbWhenFlushingThenSucceeds
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(0u, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThenSucceeds) {
@@ -290,8 +290,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotEmptyNotPaddedBbWhenFlushingThe
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(0u, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(bbUsed + 4, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(0u, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(bbUsed + 4, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds) {
@@ -317,8 +317,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds
     mock->ioctlTearDownExpected.gemClose = 1;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckFlagsWhenFlushingThenSucceeds) {
@@ -364,8 +364,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenGettingDrmThenNonNullPointerIsReturned) {
@@ -406,8 +406,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
     mock->ioctlTearDownExpected.gemWait = 2;
     mock->ioctlTearDownExpects = true;
 
-    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().batch_start_offset);
-    EXPECT_EQ(expectedSize, mock->execBuffers.back().batch_len);
+    EXPECT_EQ(expectedBatchStartOffset, mock->execBuffers.back().getBatchStartOffset());
+    EXPECT_EQ(expectedSize, mock->execBuffers.back().getBatchLen());
 }
 
 class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
@@ -450,7 +450,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenFlushIsCalledThenP
     EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
     uint64_t flags = engineFlag | I915_EXEC_NO_RELOC;
-    EXPECT_EQ(flags, this->mock->execBuffer.flags);
+    EXPECT_EQ(flags, this->mock->execBuffer.getFlags());
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
@@ -515,7 +515,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
 
-    EXPECT_EQ(0u, this->mock->execBuffer.flags);
+    EXPECT_EQ(0u, this->mock->execBuffer.getFlags());
 
     csr->flushBatchedSubmissions();
 
@@ -569,14 +569,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
 
     //validate that submited command buffer has what we want
-    EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);
-    EXPECT_EQ(4u, this->mock->execBuffer.batch_start_offset);
-    EXPECT_EQ(submittedCommandBuffer.getUsed(), this->mock->execBuffer.batch_len);
+    EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.getBufferCount());
+    EXPECT_EQ(4u, this->mock->execBuffer.getBatchStartOffset());
+    EXPECT_EQ(submittedCommandBuffer.getUsed(), this->mock->execBuffer.getBatchLen());
 
-    drm_i915_gem_exec_object2 *exec_objects = (drm_i915_gem_exec_object2 *)this->mock->execBuffer.buffers_ptr;
+    auto *execObjects = reinterpret_cast<MockExecObject *>(this->mock->execBuffer.getBuffersPtr());
 
-    for (unsigned int i = 0; i < this->mock->execBuffer.buffer_count; i++) {
-        int handle = exec_objects[i].handle;
+    for (unsigned int i = 0; i < this->mock->execBuffer.getBufferCount(); i++) {
+        int handle = execObjects[i].getHandle();
 
         auto handleFound = false;
         for (auto &graphicsAllocation : copyOfResidency) {

@@ -128,14 +128,12 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }
     this->fillExecObject(execObjectsStorage[residencyCount], osContext, vmHandleId, drmContextId);
+    auto ioctlHelper = drm->getIoctlHelper();
 
-    drm_i915_gem_execbuffer2 execbuf{};
-    execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObjectsStorage);
-    execbuf.buffer_count = static_cast<uint32_t>(residencyCount + 1u);
-    execbuf.batch_start_offset = static_cast<uint32_t>(startOffset);
-    execbuf.batch_len = alignUp(used, 8);
-    execbuf.flags = flags;
-    execbuf.rsvd1 = drmContextId;
+    ExecBuffer execbuf{};
+    ioctlHelper->fillExecBuffer(execbuf, reinterpret_cast<uintptr_t>(execObjectsStorage),
+                                static_cast<uint32_t>(residencyCount + 1u), static_cast<uint32_t>(startOffset),
+                                alignUp(used, 8), flags, drmContextId);
 
     if (DebugManager.flags.PrintExecutionBuffer.get()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintExecutionBuffer.get(), stdout, "Exec called with drmVmId = %u\n",
@@ -144,7 +142,6 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
-    auto ioctlHelper = drm->getIoctlHelper();
     int ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {
@@ -232,17 +229,10 @@ int BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     return retVal;
 }
 
-void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]) {
+void BufferObject::printExecutionBuffer(ExecBuffer &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]) {
     auto ioctlHelper = drm->getIoctlHelper();
     std::stringstream logger;
-    logger << "drm_i915_gem_execbuffer2 { "
-           << "buffer_ptr: " + std::to_string(execbuf.buffers_ptr)
-           << ", buffer_count: " + std::to_string(execbuf.buffer_count)
-           << ", batch_start_offset: " + std::to_string(execbuf.batch_start_offset)
-           << ", batch_len: " + std::to_string(execbuf.batch_len)
-           << ", flags: " + std::to_string(execbuf.flags)
-           << ", rsvd1: " + std::to_string(execbuf.rsvd1)
-           << " }\n";
+    ioctlHelper->logExecBuffer(execbuf, logger);
 
     size_t i;
     for (i = 0; i < residencyCount; i++) {

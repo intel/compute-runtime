@@ -156,10 +156,10 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
         ioctlCount.execbuffer2++;
-        auto execbuf = static_cast<drm_i915_gem_execbuffer2 *>(arg);
-        auto execObjects = reinterpret_cast<const drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr);
+        auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
+        auto execObjects = reinterpret_cast<const MockExecObject *>(execbuf->getBuffersPtr());
         this->execBuffers.push_back(*execbuf);
-        for (uint32_t i = 0; i < execbuf->buffer_count; i++) {
+        for (uint32_t i = 0; i < execbuf->getBufferCount(); i++) {
             this->receivedBos.push_back(execObjects[i]);
         }
         return 0;

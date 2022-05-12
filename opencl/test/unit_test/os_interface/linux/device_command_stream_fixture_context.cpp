@@ -7,6 +7,8 @@
 
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_context.h"
 
+#include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
+
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
 int DrmMockCustomPrelimContext::ioctlExtra(unsigned long request, void *arg) {
@@ -45,13 +47,13 @@ int DrmMockCustomPrelimContext::ioctlExtra(unsigned long request, void *arg) {
 }
 
 void DrmMockCustomPrelimContext::execBufferExtensions(void *arg) {
-    const auto execbuf = reinterpret_cast<drm_i915_gem_execbuffer2 *>(arg);
-    if ((execbuf->flags | I915_EXEC_USE_EXTENSIONS) &&
-        (execbuf->cliprects_ptr != 0)) {
-        i915_user_extension *base = reinterpret_cast<i915_user_extension *>(execbuf->cliprects_ptr);
+    const auto execbuf = reinterpret_cast<NEO::MockExecBuffer *>(arg);
+    if ((execbuf->hasUseExtensionsFlag()) &&
+        (execbuf->getCliprectsPtr() != 0)) {
+        i915_user_extension *base = reinterpret_cast<i915_user_extension *>(execbuf->getCliprectsPtr());
         if (base->name == PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE) {
             prelim_drm_i915_gem_execbuffer_ext_user_fence *userFenceExt =
-                reinterpret_cast<prelim_drm_i915_gem_execbuffer_ext_user_fence *>(execbuf->cliprects_ptr);
+                reinterpret_cast<prelim_drm_i915_gem_execbuffer_ext_user_fence *>(execbuf->getCliprectsPtr());
             this->completionAddress = userFenceExt->addr;
             this->completionValue = userFenceExt->value;
         }

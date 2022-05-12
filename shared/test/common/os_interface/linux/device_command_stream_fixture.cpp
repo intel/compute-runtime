@@ -69,10 +69,10 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     //store flags
     switch (request) {
     case DRM_IOCTL_I915_GEM_EXECBUFFER2: {
-        drm_i915_gem_execbuffer2 *execbuf = (drm_i915_gem_execbuffer2 *)arg;
+        auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
         this->execBuffer = *execbuf;
         this->execBufferBufferObjects =
-            *reinterpret_cast<drm_i915_gem_exec_object2 *>(this->execBuffer.buffers_ptr);
+            *reinterpret_cast<NEO::MockExecObject *>(this->execBuffer.getBuffersPtr());
         ioctl_cnt.execbuffer2++;
         execBufferExtensions(execbuf);
     } break;

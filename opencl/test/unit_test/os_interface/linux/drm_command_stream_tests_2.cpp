@@ -90,7 +90,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenTaskThatRequiresLargeResou
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
+    EXPECT_EQ(11u, this->mock->execBuffer.getBufferCount());
     mm->freeGraphicsMemory(commandBuffer);
     for (auto graphicsAllocation : graphicsAllocations) {
         mm->freeGraphicsMemory(graphicsAllocation);

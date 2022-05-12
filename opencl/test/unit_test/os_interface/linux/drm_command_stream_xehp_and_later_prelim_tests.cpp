@@ -475,11 +475,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesW
 
     EXPECT_EQ(2, drm->ioctlCount.execbuffer2);
 
-    EXPECT_EQ(exec0Bos.size(), drm->execBuffers[0].buffer_count);
-    EXPECT_EQ(exec1Bos.size(), drm->execBuffers[1].buffer_count);
+    EXPECT_EQ(exec0Bos.size(), drm->execBuffers[0].getBufferCount());
+    EXPECT_EQ(exec1Bos.size(), drm->execBuffers[1].getBufferCount());
 
     for (size_t i = 0; i < execBos.size(); i++) {
-        EXPECT_EQ(static_cast<uint32_t>(execBos[i]->peekHandle()), drm->receivedBos[i].handle);
+        EXPECT_EQ(static_cast<uint32_t>(execBos[i]->peekHandle()), drm->receivedBos[i].getHandle());
     }
 
     memoryManager->freeGraphicsMemory(tileInstancedAllocation);

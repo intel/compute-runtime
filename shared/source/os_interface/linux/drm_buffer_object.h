@@ -19,11 +19,9 @@
 #include <stdint.h>
 #include <vector>
 
-struct drm_i915_gem_relocation_entry;
-struct drm_i915_gem_execbuffer2;
-
 namespace NEO {
 
+struct ExecBuffer;
 struct ExecObject;
 class DrmMemoryManager;
 class Drm;
@@ -52,7 +50,7 @@ class BufferObject {
     int bind(OsContext *osContext, uint32_t vmHandleId);
     int unbind(OsContext *osContext, uint32_t vmHandleId);
 
-    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]);
+    void printExecutionBuffer(ExecBuffer &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]);
 
     int wait(int64_t timeoutNs);
     bool close();

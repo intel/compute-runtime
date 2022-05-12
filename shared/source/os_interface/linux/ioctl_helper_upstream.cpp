@@ -159,7 +159,7 @@ uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
     return 0;
 }
 
-int IoctlHelperUpstream::execBuffer(Drm *drm, drm_i915_gem_execbuffer2 *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
+int IoctlHelperUpstream::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
     return ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
 }
 

@@ -507,7 +507,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     EXPECT_NE(0u, drmContextId);
 
     auto alloc = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, memoryManager->pinThreshold, true));
-    EXPECT_EQ(drmContextId, mock->execBuffer.rsvd1);
+    EXPECT_EQ(drmContextId, mock->execBuffer.getReserved());
 
     memoryManager->freeGraphicsMemory(alloc);
 }
@@ -1127,7 +1127,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(allocation->getGpuAddress() - allocation->getAllocationOffset(), mock->execBufferBufferObjects.offset);
+    EXPECT_EQ(allocation->getGpuAddress() - allocation->getAllocationOffset(), mock->execBufferBufferObjects.getOffset());
 
     mock->testIoctls();
     mock->ioctl_res_ext = &mock->NONE;

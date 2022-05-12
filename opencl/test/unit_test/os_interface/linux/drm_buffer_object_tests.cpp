@@ -29,7 +29,7 @@ TEST_F(DrmBufferObjectTest, WhenCallingExecThenReturnIsCorrect) {
     ExecObject execObjectsStorage = {};
     auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage, 0, 0);
     EXPECT_EQ(mock->ioctl_res, ret);
-    EXPECT_EQ(0u, mock->execBuffer.flags);
+    EXPECT_EQ(0u, mock->execBuffer.getFlags());
 }
 
 TEST_F(DrmBufferObjectTest, GivenInvalidParamsWhenCallingExecThenEfaultIsReturned) {
@@ -275,9 +275,9 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     auto ret = bo->pin(array, 3, &osContext, 0, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
 
-    EXPECT_LT(0u, mock->execBuffer.batch_len);
-    EXPECT_EQ(4u, mock->execBuffer.buffer_count); // 3 bos to pin plus 1 exec bo
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(boToPin->execObjectPointerFilled), mock->execBuffer.buffers_ptr);
+    EXPECT_LT(0u, mock->execBuffer.getBatchLen());
+    EXPECT_EQ(4u, mock->execBuffer.getBufferCount()); // 3 bos to pin plus 1 exec bo
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(boToPin->execObjectPointerFilled), mock->execBuffer.getBuffersPtr());
     EXPECT_NE(nullptr, boToPin2->execObjectPointerFilled);
     EXPECT_NE(nullptr, boToPin3->execObjectPointerFilled);
 
@@ -309,9 +309,9 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenValidatedThenAllBosArePinned)
     auto ret = bo->validateHostPtr(array, 3, &osContext, 0, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
 
-    EXPECT_LT(0u, mock->execBuffer.batch_len);
-    EXPECT_EQ(4u, mock->execBuffer.buffer_count); // 3 bos to pin plus 1 exec bo
-    EXPECT_EQ(reinterpret_cast<uintptr_t>(boToPin->execObjectPointerFilled), mock->execBuffer.buffers_ptr);
+    EXPECT_LT(0u, mock->execBuffer.getBatchLen());
+    EXPECT_EQ(4u, mock->execBuffer.getBufferCount()); // 3 bos to pin plus 1 exec bo
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(boToPin->execObjectPointerFilled), mock->execBuffer.getBuffersPtr());
     EXPECT_NE(nullptr, boToPin2->execObjectPointerFilled);
     EXPECT_NE(nullptr, boToPin3->execObjectPointerFilled);
 

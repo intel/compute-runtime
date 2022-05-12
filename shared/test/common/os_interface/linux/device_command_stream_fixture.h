@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
 #include "engine_node.h"
 #include "gtest/gtest.h"
@@ -161,10 +162,10 @@ class DrmMockCustom : public Drm {
     std::atomic<IoctlResExt *> ioctl_res_ext;
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
-    drm_i915_gem_execbuffer2 execBuffer = {0};
+    NEO::MockExecBuffer execBuffer{};
 
     //First exec object
-    drm_i915_gem_exec_object2 execBufferBufferObjects = {0};
+    NEO::MockExecObject execBufferBufferObjects{};
 
     //DRM_IOCTL_I915_GEM_CREATE
     __u64 createParamsSize = 0;
