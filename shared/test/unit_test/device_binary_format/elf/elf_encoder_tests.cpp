@@ -490,3 +490,12 @@ TEST(ElfEncoder, WhenProgramHeadersArePresentThenTheyAreSortedByVirtualAddresses
         EXPECT_EQ(sectionHeaders[secId].offset, programHeaders[i].offset);
     }
 }
+
+TEST(ElfEncoder, WhenGetSectionHeaderIndexIsCalledThenCorrectSectionIdxIsReturned) {
+    ElfEncoder<EI_CLASS_64> elfEncoder64(false, false);
+    auto &sec0 = elfEncoder64.appendSection(SHT_PROGBITS, "", {});
+    EXPECT_EQ(0U, elfEncoder64.getSectionHeaderIndex(sec0));
+
+    auto &sec1 = elfEncoder64.appendSection(SHT_PROGBITS, "", {});
+    EXPECT_EQ(1U, elfEncoder64.getSectionHeaderIndex(sec1));
+}

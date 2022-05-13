@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -347,67 +347,177 @@ struct ElfSymbolEntryTypes<EI_CLASS_64> {
 };
 
 template <ELF_IDENTIFIER_CLASS NumBits>
-struct ElfSymbolEntry;
+struct ElfSymbolEntry {
+    using Name = typename ElfSymbolEntryTypes<NumBits>::Name;
+    using Value = typename ElfSymbolEntryTypes<NumBits>::Value;
+    using Size = typename ElfSymbolEntryTypes<NumBits>::Size;
+    using Info = typename ElfSymbolEntryTypes<NumBits>::Info;
+    using Other = typename ElfSymbolEntryTypes<NumBits>::Other;
+    using Shndx = typename ElfSymbolEntryTypes<NumBits>::Shndx;
+    Name name = 0U;
+    Info info = 0U;
+    Other other = 0U;
+    Shndx shndx = SHN_UNDEF;
+    Value value = 0U;
+    Size size = 0U;
 
-template <>
-struct ElfSymbolEntry<EI_CLASS_32> {
-    ElfSymbolEntryTypes<EI_CLASS_32>::Name name;
-    ElfSymbolEntryTypes<EI_CLASS_32>::Value value;
-    ElfSymbolEntryTypes<EI_CLASS_32>::Size size;
-    ElfSymbolEntryTypes<EI_CLASS_32>::Info info;
-    ElfSymbolEntryTypes<EI_CLASS_32>::Other other;
-    ElfSymbolEntryTypes<EI_CLASS_32>::Shndx shndx;
-};
+    Info getBinding() const {
+        return info >> 4;
+    }
 
-template <>
-struct ElfSymbolEntry<EI_CLASS_64> {
-    ElfSymbolEntryTypes<EI_CLASS_64>::Name name;
-    ElfSymbolEntryTypes<EI_CLASS_64>::Info info;
-    ElfSymbolEntryTypes<EI_CLASS_64>::Other other;
-    ElfSymbolEntryTypes<EI_CLASS_64>::Shndx shndx;
-    ElfSymbolEntryTypes<EI_CLASS_64>::Value value;
-    ElfSymbolEntryTypes<EI_CLASS_64>::Size size;
+    Info getType() const {
+        return info & 0xF;
+    }
+
+    Other getVisibility() const {
+        return other & 0x3;
+    }
+
+    void setBinding(Info binding) {
+        info = (info & 0xF) | (binding << 4);
+    }
+
+    void setType(Info type) {
+        info = (info & (~0xF)) | (type & 0xF);
+    }
+
+    void setVisibility(Other visibility) {
+        other = (other & (~0x3)) | (visibility & 0x3);
+    }
 };
 
 static_assert(sizeof(ElfSymbolEntry<EI_CLASS_32>) == 0x10, "");
 static_assert(sizeof(ElfSymbolEntry<EI_CLASS_64>) == 0x18, "");
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-struct ElfRel;
+template <int NumBits>
+struct ElfRelocationEntryTypes;
 
 template <>
-struct ElfRel<EI_CLASS_32> {
-    uint32_t offset;
-    uint32_t info;
+struct ElfRelocationEntryTypes<EI_CLASS_32> {
+    using Offset = uint32_t;
+    using Info = uint32_t;
+    using Addend = int32_t;
 };
 
 template <>
-struct ElfRel<EI_CLASS_64> {
-    uint64_t offset;
-    uint64_t info;
+struct ElfRelocationEntryTypes<EI_CLASS_64> {
+    using Offset = uint64_t;
+    using Info = uint64_t;
+    using Addend = int64_t;
+};
+
+namespace RelocationFuncs {
+template <typename T>
+constexpr T getSymbolTableIndex(T info);
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_32>::Info getSymbolTableIndex(ElfRelocationEntryTypes<EI_CLASS_32>::Info info) {
+    return info >> 8;
+}
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info getSymbolTableIndex(ElfRelocationEntryTypes<EI_CLASS_64>::Info info) {
+    return info >> 32;
+}
+
+template <typename T>
+constexpr T getRelocationType(T info);
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_32>::Info getRelocationType(ElfRelocationEntryTypes<EI_CLASS_32>::Info info) {
+    return static_cast<uint8_t>(info);
+}
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info getRelocationType(ElfRelocationEntryTypes<EI_CLASS_64>::Info info) {
+    return static_cast<uint32_t>(info);
+}
+
+template <typename T>
+constexpr T setSymbolTableIndex(T info, T index);
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_32>::Info setSymbolTableIndex(ElfRelocationEntryTypes<EI_CLASS_32>::Info info,
+                                                                         ElfRelocationEntryTypes<EI_CLASS_32>::Info index) {
+    return (info & 0x000000FF) | (index << 8);
+}
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info setSymbolTableIndex(ElfRelocationEntryTypes<EI_CLASS_64>::Info info,
+                                                                         ElfRelocationEntryTypes<EI_CLASS_64>::Info index) {
+    return (info & 0x00000000FFFFFFFF) | (index << 32);
+}
+
+template <typename T>
+constexpr T setRelocationType(T info, T type);
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_32>::Info setRelocationType(ElfRelocationEntryTypes<EI_CLASS_32>::Info info,
+                                                                       ElfRelocationEntryTypes<EI_CLASS_32>::Info type) {
+    return (info & 0xFFFFFF00) | static_cast<uint8_t>(type);
+}
+
+template <>
+constexpr ElfRelocationEntryTypes<EI_CLASS_64>::Info setRelocationType(ElfRelocationEntryTypes<EI_CLASS_64>::Info info,
+                                                                       ElfRelocationEntryTypes<EI_CLASS_64>::Info type) {
+    return (info & 0xFFFFFFFF00000000) | static_cast<uint32_t>(type);
+}
+} // namespace RelocationFuncs
+
+template <ELF_IDENTIFIER_CLASS NumBits>
+struct ElfRel {
+    using Offset = typename ElfRelocationEntryTypes<NumBits>::Offset;
+    using Info = typename ElfRelocationEntryTypes<NumBits>::Info;
+    Offset offset = 0U;
+    Info info = 0U;
+
+    constexpr Info getSymbolTableIndex() const {
+        return RelocationFuncs::getSymbolTableIndex(info);
+    }
+
+    constexpr Info getRelocationType() const {
+        return RelocationFuncs::getRelocationType(info);
+    }
+
+    constexpr void setSymbolTableIndex(Info index) {
+        info = RelocationFuncs::setSymbolTableIndex(info, index);
+    }
+
+    constexpr void setRelocationType(Info type) {
+        info = RelocationFuncs::setRelocationType(info, type);
+    }
 };
 
 static_assert(sizeof(ElfRel<EI_CLASS_32>) == 0x8, "");
 static_assert(sizeof(ElfRel<EI_CLASS_64>) == 0x10, "");
 
-template <ELF_IDENTIFIER_CLASS NumBits>
-struct ElfRela;
+template <int NumBits>
+struct ElfRela {
+    using Offset = typename ElfRelocationEntryTypes<NumBits>::Offset;
+    using Info = typename ElfRelocationEntryTypes<NumBits>::Info;
+    using Addend = typename ElfRelocationEntryTypes<NumBits>::Addend;
+    Offset offset = 0U;
+    Info info = 0U;
+    Addend addend = 0U;
 
-template <>
-struct ElfRela<EI_CLASS_32> {
-    uint32_t offset;
-    uint32_t info;
-    int32_t addend;
+    constexpr Info getSymbolTableIndex() const {
+        return RelocationFuncs::getSymbolTableIndex(info);
+    }
+
+    constexpr Info getRelocationType() const {
+        return RelocationFuncs::getRelocationType(info);
+    }
+
+    constexpr void setSymbolTableIndex(Info index) {
+        info = RelocationFuncs::setSymbolTableIndex(info, index);
+    }
+
+    constexpr void setRelocationType(Info type) {
+        info = RelocationFuncs::setRelocationType(info, type);
+    }
 };
 
-template <>
-struct ElfRela<EI_CLASS_64> {
-    uint64_t offset;
-    uint64_t info;
-    int64_t addend;
-};
-
-static_assert(sizeof(ElfRela<EI_CLASS_32>) == 0xc, "");
+static_assert(sizeof(ElfRela<EI_CLASS_32>) == 0xC, "");
 static_assert(sizeof(ElfRela<EI_CLASS_64>) == 0x18, "");
 
 namespace SpecialSectionNames {

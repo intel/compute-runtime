@@ -42,6 +42,7 @@ enum RELOC_TYPE_ZEBIN : uint32_t {
 
 namespace SectionsNamesZebin {
 static constexpr ConstStringRef textPrefix = ".text.";
+static constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
 static constexpr ConstStringRef dataConst = ".data.const";
 static constexpr ConstStringRef dataGlobalConst = ".data.global_const";
 static constexpr ConstStringRef dataGlobal = ".data.global";

@@ -20,9 +20,7 @@ ElfEncoder<NumBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectio
     : addUndefSectionHeader(addUndefSectionHeader), addHeaderSectionNamesSection(addHeaderSectionNamesSection), defaultDataAlignment(defaultDataAlignemnt) {
     // add special strings
     UNRECOVERABLE_IF(defaultDataAlignment == 0);
-    stringTable.push_back('\0');
-    specialStringsOffsets.undef = 0U;
-    specialStringsOffsets.shStrTab = this->appendSectionName(SpecialSectionNames::shStrTab);
+    shStrTabNameOffset = this->appendSectionName(SpecialSectionNames::shStrTab);
 
     if (addUndefSectionHeader) {
         ElfSectionHeader<NumBits> undefSection;
@@ -61,6 +59,13 @@ void ElfEncoder<NumBits>::appendSegment(const ElfProgramHeader<NumBits> &program
         programHeaders.rbegin()->offset = static_cast<decltype(programHeaders.rbegin()->offset)>(alignedOffset);
         programHeaders.rbegin()->fileSz = static_cast<decltype(programHeaders.rbegin()->fileSz)>(segmentData.size());
     }
+}
+
+template <ELF_IDENTIFIER_CLASS NumBits>
+uint32_t ElfEncoder<NumBits>::getSectionHeaderIndex(const ElfSectionHeader<NumBits> &sectionHeader) {
+    UNRECOVERABLE_IF(&sectionHeader < sectionHeaders.begin());
+    UNRECOVERABLE_IF(&sectionHeader >= sectionHeaders.begin() + sectionHeaders.size());
+    return static_cast<uint32_t>(&sectionHeader - &*sectionHeaders.begin());
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
@@ -109,15 +114,10 @@ void ElfEncoder<NumBits>::appendProgramHeaderLoad(size_t sectionId, uint64_t vAd
 
 template <ELF_IDENTIFIER_CLASS NumBits>
 uint32_t ElfEncoder<NumBits>::appendSectionName(ConstStringRef str) {
-    if (str.empty() || (false == addHeaderSectionNamesSection)) {
-        return specialStringsOffsets.undef;
+    if (false == addHeaderSectionNamesSection) {
+        return strSecBuilder.undef();
     }
-    uint32_t offset = static_cast<uint32_t>(stringTable.size());
-    stringTable.insert(stringTable.end(), str.begin(), str.end());
-    if (str[str.size() - 1] != '\0') {
-        stringTable.push_back('\0');
-    }
-    return offset;
+    return strSecBuilder.appendString(str);
 }
 
 template <ELF_IDENTIFIER_CLASS NumBits>
@@ -137,13 +137,13 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
         auto alignedDataSize = alignUp(data.size(), static_cast<size_t>(defaultDataAlignment));
         dataPaddingBeforeSectionNames = alignedDataSize - data.size();
         sectionHeaderNamesSection.type = SHT_STRTAB;
-        sectionHeaderNamesSection.name = specialStringsOffsets.shStrTab;
+        sectionHeaderNamesSection.name = shStrTabNameOffset;
         sectionHeaderNamesSection.offset = static_cast<decltype(sectionHeaderNamesSection.offset)>(alignedDataSize);
-        sectionHeaderNamesSection.size = static_cast<decltype(sectionHeaderNamesSection.size)>(stringTable.size());
+        sectionHeaderNamesSection.size = static_cast<decltype(sectionHeaderNamesSection.size)>(strSecBuilder.data().size());
         sectionHeaderNamesSection.addralign = static_cast<decltype(sectionHeaderNamesSection.addralign)>(defaultDataAlignment);
         elfFileHeader.shStrNdx = static_cast<decltype(elfFileHeader.shStrNdx)>(sectionHeaders.size());
         sectionHeaders.push_back(sectionHeaderNamesSection);
-        alignedSectionNamesDataSize = alignUp(stringTable.size(), static_cast<size_t>(sectionHeaderNamesSection.addralign));
+        alignedSectionNamesDataSize = alignUp(strSecBuilder.data().size(), static_cast<size_t>(sectionHeaderNamesSection.addralign));
     }
 
     elfFileHeader.phNum = static_cast<decltype(elfFileHeader.phNum)>(programHeaders.size());
@@ -192,7 +192,10 @@ std::vector<uint8_t> ElfEncoder<NumBits>::encode() const {
     ret.resize(dataOffset, 0U);
     ret.insert(ret.end(), data.begin(), data.end());
     ret.resize(ret.size() + dataPaddingBeforeSectionNames, 0U);
-    ret.insert(ret.end(), reinterpret_cast<const uint8_t *>(stringTable.data()), reinterpret_cast<const uint8_t *>(stringTable.data() + static_cast<size_t>(sectionHeaderNamesSection.size)));
+    if (alignedSectionNamesDataSize > 0U) {
+        auto sectionNames = strSecBuilder.data();
+        ret.insert(ret.end(), sectionNames.begin(), sectionNames.end());
+    }
     ret.resize(ret.size() + alignedSectionNamesDataSize - static_cast<size_t>(sectionHeaderNamesSection.size), 0U);
     return ret;
 }
