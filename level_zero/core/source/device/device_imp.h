@@ -130,6 +130,9 @@ struct DeviceImp : public Device {
     void populateSubDeviceCopyEngineGroups();
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
 
+    using CmdListCreateFunT = std::function<ze_command_list_handle_t(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &)>;
+    CmdListCreateFunT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
+
   protected:
     NEO::Device::EngineGroupsT subDeviceCopyEngineGroups{};
 

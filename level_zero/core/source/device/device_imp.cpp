@@ -168,7 +168,8 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandList = CommandList::create(productFamily, this, engineGroupType, desc->flags, returnValue);
+    auto createCommandList = getCmdListCreateFunc(desc);
+    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue);
 
     return returnValue;
 }
