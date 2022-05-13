@@ -106,5 +106,134 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
+using CommandListTest = Test<DeviceFixture>;
+using IsDcFlushSupportedPlatform = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HP_CORE>;
+
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExpectNoPipeControl, IsDcFlushSupportedPlatform) {
+    EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    commandList->addFlushRequiredCommand(true, nullptr);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationThenExpectPipeControlWithDcFlush, IsDcFlushSupportedPlatform) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    commandList->addFlushRequiredCommand(true, nullptr);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+    auto pipeControl = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(pipeControl, cmdList.end());
+    auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControl);
+    EXPECT_TRUE(cmdPipeControl->getDcFlushEnable());
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenNoRequiredFlushOperationThenExpectNoPipeControl, IsDcFlushSupportedPlatform) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()));
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    commandList->addFlushRequiredCommand(false, nullptr);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndNoSignalScopeEventThenExpectPipeControlWithDcFlush, IsDcFlushSupportedPlatform) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()));
+
+    ze_result_t result;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    commandList->addFlushRequiredCommand(true, eventHandle);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+    auto pipeControl = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(pipeControl, cmdList.end());
+    auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControl);
+    EXPECT_TRUE(cmdPipeControl->getDcFlushEnable());
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndSignalScopeEventThenExpectNoPipeControl, IsDcFlushSupportedPlatform) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()));
+
+    ze_result_t result;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t eventHandle = event->toHandle();
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandContainer = commandList->commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    commandList->addFlushRequiredCommand(true, eventHandle);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+    EXPECT_EQ(usedBefore, usedAfter);
+}
+
 } // namespace ult
 } // namespace L0

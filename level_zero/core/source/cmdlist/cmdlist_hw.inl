@@ -348,7 +348,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
         if (appendPipeControlWithPostSync) {
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *commandContainer.getCommandStream(),
                 POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
@@ -637,17 +637,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
                                                                         hEvent, numWaitEvents, phWaitEvents);
 
-    auto event = Event::fromHandle(hEvent);
-    if (event) {
-        allocationStruct.needsFlush &= !event->signalScope;
-    }
-
-    if (allocationStruct.needsFlush) {
-        const auto &hwInfo = this->device->getHwInfo();
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-    }
+    addFlushRequiredCommand(allocationStruct.needsFlush, hEvent);
 
     return ret;
 }
@@ -1152,20 +1142,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
-
-    const auto &hwInfo = this->device->getHwInfo();
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
-        auto event = Event::fromHandle(hSignalEvent);
-        if (event) {
-            dstAllocationStruct.needsFlush &= !event->signalScope;
-        }
-
-        if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = true;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-        }
-    }
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, hSignalEvent);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -1249,19 +1226,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
-    const auto &hwInfo = this->device->getHwInfo();
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
-        auto event = Event::fromHandle(hSignalEvent);
-        if (event) {
-            dstAllocationStruct.needsFlush &= !event->signalScope;
-        }
-
-        if (dstAllocationStruct.needsFlush && !isCopyOnly()) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = true;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-        }
-    }
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, hSignalEvent);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -1589,20 +1554,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     appendEventForProfilingAllWalkers(hSignalEvent, false);
-
-    const auto &hwInfo = this->device->getHwInfo();
-    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo)) {
-        auto event = Event::fromHandle(hSignalEvent);
-        if (event) {
-            hostPointerNeedsFlush &= !event->signalScope;
-        }
-
-        if (hostPointerNeedsFlush) {
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = true;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-        }
-    }
+    addFlushRequiredCommand(hostPointerNeedsFlush, hSignalEvent);
 
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -1687,7 +1639,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(ze_event_
                                                               args, hwInfo);
         } else {
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
             if (this->partitionCount > 1) {
                 args.workloadPartitionOffset = true;
                 event->setPacketsInUse(this->partitionCount);
@@ -1846,7 +1798,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
                                                           Event::STATE_SIGNALED, args, hwInfo);
     } else {
         NEO::PipeControlArgs args;
-        bool applyScope = event->signalScope;
+        bool applyScope = !!event->signalScope;
         args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(applyScope, hwInfo);
         if (this->partitionCount > 1) {
             event->setPacketsInUse(this->partitionCount);
@@ -2015,7 +1967,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         } else {
             const auto &hwInfo = this->device->getHwInfo();
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(event->signalScope, hwInfo);
+            args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
             NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
                                                                                       hwInfo);
 
@@ -2314,6 +2266,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     appendSignalEventPostWalker(hSignalEvent, workloadPartition);
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOperationRequired, ze_event_handle_t signalEvent) {
+    if (isCopyOnly()) {
+        return;
+    }
+    auto event = Event::fromHandle(signalEvent);
+    if (event) {
+        flushOperationRequired &= !event->signalScope;
+    }
+
+    const auto &hwInfo = this->device->getHwInfo();
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(flushOperationRequired, hwInfo)) {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    }
 }
 
 } // namespace L0

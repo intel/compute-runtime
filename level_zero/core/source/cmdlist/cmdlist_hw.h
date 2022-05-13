@@ -249,6 +249,7 @@ struct CommandListCoreFamily : CommandListImp {
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    void addFlushRequiredCommand(bool flushOperationRequired, ze_event_handle_t signalEvent);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;

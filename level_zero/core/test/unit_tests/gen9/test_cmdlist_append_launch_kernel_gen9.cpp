@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,9 +15,9 @@ namespace L0 {
 namespace ult {
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-using IsSKLOrKBL = IsWithinProducts<IGFX_SKYLAKE, IGFX_KABYLAKE>;
+using IsGen9Core = IsWithinProducts<IGFX_SKYLAKE, IGFX_COFFEELAKE>;
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWithSLMValue, IsSKLOrKBL) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWithSLMValue, IsGen9Core) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     createKernel();
     ze_result_t returnValue;

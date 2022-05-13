@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/test.h"
@@ -566,6 +567,66 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
         }
     }
     EXPECT_EQ(3u, postSyncPipeControls);
+}
+
+HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+          givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, isXeHpOrXeHpgCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
+    auto &commandContainer = commandList->commandContainer;
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    uint32_t postSyncFound = 0;
+    uint32_t dcFlushFound = 0;
+    ASSERT_NE(0u, pipeControls.size());
+    for (auto it : pipeControls) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA &&
+            cmd->getImmediateData() == Event::STATE_SIGNALED) {
+            postSyncFound++;
+        }
+        if (cmd->getDcFlushEnable()) {
+            dcFlushFound++;
+        }
+    }
+
+    uint32_t expectedDcFlushFound = 2u;
+
+    auto &hwInfo = device->getHwInfo();
+    auto &hwInfoConfig = (*NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily));
+    const auto waPair = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, true);
+    if (waPair.first) {
+        expectedDcFlushFound++;
+    }
+
+    EXPECT_EQ(2u, postSyncFound);
+    EXPECT_EQ(expectedDcFlushFound, dcFlushFound);
 }
 
 } // namespace ult

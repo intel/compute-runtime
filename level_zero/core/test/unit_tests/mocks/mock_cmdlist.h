@@ -28,6 +28,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::addFlushRequiredCommand;
     using BaseClass::appendBlitFill;
     using BaseClass::appendCopyImageBlit;
     using BaseClass::appendEventForProfiling;

@@ -245,13 +245,16 @@ HWTEST2_F(CommandListCreate,
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
-using PlatformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_ICELAKE>;
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
+using PlatformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
+HWTEST2_F(CommandListCreate,
+          givenCommandListWhenMemoryCopyRegionHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlsWithDcFlushIsFound,
+          PlatformSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);
@@ -267,6 +270,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event.get());
     eventDesc.index = 1;
@@ -275,24 +279,39 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingHostMemor
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                                  srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(7u, allPcCommands.size());
+
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(2u, dcFlushPipeControls);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsNotFound, PlatformSupport) {
+HWTEST2_F(CommandListCreate,
+          givenCommandListWhenMemoryCopyRegionHavingDeviceMemoryWithNoSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound,
+          PlatformSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *srcBuffer = nullptr;
     void *dstBuffer = nullptr;
@@ -322,27 +341,41 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHavingDeviceMem
 
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
                                                  srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(1u, dcFlushPipeControls);
 
     context->freeMem(srcBuffer);
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsNotFound, PlatformSupport) {
+HWTEST2_F(CommandListCreate,
+          givenCommandListWhenMemoryFillHavingDeviceMemoryWithSignalAndNoWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound,
+          PlatformSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -357,7 +390,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event.get());
     eventDesc.index = 1;
@@ -365,26 +398,40 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingDeviceMemoryWit
     events.push_back(event1.get());
 
     int one = 1;
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(1u, dcFlushPipeControls);
 
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
+HWTEST2_F(CommandListCreate,
+          givenCommandListWhenMemoryFillHavingSharedMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlsWithDcFlushIsFound,
+          PlatformSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -401,6 +448,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
     events.push_back(event.get());
     eventDesc.index = 1;
@@ -408,26 +456,39 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingSharedMemoryWit
     events.push_back(event1.get());
 
     int one = 1;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(7u, allPcCommands.size());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(2u, dcFlushPipeControls);
 
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitEventsUsingRenderEngineThenPipeControlIsFound, PlatformSupport) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound, PlatformSupport) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -451,16 +512,26 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     events.push_back(event1.get());
 
     int one = 1;
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(2u, dcFlushPipeControls);
 
     context->freeMem(dstBuffer);
 }
@@ -472,6 +543,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -495,31 +567,42 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     events.push_back(event1.get());
 
     int one = 1;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(6u, allPcCommands.size());
-    auto cmd = genCmdCast<PIPE_CONTROL *>(*allPcCommands.back());
-    EXPECT_TRUE(cmd->getDcFlushEnable());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(2u, dcFlushPipeControls);
 
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithOutDCFlush, PlatformSupport) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->commandContainer;
+    commandContainer.slmSize = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -543,30 +626,27 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     events.push_back(event1.get());
 
     int one = 1;
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                            events[0], 1u, &events[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
-    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
-    EXPECT_FALSE(cmd->getDcFlushEnable());
+    auto allPcCommands = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    uint32_t dcFlushPipeControls = 0;
+    for (auto it : allPcCommands) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControls++;
+        }
+    }
+    EXPECT_EQ(1u, dcFlushPipeControls);
 
     context->freeMem(dstBuffer);
 }

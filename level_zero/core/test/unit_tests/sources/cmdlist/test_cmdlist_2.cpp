@@ -564,6 +564,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_SUBDEVICE;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     result = commandList->appendMemoryCopy(dstPtr, srcPtr, 0x1001, event.get(), 0u, nullptr);
@@ -580,16 +581,12 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if ((cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) &&
             (cmd->getImmediateData() == Event::STATE_SIGNALED) &&
-            (!cmd->getDcFlushEnable())) {
+            (cmd->getDcFlushEnable())) {
             postSyncFound++;
         }
     }
 
     EXPECT_EQ(1u, postSyncFound);
-
-    auto it = *(iterator.end() - 1);
-    auto cmd1 = genCmdCast<PIPE_CONTROL *>(*it);
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd1->getDcFlushEnable());
 }
 
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;

@@ -209,20 +209,31 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
 
     auto &commandContainer = cmdList.commandContainer;
+
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        genCmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
     auto itor = find<PIPE_CONTROL *>(genCmdList.begin(), genCmdList.end());
-    ASSERT_NE(genCmdList.end(), itor);
     PIPE_CONTROL *cmd = nullptr;
+    uint32_t dcFlushPipeControl = 0;
     while (itor != genCmdList.end()) {
         cmd = genCmdCast<PIPE_CONTROL *>(*itor);
-        itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+        if (cmd->getDcFlushEnable()) {
+            dcFlushPipeControl++;
+        }
+        itor++;
     }
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable()); // NOLINT(clang-analyzer-core.CallAndMessage)
+    uint32_t expectedDcFlushPipeControl =
+        NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo()) ? 1 : 0;
+    EXPECT_EQ(expectedDcFlushPipeControl, dcFlushPipeControl);
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, IsAtLeastSkl) {
