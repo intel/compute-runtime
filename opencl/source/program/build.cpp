@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -177,12 +178,22 @@ cl_int Program::build(
             phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
         }
 
+        auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray);
+        auto isUserKernel = !isBuiltIn;
+
+        auto failBuildProgram = (containsStatefulAccess &&
+                                 isUserKernel &&
+                                 AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getHardwareInfo()));
+
+        if (failBuildProgram) {
+            retVal = CL_BUILD_PROGRAM_FAILURE;
+        }
+
         if (retVal != CL_SUCCESS) {
             break;
         }
 
         if (isKernelDebugEnabled() || gtpinIsGTPinInitialized()) {
-
             for (auto &clDevice : deviceVector) {
                 auto rootDeviceIndex = clDevice->getRootDeviceIndex();
                 if (BuildPhase::DebugDataNotification == phaseReached[rootDeviceIndex]) {

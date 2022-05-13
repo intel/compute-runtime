@@ -8,6 +8,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
     ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h

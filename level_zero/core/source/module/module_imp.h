@@ -126,7 +126,7 @@ struct ModuleImp : public Module {
 
     Device *getDevice() const override { return device; }
 
-    bool linkBinary();
+    MOCKABLE_VIRTUAL bool linkBinary();
 
     bool initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
 

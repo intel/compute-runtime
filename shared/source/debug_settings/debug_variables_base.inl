@@ -203,6 +203,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SetVmAdviseAtomicAttribute, -1, "-1: default - a
 DECLARE_DEBUG_VARIABLE(int32_t, ReadBackCommandBufferAllocation, -1, "Read command buffer allocation back on the host side. -1: default, 0 - disabled, 1 - local memory only, 2 - local and system memory")
 DECLARE_DEBUG_VARIABLE(int32_t, UseContextEndOffsetForEventCompletion, -1, "Use Context End or Context Start for event completion signalling. -1: default: platform dependent, 0 - Use Context Start, 1 - Use Context End")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmLowPriorityContextValue, -1, "Force scheduling priority value during Wddm low priority context creation. -1 - default.")
+DECLARE_DEBUG_VARIABLE(int32_t, FailBuildProgramWithStatefulAccess, -1, "-1: default, 0: disable, 1: enable, Fail build program/module creation whenever stateful access is discovered (except built in kernels).")
 DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

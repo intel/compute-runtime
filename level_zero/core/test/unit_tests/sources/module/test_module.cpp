@@ -10,6 +10,8 @@
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -2079,28 +2081,19 @@ HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOpti
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
 }
 
-HWTEST_F(ModuleTranslationUnitTest, givenSystemSharedAllocationAllowedWhenBuildingModuleThen4GbBuffersAreRequired) {
+HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingModuleThen4GbBuffersAreRequired) {
     auto mockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
 
-    {
-        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1;
+    MockModuleTranslationUnit moduleTu(device);
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_TRUE(ret);
 
-        MockModuleTranslationUnit moduleTu(device);
-        auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-        EXPECT_TRUE(ret);
-
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired()) {
         EXPECT_NE(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
-    }
-
-    {
-        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 0;
-
-        MockModuleTranslationUnit moduleTu(device);
-        auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
-        EXPECT_TRUE(ret);
-
+    } else {
         EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find("cl-intel-greater-than-4GB-buffer-required"), std::string::npos);
     }
 }
@@ -2307,6 +2300,110 @@ TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingBuiltinModuleThenI
 
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc"));
 };
+
+TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
+    class MyModuleImpl : public ModuleImp {
+      public:
+        using ModuleImp::ModuleImp;
+    };
+
+    std::vector<std::tuple<bool, SurfaceStateHeapOffset, CrossThreadDataOffset>> testParams = {
+        {false, undefined<SurfaceStateHeapOffset>, undefined<CrossThreadDataOffset>},
+        {true, 0x40, undefined<CrossThreadDataOffset>},
+        {true, undefined<SurfaceStateHeapOffset>, 0x40},
+        {true, 0x40, 0x40},
+    };
+
+    for (auto &[expectedResult, surfaceStateHeapOffset, crossThreadDataOffset] : testParams) {
+        auto module = std::make_unique<MyModuleImpl>(device, nullptr, ModuleType::User);
+        ASSERT_NE(nullptr, module);
+        auto moduleTranslationUnit = module->getTranslationUnit();
+        ASSERT_NE(nullptr, moduleTranslationUnit);
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+        auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+        argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
+        argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+        moduleTranslationUnit->programInfo.kernelInfos.clear();
+        moduleTranslationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+        EXPECT_EQ(expectedResult, NEO::AddressingModeHelper::containsStatefulAccess(moduleTranslationUnit->programInfo.kernelInfos));
+    }
+}
+
+using ModuleInitializeTest = Test<DeviceFixture>;
+
+TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsReturned) {
+    class MockModuleImp : public ModuleImp {
+      public:
+        using ModuleImp::isFullyLinked;
+        using ModuleImp::ModuleImp;
+        using ModuleImp::translationUnit;
+
+        bool linkBinary() override {
+            return true;
+        }
+
+        void setAddressingMode(bool isStateful) {
+            auto kernelInfo = std::make_unique<KernelInfo>();
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+            auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+            if (isStateful) {
+                argDescriptor.as<ArgDescPointer>().bindful = 0x40;
+                argDescriptor.as<ArgDescPointer>().bindless = 0x40;
+            } else {
+                argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
+                argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+            }
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+            kernelInfo->heapInfo.KernelHeapSize = 0x1;
+            kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<void *>(0xffff);
+
+            this->translationUnit->programInfo.kernelInfos.clear();
+            this->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
+        }
+    };
+
+    class MyMockModuleTU : public MockModuleTU {
+      public:
+        using MockModuleTU::MockModuleTU;
+        bool createFromNativeBinary(const char *input, size_t inputSize) override { return true; }
+    };
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::string testFile;
+    retrieveBinaryKernelFilenameApiSpecific(testFile, "test_kernel_", ".bin");
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    std::array<std::tuple<bool, bool, ModuleType, int32_t>, 5> testParams = {{
+        {true, false, ModuleType::Builtin, -1},
+        {true, true, ModuleType::Builtin, 0},
+        {true, true, ModuleType::User, 0},
+        {true, true, ModuleType::Builtin, 1},
+        {false, true, ModuleType::User, 1},
+    }};
+
+    for (auto &[expectedResult, isStateful, moduleType, debugKey] : testParams) {
+        MockModuleImp module(device, nullptr, moduleType);
+        module.translationUnit = std::make_unique<MyMockModuleTU>(device);
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debugKey);
+        module.setAddressingMode(isStateful);
+        EXPECT_EQ(expectedResult, module.initialize(&moduleDesc, device->getNEODevice()));
+    }
+}
 
 using ModuleDebugDataTest = Test<DeviceFixture>;
 TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDebugDataThenRelocationsAreApplied) {

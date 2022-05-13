@@ -14,7 +14,9 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -1140,7 +1142,9 @@ TEST_F(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
     // Check build options that were applied
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, CompilerOptions::fastRelaxedMath)) << cip->buildOptions;
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
-    if (!pDevice->areSharedSystemAllocationsAllowed()) {
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
         EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << cip->buildInternalOptions;
     }
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << cip->buildInternalOptions;
@@ -1730,14 +1734,6 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     }
 }
 
-TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProgramIsCompiledThenItForcesStatelessCompilation) {
-    pClDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
-    pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1;
-    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
-    auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions.c_str(), CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-}
-
 TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
     cl_int retVal = CL_DEVICE_NOT_FOUND;
@@ -1746,7 +1742,8 @@ TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterTha
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptions = program.getInternalOptions();
-        if (pDevice->areSharedSystemAllocationsAllowed()) {
+        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+        if (compilerHwInfoConfig.isForceToStatelessRequired()) {
             EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
         } else {
             EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
@@ -1761,10 +1758,12 @@ TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuff
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
-    if ((false == pDevice->areSharedSystemAllocationsAllowed()) && (false == is32bit)) {
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-    } else {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || is32bit) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
+    } else {
+        EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
     }
 }
 
@@ -1788,14 +1787,101 @@ TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbB
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
-    if (is32bit) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (is32bit || compilerHwInfoConfig.isForceToStatelessRequired()) {
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
     } else {
-        if (false == pDevice->areSharedSystemAllocationsAllowed()) {
-            EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
-        } else {
-            EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
+        EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << internalOptions;
+    }
+}
+
+TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) {
+    std::vector<std::tuple<bool, SurfaceStateHeapOffset, CrossThreadDataOffset>> testParams = {
+        {false, undefined<SurfaceStateHeapOffset>, undefined<CrossThreadDataOffset>},
+        {true, 0x40, undefined<CrossThreadDataOffset>},
+        {true, undefined<SurfaceStateHeapOffset>, 0x40},
+        {true, 0x40, 0x40},
+
+    };
+
+    for (auto &[expectedResult, surfaceStateHeapOffset, crossThreadDataOffset] : testParams) {
+        MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+        auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+        argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
+        argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
+
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+        program.addKernelInfo(kernelInfo.release(), 0);
+
+        EXPECT_EQ(expectedResult, AddressingModeHelper::containsStatefulAccess(program.buildInfos[0].kernelInfoArray));
+    }
+}
+
+TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restorer;
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(pClDevice->getHardwareInfo().platform.eProductFamily);
+
+    class MyMockProgram : public Program {
+      public:
+        using Program::buildInfos;
+        using Program::createdFrom;
+        using Program::irBinary;
+        using Program::irBinarySize;
+        using Program::isBuiltIn;
+        using Program::options;
+        using Program::Program;
+        using Program::sourceCode;
+
+        void setAddressingMode(bool isStateful) {
+            auto kernelInfo = std::make_unique<KernelInfo>();
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
+            auto argDescriptor = ArgDescriptor(ArgDescriptor::ArgTPointer);
+            if (isStateful) {
+                argDescriptor.as<ArgDescPointer>().bindful = 0x40;
+                argDescriptor.as<ArgDescPointer>().bindless = 0x40;
+            } else {
+                argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
+                argDescriptor.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+            }
+
+            kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+            this->buildInfos[0].kernelInfoArray.clear();
+            this->buildInfos[0].kernelInfoArray.push_back(kernelInfo.release());
         }
+
+        cl_int processGenBinary(const ClDevice &clDevice) override {
+            return CL_SUCCESS;
+        }
+    };
+
+    std::array<std::tuple<int, bool, int32_t>, 3> testParams = {{{CL_SUCCESS, false, -1},
+                                                                 {CL_SUCCESS, true, 0},
+                                                                 {CL_BUILD_PROGRAM_FAILURE, true, 1}}};
+
+    for (auto &[result, isStatefulAccess, debuyKey] : testParams) {
+
+        if (!compilerHwInfoConfig.isForceToStatelessRequired()) {
+            result = CL_SUCCESS;
+        }
+        MyMockProgram program(pContext, false, toClDeviceVector(*pClDevice));
+        program.isBuiltIn = false;
+        program.sourceCode = "test_kernel";
+        program.createdFrom = Program::CreatedFrom::SOURCE;
+        program.setAddressingMode(isStatefulAccess);
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
+        EXPECT_EQ(result, program.build(toClDeviceVector(*pClDevice), nullptr, false));
+    }
+
+    {
+        MyMockProgram programWithBuiltIn(pContext, true, toClDeviceVector(*pClDevice));
+        programWithBuiltIn.isBuiltIn = true;
+        programWithBuiltIn.irBinary.reset(new char[16]);
+        programWithBuiltIn.irBinarySize = 16;
+        programWithBuiltIn.setAddressingMode(true);
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+        EXPECT_EQ(CL_SUCCESS, programWithBuiltIn.build(toClDeviceVector(*pClDevice), nullptr, false));
     }
 }
 

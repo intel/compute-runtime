@@ -257,10 +257,10 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
         uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
         auto hashName = getBuiltInHashFileName(hash, supportsImages);
 
-        //First fail, if we are inconsistent
+        // First fail, if we are inconsistent
         EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
 
-        //then write to file if needed
+        // then write to file if needed
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
         std::cout << "writing builtins to file: " << hashName << std::endl;
@@ -1527,17 +1527,21 @@ TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerI
     EXPECT_NE(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenDeviceSupportSharedSystemAllocationThenInternalOptionsDisableStosoFlag) {
+TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenForceToStatelessRequiredOr32BitThenInternalOptionsHasGreaterThan4gbBuffersRequired) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    pClDevice->deviceInfo.sharedSystemMemCapabilities = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
-    pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = 1;
 
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
     auto program = std::unique_ptr<Program>(BuiltinDispatchInfoBuilder::createProgramFromCode(bc, toClDeviceVector(*pClDevice)));
     EXPECT_NE(nullptr, program.get());
     auto builtinInternalOptions = program->getInternalOptions();
-    EXPECT_TRUE(hasSubstr(builtinInternalOptions, std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
+
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    if (compilerHwInfoConfig.isForceToStatelessRequired() || is32bit) {
+        EXPECT_THAT(builtinInternalOptions, testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
+    } else {
+        EXPECT_THAT(builtinInternalOptions, testing::Not(testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired))));
+    }
 }
 
 TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
@@ -1586,7 +1590,9 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
     EXPECT_EQ(std::string::npos, it);
 
     it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
-    if (is32bit || pDevice->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+
+    if (is32bit || compilerHwInfoConfig.isForceToStatelessRequired()) {
         EXPECT_NE(std::string::npos, it);
     } else {
         EXPECT_EQ(std::string::npos, it);

@@ -73,8 +73,12 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
     }
 
-    if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
-        DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
+    auto &hwInfo = pClDevice->getHardwareInfo();
+    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
+
+    if ((isBuiltIn && is32bit) || forceToStatelessRequired || disableStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
@@ -91,7 +95,6 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
-    auto &hwInfo = pClDevice->getHardwareInfo();
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);

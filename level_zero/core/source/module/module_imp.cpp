@@ -16,6 +16,7 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
@@ -116,8 +117,9 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         options = buildOptions;
     }
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
+    auto &neoDevice = *device->getNEODevice();
 
-    if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
+    if (neoDevice.getDeviceInfo().debuggerActive) {
         if (NEO::SourceLevelDebugger::shouldAppendOptDisable(*device->getSourceLevelDebugger())) {
             NEO::CompilerOptions::concatenateAppend(options, BuildOptions::optDisable);
         }
@@ -126,8 +128,11 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
-    if (NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get() ||
-        device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(neoDevice.getHardwareInfo().platform.eProductFamily);
+    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    auto statelessToStatefulOptimizationDisabled = NEO::DebugManager.flags.DisableStatelessToStatefulOptimization.get();
+
+    if (forceToStatelessRequired || statelessToStatefulOptimizationDisabled) {
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     }
 
@@ -527,6 +532,18 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     this->updateBuildLog(neoDevice);
     verifyDebugCapabilities();
 
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos);
+    auto isUserKernel = (type == ModuleType::User);
+
+    auto failBuildProgram = containsStatefulAccess &&
+                            isUserKernel &&
+                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(hwInfo);
+
+    if (failBuildProgram) {
+        success = false;
+    }
+
     if (false == success) {
         return false;
     }
@@ -554,7 +571,6 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         passDebugData();
     }
 
-    auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (this->isFullyLinked && this->type == ModuleType::User) {
