@@ -127,10 +127,10 @@ XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenXeHPAndLaterPlatformWhenCheckAssig
     EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported());
 }
 
-XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalseForQueuesButTrueForEvents) {
+XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_FALSE(helper.isTimestampWaitSupportedForQueues());
-    EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
+    EXPECT_FALSE(helper.isTimestampWaitSupportedForEvents(*defaultHwInfo));
 }
 
 XE_HPG_CORETEST_F(HwHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {

@@ -175,3 +175,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+    return true;
+}

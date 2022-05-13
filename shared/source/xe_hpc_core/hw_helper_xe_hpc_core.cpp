@@ -450,7 +450,7 @@ bool HwHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents() const {
+bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
     return true;
 }
 

@@ -362,4 +362,9 @@ bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+    return false;
+}
+
 } // namespace NEO

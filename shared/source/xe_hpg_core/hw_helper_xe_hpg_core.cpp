@@ -131,8 +131,9 @@ inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents() const {
-    return true;
+bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    return hwInfoConfig.isTimestampWaitSupportedForEvents();
 }
 
 template class HwHelperHw<Family>;

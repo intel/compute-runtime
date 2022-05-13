@@ -365,4 +365,9 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isCooperativeEngineSupported(const HardwareIn
     return false;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
+    return false;
+}
+
 } //namespace NEO

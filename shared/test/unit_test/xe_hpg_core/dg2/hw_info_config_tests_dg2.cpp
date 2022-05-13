@@ -378,6 +378,15 @@ DG2TEST_F(HwInfoConfigTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratc
     EXPECT_THROW(hwHelper.getComputeUnitsUsedForScratch(&hwInfo), std::exception);
 }
 
+HWTEST_EXCLUDE_PRODUCT(HwHelperTestXeHpgCore, givenHwHelperWhenCheckTimestampWaitSupportThenReturnFalse, IGFX_DG2);
+DG2TEST_F(HwInfoConfigTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    EXPECT_TRUE(hwInfoConfig.isTimestampWaitSupportedForEvents());
+    EXPECT_TRUE(hwHelper.isTimestampWaitSupportedForEvents(hwInfo));
+}
+
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {
     for (const auto &deviceId : DG2_G10_IDS) {
         hwInfo.platform.usDeviceID = deviceId;

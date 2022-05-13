@@ -103,6 +103,7 @@ class HwInfoConfig {
     virtual bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual bool isGrfNumReportedWithScm() const = 0;
     virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isTimestampWaitSupportedForEvents() const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -190,6 +191,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isIpSamplingSupported(const NEO::HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
+    bool isTimestampWaitSupportedForEvents() const override;
 
   protected:
     HwInfoConfigHw() = default;

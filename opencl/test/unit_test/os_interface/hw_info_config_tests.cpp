@@ -400,3 +400,8 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfUseChannelRedForUnusedSh
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.useChannelRedForUnusedShaderChannels());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgCore) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isTimestampWaitSupportedForEvents());
+}
