@@ -53,31 +53,31 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
 }
 
 template <>
-PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     uint32_t stepping = getSteppingFromHwRevId(hwInfo);
     if (stepping == CommonConstants::invalidStepping) {
-        return PRODUCT_CONFIG::UNKNOWN_ISA;
+        return AOT::UNKNOWN_ISA;
     }
 
     if (PVC::isXl(hwInfo)) {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
-            return PRODUCT_CONFIG::PVC_XL_A0;
+            return AOT::PVC_XL_A0;
         default:
         case 0x1:
-            return PRODUCT_CONFIG::PVC_XL_A0P;
+            return AOT::PVC_XL_A0P;
         }
     } else {
         switch (hwInfo.platform.usRevId) {
         case 0x3:
-            return PRODUCT_CONFIG::PVC_XT_A0;
-        case 0x5:
-            return PRODUCT_CONFIG::PVC_XT_B0;
-        case 0x6:
-            return PRODUCT_CONFIG::PVC_XT_B1;
+            return AOT::PVC_XT_A0;
+        case 05:
+            return AOT::PVC_XT_B0;
+        case 06:
+            return AOT::PVC_XT_B1;
         default:
-        case 0x7:
-            return PRODUCT_CONFIG::PVC_XT_C0;
+        case 07:
+            return AOT::PVC_XT_C0;
         }
     }
 }

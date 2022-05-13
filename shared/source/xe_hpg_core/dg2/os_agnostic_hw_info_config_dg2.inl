@@ -33,8 +33,9 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
         return 0x4;
     case REVISION_C:
         return 0x8;
+    default:
+        return CommonConstants::invalidStepping;
     }
-    return CommonConstants::invalidStepping;
 }
 
 template <>
@@ -48,8 +49,9 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
         return REVISION_B;
     case 0x8:
         return REVISION_C;
+    default:
+        return CommonConstants::invalidStepping;
     }
-    return CommonConstants::invalidStepping;
 }
 
 template <>

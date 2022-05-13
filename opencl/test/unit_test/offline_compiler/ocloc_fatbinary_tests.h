@@ -16,21 +16,39 @@
 #include <memory>
 
 namespace NEO {
-
-class OclocFatBinaryGetTargetConfigsForFatbinary : public ::testing::Test {
+class OclocEnabledAcronyms : public ::testing::Test {
   public:
-    OclocFatBinaryGetTargetConfigsForFatbinary() {
+    std::vector<DeviceMapping> enabledProducts{};
+    std::vector<ConstStringRef> enabledProductsAcronyms{};
+    std::vector<ConstStringRef> enabledFamiliesAcronyms{};
+    std::vector<ConstStringRef> enabledReleasesAcronyms{};
+};
+
+class OclocFatBinaryProductAcronymsTests : public OclocEnabledAcronyms {
+  public:
+    OclocFatBinaryProductAcronymsTests() {
         oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
         oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{true};
+
+        enabledProducts = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+        enabledProductsAcronyms = oclocArgHelperWithoutInput->getEnabledProductAcronyms();
+        enabledFamiliesAcronyms = oclocArgHelperWithoutInput->getEnabledFamiliesAcronyms();
+        enabledReleasesAcronyms = oclocArgHelperWithoutInput->getEnabledReleasesAcronyms();
     }
+
     std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
 };
 
-class OclocFatBinaryTest : public ::testing::Test {
+class OclocFatBinaryTest : public OclocEnabledAcronyms {
   public:
     OclocFatBinaryTest() {
         mockArgHelperFilesMap[spirvFilename] = spirvFileContent;
         mockArgHelper.interceptOutput = true;
+
+        enabledProducts = mockArgHelper.getAllSupportedDeviceConfigs();
+        enabledProductsAcronyms = mockArgHelper.getEnabledProductAcronyms();
+        enabledFamiliesAcronyms = mockArgHelper.getEnabledFamiliesAcronyms();
+        enabledReleasesAcronyms = mockArgHelper.getEnabledReleasesAcronyms();
     }
 
   protected:

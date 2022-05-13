@@ -34,6 +34,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.h
@@ -105,6 +106,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h

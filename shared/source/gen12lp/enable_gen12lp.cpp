@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/helpers/compiler_aot_config_bdw_and_later.inl"
 #include "shared/source/helpers/compiler_hw_info_config_base.inl"
 #include "shared/source/helpers/compiler_hw_info_config_bdw_and_later.inl"
 #include "shared/source/helpers/enable_product.inl"

@@ -52,25 +52,30 @@ auto allFilesInArchiveExceptPaddingStartsWith(const Ar::Ar &archive, const Const
     return true;
 }
 
-std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
+std::string getDeviceConfig(const OfflineCompiler &offlineCompiler, MockOclocArgHelper *argHelper) {
     auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
+    if (allEnabledDeviceConfigs.empty()) {
         return {};
     }
 
-    const auto cfg1 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    const auto cfg2 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[1].config);
-
-    return cfg1 + "," + cfg2;
+    const auto &hwInfo = offlineCompiler.getHardwareInfo();
+    for (const auto &device : allEnabledDeviceConfigs) {
+        if (device.hwInfo->platform.eProductFamily == hwInfo.platform.eProductFamily) {
+            return ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+        }
+    }
+    return {};
 }
 
-std::string getDeviceConfig(const OfflineCompiler &offlineCompiler) {
-    const auto &hwInfo = offlineCompiler.getHardwareInfo();
+std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
+    auto enabledProductsAcronyms = argHelper->getEnabledProductAcronyms();
+    if (enabledProductsAcronyms.size() < 2) {
+        return {};
+    }
 
-    const std::string product = hardwarePrefix[hwInfo.platform.eProductFamily];
-    const auto stepping = hwInfo.platform.usRevId;
-
-    return product + "." + std::to_string(stepping);
+    const auto cfg1 = enabledProductsAcronyms[0].str();
+    const auto cfg2 = enabledProductsAcronyms[1].str();
+    return cfg1 + "," + cfg2;
 }
 
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
@@ -85,23 +90,75 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     EXPECT_FALSE(NEO::requestedFatBinary(4, args, argHelper.get()));
 }
 
-TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenFatBinaryFormatWithRangeIsPassedThenTrueIsReturned) {
+TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronymsForTargetThenCorrectValuesAreReturned) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    auto &enabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    if (enabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    ConstStringRef acronym("");
+    std::vector<ConstStringRef> outRelease{}, outFamily{};
+
+    for (auto &device : enabledDeviceConfigs) {
+        if (!device.acronyms.empty()) {
+            acronym = device.acronyms.front();
+            getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
+            EXPECT_TRUE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+
+            getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
+            EXPECT_TRUE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+
+            device.acronyms.clear();
+            outRelease.clear();
+            outFamily.clear();
+
+            getProductsAcronymsForTarget<AOT::RELEASE>(outRelease, device.release, argHelper.get());
+            EXPECT_FALSE(std::find(outRelease.begin(), outRelease.end(), acronym) != outRelease.end());
+
+            getProductsAcronymsForTarget<AOT::FAMILY>(outFamily, device.family, argHelper.get());
+            EXPECT_FALSE(std::find(outFamily.begin(), outFamily.end(), acronym) != outFamily.end());
+        }
+    }
+}
+
+TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgToFatBinaryWhenConfigIsNotFullThenFalseIsReturned) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+    auto aotConfig = allEnabledDeviceConfigs[0].aotConfig;
+
+    std::stringstream majorString;
+    majorString << aotConfig.ProductConfigID.Major;
+    auto major = majorString.str();
+    auto aotValue0 = argHelper->getMajorMinorRevision(major);
+    EXPECT_EQ(aotValue0.ProductConfig, AOT::UNKNOWN_ISA);
+
+    auto majorMinor = ProductConfigHelper::parseMajorMinorValue(aotConfig);
+    auto aotValue1 = argHelper->getMajorMinorRevision(majorMinor);
+    EXPECT_EQ(aotValue1.ProductConfig, AOT::UNKNOWN_ISA);
+
+    const char *cutRevision[] = {"ocloc", "-device", majorMinor.c_str()};
+    const char *cutMinorAndRevision[] = {"ocloc", "-device", major.c_str()};
+
+    EXPECT_FALSE(NEO::requestedFatBinary(3, cutRevision, argHelper.get()));
+    EXPECT_FALSE(NEO::requestedFatBinary(3, cutMinorAndRevision, argHelper.get()));
+}
+
+TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgProvidedWhenFatBinaryFormatWithRangeIsPassedThenTrueIsReturned) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
 
     const char *allPlatforms[] = {"ocloc", "-device", "*"};
     const char *manyPlatforms[] = {"ocloc", "-device", "a,b"};
-    const char *manyGens[] = {"ocloc", "-device", "gen0,gen1"};
-    const char *rangePlatformFrom[] = {"ocloc", "-device", "skl-"};
-    const char *rangePlatformTo[] = {"ocloc", "-device", "-skl"};
-    const char *rangePlatformBounds[] = {"ocloc", "-device", "skl-icllp"};
-    const char *rangeGenFrom[] = {"ocloc", "-device", "gen0-"};
-    const char *rangeGenTo[] = {"ocloc", "-device", "-gen5"};
-    const char *rangeGenBounds[] = {"ocloc", "-device", "gen0-gen5"};
-    const char *rangeConfigBounds[] = {"ocloc", "-device", "9-11"};
-    const char *manyConfigs[] = {"ocloc", "-device", "9.0,11"};
-    const char *rangeConfigFrom[] = {"ocloc", "-device", "10.1-"};
-    const char *rangeConfigTo[] = {"ocloc", "-device", "-11.2"};
-    const char *rangeConfigsBoundsSecond[] = {"ocloc", "-device", "11.2-12.2"};
+    const char *manyGens[] = {"ocloc", "-device", "family0,family1"};
+    const char *rangePlatformFrom[] = {"ocloc", "-device", "skl:"};
+    const char *rangePlatformTo[] = {"ocloc", "-device", ":skl"};
+    const char *rangePlatformBounds[] = {"ocloc", "-device", "skl:icllp"};
+    const char *rangeGenFrom[] = {"ocloc", "-device", "family0:"};
+    const char *rangeGenTo[] = {"ocloc", "-device", ":release5"};
+    const char *rangeGenBounds[] = {"ocloc", "-device", "family0:family5"};
 
     EXPECT_TRUE(NEO::requestedFatBinary(3, allPlatforms, argHelper.get()));
     EXPECT_TRUE(NEO::requestedFatBinary(3, manyPlatforms, argHelper.get()));
@@ -112,1005 +169,654 @@ TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenFatBinaryFormat
     EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenFrom, argHelper.get()));
     EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenTo, argHelper.get()));
     EXPECT_TRUE(NEO::requestedFatBinary(3, rangeGenBounds, argHelper.get()));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeConfigBounds, argHelper.get()));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, manyConfigs, argHelper.get()));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeConfigFrom, argHelper.get()));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeConfigTo, argHelper.get()));
-    EXPECT_TRUE(NEO::requestedFatBinary(3, rangeConfigsBoundsSecond, argHelper.get()));
 }
 
-TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgToFatBinaryWhenConfigMatchesMoreThanOneProductThenTrueIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-
-    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2].config);
-    auto majorPos = configNum0.find(".");
-    auto cutMinorAndRevision = configNum0.substr(0, majorPos);
-    auto matchedConfigs = getAllMatchedConfigs(cutMinorAndRevision, argHelper.get());
-
-    if (matchedConfigs.size() < 2) {
-        GTEST_SKIP();
-    }
-
-    const char *fewConfigs[] = {"ocloc", "-device", cutMinorAndRevision.c_str()};
-    EXPECT_TRUE(NEO::requestedFatBinary(3, fewConfigs, argHelper.get()));
-}
-
-TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgAsSingleProductConfigThenFatBinaryIsNotRequested) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-
-    for (auto &deviceConfig : allEnabledDeviceConfigs) {
-        std::string configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
-        const char *singleConfig[] = {"ocloc", "-device", configStr.c_str()};
-        EXPECT_FALSE(NEO::requestedFatBinary(3, singleConfig, argHelper.get()));
-    }
-}
-
-TEST(OclocFatBinaryRequestedFatBinary, WhenPlatformIsProvidedButDoesNotContainMoreThanOneProductThenReturnFalse) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    const char *skl[] = {"ocloc", "-device", "skl"};
-    EXPECT_FALSE(NEO::requestedFatBinary(3, skl, argHelper.get()));
-}
-
-TEST(OclocFatBinaryToProductConfigStrings, GivenListOfProductIdsThenReturnsListOfStrings) {
-    auto platforms = NEO::getAllSupportedTargetPlatforms();
-    auto names = NEO::toProductNames(platforms);
-    EXPECT_EQ(names.size(), platforms.size());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenDifferentDeviceArgWhenCheckIfPlatformsAbbreviationIsPassedThenReturnCorrectValue) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgAsSingleProductThenFatBinaryIsNotRequested) {
     auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
 
-    if (allEnabledPlatforms.size() < 3 || allEnabledDeviceConfigs.size() < 3) {
-        GTEST_SKIP();
+    for (const auto &deviceConfig : allEnabledDeviceConfigs) {
+        std::string configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
+        const char *singleConfig[] = {"ocloc", "-device", configStr.c_str()};
+        EXPECT_FALSE(NEO::requestedFatBinary(3, singleConfig, oclocArgHelperWithoutInput.get()));
+
+        for (const auto &acronym : deviceConfig.acronyms) {
+            auto acronymStr = acronym.str();
+            const char *singleAcronym[] = {"ocloc", "-device", acronymStr.c_str()};
+            EXPECT_FALSE(NEO::requestedFatBinary(3, singleAcronym, oclocArgHelperWithoutInput.get()));
+        }
     }
-
-    auto platform0 = allEnabledPlatforms[0];
-    ConstStringRef platformName0(hardwarePrefix[platform0], strlen(hardwarePrefix[platform0]));
-    auto platform1 = allEnabledPlatforms[1];
-    ConstStringRef platformName1(hardwarePrefix[platform1], strlen(hardwarePrefix[platform1]));
-
-    auto deviceMapConfig0 = allEnabledDeviceConfigs[0];
-    auto configNumConvention0 = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig0.config);
-    auto deviceMapConfig1 = allEnabledDeviceConfigs[1];
-    auto configNumConvention1 = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig1.config);
-
-    auto twoPlatforms = platformName0.str() + "," + platformName1.str();
-    auto configsRange = configNumConvention0 + "-" + configNumConvention1;
-    auto gen = std::to_string(deviceMapConfig0.hwInfo->platform.eRenderCoreFamily);
-
-    EXPECT_TRUE(isDeviceWithPlatformAbbreviation(platformName0, oclocArgHelperWithoutInput.get()));
-    EXPECT_TRUE(isDeviceWithPlatformAbbreviation(ConstStringRef(twoPlatforms), oclocArgHelperWithoutInput.get()));
-    EXPECT_FALSE(isDeviceWithPlatformAbbreviation(ConstStringRef(configsRange), oclocArgHelperWithoutInput.get()));
-    EXPECT_FALSE(isDeviceWithPlatformAbbreviation(ConstStringRef(gen), oclocArgHelperWithoutInput.get()));
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenAsterixThenReturnAllEnabledConfigs) {
-    auto expected = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
-    auto got = NEO::getTargetConfigsForFatbinary("*", oclocArgHelperWithoutInput.get());
+TEST_F(OclocFatBinaryProductAcronymsTests, givenAsterixThenReturnAllEnabledAcronyms) {
+    auto expected = oclocArgHelperWithoutInput->getEnabledProductAcronyms();
+    auto got = NEO::getTargetProductsForFatbinary("*", oclocArgHelperWithoutInput.get());
 
     EXPECT_EQ(got.size(), expected.size());
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigWhenConfigIsUndefinedThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("0.0.0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("0.0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenUnknownFamilyNameIsPassedThenRequestedFatBinaryReturnsFalse) {
+    const char *unknownFamily[] = {"ocloc", "-device", "gen0"};
+    EXPECT_FALSE(NEO::requestedFatBinary(3, unknownFamily, oclocArgHelperWithoutInput.get()));
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeToWhenConfigIsUndefinedThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("-0.0.0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("-0.0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("-0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFromWhenConfigIsUndefinedThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("0.0.0-", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("0.0-", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("0-", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRangeWhenAnyOfConfigIsUndefinedOrIncorrectThenReturnEmptyList) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
-        GTEST_SKIP();
-    }
-
-    auto deviceMapConfig0 = allEnabledDeviceConfigs[0];
-    auto config0Str = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig0.config);
-
-    auto got = NEO::getTargetConfigsForFatbinary("1.2-" + config0Str, oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary(config0Str + "-1.2", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("1.a.c-" + config0Str, oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary(config0Str + "-1.a.c", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenUnknownGenNameIsPassedThenRequestedFatBinaryReturnsFalse) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    const char *unknownGen[] = {"ocloc", "-device", "gen0"};
-    const char *unknownGenCaseInsensitive[] = {"ocloc", "-device", "Gen0"};
-
-    EXPECT_FALSE(NEO::requestedFatBinary(3, unknownGen, argHelper.get()));
-    EXPECT_FALSE(NEO::requestedFatBinary(3, unknownGenCaseInsensitive, argHelper.get()));
-}
-
-TEST(OclocFatBinaryRequestedFatBinary, GivenDeviceArgProvidedWhenKnownGenNameIsPassedThenRequestedFatBinaryReturnsTrue) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    unsigned int i = 0;
-    for (; i < IGFX_MAX_CORE; ++i) {
-        if (NEO::familyName[i] != nullptr)
-            break;
-    }
-    const char *genFromFamilyName[] = {"ocloc", "-device", NEO::familyName[i]};
-    EXPECT_TRUE(NEO::requestedFatBinary(3, genFromFamilyName, argHelper.get()));
-}
-
-TEST(OclocFatBinaryGetAllSupportedTargetPlatforms, WhenRequestedThenReturnsAllPlatformsWithNonNullHardwarePrefixes) {
-    auto platforms = NEO::getAllSupportedTargetPlatforms();
-    std::unordered_set<uint32_t> platformsSet(platforms.begin(), platforms.end());
-    for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
-        if (nullptr != NEO::hardwarePrefix[productId]) {
-            EXPECT_EQ(1U, platformsSet.count(static_cast<PRODUCT_FAMILY>(productId))) << productId;
-        } else {
-            EXPECT_EQ(0U, platformsSet.count(static_cast<PRODUCT_FAMILY>(productId))) << productId;
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIsPassedThenRequestedFatBinaryReturnsTrue) {
+    for (const auto &acronyms : {enabledFamiliesAcronyms, enabledReleasesAcronyms}) {
+        for (const auto &acronym : acronyms) {
+            auto acronymStr = acronym.str();
+            const char *name[] = {"ocloc", "-device", acronymStr.c_str()};
+            EXPECT_TRUE(NEO::requestedFatBinary(3, name, oclocArgHelperWithoutInput.get()));
         }
     }
 }
 
-TEST(OclocFatBinaryAsProductId, GivenEnabledPlatformNameThenReturnsProperPlatformId) {
-    auto platforms = NEO::getAllSupportedTargetPlatforms();
-    auto names = NEO::toProductNames(platforms);
-    for (size_t i = 0; i < platforms.size(); ++i) {
-        auto idByName = NEO::asProductId(names[i], platforms);
-        EXPECT_EQ(idByName, platforms[i]) << names[i].data() << " : " << platforms[i] << " != " << idByName;
+TEST_F(OclocFatBinaryProductAcronymsTests, givenEnabledFamilyAcronymsWhenCheckIfIsFamilyThenTrueIsReturned) {
+    for (const auto &acronym : enabledFamiliesAcronyms) {
+        EXPECT_TRUE(oclocArgHelperWithoutInput->isFamily(acronym.str()));
     }
 }
 
-TEST(OclocFatBinaryAsProductId, GivenDisabledPlatformNameThenReturnsUnknownPlatformId) {
-    auto platforms = NEO::getAllSupportedTargetPlatforms();
-    auto names = NEO::toProductNames(platforms);
-    platforms.clear();
-    for (size_t i = 0; i < platforms.size(); ++i) {
-        auto idByName = NEO::asProductId(names[i], platforms);
-        EXPECT_EQ(IGFX_UNKNOWN, platforms[i]) << names[i].data() << " : IGFX_UNKNOWN != " << idByName;
+TEST_F(OclocFatBinaryProductAcronymsTests, givenEnabledReleaseAcronymsWhenCheckIfIsReleaseThenTrueIsReturned) {
+    for (const auto &acronym : enabledReleasesAcronyms) {
+        EXPECT_TRUE(oclocArgHelperWithoutInput->isRelease(acronym.str()));
     }
 }
 
-TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonEmptyList) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenDisabledFamilyOrReleaseNameThenReturnsEmptyList) {
+    EXPECT_FALSE(oclocArgHelperWithoutInput->isFamily(ConstStringRef("gen0").str()));
+    EXPECT_FALSE(oclocArgHelperWithoutInput->isFamily(ConstStringRef("genX").str()));
+    EXPECT_FALSE(oclocArgHelperWithoutInput->isRelease(ConstStringRef("gen0").str()));
+    EXPECT_FALSE(oclocArgHelperWithoutInput->isRelease(ConstStringRef("genX").str()));
+}
 
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+TEST_F(OclocFatBinaryProductAcronymsTests, givenUnkownArchitectureThenReturnEmptyList) {
+    auto got = NEO::getTargetProductsForFatbinary("gen0", oclocArgHelperWithoutInput.get());
+    EXPECT_TRUE(got.empty());
+}
 
-    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        if (nullptr != NEO::familyName[coreId]) {
-            EXPECT_TRUE(argHelper->isGen(ConstStringRef(NEO::familyName[coreId]).str()));
-            std::string caseInsensitive = NEO::familyName[coreId];
-            std::transform(caseInsensitive.begin(), caseInsensitive.end(), caseInsensitive.begin(), ::tolower);
-            EXPECT_TRUE(argHelper->isGen(caseInsensitive));
+TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProductsOrFamiliesOrReleasesAreValidThenFailIsReturned) {
+    for (const auto &enabledAcronyms : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
+        if (enabledAcronyms.size() < 3) {
+            GTEST_SKIP();
+        }
 
-            auto findCore = caseInsensitive.find("_core");
-            if (findCore != std::string::npos) {
-                caseInsensitive = caseInsensitive.substr(0, findCore);
-                EXPECT_TRUE(argHelper->isGen(caseInsensitive));
-            }
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream acronymsString;
+        acronymsString << enabledAcronyms[0].str() << ":" << enabledAcronyms[1].str() << ":" << enabledAcronyms[2].str();
+        auto target = acronymsString.str();
 
-            auto findUnderline = caseInsensitive.find("_");
-            if (findUnderline != std::string::npos) {
-                caseInsensitive.erase(std::remove(caseInsensitive.begin(), caseInsensitive.end(), '_'), caseInsensitive.end());
-                EXPECT_TRUE(argHelper->isGen(caseInsensitive));
-            }
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            target};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
+        resString << "Invalid range : " << acronymsString.str() << " - should be from:to or :to or from:\n";
+        resString << "Failed to parse target devices from : " << target << "\n";
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenAcronymOpenRangeWhenAcronymIsUnknownThenReturnEmptyList) {
+    auto got = NEO::getTargetProductsForFatbinary("unk:", oclocArgHelperWithoutInput.get());
+    EXPECT_TRUE(got.empty());
+
+    got = NEO::getTargetProductsForFatbinary(":unk", oclocArgHelperWithoutInput.get());
+    EXPECT_TRUE(got.empty());
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWhenAnyOfAcronymIsUnknownThenReturnEmptyList) {
+    for (const auto &vec : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
+        for (const auto &acronym : vec) {
+            auto got = NEO::getTargetProductsForFatbinary("unk:" + acronym.str(), oclocArgHelperWithoutInput.get());
+            EXPECT_TRUE(got.empty());
+
+            got = NEO::getTargetProductsForFatbinary(acronym.str() + ":unk", oclocArgHelperWithoutInput.get());
+            EXPECT_TRUE(got.empty());
+
+            got = NEO::getTargetProductsForFatbinary(acronym.str() + ",unk", oclocArgHelperWithoutInput.get());
+            EXPECT_TRUE(got.empty());
+
+            got = NEO::getTargetProductsForFatbinary("unk," + acronym.str(), oclocArgHelperWithoutInput.get());
+            EXPECT_TRUE(got.empty());
         }
     }
 }
 
-TEST(OclocFatBinaryAsGfxCoreIdList, GivenDisabledGfxCoreNameThenReturnsEmptyList) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProductsAcronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
+        auto acronym0 = enabledProductsAcronyms.at(product);
+        auto acronym1 = enabledProductsAcronyms.at(product + 1);
+        std::vector<ConstStringRef> expected{acronym0, acronym1};
 
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
 
-    EXPECT_FALSE(argHelper->isGen(ConstStringRef("genA").str()));
-    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen0").str()));
-    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen1").str()));
-    EXPECT_FALSE(argHelper->isGen(ConstStringRef("gen2").str()));
-}
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
 
-TEST(OclocFatBinaryAsGfxCoreIdList, GivenEnabledGfxCoreNameThenReturnsNonNullIGFX) {
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-
-    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        if (nullptr != NEO::familyName[coreId]) {
-            EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef(NEO::familyName[coreId]).str()), coreId);
-            std::string caseInsensitive = NEO::familyName[coreId];
-            std::transform(caseInsensitive.begin(), caseInsensitive.end(), caseInsensitive.begin(), ::tolower);
-            EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
-
-            auto findCore = caseInsensitive.find("_core");
-            if (findCore != std::string::npos) {
-                caseInsensitive = caseInsensitive.substr(0, findCore);
-                EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
-            }
-
-            auto findUnderline = caseInsensitive.find("_");
-            if (findUnderline != std::string::npos) {
-                caseInsensitive.erase(std::remove(caseInsensitive.begin(), caseInsensitive.end(), '_'), caseInsensitive.end());
-                EXPECT_EQ(argHelper->returnIGFXforGen(caseInsensitive), coreId);
-            }
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
         }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
 }
 
-TEST(OclocFatBinaryAsGfxCoreIdList, GivenDisabledGfxCoreNameThenReturnsNullIGFX) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-
-    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("genA").str()), 0u);
-    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen0").str()), 0u);
-    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen1").str()), 0u);
-    EXPECT_EQ(argHelper->returnIGFXforGen(ConstStringRef("gen2").str()), 0u);
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenMutiplePlatformThenReturnThosePlatforms) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 2) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameReleaseTargetsWhenGetProductsAcronymsThenDuplicatesAreNotFound) {
+    if (enabledReleasesAcronyms.empty()) {
         GTEST_SKIP();
     }
-    auto platform0 = allEnabledPlatforms[0];
-    std::string platform0Name = NEO::hardwarePrefix[platform0];
-    auto platform1 = allEnabledPlatforms[1];
-    std::string platform1Name = NEO::hardwarePrefix[platform1];
 
-    std::vector<ConstStringRef> expected{platform0Name, platform1Name};
-    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + "," + platform1Name, oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected, got);
+    auto acronym = enabledReleasesAcronyms[0];
+    std::vector<ConstStringRef> acronyms{};
+
+    auto release = ProductConfigHelper::returnReleaseForAcronym(acronym.str());
+    getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
+    auto expectedSize = acronyms.size();
+    getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(acronyms.size(), expectedSize);
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformOpenRangeFromThenReturnAllEnabledPlatformsThatMatch) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 3) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameFamilyTargetsWhenGetProductsAcronymsThenDuplicatesAreNotFound) {
+    if (enabledFamiliesAcronyms.empty()) {
         GTEST_SKIP();
     }
-    auto platform0 = allEnabledPlatforms[allEnabledPlatforms.size() / 2];
-    std::string platformName = NEO::hardwarePrefix[platform0];
 
-    std::vector<PRODUCT_FAMILY> expectedPlatforms;
-    auto platformFrom = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platform0);
-    expectedPlatforms.insert(expectedPlatforms.end(), platformFrom, allEnabledPlatforms.end());
-    auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(platformName + "-", oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected, got);
+    auto acronym = enabledFamiliesAcronyms[0];
+    std::vector<ConstStringRef> acronyms{};
+
+    auto family = ProductConfigHelper::returnFamilyForAcronym(acronym.str());
+    getProductsAcronymsForTarget(acronyms, family, oclocArgHelperWithoutInput.get());
+    auto expectedSize = acronyms.size();
+    getProductsAcronymsForTarget(acronyms, family, oclocArgHelperWithoutInput.get());
+
+    EXPECT_EQ(acronyms.size(), expectedSize);
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformOpenRangeToThenReturnAllEnabledPlatformsThatMatch) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 3) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledReleasesAcronyms.size() < 2) {
         GTEST_SKIP();
     }
-    auto platform0 = allEnabledPlatforms[allEnabledPlatforms.size() / 2];
-    std::string platformName = NEO::hardwarePrefix[platform0];
+    for (unsigned int product = 0; product < enabledReleasesAcronyms.size() - 1; product++) {
+        auto acronym0 = enabledReleasesAcronyms.at(product);
+        auto acronym1 = enabledReleasesAcronyms.at(product + 1);
+        std::vector<ConstStringRef> expected{};
 
-    std::vector<PRODUCT_FAMILY> expectedPlatforms;
-    auto platformTo = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platform0);
-    expectedPlatforms.insert(expectedPlatforms.end(), allEnabledPlatforms.begin(), platformTo + 1);
-    auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary("-" + platformName, oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected, got);
-}
+        auto release0 = ProductConfigHelper::returnReleaseForAcronym(acronym0.str());
+        auto release1 = ProductConfigHelper::returnReleaseForAcronym(acronym1.str());
+        getProductsAcronymsForTarget(expected, release0, oclocArgHelperWithoutInput.get());
+        getProductsAcronymsForTarget(expected, release1, oclocArgHelperWithoutInput.get());
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformClosedRangeThenReturnAllEnabledPlatformsThatMatch) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 4) {
-        GTEST_SKIP();
-    }
-    auto platformFrom = allEnabledPlatforms[1];
-    auto platformTo = allEnabledPlatforms[allEnabledPlatforms.size() - 2];
-    std::string platformNameFrom = NEO::hardwarePrefix[platformFrom];
-    std::string platformNameTo = NEO::hardwarePrefix[platformTo];
+        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
 
-    std::vector<PRODUCT_FAMILY> expectedPlatforms;
-    expectedPlatforms.insert(expectedPlatforms.end(), allEnabledPlatforms.begin() + 1, allEnabledPlatforms.begin() + allEnabledPlatforms.size() - 1);
-    auto expected = NEO::toProductNames(expectedPlatforms);
-    auto got = NEO::getTargetPlatformsForFatbinary(platformNameFrom + "-" + platformNameTo, oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected, got);
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
 
-    got = NEO::getTargetPlatformsForFatbinary(platformNameTo + "-" + platformNameFrom, oclocArgHelperWithoutInput.get()); // swap min with max implicitly
-    EXPECT_EQ(expected, got);
-}
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
 
-std::vector<GFXCORE_FAMILY> getEnabledCores() {
-    std::vector<GFXCORE_FAMILY> ret;
-    for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        if (nullptr != NEO::familyName[coreId]) {
-            ret.push_back(static_cast<GFXCORE_FAMILY>(coreId));
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
         }
-    }
-    return ret;
-}
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArchitectureThenReturnAllEnabledConfigsThatMatch) {
-    auto allEnabledCores = getEnabledCores();
-    if (allEnabledCores.size() < 3) {
-        GTEST_SKIP();
-    }
-    auto core = allEnabledCores[allEnabledCores.size() / 2];
-    std::string coreName = NEO::familyName[core];
-    if (coreName[0] == 'G') {
-        coreName[0] = 'g';
-    }
-
-    std::vector<DeviceMapping> expected;
-    oclocArgHelperWithoutInput->getProductConfigsForGfxCoreFamily(core, expected);
-    auto got = NEO::getTargetConfigsForFatbinary(coreName, oclocArgHelperWithoutInput.get());
-
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArchitectureOpenRangeFromThenReturnAllEnabledConfigsThatMatch) {
-    auto allEnabledCores = getEnabledCores();
-    if (allEnabledCores.size() < 3) {
-        GTEST_SKIP();
-    }
-    auto core0 = allEnabledCores[allEnabledCores.size() / 2];
-    std::string coreName = NEO::familyName[core0];
-    if (coreName[0] == 'G') {
-        coreName[0] = 'g';
-    }
-
-    std::vector<DeviceMapping> expected;
-    unsigned int coreIt = core0;
-    while (coreIt < static_cast<unsigned int>(IGFX_MAX_CORE)) {
-        oclocArgHelperWithoutInput->getProductConfigsForGfxCoreFamily(static_cast<GFXCORE_FAMILY>(coreIt), expected);
-        ++coreIt;
-    }
-
-    auto got = NEO::getTargetConfigsForFatbinary(coreName + "-", oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArchitectureOpenRangeToThenReturnAllEnabledConfigsThatMatch) {
-    auto allEnabledCores = getEnabledCores();
-    if (allEnabledCores.size() < 3) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledFamiliesAcronyms.size() < 2) {
         GTEST_SKIP();
     }
 
-    auto core0 = allEnabledCores[allEnabledCores.size() / 2];
-    std::string coreName = NEO::familyName[core0];
-    if (coreName[0] == 'G') {
-        coreName[0] = 'g';
-    }
-
-    std::vector<DeviceMapping> expected;
-    unsigned int coreIt = IGFX_UNKNOWN_CORE;
-    ++coreIt;
-    while (coreIt <= static_cast<unsigned int>(core0)) {
-        oclocArgHelperWithoutInput->getProductConfigsForGfxCoreFamily(static_cast<GFXCORE_FAMILY>(coreIt), expected);
-        ++coreIt;
-    }
-
-    auto got = NEO::getTargetConfigsForFatbinary("-" + coreName, oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArchitectureClosedRangeThenReturnAllEnabledConfigsThatMatch) {
-    auto allEnabledCores = getEnabledCores();
-    if (allEnabledCores.size() < 4) {
-        GTEST_SKIP();
-    }
-    auto coreFrom = allEnabledCores[1];
-    auto coreTo = allEnabledCores[allEnabledCores.size() - 2];
-    std::string coreNameFrom = NEO::familyName[coreFrom];
-    if (coreNameFrom[0] == 'G') {
-        coreNameFrom[0] = 'g';
-    }
-    std::string coreNameTo = NEO::familyName[coreTo];
-    if (coreNameTo[0] == 'G') {
-        coreNameTo[0] = 'g';
-    }
-
-    std::vector<DeviceMapping> expected;
-    auto coreIt = coreFrom;
-    while (coreIt <= coreTo) {
-        oclocArgHelperWithoutInput->getProductConfigsForGfxCoreFamily(static_cast<GFXCORE_FAMILY>(coreIt), expected);
-        coreIt = static_cast<GFXCORE_FAMILY>(static_cast<unsigned int>(coreIt) + 1);
-    }
-
-    auto got = NEO::getTargetConfigsForFatbinary(coreNameFrom + "-" + coreNameTo, oclocArgHelperWithoutInput.get());
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-
-    got = NEO::getTargetConfigsForFatbinary(coreNameTo + "-" + coreNameFrom, oclocArgHelperWithoutInput.get()); // swap min with max implicitly
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenUnkownArchitectureThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("gen0", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenMutiplePlatformWhenSecondPlatformsIsUnknownThenReturnErrorMessage) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    auto platform0 = allEnabledPlatforms[0];
-    std::string platform0Name = NEO::hardwarePrefix[platform0];
-
-    auto platformTarget = platform0Name + ",unk";
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        platformTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    resString << "Unknown device : unk\n";
-    resString << "Failed to parse target devices from : " << platformTarget << "\n";
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenClosedRangeTooExtensiveWhenConfigIsValidThenErrorMessageAndFailIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 4) {
-        GTEST_SKIP();
-    }
-    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    std::string configNum1 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[1].config);
-    std::string configNum2 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[2].config);
-
-    std::stringstream configString;
-    configString << configNum0 << "-" << configNum1 << "-" << configNum2;
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        configString.str()};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-    resString << "Invalid range : " << configString.str() << " - should be from-to or -to or from-"
-              << "\n";
-    resString << "Failed to parse target devices from : " << configString.str() << "\n";
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenClosedRangeTooExtensiveWhenPlatformIsValidThenErrorMessageAndReturnEmptyList) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 4) {
-        GTEST_SKIP();
-    }
-    auto platform0 = allEnabledPlatforms[0];
-    std::string platform0Name = NEO::hardwarePrefix[platform0];
-    auto platform1 = allEnabledPlatforms[1];
-    std::string platform1Name = NEO::hardwarePrefix[platform1];
-    auto platform2 = allEnabledPlatforms[2];
-    std::string platform2Name = NEO::hardwarePrefix[platform2];
-    std::string platformsTarget = platform0Name + "-" + platform1Name + "-" + platform2Name;
-
-    std::string resString = "Invalid range : " + platformsTarget + " - should be from-to or -to or from-\n";
-
-    testing::internal::CaptureStdout();
-    auto got = NEO::getTargetPlatformsForFatbinary(platformsTarget, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(output.c_str(), resString.c_str());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformClosedRangeWhenSecondPlatformIsUnkownThenReturnEmptyList) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    auto platform0 = allEnabledPlatforms[0];
-    std::string platform0Name = NEO::hardwarePrefix[platform0];
-
-    auto got = NEO::getTargetPlatformsForFatbinary(platform0Name + "-unk", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenGenOpenRangeFromWhenGenIsUnknownThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("gen2-", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenGenOpenRangeToWhenGenIsUnknownThenReturnEmptyList) {
-    auto got = NEO::getTargetConfigsForFatbinary("-gen2", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenGenClosedRangeWhenAnyOfGensIsUnknownThenReturnEmptyList) {
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    auto platform0 = allEnabledPlatforms[0];
-    auto gfxCore0 = NEO::hardwareInfoTable[platform0]->platform.eRenderCoreFamily;
-    std::string genName = NEO::familyName[gfxCore0];
-    if (genName[0] == 'G') {
-        genName[0] = 'g';
-    }
-
-    auto got = NEO::getTargetConfigsForFatbinary("gen2-" + genName, oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary(genName + "-gen2", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary(genName + ",gen2", oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-
-    got = NEO::getTargetConfigsForFatbinary("gen2," + genName, oclocArgHelperWithoutInput.get());
-    EXPECT_TRUE(got.empty());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoPlatformsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 3) {
-        GTEST_SKIP();
-    }
-
-    auto platform0 = allEnabledPlatforms[0];
-    ConstStringRef platformName0(hardwarePrefix[platform0], strlen(hardwarePrefix[platform0]));
-    auto platform1 = allEnabledPlatforms[1];
-    ConstStringRef platformName1(hardwarePrefix[platform1], strlen(hardwarePrefix[platform1]));
-
-    std::vector<ConstStringRef> expected{platformName0, platformName1};
-
-    std::string platformsTarget = platformName0.str() + "," + platformName1.str();
-
-    auto got = NEO::getTargetPlatformsForFatbinary(platformsTarget, argHelper.get());
-    EXPECT_EQ(expected, got);
-
-    auto platformRev0 = std::to_string(hardwareInfoTable[platform0]->platform.usRevId);
-    auto platformRev1 = std::to_string(hardwareInfoTable[platform1]->platform.usRevId);
-    std::vector<std::string> platformsRevision{platformRev0, platformRev1};
-    std::stringstream resString;
-
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        platformsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (uint32_t i = 0; i < got.size(); i++) {
-        resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevision[i] + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 4) {
-        GTEST_SKIP();
-    }
-
-    auto platformFrom = allEnabledPlatforms[0];
-    ConstStringRef platformNameFrom(hardwarePrefix[platformFrom], strlen(hardwarePrefix[platformFrom]));
-    auto platformTo = allEnabledPlatforms[allEnabledPlatforms.size() / 2];
-    ConstStringRef platformNameTo(hardwarePrefix[platformTo], strlen(hardwarePrefix[platformTo]));
-
-    if (platformFrom > platformTo) {
-        std::swap(platformFrom, platformTo);
-    }
-
-    std::vector<PRODUCT_FAMILY> requestedPlatforms;
-    auto from = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platformFrom);
-    auto to = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platformTo) + 1;
-    requestedPlatforms.insert(requestedPlatforms.end(), from, to);
-
-    auto expected = toProductNames(requestedPlatforms);
-
-    std::string platformsTarget = platformNameFrom.str() + "-" + platformNameTo.str();
-
-    auto got = NEO::getTargetPlatformsForFatbinary(platformsTarget, argHelper.get());
-    EXPECT_EQ(expected, got);
-
-    std::vector<std::string> platformsRevisions;
-
-    for (auto platform : requestedPlatforms) {
-        platformsRevisions.push_back(std::to_string(hardwareInfoTable[platform]->platform.usRevId));
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        platformsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (uint32_t i = 0; i < got.size(); i++) {
-        resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeToWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 4) {
-        GTEST_SKIP();
-    }
-
-    auto platformTo = allEnabledPlatforms[0];
-    ConstStringRef platformNameTo(hardwarePrefix[platformTo], strlen(hardwarePrefix[platformTo]));
-
-    std::vector<PRODUCT_FAMILY> requestedPlatforms;
-    auto platformToId = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platformTo);
-    assert(platformToId != allEnabledPlatforms.end());
-
-    requestedPlatforms.insert(requestedPlatforms.end(), allEnabledPlatforms.begin(), platformToId + 1);
-
-    auto expected = toProductNames(requestedPlatforms);
-
-    std::string platformsTarget = "-" + platformNameTo.str();
-
-    auto got = NEO::getTargetPlatformsForFatbinary(platformsTarget, argHelper.get());
-    EXPECT_EQ(expected, got);
-
-    std::vector<std::string> platformsRevisions;
-
-    for (auto platform : requestedPlatforms) {
-        platformsRevisions.push_back(std::to_string(hardwareInfoTable[platform]->platform.usRevId));
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        platformsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (uint32_t i = 0; i < got.size(); i++) {
-        resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeFromWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledPlatforms = NEO::getAllSupportedTargetPlatforms();
-    if (allEnabledPlatforms.size() < 4) {
-        GTEST_SKIP();
-    }
-
-    auto platformFrom = allEnabledPlatforms[0];
-    ConstStringRef platformNameFrom(hardwarePrefix[platformFrom], strlen(hardwarePrefix[platformFrom]));
-
-    std::vector<PRODUCT_FAMILY> requestedPlatforms;
-    auto platformToId = std::find(allEnabledPlatforms.begin(), allEnabledPlatforms.end(), platformFrom);
-    assert(platformToId != allEnabledPlatforms.end());
-
-    requestedPlatforms.insert(requestedPlatforms.end(), platformToId, allEnabledPlatforms.end());
-
-    auto expected = toProductNames(requestedPlatforms);
-
-    std::string platformsTarget = platformNameFrom.str() + "-";
-
-    auto got = NEO::getTargetPlatformsForFatbinary(platformsTarget, argHelper.get());
-    EXPECT_EQ(expected, got);
-
-    std::vector<std::string> platformsRevisions;
-
-    for (auto platform : requestedPlatforms) {
-        platformsRevisions.push_back(std::to_string(hardwareInfoTable[platform]->platform.usRevId));
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        platformsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (uint32_t i = 0; i < got.size(); i++) {
-        resString << "Build succeeded for : " << expected[i].str() + "." + platformsRevisions[i] + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
-        GTEST_SKIP();
-    }
-    auto config0 = allEnabledDeviceConfigs[0];
-    auto config1 = allEnabledDeviceConfigs[1];
-
-    auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0.config);
-    auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1.config);
-
-    std::vector<std::string> targets{configStr0, configStr1};
-    std::vector<DeviceMapping> expected;
-
-    for (auto &target : targets) {
-        auto configFirstEl = argHelper->findConfigMatch(target, true);
-
-        auto configLastEl = argHelper->findConfigMatch(target, false);
-        for (auto &deviceConfig : allEnabledDeviceConfigs) {
-            if (deviceConfig.config >= configFirstEl && deviceConfig.config <= configLastEl) {
-                expected.push_back(deviceConfig);
-            }
+    for (unsigned int product = 0; product < enabledFamiliesAcronyms.size() - 1; product++) {
+        auto acronym0 = enabledFamiliesAcronyms.at(product);
+        auto acronym1 = enabledFamiliesAcronyms.at(product + 1);
+        std::vector<ConstStringRef> expected{};
+
+        auto family0 = ProductConfigHelper::returnFamilyForAcronym(acronym0.str());
+        auto family1 = ProductConfigHelper::returnFamilyForAcronym(acronym1.str());
+        getProductsAcronymsForTarget(expected, family0, oclocArgHelperWithoutInput.get());
+        getProductsAcronymsForTarget(expected, family1, oclocArgHelperWithoutInput.get());
+
+        std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
         }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
-
-    auto configsTarget = configStr0 + "," + configStr1;
-    auto got = NEO::getTargetConfigsForFatbinary(configsTarget, argHelper.get());
-
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        configsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (auto deviceConfig : expected) {
-        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
-        resString << "Build succeeded for : " << targetConfig + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFromWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProductsAcronyms.size() < 3) {
         GTEST_SKIP();
     }
-    auto deviceMapConfig = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2];
-    auto configNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
-
-    std::vector<DeviceMapping> expected;
-    auto configFrom = std::find_if(allEnabledDeviceConfigs.begin(),
-                                   allEnabledDeviceConfigs.end(),
-                                   [&cf = deviceMapConfig](const DeviceMapping &c) -> bool { return cf.config == c.config; });
-
-    expected.insert(expected.end(), configFrom, allEnabledDeviceConfigs.end());
-
-    auto configsTarget = configNumConvention + "-";
-    auto got = NEO::getTargetConfigsForFatbinary(configsTarget, argHelper.get());
-
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        configsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (auto deviceConfig : expected) {
-        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
-        resString << "Build succeeded for : " << targetConfig + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeToWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
-        GTEST_SKIP();
-    }
-
-    auto deviceMapConfig = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() / 2];
-    auto configNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.config);
-
-    std::vector<DeviceMapping> expected;
-    for (auto &deviceConfig : allEnabledDeviceConfigs) {
-        if (deviceConfig.config <= deviceMapConfig.config) {
-            expected.push_back(deviceConfig);
+    for (unsigned int product = 0; product < enabledProductsAcronyms.size() - 1; product++) {
+        if (product == enabledProductsAcronyms.size() / 2) {
+            continue;
         }
-    }
-    auto configsTarget = "-" + configNumConvention;
-    auto got = NEO::getTargetConfigsForFatbinary(configsTarget, argHelper.get());
+        std::vector<ConstStringRef> expected{};
+        auto acronymFrom = enabledProductsAcronyms.at(product);
+        auto acronymTo = enabledProductsAcronyms.at(enabledProductsAcronyms.size() / 2);
 
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        configsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (auto deviceConfig : expected) {
-        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
-        resString << "Build succeeded for : " << targetConfig + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
-}
-
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
-    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 4) {
-        GTEST_SKIP();
-    }
-
-    auto deviceMapConfigFrom = allEnabledDeviceConfigs[1];
-    auto deviceMapConfigTo = allEnabledDeviceConfigs[allEnabledDeviceConfigs.size() - 2];
-    auto configFromNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfigFrom.config);
-    auto configToNumConvention = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfigTo.config);
-
-    std::vector<DeviceMapping> expected;
-
-    for (auto &deviceConfig : allEnabledDeviceConfigs) {
-        if (deviceConfig.config >= deviceMapConfigFrom.config && deviceConfig.config <= deviceMapConfigTo.config) {
-            expected.push_back(deviceConfig);
+        auto prodFromIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymFrom);
+        auto prodToIt = std::find(enabledProductsAcronyms.begin(), enabledProductsAcronyms.end(), acronymTo);
+        if (prodFromIt > prodToIt) {
+            std::swap(prodFromIt, prodToIt);
         }
+        expected.insert(expected.end(), prodFromIt, ++prodToIt);
+
+        std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
     }
-    auto configsTarget = configFromNumConvention + "-" + configToNumConvention;
-    auto got = NEO::getTargetConfigsForFatbinary(configsTarget, argHelper.get()); // swap min with max implicitly
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-    got = NEO::getTargetConfigsForFatbinary(configToNumConvention + "-" + configFromNumConvention, argHelper.get()); // swap min with max implicitly
-
-    EXPECT_EQ(expected.size(), got.size());
-    for (unsigned int i = 0; i < got.size(); i++) {
-        EXPECT_TRUE(expected[i] == got[i]);
-    }
-
-    std::stringstream resString;
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-file",
-        clFiles + "copybuffer.cl",
-        "-device",
-        configsTarget};
-
-    testing::internal::CaptureStdout();
-    int retVal = buildFatBinary(argv, argHelper.get());
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-
-    for (auto deviceConfig : expected) {
-        auto targetConfig = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.config);
-        resString << "Build succeeded for : " << targetConfig + ".\n";
-    }
-
-    EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNumerationIsProvidedWithoutRevisionThenTargetsAreFound) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenReleasesClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledReleasesAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+    for (unsigned int release = 0; release < enabledReleasesAcronyms.size() - 1; release++) {
+        if (release == enabledReleasesAcronyms.size() / 2) {
+            continue;
+        }
+        std::vector<ConstStringRef> expected{};
+        auto acronymFrom = enabledReleasesAcronyms.at(release);
+        auto acronymTo = enabledReleasesAcronyms.at(enabledReleasesAcronyms.size() / 2);
+
+        auto releaseFromIt = ProductConfigHelper::returnReleaseForAcronym(acronymFrom.str());
+        auto releaseToIt = ProductConfigHelper::returnReleaseForAcronym(acronymTo.str());
+
+        if (releaseFromIt > releaseToIt) {
+            std::swap(releaseFromIt, releaseToIt);
+        }
+        while (releaseFromIt <= releaseToIt) {
+            getProductsAcronymsForTarget(expected, releaseFromIt, oclocArgHelperWithoutInput.get());
+            releaseFromIt = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromIt) + 1);
+        }
+
+        std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledFamiliesAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+    for (unsigned int family = 0; family < enabledFamiliesAcronyms.size() - 1; family++) {
+        if (family == enabledFamiliesAcronyms.size() / 2) {
+            continue;
+        }
+        std::vector<ConstStringRef> expected{};
+        auto acronymFrom = enabledFamiliesAcronyms.at(family);
+        auto acronymTo = enabledFamiliesAcronyms.at(enabledFamiliesAcronyms.size() / 2);
+
+        auto familyFromIt = ProductConfigHelper::returnFamilyForAcronym(acronymFrom.str());
+        auto familyToIt = ProductConfigHelper::returnFamilyForAcronym(acronymTo.str());
+
+        if (familyFromIt > familyToIt) {
+            std::swap(familyFromIt, familyToIt);
+        }
+        while (familyFromIt <= familyToIt) {
+            getProductsAcronymsForTarget(expected, familyFromIt, oclocArgHelperWithoutInput.get());
+            familyFromIt = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromIt) + 1);
+        }
+
+        std::string acronymsTarget = acronymFrom.str() + ":" + acronymTo.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProductsAcronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (auto acronymIt = enabledProductsAcronyms.begin(); acronymIt != enabledProductsAcronyms.end(); ++acronymIt) {
+        std::vector<ConstStringRef> expected{};
+        expected.insert(expected.end(), acronymIt, enabledProductsAcronyms.end());
+
+        std::string acronymsTarget = (*acronymIt).str() + ":";
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProductsAcronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (auto acronymIt = enabledProductsAcronyms.begin(); acronymIt != enabledProductsAcronyms.end(); ++acronymIt) {
+        std::vector<ConstStringRef> expected{};
+        expected.insert(expected.end(), enabledProductsAcronyms.begin(), acronymIt + 1);
+
+        std::string acronymsTarget = ":" + (*acronymIt).str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledReleasesAcronyms.size() < 3) {
         GTEST_SKIP();
     }
 
-    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    auto majorPos = configNum0.find(".");
-    auto minorPos = configNum0.find(".", ++majorPos);
-    auto cutRevision = configNum0.substr(0, minorPos);
+    for (const auto &release : enabledReleasesAcronyms) {
+        std::vector<ConstStringRef> expected{};
 
-    auto got = NEO::getTargetConfigsForFatbinary(ConstStringRef(cutRevision), oclocArgHelperWithoutInput.get());
-    EXPECT_FALSE(got.empty());
+        auto releaseFromId = ProductConfigHelper::returnReleaseForAcronym(release.str());
+        auto releaseToId = AOT::RELEASE_MAX;
+        while (releaseFromId < releaseToId) {
+            getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
+            releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
+        }
+
+        std::string releasesTarget = release.str() + ":";
+        auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            releasesTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
 }
 
-TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenArgsWhenCorrectDeviceNumerationIsProvidedWithoutMinorAndRevisionThenTargetsAreFound) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
-    if (allEnabledDeviceConfigs.size() < 2) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledReleasesAcronyms.size() < 3) {
         GTEST_SKIP();
     }
 
-    std::string configNum0 = ProductConfigHelper::parseMajorMinorRevisionValue(allEnabledDeviceConfigs[0].config);
-    auto majorPos = configNum0.find(".");
-    auto cutMinorAndRevision = configNum0.substr(0, majorPos);
+    for (const auto &release : enabledReleasesAcronyms) {
+        std::vector<ConstStringRef> expected{};
 
-    auto got = NEO::getTargetConfigsForFatbinary(ConstStringRef(cutMinorAndRevision), oclocArgHelperWithoutInput.get());
-    EXPECT_FALSE(got.empty());
+        auto releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(AOT::UNKNOWN_RELEASE) + 1);
+        auto releaseToId = ProductConfigHelper::returnReleaseForAcronym(release.str());
+
+        while (releaseFromId <= releaseToId) {
+            getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
+            releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFromId) + 1);
+        }
+
+        std::string releasesTarget = ":" + release.str();
+        auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            releasesTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
 }
 
-TEST_F(OclocFatBinaryTest, GivenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsGenericIrFileWithSpirvContent) {
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledFamiliesAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &family : enabledFamiliesAcronyms) {
+        std::vector<ConstStringRef> expected{};
+
+        auto familyFromId = ProductConfigHelper::returnFamilyForAcronym(family.str());
+        auto familyToId = AOT::FAMILY_MAX;
+        while (familyFromId < familyToId) {
+            getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
+            familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
+        }
+
+        std::string familiesTarget = family.str() + ":";
+        auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            familiesTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledFamiliesAcronyms.size() < 3) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &family : enabledFamiliesAcronyms) {
+        std::vector<ConstStringRef> expected{};
+
+        auto familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(AOT::UNKNOWN_FAMILY) + 1);
+        auto familyToId = ProductConfigHelper::returnFamilyForAcronym(family.str());
+
+        while (familyFromId <= familyToId) {
+            getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
+            familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
+        }
+
+        std::string familiesTarget = ":" + family.str();
+        auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            familiesTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveContainsGenericIrFileWithSpirvContent) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
     }
-
     const std::vector<std::string> args = {
         "ocloc",
         "-output",
@@ -1122,6 +828,7 @@ TEST_F(OclocFatBinaryTest, GivenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
         "-device",
         devices};
 
+    mockArgHelper.getPrinterRef() = MessagePrinter{true};
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1157,7 +864,7 @@ TEST_F(OclocFatBinaryTest, GivenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
     EXPECT_TRUE(isSpirvDataEqualsInputFileData);
 }
 
-TEST_F(OclocFatBinaryTest, GivenDeviceFlagWithoutConsecutiveArgumentWhenBuildingFatbinaryThenErrorIsReported) {
+TEST_F(OclocFatBinaryTest, givenDeviceFlagWithoutConsecutiveArgumentWhenBuildingFatbinaryThenErrorIsReported) {
     const std::vector<std::string> args = {
         "ocloc",
         "-device"};
@@ -1172,12 +879,11 @@ TEST_F(OclocFatBinaryTest, GivenDeviceFlagWithoutConsecutiveArgumentWhenBuilding
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
-TEST_F(OclocFatBinaryTest, GivenFlagsWhichRequireMoreArgsWithoutThemWhenBuildingFatbinaryThenErrorIsReported) {
+TEST_F(OclocFatBinaryTest, givenFlagsWhichRequireMoreArgsWithoutThemWhenBuildingFatbinaryThenErrorIsReported) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
     }
-
     const std::array<std::string, 3> flagsToTest = {"-file", "-output", "-out_dir"};
 
     for (const auto &flag : flagsToTest) {
@@ -1198,12 +904,11 @@ TEST_F(OclocFatBinaryTest, GivenFlagsWhichRequireMoreArgsWithoutThemWhenBuilding
     }
 }
 
-TEST_F(OclocFatBinaryTest, GivenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveHaveCorrectPointerSize) {
+TEST_F(OclocFatBinaryTest, givenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveHaveCorrectPointerSize) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
     }
-
     using TestDescription = std::pair<std::string, std::string>;
 
     const std::array<TestDescription, 4> flagsToTest{
@@ -1226,6 +931,7 @@ TEST_F(OclocFatBinaryTest, GivenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveH
             "-device",
             devices};
 
+        mockArgHelper.getPrinterRef() = MessagePrinter{true};
         const auto buildResult = buildFatBinary(args, &mockArgHelper);
         ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
         ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1245,12 +951,11 @@ TEST_F(OclocFatBinaryTest, GivenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveH
     }
 }
 
-TEST_F(OclocFatBinaryTest, GivenOutputDirectoryFlagWhenBuildingFatbinaryThenArchiveIsStoredInThatDirectory) {
+TEST_F(OclocFatBinaryTest, givenOutputDirectoryFlagWhenBuildingFatbinaryThenArchiveIsStoredInThatDirectory) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
     }
-
     const std::string outputDirectory{"someOutputDir"};
 
     const std::vector<std::string> args = {
@@ -1266,6 +971,7 @@ TEST_F(OclocFatBinaryTest, GivenOutputDirectoryFlagWhenBuildingFatbinaryThenArch
         "-device",
         devices};
 
+    mockArgHelper.getPrinterRef() = MessagePrinter{true};
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
 
@@ -1273,12 +979,11 @@ TEST_F(OclocFatBinaryTest, GivenOutputDirectoryFlagWhenBuildingFatbinaryThenArch
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(expectedArchivePath));
 }
 
-TEST_F(OclocFatBinaryTest, GivenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
+TEST_F(OclocFatBinaryTest, givenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
     }
-
     const std::vector<std::string> args = {
         "ocloc",
         "-output",
@@ -1291,6 +996,7 @@ TEST_F(OclocFatBinaryTest, GivenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequest
         "-device",
         devices};
 
+    mockArgHelper.getPrinterRef() = MessagePrinter{true};
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1310,7 +1016,7 @@ TEST_F(OclocFatBinaryTest, GivenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequest
     EXPECT_EQ(decodedArchive.files.end(), spirvFileIt);
 }
 
-TEST_F(OclocFatBinaryTest, GivenClInputFileWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
+TEST_F(OclocFatBinaryTest, givenClInputFileWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {
         GTEST_SKIP();
@@ -1329,6 +1035,7 @@ TEST_F(OclocFatBinaryTest, GivenClInputFileWhenFatBinaryIsRequestedThenArchiveDo
         "-device",
         devices};
 
+    mockArgHelper.getPrinterRef() = MessagePrinter{true};
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1348,7 +1055,7 @@ TEST_F(OclocFatBinaryTest, GivenClInputFileWhenFatBinaryIsRequestedThenArchiveDo
     EXPECT_EQ(decodedArchive.files.end(), spirvFileIt);
 }
 
-TEST_F(OclocFatBinaryTest, GivenEmptyFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
+TEST_F(OclocFatBinaryTest, givenEmptyFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
     Ar::ArEncoder ar;
     std::string emptyFile{"empty_file.spv"};
     mockArgHelperFilesMap[emptyFile] = "";
@@ -1362,7 +1069,7 @@ TEST_F(OclocFatBinaryTest, GivenEmptyFileWhenAppendingGenericIrThenInvalidFileIs
     EXPECT_EQ("Error! Couldn't read input file!\n", output);
 }
 
-TEST_F(OclocFatBinaryTest, GivenInvalidIrFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
+TEST_F(OclocFatBinaryTest, givenInvalidIrFileWhenAppendingGenericIrThenInvalidFileIsReturned) {
     Ar::ArEncoder ar;
     std::string dummyFile{"dummy_file.spv"};
     mockArgHelperFilesMap[dummyFile] = "This is not IR!";
@@ -1378,7 +1085,7 @@ TEST_F(OclocFatBinaryTest, GivenInvalidIrFileWhenAppendingGenericIrThenInvalidFi
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbinaryForTargetThenNothingIsDoneAndErrorIsReturned) {
+TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationErrorWhenBuildingFatbinaryForTargetThenNothingIsDoneAndErrorIsReturned) {
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -1387,6 +1094,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbina
         gEnvironment->devicePrefix.c_str()};
 
     MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.argHelper->getPrinterRef() = MessagePrinter{true};
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     // We expect that nothing is done and error is returned.
@@ -1397,7 +1105,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbina
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
-    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     const int previousReturnValue{OclocErrorCode::INVALID_FILE};
     const auto buildResult = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
@@ -1406,7 +1114,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbina
     EXPECT_EQ(0, mockOfflineCompiler.buildCalledCount);
 }
 
-TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatbinaryForTargetThenCompilationIsInvokedAndErrorLogIsPrinted) {
+TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationSuccessAndFailingBuildWhenBuildingFatbinaryForTargetThenCompilationIsInvokedAndErrorLogIsPrinted) {
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -1422,7 +1130,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationSuccessAndFailingBuildWh
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
-    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
     const int previousReturnValue{OclocErrorCode::SUCCESS};
@@ -1445,7 +1153,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationSuccessAndFailingBuildWh
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, GivenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsPrinted) {
+TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsPrinted) {
     using namespace std::string_literals;
 
     const std::vector<std::string> argv = {
@@ -1468,7 +1176,7 @@ TEST(OclocFatBinaryHelpersTest, GivenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
-    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
     const int previousReturnValue{OclocErrorCode::SUCCESS};
@@ -1482,7 +1190,7 @@ TEST(OclocFatBinaryHelpersTest, GivenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     EXPECT_EQ(expectedOutput, output);
 }
 
-TEST(OclocFatBinaryHelpersTest, GivenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
+TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
     using namespace std::string_literals;
 
     const std::vector<std::string> argv = {
@@ -1503,7 +1211,7 @@ TEST(OclocFatBinaryHelpersTest, GivenQuietModeWhenBuildingFatbinaryForTargetThen
     Ar::ArEncoder ar;
     const std::string pointerSize{"32"};
     const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
-    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler);
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
 
     ::testing::internal::CaptureStdout();
     const int previousReturnValue{OclocErrorCode::SUCCESS};

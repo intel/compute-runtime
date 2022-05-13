@@ -61,6 +61,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_arg_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fcl_facade_tests.cpp

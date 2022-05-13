@@ -60,7 +60,7 @@ inline const char *asString(DecodeError err) {
 struct TargetDevice {
     GFXCORE_FAMILY coreFamily = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
-    PRODUCT_CONFIG productConfig = UNKNOWN_ISA;
+    AheadOfTimeConfig aotConfig = {0};
     uint32_t stepping = 0U;
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
@@ -47,11 +48,6 @@ HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetThreadEuRatioForScratchThen8I
     EXPECT_EQ(8u, hwInfoConfig.getThreadEuRatioForScratch(*defaultHwInfo));
 }
 
-HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_NE(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), UNKNOWN_ISA);
-}
-
 HWTEST_F(HwInfoConfigTest, whenIsGrfNumReportedWithScmIsQueriedThenTrueIsReturned) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isGrfNumReportedWithScm());
@@ -87,4 +83,18 @@ HWTEST_F(HwInfoConfigTest, givenForceThreadArbitrationPolicyProgrammingWithScmFl
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectFalse, isNotXeHpOrXeHpcCore) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
+}
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenGetProductConfigThenCorrectMatchIsFound, IsAtMostXeHpCore) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_NE(hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo), AOT::UNKNOWN_ISA);
+}
+
+HWTEST2_F(HwInfoConfigTest, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostXeHpCore) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(*defaultHwInfo);
+    AheadOfTimeConfig aotConfig = {0};
+    aotConfig.ProductConfig = productConfig;
+    CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->setProductConfigForHwInfo(*defaultHwInfo, aotConfig);
+    EXPECT_EQ(defaultHwInfo->platform.usRevId, aotConfig.ProductConfigID.Revision);
 }

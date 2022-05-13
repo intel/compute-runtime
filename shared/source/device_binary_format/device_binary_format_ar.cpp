@@ -34,8 +34,8 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
     }
 
     std::string pointerSize = ((requestedTargetDevice.maxPointerSizeInBytes == 8) ? "64" : "32");
-    std::string filterPointerSizeAndMajorMinorRevision = pointerSize + "." + NEO::ProductConfigHelper::parseMajorMinorRevisionValue(requestedTargetDevice.productConfig);
-    std::string filterPointerSizeAndMajorMinor = pointerSize + "." + NEO::ProductConfigHelper::parseMajorMinorValue(requestedTargetDevice.productConfig);
+    std::string filterPointerSizeAndMajorMinorRevision = pointerSize + "." + ProductConfigHelper::parseMajorMinorRevisionValue(requestedTargetDevice.aotConfig);
+    std::string filterPointerSizeAndMajorMinor = pointerSize + "." + ProductConfigHelper::parseMajorMinorValue(requestedTargetDevice.aotConfig);
     std::string filterPointerSizeAndPlatform = pointerSize + "." + requestedProductAbbreviation.str();
     std::string filterPointerSizeAndPlatformAndStepping = filterPointerSizeAndPlatform + "." + std::to_string(requestedTargetDevice.stepping);
     ConstStringRef filterGenericIrFileName{"generic_ir"};

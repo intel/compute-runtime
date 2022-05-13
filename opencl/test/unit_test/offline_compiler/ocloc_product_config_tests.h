@@ -12,13 +12,13 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
 
 namespace NEO {
-struct OclocProductConfigTests : public ::testing::TestWithParam<std::tuple<PRODUCT_CONFIG, PRODUCT_FAMILY>> {
+struct OclocProductConfigTests : public ::testing::TestWithParam<std::tuple<AOT::PRODUCT_CONFIG, PRODUCT_FAMILY>> {
     void SetUp() override {
-        std::tie(productConfig, productFamily) = GetParam();
+        std::tie(aotConfig.ProductConfig, productFamily) = GetParam();
         mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     }
 
-    PRODUCT_CONFIG productConfig;
+    AheadOfTimeConfig aotConfig;
     PRODUCT_FAMILY productFamily;
     std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
 };
