@@ -19,6 +19,9 @@ extern _ze_driver_handle_t *GlobalDriverHandle;
 namespace ult {
 
 void MetricIpSamplingFixture::SetUp() {
+
+    DebugManager.flags.EnableImplicitScaling.set(1);
+
     MultiDeviceFixture::numRootDevices = 1;
     MultiDeviceFixture::numSubDevices = 2;
     MultiDeviceFixture::SetUp();

@@ -57,6 +57,12 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
     void SetUp() override;
     void TearDown() override;
 
+    std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
+    std::vector<L0::Device *> testDevices = {};
+};
+
+class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingFixture {
+  public:
     std::vector<MockStallRawIpData> rawDataVector = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
                                                      {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
                                                      {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x100}, // set the overflow bit in flags
@@ -84,9 +90,6 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}},
         {ZET_VALUE_TYPE_UINT64, {110}}};
-
-    std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
-    std::vector<L0::Device *> testDevices = {};
 };
 
 } // namespace ult

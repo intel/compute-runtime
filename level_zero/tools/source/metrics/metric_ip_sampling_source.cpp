@@ -7,7 +7,9 @@
 
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 #include <level_zero/zet_api.h>
 
@@ -34,6 +36,27 @@ bool IpSamplingMetricSourceImp::isAvailable() {
 }
 
 void IpSamplingMetricSourceImp::cacheMetricGroup() {
+
+    if (metricDeviceContext.isImplicitScalingCapable()) {
+        const auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
+        std::vector<IpSamplingMetricGroupImp *> subDeviceMetricGroup = {};
+        subDeviceMetricGroup.reserve(deviceImp->subDevices.size());
+
+        // Prepare cached metric group for sub-devices
+        for (auto &subDevice : deviceImp->subDevices) {
+            IpSamplingMetricSourceImp &source = subDevice->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+            // 1 metric group available for IP Sampling
+            uint32_t count = 1;
+            zet_metric_group_handle_t hMetricGroup = {};
+            const auto result = source.metricGroupGet(&count, &hMetricGroup);
+            // Getting MetricGroup from sub-device cannot fail, since RootDevice is successful
+            UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+            subDeviceMetricGroup.push_back(static_cast<IpSamplingMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup)));
+        }
+
+        cachedMetricGroup = MultiDeviceIpSamplingMetricGroupImp::create(subDeviceMetricGroup);
+        return;
+    }
 
     std::vector<IpSamplingMetricImp> metrics = {};
     metrics.reserve(ipSamplinMetricCount);
@@ -75,7 +98,7 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
         metrics.push_back(IpSamplingMetricImp(metricProperties));
     }
 
-    cachedMetricGroup = IpSamplingMetricGroupImp::create(metrics);
+    cachedMetricGroup = IpSamplingMetricGroupImp::create(*this, metrics);
     DEBUG_BREAK_IF(cachedMetricGroup == nullptr);
 }
 
@@ -110,7 +133,8 @@ void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSam
     this->metricOsInterface = std::move(metricOsInterface);
 }
 
-IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(std::vector<IpSamplingMetricImp> &metrics) {
+IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
+                                                   std::vector<IpSamplingMetricImp> &metrics) : metricSource(metricSource) {
     this->metrics.reserve(metrics.size());
     for (const auto &metric : metrics) {
         this->metrics.push_back(std::make_unique<IpSamplingMetricImp>(metric));
@@ -341,28 +365,52 @@ void IpSamplingMetricGroupImp::stallSumIpDataToTypedValues(uint64_t ip,
     ipDataValues.push_back(tmpValueData);
 }
 
-bool IpSamplingMetricGroupImp::activate() {
-    // There is no hardware specific activation, since metric collection starts in streamer open
-    return true;
-}
-
-bool IpSamplingMetricGroupImp::deactivate() {
-    return true;
-}
 zet_metric_group_handle_t IpSamplingMetricGroupImp::getMetricGroupForSubDevice(const uint32_t subDeviceIndex) {
     return toHandle();
 }
 
-ze_result_t IpSamplingMetricGroupImp::metricQueryPoolCreate(
-    zet_context_handle_t hContext,
-    zet_device_handle_t hDevice,
-    const zet_metric_query_pool_desc_t *desc,
-    zet_metric_query_pool_handle_t *phMetricQueryPool) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+std::unique_ptr<IpSamplingMetricGroupImp> IpSamplingMetricGroupImp::create(IpSamplingMetricSourceImp &metricSource,
+                                                                           std::vector<IpSamplingMetricImp> &ipSamplingMetrics) {
+    return std::unique_ptr<IpSamplingMetricGroupImp>(new (std::nothrow) IpSamplingMetricGroupImp(metricSource, ipSamplingMetrics));
 }
 
-std::unique_ptr<IpSamplingMetricGroupImp> IpSamplingMetricGroupImp::create(std::vector<IpSamplingMetricImp> &ipSamplingMetrics) {
-    return std::unique_ptr<IpSamplingMetricGroupImp>(new (std::nothrow) IpSamplingMetricGroupImp(ipSamplingMetrics));
+ze_result_t MultiDeviceIpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
+    return subDeviceMetricGroup[0]->getProperties(pProperties);
+}
+
+ze_result_t MultiDeviceIpSamplingMetricGroupImp::metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) {
+    return subDeviceMetricGroup[0]->metricGet(pCount, phMetrics);
+}
+
+ze_result_t MultiDeviceIpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                                       const uint8_t *pRawData, uint32_t *pMetricValueCount,
+                                                                       zet_typed_value_t *pMetricValues) {
+    return subDeviceMetricGroup[0]->calculateMetricValues(type, rawDataSize, pRawData, pMetricValueCount, pMetricValues);
+}
+
+ze_result_t MultiDeviceIpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                                          const uint8_t *pRawData, uint32_t *pSetCount,
+                                                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                                                          zet_typed_value_t *pMetricValues) {
+
+    return subDeviceMetricGroup[0]->calculateMetricValuesExp(type, rawDataSize, pRawData, pSetCount, pTotalMetricValueCount,
+                                                             pMetricCounts, pMetricValues);
+}
+
+zet_metric_group_handle_t MultiDeviceIpSamplingMetricGroupImp::getMetricGroupForSubDevice(const uint32_t subDeviceIndex) {
+    return subDeviceMetricGroup[subDeviceIndex]->toHandle();
+}
+
+void MultiDeviceIpSamplingMetricGroupImp::closeSubDeviceStreamers(std::vector<IpSamplingMetricStreamerImp *> &subDeviceStreamers) {
+    for (auto streamer : subDeviceStreamers) {
+        streamer->close();
+    }
+}
+
+std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetricGroupImp::create(
+    std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) {
+    UNRECOVERABLE_IF(subDeviceMetricGroup.size() == 0);
+    return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(subDeviceMetricGroup));
 }
 
 IpSamplingMetricImp::IpSamplingMetricImp(zet_metric_properties_t &properties) : properties(properties) {

@@ -38,9 +38,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenStreamerOpenAnd
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
 
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -61,9 +58,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenEventHandleIsNullWhenStreamerOpenAndCl
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
 
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -82,10 +76,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenMetricGroupIsNotActivatedWhenStreamerO
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
-
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
 
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
 
@@ -106,11 +96,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsAlreadyOpenWhenStreamerOpenI
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
-
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
-
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -136,11 +121,13 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStartMeasurementFailsWhenStreamerOpenI
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
         auto device = testDevices[index];
-        osInterfaceVector[index]->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-
+        std::size_t subDeviceIndex = index;
         if (!device->getNEODevice()->isSubDevice()) {
-            continue;
+            ASSERT_GE(testDevices.size(), 3u);
+            subDeviceIndex = 2;
         }
+
+        osInterfaceVector[subDeviceIndex]->startMeasurementReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -154,8 +141,39 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStartMeasurementFailsWhenStreamerOpenI
 
         EXPECT_EQ(
             zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle),
-            osInterfaceVector[index]->startMeasurementReturn);
+            osInterfaceVector[subDeviceIndex]->startMeasurementReturn);
         EXPECT_EQ(streamerHandle, nullptr);
+    }
+}
+
+TEST_F(MetricIpSamplingStreamerTest, GivenStopMeasurementFailsWhenStreamerCloseIsCalledThenErrorIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (std::size_t index = 0; index < testDevices.size(); index++) {
+
+        auto device = testDevices[index];
+        std::size_t subDeviceIndex = index;
+        if (!device->getNEODevice()->isSubDevice()) {
+            ASSERT_GE(testDevices.size(), 3u);
+            subDeviceIndex = 2;
+        }
+
+        osInterfaceVector[subDeviceIndex]->stopMeasurementReturn = ZE_RESULT_ERROR_UNKNOWN;
+
+        zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+        ze_event_handle_t eventHandle = {};
+        zet_metric_streamer_handle_t streamerHandle = {};
+        zet_metric_streamer_desc_t streamerDesc = {};
+        streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+        streamerDesc.notifyEveryNReports = 32768;
+        streamerDesc.samplingPeriod = 1000;
+
+        EXPECT_EQ(
+            zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle),
+            ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricStreamerClose(streamerHandle), osInterfaceVector[subDeviceIndex]->stopMeasurementReturn);
     }
 }
 
@@ -165,11 +183,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
         auto device = testDevices[index];
-        osInterfaceVector[index]->getRequiredBufferSizeReturn = 100;
 
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -186,9 +200,9 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_NE(rawSize, 0u);
         uint8_t rawData = 0;
-        rawSize = 50;
+        rawSize = 256;
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, &rawData), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(rawSize, 50u);
+        EXPECT_EQ(rawSize, 256u);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
 }
@@ -199,11 +213,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
         auto device = testDevices[index];
-        osInterfaceVector[index]->getRequiredBufferSizeReturn = 100;
-
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -221,8 +230,44 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
         EXPECT_NE(rawSize, 0u);
         uint8_t rawData = 0;
         rawSize = UINT32_MAX;
-        osInterfaceVector[index]->getRequiredBufferSizeReturn = 1;
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, UINT32_MAX, &rawSize, &rawData), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+    }
+}
+
+TEST_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerReadDataIsCalledThenErrorIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    for (std::size_t index = 0; index < testDevices.size(); index++) {
+
+        auto device = testDevices[index];
+        auto subDeviceIndex = index;
+
+        if (!device->getNEODevice()->isSubDevice()) {
+            ASSERT_GE(testDevices.size(), 2u);
+            subDeviceIndex = 1;
+        }
+        osInterfaceVector[subDeviceIndex]->readDataReturn = ZE_RESULT_ERROR_UNKNOWN;
+
+        zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+        ze_event_handle_t eventHandle = {};
+        zet_metric_streamer_handle_t streamerHandle = {};
+        zet_metric_streamer_desc_t streamerDesc = {};
+        streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+        streamerDesc.notifyEveryNReports = 32768;
+        streamerDesc.samplingPeriod = 1000;
+        EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+        EXPECT_NE(streamerHandle, nullptr);
+
+        size_t rawSize = 0;
+        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_NE(rawSize, 0u);
+        uint8_t rawData = 0;
+        rawSize = 256;
+        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, &rawData),
+                  osInterfaceVector[subDeviceIndex]->readDataReturn);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
 }
@@ -232,9 +277,6 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerOpenIsSuccessfullWhenStreamerA
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
     for (auto device : testDevices) {
 
-        if (!device->getNEODevice()->isSubDevice()) {
-            continue;
-        }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
@@ -262,10 +304,12 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsAvailableToRead
     for (std::size_t index = 0; index < testDevices.size(); index++) {
 
         auto device = testDevices[index];
-        osInterfaceVector[index]->isNReportsAvailableReturn = true;
 
         if (!device->getNEODevice()->isSubDevice()) {
-            continue;
+            ASSERT_GE(testDevices.size(), 2u);
+            osInterfaceVector[1]->isNReportsAvailableReturn = true;
+        } else {
+            osInterfaceVector[index]->isNReportsAvailableReturn = true;
         }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -314,7 +358,11 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToR
         osInterfaceVector[index]->isNReportsAvailableReturn = false;
 
         if (!device->getNEODevice()->isSubDevice()) {
-            continue;
+            ASSERT_GE(testDevices.size(), 3u);
+            osInterfaceVector[1]->isNReportsAvailableReturn = false;
+            osInterfaceVector[2]->isNReportsAvailableReturn = false;
+        } else {
+            osInterfaceVector[index]->isNReportsAvailableReturn = false;
         }
         zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
@@ -353,6 +401,93 @@ TEST_F(MetricIpSamplingStreamerTest, GivenStreamerIsOpenAndDataIsNotAvailableToR
         EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
         EXPECT_EQ(zeEventPoolDestroy(eventPoolHandle), ZE_RESULT_SUCCESS);
     }
+}
+
+TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    auto device = testDevices[0];
+
+    ASSERT_FALSE(device->getNEODevice()->isSubDevice());
+    ASSERT_GE(testDevices.size(), 3u);
+
+    zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    ze_event_handle_t eventHandle = {};
+    zet_metric_streamer_handle_t streamerHandle = {};
+    zet_metric_streamer_desc_t streamerDesc = {};
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+
+    //Setup data for both subdevices
+    osInterfaceVector[1]->isfillDataEnabled = true;
+    osInterfaceVector[1]->fillData = 2;
+    osInterfaceVector[1]->fillDataSize = 64 * 20;
+
+    osInterfaceVector[2]->isfillDataEnabled = true;
+    osInterfaceVector[2]->fillData = 4;
+    osInterfaceVector[2]->fillDataSize = 64 * 30;
+
+    size_t rawSize = 0;
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_NE(rawSize, 0u);
+    std::vector<uint8_t> rawData = {};
+    rawData.resize(rawSize);
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 75, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(rawSize, osInterfaceVector[1]->fillDataSize + osInterfaceVector[2]->fillDataSize);
+    EXPECT_EQ(rawData[0], 2u);
+    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize - 1], 2u);
+    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize], 4u);
+    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize + osInterfaceVector[2]->fillDataSize - 1], 4u);
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDataIsCalledOnRootDeviceThenCorrectDataIsReturned) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    auto device = testDevices[0];
+
+    ASSERT_FALSE(device->getNEODevice()->isSubDevice());
+    ASSERT_GE(testDevices.size(), 3u);
+
+    zet_metric_group_handle_t metricGroupHandle = MetricIpSamplingStreamerTest::getMetricGroup(device);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    ze_event_handle_t eventHandle = {};
+    zet_metric_streamer_handle_t streamerHandle = {};
+    zet_metric_streamer_desc_t streamerDesc = {};
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+
+    //Setup data for both subdevices
+    osInterfaceVector[1]->isfillDataEnabled = true;
+    osInterfaceVector[1]->fillData = 2;
+    osInterfaceVector[1]->fillDataSize = osInterfaceVector[1]->getUnitReportSize() * 20;
+
+    osInterfaceVector[2]->isfillDataEnabled = true;
+    osInterfaceVector[2]->fillData = 4;
+    osInterfaceVector[2]->fillDataSize = osInterfaceVector[2]->getUnitReportSize() * 30;
+
+    size_t rawSize = 0;
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_NE(rawSize, 0u);
+
+    std::vector<uint8_t> rawData = {};
+    //Setup memory for only the first sub-device's read to succeed
+    rawSize = osInterfaceVector[1]->fillDataSize;
+    rawData.resize(rawSize);
+    EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 75, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(rawSize, osInterfaceVector[1]->fillDataSize);
+    EXPECT_EQ(rawData[0], 2u);
+    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize - 1], 2u);
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
 } // namespace ult

@@ -171,14 +171,18 @@ bool streamTest() {
 
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-        std::unique_ptr<CopyBufferToBuffer> workload =
+        executionCtxt->setExecutionTimeInMilliseconds(200);
+        std::unique_ptr<CopyBufferToBuffer> workload1 =
             std::make_unique<CopyBufferToBuffer>(executionCtxt.get());
+        std::unique_ptr<AppendMemoryCopyFromHeapToDeviceAndBackToHost> workload2 =
+            std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(executionCtxt.get());
         std::unique_ptr<SingleMetricStreamerCollector> collector =
             std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), metricGroupName.c_str());
 
         std::unique_ptr<SingleDeviceTestRunner> testRunner = std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
         testRunner->addCollector(collector.get());
-        testRunner->addWorkload(workload.get());
+        testRunner->addWorkload(workload1.get());
+        testRunner->addWorkload(workload2.get());
 
         return testRunner->run();
     };

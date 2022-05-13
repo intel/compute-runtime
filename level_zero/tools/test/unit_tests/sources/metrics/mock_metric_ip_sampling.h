@@ -19,10 +19,12 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
     ze_result_t startMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t stopMeasurementReturn = ZE_RESULT_SUCCESS;
     ze_result_t readDataReturn = ZE_RESULT_SUCCESS;
-    uint32_t getRequiredBufferSizeReturn = 100;
     uint32_t getUnitReportSizeReturn = 64;
     bool isNReportsAvailableReturn = true;
     bool isDependencyAvailableReturn = true;
+    bool isfillDataEnabled = false;
+    uint8_t fillData = 1;
+    size_t fillDataSize = 0;
 
     ~MockMetricIpSamplingOsInterface() override = default;
     ze_result_t startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) override {
@@ -32,10 +34,15 @@ class MockMetricIpSamplingOsInterface : public MetricIpSamplingOsInterface {
         return stopMeasurementReturn;
     }
     ze_result_t readData(uint8_t *pRawData, size_t *pRawDataSize) override {
+        if (isfillDataEnabled) {
+            auto fillSize = std::min(fillDataSize, *pRawDataSize);
+            memset(pRawData, fillData, fillSize);
+            *pRawDataSize = fillSize;
+        }
         return readDataReturn;
     }
     uint32_t getRequiredBufferSize(const uint32_t maxReportCount) override {
-        return getRequiredBufferSizeReturn;
+        return maxReportCount * getUnitReportSizeReturn;
     }
     uint32_t getUnitReportSize() override {
         return getUnitReportSizeReturn;

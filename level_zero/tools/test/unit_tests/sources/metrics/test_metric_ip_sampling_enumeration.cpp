@@ -194,7 +194,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyAct
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
     }
 }
-using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingFixture;
+using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingCalculateMetricsFixture;
 
 TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
