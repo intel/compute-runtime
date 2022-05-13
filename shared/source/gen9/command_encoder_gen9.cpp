@@ -43,10 +43,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     UNRECOVERABLE_IF(properties.threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent);
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        auto pipeControl = csr.getSpaceForCmd<PIPE_CONTROL>();
-        PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
-        cmd.setCommandStreamerStallEnable(true);
-        *pipeControl = cmd;
+        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
 
         LriHelper<SKLFamily>::program(&csr,
                                       DebugControlReg2::address,

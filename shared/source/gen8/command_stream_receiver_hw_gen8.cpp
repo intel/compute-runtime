@@ -22,8 +22,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::addClearSLMWorkAround(Family::PIPE_CONTROL *pCmd) {
-    pCmd->setProtectedMemoryDisable(1);
+void CommandStreamReceiverHw<Family>::setClearSlmWorkAroundParameter(PipeControlArgs &args) {
+    args.protectedMemoryDisable = true;
 }
 
 template class CommandStreamReceiverHw<Family>;

@@ -721,7 +721,7 @@ typedef struct tagPIPE_CONTROL {
             uint32_t DestinationAddressType : BITFIELD_RANGE(24, 24);
             uint32_t AmfsFlushEnable : BITFIELD_RANGE(25, 25);
             uint32_t FlushLlc : BITFIELD_RANGE(26, 26);
-            uint32_t Reserved_59 : BITFIELD_RANGE(27, 27);
+            uint32_t ProtectedMemoryDisable : BITFIELD_RANGE(27, 27);
             uint32_t TileCacheFlushEnable : BITFIELD_RANGE(28, 28);
             uint32_t CommandCacheInvalidateEnable : BITFIELD_RANGE(29, 29);
             uint32_t L3FabricFlush : BITFIELD_RANGE(30, 30);
@@ -969,6 +969,12 @@ typedef struct tagPIPE_CONTROL {
     }
     inline bool getFlushLlc() const {
         return TheStructure.Common.FlushLlc;
+    }
+    inline void setProtectedMemoryDisable(const bool value) {
+        TheStructure.Common.ProtectedMemoryDisable = value;
+    }
+    inline bool getProtectedMemoryDisable() const {
+        return TheStructure.Common.ProtectedMemoryDisable;
     }
     inline void setTileCacheFlushEnable(const bool value) {
         TheStructure.Common.TileCacheFlushEnable = value;

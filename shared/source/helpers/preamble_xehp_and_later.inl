@@ -58,10 +58,9 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
         cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
         *pCmd = cmd;
 
-        auto pipeControl = Family::cmdInitPipeControl;
-        pipeControl.setStateCacheInvalidationEnable(true);
-        auto pipeControlBuffer = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-        *pipeControlBuffer = pipeControl;
+        PipeControlArgs args = {};
+        args.stateCacheInvalidationEnable = true;
+        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
     }
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
@@ -80,10 +79,9 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     *pCmd = cmd;
 
     if (DebugManager.flags.CleanStateInPreamble.get()) {
-        auto pipeControl = Family::cmdInitPipeControl;
-        pipeControl.setStateCacheInvalidationEnable(true);
-        auto pipeControlBuffer = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-        *pipeControlBuffer = pipeControl;
+        PipeControlArgs args = {};
+        args.stateCacheInvalidationEnable = true;
+        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
     }
 }
 

@@ -319,6 +319,9 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
     pipeControl.setNotifyEnable(args.notifyEnable);
     pipeControl.setDcFlushEnable(args.dcFlushEnable);
+    pipeControl.setDepthCacheFlushEnable(args.depthCacheFlushEnable);
+    pipeControl.setDepthStallEnable(args.depthStallEnable);
+    pipeControl.setProtectedMemoryDisable(args.protectedMemoryDisable);
 
     if constexpr (GfxFamily::isUsingGenericMediaStateClear) {
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);

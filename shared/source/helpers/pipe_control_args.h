@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,9 @@ struct PipeControlArgs {
     bool workloadPartitionOffset = false;
     bool amfsFlushEnable = false;
     bool unTypedDataPortCacheFlush = false;
+    bool depthCacheFlushEnable = false;
+    bool depthStallEnable = false;
+    bool protectedMemoryDisable = false;
 };
 
 } // namespace NEO

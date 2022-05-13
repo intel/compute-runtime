@@ -53,8 +53,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     EncodeComputeMode<Family>::programComputeModeCommand(csr, properties, hwInfo);
 
     if (hasSharedHandles) {
-        auto pc = csr.getSpaceForCmd<PIPE_CONTROL>();
-        *pc = Family::cmdInitPipeControl;
+        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
     }
 
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, false, hwInfo, isRcs);

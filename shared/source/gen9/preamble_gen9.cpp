@@ -10,8 +10,10 @@
 
 namespace NEO {
 
+using Family = SKLFamily;
+
 template <>
-uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
     switch (hwInfo.platform.eProductFamily) {
@@ -28,19 +30,19 @@ uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-bool PreambleHelper<SKLFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
+bool PreambleHelper<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
     return getL3Config(hwInfo, true) != getL3Config(hwInfo, false);
 }
 
 template <>
-void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const PipelineSelectArgs &pipelineSelectArgs,
-                                                      const HardwareInfo &hwInfo) {
+void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
+                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                   const HardwareInfo &hwInfo) {
 
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Family::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = SKLFamily::cmdInitPipelineSelect;
+    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     cmd.setMaskBits(mask);
@@ -51,25 +53,23 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template <>
-void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
+void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+    PipeControlArgs args = {};
     if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
-        cmd.setRenderTargetCacheFlushEnable(true);
-        cmd.setDepthCacheFlushEnable(true);
-        cmd.setDcFlushEnable(true);
+        args.renderTargetCacheFlushEnable = true;
+        args.depthCacheFlushEnable = true;
+        args.dcFlushEnable = true;
     }
-    *pipeControl = cmd;
+    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
 }
 
 template <>
-std::vector<int32_t> PreambleHelper<SKLFamily>::getSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> PreambleHelper<Family>::getSupportedThreadArbitrationPolicies() {
     std::vector<int32_t> retVal;
     for (const int32_t &p : DebugControlReg2::supportedArbitrationPolicy) {
         retVal.push_back(p);
     }
     return retVal;
 }
-template struct PreambleHelper<SKLFamily>;
+template struct PreambleHelper<Family>;
 } // namespace NEO

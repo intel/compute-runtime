@@ -13,8 +13,10 @@
 
 namespace NEO {
 
+using Family = ICLFamily;
+
 template <>
-uint32_t PreambleHelper<ICLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
+uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
     switch (hwInfo.platform.eProductFamily) {
@@ -28,14 +30,14 @@ uint32_t PreambleHelper<ICLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStream,
-                                                      const PipelineSelectArgs &pipelineSelectArgs,
-                                                      const HardwareInfo &hwInfo) {
+void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
+                                                   const PipelineSelectArgs &pipelineSelectArgs,
+                                                   const HardwareInfo &hwInfo) {
 
-    using PIPELINE_SELECT = typename ICLFamily::PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = ICLFamily::cmdInitPipelineSelect;
+    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits |
                 pipelineSelectMediaSamplerDopClockGateMaskBits |
@@ -50,21 +52,18 @@ void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template <>
-void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
-    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-
+void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
+    PipeControlArgs args = {};
     if (hwInfo->workaroundTable.flags.waSendMIFLUSHBeforeVFE) {
-        cmd.setRenderTargetCacheFlushEnable(true);
-        cmd.setDepthCacheFlushEnable(true);
-        cmd.setDcFlushEnable(true);
+        args.renderTargetCacheFlushEnable = true;
+        args.depthCacheFlushEnable = true;
+        args.dcFlushEnable = true;
     }
-    *pipeControl = cmd;
+    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
 }
 
 template <>
-std::vector<int32_t> PreambleHelper<ICLFamily>::getSupportedThreadArbitrationPolicies() {
+std::vector<int32_t> PreambleHelper<Family>::getSupportedThreadArbitrationPolicies() {
     std::vector<int32_t> retVal;
     int32_t policySize = sizeof(RowChickenReg4::regDataForArbitrationPolicy) /
                          sizeof(RowChickenReg4::regDataForArbitrationPolicy[0]);
@@ -74,12 +73,12 @@ std::vector<int32_t> PreambleHelper<ICLFamily>::getSupportedThreadArbitrationPol
     return retVal;
 }
 template <>
-size_t PreambleHelper<ICLFamily>::getAdditionalCommandsSize(const Device &device) {
-    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<ICLFamily>(device);
+size_t PreambleHelper<Family>::getAdditionalCommandsSize(const Device &device) {
+    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<Family>(device);
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }
 
-template struct PreambleHelper<ICLFamily>;
+template struct PreambleHelper<Family>;
 } // namespace NEO

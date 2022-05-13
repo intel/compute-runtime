@@ -51,10 +51,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        auto pipeControl = csr.getSpaceForCmd<PIPE_CONTROL>();
-        PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-        cmd.setCommandStreamerStallEnable(true);
-        *pipeControl = cmd;
+        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
 
         LriHelper<Family>::program(&csr,
                                    RowChickenReg4::address,

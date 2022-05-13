@@ -163,7 +163,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
 
-    void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
+    void setClearSlmWorkAroundParameter(PipeControlArgs &args);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
     void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
     size_t getSshHeapSize();
