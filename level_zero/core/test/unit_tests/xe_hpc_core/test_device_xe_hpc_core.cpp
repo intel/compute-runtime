@@ -445,5 +445,12 @@ HWTEST2_F(DeviceTestXeHpc, givenReturnedDevicePropertiesThenExpectedPropertyFlag
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
+
+HWTEST2_F(DeviceTestXeHpc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16, IsPVC) {
+    ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    device->getProperties(&properties);
+    EXPECT_EQ(16u, properties.physicalEUSimdWidth);
+}
+
 } // namespace ult
 } // namespace L0

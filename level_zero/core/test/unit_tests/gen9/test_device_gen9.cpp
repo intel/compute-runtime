@@ -80,5 +80,11 @@ HWTEST2_F(CommandQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreate
     context->destroy();
 }
 
+HWTEST2_F(DevicePropertyTest, GivenGen9WhenGettingPhysicalEuSimdWidthThenReturn8, IsGen9) {
+    ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    device->getProperties(&properties);
+    EXPECT_EQ(8u, properties.physicalEUSimdWidth);
+}
+
 } // namespace ult
 } // namespace L0

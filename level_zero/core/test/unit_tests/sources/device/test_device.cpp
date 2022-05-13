@@ -29,6 +29,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -3103,6 +3104,123 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     auto ret = deviceImp->getCsrForLowPriority(&csr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
+}
+
+using DeviceSimpleTests = Test<DeviceFixture>;
+
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_RW == UNIFIED_SHARED_MEMORY_ACCESS, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC == UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT == UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS, "Flags value difference");
+static_assert(ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC == UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS, "Flags value difference");
+
+TEST_F(DeviceSimpleTests, returnsGPUType) {
+    ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    device->getProperties(&properties);
+    EXPECT_EQ(ZE_DEVICE_TYPE_GPU, properties.type);
+}
+
+TEST_F(DeviceSimpleTests, givenNoSubDevicesThenNonZeroNumSlicesAreReturned) {
+    uint32_t subDeviceCount = 0;
+    device->getSubDevices(&subDeviceCount, nullptr);
+    EXPECT_EQ(0u, device->getNEODevice()->getNumGenericSubDevices());
+    EXPECT_EQ(device->getNEODevice()->getNumSubDevices(), subDeviceCount);
+
+    ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    device->getProperties(&properties);
+    EXPECT_NE(0u, properties.numSlices);
+}
+
+TEST_F(DeviceSimpleTests, givenDeviceThenValidUuidIsReturned) {
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+
+    device->getProperties(&deviceProps);
+    uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
+
+    EXPECT_EQ(memcmp(&deviceProps.vendorId, deviceProps.uuid.id, sizeof(uint32_t)), 0);
+    EXPECT_EQ(memcmp(&deviceProps.deviceId, deviceProps.uuid.id + sizeof(uint32_t), sizeof(uint32_t)), 0);
+    EXPECT_EQ(memcmp(&rootDeviceIndex, deviceProps.uuid.id + (2 * sizeof(uint32_t)), sizeof(uint32_t)), 0);
+}
+
+TEST_F(DeviceSimpleTests, WhenGettingKernelPropertiesThenSuccessIsReturned) {
+    ze_device_module_properties_t kernelProps = {};
+
+    auto result = device->getKernelProperties(&kernelProps);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(DeviceSimpleTests, WhenGettingMemoryPropertiesThenSuccessIsReturned) {
+    ze_device_memory_properties_t properties;
+    uint32_t count = 1;
+    auto result = device->getMemoryProperties(&count, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(DeviceSimpleTests, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
+    ze_device_compute_properties_t properties;
+    auto result = device->getComputeProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto maxSubGroupsFromDeviceInfo = device->getDeviceInfo().maxSubGroups;
+
+    EXPECT_NE(0u, maxSubGroupsFromDeviceInfo.size());
+    EXPECT_EQ(maxSubGroupsFromDeviceInfo.size(), properties.numSubGroupSizes);
+
+    for (uint32_t i = 0; i < properties.numSubGroupSizes; i++) {
+        EXPECT_EQ(maxSubGroupsFromDeviceInfo[i], properties.subGroupSizes[i]);
+    }
+}
+
+using IsAtMostProductDG2 = IsAtMostProduct<IGFX_DG2>;
+
+HWTEST2_F(DeviceSimpleTests, WhenCreatingImageThenSuccessIsReturned, IsAtMostProductDG2) {
+    ze_image_handle_t image = {};
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto result = device->createImage(&desc, &image);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, image);
+
+    Image::fromHandle(image)->destroy();
+}
+
+TEST_F(DeviceSimpleTests, WhenGettingMaxHwThreadsThenCorrectValueIsReturned) {
+    auto hwInfo = neoDevice->getHardwareInfo();
+
+    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) +
+                            hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t value = device->getMaxNumHwThreads();
+
+    uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
+    EXPECT_EQ(expected, value);
+}
+
+TEST_F(DeviceSimpleTests, WhenCreatingCommandListThenSuccessIsReturned) {
+    ze_command_list_handle_t commandList = {};
+    ze_command_list_desc_t desc = {};
+
+    auto result = device->createCommandList(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, commandList);
+
+    CommandList::fromHandle(commandList)->destroy();
+}
+
+TEST_F(DeviceSimpleTests, WhenCreatingCommandQueueThenSuccessIsReturned) {
+    ze_command_queue_handle_t commandQueue = {};
+    ze_command_queue_desc_t desc = {};
+
+    auto result = device->createCommandQueue(&desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, commandQueue);
+
+    auto queue = L0::CommandQueue::fromHandle(commandQueue);
+    queue->destroy();
+}
+
+TEST_F(DeviceSimpleTests, givenValidDeviceThenValidCoreDeviceIsRetrievedWithGetSpecializedDevice) {
+    auto specializedDevice = neoDevice->getSpecializedDevice<Device>();
+    EXPECT_EQ(device, specializedDevice);
 }
 
 } // namespace ult
