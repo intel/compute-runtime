@@ -61,6 +61,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel${BRANCH_DIR_SUFFIX}kernel_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_imp.cpp

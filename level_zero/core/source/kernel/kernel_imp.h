@@ -17,6 +17,10 @@
 
 namespace L0 {
 
+struct KernelExt {
+    virtual ~KernelExt() = default;
+};
+
 struct KernelArgInfo {
     const void *value;
     uint32_t allocId;
@@ -164,6 +168,8 @@ struct KernelImp : Kernel {
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
 
+    KernelExt *getExtension(uint32_t extensionType);
+
   protected:
     KernelImp() = default;
 
@@ -222,6 +228,8 @@ struct KernelImp : Kernel {
 
     int32_t schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::NotPresent;
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
+
+    std::unique_ptr<KernelExt> pExtension;
 };
 
 } // namespace L0
