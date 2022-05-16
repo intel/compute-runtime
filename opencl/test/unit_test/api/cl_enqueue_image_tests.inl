@@ -35,8 +35,8 @@ struct ValidateRegionAndOriginTests : public ::testing::TestWithParam<ImageEnque
     }
 
     static void fillImage(MockCommandQueue *cmdQ, Image *image, size_t *origin, size_t *region, int32_t &retVal) {
-        uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
-        retVal = clEnqueueFillImage(cmdQ, image, fill_color, origin, region, 0, nullptr, nullptr);
+        uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+        retVal = clEnqueueFillImage(cmdQ, image, fillColor, origin, region, 0, nullptr, nullptr);
     }
 
     static void copyImageWithCorrectSrc(MockCommandQueue *cmdQ, Image *dstImage, size_t *dstOrigin, size_t *region, int32_t &retVal) {

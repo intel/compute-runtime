@@ -38,10 +38,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
     event->setUsingContextEndOffset(useContextEndOffset);
 
-    EventPoolImp *EventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
+    EventPoolImp *eventPoolImp = static_cast<struct EventPoolImp *>(eventPool);
     // do not reset even if it has been imported, since event pool
     // might have been imported after events being already signaled
-    if (EventPoolImp->isImportedIpcPool == false) {
+    if (eventPoolImp->isImportedIpcPool == false) {
         event->reset();
     }
 

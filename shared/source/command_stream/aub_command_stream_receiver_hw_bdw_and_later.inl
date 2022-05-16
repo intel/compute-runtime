@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle)
 
 template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
-    uint32_t GUCWorkQueueItemHeader = 0x00030001;
-    return GUCWorkQueueItemHeader;
+    uint32_t gucWorkQueueItemHeader = 0x00030001;
+    return gucWorkQueueItemHeader;
 }
 
 template <typename GfxFamily>

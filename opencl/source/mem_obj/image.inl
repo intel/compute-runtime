@@ -51,12 +51,12 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
         // than the maximal image width. Mock image1d_buffer with SURFACE_TYPE_SURFTYPE_BUFFER.
-        SURFACE_STATE_BUFFER_LENGTH Length = {0};
-        Length.Length = static_cast<uint32_t>(getImageDesc().image_width - 1);
+        SURFACE_STATE_BUFFER_LENGTH length = {0};
+        length.Length = static_cast<uint32_t>(getImageDesc().image_width - 1);
 
-        surfaceState->setWidth(static_cast<uint32_t>(Length.SurfaceState.Width + 1));
-        surfaceState->setHeight(static_cast<uint32_t>(Length.SurfaceState.Height + 1));
-        surfaceState->setDepth(static_cast<uint32_t>(Length.SurfaceState.Depth + 1));
+        surfaceState->setWidth(static_cast<uint32_t>(length.SurfaceState.Width + 1));
+        surfaceState->setHeight(static_cast<uint32_t>(length.SurfaceState.Height + 1));
+        surfaceState->setDepth(static_cast<uint32_t>(length.SurfaceState.Depth + 1));
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,9 +50,9 @@ TEST_F(clCreateUserEventTests, GivenCorrectUserEventWhenGetingEventInfoThenClCom
     retVal = clGetEventInfo(userEvent, CL_EVENT_COMMAND_TYPE, 0, nullptr, &retSize);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_event_info), retSize);
-    auto cmd_type = CL_COMMAND_SVM_UNMAP;
-    retVal = clGetEventInfo(userEvent, CL_EVENT_COMMAND_TYPE, retSize, &cmd_type, 0);
-    EXPECT_EQ(CL_COMMAND_USER, cmd_type);
+    auto cmdType = CL_COMMAND_SVM_UNMAP;
+    retVal = clGetEventInfo(userEvent, CL_EVENT_COMMAND_TYPE, retSize, &cmdType, 0);
+    EXPECT_EQ(CL_COMMAND_USER, cmdType);
 
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);

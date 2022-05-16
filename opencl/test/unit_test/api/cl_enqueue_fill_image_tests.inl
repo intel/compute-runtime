@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,14 +20,14 @@ namespace ULT {
 
 TEST_F(clEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalidCommandQueueErrorIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
-    uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+    uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
 
     retVal = clEnqueueFillImage(
         nullptr,
         image.get(),
-        fill_color,
+        fillColor,
         origin,
         region,
         0,
@@ -38,14 +38,14 @@ TEST_F(clEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalid
 }
 
 TEST_F(clEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObjectErrorIsReturned) {
-    uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
+    uint32_t fillColor[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
 
     retVal = clEnqueueFillImage(
         pCommandQueue,
         nullptr,
-        fill_color,
+        fillColor,
         origin,
         region,
         0,

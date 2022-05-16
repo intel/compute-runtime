@@ -156,12 +156,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     NEO::GraphicsAllocation *eventAlloc = nullptr;
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
-    bool L3FlushEnable = false;
+    bool l3FlushEnable = false;
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
-        L3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+        l3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
         isTimestampEvent = event->isUsingContextEndOffset();
         eventAddress = event->getPacketAddress(this->device);
     }
@@ -222,7 +222,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         launchParams.isIndirect,                                  // isIndirect
         launchParams.isPredicate,                                 // isPredicate
         isTimestampEvent,                                         // isTimestampEvent
-        L3FlushEnable,                                            // L3FlushEnable
+        l3FlushEnable,                                            // l3FlushEnable
         this->containsStatelessUncachedResource,                  // requiresUncachedMocs
         kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         internalUsage,                                            // isInternal
@@ -236,7 +236,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         if (partitionCount > 1) {
             event->setPacketsInUse(partitionCount);
         }
-        if (L3FlushEnable) {
+        if (l3FlushEnable) {
             programEventL3Flush<gfxCoreFamily>(hEvent, this->device, partitionCount, commandContainer);
         }
     }

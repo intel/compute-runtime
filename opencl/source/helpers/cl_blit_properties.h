@@ -171,12 +171,12 @@ struct ClBlitProperties {
     static void adjustBlitPropertiesForImage(MemObj *memObj, BlitProperties &blitProperties, size_t &rowPitch, size_t &slicePitch, const bool isSource) {
         auto image = castToObject<Image>(memObj);
         const auto &imageDesc = image->getImageDesc();
-        auto image_width = imageDesc.image_width;
-        auto image_height = imageDesc.image_height;
-        auto image_depth = imageDesc.image_depth;
+        auto imageWidth = imageDesc.image_width;
+        auto imageHeight = imageDesc.image_height;
+        auto imageDepth = imageDesc.image_depth;
 
         if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-            image_depth = std::max(image_depth, imageDesc.image_array_size);
+            imageDepth = std::max(imageDepth, imageDesc.image_array_size);
         }
 
         SurfaceOffsets surfaceOffsets;
@@ -189,9 +189,9 @@ struct ClBlitProperties {
 
         image->getSurfaceOffsets(surfaceOffsets);
         gpuAddress += surfaceOffsets.offset;
-        size.x = image_width;
-        size.y = image_height ? image_height : 1;
-        size.z = image_depth ? image_depth : 1;
+        size.x = imageWidth;
+        size.y = imageHeight ? imageHeight : 1;
+        size.z = imageDepth ? imageDepth : 1;
         bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
         rowPitch = imageDesc.image_row_pitch;
         slicePitch = imageDesc.image_slice_pitch;
