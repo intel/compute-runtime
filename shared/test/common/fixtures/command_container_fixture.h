@@ -47,7 +47,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             false,                    // isIndirect
             false,                    // isPredicate
             false,                    // isTimestampEvent
-            false,                    // L3FlushEnable
             requiresUncachedMocs,     // requiresUncachedMocs
             false,                    // useGlobalAtomics
             false,                    // isInternal

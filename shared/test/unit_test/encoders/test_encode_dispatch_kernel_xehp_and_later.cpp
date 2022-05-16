@@ -276,7 +276,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDi
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.isTimestampEvent = true;
-    dispatchArgs.L3FlushEnable = true;
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
@@ -301,7 +300,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncod
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
     dispatchArgs.eventAddress = eventAddress;
     dispatchArgs.isTimestampEvent = true;
-    dispatchArgs.L3FlushEnable = true;
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
 
     GenCmdList commands;

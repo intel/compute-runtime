@@ -222,7 +222,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         launchParams.isIndirect,                                  // isIndirect
         launchParams.isPredicate,                                 // isPredicate
         isTimestampEvent,                                         // isTimestampEvent
-        l3FlushEnable,                                            // l3FlushEnable
         this->containsStatelessUncachedResource,                  // requiresUncachedMocs
         kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         internalUsage,                                            // isInternal

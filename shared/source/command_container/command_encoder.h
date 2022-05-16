@@ -42,7 +42,6 @@ struct EncodeDispatchKernelArgs {
     bool isIndirect = false;
     bool isPredicate = false;
     bool isTimestampEvent = false;
-    bool L3FlushEnable = false;
     bool requiresUncachedMocs = false;
     bool useGlobalAtomics = false;
     bool isInternal = false;

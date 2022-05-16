@@ -152,7 +152,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
         false,
         false,
         false,
-        false,
         false};
     NEO::EncodeDispatchKernel<FamilyType>::encode(commandContainer, dispatchKernelArgs);
 
