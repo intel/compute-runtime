@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,11 +51,11 @@ TEST_F(EnqueueTaskWithRequiredWorkGroupSize, GivenRequiredWorkGroupSizeWhenEnque
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
-    cl_command_queue command_queue = static_cast<cl_command_queue>(pCmdQ);
+    cl_command_queue commandQueue = static_cast<cl_command_queue>(pCmdQ);
     cl_kernel kernel = static_cast<cl_kernel>(pMultiDeviceKernel);
 
     retVal = clEnqueueTask(
-        command_queue,
+        commandQueue,
         kernel,
         numEventsInWaitList,
         eventWaitList,

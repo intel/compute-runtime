@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,30 +19,30 @@ TEST_F(clCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWait
         pContext,
         &retVal);
 
-    std::atomic<bool> ThreadStarted(false);
-    std::atomic<bool> WaitForEventsCompleted(false);
+    std::atomic<bool> threadStarted(false);
+    std::atomic<bool> waitForEventsCompleted(false);
     int counter = 0;
-    int Deadline = 2000;
+    int deadline = 2000;
     std::thread t([&]() {
-        ThreadStarted = true;
+        threadStarted = true;
         clWaitForEvents(1, &userEvent);
-        WaitForEventsCompleted = true;
+        waitForEventsCompleted = true;
     });
 
     //wait for the thread to start
-    while (!ThreadStarted)
+    while (!threadStarted)
         ;
     //now wait a while.
-    while (!WaitForEventsCompleted && counter++ < Deadline)
+    while (!waitForEventsCompleted && counter++ < deadline)
         ;
 
-    ASSERT_EQ(WaitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
+    ASSERT_EQ(waitForEventsCompleted, false) << "WaitForEvents returned while user event is not signaled!";
 
     //set event to CL_COMPLETE
     retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
     t.join();
 
-    ASSERT_EQ(WaitForEventsCompleted, true);
+    ASSERT_EQ(waitForEventsCompleted, true);
 
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);

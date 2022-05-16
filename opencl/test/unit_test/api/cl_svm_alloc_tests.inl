@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,10 +53,10 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, platform()->getNumDevices());
-    auto SVMPtr = clSVMAlloc(context.get(), 0u, 4096, 128);
-    EXPECT_NE(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(context.get(), 0u, 4096, 128);
+    EXPECT_NE(nullptr, svmPtr);
 
-    clSVMFree(context.get(), SVMPtr);
+    clSVMFree(context.get(), svmPtr);
 }
 
 TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
@@ -68,28 +68,28 @@ TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAlloc
         if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
             //fg svm flag, fg svm support - expected success
             if (devInfo.svmCapabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
-                auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
-                EXPECT_NE(nullptr, SVMPtr);
+                auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
+                EXPECT_NE(nullptr, svmPtr);
 
-                clSVMFree(pContext, SVMPtr);
+                clSVMFree(pContext, svmPtr);
             }
             //fg svm flag no fg svm support
             else {
-                auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
-                EXPECT_EQ(nullptr, SVMPtr);
+                auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
+                EXPECT_EQ(nullptr, svmPtr);
             }
         }
         //no fg svm flag, svm support - expected success
         else {
-            auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
-            EXPECT_NE(nullptr, SVMPtr);
+            auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
+            EXPECT_NE(nullptr, svmPtr);
 
-            clSVMFree(pContext, SVMPtr);
+            clSVMFree(pContext, svmPtr);
         }
     } else {
         //no svm support -expected fail
-        auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
-        EXPECT_EQ(nullptr, SVMPtr);
+        auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
+        EXPECT_EQ(nullptr, svmPtr);
     }
 };
 
@@ -123,32 +123,32 @@ TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     HardwareInfo *pHwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
 
     cl_mem_flags flags = GetParam();
-    void *SVMPtr = nullptr;
+    void *svmPtr = nullptr;
 
     //1: no svm - no flags supported
     pHwInfo->capabilityTable.ftrSvm = false;
     pHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    SVMPtr = clSVMAlloc(pContext, flags, 4096, 128);
-    EXPECT_EQ(nullptr, SVMPtr);
+    svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
+    EXPECT_EQ(nullptr, svmPtr);
 
     //2: coarse svm - normal flags supported
     pHwInfo->capabilityTable.ftrSvm = true;
-    SVMPtr = clSVMAlloc(pContext, flags, 4096, 128);
+    svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
     if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
         //fg svm flags not supported
-        EXPECT_EQ(nullptr, SVMPtr);
+        EXPECT_EQ(nullptr, svmPtr);
     } else {
         //no fg svm flags supported
-        EXPECT_NE(nullptr, SVMPtr);
-        clSVMFree(pContext, SVMPtr);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
     }
 
     //3: fg svm - all flags supported
     pHwInfo->capabilityTable.ftrSupportsCoherency = true;
-    SVMPtr = clSVMAlloc(pContext, flags, 4096, 128);
-    EXPECT_NE(nullptr, SVMPtr);
-    clSVMFree(pContext, SVMPtr);
+    svmPtr = clSVMAlloc(pContext, flags, 4096, 128);
+    EXPECT_NE(nullptr, svmPtr);
+    clSVMFree(pContext, svmPtr);
 };
 
 struct clSVMAllocInvalidFlagsTests : public clSVMAllocTemplateTests {
@@ -157,8 +157,8 @@ struct clSVMAllocInvalidFlagsTests : public clSVMAllocTemplateTests {
 TEST_P(clSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = GetParam();
 
-    auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
-    EXPECT_EQ(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
+    EXPECT_EQ(nullptr, svmPtr);
 };
 
 cl_mem_flags SVMAllocInvalidFlags[] = {
@@ -174,23 +174,23 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST_F(clSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto SVMPtr = clSVMAlloc(nullptr /* cl_context */, flags, 4096 /* Size*/, 128 /* alignment */);
-    EXPECT_EQ(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(nullptr /* cl_context */, flags, 4096 /* Size*/, 128 /* alignment */);
+    EXPECT_EQ(nullptr, svmPtr);
 }
 
 TEST_F(clSVMAllocTests, GivenZeroSizeWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 0 /* Size*/, 128 /* alignment */);
-    EXPECT_EQ(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 0 /* Size*/, 128 /* alignment */);
+    EXPECT_EQ(nullptr, svmPtr);
 }
 
 TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
-        auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 0 /* alignment */);
-        EXPECT_NE(nullptr, SVMPtr);
-        clSVMFree(pContext, SVMPtr);
+        auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 0 /* alignment */);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
     }
 }
 
@@ -243,21 +243,21 @@ TEST_F(clSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmTh
     const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
-        auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4095 /* Size*/, 0 /* alignment */);
-        EXPECT_NE(nullptr, SVMPtr);
-        clSVMFree(pContext, SVMPtr);
+        auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 4095 /* Size*/, 0 /* alignment */);
+        EXPECT_NE(nullptr, svmPtr);
+        clSVMFree(pContext, svmPtr);
     }
 }
 
 TEST_F(clSVMAllocTests, GivenAlignmentNotPowerOfTwoWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 129 /* alignment */);
-    EXPECT_EQ(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 129 /* alignment */);
+    EXPECT_EQ(nullptr, svmPtr);
 }
 
 TEST_F(clSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAllocated) {
-    auto SVMPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
-    EXPECT_EQ(nullptr, SVMPtr);
+    auto svmPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
+    EXPECT_EQ(nullptr, svmPtr);
 };
 
 TEST_F(clSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocationIsCreated) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,30 +75,30 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         &retVal);
     ASSERT_NE(nullptr, pMultiDeviceKernel2);
 
-    const cl_int NUM_ELEMS = 64;
-    const size_t BUFFER_SIZE = NUM_ELEMS * sizeof(cl_uint);
+    const cl_int numElems = 64;
+    const size_t bufferSize = numElems * sizeof(cl_uint);
 
     cl_uint *destinationMemory1;
     cl_uint *destinationMemory2;
-    cl_uint expectedMemory1[NUM_ELEMS];
-    cl_uint expectedMemory2[NUM_ELEMS];
+    cl_uint expectedMemory1[numElems];
+    cl_uint expectedMemory2[numElems];
 
     cl_uint arg0 = 2;
     cl_float arg1 = 3.0f;
     cl_uint arg3 = 4;
     cl_uint arg5 = 0xBBBBBBBB;
-    cl_uint bad_value = 0; // set to non-zero to force failure
+    cl_uint badValue = 0; // set to non-zero to force failure
 
-    destinationMemory1 = (cl_uint *)::alignedMalloc(BUFFER_SIZE, 4096);
+    destinationMemory1 = (cl_uint *)::alignedMalloc(bufferSize, 4096);
     ASSERT_NE(nullptr, destinationMemory1);
-    destinationMemory2 = (cl_uint *)::alignedMalloc(BUFFER_SIZE, 4096);
+    destinationMemory2 = (cl_uint *)::alignedMalloc(bufferSize, 4096);
     ASSERT_NE(nullptr, destinationMemory2);
 
-    for (cl_int i = 0; i < NUM_ELEMS; i++) {
+    for (cl_int i = 0; i < numElems; i++) {
         destinationMemory1[i] = 0xA1A1A1A1;
         destinationMemory2[i] = 0xA2A2A2A2;
-        expectedMemory1[i] = (arg0 + static_cast<cl_uint>(arg1) + arg3 + bad_value);
-        expectedMemory2[i] = arg5 + bad_value;
+        expectedMemory1[i] = (arg0 + static_cast<cl_uint>(arg1) + arg3 + badValue);
+        expectedMemory2[i] = arg5 + badValue;
     }
 
     auto pDestinationMemory1 = &destinationMemory1[0];
@@ -109,7 +109,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto intermediateBuffer = Buffer::create(
         context,
         CL_MEM_READ_WRITE,
-        BUFFER_SIZE,
+        bufferSize,
         nullptr,
         retVal);
     ASSERT_NE(nullptr, intermediateBuffer);
@@ -117,7 +117,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto destinationBuffer1 = Buffer::create(
         context,
         CL_MEM_USE_HOST_PTR,
-        BUFFER_SIZE,
+        bufferSize,
         pDestinationMemory1,
         retVal);
     ASSERT_NE(nullptr, destinationBuffer1);
@@ -128,7 +128,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto destinationBuffer2 = Buffer::create(
         context,
         CL_MEM_USE_HOST_PTR,
-        BUFFER_SIZE,
+        bufferSize,
         pDestinationMemory2,
         retVal);
     ASSERT_NE(nullptr, destinationBuffer2);
@@ -217,8 +217,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     AUBCommandStreamFixture::expectMemory<FamilyType>(pDestinationMemory2, pExpectedMemory2, sizeWritten);
 
     // ensure we didn't overwrite existing memory
-    if (sizeWritten < BUFFER_SIZE) {
-        auto sizeRemaining = BUFFER_SIZE - sizeWritten;
+    if (sizeWritten < bufferSize) {
+        auto sizeRemaining = bufferSize - sizeWritten;
         auto pUnwrittenMemory1 = (pDestinationMemory1 + sizeWritten / sizeof(cl_uint));
         auto pUnwrittenMemory2 = (pDestinationMemory2 + sizeWritten / sizeof(cl_uint));
         auto pExpectedUnwrittenMemory1 = &destinationMemory1[globalWorkItems];
@@ -253,12 +253,12 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     const cl_int mbHeight = testHeight / 16;
 
     // 1 per macroblock (there is 1 macroblock in this test):
-    const int PRED_BUFFER_SIZE = mbWidth * mbHeight;
-    const int SHAPES_BUFFER_SIZE = mbWidth * mbHeight;
+    const int predBufferSize = mbWidth * mbHeight;
+    const int shapesBufferSize = mbWidth * mbHeight;
 
     // 4 per macroblock (valid for 8x8 mode only):
-    const int MV_BUFFER_SIZE = testWidth * mbHeight / 4;
-    const int RESIDUALS_BUFFER_SIZE = MV_BUFFER_SIZE;
+    const int mvBufferSize = testWidth * mbHeight / 4;
+    const int residualsBufferSize = mvBufferSize;
 
     std::string kernelFilename;
     retrieveBinaryKernelFilename(kernelFilename, "vme_kernels_", ".bin");
@@ -299,16 +299,16 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     imageDesc.num_samples = 0;
     imageDesc.mem_object = nullptr;
 
-    const int INPUT_SIZE = testWidth * testHeight;
-    ASSERT_GT(INPUT_SIZE, 0);
+    const int inputSize = testWidth * testHeight;
+    ASSERT_GT(inputSize, 0);
 
-    auto srcMemory = (cl_uchar *)::alignedMalloc(INPUT_SIZE, 4096);
+    auto srcMemory = (cl_uchar *)::alignedMalloc(inputSize, 4096);
     ASSERT_NE(srcMemory, nullptr);
-    memset(srcMemory, 0x00, INPUT_SIZE);
+    memset(srcMemory, 0x00, inputSize);
 
-    auto refMemory = (cl_uchar *)::alignedMalloc(INPUT_SIZE, 4096);
+    auto refMemory = (cl_uchar *)::alignedMalloc(inputSize, 4096);
     ASSERT_NE(refMemory, nullptr);
-    memset(refMemory, 0x00, INPUT_SIZE);
+    memset(refMemory, 0x00, inputSize);
 
     int xMovement = 7;
     int yMovement = 9;
@@ -343,8 +343,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
         retVal);
     ASSERT_NE(nullptr, refImage);
 
-    cl_short2 *predMem = new cl_short2[PRED_BUFFER_SIZE];
-    for (int i = 0; i < PRED_BUFFER_SIZE; i++) {
+    cl_short2 *predMem = new cl_short2[predBufferSize];
+    for (int i = 0; i < predBufferSize; i++) {
         predMem[i].s[0] = 0;
         predMem[i].s[1] = 0;
     }
@@ -352,7 +352,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto predMvBuffer = Buffer::create(
         context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        PRED_BUFFER_SIZE * sizeof(cl_short2),
+        predBufferSize * sizeof(cl_short2),
         predMem,
         retVal);
     ASSERT_NE(nullptr, predMvBuffer);
@@ -360,7 +360,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto motionVectorBuffer = Buffer::create(
         context,
         CL_MEM_WRITE_ONLY,
-        MV_BUFFER_SIZE * sizeof(cl_short2),
+        mvBufferSize * sizeof(cl_short2),
         nullptr,
         retVal);
     ASSERT_NE(nullptr, motionVectorBuffer);
@@ -368,7 +368,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto residualsBuffer = Buffer::create(
         context,
         CL_MEM_WRITE_ONLY,
-        RESIDUALS_BUFFER_SIZE * sizeof(cl_short),
+        residualsBufferSize * sizeof(cl_short),
         nullptr,
         retVal);
     ASSERT_NE(nullptr, residualsBuffer);
@@ -376,7 +376,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto shapesBuffer = Buffer::create(
         context,
         CL_MEM_WRITE_ONLY,
-        SHAPES_BUFFER_SIZE * sizeof(cl_char2),
+        shapesBufferSize * sizeof(cl_char2),
         nullptr,
         retVal);
     ASSERT_NE(nullptr, shapesBuffer);
@@ -429,9 +429,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    cl_short2 destinationMV[MV_BUFFER_SIZE];
-    cl_short destinationResiduals[RESIDUALS_BUFFER_SIZE];
-    cl_uchar2 destinationShapes[SHAPES_BUFFER_SIZE];
+    cl_short2 destinationMV[mvBufferSize];
+    cl_short destinationResiduals[residualsBufferSize];
+    cl_uchar2 destinationShapes[shapesBufferSize];
 
     motionVectorBuffer->forceDisallowCPUCopy = true;
     residualsBuffer->forceDisallowCPUCopy = true;
@@ -445,17 +445,17 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Check if our buffers matches expectations
-    cl_short2 expectedMV[MV_BUFFER_SIZE];
-    cl_short expectedResiduals[RESIDUALS_BUFFER_SIZE];
-    cl_uchar2 expectedShapes[SHAPES_BUFFER_SIZE];
+    cl_short2 expectedMV[mvBufferSize];
+    cl_short expectedResiduals[residualsBufferSize];
+    cl_uchar2 expectedShapes[shapesBufferSize];
 
     // This test uses 8x8 sub blocks (4 per macroblock)
-    for (int i = 0; i < SHAPES_BUFFER_SIZE; i++) {
+    for (int i = 0; i < shapesBufferSize; i++) {
         expectedShapes[i].s0 = CL_AVC_ME_MAJOR_8x8_INTEL;
         expectedShapes[i].s1 = CL_AVC_ME_MINOR_8x8_INTEL;
     }
 
-    for (int i = 0; i < MV_BUFFER_SIZE; i++) {
+    for (int i = 0; i < mvBufferSize; i++) {
         expectedResiduals[i] = 0;
 
         // Second and fourth block not moved, set 0 as default.

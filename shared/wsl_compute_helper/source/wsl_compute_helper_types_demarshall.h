@@ -6660,54 +6660,54 @@ struct Demarshaller<TOK_S_GMM_TEXTURE_INFO_REC> {
                 } break;
                 case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                    const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                    const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                    while (tok__Platform < tok__PlatformEnd) {
-                        if (false == tok__Platform->flags.flag4IsVariableLength) {
-                            switch (tok__Platform->id) {
+                    const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                    const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                    while (tokPlatform < tokPlatformEnd) {
+                        if (false == tokPlatform->flags.flag4IsVariableLength) {
+                            switch (tokPlatform->id) {
                             default:
-                                if (tok__Platform->flags.flag3IsMandatory) {
+                                if (tokPlatform->flags.flag3IsMandatory) {
                                     return false;
                                 }
                                 break;
                             case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                dst.__Platform.eProductFamily = readTokValue<decltype(dst.__Platform.eProductFamily)>(*tok__Platform);
+                                dst.__Platform.eProductFamily = readTokValue<decltype(dst.__Platform.eProductFamily)>(*tokPlatform);
                             } break;
                             case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                dst.__Platform.ePCHProductFamily = readTokValue<decltype(dst.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                dst.__Platform.ePCHProductFamily = readTokValue<decltype(dst.__Platform.ePCHProductFamily)>(*tokPlatform);
                             } break;
                             case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                dst.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                dst.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                             } break;
                             case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                dst.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                dst.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.__Platform.eRenderCoreFamily)>(*tokPlatform);
                             } break;
                             case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                dst.__Platform.ePlatformType = readTokValue<decltype(dst.__Platform.ePlatformType)>(*tok__Platform);
+                                dst.__Platform.ePlatformType = readTokValue<decltype(dst.__Platform.ePlatformType)>(*tokPlatform);
                             } break;
                             case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                dst.__Platform.usDeviceID = readTokValue<decltype(dst.__Platform.usDeviceID)>(*tok__Platform);
+                                dst.__Platform.usDeviceID = readTokValue<decltype(dst.__Platform.usDeviceID)>(*tokPlatform);
                             } break;
                             case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                dst.__Platform.usRevId = readTokValue<decltype(dst.__Platform.usRevId)>(*tok__Platform);
+                                dst.__Platform.usRevId = readTokValue<decltype(dst.__Platform.usRevId)>(*tokPlatform);
                             } break;
                             case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                dst.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                dst.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.__Platform.usDeviceID_PCH)>(*tokPlatform);
                             } break;
                             case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                dst.__Platform.usRevId_PCH = readTokValue<decltype(dst.__Platform.usRevId_PCH)>(*tok__Platform);
+                                dst.__Platform.usRevId_PCH = readTokValue<decltype(dst.__Platform.usRevId_PCH)>(*tokPlatform);
                             } break;
                             case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                dst.__Platform.eGTType = readTokValue<decltype(dst.__Platform.eGTType)>(*tok__Platform);
+                                dst.__Platform.eGTType = readTokValue<decltype(dst.__Platform.eGTType)>(*tokPlatform);
                             } break;
                             };
-                            tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                            tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                         } else {
-                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                            if (tok__Platform->flags.flag3IsMandatory) {
+                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                            if (tokPlatform->flags.flag3IsMandatory) {
                                 return false;
                             }
-                            tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                            tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }
                     }
                     WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -7741,54 +7741,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                             } break;
                             case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tok__Platform < tok__PlatformEnd) {
-                                    if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                        switch (tok__Platform->id) {
+                                const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokPlatform < tokPlatformEnd) {
+                                    if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                        switch (tokPlatform->id) {
                                         default:
-                                            if (tok__Platform->flags.flag3IsMandatory) {
+                                            if (tokPlatform->flags.flag3IsMandatory) {
                                                 return false;
                                             }
                                             break;
                                         case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                            dst.Surf.__Platform.eProductFamily = readTokValue<decltype(dst.Surf.__Platform.eProductFamily)>(*tok__Platform);
+                                            dst.Surf.__Platform.eProductFamily = readTokValue<decltype(dst.Surf.__Platform.eProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                            dst.Surf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.Surf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                            dst.Surf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.Surf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                            dst.Surf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.Surf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                            dst.Surf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.Surf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                            dst.Surf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.Surf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                            dst.Surf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.Surf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                            dst.Surf.__Platform.ePlatformType = readTokValue<decltype(dst.Surf.__Platform.ePlatformType)>(*tok__Platform);
+                                            dst.Surf.__Platform.ePlatformType = readTokValue<decltype(dst.Surf.__Platform.ePlatformType)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                            dst.Surf.__Platform.usDeviceID = readTokValue<decltype(dst.Surf.__Platform.usDeviceID)>(*tok__Platform);
+                                            dst.Surf.__Platform.usDeviceID = readTokValue<decltype(dst.Surf.__Platform.usDeviceID)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                            dst.Surf.__Platform.usRevId = readTokValue<decltype(dst.Surf.__Platform.usRevId)>(*tok__Platform);
+                                            dst.Surf.__Platform.usRevId = readTokValue<decltype(dst.Surf.__Platform.usRevId)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                            dst.Surf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.Surf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                            dst.Surf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.Surf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                            dst.Surf.__Platform.usRevId_PCH = readTokValue<decltype(dst.Surf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                            dst.Surf.__Platform.usRevId_PCH = readTokValue<decltype(dst.Surf.__Platform.usRevId_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                            dst.Surf.__Platform.eGTType = readTokValue<decltype(dst.Surf.__Platform.eGTType)>(*tok__Platform);
+                                            dst.Surf.__Platform.eGTType = readTokValue<decltype(dst.Surf.__Platform.eGTType)>(*tokPlatform);
                                         } break;
                                         };
-                                        tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                        tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                     } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                        if (tokPlatform->flags.flag3IsMandatory) {
                                             return false;
                                         }
-                                        tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                        tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
                                 WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -8727,54 +8727,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                             } break;
                             case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tok__Platform < tok__PlatformEnd) {
-                                    if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                        switch (tok__Platform->id) {
+                                const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokPlatform < tokPlatformEnd) {
+                                    if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                        switch (tokPlatform->id) {
                                         default:
-                                            if (tok__Platform->flags.flag3IsMandatory) {
+                                            if (tokPlatform->flags.flag3IsMandatory) {
                                                 return false;
                                             }
                                             break;
                                         case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                            dst.AuxSurf.__Platform.eProductFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eProductFamily)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.eProductFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                            dst.AuxSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.AuxSurf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.AuxSurf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                            dst.AuxSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                            dst.AuxSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.AuxSurf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                            dst.AuxSurf.__Platform.ePlatformType = readTokValue<decltype(dst.AuxSurf.__Platform.ePlatformType)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.ePlatformType = readTokValue<decltype(dst.AuxSurf.__Platform.ePlatformType)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                            dst.AuxSurf.__Platform.usDeviceID = readTokValue<decltype(dst.AuxSurf.__Platform.usDeviceID)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.usDeviceID = readTokValue<decltype(dst.AuxSurf.__Platform.usDeviceID)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                            dst.AuxSurf.__Platform.usRevId = readTokValue<decltype(dst.AuxSurf.__Platform.usRevId)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.usRevId = readTokValue<decltype(dst.AuxSurf.__Platform.usRevId)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                            dst.AuxSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.AuxSurf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.AuxSurf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                            dst.AuxSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.AuxSurf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.AuxSurf.__Platform.usRevId_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                            dst.AuxSurf.__Platform.eGTType = readTokValue<decltype(dst.AuxSurf.__Platform.eGTType)>(*tok__Platform);
+                                            dst.AuxSurf.__Platform.eGTType = readTokValue<decltype(dst.AuxSurf.__Platform.eGTType)>(*tokPlatform);
                                         } break;
                                         };
-                                        tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                        tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                     } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                        if (tokPlatform->flags.flag3IsMandatory) {
                                             return false;
                                         }
-                                        tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                        tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
                                 WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -9713,54 +9713,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                             } break;
                             case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tok__Platform < tok__PlatformEnd) {
-                                    if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                        switch (tok__Platform->id) {
+                                const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokPlatform < tokPlatformEnd) {
+                                    if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                        switch (tokPlatform->id) {
                                         default:
-                                            if (tok__Platform->flags.flag3IsMandatory) {
+                                            if (tokPlatform->flags.flag3IsMandatory) {
                                                 return false;
                                             }
                                             break;
                                         case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                            dst.AuxSecSurf.__Platform.eProductFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eProductFamily)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.eProductFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                            dst.AuxSecSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                            dst.AuxSecSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                            dst.AuxSecSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.AuxSecSurf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                            dst.AuxSecSurf.__Platform.ePlatformType = readTokValue<decltype(dst.AuxSecSurf.__Platform.ePlatformType)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.ePlatformType = readTokValue<decltype(dst.AuxSecSurf.__Platform.ePlatformType)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                            dst.AuxSecSurf.__Platform.usDeviceID = readTokValue<decltype(dst.AuxSecSurf.__Platform.usDeviceID)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.usDeviceID = readTokValue<decltype(dst.AuxSecSurf.__Platform.usDeviceID)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                            dst.AuxSecSurf.__Platform.usRevId = readTokValue<decltype(dst.AuxSecSurf.__Platform.usRevId)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.usRevId = readTokValue<decltype(dst.AuxSecSurf.__Platform.usRevId)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                            dst.AuxSecSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.AuxSecSurf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.AuxSecSurf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                            dst.AuxSecSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.AuxSecSurf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.AuxSecSurf.__Platform.usRevId_PCH)>(*tokPlatform);
                                         } break;
                                         case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                            dst.AuxSecSurf.__Platform.eGTType = readTokValue<decltype(dst.AuxSecSurf.__Platform.eGTType)>(*tok__Platform);
+                                            dst.AuxSecSurf.__Platform.eGTType = readTokValue<decltype(dst.AuxSecSurf.__Platform.eGTType)>(*tokPlatform);
                                         } break;
                                         };
-                                        tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                        tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                     } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                        if (tokPlatform->flags.flag3IsMandatory) {
                                             return false;
                                         }
-                                        tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                        tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
                                 WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -10841,54 +10841,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                         } break;
                                         case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                            const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                            const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                            while (tok__Platform < tok__PlatformEnd) {
-                                                if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                                    switch (tok__Platform->id) {
+                                            const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                            const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                            while (tokPlatform < tokPlatformEnd) {
+                                                if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                                    switch (tokPlatform->id) {
                                                     default:
-                                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                                        if (tokPlatform->flags.flag3IsMandatory) {
                                                             return false;
                                                         }
                                                         break;
                                                     case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.ePlatformType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.ePlatformType)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usRevId)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usRevId)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.usRevId_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eGTType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.Surf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.__Platform.eGTType)>(*tokPlatform);
                                                     } break;
                                                     };
-                                                    tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                                    tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                                 } else {
-                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                                    if (tok__Platform->flags.flag3IsMandatory) {
+                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                                    if (tokPlatform->flags.flag3IsMandatory) {
                                                         return false;
                                                     }
-                                                    tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                                    tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
                                             WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -11827,54 +11827,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                         } break;
                                         case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                            const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                            const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                            while (tok__Platform < tok__PlatformEnd) {
-                                                if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                                    switch (tok__Platform->id) {
+                                            const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                            const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                            while (tokPlatform < tokPlatformEnd) {
+                                                if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                                    switch (tokPlatform->id) {
                                                     default:
-                                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                                        if (tokPlatform->flags.flag3IsMandatory) {
                                                             return false;
                                                         }
                                                         break;
                                                     case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePlatformType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.ePlatformType)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.usRevId_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eGTType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSurf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.__Platform.eGTType)>(*tokPlatform);
                                                     } break;
                                                     };
-                                                    tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                                    tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                                 } else {
-                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                                    if (tok__Platform->flags.flag3IsMandatory) {
+                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                                    if (tokPlatform->flags.flag3IsMandatory) {
                                                         return false;
                                                     }
-                                                    tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                                    tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
                                             WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -12813,54 +12813,54 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                         } break;
                                         case TOK_FS_GMM_TEXTURE_INFO_REC____PLATFORM: {
 #if !(_DEBUG || _RELEASE_INTERNAL)
-                                            const TokenHeader *tok__Platform = varLen->getValue<TokenHeader>();
-                                            const TokenHeader *tok__PlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                            while (tok__Platform < tok__PlatformEnd) {
-                                                if (false == tok__Platform->flags.flag4IsVariableLength) {
-                                                    switch (tok__Platform->id) {
+                                            const TokenHeader *tokPlatform = varLen->getValue<TokenHeader>();
+                                            const TokenHeader *tokPlatformEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                            while (tokPlatform < tokPlatformEnd) {
+                                                if (false == tokPlatform->flags.flag4IsVariableLength) {
+                                                    switch (tokPlatform->id) {
                                                     default:
-                                                        if (tok__Platform->flags.flag3IsMandatory) {
+                                                        if (tokPlatform->flags.flag3IsMandatory) {
                                                             return false;
                                                         }
                                                         break;
                                                     case TOK_FE_PLATFORM_STR__E_PRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PCHPRODUCT_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePCHProductFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePCHProductFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePCHProductFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_DISPLAY_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eDisplayCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eDisplayCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eDisplayCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_RENDER_CORE_FAMILY: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eRenderCoreFamily)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eRenderCoreFamily = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eRenderCoreFamily)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_PLATFORM_TYPE: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePlatformType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePlatformType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.ePlatformType)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_DEVICE_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usDeviceID_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FBW_PLATFORM_STR__US_REV_ID_PCH: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId_PCH)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId_PCH = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.usRevId_PCH)>(*tokPlatform);
                                                     } break;
                                                     case TOK_FE_PLATFORM_STR__E_GTTYPE: {
-                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eGTType)>(*tok__Platform);
+                                                        dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eGTType = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.__Platform.eGTType)>(*tokPlatform);
                                                     } break;
                                                     };
-                                                    tok__Platform = tok__Platform + 1 + tok__Platform->valueDwordCount;
+                                                    tokPlatform = tokPlatform + 1 + tokPlatform->valueDwordCount;
                                                 } else {
-                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tok__Platform);
-                                                    if (tok__Platform->flags.flag3IsMandatory) {
+                                                    auto varLen = reinterpret_cast<const TokenVariableLength *>(tokPlatform);
+                                                    if (tokPlatform->flags.flag3IsMandatory) {
                                                         return false;
                                                     }
-                                                    tok__Platform = tok__Platform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                                    tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
                                             WCH_ASSERT(tok__Platform == tok__PlatformEnd);
@@ -13144,141 +13144,141 @@ struct Demarshaller<TOK_S_TIME_STAMP_DATA_HEADER> {
                     }
                     break;
                 case TOK_FS_TIME_STAMP_DATA_HEADER__M_HEADER: {
-                    const TokenHeader *tokM_Header = varLen->getValue<TokenHeader>();
-                    const TokenHeader *tokM_HeaderEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                    while (tokM_Header < tokM_HeaderEnd) {
-                        if (false == tokM_Header->flags.flag4IsVariableLength) {
-                            switch (tokM_Header->id) {
+                    const TokenHeader *tokMHeader = varLen->getValue<TokenHeader>();
+                    const TokenHeader *tokMHeaderEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                    while (tokMHeader < tokMHeaderEnd) {
+                        if (false == tokMHeader->flags.flag4IsVariableLength) {
+                            switch (tokMHeader->id) {
                             default:
-                                if (tokM_Header->flags.flag3IsMandatory) {
+                                if (tokMHeader->flags.flag3IsMandatory) {
                                     return false;
                                 }
                                 break;
                             case TOK_FBD_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4430__SIZE: {
-                                dst.m_Header.Size = readTokValue<decltype(dst.m_Header.Size)>(*tokM_Header);
+                                dst.m_Header.Size = readTokValue<decltype(dst.m_Header.Size)>(*tokMHeader);
                             } break;
                             case TOK_FBD_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4430__CHECK_SUM: {
-                                dst.m_Header.CheckSum = readTokValue<decltype(dst.m_Header.CheckSum)>(*tokM_Header);
+                                dst.m_Header.CheckSum = readTokValue<decltype(dst.m_Header.CheckSum)>(*tokMHeader);
                             } break;
                             case TOK_FE_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4430__ESCAPE_CODE: {
-                                dst.m_Header.EscapeCode = readTokValue<decltype(dst.m_Header.EscapeCode)>(*tokM_Header);
+                                dst.m_Header.EscapeCode = readTokValue<decltype(dst.m_Header.EscapeCode)>(*tokMHeader);
                             } break;
                             case TOK_FBD_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4430__UL_RESERVED: {
-                                dst.m_Header.ulReserved = readTokValue<decltype(dst.m_Header.ulReserved)>(*tokM_Header);
+                                dst.m_Header.ulReserved = readTokValue<decltype(dst.m_Header.ulReserved)>(*tokMHeader);
                             } break;
                             case TOK_FBD_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4963__UL_RESERVED1: {
-                                dst.m_Header.ulReserved1 = readTokValue<decltype(dst.m_Header.ulReserved1)>(*tokM_Header);
+                                dst.m_Header.ulReserved1 = readTokValue<decltype(dst.m_Header.ulReserved1)>(*tokMHeader);
                             } break;
                             case TOK_FBW_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4963__US_ESCAPE_VERSION: {
-                                dst.m_Header.usEscapeVersion = readTokValue<decltype(dst.m_Header.usEscapeVersion)>(*tokM_Header);
+                                dst.m_Header.usEscapeVersion = readTokValue<decltype(dst.m_Header.usEscapeVersion)>(*tokMHeader);
                             } break;
                             case TOK_FBW_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4963__US_FILE_VERSION: {
-                                dst.m_Header.usFileVersion = readTokValue<decltype(dst.m_Header.usFileVersion)>(*tokM_Header);
+                                dst.m_Header.usFileVersion = readTokValue<decltype(dst.m_Header.usFileVersion)>(*tokMHeader);
                             } break;
                             case TOK_FE_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4963__UL_MAJOR_ESCAPE_CODE: {
-                                dst.m_Header.ulMajorEscapeCode = readTokValue<decltype(dst.m_Header.ulMajorEscapeCode)>(*tokM_Header);
+                                dst.m_Header.ulMajorEscapeCode = readTokValue<decltype(dst.m_Header.ulMajorEscapeCode)>(*tokMHeader);
                             } break;
                             case TOK_FBD_GFX_ESCAPE_HEADER__ANONYMOUS4410__ANONYMOUS4963__UI_MINOR_ESCAPE_CODE: {
-                                dst.m_Header.uiMinorEscapeCode = readTokValue<decltype(dst.m_Header.uiMinorEscapeCode)>(*tokM_Header);
+                                dst.m_Header.uiMinorEscapeCode = readTokValue<decltype(dst.m_Header.uiMinorEscapeCode)>(*tokMHeader);
                             } break;
                             };
-                            tokM_Header = tokM_Header + 1 + tokM_Header->valueDwordCount;
+                            tokMHeader = tokMHeader + 1 + tokMHeader->valueDwordCount;
                         } else {
-                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokM_Header);
-                            if (tokM_Header->flags.flag3IsMandatory) {
+                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokMHeader);
+                            if (tokMHeader->flags.flag3IsMandatory) {
                                 return false;
                             }
-                            tokM_Header = tokM_Header + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                            tokMHeader = tokMHeader + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }
                     }
-                    WCH_ASSERT(tokM_Header == tokM_HeaderEnd);
+                    WCH_ASSERT(tokMHeader == tokMHeaderEnd);
                 } break;
                 case TOK_FS_TIME_STAMP_DATA_HEADER__M_DATA: {
-                    const TokenHeader *tokM_Data = varLen->getValue<TokenHeader>();
-                    const TokenHeader *tokM_DataEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                    while (tokM_Data < tokM_DataEnd) {
-                        if (false == tokM_Data->flags.flag4IsVariableLength) {
-                            if (tokM_Data->flags.flag3IsMandatory) {
+                    const TokenHeader *tokMData = varLen->getValue<TokenHeader>();
+                    const TokenHeader *tokMDataEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                    while (tokMData < tokMDataEnd) {
+                        if (false == tokMData->flags.flag4IsVariableLength) {
+                            if (tokMData->flags.flag3IsMandatory) {
                                 return false;
                             }
-                            tokM_Data = tokM_Data + 1 + tokM_Data->valueDwordCount;
+                            tokMData = tokMData + 1 + tokMData->valueDwordCount;
                         } else {
-                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokM_Data);
-                            switch (tokM_Data->id) {
+                            auto varLen = reinterpret_cast<const TokenVariableLength *>(tokMData);
+                            switch (tokMData->id) {
                             default:
-                                if (tokM_Data->flags.flag3IsMandatory) {
+                                if (tokMData->flags.flag3IsMandatory) {
                                     return false;
                                 }
                                 break;
                             case TOK_FXS_TIME_STAMP_DATA_HEADER__ANONYMOUS2466__M_IN: {
-                                const TokenHeader *tokM_In = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tokM_InEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tokM_In < tokM_InEnd) {
-                                    if (false == tokM_In->flags.flag4IsVariableLength) {
-                                        switch (tokM_In->id) {
+                                const TokenHeader *tokMIn = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokMInEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokMIn < tokMInEnd) {
+                                    if (false == tokMIn->flags.flag4IsVariableLength) {
+                                        switch (tokMIn->id) {
                                         default:
-                                            if (tokM_In->flags.flag3IsMandatory) {
+                                            if (tokMIn->flags.flag3IsMandatory) {
                                                 return false;
                                             }
                                             break;
                                         case TOK_FE_GTDIBASE_IN_STRUCT__FUNCTION: {
-                                            dst.m_Data.m_In.Function = readTokValue<decltype(dst.m_Data.m_In.Function)>(*tokM_In);
+                                            dst.m_Data.m_In.Function = readTokValue<decltype(dst.m_Data.m_In.Function)>(*tokMIn);
                                         } break;
                                         };
-                                        tokM_In = tokM_In + 1 + tokM_In->valueDwordCount;
+                                        tokMIn = tokMIn + 1 + tokMIn->valueDwordCount;
                                     } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokM_In);
-                                        if (tokM_In->flags.flag3IsMandatory) {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokMIn);
+                                        if (tokMIn->flags.flag3IsMandatory) {
                                             return false;
                                         }
-                                        tokM_In = tokM_In + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                        tokMIn = tokMIn + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
-                                WCH_ASSERT(tokM_In == tokM_InEnd);
+                                WCH_ASSERT(tokMIn == tokMInEnd);
                             } break;
                             case TOK_FS_TIME_STAMP_DATA_HEADER__ANONYMOUS2466__M_OUT: {
-                                const TokenHeader *tokM_Out = varLen->getValue<TokenHeader>();
-                                const TokenHeader *tokM_OutEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
-                                while (tokM_Out < tokM_OutEnd) {
-                                    if (false == tokM_Out->flags.flag4IsVariableLength) {
-                                        switch (tokM_Out->id) {
+                                const TokenHeader *tokMOut = varLen->getValue<TokenHeader>();
+                                const TokenHeader *tokMOutEnd = varLen->getValue<TokenHeader>() + varLen->valueLengthInBytes / sizeof(TokenHeader);
+                                while (tokMOut < tokMOutEnd) {
+                                    if (false == tokMOut->flags.flag4IsVariableLength) {
+                                        switch (tokMOut->id) {
                                         default:
-                                            if (tokM_Out->flags.flag3IsMandatory) {
+                                            if (tokMOut->flags.flag3IsMandatory) {
                                                 return false;
                                             }
                                             break;
                                         case TOK_FE_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT__RET_CODE: {
-                                            dst.m_Data.m_Out.RetCode = readTokValue<decltype(dst.m_Data.m_Out.RetCode)>(*tokM_Out);
+                                            dst.m_Data.m_Out.RetCode = readTokValue<decltype(dst.m_Data.m_Out.RetCode)>(*tokMOut);
                                         } break;
                                         case TOK_FBQ_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT__GPU_PERF_TICKS: {
-                                            dst.m_Data.m_Out.gpuPerfTicks = readTokValue<decltype(dst.m_Data.m_Out.gpuPerfTicks)>(*tokM_Out);
+                                            dst.m_Data.m_Out.gpuPerfTicks = readTokValue<decltype(dst.m_Data.m_Out.gpuPerfTicks)>(*tokMOut);
                                         } break;
                                         case TOK_FBQ_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT__CPU_PERF_TICKS: {
-                                            dst.m_Data.m_Out.cpuPerfTicks = readTokValue<decltype(dst.m_Data.m_Out.cpuPerfTicks)>(*tokM_Out);
+                                            dst.m_Data.m_Out.cpuPerfTicks = readTokValue<decltype(dst.m_Data.m_Out.cpuPerfTicks)>(*tokMOut);
                                         } break;
                                         case TOK_FBQ_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT__GPU_PERF_FREQ: {
-                                            dst.m_Data.m_Out.gpuPerfFreq = readTokValue<decltype(dst.m_Data.m_Out.gpuPerfFreq)>(*tokM_Out);
+                                            dst.m_Data.m_Out.gpuPerfFreq = readTokValue<decltype(dst.m_Data.m_Out.gpuPerfFreq)>(*tokMOut);
                                         } break;
                                         case TOK_FBQ_GTDIGET_GPU_CPU_TIMESTAMPS_OUT_STRUCT__CPU_PERF_FREQ: {
-                                            dst.m_Data.m_Out.cpuPerfFreq = readTokValue<decltype(dst.m_Data.m_Out.cpuPerfFreq)>(*tokM_Out);
+                                            dst.m_Data.m_Out.cpuPerfFreq = readTokValue<decltype(dst.m_Data.m_Out.cpuPerfFreq)>(*tokMOut);
                                         } break;
                                         };
-                                        tokM_Out = tokM_Out + 1 + tokM_Out->valueDwordCount;
+                                        tokMOut = tokMOut + 1 + tokMOut->valueDwordCount;
                                     } else {
-                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokM_Out);
-                                        if (tokM_Out->flags.flag3IsMandatory) {
+                                        auto varLen = reinterpret_cast<const TokenVariableLength *>(tokMOut);
+                                        if (tokMOut->flags.flag3IsMandatory) {
                                             return false;
                                         }
-                                        tokM_Out = tokM_Out + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                                        tokMOut = tokMOut + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
-                                WCH_ASSERT(tokM_Out == tokM_OutEnd);
+                                WCH_ASSERT(tokMOut == tokMOutEnd);
                             } break;
                             };
-                            tokM_Data = tokM_Data + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
+                            tokMData = tokMData + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }
                     }
-                    WCH_ASSERT(tokM_Data == tokM_DataEnd);
+                    WCH_ASSERT(tokMData == tokMDataEnd);
                 } break;
                 };
                 tok = tok + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;

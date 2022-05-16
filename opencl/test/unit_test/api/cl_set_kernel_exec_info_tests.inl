@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,12 +102,12 @@ TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExe
 TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void **pSvmPtrList = nullptr;
-    size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,        // size_t param_value_size
+        svmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -116,12 +116,12 @@ TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelI
 TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {nullptr};
-    size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,        // size_t param_value_size
+        svmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -130,12 +130,12 @@ TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAddition
 TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
-    size_t SvmPtrListSizeInBytes = 0;
+    size_t svmPtrListSizeInBytes = 0;
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,        // size_t param_value_size
+        svmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -144,12 +144,12 @@ TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelIn
 TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     REQUIRE_SVM_OR_SKIP(defaultHwInfo);
     void *pSvmPtrList[] = {ptrSvm};
-    size_t SvmPtrListSizeInBytes = (size_t)(-1);
+    size_t svmPtrListSizeInBytes = (size_t)(-1);
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel,       // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,        // size_t param_value_size
+        svmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -157,12 +157,12 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKerne
 
 TEST_F(clSetKernelExecInfoTests, GivenInvalidParamNameWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
-    size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel, // cl_kernel kernel
         0,                      // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,  // size_t param_value_size
+        svmPtrListSizeInBytes,  // size_t param_value_size
         pSvmPtrList             // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
@@ -170,12 +170,12 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidParamNameWhenSettingAdditionalKerne
 
 TEST_F(clSetKernelExecInfoTests, GivenInvalidOperationWhenSettingAdditionalKernelInfoThenInvalidOperationErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
-    size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+    size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
     retVal = clSetKernelExecInfo(
         pMockMultiDeviceKernel,                    // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM, // cl_kernel_exec_info param_name
-        SvmPtrListSizeInBytes,                     // size_t param_value_size
+        svmPtrListSizeInBytes,                     // size_t param_value_size
         pSvmPtrList                                // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
@@ -184,12 +184,12 @@ TEST_F(clSetKernelExecInfoTests, GivenInvalidOperationWhenSettingAdditionalKerne
 TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithOnePointerWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *pSvmPtrList[] = {ptrSvm};
-        size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+        size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            SvmPtrListSizeInBytes,        // size_t param_value_size
+            svmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -207,12 +207,12 @@ TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithMultiplePointersWhenSe
         EXPECT_NE(nullptr, ptrSvm2);
 
         void *pSvmPtrList[] = {ptrSvm, ptrSvm1, ptrSvm2};
-        size_t SvmPtrListSizeInBytes = 3 * sizeof(void *);
+        size_t svmPtrListSizeInBytes = 3 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            SvmPtrListSizeInBytes,        // size_t param_value_size
+            svmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -234,12 +234,12 @@ TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointers
         EXPECT_NE(nullptr, ptrSvm2);
 
         void *pSvmPtrList[] = {ptrSvm1, ptrSvm2};
-        size_t SvmPtrListSizeInBytes = 2 * sizeof(void *);
+        size_t svmPtrListSizeInBytes = 2 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            SvmPtrListSizeInBytes,        // size_t param_value_size
+            svmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -255,12 +255,12 @@ TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointers
 TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *pSvmPtrList[] = {ptrSvm};
-        size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
+        size_t svmPtrListSizeInBytes = 1 * sizeof(void *);
 
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            SvmPtrListSizeInBytes,        // size_t param_value_size
+            svmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -270,7 +270,7 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
         retVal = clSetKernelExecInfo(
             pMockMultiDeviceKernel,       // cl_kernel kernel
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
-            SvmPtrListSizeInBytes,        // size_t param_value_size
+            svmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);

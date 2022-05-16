@@ -28,8 +28,8 @@ BDWTEST_F(BdwSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueArePr
     ASSERT_NE(cmdList.end(), itorLRI);
 
     const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    auto RegisterOffset = L3CNTLRegisterOffset<BDWFamily>::registerOffset;
-    EXPECT_EQ(RegisterOffset, lri.getRegisterOffset());
+    auto registerOffset = L3CNTLRegisterOffset<BDWFamily>::registerOffset;
+    EXPECT_EQ(registerOffset, lri.getRegisterOffset());
     EXPECT_EQ(1u, lri.getDataDword() & 1);
 }
 

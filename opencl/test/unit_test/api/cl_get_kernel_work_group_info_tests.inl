@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ TEST_F(clGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 }
 TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
-    cl_ulong param_value;
+    cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -90,18 +90,18 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
         pDevice,
         CL_KERNEL_SPILL_MEM_SIZE_INTEL,
         sizeof(cl_ulong),
-        &param_value,
+        &paramValue,
         &paramValueSizeRet);
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
-    EXPECT_EQ(param_value, scratchSpaceSize);
+    EXPECT_EQ(paramValue, scratchSpaceSize);
 }
 
 using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, matcher) {
     size_t paramValueSizeRet;
-    cl_ulong param_value;
+    cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -112,17 +112,17 @@ HWTEST2_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocatio
         pDevice,
         CL_KERNEL_PRIVATE_MEM_SIZE,
         sizeof(cl_ulong),
-        &param_value,
+        &paramValue,
         &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_ulong), paramValueSizeRet);
-    EXPECT_EQ(1024U, param_value);
+    EXPECT_EQ(1024U, paramValue);
 }
 
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
     size_t paramValueSizeRet;
-    cl_ulong param_value;
+    cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -132,12 +132,12 @@ TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocatio
         pDevice,
         CL_KERNEL_PRIVATE_MEM_SIZE,
         sizeof(cl_ulong),
-        &param_value,
+        &paramValue,
         &paramValueSizeRet);
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
-    EXPECT_EQ(param_value, 0u);
+    EXPECT_EQ(paramValue, 0u);
 }
 
 static cl_kernel_work_group_info paramNames[] = {
