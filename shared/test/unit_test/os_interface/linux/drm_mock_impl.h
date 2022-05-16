@@ -56,9 +56,9 @@ class DrmTipMock : public DrmMock {
             }
             return 0;
         } else if (request == DRM_IOCTL_I915_GEM_MMAP_OFFSET) {
-            auto mmap_arg = static_cast<drm_i915_gem_mmap_offset *>(arg);
-            mmapOffsetFlagsReceived = mmap_arg->flags;
-            mmap_arg->offset = offset;
+            auto mmapArg = static_cast<drm_i915_gem_mmap_offset *>(arg);
+            mmapOffsetFlagsReceived = mmapArg->flags;
+            mmapArg->offset = offset;
             return mmapOffsetRetVal;
         }
         return handleKernelSpecificRequests(request, arg);

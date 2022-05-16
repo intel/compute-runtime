@@ -241,9 +241,9 @@ bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, uint32_t rootDeviceIndex) {
-    drm_i915_gem_userptr userptr = {};
-    userptr.user_ptr = address;
-    userptr.user_size = size;
+    GemUserPtr userptr = {};
+    userptr.userPtr = address;
+    userptr.userSize = size;
     userptr.flags = static_cast<uint32_t>(flags);
 
     auto &drm = this->getDrm(rootDeviceIndex);
@@ -514,7 +514,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
-    drm_i915_gem_create create = {0, 0, 0};
+    GemCreate create{};
     create.size = bufferSize;
 
     auto &drm = getDrm(allocationData.rootDeviceIndex);
@@ -547,7 +547,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
 
-    drm_i915_gem_create create = {0, 0, 0};
+    GemCreate create{};
     create.size = allocationData.imgInfo->size;
 
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);

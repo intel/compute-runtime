@@ -166,14 +166,14 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GEM_USERPTR) {
         ioctlCount.gemUserptr++;
-        auto userPtrParams = static_cast<drm_i915_gem_userptr *>(arg);
+        auto userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_CREATE) {
         ioctlCount.gemCreate++;
-        auto createParams = static_cast<drm_i915_gem_create *>(arg);
+        auto createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
         if (0 == this->createParamsSize) {

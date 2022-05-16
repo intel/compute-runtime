@@ -18,6 +18,16 @@ uint32_t IoctlHelper::ioctl(Drm *drm, unsigned long request, void *arg) {
     return drm->ioctl(request, arg);
 }
 
+static_assert(sizeof(GemCreate) == sizeof(drm_i915_gem_create));
+static_assert(offsetof(GemCreate, size) == offsetof(drm_i915_gem_create, size));
+static_assert(offsetof(GemCreate, handle) == offsetof(drm_i915_gem_create, handle));
+
+static_assert(sizeof(GemUserPtr) == sizeof(drm_i915_gem_userptr));
+static_assert(offsetof(GemUserPtr, userPtr) == offsetof(drm_i915_gem_userptr, user_ptr));
+static_assert(offsetof(GemUserPtr, userSize) == offsetof(drm_i915_gem_userptr, user_size));
+static_assert(offsetof(GemUserPtr, flags) == offsetof(drm_i915_gem_userptr, flags));
+static_assert(offsetof(GemUserPtr, handle) == offsetof(drm_i915_gem_userptr, handle));
+
 static_assert(sizeof(RegisterRead) == sizeof(drm_i915_reg_read));
 static_assert(offsetof(RegisterRead, offset) == offsetof(drm_i915_reg_read, offset));
 static_assert(offsetof(RegisterRead, value) == offsetof(drm_i915_reg_read, val));

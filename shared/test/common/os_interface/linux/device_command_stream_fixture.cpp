@@ -78,14 +78,14 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     } break;
 
     case DRM_IOCTL_I915_GEM_USERPTR: {
-        auto *userPtrParams = (drm_i915_gem_userptr *)arg;
+        auto *userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         ioctl_cnt.gemUserptr++;
     } break;
 
     case DRM_IOCTL_I915_GEM_CREATE: {
-        auto *createParams = (drm_i915_gem_create *)arg;
+        auto *createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
         ioctl_cnt.gemCreate++;

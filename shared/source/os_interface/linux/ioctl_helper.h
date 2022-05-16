@@ -87,6 +87,18 @@ struct ExecBuffer {
     uint8_t data[64];
 };
 
+struct GemCreate {
+    uint64_t size;
+    uint32_t handle;
+};
+
+struct GemUserPtr {
+    uint64_t userPtr;
+    uint64_t userSize;
+    uint32_t flags;
+    uint32_t handle;
+};
+
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
