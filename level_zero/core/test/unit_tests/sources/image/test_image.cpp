@@ -18,9 +18,9 @@
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
-#include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 
 #include "third_party/opencl_headers/CL/cl_ext_intel.h"
 
@@ -101,13 +101,6 @@ class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std
     void TearDown() override {
         DeviceFixture::TearDown();
     }
-};
-
-template <GFXCORE_FAMILY T>
-struct WhiteBox<::L0::ImageCoreFamily<T>> : public ::L0::ImageCoreFamily<T> {
-    using BaseClass = ::L0::ImageCoreFamily<T>;
-    using BaseClass::redescribedSurfaceState;
-    using BaseClass::surfaceState;
 };
 
 HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrectSwizzleInRSSIsSet, IsAtLeastSkl) {
@@ -971,5 +964,303 @@ HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgC
 
     image->destroy();
 }
+
+using IsAtMostProductDG2 = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG2>;
+
+HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenFilterFlagsAreValid, IsAtMostProductDG2) {
+    ze_image_properties_t properties;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.width = 10;
+    desc.height = 10;
+    desc.depth = 10;
+
+    auto result = device->imageGetProperties(&desc, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto samplerFilterFlagsValid = (properties.samplerFilterFlags ==
+                                    ZE_IMAGE_SAMPLER_FILTER_FLAG_POINT) ||
+                                   (properties.samplerFilterFlags ==
+                                    ZE_IMAGE_SAMPLER_FILTER_FLAG_LINEAR);
+    EXPECT_TRUE(samplerFilterFlagsValid);
+}
+
+HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostProductDG2) {
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    L0::Image *imagePtr;
+
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto image = whitebox_cast(imagePtr);
+    ASSERT_NE(nullptr, image);
+
+    result = zeImageDestroy(image->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostProductDG2) {
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    L0::Image *imagePtr;
+
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto image = whitebox_cast(imagePtr);
+    ASSERT_NE(nullptr, image);
+
+    image->destroy();
+}
+
+HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostProductDG2) {
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    L0::Image *imagePtr;
+
+    auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
+    ASSERT_NE(ZE_RESULT_SUCCESS, result);
+
+    auto image = whitebox_cast(imagePtr);
+    ASSERT_EQ(nullptr, image);
+}
+
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostProductDG2) {
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.width = 10;
+    desc.height = 10;
+    desc.depth = 10;
+
+    L0::Image *imagePtr;
+
+    auto result = Image::create(productFamily, device, &desc, &imagePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto image = whitebox_cast(imagePtr);
+    ASSERT_NE(nullptr, image);
+
+    auto alloc = image->getAllocation();
+    ASSERT_NE(nullptr, alloc);
+
+    image->destroy();
+}
+
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostProductDG2) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    auto imageCore = new WhiteBox<ImageCoreFamily<gfxCoreFamily>>();
+    ze_result_t ret = imageCore->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto surfaceState = &imageCore->surfaceState;
+
+    ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D);
+    ASSERT_EQ(surfaceState->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
+    ASSERT_EQ(surfaceState->getWidth(), 11u);
+    ASSERT_EQ(surfaceState->getHeight(), 13u);
+    ASSERT_EQ(surfaceState->getDepth(), 17u);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectGreen(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectBlue(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
+
+    delete imageCore;
+}
+
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostProductDG2) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageCore = new WhiteBox<ImageCoreFamily<gfxCoreFamily>>();
+    ze_result_t ret = imageCore->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto surfaceState = &imageCore->surfaceState;
+
+    ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectGreen(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectBlue(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
+    ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
+              RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
+
+    delete imageCore;
+}
+
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMostProductDG2) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+
+    ze_image_desc_t descOdd = {};
+    descOdd.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    descOdd.type = ZE_IMAGE_TYPE_3D;
+    descOdd.width = 11;
+    descOdd.height = 13;
+    descOdd.depth = 17;
+
+    // Some media formats require even dimensions due to subsampling.
+    ze_image_desc_t descEven = {};
+    descEven.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    descEven.type = ZE_IMAGE_TYPE_2D;
+    descEven.width = 12;
+    descEven.height = 16;
+    descEven.depth = 1;
+
+    // Some formats aren't compilable on all generations, so for those we
+    // skip the format check and rely on gen-specific tests defined elsewhere.
+    static const typename RENDER_SURFACE_STATE::SURFACE_FORMAT noFormatCheck =
+        static_cast<typename RENDER_SURFACE_STATE::SURFACE_FORMAT>(0xffff);
+
+    struct FormatInfo {
+        size_t elemBitSize;
+        ze_image_format_layout_t formatLayout;
+        ze_image_format_type_t formatType;
+        SURFACE_FORMAT ssFormat;
+        bool requireEven;
+        GFXCORE_FAMILY minGen;
+    };
+    struct FormatInfo testFormats[] = {
+        {sizeof(uint8_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT, false, IGFX_GEN9_CORE},
+        {sizeof(uint32_t) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_UINT, false, IGFX_GEN9_CORE},
+        {sizeof(uint8_t) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UNORM,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UNORM, false, IGFX_GEN9_CORE},
+        {sizeof(int16_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_16, ZE_IMAGE_FORMAT_TYPE_SNORM,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_SNORM, false, IGFX_GEN9_CORE},
+        {sizeof(float) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_FLOAT, false, IGFX_GEN9_CORE},
+        {sizeof(uint32_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_10_10_10_2, ZE_IMAGE_FORMAT_TYPE_UINT,
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R10G10B10A2_UINT, false, IGFX_GEN10_CORE}};
+    size_t numFormats = sizeof(testFormats) / sizeof(struct FormatInfo);
+
+    for (size_t i = 0; i < numFormats; i++) {
+        for (int j = 0; j < 2; j++) {
+            bool odd = (j == 0);
+
+            if (odd && testFormats[i].requireEven) {
+                continue;
+            }
+
+            if (gfxCoreFamily < testFormats[i].minGen) {
+                continue;
+            }
+
+            ze_image_desc_t *desc = odd ? &descOdd : &descEven;
+
+            desc->format.layout = testFormats[i].formatLayout;
+            desc->format.type = testFormats[i].formatType;
+
+            auto imageCore = new WhiteBox<ImageCoreFamily<gfxCoreFamily>>();
+            ze_result_t ret = imageCore->initialize(device, desc);
+            ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+            auto surfaceState = &imageCore->surfaceState;
+
+            if (testFormats[i].ssFormat != noFormatCheck) {
+                ASSERT_EQ(surfaceState->getSurfaceFormat(), testFormats[i].ssFormat);
+            }
+
+            delete imageCore;
+        }
+    }
+}
+
+HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMostProductDG2) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    uint8_t mockSSH[sizeof(RENDER_SURFACE_STATE) * 4] = {0};
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 1;
+
+    auto imageA = new ImageCoreFamily<gfxCoreFamily>();
+    ze_result_t ret = imageA->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.width = 10;
+    desc.height = 10;
+
+    auto imageB = new ImageCoreFamily<gfxCoreFamily>();
+    ret = imageB->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    imageA->copySurfaceStateToSSH(mockSSH, 0, false);
+    imageB->copySurfaceStateToSSH(mockSSH, sizeof(RENDER_SURFACE_STATE), false);
+
+    auto surfaceStateA = reinterpret_cast<RENDER_SURFACE_STATE *>(mockSSH);
+    ASSERT_EQ(surfaceStateA->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    ASSERT_EQ(surfaceStateA->getSurfaceFormat(),
+              RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
+    ASSERT_EQ(surfaceStateA->getWidth(), 11u);
+    ASSERT_EQ(surfaceStateA->getHeight(), 13u);
+
+    auto surfaceStateB =
+        reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(mockSSH, sizeof(RENDER_SURFACE_STATE)));
+    ASSERT_EQ(surfaceStateB->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    ASSERT_EQ(surfaceStateB->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32_UINT);
+    ASSERT_EQ(surfaceStateB->getWidth(), 10u);
+    ASSERT_EQ(surfaceStateB->getHeight(), 10u);
+
+    delete imageA;
+    delete imageB;
+}
+
 } // namespace ult
 } // namespace L0

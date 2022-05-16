@@ -302,5 +302,51 @@ HWTEST_F(FenceAubCsrTest, givenCallToFenceHostSynchronizeWithAubModeCsrReturnsSu
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST(zeFenceDestroy, WhenDestroyingFenceThenSuccessIsReturned) {
+    Mock<Fence> fence;
+
+    auto result = zeFenceDestroy(fence.toHandle());
+    EXPECT_EQ(1u, fence.destroyCalled);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeFenceHostSynchronize, WhenSynchronizingFenceThenSuccessIsReturned) {
+    Mock<Fence> fence;
+
+    auto result = zeFenceHostSynchronize(fence.toHandle(), std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(1u, fence.hostSynchronizeCalled);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(FenceTest, givenFenceNotEnqueuedThenStatusIsNotReady) {
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    *csr->tagAddress = 0;
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    auto fence = whitebox_cast(Fence::create(&cmdqueue, &desc));
+    ASSERT_NE(fence, nullptr);
+    EXPECT_EQ(fence->queryStatus(), ZE_RESULT_NOT_READY);
+
+    delete fence;
+}
+
+TEST_F(FenceTest, givenFenceWhenResettingThenTaskCountIsReset) {
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> cmdqueue(device, csr.get());
+    ze_fence_desc_t desc = {};
+
+    auto fence = whitebox_cast(Fence::create(&cmdqueue, &desc));
+    ASSERT_NE(fence, nullptr);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), fence->taskCount);
+
+    fence->taskCount = 1;
+    auto result = fence->reset(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), fence->taskCount);
+
+    delete fence;
+}
+
 } // namespace ult
 } // namespace L0
