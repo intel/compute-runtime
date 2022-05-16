@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,5 +10,5 @@
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeInit_Tracing(ze_init_flags_t flags);
+zeInitTracing(ze_init_flags_t flags);
 }

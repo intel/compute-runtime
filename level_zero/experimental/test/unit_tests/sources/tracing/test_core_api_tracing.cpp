@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-void OnEnterCommandListAppendLaunchFunction(
+void onEnterCommandListAppendLaunchFunction(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -18,7 +18,7 @@ void OnEnterCommandListAppendLaunchFunction(
     int a = 0;
     a++;
 }
-void OnExitCommandListAppendLaunchFunction(
+void onExitCommandListAppendLaunchFunction(
     ze_command_list_append_launch_kernel_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -27,7 +27,7 @@ void OnExitCommandListAppendLaunchFunction(
     a++;
 }
 
-void OnEnterCommandListCreateWithUserData(
+void onEnterCommandListCreateWithUserData(
     ze_command_list_create_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -36,7 +36,7 @@ void OnEnterCommandListCreateWithUserData(
     int *val = static_cast<int *>(pTracerUserData);
     EXPECT_EQ(5, *val);
 }
-void OnExitCommandListCreateWithUserData(
+void onExitCommandListCreateWithUserData(
     ze_command_list_create_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -46,7 +46,7 @@ void OnExitCommandListCreateWithUserData(
     EXPECT_EQ(5, *val);
 }
 
-void OnEnterCommandListCloseWithUserData(
+void onEnterCommandListCloseWithUserData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -55,7 +55,7 @@ void OnEnterCommandListCloseWithUserData(
     int *val = static_cast<int *>(pTracerUserData);
     EXPECT_EQ(5, *val);
 }
-void OnExitCommandListCloseWithUserData(
+void onExitCommandListCloseWithUserData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -65,7 +65,7 @@ void OnExitCommandListCloseWithUserData(
     EXPECT_EQ(5, *val);
 }
 
-void OnEnterCommandListCloseWithUserDataRecursion(
+void onEnterCommandListCloseWithUserDataRecursion(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -75,7 +75,7 @@ void OnEnterCommandListCloseWithUserDataRecursion(
     EXPECT_EQ(5, *val);
     *val += 5;
 }
-void OnExitCommandListCloseWithUserDataRecursion(
+void onExitCommandListCloseWithUserDataRecursion(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -86,7 +86,7 @@ void OnExitCommandListCloseWithUserDataRecursion(
     *val += 5;
 }
 
-void OnEnterCommandListCloseWithUserDataAndAllocateInstanceData(
+void onEnterCommandListCloseWithUserDataAndAllocateInstanceData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -98,7 +98,7 @@ void OnEnterCommandListCloseWithUserDataAndAllocateInstanceData(
     ppTracerInstanceUserData[0] = instanceData;
     *instanceData = 0x1234;
 }
-void OnExitCommandListCloseWithUserDataAndReadInstanceData(
+void onExitCommandListCloseWithUserDataAndReadInstanceData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -117,7 +117,7 @@ void OnExitCommandListCloseWithUserDataAndReadInstanceData(
     delete instanceData;
 }
 
-void OnEnterCommandListCloseWithoutUserDataAndAllocateInstanceData(
+void onEnterCommandListCloseWithoutUserDataAndAllocateInstanceData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -127,7 +127,7 @@ void OnEnterCommandListCloseWithoutUserDataAndAllocateInstanceData(
     ppTracerInstanceUserData[0] = instanceData;
     *instanceData = 0x1234;
 }
-void OnExitCommandListCloseWithoutUserDataAndReadInstanceData(
+void onExitCommandListCloseWithoutUserDataAndReadInstanceData(
     ze_command_list_close_params_t *params,
     ze_result_t result,
     void *pTracerUserData,
@@ -168,8 +168,8 @@ TEST_F(zeAPITracingCoreTests, WhenCreateTracerAndsetCallbacksAndEnableTracingAnd
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnAppendLaunchKernelCb = OnEnterCommandListAppendLaunchFunction;
-    epilogCbs.CommandList.pfnAppendLaunchKernelCb = OnExitCommandListAppendLaunchFunction;
+    prologCbs.CommandList.pfnAppendLaunchKernelCb = onEnterCommandListAppendLaunchFunction;
+    epilogCbs.CommandList.pfnAppendLaunchKernelCb = onExitCommandListAppendLaunchFunction;
 
     result = zetTracerExpSetPrologues(apiTracerHandle, &prologCbs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -194,7 +194,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWi
     ze_command_list_close_params_t tracerParams;
     zet_core_callbacks_t prologCbs = {};
 
-    prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserData;
+    prologCbs.CommandList.pfnCloseCb = onEnterCommandListCloseWithUserData;
 
     ze_command_list_handle_t commandListHandle = commandList.toHandle();
     tracerParams.phCommandList = &commandListHandle;
@@ -207,7 +207,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOnePrologAndNoEpilogWi
     prologCallbacks.push_back(prologCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
-    result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
+    result = apiTracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -219,8 +219,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserData;
-    epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserData;
+    prologCbs.CommandList.pfnCloseCb = onEnterCommandListCloseWithUserData;
+    epilogCbs.CommandList.pfnCloseCb = onExitCommandListCloseWithUserData;
 
     ze_command_list_handle_t commandListHandle = commandList.toHandle();
     tracerParams.phCommandList = &commandListHandle;
@@ -237,7 +237,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
-    result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
+    result = apiTracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -249,8 +249,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserDataAndAllocateInstanceData;
-    epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserDataAndReadInstanceData;
+    prologCbs.CommandList.pfnCloseCb = onEnterCommandListCloseWithUserDataAndAllocateInstanceData;
+    epilogCbs.CommandList.pfnCloseCb = onExitCommandListCloseWithUserDataAndReadInstanceData;
 
     ze_command_list_handle_t commandListHandle = commandList.toHandle();
     tracerParams.phCommandList = &commandListHandle;
@@ -267,7 +267,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
-    result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
+    result = apiTracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -278,8 +278,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithoutUserDataAndAllocateInstanceData;
-    epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithoutUserDataAndReadInstanceData;
+    prologCbs.CommandList.pfnCloseCb = onEnterCommandListCloseWithoutUserDataAndAllocateInstanceData;
+    epilogCbs.CommandList.pfnCloseCb = onExitCommandListCloseWithoutUserDataAndReadInstanceData;
 
     ze_command_list_handle_t commandListHandle = commandList.toHandle();
     tracerParams.phCommandList = &commandListHandle;
@@ -296,7 +296,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     epilogCallbacks.push_back(epilogCallback);
     ze_pfnCommandListCloseCb_t apiOrdinal = {};
 
-    result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
+    result = apiTracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -308,8 +308,8 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     zet_core_callbacks_t prologCbs = {};
     zet_core_callbacks_t epilogCbs = {};
 
-    prologCbs.CommandList.pfnCloseCb = OnEnterCommandListCloseWithUserDataRecursion;
-    epilogCbs.CommandList.pfnCloseCb = OnExitCommandListCloseWithUserDataRecursion;
+    prologCbs.CommandList.pfnCloseCb = onEnterCommandListCloseWithUserDataRecursion;
+    epilogCbs.CommandList.pfnCloseCb = onExitCommandListCloseWithUserDataRecursion;
 
     ze_command_list_handle_t commandListHandle = commandList.toHandle();
     tracerParams.phCommandList = &commandListHandle;
@@ -329,7 +329,7 @@ TEST_F(zeAPITracingCoreTests, WhenCallingTracerWrapperWithOneSetOfPrologEpilogsW
     result = callHandleTracerRecursion(zeCommandListClose, commandListHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
-    result = APITracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
+    result = apiTracerWrapperImp(zeCommandListClose, &tracerParams, apiOrdinal, prologCallbacks, epilogCallbacks, *tracerParams.phCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = callHandleTracerRecursion(zeCommandListClose, commandListHandle);

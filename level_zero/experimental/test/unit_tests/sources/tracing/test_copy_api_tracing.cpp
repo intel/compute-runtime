@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyTracingWr
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryCopy_Tracing(nullptr, dst, static_cast<const void *>(src), bufferSize, nullptr, 0U, nullptr);
+    result = zeCommandListAppendMemoryCopyTracing(nullptr, dst, static_cast<const void *>(src), bufferSize, nullptr, 0U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -60,7 +60,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryFillTracingWr
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryFill_Tracing(nullptr, dst, &pattern, sizeof(pattern), bufferSize, nullptr, 0, nullptr);
+    result = zeCommandListAppendMemoryFillTracing(nullptr, dst, &pattern, sizeof(pattern), bufferSize, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -98,15 +98,15 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyRegionTra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryCopyRegion_Tracing(nullptr, dst,
-                                                         &dstRegion, dstPitch,
-                                                         dstSlicePitch,
-                                                         static_cast<const void *>(src),
-                                                         &srcRegion, srcPitch,
-                                                         srcSlicePitch,
-                                                         nullptr,
-                                                         0,
-                                                         nullptr);
+    result = zeCommandListAppendMemoryCopyRegionTracing(nullptr, dst,
+                                                        &dstRegion, dstPitch,
+                                                        dstSlicePitch,
+                                                        static_cast<const void *>(src),
+                                                        &srcRegion, srcPitch,
+                                                        srcSlicePitch,
+                                                        nullptr,
+                                                        0,
+                                                        nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -132,7 +132,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyTracingWra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendImageCopy_Tracing(nullptr, hDstImage, hSrcImage, nullptr, 0U, nullptr);
+    result = zeCommandListAppendImageCopyTracing(nullptr, hDstImage, hSrcImage, nullptr, 0U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -160,7 +160,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyRegionTrac
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendImageCopyRegion_Tracing(nullptr, hDstImage, hSrcImage, nullptr, nullptr, nullptr, 0U, nullptr);
+    result = zeCommandListAppendImageCopyRegionTracing(nullptr, hDstImage, hSrcImage, nullptr, nullptr, nullptr, 0U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -187,7 +187,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyToMemoryTr
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendImageCopyToMemory_Tracing(nullptr, dstptr, hSrcImage, nullptr, nullptr, 0U, nullptr);
+    result = zeCommandListAppendImageCopyToMemoryTracing(nullptr, dstptr, hSrcImage, nullptr, nullptr, 0U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -214,7 +214,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyFromMemory
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendImageCopyFromMemory_Tracing(nullptr, hDstImage, srcptr, nullptr, nullptr, 0U, nullptr);
+    result = zeCommandListAppendImageCopyFromMemoryTracing(nullptr, hDstImage, srcptr, nullptr, nullptr, 0U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -240,7 +240,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemAdviseTracingWra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemAdvise_Tracing(nullptr, nullptr, ptr, bufferSize, advice);
+    result = zeCommandListAppendMemAdviseTracing(nullptr, nullptr, ptr, bufferSize, advice);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 
@@ -264,7 +264,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyFromConte
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryCopyFromContext_Tracing(nullptr, nullptr, nullptr, nullptr, 0U, nullptr, 1u, nullptr);
+    result = zeCommandListAppendMemoryCopyFromContextTracing(nullptr, nullptr, nullptr, nullptr, 0U, nullptr, 1u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

@@ -689,7 +689,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     bool anyUncacheableArgs = false;
     auto requiresCoherency = false;
-    for (auto surface : CreateRange(surfaces, surfaceCount)) {
+    for (auto surface : createRange(surfaces, surfaceCount)) {
         surface->makeResident(getGpgpuCommandStreamReceiver());
         requiresCoherency |= surface->IsCoherent;
         if (!surface->allowsL3Caching()) {
@@ -925,7 +925,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         }
 
         allSurfaces.reserve(allSurfaces.size() + surfaceCount);
-        for (auto &surface : CreateRange(surfaces, surfaceCount)) {
+        for (auto &surface : createRange(surfaces, surfaceCount)) {
             allSurfaces.push_back(surface->duplicate());
         }
 
@@ -998,7 +998,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
         }
 
-        for (auto surface : CreateRange(surfaces, surfaceCount)) {
+        for (auto surface : createRange(surfaces, surfaceCount)) {
             surface->makeResident(getGpgpuCommandStreamReceiver());
         }
 

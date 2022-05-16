@@ -63,7 +63,7 @@ HWTEST_F(ModuleTest, givenZeroCountWhenGettingKernelNamesThenCountIsFilled) {
     uint32_t count = 0;
     auto result = module->getKernelNames(&count, nullptr);
 
-    auto whiteboxModule = whitebox_cast(module.get());
+    auto whiteboxModule = whiteboxCast(module.get());
     EXPECT_EQ(whiteboxModule->kernelImmDatas.size(), count);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1125,7 +1125,7 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlag
     NEO::Linker::RelocationInfo unresolvedRelocation;
     unresolvedRelocation.symbolName = "unresolved";
 
-    whitebox_cast(module.get())->unresolvedExternalsInfo.push_back({unresolvedRelocation});
+    whiteboxCast(module.get())->unresolvedExternalsInfo.push_back({unresolvedRelocation});
 
     ze_module_property_flags_t expectedFlags = 0;
     expectedFlags |= ZE_MODULE_PROPERTY_FLAG_IMPORTS;

@@ -458,7 +458,7 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
         propertiesCurrent += 2;
         if (CL_CONTEXT_PLATFORM == propertyType) {
             Platform *pPlatform = nullptr;
-            errcode = validateObject(WithCastToInternal(reinterpret_cast<cl_platform_id>(propertyValue), &pPlatform));
+            errcode = validateObject(withCastToInternal(reinterpret_cast<cl_platform_id>(propertyValue), &pPlatform));
             return pPlatform;
         }
     }

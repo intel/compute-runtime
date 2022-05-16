@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ enum NonZeroBufferSize : size_t;
 enum PatternSize : size_t;
 
 template <typename CLType, typename InternalType>
-CLType WithCastToInternal(CLType clObject, InternalType **internalObject) {
+CLType withCastToInternal(CLType clObject, InternalType **internalObject) {
     *internalObject = NEO::castToObject<InternalType>(clObject);
     return (*internalObject) ? clObject : nullptr;
 }

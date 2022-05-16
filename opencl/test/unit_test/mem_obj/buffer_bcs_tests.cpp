@@ -450,12 +450,12 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedBlitEnqueueWhenUnblockingThenMake
     mockCmdQ->obtainNewTimestampPacketNodes(1, previousTimestampPackets, false, *bcsCsr);
     auto dependencyFromPreviousEnqueue = mockCmdQ->timestampPacketContainer->peekNodes()[0];
 
-    auto event = make_releaseable<Event>(mockCmdQ, CL_COMMAND_READ_BUFFER, 0, 0);
+    auto event = makeReleaseable<Event>(mockCmdQ, CL_COMMAND_READ_BUFFER, 0, 0);
     MockTimestampPacketContainer eventDependencyContainer(*bcsCsr->getTimestampPacketAllocator(), 1);
     auto eventDependency = eventDependencyContainer.getNode(0);
     event->addTimestampPacketNodes(eventDependencyContainer);
 
-    auto userEvent = make_releaseable<UserEvent>(bcsMockContext.get());
+    auto userEvent = makeReleaseable<UserEvent>(bcsMockContext.get());
     cl_event waitlist[] = {userEvent.get(), event.get()};
 
     commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 2, waitlist, nullptr);

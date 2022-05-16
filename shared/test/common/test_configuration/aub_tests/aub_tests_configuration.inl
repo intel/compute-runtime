@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
 
 template <typename GfxFamily>
-AubTestsConfig GetAubTestsConfig() {
+AubTestsConfig getAubTestsConfig() {
     AubTestsConfig aubTestsConfig;
     aubTestsConfig.testCanonicalAddress = true;
     return aubTestsConfig;

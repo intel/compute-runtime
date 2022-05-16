@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 template <typename To, typename From>
-constexpr To r_pod_cast(From *f) {
+constexpr To r_pod_cast(From *f) { // NOLINT(readability-identifier-naming)
     typedef typename std::remove_pointer<From>::type FromType;
     typedef typename std::remove_pointer<To>::type ToType;
 

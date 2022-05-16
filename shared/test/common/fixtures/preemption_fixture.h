@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,4 +63,4 @@ struct PreemptionTestHwDetails {
 };
 
 template <typename FamilyType>
-PreemptionTestHwDetails GetPreemptionTestHwDetails();
+PreemptionTestHwDetails getPreemptionTestHwDetails();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 using namespace NEO;
 
 template <>
-PreemptionTestHwDetails GetPreemptionTestHwDetails<BDWFamily>() {
+PreemptionTestHwDetails getPreemptionTestHwDetails<BDWFamily>() {
     PreemptionTestHwDetails ret;
     ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = 0;
     ret.modeToRegValueMap[PreemptionMode::MidBatch] = (1 << 2);

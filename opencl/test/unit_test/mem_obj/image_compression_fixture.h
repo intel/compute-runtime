@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class ImageCompressionTests : public ::testing::Test {
         mockExecutionEnvironment->memoryManager.reset(myMemoryManager);
 
         mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, mockExecutionEnvironment, 0u));
-        mockContext = make_releaseable<MockContext>(mockDevice.get());
+        mockContext = makeReleaseable<MockContext>(mockDevice.get());
     }
 
     MockExecutionEnvironment *mockExecutionEnvironment;

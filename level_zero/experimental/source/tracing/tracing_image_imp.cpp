@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeImageGetProperties_Tracing(ze_device_handle_t hDevice,
-                             const ze_image_desc_t *desc,
-                             ze_image_properties_t *pImageProperties) {
+zeImageGetPropertiesTracing(ze_device_handle_t hDevice,
+                            const ze_image_desc_t *desc,
+                            ze_image_properties_t *pImageProperties) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Image.pfnGetProperties,
                                hDevice,
@@ -26,7 +26,7 @@ zeImageGetProperties_Tracing(ze_device_handle_t hDevice,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnImageGetPropertiesCb_t, Image, pfnGetPropertiesCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnGetProperties,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnGetProperties,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -37,10 +37,10 @@ zeImageGetProperties_Tracing(ze_device_handle_t hDevice,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeImageCreate_Tracing(ze_context_handle_t hContext,
-                      ze_device_handle_t hDevice,
-                      const ze_image_desc_t *desc,
-                      ze_image_handle_t *phImage) {
+zeImageCreateTracing(ze_context_handle_t hContext,
+                     ze_device_handle_t hDevice,
+                     const ze_image_desc_t *desc,
+                     ze_image_handle_t *phImage) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Image.pfnCreate,
                                hContext,
@@ -58,7 +58,7 @@ zeImageCreate_Tracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnImageCreateCb_t, Image, pfnCreateCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnCreate,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnCreate,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -70,7 +70,7 @@ zeImageCreate_Tracing(ze_context_handle_t hContext,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeImageDestroy_Tracing(ze_image_handle_t hImage) {
+zeImageDestroyTracing(ze_image_handle_t hImage) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Image.pfnDestroy,
                                hImage);
@@ -82,7 +82,7 @@ zeImageDestroy_Tracing(ze_image_handle_t hImage) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnImageDestroyCb_t, Image, pfnDestroyCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnDestroy,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Image.pfnDestroy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

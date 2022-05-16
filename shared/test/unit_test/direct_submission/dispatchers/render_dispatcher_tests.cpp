@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForPreemptionCmdSizeThenRetu
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     size_t expectedCmdSize = 0u;
-    if (GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
+    if (getPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         expectedCmdSize = sizeof(MI_LOAD_REGISTER_IMM);
     }
     EXPECT_EQ(expectedCmdSize, RenderDispatcher<FamilyType>::getSizePreemption());
@@ -29,7 +29,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForPreemptionCmdSizeThenRetu
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingPreemptionCmdThenExpectProperMmioAddress) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    auto preemptionDetails = GetPreemptionTestHwDetails<FamilyType>();
+    auto preemptionDetails = getPreemptionTestHwDetails<FamilyType>();
 
     RenderDispatcher<FamilyType>::dispatchPreemption(cmdBuffer);
 

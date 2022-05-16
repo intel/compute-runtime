@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ uint32_t cmdQueueMocs(CommandQueue *pCmdQ) {
     auto &csr = pCmdQHw->getGpgpuCommandStreamReceiver();
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(csr.getCS(0), 0);
-    auto itorCmd = reverse_find<STATE_BASE_ADDRESS *>(hwParse.cmdList.rbegin(), hwParse.cmdList.rend());
+    auto itorCmd = reverseFind<STATE_BASE_ADDRESS *>(hwParse.cmdList.rbegin(), hwParse.cmdList.rend());
     EXPECT_NE(hwParse.cmdList.rend(), itorCmd);
     auto sba = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
     EXPECT_NE(nullptr, sba);

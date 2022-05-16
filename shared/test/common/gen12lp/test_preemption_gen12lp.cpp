@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 using namespace NEO;
 
 template <>
-PreemptionTestHwDetails GetPreemptionTestHwDetails<TGLLPFamily>() {
+PreemptionTestHwDetails getPreemptionTestHwDetails<TGLLPFamily>() {
     PreemptionTestHwDetails ret;
     ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
     ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);

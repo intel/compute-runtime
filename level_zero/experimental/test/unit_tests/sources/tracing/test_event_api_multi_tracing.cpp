@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,7 +246,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventCreate_Tracing(event_create_args.hEventPool0, &event_create_args.desc0, &event_create_args.hEvent0);
+    result = zeEventCreateTracing(event_create_args.hEventPool0, &event_create_args.desc0, &event_create_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -375,7 +375,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventDestroy_Tracing(event_destroy_args.hEvent0);
+    result = zeEventDestroyTracing(event_destroy_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -504,7 +504,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTrac
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostSignal_Tracing(event_host_signal_args.hEvent0);
+    result = zeEventHostSignalTracing(event_host_signal_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -645,7 +645,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchroniz
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostSynchronize_Tracing(event_host_synchronize_args.hEvent0, event_host_synchronize_args.timeout0);
+    result = zeEventHostSynchronizeTracing(event_host_synchronize_args.hEvent0, event_host_synchronize_args.timeout0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -774,7 +774,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventQueryStatus_Tracing(event_query_status_args.hEvent0);
+    result = zeEventQueryStatusTracing(event_query_status_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -903,7 +903,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTraci
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostReset_Tracing(event_reset_args.hEvent0);
+    result = zeEventHostResetTracing(event_reset_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -1200,11 +1200,11 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTrac
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolCreate_Tracing(event_pool_create_args.hContext0,
-                                       &event_pool_create_args.desc0,
-                                       event_pool_create_args.numDevices0,
-                                       event_pool_create_args.hDevices0,
-                                       &event_pool_create_args.hEventPool0);
+    result = zeEventPoolCreateTracing(event_pool_create_args.hContext0,
+                                      &event_pool_create_args.desc0,
+                                      event_pool_create_args.numDevices0,
+                                      event_pool_create_args.hDevices0,
+                                      &event_pool_create_args.hEventPool0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -1333,7 +1333,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolDestroy_Tracing(event_pool_destroy_args.hEventPool0);
+    result = zeEventPoolDestroyTracing(event_pool_destroy_args.hEventPool0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -1348,14 +1348,14 @@ struct {
     void *instanceData3;
 } event_pool_get_ipc_handle_args;
 
-static void event_pool_get_ipc_handle_init_random(ze_ipc_event_pool_handle_t *phIpc) {
+static void eventPoolGetIpcHandleInitRandom(ze_ipc_event_pool_handle_t *phIpc) {
     uint8_t *ptr = (uint8_t *)phIpc;
     for (size_t i = 0; i < sizeof(*phIpc); i++, ptr++) {
         *ptr = generateRandomSize<uint8_t>();
     }
 }
 
-static bool event_pool_get_ipc_handles_compare(ze_ipc_event_pool_handle_t *phIpc0, ze_ipc_event_pool_handle_t *phIpc1) {
+static bool eventPoolGetIpcHandlesCompare(ze_ipc_event_pool_handle_t *phIpc0, ze_ipc_event_pool_handle_t *phIpc1) {
     if (nullptr == phIpc0) {
         return false;
     }
@@ -1370,11 +1370,11 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
 
     // initialize initial argument set
     event_pool_get_ipc_handle_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
-    event_pool_get_ipc_handle_init_random(&event_pool_get_ipc_handle_args.hIpc0);
+    eventPoolGetIpcHandleInitRandom(&event_pool_get_ipc_handle_args.hIpc0);
 
     // initialize replacement argument set
     event_pool_get_ipc_handle_args.hEventPool1 = generateRandomHandle<ze_event_pool_handle_t>();
-    event_pool_get_ipc_handle_init_random(&event_pool_get_ipc_handle_args.hIpc1);
+    eventPoolGetIpcHandleInitRandom(&event_pool_get_ipc_handle_args.hIpc1);
 
     // initialize user instance data
     event_pool_get_ipc_handle_args.instanceData0 = generateRandomHandle<void *>();
@@ -1384,8 +1384,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
         [](ze_event_pool_handle_t hEventPool, ze_ipc_event_pool_handle_t *phIpc) {
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, hEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, phIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, phIpc));
-            event_pool_get_ipc_handle_init_random(&event_pool_get_ipc_handle_args.hIpcAPI);
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, phIpc));
+            eventPoolGetIpcHandleInitRandom(&event_pool_get_ipc_handle_args.hIpcAPI);
             *phIpc = event_pool_get_ipc_handle_args.hIpcAPI;
             return ZE_RESULT_SUCCESS;
         };
@@ -1398,7 +1398,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
         [](ze_event_pool_get_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool0, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc0, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc0, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc0, *params->pphIpc));
             *params->phEventPool = event_pool_get_ipc_handle_args.hEventPool1;
             *params->pphIpc = &event_pool_get_ipc_handle_args.hIpc1;
             ASSERT_NE(nullptr, pTracerUserData);
@@ -1420,7 +1420,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
@@ -1438,7 +1438,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
         [](ze_event_pool_get_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 11);
@@ -1454,7 +1454,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 21);
@@ -1469,7 +1469,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
         [](ze_event_pool_get_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
@@ -1489,7 +1489,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_get_ipc_handle_args.hEventPool1, *params->phEventPool);
             EXPECT_EQ(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc);
-            EXPECT_TRUE(event_pool_get_ipc_handles_compare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
+            EXPECT_TRUE(eventPoolGetIpcHandlesCompare(&event_pool_get_ipc_handle_args.hIpc1, *params->pphIpc));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
@@ -1501,7 +1501,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHand
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolGetIpcHandle_Tracing(event_pool_get_ipc_handle_args.hEventPool0, &event_pool_get_ipc_handle_args.hIpc0);
+    result = zeEventPoolGetIpcHandleTracing(event_pool_get_ipc_handle_args.hEventPool0, &event_pool_get_ipc_handle_args.hIpc0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -1518,14 +1518,14 @@ struct {
     void *instanceData3;
 } event_pool_open_ipc_handle_args;
 
-static void event_pool_open_ipc_handle_init_random(ze_ipc_event_pool_handle_t *phIpc) {
+static void eventPoolOpenIpcHandleInitRandom(ze_ipc_event_pool_handle_t *phIpc) {
     uint8_t *ptr = (uint8_t *)phIpc;
     for (size_t i = 0; i < sizeof(*phIpc); i++, ptr++) {
         *ptr = generateRandomSize<uint8_t>();
     }
 }
 
-static bool event_pool_open_ipc_handles_compare(ze_ipc_event_pool_handle_t *phIpc0, ze_ipc_event_pool_handle_t *phIpc1) {
+static bool eventPoolOpenIpcHandlesCompare(ze_ipc_event_pool_handle_t *phIpc0, ze_ipc_event_pool_handle_t *phIpc1) {
     return (memcmp((void *)phIpc0, (void *)phIpc1, sizeof(ze_ipc_event_pool_handle_t)) == 0);
 }
 
@@ -1534,12 +1534,12 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
 
     // initialize initial argument set
     event_pool_open_ipc_handle_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
-    event_pool_open_ipc_handle_init_random(&event_pool_open_ipc_handle_args.hIpc0);
+    eventPoolOpenIpcHandleInitRandom(&event_pool_open_ipc_handle_args.hIpc0);
     event_pool_open_ipc_handle_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
 
     // initialize replacement argument set
     event_pool_open_ipc_handle_args.hContext1 = generateRandomHandle<ze_context_handle_t>();
-    event_pool_open_ipc_handle_init_random(&event_pool_open_ipc_handle_args.hIpc1);
+    eventPoolOpenIpcHandleInitRandom(&event_pool_open_ipc_handle_args.hIpc1);
     event_pool_open_ipc_handle_args.hEventPool1 = generateRandomHandle<ze_event_pool_handle_t>();
 
     // initialize user instance data
@@ -1549,7 +1549,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     driver_ddiTable.core_ddiTable.EventPool.pfnOpenIpcHandle =
         [](ze_context_handle_t hContext, ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) {
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, hContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, &hIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, &hIpc));
             EXPECT_EQ(event_pool_open_ipc_handle_args.hEventPool1, *phEventPool);
             EXPECT_EQ(&event_pool_open_ipc_handle_args.hEventPool1, phEventPool);
             event_pool_open_ipc_handle_args.hEventPoolAPI = generateRandomHandle<ze_event_pool_handle_t>();
@@ -1564,7 +1564,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     prologCbs0.EventPool.pfnOpenIpcHandleCb =
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext0, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc0, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc0, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1602,7 +1602,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             struct instanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1634,7 +1634,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     prologCbs1.EventPool.pfnOpenIpcHandleCb =
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1664,7 +1664,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1693,7 +1693,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
     prologCbs3.EventPool.pfnOpenIpcHandleCb =
         [](ze_event_pool_open_ipc_handle_params_t *params, ze_result_t result, void *pTracerUserData, void **ppTracerInstanceUserData) {
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1727,7 +1727,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
             struct instanceDataStruct *instanceData;
             EXPECT_EQ(result, ZE_RESULT_SUCCESS);
             EXPECT_EQ(event_pool_open_ipc_handle_args.hContext1, *params->phContext);
-            EXPECT_TRUE(event_pool_open_ipc_handles_compare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
+            EXPECT_TRUE(eventPoolOpenIpcHandlesCompare(&event_pool_open_ipc_handle_args.hIpc1, params->phIpc));
 
             ze_event_pool_handle_t **ppHandle;
             ASSERT_NE(nullptr, params);
@@ -1754,9 +1754,9 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHan
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolOpenIpcHandle_Tracing(event_pool_open_ipc_handle_args.hContext0,
-                                              event_pool_open_ipc_handle_args.hIpc0,
-                                              &event_pool_open_ipc_handle_args.hEventPool0);
+    result = zeEventPoolOpenIpcHandleTracing(event_pool_open_ipc_handle_args.hContext0,
+                                             event_pool_open_ipc_handle_args.hIpc0,
+                                             &event_pool_open_ipc_handle_args.hEventPool0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -1885,7 +1885,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHa
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolCloseIpcHandle_Tracing(event_pool_close_ipc_handle_args.hEventPool0);
+    result = zeEventPoolCloseIpcHandleTracing(event_pool_close_ipc_handle_args.hEventPool0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -2022,7 +2022,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendSignalEvent_Tracing(command_list_append_signal_event_args.hCommandList0, command_list_append_signal_event_args.hEvent0);
+    result = zeCommandListAppendSignalEventTracing(command_list_append_signal_event_args.hCommandList0, command_list_append_signal_event_args.hEvent0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
@@ -2191,9 +2191,9 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWa
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendWaitOnEvents_Tracing(command_list_append_wait_on_events_args.hCommandList0,
-                                                     NUM_COMMAND_LIST_APPEND_WAIT_ON_EVENTS_0,
-                                                     command_list_append_wait_on_events_args.hEvents0);
+    result = zeCommandListAppendWaitOnEventsTracing(command_list_append_wait_on_events_args.hCommandList0,
+                                                    NUM_COMMAND_LIST_APPEND_WAIT_ON_EVENTS_0,
+                                                    command_list_append_wait_on_events_args.hEvents0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

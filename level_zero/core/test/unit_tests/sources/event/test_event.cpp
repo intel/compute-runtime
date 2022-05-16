@@ -1613,7 +1613,7 @@ class EventFixture : public DeviceFixture {
 
         auto hDevice = device->toHandle();
         ze_result_t result = ZE_RESULT_SUCCESS;
-        eventPool = whitebox_cast(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
+        eventPool = whiteboxCast(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
     }
 
     void TearDown() {
@@ -1635,7 +1635,7 @@ class EventFixture : public DeviceFixture {
 using EventTests = Test<EventFixture>;
 
 TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
-    auto event = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->hostSignal();
@@ -1647,7 +1647,7 @@ TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
 }
 
 TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
-    auto event = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->hostSignal();
@@ -1664,7 +1664,7 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
 }
 
 TEST_F(EventTests, WhenDestroyingAnEventThenSuccessIsReturned) {
-    auto event = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
     auto result = event->destroy();
@@ -1680,10 +1680,10 @@ TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
     eventDesc1.index = 1;
     eventDesc.index = 1;
 
-    auto event0 = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc0, device));
+    auto event0 = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc0, device));
     ASSERT_NE(event0, nullptr);
 
-    auto event1 = whitebox_cast(Event::create<uint32_t>(eventPool, &eventDesc1, device));
+    auto event1 = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc1, device));
     ASSERT_NE(event1, nullptr);
 
     EXPECT_NE(event0->hostAddress, event1->hostAddress);

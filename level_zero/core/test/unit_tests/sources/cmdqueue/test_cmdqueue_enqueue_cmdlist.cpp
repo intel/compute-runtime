@@ -102,17 +102,17 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncach
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
-    auto commandList1 = whitebox_cast(CommandList::fromHandle(commandLists[0]));
-    auto commandList2 = whitebox_cast(CommandList::fromHandle(commandLists[1]));
+    auto commandList1 = whiteboxCast(CommandList::fromHandle(commandLists[0]));
+    auto commandList2 = whiteboxCast(CommandList::fromHandle(commandLists[1]));
     commandList1->requiresQueueUncachedMocs = true;
     commandList2->requiresQueueUncachedMocs = true;
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
@@ -128,13 +128,13 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEU
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto commandList1 = static_cast<WhiteBoxCommandList *>(CommandList::fromHandle(commandLists[0]));
@@ -154,13 +154,13 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
@@ -202,20 +202,20 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
 HWTEST_F(CommandQueueExecuteCommandLists, givenFenceWhenExecutingCmdListThenFenceStatusIsCorrect) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     *csr.tagAddress = 10;
     csr.taskCount = 10;
 
     ze_fence_desc_t fenceDesc{};
-    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
     EXPECT_EQ(ZE_RESULT_NOT_READY, fence->queryStatus());
 
@@ -241,17 +241,17 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
     ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_fence_desc_t fenceDesc{};
-    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
 
     ze_fence_handle_t fenceHandle = fence->toHandle();
@@ -293,13 +293,13 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
@@ -336,13 +336,13 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     using PARSE = typename FamilyType::PARSE;
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(512u);
     CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(1024u);
@@ -410,13 +410,13 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
 
     for (auto flagInternal : testedInternalFlags) {
         ze_result_t returnValue;
-        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                               device,
-                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                               &desc,
-                                                               false,
-                                                               flagInternal,
-                                                               returnValue));
+        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                              device,
+                                                              neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                              &desc,
+                                                              false,
+                                                              flagInternal,
+                                                              returnValue));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         ASSERT_NE(nullptr, commandQueue->commandStream);
@@ -461,13 +461,13 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
 
     for (auto flagInternal : testedInternalFlags) {
         ze_result_t returnValue;
-        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                               device,
-                                                               neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                               &desc,
-                                                               false,
-                                                               flagInternal,
-                                                               returnValue));
+        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                              device,
+                                                              neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                              &desc,
+                                                              false,
+                                                              flagInternal,
+                                                              returnValue));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         ASSERT_NE(nullptr, commandQueue->commandStream);
@@ -637,7 +637,7 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(
+    auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
@@ -645,10 +645,10 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
     preemptionCmdProgramming = NEO::PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(NEO::PreemptionMode::ThreadGroup, NEO::PreemptionMode::Disabled) > 0u;
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
-    auto commandListDisabled = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListDisabled = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListDisabled->commandListPreemptionMode = NEO::PreemptionMode::Disabled;
 
-    auto commandListThreadGroup = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    auto commandListThreadGroup = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListThreadGroup->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_list_handle_t commandLists[] = {commandListDisabled->toHandle(),
@@ -806,13 +806,13 @@ struct CommandQueueExecuteCommandListSWTagsTests : public Test<DeviceFixture> {
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
         ze_command_queue_desc_t desc = {};
-        commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                          device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          returnValue));
+        commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                         device,
+                                                         neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                         &desc,
+                                                         false,
+                                                         false,
+                                                         returnValue));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
         ASSERT_NE(nullptr, commandQueue->commandStream);
     }
@@ -863,7 +863,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
     using MI_NOOP = typename FamilyType::MI_NOOP;
     using PARSE = typename FamilyType::PARSE;
 
-    whitebox_cast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
+    whiteboxCast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
     auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, false);
@@ -945,13 +945,13 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
     ze_result_t returnValue;
 
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, commandQueue->partitionCount);
     ASSERT_NE(nullptr, commandQueue->commandStream);
@@ -962,7 +962,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     }
 
     ze_fence_desc_t fenceDesc{};
-    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
@@ -1039,18 +1039,18 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     csr->useNotifyEnableForPostSync = true;
 
     const ze_command_queue_desc_t desc{};
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           true,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     ze_fence_desc_t fenceDesc{};
-    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 
@@ -1091,18 +1091,18 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     csr->useNotifyEnableForPostSync = true;
 
     const ze_command_queue_desc_t desc{};
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           true,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          true,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     ze_fence_desc_t fenceDesc{};
-    auto fence = whitebox_cast(Fence::create(commandQueue, &fenceDesc));
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
     ze_fence_handle_t fenceHandle = fence->toHandle();
 

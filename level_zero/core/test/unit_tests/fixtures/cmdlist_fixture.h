@@ -24,7 +24,7 @@ class CommandListFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
         ze_result_t returnValue;
-        commandList.reset(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+        commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -61,10 +61,10 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
         NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
 
         if (!createImmediate) {
-            commandList.reset(whitebox_cast(CommandList::create(productFamily, device, cmdListEngineType, 0u, returnValue)));
+            commandList.reset(whiteboxCast(CommandList::create(productFamily, device, cmdListEngineType, 0u, returnValue)));
         } else {
             const ze_command_queue_desc_t desc = {};
-            commandList.reset(whitebox_cast(CommandList::createImmediate(productFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
+            commandList.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
         }
         ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

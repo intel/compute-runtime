@@ -449,7 +449,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         return nullptr;
     }
 
-    FileLoggerInstance().logAllocation(allocation.get());
+    fileLoggerInstance().logAllocation(allocation.get());
     return allocation.release();
 }
 

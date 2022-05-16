@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ struct Range {
 };
 
 template <typename T>
-inline Range<T> CreateRange(T *base, size_t count) {
+inline Range<T> createRange(T *base, size_t count) {
     return Range<T>(base, count);
 }
 } // namespace NEO

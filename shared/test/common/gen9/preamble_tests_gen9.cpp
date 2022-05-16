@@ -81,7 +81,7 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
     auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(cmdList.end(), ppC);
 
-    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
+    auto itorLRI = reverseFind<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
     ASSERT_NE(cmdList.rend(), itorLRI);
 
     const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
@@ -108,7 +108,7 @@ GEN9TEST_F(ThreadArbitrationGen9, whenThreadArbitrationPolicyIsProgrammedThenCor
     auto ppC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(ppC, cmdList.end());
 
-    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
+    auto itorLRI = reverseFind<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
     ASSERT_NE(cmdList.rend(), itorLRI);
 
     const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);

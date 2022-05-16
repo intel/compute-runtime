@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ inline bool pauseModeAllowed(int32_t debugFlagValue, uint32_t taskCount, PauseMo
     return (debugFlagValue == static_cast<int32_t>(taskCount));
 }
 
-inline bool GpuScratchRegWriteAllowed(int32_t debugFlagValue, uint32_t taskCount) {
+inline bool gpuScratchRegWriteAllowed(int32_t debugFlagValue, uint32_t taskCount) {
     if (!featureEnabled(debugFlagValue)) {
         // feature disabled
         return false;

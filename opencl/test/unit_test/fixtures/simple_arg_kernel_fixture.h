@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,42 +31,42 @@ class Kernel;
 class Program;
 
 template <typename T>
-inline const char *type_name(T &) {
+inline const char *typeName(T &) {
     return "unknown";
 }
 
 template <>
-inline const char *type_name(char &) {
+inline const char *typeName(char &) {
     return "char";
 }
 
 template <>
-inline const char *type_name(int &) {
+inline const char *typeName(int &) {
     return "int";
 }
 
 template <>
-inline const char *type_name(float &) {
+inline const char *typeName(float &) {
     return "float";
 }
 
 template <>
-inline const char *type_name(short &) {
+inline const char *typeName(short &) {
     return "short";
 }
 
 template <>
-inline const char *type_name(unsigned char &) {
+inline const char *typeName(unsigned char &) {
     return "unsigned char";
 }
 
 template <>
-inline const char *type_name(unsigned int &) {
+inline const char *typeName(unsigned int &) {
     return "unsigned int";
 }
 
 template <>
-inline const char *type_name(unsigned short &) {
+inline const char *typeName(unsigned short &) {
     return "unsigned short";
 }
 
@@ -83,7 +83,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         int forTheName = 0;
 
         testFile.append("simple_arg_");
-        testFile.append(type_name(forTheName));
+        testFile.append(typeName(forTheName));
 
         auto pos = testFile.find(" ");
         if (pos != (size_t)-1) {

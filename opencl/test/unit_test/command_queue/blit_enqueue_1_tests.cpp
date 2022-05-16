@@ -366,7 +366,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     auto buffer = createBuffer(1, true);
     setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
 
-    auto event = make_releaseable<Event>(commandQueue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
+    auto event = makeReleaseable<Event>(commandQueue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
     MockTimestampPacketContainer eventDependencyContainer(*bcsCsr->getTimestampPacketAllocator(), 1);
     auto eventDependency = eventDependencyContainer.getNode(0);
     event->addTimestampPacketNodes(eventDependencyContainer);
@@ -534,7 +534,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     auto buffer = createBuffer(1, true);
     setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
 
-    auto event = make_releaseable<Event>(commandQueue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
+    auto event = makeReleaseable<Event>(commandQueue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
     MockTimestampPacketContainer eventDependencyContainer(*bcsCsr->getTimestampPacketAllocator(), 1);
     auto eventDependency = eventDependencyContainer.getNode(0);
     event->addTimestampPacketNodes(eventDependencyContainer);

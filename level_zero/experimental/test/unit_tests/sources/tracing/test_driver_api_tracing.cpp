@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDriverGet_Tracing(nullptr, nullptr);
+    result = zeDriverGetTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -35,7 +35,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDriverGetProperties_Tracing(nullptr, nullptr);
+    result = zeDriverGetPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -49,7 +49,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetApiVersionTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDriverGetApiVersion_Tracing(nullptr, nullptr);
+    result = zeDriverGetApiVersionTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -65,7 +65,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetIpcPropertiesTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDriverGetIpcProperties_Tracing(nullptr, nullptr);
+    result = zeDriverGetIpcPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -82,7 +82,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetExtensionPropertiesTracin
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDriverGetExtensionProperties_Tracing(nullptr, nullptr, nullptr);
+    result = zeDriverGetExtensionPropertiesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

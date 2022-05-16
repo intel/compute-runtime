@@ -1171,7 +1171,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
                                      cl_int &errcodeRet) {
 
     Context *pContext = nullptr;
-    errcodeRet = validateObjects(WithCastToInternal(context, &pContext));
+    errcodeRet = validateObjects(withCastToInternal(context, &pContext));
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
     }

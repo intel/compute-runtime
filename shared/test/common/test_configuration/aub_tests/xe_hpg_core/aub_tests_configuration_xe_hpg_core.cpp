@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 using namespace NEO;
 
 template <>
-AubTestsConfig GetAubTestsConfig<XE_HPG_COREFamily>() {
+AubTestsConfig getAubTestsConfig<XE_HPG_COREFamily>() {
     AubTestsConfig aubTestsConfig;
     aubTestsConfig.testCanonicalAddress = true;
     return aubTestsConfig;

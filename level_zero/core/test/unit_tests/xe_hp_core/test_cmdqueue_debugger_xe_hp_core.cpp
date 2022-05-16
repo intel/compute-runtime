@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
 
-        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
         ze_command_list_handle_t commandLists[] = {
@@ -115,7 +115,7 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
 
-        auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+        auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
         ze_command_list_handle_t commandLists[] = {

@@ -19,7 +19,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeSamplerCreate_Tracing(nullptr, nullptr, nullptr, nullptr);
+    result = zeSamplerCreateTracing(nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -33,7 +33,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeSamplerDestroy_Tracing(nullptr);
+    result = zeSamplerDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -286,7 +286,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeSamplerCreate_Tracing(sampler_create_args.hContext0, sampler_create_args.hDevice0, &sampler_create_args.Desc0, &sampler_create_args.hSampler0);
+    result = zeSamplerCreateTracing(sampler_create_args.hContext0, sampler_create_args.hDevice0, &sampler_create_args.Desc0, &sampler_create_args.hSampler0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(sampler_create_args.hSampler1, sampler_create_args.hSamplerAPI);
     validateDefaultUserDataFinal();
@@ -418,7 +418,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeSamplerDestroy_Tracing(sampler_destroy_args.hSampler0);
+    result = zeSamplerDestroyTracing(sampler_destroy_args.hSampler0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

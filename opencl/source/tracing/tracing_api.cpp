@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ void removeTracingClient() {
     tracingState.fetch_sub(1, std::memory_order_acq_rel);
 }
 
-static void LockTracingState() {
+static void lockTracingState() {
     uint32_t state = tracingState.load(std::memory_order_acquire);
     state = TRACING_ZERO_CLIENT_COUNTER(state);
     state = TRACING_UNSET_LOCKED_BIT(state);
@@ -59,7 +59,7 @@ static void LockTracingState() {
     DEBUG_BREAK_IF(TRACING_GET_CLIENT_COUNTER(tracingState.load(std::memory_order_acquire)) > 0);
 }
 
-static void UnlockTracingState() {
+static void unlockTracingState() {
     DEBUG_BREAK_IF(!TRACING_GET_LOCKED_BIT(tracingState.load(std::memory_order_acquire)));
     DEBUG_BREAK_IF(TRACING_GET_CLIENT_COUNTER(tracingState.load(std::memory_order_acquire)) > 0);
     tracingState.fetch_and(~TRACING_STATE_LOCKED_BIT, std::memory_order_acq_rel);
@@ -121,20 +121,20 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
         return CL_INVALID_VALUE;
     }
 
-    LockTracingState();
+    lockTracingState();
 
     size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
     while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
-            UnlockTracingState();
+            unlockTracingState();
             return CL_INVALID_VALUE;
         }
         ++i;
     }
 
     if (i == TRACING_MAX_HANDLE_COUNT) {
-        UnlockTracingState();
+        unlockTracingState();
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -144,7 +144,7 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
         tracingState.fetch_or(TRACING_STATE_ENABLED_BIT, std::memory_order_acq_rel);
     }
 
-    UnlockTracingState();
+    unlockTracingState();
     return CL_SUCCESS;
 }
 
@@ -153,7 +153,7 @@ cl_int CL_API_CALL clDisableTracingINTEL(cl_tracing_handle handle) {
         return CL_INVALID_VALUE;
     }
 
-    LockTracingState();
+    lockTracingState();
 
     size_t size = 0;
     while (size < TRACING_MAX_HANDLE_COUNT && tracingHandle[size] != nullptr) {
@@ -172,13 +172,13 @@ cl_int CL_API_CALL clDisableTracingINTEL(cl_tracing_handle handle) {
                 tracingHandle[i] = tracingHandle[size - 1];
                 tracingHandle[size - 1] = nullptr;
             }
-            UnlockTracingState();
+            unlockTracingState();
             return CL_SUCCESS;
         }
         ++i;
     }
 
-    UnlockTracingState();
+    unlockTracingState();
     return CL_INVALID_VALUE;
 }
 
@@ -187,7 +187,7 @@ cl_int CL_API_CALL clGetTracingStateINTEL(cl_tracing_handle handle, cl_bool *ena
         return CL_INVALID_VALUE;
     }
 
-    LockTracingState();
+    lockTracingState();
 
     *enable = CL_FALSE;
 
@@ -201,6 +201,6 @@ cl_int CL_API_CALL clGetTracingStateINTEL(cl_tracing_handle handle, cl_bool *ena
         ++i;
     }
 
-    UnlockTracingState();
+    unlockTracingState();
     return CL_SUCCESS;
 }

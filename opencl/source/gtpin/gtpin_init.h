@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, gtpin::interface_version_t *pDriverVersion);
+gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, gtpin::interface_version_t *pDriverVersion); // NOLINT(readability-identifier-naming)
 
 #ifdef __cplusplus
 }

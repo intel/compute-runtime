@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@
 
 namespace NEO {
 BarrierCommand::BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors) : numSurfaces(numDescriptors) {
-    for (auto description : CreateRange(descriptors, numDescriptors)) {
+    for (auto description : createRange(descriptors, numDescriptors)) {
         GraphicsAllocation *allocation;
         if (description.mem_object) {
             MemObj *memObj = nullptr;
-            WithCastToInternal(description.mem_object, &memObj);
+            withCastToInternal(description.mem_object, &memObj);
             allocation = memObj->getGraphicsAllocation(commandQueue->getDevice().getRootDeviceIndex());
         } else {
             auto svmData = commandQueue->getContext().getSVMAllocsManager()->getSVMAlloc(description.svm_allocation_pointer);

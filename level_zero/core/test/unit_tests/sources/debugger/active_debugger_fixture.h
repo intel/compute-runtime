@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct ActiveDebuggerFixture {
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(device));
 
-        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
+        auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
 
         ASSERT_NE(nullptr, driverHandle);

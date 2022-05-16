@@ -426,7 +426,7 @@ HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
 
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto normalizedCoordsAddress = ptrOffset(crossThreadData, 0x10);
-    unsigned int normalizedCoordsValue = GetNormCoordsEnum(normalizedCoordinates);
+    unsigned int normalizedCoordsValue = getNormCoordsEnum(normalizedCoordinates);
 
     EXPECT_EQ(normalizedCoordsValue, *normalizedCoordsAddress);
 }
@@ -510,7 +510,7 @@ HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     auto crossThreadData = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
     auto addressingModeAddress = ptrOffset(crossThreadData, 0x8);
 
-    unsigned int addresingValue = GetAddrModeEnum(addressingMode);
+    unsigned int addresingValue = getAddrModeEnum(addressingMode);
 
     EXPECT_EQ(addresingValue, *addressingModeAddress);
 }

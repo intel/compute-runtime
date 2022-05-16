@@ -195,21 +195,21 @@ INSTANTIATE_TEST_CASE_P(PatternSize,
                         PatternSizeInvalid,
                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 
-TEST(WithCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
+TEST(withCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
     Context *pContext = nullptr;
     cl_context context = nullptr;
 
-    auto ret = WithCastToInternal(context, &pContext);
+    auto ret = withCastToInternal(context, &pContext);
 
     EXPECT_EQ(ret, nullptr);
 }
 
-TEST(WithCastToInternal, GivenNonNullPtrWhenCastingThenNonNullPtrIsReturned) {
+TEST(withCastToInternal, GivenNonNullPtrWhenCastingThenNonNullPtrIsReturned) {
     Context *pContext = nullptr;
     auto temp = std::unique_ptr<Context>(new MockContext());
     cl_context context = temp.get();
 
-    auto ret = WithCastToInternal(context, &pContext);
+    auto ret = withCastToInternal(context, &pContext);
 
     EXPECT_NE(ret, nullptr);
 }

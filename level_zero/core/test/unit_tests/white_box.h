@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,17 +16,17 @@ struct WhiteBox : public Type {
 };
 
 template <typename Type>
-WhiteBox<Type> *whitebox_cast(Type *obj) {
+WhiteBox<Type> *whiteboxCast(Type *obj) {
     return static_cast<WhiteBox<Type> *>(obj);
 }
 
 template <typename Type>
-WhiteBox<Type> &whitebox_cast(Type &obj) {
+WhiteBox<Type> &whiteboxCast(Type &obj) {
     return static_cast<WhiteBox<Type> &>(obj);
 }
 
 template <typename Type>
-Type *blackbox_cast(WhiteBox<Type> *obj) {
+Type *blackboxCast(WhiteBox<Type> *obj) {
     return static_cast<Type *>(obj);
 }
 

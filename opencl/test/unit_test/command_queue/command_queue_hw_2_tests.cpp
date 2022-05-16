@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
+void cloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
     for (auto &srcDi : src) {
         dst.push(srcDi);
     }
@@ -48,7 +48,7 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
         dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
         dispatchInfoBuilder.bake(d);
 
-        CloneMdi(paramsReceived.multiDispatchInfo, d);
+        cloneMdi(paramsReceived.multiDispatchInfo, d);
         return true;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ using CommandQueueExecuteCommandListsXE_HP_CORE = Test<DeviceFixture>;
 XE_HP_CORE_TEST_F(CommandQueueExecuteCommandListsXE_HP_CORE, WhenExecutingCmdListsThenPipelineSelectAndCfeStateAreAddedToCmdBuffer) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(
+    auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
@@ -68,7 +68,7 @@ XE_HP_CORE_TEST_F(CommandQueueExecuteCommandListsXE_HP_CORE, WhenExecutingCmdLis
 XE_HP_CORE_TEST_F(CommandQueueExecuteCommandListsXE_HP_CORE, WhenExecutingCmdListsThenStateBaseAddressForGeneralStateBaseAddressIsNotAdded) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(
+    auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);

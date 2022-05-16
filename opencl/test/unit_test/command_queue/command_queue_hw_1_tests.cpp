@@ -464,7 +464,7 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCSR);
 
-    auto userEvent = make_releaseable<UserEvent>(context);
+    auto userEvent = makeReleaseable<UserEvent>(context);
     KernelInfo kernelInfo;
     MockKernelWithInternals mockKernelWithInternals(*pClDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;

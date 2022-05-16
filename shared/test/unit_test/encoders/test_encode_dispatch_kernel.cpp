@@ -630,13 +630,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatch
     GenCmdList cmdList;
     CmdParse<FamilyType>::parseCommandBuffer(cmdList, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itor = reverse_find<STATE_BASE_ADDRESS *>(cmdList.rbegin(), cmdList.rend());
+    auto itor = reverseFind<STATE_BASE_ADDRESS *>(cmdList.rbegin(), cmdList.rend());
     ASSERT_NE(cmdList.rend(), itor);
 
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
     EXPECT_NE(nullptr, cmdSba);
 
-    auto itorPc = reverse_find<PIPE_CONTROL *>(itor, cmdList.rend());
+    auto itorPc = reverseFind<PIPE_CONTROL *>(itor, cmdList.rend());
     ASSERT_NE(cmdList.rend(), itorPc);
 
     bool foundPcWithDCFlush = false;

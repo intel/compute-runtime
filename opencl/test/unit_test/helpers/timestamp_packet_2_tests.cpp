@@ -129,7 +129,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenEmptyWaitlistAndEventWhe
     auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
     GenCmdList::reverse_iterator rItorStoreRegMemIt(storeRegMemIt);
-    auto pipeControlIt = reverse_find<PIPE_CONTROL *>(rItorStoreRegMemIt, hwParser.cmdList.rbegin());
+    auto pipeControlIt = reverseFind<PIPE_CONTROL *>(rItorStoreRegMemIt, hwParser.cmdList.rbegin());
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlIt);
     EXPECT_NE(nullptr, pipeControl);
 
@@ -220,7 +220,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequest
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
-    auto userEvent = make_releaseable<UserEvent>();
+    auto userEvent = makeReleaseable<UserEvent>();
     cl_event waitlist[] = {userEvent.get()};
     cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
     EXPECT_TRUE(csr.stallingCommandsOnNextFlushRequired);

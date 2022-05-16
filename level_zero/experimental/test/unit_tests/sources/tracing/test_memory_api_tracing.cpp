@@ -26,7 +26,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemAllocShared_Tracing(nullptr, &deviceDesc, &hostDesc, size, alignment, nullptr, &pptr);
+    result = zeMemAllocSharedTracing(nullptr, &deviceDesc, &hostDesc, size, alignment, nullptr, &pptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -46,7 +46,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemAllocDevice_Tracing(nullptr, &deviceDesc, size, alignment, nullptr, &pptr);
+    result = zeMemAllocDeviceTracing(nullptr, &deviceDesc, size, alignment, nullptr, &pptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -65,7 +65,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemAllocHost_Tracing(nullptr, &hostDesc, size, alignment, &pptr);
+    result = zeMemAllocHostTracing(nullptr, &hostDesc, size, alignment, &pptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -80,7 +80,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPro
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemFree_Tracing(nullptr, nullptr);
+    result = zeMemFreeTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -95,7 +95,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemGetAllocProperties_Tracing(nullptr, nullptr, nullptr, nullptr);
+    result = zeMemGetAllocPropertiesTracing(nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -110,7 +110,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemGetAddressRange_Tracing(nullptr, nullptr, nullptr, nullptr);
+    result = zeMemGetAddressRangeTracing(nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -125,7 +125,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemGetIpcHandle_Tracing(nullptr, nullptr, nullptr);
+    result = zeMemGetIpcHandleTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -142,7 +142,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemOpenIpcHandle_Tracing(nullptr, nullptr, ipchandle, 0, nullptr);
+    result = zeMemOpenIpcHandleTracing(nullptr, nullptr, ipchandle, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -157,7 +157,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeMemCloseIpcHandle_Tracing(nullptr, nullptr);
+    result = zeMemCloseIpcHandleTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -172,7 +172,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zePhysicalMemCreate_Tracing(nullptr, nullptr, nullptr, nullptr);
+    result = zePhysicalMemCreateTracing(nullptr, nullptr, nullptr, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -188,7 +188,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zePhysicalMemDestroy_Tracing(nullptr, nullptr);
+    result = zePhysicalMemDestroyTracing(nullptr, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -204,7 +204,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemFree_Tracing(nullptr, nullptr, 1U);
+    result = zeVirtualMemFreeTracing(nullptr, nullptr, 1U);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -220,7 +220,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemGetAccessAttribute_Tracing(nullptr, nullptr, 1U, nullptr, nullptr);
+    result = zeVirtualMemGetAccessAttributeTracing(nullptr, nullptr, 1U, nullptr, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -236,7 +236,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemMap_Tracing(nullptr, nullptr, 1U, nullptr, 1U, ZE_MEMORY_ACCESS_ATTRIBUTE_NONE);
+    result = zeVirtualMemMapTracing(nullptr, nullptr, 1U, nullptr, 1U, ZE_MEMORY_ACCESS_ATTRIBUTE_NONE);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -252,7 +252,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrappe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemQueryPageSize_Tracing(nullptr, nullptr, 1U, nullptr);
+    result = zeVirtualMemQueryPageSizeTracing(nullptr, nullptr, 1U, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -268,7 +268,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemReserve_Tracing(nullptr, nullptr, 1U, nullptr);
+    result = zeVirtualMemReserveTracing(nullptr, nullptr, 1U, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -284,7 +284,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemSetAccessAttribute_Tracing(nullptr, nullptr, 1U, ZE_MEMORY_ACCESS_ATTRIBUTE_NONE);
+    result = zeVirtualMemSetAccessAttributeTracing(nullptr, nullptr, 1U, ZE_MEMORY_ACCESS_ATTRIBUTE_NONE);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
@@ -300,7 +300,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemUnmapTracingWrapperWithOne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeVirtualMemUnmap_Tracing(nullptr, nullptr, 1U);
+    result = zeVirtualMemUnmapTracing(nullptr, nullptr, 1U);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);

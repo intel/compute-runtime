@@ -394,7 +394,7 @@ bool CommandQueue::isQueueBlocked() {
                 taskLevel = getGpgpuCommandStreamReceiver().peekTaskLevel();
             }
 
-            FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
+            fileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
 
             // close the access to virtual event, driver added only 1 ref count.
             this->virtualEvent->decRefInternal();
@@ -503,7 +503,7 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
 
     if (outEvent) {
         outEvent->updateCompletionStamp(completionStamp.taskCount, outEvent->peekBcsTaskCountFromCommandQueue(), completionStamp.taskLevel, completionStamp.flushStamp);
-        FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
+        fileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
     }
 }
 

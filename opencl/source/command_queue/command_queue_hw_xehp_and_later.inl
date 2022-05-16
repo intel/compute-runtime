@@ -20,7 +20,7 @@ void CommandQueueHw<Family>::submitCacheFlush(Surface **surfaces,
                                               uint64_t postSyncAddress) {
     if constexpr (Family::isUsingL3Control) {
         StackVec<L3Range, 128> subranges;
-        for (auto surface : CreateRange(surfaces, numSurfaces)) {
+        for (auto surface : createRange(surfaces, numSurfaces)) {
             auto resource = reinterpret_cast<ResourceSurface *>(surface);
             auto alloc = resource->getGraphicsAllocation();
             coverRangeExact(alloc->getGpuAddress(), alloc->getUnderlyingBufferSize(), subranges, resource->resourceType);
@@ -28,7 +28,7 @@ void CommandQueueHw<Family>::submitCacheFlush(Surface **surfaces,
 
         for (size_t subrangeNumber = 0; subrangeNumber < subranges.size(); subrangeNumber += maxFlushSubrangeCount) {
             size_t rangeCount = subranges.size() <= subrangeNumber + maxFlushSubrangeCount ? subranges.size() - subrangeNumber : maxFlushSubrangeCount;
-            Range<L3Range> range = CreateRange(subranges.begin() + subrangeNumber, rangeCount);
+            Range<L3Range> range = createRange(subranges.begin() + subrangeNumber, rangeCount);
             uint64_t postSyncAddressToFlush = 0;
             if (rangeCount < maxFlushSubrangeCount || subranges.size() - subrangeNumber - maxFlushSubrangeCount == 0) {
                 postSyncAddressToFlush = postSyncAddress;
@@ -55,7 +55,7 @@ LinearStream &getCommandStream<Family, CL_COMMAND_RESOURCE_BARRIER>(CommandQueue
 
     if constexpr (Family::isUsingL3Control) {
         StackVec<L3Range, 128> subranges;
-        for (auto surface : CreateRange(surfaces, numSurfaces)) {
+        for (auto surface : createRange(surfaces, numSurfaces)) {
             ResourceSurface *resource = reinterpret_cast<ResourceSurface *>(surface);
             auto alloc = resource->getGraphicsAllocation();
             coverRangeExact(alloc->getGpuAddress(), alloc->getUnderlyingBufferSize(), subranges, resource->resourceType);

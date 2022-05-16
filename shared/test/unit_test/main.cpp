@@ -112,7 +112,7 @@ void applyWorkarounds() {
 
     //Create FileLogger to prevent false memory leaks
     {
-        NEO::FileLoggerInstance();
+        NEO::fileLoggerInstance();
     }
 }
 

@@ -307,7 +307,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = false;
 
-    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+    auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_FALSE(driverHandle->enableProgramDebugging);
@@ -408,7 +408,7 @@ TEST(DriverTest, givenProgramDebuggingEnvVarNonZeroWhenCreatingDriverThenEnableP
     L0EnvVariables envVariables = {};
     envVariables.programDebugging = true;
 
-    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+    auto driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
     EXPECT_NE(nullptr, driverHandle);
 
     EXPECT_TRUE(driverHandle->enableProgramDebugging);
@@ -525,7 +525,7 @@ struct DriverHandleTest : public ::testing::Test {
         L0EnvVariables envVariables = {};
         envVariables.programDebugging = true;
 
-        driverHandle = whitebox_cast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
+        driverHandle = whiteboxCast(DriverHandle::create(std::move(devices), envVariables, &returnValue));
         L0::GlobalDriverHandle = driverHandle;
     }
     void TearDown() override {

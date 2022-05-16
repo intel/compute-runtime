@@ -19,7 +19,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextCreate_Tracing(nullptr, nullptr, nullptr);
+    result = zeContextCreateTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -33,7 +33,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextDestroy_Tracing(nullptr);
+    result = zeContextDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -47,7 +47,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextGetStatus_Tracing(nullptr);
+    result = zeContextGetStatusTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -61,7 +61,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextSystemBarrier_Tracing(nullptr, nullptr);
+    result = zeContextSystemBarrierTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -75,7 +75,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrap
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextMakeMemoryResident_Tracing(nullptr, nullptr, nullptr, 1024);
+    result = zeContextMakeMemoryResidentTracing(nullptr, nullptr, nullptr, 1024);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -89,7 +89,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextEvictMemory_Tracing(nullptr, nullptr, nullptr, 1024);
+    result = zeContextEvictMemoryTracing(nullptr, nullptr, nullptr, 1024);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -103,7 +103,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextMakeImageResident_Tracing(nullptr, nullptr, nullptr);
+    result = zeContextMakeImageResidentTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -117,7 +117,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextEvictImageTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextEvictImage_Tracing(nullptr, nullptr, nullptr);
+    result = zeContextEvictImageTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -284,7 +284,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextMakeMemoryResident_Tracing(MakeMemoryResident_args.hContext0, MakeMemoryResident_args.hDevice0, MakeMemoryResident_args.ptr0, MakeMemoryResident_args.size0);
+    result = zeContextMakeMemoryResidentTracing(MakeMemoryResident_args.hContext0, MakeMemoryResident_args.hDevice0, MakeMemoryResident_args.ptr0, MakeMemoryResident_args.size0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -447,7 +447,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryT
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextEvictMemory_Tracing(EvictMemory_args.hContext0, EvictMemory_args.hDevice0, EvictMemory_args.ptr0, EvictMemory_args.size0);
+    result = zeContextEvictMemoryTracing(EvictMemory_args.hContext0, EvictMemory_args.hDevice0, EvictMemory_args.ptr0, EvictMemory_args.size0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -602,7 +602,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextMakeImageResident_Tracing(MakeImageResident_args.hContext0, MakeImageResident_args.hDevice0, MakeImageResident_args.hImage0);
+    result = zeContextMakeImageResidentTracing(MakeImageResident_args.hContext0, MakeImageResident_args.hDevice0, MakeImageResident_args.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -757,7 +757,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeContextMakeImageResident_Tracing(EvictImage_args.hContext0, EvictImage_args.hDevice0, EvictImage_args.hImage0);
+    result = zeContextMakeImageResidentTracing(EvictImage_args.hContext0, EvictImage_args.hDevice0, EvictImage_args.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

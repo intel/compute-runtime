@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ cl_mem CL_API_CALL clCreateFromGLBuffer(cl_context context, cl_mem_flags flags, 
 
     Context *pContext = nullptr;
 
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
@@ -72,7 +72,7 @@ cl_mem CL_API_CALL clCreateFromGLTexture(cl_context context, cl_mem_flags flags,
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
 
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
@@ -101,7 +101,7 @@ cl_mem CL_API_CALL clCreateFromGLTexture2D(cl_context context, cl_mem_flags flag
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
@@ -131,7 +131,7 @@ cl_mem CL_API_CALL clCreateFromGLTexture3D(cl_context context, cl_mem_flags flag
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "target", target, "miplevel", miplevel, "texture", texture);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
     cl_mem image = nullptr;
@@ -159,7 +159,7 @@ cl_mem CL_API_CALL clCreateFromGLRenderbuffer(cl_context context, cl_mem_flags f
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "flags", flags, "renderbuffer", renderbuffer);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
@@ -208,8 +208,8 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     cl_int retValue = CL_SUCCESS;
     API_ENTER(&retValue);
     DBG_LOG_INPUTS("memobj", memobj, "paramName", paramName, "paramValueSize", paramValueSize, "paramValueSize",
-                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
     retValue = validateObjects(memobj);
     if (retValue == CL_SUCCESS) {
         auto pMemObj = castToObject<MemObj>(memobj);
@@ -231,7 +231,7 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
                    getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
                    getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
-    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
+    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (retVal == CL_SUCCESS) {
         if (pCommandQueue->getContext().getSharing<GLSharingFunctions>() == nullptr) {
@@ -268,7 +268,7 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
                    getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList), "event",
                    getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
     CommandQueue *pCommandQueue = nullptr;
-    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
+    retVal = validateObjects(withCastToInternal(commandQueue, &pCommandQueue), EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (retVal == CL_SUCCESS) {
         if (pCommandQueue->getContext().getSharing<GLSharingFunctions>() == nullptr) {
@@ -290,7 +290,7 @@ cl_event CL_API_CALL clCreateEventFromGLsyncKHR(cl_context context, cl_GLsync sy
     API_ENTER(errcodeRet);
     DBG_LOG_INPUTS("context", context, "sync", sync);
     Context *pContext = nullptr;
-    auto returnCode = validateObjects(WithCastToInternal(context, &pContext));
+    auto returnCode = validateObjects(withCastToInternal(context, &pContext));
 
     ErrorCodeHelper err(errcodeRet, returnCode);
 
@@ -311,8 +311,8 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue",
-                   FileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
-                   FileLoggerInstance().getInput(paramValueSizeRet, 0));
+                   fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet",
+                   fileLoggerInstance().getInput(paramValueSizeRet, 0));
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     uint32_t GLHGLRCHandle = 0;

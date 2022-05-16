@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventCreateTracingWrapperWithOneSetO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventCreate_Tracing(nullptr, &desc, &event);
+    result = zeEventCreateTracing(nullptr, &desc, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -37,7 +37,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventDestroyTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventDestroy_Tracing(nullptr);
+    result = zeEventDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -51,7 +51,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventHostSignalTracingWrapperWithOne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostSignal_Tracing(nullptr);
+    result = zeEventHostSignalTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -65,7 +65,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventHostSynchronizeTracingWrapperWi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostSynchronize_Tracing(nullptr, 1U);
+    result = zeEventHostSynchronizeTracing(nullptr, 1U);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -79,7 +79,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventQueryStatusTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventQueryStatus_Tracing(nullptr);
+    result = zeEventQueryStatusTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -93,7 +93,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventHostResetTracingWrapperWithOneS
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventHostReset_Tracing(nullptr);
+    result = zeEventHostResetTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -111,7 +111,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventPoolCreateTracingWrapperWithOne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolCreate_Tracing(nullptr, nullptr, 1U, nullptr, nullptr);
+    result = zeEventPoolCreateTracing(nullptr, nullptr, 1U, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -125,7 +125,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventPoolDestroyTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolDestroy_Tracing(nullptr);
+    result = zeEventPoolDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -141,7 +141,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventPoolGetIpcHandleTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolGetIpcHandle_Tracing(nullptr, &phIpc);
+    result = zeEventPoolGetIpcHandleTracing(nullptr, &phIpc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -160,7 +160,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventPoolOpenIpcHandleTracingWrapper
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolOpenIpcHandle_Tracing(nullptr, hIpc, &phEventPool);
+    result = zeEventPoolOpenIpcHandleTracing(nullptr, hIpc, &phEventPool);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -174,7 +174,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventPoolCloseIpcHandleTracingWrappe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventPoolCloseIpcHandle_Tracing(nullptr);
+    result = zeEventPoolCloseIpcHandleTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -190,7 +190,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendSignalEventTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendSignalEvent_Tracing(nullptr, nullptr);
+    result = zeCommandListAppendSignalEventTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -207,7 +207,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendWaitOnEventsTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendWaitOnEvents_Tracing(nullptr, 1, &phEvents);
+    result = zeCommandListAppendWaitOnEventsTracing(nullptr, 1, &phEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -222,7 +222,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendEventResetTracingWr
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendEventReset_Tracing(nullptr, nullptr);
+    result = zeCommandListAppendEventResetTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -237,7 +237,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingEventQueryKernelTimestampTracingWrap
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeEventQueryKernelTimestamp_Tracing(nullptr, nullptr);
+    result = zeEventQueryKernelTimestampTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

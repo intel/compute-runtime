@@ -58,15 +58,15 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
-        context = make_releaseable<MockContext>();
+        context = makeReleaseable<MockContext>();
 
-        commandQueue = make_releaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
+        commandQueue = makeReleaseable<MockCommandQueue>(context.get(), context->getDevice(0), nullptr, false);
 
         *(commandQueue->getGpgpuCommandStreamReceiver().getTagAddress()) = 0;
 
-        event1 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event2 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
-        event3 = make_releaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event1 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event2 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
+        event3 = makeReleaseable<MyEvent>(context.get(), commandQueue.get(), CL_COMMAND_BARRIER, CompletionStamp::notReady, CompletionStamp::notReady);
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;

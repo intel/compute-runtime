@@ -133,7 +133,7 @@ inline void initializeProcess(ze_driver_handle_t &driverHandle,
 typedef ze_result_t (*pFnzexMemGetIpcHandle)(ze_context_handle_t, const void *, uint32_t *, ze_ipc_mem_handle_t *);
 typedef ze_result_t (*pFnzexMemOpenIpcHandle)(ze_context_handle_t, ze_device_handle_t, uint32_t, ze_ipc_mem_handle_t *, ze_ipc_memory_flags_t, void **);
 
-void run_client(int commSocket, uint32_t clientId) {
+void runClient(int commSocket, uint32_t clientId) {
     std::cout << "Client " << clientId << ", process ID: " << std::dec << getpid() << "\n";
 
     ze_driver_handle_t driverHandle;
@@ -202,7 +202,7 @@ void run_client(int commSocket, uint32_t clientId) {
     delete[] heapBuffer;
 }
 
-void run_server(bool &validRet) {
+void runServer(bool &validRet) {
     std::cout << "Server process ID " << std::dec << getpid() << "\n";
 
     ze_driver_handle_t driverHandle;
@@ -331,13 +331,13 @@ int main(int argc, char *argv[]) {
             exit(1);
         } else if (childPids[i] == 0) {
             close(sv[i][0]);
-            run_client(sv[i][1], i);
+            runClient(sv[i][1], i);
             close(sv[i][1]);
             exit(0);
         }
     }
 
-    run_server(outputValidationSuccessful);
+    runServer(outputValidationSuccessful);
 
     std::cout << "\nZello IPC Results validation "
               << (outputValidationSuccessful ? "PASSED" : "FAILED")

@@ -400,10 +400,10 @@ TEST(ElfEncoder, WhenDefaultAlignmentIsRaisedThenSegmentDataAbideByIt) {
     auto &header64 = *reinterpret_cast<ElfFileHeader<EI_CLASS_64> *>(elfData64.data());
     auto sectionHeaders = reinterpret_cast<NEO::Elf::ElfSectionHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.shOff));
     auto programHeaders = reinterpret_cast<NEO::Elf::ElfProgramHeader<EI_CLASS_64> *>(elfData64.data() + static_cast<size_t>(header64.phOff));
-    for (const auto &section : NEO::CreateRange(sectionHeaders, header64.shNum)) {
+    for (const auto &section : NEO::createRange(sectionHeaders, header64.shNum)) {
         EXPECT_EQ(0U, section.offset % 8U);
     }
-    for (const auto &segment : NEO::CreateRange(programHeaders, header64.phNum)) {
+    for (const auto &segment : NEO::createRange(programHeaders, header64.phNum)) {
         EXPECT_EQ(0U, segment.offset % alignment);
         EXPECT_LE(alignment, segment.align);
     }

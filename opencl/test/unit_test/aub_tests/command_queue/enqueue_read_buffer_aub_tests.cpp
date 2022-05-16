@@ -108,7 +108,7 @@ INSTANTIATE_TEST_CASE_P(AUBReadBuffer_simple,
                             3 * sizeof(cl_float)));
 
 HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpectationsAreMet) {
-    if (!GetAubTestsConfig<FamilyType>().testCanonicalAddress) {
+    if (!getAubTestsConfig<FamilyType>().testCanonicalAddress) {
         return;
     }
 

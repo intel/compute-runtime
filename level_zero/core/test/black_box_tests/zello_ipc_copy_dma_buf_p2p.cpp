@@ -20,7 +20,7 @@ uint8_t uinitializedPattern = 1;
 uint8_t expectedPattern = 7;
 size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
 
-static int sendmsg_fd(int socket, int fd) {
+static int sendmsgFd(int socket, int fd) {
     char sendBuf[sizeof(ze_ipc_mem_handle_t)] = {};
     char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
 
@@ -48,7 +48,7 @@ static int sendmsg_fd(int socket, int fd) {
     return 0;
 }
 
-static int recvmsg_fd(int socket) {
+static int recvmsgFd(int socket) {
     int fd = -1;
     char recvBuf[sizeof(ze_ipc_mem_handle_t)] = {};
     char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
@@ -198,7 +198,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDescCopy, &cmdListCopy));
 }
 
-void run_client(int commSocket) {
+void runClient(int commSocket) {
     std::cout << "Client process " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -220,7 +220,7 @@ void run_client(int commSocket) {
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // get the dma_buf from the other process
-    int dmaBufFd = recvmsg_fd(commSocket);
+    int dmaBufFd = recvmsgFd(commSocket);
     if (dmaBufFd < 0) {
         std::cerr << "Failing to get dma_buf fd from server\n";
         std::terminate();
@@ -249,7 +249,7 @@ void run_client(int commSocket) {
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
-void run_server(int commSocket, bool &validRet) {
+void runServer(int commSocket, bool &validRet) {
     std::cout << "Server process " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -280,7 +280,7 @@ void run_server(int commSocket, bool &validRet) {
     // Pass the dma_buf to the other process
     int dmaBufFd;
     memcpy(static_cast<void *>(&dmaBufFd), &pIpcHandle, sizeof(dmaBufFd));
-    if (sendmsg_fd(commSocket, static_cast<int>(dmaBufFd)) < 0) {
+    if (sendmsgFd(commSocket, static_cast<int>(dmaBufFd)) < 0) {
         std::cerr << "Failing to send dma_buf fd to client\n";
         std::terminate();
     }
@@ -346,12 +346,12 @@ int main(int argc, char *argv[]) {
         exit(1);
     } else if (0 == child) {
         close(sv[0]);
-        run_client(sv[1]);
+        runClient(sv[1]);
         close(sv[1]);
         exit(0);
     } else {
         close(sv[1]);
-        run_server(sv[0], outputValidationSuccessful);
+        runServer(sv[0], outputValidationSuccessful);
         close(sv[0]);
     }
 

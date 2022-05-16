@@ -82,7 +82,7 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     ze_result_t returnValue;
-    commandList.reset(ult::whitebox_cast(CommandList::create(hwInfo.platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    commandList.reset(ult::whiteboxCast(CommandList::create(hwInfo.platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
     ze_command_queue_desc_t queueDesc = {};

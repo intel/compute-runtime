@@ -101,7 +101,7 @@ bool SingleDeviceTestRunner::run() {
 //////////////
 /// query_test
 //////////////
-bool query_test() {
+bool queryTest() {
     // This test verifies Query mode for a metric group for all devices OR specific device
 
     bool status = true;
@@ -153,7 +153,7 @@ bool query_test() {
 ///////////////
 /// stream_test
 ///////////////
-bool stream_test() {
+bool streamTest() {
 
     // This test verifies Streamer mode for a metric group for all devices OR specific device
 
@@ -205,7 +205,7 @@ bool stream_test() {
 ////////////////////////////////////
 /// stream_multi_metric_domain_test
 ////////////////////////////////////
-bool stream_multi_metric_domain_test() {
+bool streamMultiMetricDomainTest() {
 
     // This test validates that metric groups of different domains can be captured concurrently
 
@@ -266,7 +266,7 @@ bool stream_multi_metric_domain_test() {
 //////////////////////////////////////////////
 /// stream_mt_collection_workload_same_thread
 //////////////////////////////////////////////
-bool stream_mt_collection_workload_same_thread() {
+bool streamMtCollectionWorkloadSameThread() {
 
     // This test collects Metrics on sub-devices from different threads
     // Each thread runs the workload and collects for a single sub-device
@@ -329,7 +329,7 @@ bool stream_mt_collection_workload_same_thread() {
 ////////////////////////////////////////////////////
 /// stream_mt_collection_workload_different_threads
 ////////////////////////////////////////////////////
-bool stream_mt_collection_workload_different_threads() {
+bool streamMtCollectionWorkloadDifferentThreads() {
 
     // This test collects Metrics on one device from different threads
     // One thread collects metrics and other runs the workload
@@ -417,7 +417,7 @@ bool stream_mt_collection_workload_different_threads() {
 //////////////////////////////////////////////
 /// stream_mp_collection_workload_same_process
 //////////////////////////////////////////////
-bool stream_mp_collection_workload_same_process() {
+bool streamMpCollectionWorkloadSameProcess() {
 
     // This test collects Metric on devices from different processes
     // Each process runs the workload and collects for a single device
@@ -482,7 +482,7 @@ bool stream_mp_collection_workload_same_process() {
 ////////////////////////////////////////////////////
 /// stream_mp_collection_workload_different_process
 ////////////////////////////////////////////////////
-bool stream_mp_collection_workload_different_process() {
+bool streamMpCollectionWorkloadDifferentProcess() {
 
     // This test collects EuStallSampling Metric on one process and runs the workload on another process
 
@@ -583,13 +583,13 @@ int main(int argc, char *argv[]) {
 
     std::map<std::string, std::function<bool()>> tests;
 
-    tests["query_test"] = query_test;
-    tests["stream_test"] = stream_test;
-    tests["stream_multi_metric_domain_test"] = stream_multi_metric_domain_test;
-    tests["stream_mt_collection_workload_same_thread"] = stream_mt_collection_workload_same_thread;
-    tests["stream_mt_collection_workload_different_threads"] = stream_mt_collection_workload_different_threads;
-    tests["stream_mp_collection_workload_same_process"] = stream_mp_collection_workload_same_process;
-    tests["stream_mp_collection_workload_different_process"] = stream_mp_collection_workload_different_process;
+    tests["query_test"] = queryTest;
+    tests["stream_test"] = streamTest;
+    tests["stream_multi_metric_domain_test"] = streamMultiMetricDomainTest;
+    tests["stream_mt_collection_workload_same_thread"] = streamMtCollectionWorkloadSameThread;
+    tests["stream_mt_collection_workload_different_threads"] = streamMtCollectionWorkloadDifferentThreads;
+    tests["stream_mp_collection_workload_same_process"] = streamMpCollectionWorkloadSameProcess;
+    tests["stream_mp_collection_workload_different_process"] = streamMpCollectionWorkloadDifferentProcess;
 
     auto testSettings = zmu::TestSettings::get();
     testSettings->parseArguments(argc, argv);

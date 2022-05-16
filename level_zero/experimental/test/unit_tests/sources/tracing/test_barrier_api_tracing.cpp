@@ -23,7 +23,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendBarrier_Tracing(nullptr, hSignalEvent, numWaitEvents, nullptr);
+    result = zeCommandListAppendBarrierTracing(nullptr, hSignalEvent, numWaitEvents, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -44,7 +44,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryRangesBarrier
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryRangesBarrier_Tracing(nullptr, numRanges, pRangeSizes, pRanges, nullptr, 0, nullptr);
+    result = zeCommandListAppendMemoryRangesBarrierTracing(nullptr, numRanges, pRangeSizes, pRanges, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 

@@ -53,7 +53,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsXeHpgCore) {
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     result = zeImageDestroy(image->toHandle());
@@ -68,7 +68,7 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenSuccessIsReturned, IsXeHpgCore) {
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     image->destroy();
@@ -82,7 +82,7 @@ HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenReturnNullPointer, IsXeHpgCo
     auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_EQ(nullptr, image);
 }
 
@@ -102,7 +102,7 @@ HWTEST2_F(ImageCreate, WhenImagesIsCreatedThenParamsSetCorrectly, IsXeHpgCore) {
 
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     auto alloc = image->getAllocation();

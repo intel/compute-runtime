@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_map>
 
-extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count);
+extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count); // NOLINT(readability-identifier-naming)
 
 namespace NEO {
 
@@ -84,7 +84,7 @@ class PrintFormatter {
     size_t typedPrintToken(char *output, size_t size, const char *formatString) {
         T value = {0};
         read(&value);
-        return simple_sprintf(output, size, formatString, value);
+        return simpleSprintf(output, size, formatString, value);
     }
 
     template <class T>
@@ -101,9 +101,9 @@ class PrintFormatter {
 
         for (int i = 0; i < valueCount; i++) {
             read(&value);
-            charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
+            charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
             if (i < valueCount - 1) {
-                charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
+                charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
             }
         }
 

@@ -25,7 +25,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListCreate_Tracing(nullptr, nullptr, &desc, &commandList);
+    result = zeCommandListCreateTracing(nullptr, nullptr, &desc, &commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -45,7 +45,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListCreateImmediate_Tracing(nullptr, nullptr, &desc, &commandList);
+    result = zeCommandListCreateImmediateTracing(nullptr, nullptr, &desc, &commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -59,7 +59,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListDestroy_Tracing(nullptr);
+    result = zeCommandListDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -73,7 +73,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListReset_Tracing(nullptr);
+    result = zeCommandListResetTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -87,7 +87,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTraci
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendMemoryPrefetch_Tracing(nullptr, nullptr, 0);
+    result = zeCommandListAppendMemoryPrefetchTracing(nullptr, nullptr, 0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -101,7 +101,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListClose_Tracing(nullptr);
+    result = zeCommandListCloseTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -124,7 +124,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestam
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendQueryKernelTimestamps_Tracing(nullptr, 1U, nullptr, nullptr, nullptr, nullptr, 1U, nullptr);
+    result = zeCommandListAppendQueryKernelTimestampsTracing(nullptr, 1U, nullptr, nullptr, nullptr, nullptr, 1U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -143,7 +143,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendWriteGlobalTimestam
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendWriteGlobalTimestamp_Tracing(nullptr, nullptr, nullptr, 1U, nullptr);
+    result = zeCommandListAppendWriteGlobalTimestampTracing(nullptr, nullptr, nullptr, 1U, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

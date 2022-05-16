@@ -429,10 +429,10 @@ TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
     EXPECT_EQ(sampler->getSnapWaValue(), *pSnapWa);
 
     auto pAddressingMode = ptrOffset(crossThreadData, clonedArg.metadataPayload.samplerAddressingMode);
-    EXPECT_EQ(GetAddrModeEnum(sampler->addressingMode), *pAddressingMode);
+    EXPECT_EQ(getAddrModeEnum(sampler->addressingMode), *pAddressingMode);
 
     auto pNormalizedCoords = ptrOffset(crossThreadData, clonedArg.metadataPayload.samplerNormalizedCoords);
-    EXPECT_EQ(GetNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
+    EXPECT_EQ(getNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
     EXPECT_EQ(3, sampler->getRefInternalCount());
 }
 

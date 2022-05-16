@@ -373,7 +373,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleCreateTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleCreate_Tracing(module_create_args.hContext0, module_create_args.hDevice0, &module_create_args.desc0, &module_create_args.hModule0, &module_create_args.hBuildLog0);
+    result = zeModuleCreateTracing(module_create_args.hContext0, module_create_args.hDevice0, &module_create_args.desc0, &module_create_args.hModule0, &module_create_args.hBuildLog0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -502,7 +502,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleDestroyTracin
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleDestroy_Tracing(module_destroy_args.hModule0);
+    result = zeModuleDestroyTracing(module_destroy_args.hModule0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -521,14 +521,14 @@ struct {
     void *instanceData3;
 } module_get_native_binary_args;
 
-static void module_get_native_binary_native_binary_init_random(uint8_t *binary, size_t size) {
+static void moduleGetNativeBinaryNativeBinaryInitRandom(uint8_t *binary, size_t size) {
     uint8_t *ptr = binary;
     for (size_t i = 0; i < size; i++) {
         *ptr = generateRandomSize<uint8_t>();
     }
 }
 
-static bool module_get_native_binary_native_binary_compare(uint8_t *binary0, uint8_t *binary1, size_t size) {
+static bool moduleGetNativeBinaryNativeBinaryCompare(uint8_t *binary0, uint8_t *binary1, size_t size) {
     if (binary0 == nullptr) {
         return false;
     }
@@ -543,11 +543,11 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
 
     // initialize initial argument set
     module_get_native_binary_args.hModule0 = generateRandomHandle<ze_module_handle_t>();
-    module_get_native_binary_native_binary_init_random(module_get_native_binary_args.moduleNativeBinary0, moduleGetNativeBinarySize0);
+    moduleGetNativeBinaryNativeBinaryInitRandom(module_get_native_binary_args.moduleNativeBinary0, moduleGetNativeBinarySize0);
 
     // initialize replacement argument set
     module_get_native_binary_args.hModule1 = generateRandomHandle<ze_module_handle_t>();
-    module_get_native_binary_native_binary_init_random(module_get_native_binary_args.moduleNativeBinary1, moduleGetNativeBinarySize1);
+    moduleGetNativeBinaryNativeBinaryInitRandom(module_get_native_binary_args.moduleNativeBinary1, moduleGetNativeBinarySize1);
 
     // initialize user instance data
     module_get_native_binary_args.instanceData0 = generateRandomHandle<void *>();
@@ -559,8 +559,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(&module_get_native_binary_args.size1, pSize);
             EXPECT_EQ(*pSize, moduleGetNativeBinarySize1);
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, pModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       pModuleNativeBinary, moduleGetNativeBinarySize0));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 pModuleNativeBinary, moduleGetNativeBinarySize0));
             return ZE_RESULT_SUCCESS;
         };
 
@@ -587,8 +587,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize0);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary0, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary0,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize0));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary0,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize0));
             *params->phModule = module_get_native_binary_args.hModule1;
             *params->ppSize = &module_get_native_binary_args.size1;
             *params->ppModuleNativeBinary = module_get_native_binary_args.moduleNativeBinary1;
@@ -627,8 +627,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 2);
@@ -661,8 +661,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 11);
@@ -693,8 +693,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 21);
@@ -725,8 +725,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 31);
@@ -761,8 +761,8 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
             EXPECT_EQ(size, moduleGetNativeBinarySize1);
 
             EXPECT_EQ(module_get_native_binary_args.moduleNativeBinary1, *params->ppModuleNativeBinary);
-            EXPECT_TRUE(module_get_native_binary_native_binary_compare(module_get_native_binary_args.moduleNativeBinary1,
-                                                                       *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
+            EXPECT_TRUE(moduleGetNativeBinaryNativeBinaryCompare(module_get_native_binary_args.moduleNativeBinary1,
+                                                                 *params->ppModuleNativeBinary, moduleGetNativeBinarySize1));
             ASSERT_NE(nullptr, pTracerUserData);
             int *val = static_cast<int *>(pTracerUserData);
             EXPECT_EQ(*val, 62);
@@ -774,7 +774,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingModuleGetNativeBina
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetNativeBinary_Tracing(module_get_native_binary_args.hModule0, &module_get_native_binary_args.size0, module_get_native_binary_args.moduleNativeBinary0);
+    result = zeModuleGetNativeBinaryTracing(module_get_native_binary_args.hModule0, &module_get_native_binary_args.size0, module_get_native_binary_args.moduleNativeBinary0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

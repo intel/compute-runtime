@@ -184,7 +184,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
         }
         for (size_t subrangeNumber = 0; subrangeNumber < subranges.size(); subrangeNumber += maxFlushSubrangeCount) {
             size_t rangeCount = subranges.size() <= subrangeNumber + maxFlushSubrangeCount ? subranges.size() - subrangeNumber : maxFlushSubrangeCount;
-            Range<L3Range> range = CreateRange(subranges.begin() + subrangeNumber, rangeCount);
+            Range<L3Range> range = createRange(subranges.begin() + subrangeNumber, rangeCount);
             uint64_t postSyncAddressToFlush = 0;
             if (rangeCount < maxFlushSubrangeCount || subranges.size() - subrangeNumber - maxFlushSubrangeCount == 0) {
                 postSyncAddressToFlush = postSyncAddress;

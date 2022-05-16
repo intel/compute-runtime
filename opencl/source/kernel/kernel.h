@@ -105,10 +105,10 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
             *errcodeRet = retVal;
         }
 
-        if (FileLoggerInstance().enabled()) {
+        if (fileLoggerInstance().enabled()) {
             std::string source;
             program->getSource(source);
-            FileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
+            fileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
         }
 
         return pKernel;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ void *NEO::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcPara
 cl_int CL_API_CALL clGetDeviceIDsFromDX9INTEL(cl_platform_id platform, cl_dx9_device_source_intel dx9DeviceSource, void *dx9Object,
                                               cl_dx9_device_set_intel dx9DeviceSet, cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices) {
     Platform *platformInternal = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    auto retVal = validateObjects(withCastToInternal(platform, &platformInternal));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
                    "dx9DeviceSource", dx9DeviceSource,
@@ -153,7 +153,7 @@ cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -172,7 +172,7 @@ cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue
 cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue, cl_uint numObjects, cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -205,7 +205,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromDX9MediaAdapterKHR(cl_platform_id platform,
                                                         cl_dx9_media_adapter_set_khr mediaAdapterSet, cl_uint numEntries,
                                                         cl_device_id *devices, cl_uint *numDevices) {
     Platform *platformInternal = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    auto retVal = validateObjects(withCastToInternal(platform, &platformInternal));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
                    "numMediaAdapters", numMediaAdapters,
@@ -245,7 +245,7 @@ cl_mem CL_API_CALL clCreateFromDX9MediaSurfaceKHR(cl_context context, cl_mem_fla
 cl_int CL_API_CALL clEnqueueAcquireDX9MediaSurfacesKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                        cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -265,7 +265,7 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
                                                        cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -311,7 +311,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
 
     Platform *platformInternal = nullptr;
     ClDevice *device = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    auto retVal = validateObjects(withCastToInternal(platform, &platformInternal));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
                    "d3dDeviceSource", d3dDeviceSource,
@@ -378,7 +378,7 @@ cl_mem CL_API_CALL clCreateFromD3D10BufferKHR(cl_context context, cl_mem_flags f
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
 
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
@@ -401,7 +401,7 @@ cl_mem CL_API_CALL clCreateFromD3D10Texture2DKHR(cl_context context, cl_mem_flag
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
 
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
@@ -424,7 +424,7 @@ cl_mem CL_API_CALL clCreateFromD3D10Texture3DKHR(cl_context context, cl_mem_flag
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
 
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
@@ -441,7 +441,7 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -474,7 +474,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -522,7 +522,7 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
 
     Platform *platformInternal = nullptr;
     ClDevice *device = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    auto retVal = validateObjects(withCastToInternal(platform, &platformInternal));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
                    "d3dDeviceSource", d3dDeviceSource,
@@ -589,7 +589,7 @@ cl_mem CL_API_CALL clCreateFromD3D11BufferKHR(cl_context context, cl_mem_flags f
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
     }
@@ -611,7 +611,7 @@ cl_mem CL_API_CALL clCreateFromD3D11Texture2DKHR(cl_context context, cl_mem_flag
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
     }
@@ -633,7 +633,7 @@ cl_mem CL_API_CALL clCreateFromD3D11Texture3DKHR(cl_context context, cl_mem_flag
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *ctx = nullptr;
 
-    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    err.set(validateObjects(withCastToInternal(context, &ctx)));
 
     if (err.localErrcode != CL_SUCCESS) {
         return nullptr;
@@ -650,7 +650,7 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,
@@ -683,7 +683,7 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
     CommandQueue *cmdQ = nullptr;
 
-    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    auto retVal = validateObjects(withCastToInternal(commandQueue, &cmdQ));
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "numObjects", numObjects,

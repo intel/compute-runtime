@@ -63,7 +63,7 @@ struct MockReferenceTrackedObjectDerivative : MockReferenceTrackedObject {
     }
 };
 
-void DecRefCount(MockReferenceTrackedObject *obj, bool useInternalRefCount, std::atomic<bool> *flagInsideCustomDeleter, std::atomic<bool> *flagUseCustomDeleter, std::atomic<bool> *flagAfterBgDecRefCount) {
+void decRefCount(MockReferenceTrackedObject *obj, bool useInternalRefCount, std::atomic<bool> *flagInsideCustomDeleter, std::atomic<bool> *flagUseCustomDeleter, std::atomic<bool> *flagAfterBgDecRefCount) {
     while (*flagInsideCustomDeleter == false) {
     }
 
@@ -97,7 +97,7 @@ TEST(ReferenceTrackedObject, whenDecreasingApiRefcountSimultaneouslyThenRetrieve
     ASSERT_EQ(2, obj->getRefInternalCount());
     ASSERT_EQ(0, marker);
 
-    std::thread bgThread(DecRefCount, obj, false, &flagInsideCustomDeleter, &flagUseCustomDeleter, &flagAfterBgDecRefCount);
+    std::thread bgThread(decRefCount, obj, false, &flagInsideCustomDeleter, &flagUseCustomDeleter, &flagAfterBgDecRefCount);
     obj->decRefApi();
     bgThread.join();
 
@@ -124,7 +124,7 @@ TEST(ReferenceTrackedObject, whenDecreasingInternalRefcountSimultaneouslyThenRet
     ASSERT_EQ(0, obj->getRefApiCount());
     ASSERT_EQ(0, marker);
 
-    std::thread bgThread(DecRefCount, obj, true, &flagInsideCustomDeleter, &flagUseCustomDeleter, &flagAfterBgDecRefCount);
+    std::thread bgThread(decRefCount, obj, true, &flagInsideCustomDeleter, &flagUseCustomDeleter, &flagAfterBgDecRefCount);
     obj->decRefInternal();
     bgThread.join();
 

@@ -6,7 +6,7 @@
  */
 
 namespace UuidUtil {
-static inline bool UuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString,
+static inline bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString,
                                      const uint64_t offset, const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid);
 } // namespace UuidUtil
 
@@ -47,12 +47,12 @@ bool HwInfoConfigHw<gfxProduct>::getUuid(Device *device, std::array<uint8_t, HwI
         return false;
     }
 
-    return UuidUtil::UuidReadFromTelem(telemDir, guidString, offset, deviceIndex, uuid);
+    return UuidUtil::uuidReadFromTelem(telemDir, guidString, offset, deviceIndex, uuid);
 }
 
 namespace UuidUtil {
 
-bool UuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, const uint64_t offset,
+bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, const uint64_t offset,
                        const uint8_t deviceIndex, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
     auto pos = guidUuidOffsetMap.find(guidString.data());
     if (pos != guidUuidOffsetMap.end()) {

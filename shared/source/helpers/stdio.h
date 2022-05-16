@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include <cstdio>
 #include <errno.h>
 
-inline int fopen_s(FILE **pFile, const char *filename, const char *mode) {
+inline int fopen_s(FILE **pFile, const char *filename, const char *mode) { // NOLINT(readability-identifier-naming)
     if ((pFile == nullptr) || (filename == nullptr) || (mode == nullptr)) {
         return -EINVAL;
     }

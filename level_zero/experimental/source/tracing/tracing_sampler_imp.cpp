@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeSamplerCreate_Tracing(ze_context_handle_t hContext,
-                        ze_device_handle_t hDevice,
-                        const ze_sampler_desc_t *pDesc,
-                        ze_sampler_handle_t *phSampler) {
+zeSamplerCreateTracing(ze_context_handle_t hContext,
+                       ze_device_handle_t hDevice,
+                       const ze_sampler_desc_t *pDesc,
+                       ze_sampler_handle_t *phSampler) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Sampler.pfnCreate,
                                hContext,
@@ -29,7 +29,7 @@ zeSamplerCreate_Tracing(ze_context_handle_t hContext,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnSamplerCreateCb_t, Sampler, pfnCreateCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnCreate,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnCreate,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -41,7 +41,7 @@ zeSamplerCreate_Tracing(ze_context_handle_t hContext,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeSamplerDestroy_Tracing(ze_sampler_handle_t hSampler) {
+zeSamplerDestroyTracing(ze_sampler_handle_t hSampler) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,
                                hSampler);
@@ -53,7 +53,7 @@ zeSamplerDestroy_Tracing(ze_sampler_handle_t hSampler) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnSamplerDestroyCb_t, Sampler, pfnDestroyCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

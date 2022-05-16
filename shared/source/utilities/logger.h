@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ class FileLogger {
     }
 };
 
-extern FileLogger<globalDebugFunctionalityLevel> &FileLoggerInstance();
+extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 
 template <bool Enabled>
 class LoggerApiEnterWrapper {
@@ -188,12 +188,12 @@ class LoggerApiEnterWrapper {
     LoggerApiEnterWrapper(const char *funcName, const int *errorCode)
         : funcName(funcName), errorCode(errorCode) {
         if (Enabled) {
-            FileLoggerInstance().logApiCall(funcName, true, 0);
+            fileLoggerInstance().logApiCall(funcName, true, 0);
         }
     }
     ~LoggerApiEnterWrapper() {
         if (Enabled) {
-            FileLoggerInstance().logApiCall(funcName, false, (errorCode != nullptr) ? *errorCode : 0);
+            fileLoggerInstance().logApiCall(funcName, false, (errorCode != nullptr) ? *errorCode : 0);
         }
     }
     const char *funcName;
@@ -206,7 +206,7 @@ class LoggerApiEnterWrapper {
     LOGGER.logLazyEvaluateArgs(PREDICATE, [&] { LOGGER.LOG_FUNCTION(__VA_ARGS__); })
 
 #define DBG_LOG(PREDICATE, ...) \
-    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::FileLoggerInstance(), NEO::DebugManager.flags.PREDICATE.get(), log, NEO::DebugManager.flags.PREDICATE.get(), __VA_ARGS__)
+    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::fileLoggerInstance(), NEO::DebugManager.flags.PREDICATE.get(), log, NEO::DebugManager.flags.PREDICATE.get(), __VA_ARGS__)
 
 #define DBG_LOG_INPUTS(...) \
-    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::FileLoggerInstance(), NEO::FileLoggerInstance().peekLogApiCalls(), logInputs, __VA_ARGS__)
+    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::fileLoggerInstance(), NEO::fileLoggerInstance().peekLogApiCalls(), logInputs, __VA_ARGS__)

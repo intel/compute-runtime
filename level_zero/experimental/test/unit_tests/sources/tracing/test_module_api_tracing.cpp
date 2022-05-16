@@ -23,7 +23,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleCreateTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleCreate_Tracing(nullptr, nullptr, &desc, &phModule, &phBuildLog);
+    result = zeModuleCreateTracing(nullptr, nullptr, &desc, &phModule, &phBuildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -38,7 +38,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDestroyTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleDestroy_Tracing(nullptr);
+    result = zeModuleDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -53,7 +53,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogDestroyTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleBuildLogDestroy_Tracing(nullptr);
+    result = zeModuleBuildLogDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -71,7 +71,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogGetStringTracingWrappe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleBuildLogGetString_Tracing(nullptr, &pSize, &pBuildLog);
+    result = zeModuleBuildLogGetStringTracing(nullptr, &pSize, &pBuildLog);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -88,7 +88,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetNativeBinaryTracingWrapperW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetNativeBinary_Tracing(nullptr, &pSize, &pModuleNativeBinary);
+    result = zeModuleGetNativeBinaryTracing(nullptr, &pSize, &pModuleNativeBinary);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -106,7 +106,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetGlobalPointerTracingWrapper
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetGlobalPointer_Tracing(nullptr, &pGlobalName, &size, &pptr);
+    result = zeModuleGetGlobalPointerTracing(nullptr, &pGlobalName, &size, &pptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -123,7 +123,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelCreateTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelCreate_Tracing(nullptr, &desc, &phKernel);
+    result = zeKernelCreateTracing(nullptr, &desc, &phKernel);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -138,7 +138,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelDestroyTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelDestroy_Tracing(nullptr);
+    result = zeKernelDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -155,7 +155,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetFunctionPointerTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetFunctionPointer_Tracing(nullptr, &pKernelName, &pfnFunction);
+    result = zeModuleGetFunctionPointerTracing(nullptr, &pKernelName, &pfnFunction);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -173,7 +173,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetGroupSizeTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSetGroupSize_Tracing(nullptr, groupSizeX, groupSizeY, groupSizeZ);
+    result = zeKernelSetGroupSizeTracing(nullptr, groupSizeX, groupSizeY, groupSizeZ);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -194,7 +194,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestGroupSizeTracingWrapper
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSuggestGroupSize_Tracing(nullptr, globalSizeX, globalSizeY, globalSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+    result = zeKernelSuggestGroupSizeTracing(nullptr, globalSizeX, globalSizeY, globalSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -212,7 +212,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetArgumentValueTracingWrapper
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSetArgumentValue_Tracing(nullptr, argIndex, argSize, &pArgValue);
+    result = zeKernelSetArgumentValueTracing(nullptr, argIndex, argSize, &pArgValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -227,7 +227,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetPropertiesTracingWrapperWit
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelGetProperties_Tracing(nullptr, nullptr);
+    result = zeKernelGetPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -247,7 +247,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendLaunchKernel_Tracing(nullptr, nullptr, &pLaunchFuncArgs, hSignalEvent, numWaitEvents, &phWaitEvents);
+    result = zeCommandListAppendLaunchKernelTracing(nullptr, nullptr, &pLaunchFuncArgs, hSignalEvent, numWaitEvents, &phWaitEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -267,7 +267,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelIndirec
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendLaunchKernelIndirect_Tracing(nullptr, nullptr, &pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, &phWaitEvents);
+    result = zeCommandListAppendLaunchKernelIndirectTracing(nullptr, nullptr, &pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, &phWaitEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -291,7 +291,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchMultipleKerne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(nullptr, numKernels, &phKernels, &pNumLaunchArguments, &pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, &phWaitEvents);
+    result = zeCommandListAppendLaunchMultipleKernelsIndirectTracing(nullptr, numKernels, &phKernels, &pNumLaunchArguments, &pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, &phWaitEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -306,7 +306,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchCooperativeKe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeCommandListAppendLaunchCooperativeKernel_Tracing(nullptr, nullptr, nullptr, nullptr, 1, nullptr);
+    result = zeCommandListAppendLaunchCooperativeKernelTracing(nullptr, nullptr, nullptr, nullptr, 1, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -321,7 +321,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetKernelNamesTracingWrapperWi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetKernelNames_Tracing(nullptr, nullptr, nullptr);
+    result = zeModuleGetKernelNamesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -336,7 +336,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestMaxCooperativeGroupCoun
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSuggestMaxCooperativeGroupCount_Tracing(nullptr, nullptr);
+    result = zeKernelSuggestMaxCooperativeGroupCountTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -351,7 +351,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetIndirectAccessTracingWrappe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelGetIndirectAccess_Tracing(nullptr, nullptr);
+    result = zeKernelGetIndirectAccessTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -366,7 +366,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetNameTracingWrapperWithOneSe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelGetName_Tracing(nullptr, nullptr, nullptr);
+    result = zeKernelGetNameTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -381,7 +381,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetSourceAttributesTracingWrap
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelGetSourceAttributes_Tracing(nullptr, nullptr, nullptr);
+    result = zeKernelGetSourceAttributesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -396,7 +396,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetIndirectAccessTracingWrappe
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSetIndirectAccess_Tracing(nullptr, ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST);
+    result = zeKernelSetIndirectAccessTracing(nullptr, ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -411,7 +411,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDynamicLinkTracingWrapperWithO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleDynamicLink_Tracing(1U, nullptr, nullptr);
+    result = zeModuleDynamicLinkTracing(1U, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -426,7 +426,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetPropertiesTracingWrapperWit
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeModuleGetProperties_Tracing(nullptr, nullptr);
+    result = zeModuleGetPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

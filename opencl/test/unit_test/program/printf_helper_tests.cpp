@@ -915,7 +915,7 @@ TEST(printToSTDOUTTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
 
 TEST(simpleSprintf, GivenEmptyFormatStringWhenSimpleSprintfIsCalledThenBailOutWith0) {
     char out[1024] = {7, 0};
-    auto ret = simple_sprintf<float>(out, sizeof(out), "", 3.0f);
+    auto ret = simpleSprintf<float>(out, sizeof(out), "", 3.0f);
     EXPECT_EQ(0U, ret);
     EXPECT_EQ(0, out[0]);
     EXPECT_EQ(0, out[1]);

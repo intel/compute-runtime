@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         std::vector<std::unique_ptr<NEO::Device>> devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
 
-        auto driverHandleUlt = whitebox_cast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
+        auto driverHandleUlt = whiteboxCast(DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue));
         driverHandle.reset(driverHandleUlt);
 
         ASSERT_NE(nullptr, driverHandle);
@@ -47,12 +47,12 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         ASSERT_NE(nullptr, device);
 
         ze_command_queue_desc_t queueDesc = {};
-        commandQueue = whitebox_cast(CommandQueue::create(productFamily, device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &queueDesc,
-                                                          false,
-                                                          false,
-                                                          returnValue));
+        commandQueue = whiteboxCast(CommandQueue::create(productFamily, device,
+                                                         neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                         &queueDesc,
+                                                         false,
+                                                         false,
+                                                         returnValue));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
         commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);

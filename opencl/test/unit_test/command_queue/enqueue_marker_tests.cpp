@@ -47,7 +47,7 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
     parseCommands<FamilyType>(*pCmdQ);
 
     // If CSR == CQ then a PC is required.
-    auto itorCmd = reverse_find<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
+    auto itorCmd = reverseFind<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
     EXPECT_EQ(cmdList.rend(), itorCmd);
 }
 

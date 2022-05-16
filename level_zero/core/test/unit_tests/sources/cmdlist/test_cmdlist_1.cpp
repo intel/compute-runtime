@@ -78,7 +78,7 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     ASSERT_GT(commandList->commandContainer.getCmdBufferAllocations().size(), 0u);
 
     auto numAllocations = 0u;
-    auto allocation = whitebox_cast(commandList->commandContainer.getCmdBufferAllocations()[0]);
+    auto allocation = whiteboxCast(commandList->commandContainer.getCmdBufferAllocations()[0]);
     ASSERT_NE(allocation, nullptr);
 
     ++numAllocations;

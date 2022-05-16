@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeFenceCreate_Tracing(ze_command_queue_handle_t hCommandQueue,
-                      const ze_fence_desc_t *desc,
-                      ze_fence_handle_t *phFence) {
+zeFenceCreateTracing(ze_command_queue_handle_t hCommandQueue,
+                     const ze_fence_desc_t *desc,
+                     ze_fence_handle_t *phFence) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnCreate,
                                hCommandQueue,
@@ -26,7 +26,7 @@ zeFenceCreate_Tracing(ze_command_queue_handle_t hCommandQueue,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnFenceCreateCb_t, Fence, pfnCreateCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnCreate,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnCreate,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -37,7 +37,7 @@ zeFenceCreate_Tracing(ze_command_queue_handle_t hCommandQueue,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeFenceDestroy_Tracing(ze_fence_handle_t hFence) {
+zeFenceDestroyTracing(ze_fence_handle_t hFence) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnDestroy,
                                hFence);
@@ -49,7 +49,7 @@ zeFenceDestroy_Tracing(ze_fence_handle_t hFence) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnFenceDestroyCb_t, Fence, pfnDestroyCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnDestroy,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnDestroy,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -58,8 +58,8 @@ zeFenceDestroy_Tracing(ze_fence_handle_t hFence) {
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeFenceHostSynchronize_Tracing(ze_fence_handle_t hFence,
-                               uint64_t timeout) {
+zeFenceHostSynchronizeTracing(ze_fence_handle_t hFence,
+                              uint64_t timeout) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize,
                                hFence,
@@ -73,7 +73,7 @@ zeFenceHostSynchronize_Tracing(ze_fence_handle_t hFence,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnFenceHostSynchronizeCb_t, Fence, pfnHostSynchronizeCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -83,7 +83,7 @@ zeFenceHostSynchronize_Tracing(ze_fence_handle_t hFence,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeFenceQueryStatus_Tracing(ze_fence_handle_t hFence) {
+zeFenceQueryStatusTracing(ze_fence_handle_t hFence) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus,
                                hFence);
@@ -95,7 +95,7 @@ zeFenceQueryStatus_Tracing(ze_fence_handle_t hFence) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnFenceQueryStatusCb_t, Fence, pfnQueryStatusCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -104,7 +104,7 @@ zeFenceQueryStatus_Tracing(ze_fence_handle_t hFence) {
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeFenceReset_Tracing(ze_fence_handle_t hFence) {
+zeFenceResetTracing(ze_fence_handle_t hFence) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnReset,
                                hFence);
@@ -116,7 +116,7 @@ zeFenceReset_Tracing(ze_fence_handle_t hFence) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnFenceResetCb_t, Fence, pfnResetCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnReset,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Fence.pfnReset,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

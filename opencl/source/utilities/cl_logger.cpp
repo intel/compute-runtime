@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ ClFileLogger<DebugLevel>::ClFileLogger(FileLogger<DebugLevel> &baseLoggerIn, con
 }
 
 ClFileLogger<globalDebugFunctionalityLevel> &getClFileLogger() {
-    static ClFileLogger<globalDebugFunctionalityLevel> clFileLoggerInstance(FileLoggerInstance(), DebugManager.flags);
+    static ClFileLogger<globalDebugFunctionalityLevel> clFileLoggerInstance(fileLoggerInstance(), DebugManager.flags);
     return clFileLoggerInstance;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenFailsThenFunctionsAreNull) 
     EXPECT_TRUE(functions.wereFunctionsAssignedNull());
 }
 
-void *GetLibFunc(VADisplay vaDisplay, const char *func) {
+void *getLibFunc(VADisplay vaDisplay, const char *func) {
     return reinterpret_cast<void *>(uintptr_t(0xdeadbeef));
 }
 
@@ -79,7 +79,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotN
     };
 
     VASharingFunctions::fdlsym = [&](void *handle, const char *symbol) -> void * {
-        return (void *)GetLibFunc;
+        return (void *)getLibFunc;
     };
 
     VASharingFunctions::fdlclose = [&](void *handle) -> int {
@@ -105,7 +105,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenEnableVaLibCallsThenFunctionsAreA
     };
 
     VASharingFunctions::fdlsym = [&](void *handle, const char *symbol) -> void * {
-        return (void *)GetLibFunc;
+        return (void *)getLibFunc;
     };
 
     VASharingFunctions::fdlclose = [&](void *handle) -> int {

@@ -169,7 +169,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
     auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue);
     ASSERT_NE(nullptr, cmdQ);
 
-    auto commandQueue = whitebox_cast(cmdQ);
+    auto commandQueue = whiteboxCast(cmdQ);
     auto cmdQHw = static_cast<CommandQueueHw<gfxCoreFamily> *>(cmdQ);
 
     if (cmdQHw->estimateStateBaseAddressCmdSize() == 0) {
@@ -226,7 +226,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsS
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
@@ -262,7 +262,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueu
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {
@@ -293,7 +293,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueI
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {

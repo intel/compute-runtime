@@ -306,7 +306,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegu
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue->commandStream);
 
     ze_command_list_handle_t commandLists[] = {

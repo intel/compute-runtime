@@ -497,7 +497,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         return nullptr;
     }
 
-    FileLoggerInstance().logAllocation(allocation);
+    fileLoggerInstance().logAllocation(allocation);
     registerAllocationInOs(allocation);
     return allocation;
 }

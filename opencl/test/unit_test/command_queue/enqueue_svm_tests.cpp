@@ -668,7 +668,7 @@ TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSucc
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenCopyingMemoryWithBlockingThenSuccessisReturned) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
-    auto uEvent = make_releaseable<UserEvent>();
+    auto uEvent = makeReleaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,         // cl_bool  blocking_copy
@@ -707,7 +707,7 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsR
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties, context->getRootDeviceIndices(), context->getDeviceBitfields());
-    auto uEvent = make_releaseable<UserEvent>();
+    auto uEvent = makeReleaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,         // cl_bool  blocking_copy
@@ -788,7 +788,7 @@ HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccesIsReturnedAndA
 TEST_F(EnqueueSvmTest, GivenValidParamsWhenFillingMemoryWithBlockingThenSuccessIsReturned) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
-    auto uEvent = make_releaseable<UserEvent>();
+    auto uEvent = makeReleaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemFill(
         ptrSVM,        // void *svm_ptr
@@ -816,7 +816,7 @@ HWTEST_F(EnqueueSvmTest, GivenGpuHangAndBlockingCallAndValidParamsWhenFillingMem
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
 
-    auto uEvent = make_releaseable<UserEvent>();
+    auto uEvent = makeReleaseable<UserEvent>();
     const cl_uint numOfEvents = 1;
     cl_event eventWaitList[numOfEvents] = {uEvent.get()};
 
@@ -929,7 +929,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
 
     kernel->setSvmKernelExecInfo(pSvmAlloc);
 
-    auto uEvent = make_releaseable<UserEvent>();
+    auto uEvent = makeReleaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     size_t offset = 0;
     size_t size = 1;

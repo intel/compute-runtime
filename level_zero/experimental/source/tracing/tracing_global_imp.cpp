@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeInit_Tracing(ze_init_flags_t flags) {
+zeInitTracing(ze_init_flags_t flags) {
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Global.pfnInit,
                                flags);
 
@@ -19,7 +19,7 @@ zeInit_Tracing(ze_init_flags_t flags) {
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnInitCb_t, Global, pfnInitCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Global.pfnInit,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Global.pfnInit,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

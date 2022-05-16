@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 using namespace NEO;
 
 template <>
-AubTestsConfig GetAubTestsConfig<TGLLPFamily>() {
+AubTestsConfig getAubTestsConfig<TGLLPFamily>() {
     AubTestsConfig aubTestsConfig;
     aubTestsConfig.testCanonicalAddress = false;
     return aubTestsConfig;

@@ -118,7 +118,7 @@ HWTEST_P(PreemptionHwTest, GivenPreemptionModeIsChangingWhenGettingRequiredCmdSt
     PreemptionMode mode = GetParam();
     PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
 
-    if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
+    if (false == getPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         EXPECT_EQ(0U, PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, differentPreemptionMode));
         return;
     }
@@ -146,7 +146,7 @@ HWTEST_P(PreemptionHwTest, WhenProgrammingCmdStreamThenProperMiLoadRegisterImmCo
     PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
+    if (false == getPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         LinearStream cmdStream(nullptr, 0U);
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, nullptr);
         EXPECT_EQ(0U, cmdStream.getUsed());
@@ -154,7 +154,7 @@ HWTEST_P(PreemptionHwTest, WhenProgrammingCmdStreamThenProperMiLoadRegisterImmCo
     }
 
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    auto hwDetails = GetPreemptionTestHwDetails<FamilyType>();
+    auto hwDetails = getPreemptionTestHwDetails<FamilyType>();
 
     uint32_t defaultRegValue = hwDetails.defaultRegValue;
 
@@ -383,7 +383,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionT
                       dispatchFlags,
                       *mockDevice);
 
-        auto hwDetails = GetPreemptionTestHwDetails<FamilyType>();
+        auto hwDetails = getPreemptionTestHwDetails<FamilyType>();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr.getCS(0));

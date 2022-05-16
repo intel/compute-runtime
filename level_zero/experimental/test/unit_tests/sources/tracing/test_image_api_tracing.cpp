@@ -22,7 +22,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWith
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageGetProperties_Tracing(nullptr, &desc, &pImageProperties);
+    result = zeImageGetPropertiesTracing(nullptr, &desc, &pImageProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -39,7 +39,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageCreate_Tracing(nullptr, nullptr, &desc, &phImage);
+    result = zeImageCreateTracing(nullptr, nullptr, &desc, &phImage);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -53,7 +53,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageDestroy_Tracing(nullptr);
+    result = zeImageDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -204,7 +204,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesT
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageGetProperties_Tracing(ImageGetProperties_args.hDevice0, &ImageGetProperties_args.desc0, &ImageGetProperties_args.ImageProperties0);
+    result = zeImageGetPropertiesTracing(ImageGetProperties_args.hDevice0, &ImageGetProperties_args.desc0, &ImageGetProperties_args.ImageProperties0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -465,7 +465,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageCreate_Tracing(ImageCreate_args.hContext0, ImageCreate_args.hDevice0, &ImageCreate_args.desc0, &ImageCreate_args.hImage0);
+    result = zeImageCreateTracing(ImageCreate_args.hContext0, ImageCreate_args.hDevice0, &ImageCreate_args.desc0, &ImageCreate_args.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -594,7 +594,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeImageDestroy_Tracing(ImageDestroy_args.hImage0);
+    result = zeImageDestroyTracing(ImageDestroy_args.hImage0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

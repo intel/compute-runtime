@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,15 +14,15 @@
 
 namespace NEO {
 
-void cpuid_linux_wrapper(int cpuInfo[4], int functionId) {
+void cpuidLinuxWrapper(int cpuInfo[4], int functionId) {
     __cpuid_count(functionId, 0, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
 }
 
-void cpuidex_linux_wrapper(int *cpuInfo, int functionId, int subfunctionId) {
+void cpuidexLinuxWrapper(int *cpuInfo, int functionId, int subfunctionId) {
     __cpuid_count(functionId, subfunctionId, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
 }
 
-void get_cpu_flags_linux(std::string &cpuFlags) {
+void getCpuFlagsLinux(std::string &cpuFlags) {
     std::ifstream cpuinfo(std::string(Os::sysFsProcPathPrefix) + "/cpuinfo");
     std::string line;
     while (std::getline(cpuinfo, line)) {
@@ -33,9 +33,9 @@ void get_cpu_flags_linux(std::string &cpuFlags) {
     }
 }
 
-void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidex_linux_wrapper;
-void (*CpuInfo::cpuidFunc)(int[4], int) = cpuid_linux_wrapper;
-void (*CpuInfo::getCpuFlagsFunc)(std::string &) = get_cpu_flags_linux;
+void (*CpuInfo::cpuidexFunc)(int *, int, int) = cpuidexLinuxWrapper;
+void (*CpuInfo::cpuidFunc)(int[4], int) = cpuidLinuxWrapper;
+void (*CpuInfo::getCpuFlagsFunc)(std::string &) = getCpuFlagsLinux;
 
 const CpuInfo CpuInfo::instance;
 

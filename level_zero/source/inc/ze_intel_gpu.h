@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-inline bool getenv_tobool(const char *name) {
+inline bool getEnvToBool(const char *name) {
     const char *env = getenv(name);
     if ((nullptr == env) || (0 == strcmp("0", env)))
         return false;

@@ -160,7 +160,7 @@ TEST(UserEvent, givenUserEventWhenStatusIsCompletedThenReturnZeroTaskLevel) {
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
 TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEventThenDoNotSubmitToCsr) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event *eventWaitList = &userEvent;
@@ -192,7 +192,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEv
 }
 
 TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEventThenDoNotSubmitToCsr) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event retEvent = nullptr;
@@ -235,7 +235,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
 }
 
 TEST_F(MockEventTests, WhenAddingChildEventThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
 
     cl_event userEvent = uEvent.get();
     cl_event retEvent = nullptr;
@@ -274,8 +274,8 @@ TEST_F(EventTests, givenNormalEventThatHasParentUserEventWhenUserEventIsUnblocke
 }
 
 TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOnReturnEventIsInjected) {
-    uEvent = make_releaseable<UserEvent>();
-    auto uEvent2 = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
+    auto uEvent2 = makeReleaseable<UserEvent>();
     cl_event retEvent = nullptr;
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
@@ -317,8 +317,8 @@ TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOn
 }
 
 TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropagatedToNdr2viaVirtualEvent) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -387,8 +387,8 @@ TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledT
 }
 
 TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocked) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -405,7 +405,7 @@ TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocke
 }
 
 TEST_F(MockEventTests, WhenCompletingUserEventThenStatusPropagatedToNormalEvent) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -442,7 +442,7 @@ HWTEST_F(EventTests, WhenSignalingThenUserEventObtainsProperTaskLevel) {
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpdatedCorrectly) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
 
@@ -471,7 +471,7 @@ TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpd
 }
 
 TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreComplete) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
@@ -508,7 +508,7 @@ TEST_F(EventTests, WhenStatusIsAbortedWhenWaitingForEventsThenErrorIsReturned) {
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -567,7 +567,7 @@ TEST_F(MockEventTests, givenDebugVariableWhenStatusIsQueriedThenNoFlushHappens) 
 }
 
 TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProcessBlockedCommands) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -607,7 +607,7 @@ TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProces
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -630,8 +630,8 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturn
 }
 
 TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenErrorIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
-    auto uEvent2 = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
+    auto uEvent2 = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
@@ -654,7 +654,7 @@ TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenE
 }
 
 TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
@@ -677,7 +677,7 @@ TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
@@ -691,7 +691,7 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered
 }
 
 TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidCommandStream) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
@@ -705,7 +705,7 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidC
 }
 
 TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -734,7 +734,7 @@ TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
 }
 
 TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturnsSuccess) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
@@ -758,7 +758,7 @@ TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturns
 }
 
 TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnqueueAndAfterSignaling) {
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
@@ -898,7 +898,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
 TEST_F(MockEventTests, GivenEnqueueReadImageWhenWaitingforEventThenSuccessIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     cl_event retEvent;
-    uEvent = make_releaseable<UserEvent>(context);
+    uEvent = makeReleaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
     auto image = clUniquePtr(Image2dHelper<>::create(this->context));

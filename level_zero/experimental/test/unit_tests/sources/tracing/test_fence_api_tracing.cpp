@@ -22,7 +22,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetO
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceCreate_Tracing(nullptr, &desc, &fence);
+    result = zeFenceCreateTracing(nullptr, &desc, &fence);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -37,7 +37,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSet
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceDestroy_Tracing(nullptr);
+    result = zeFenceDestroyTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -51,7 +51,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceHostSynchronize_Tracing(nullptr, 1U);
+    result = zeFenceHostSynchronizeTracing(nullptr, 1U);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -65,7 +65,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOn
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceQueryStatus_Tracing(nullptr);
+    result = zeFenceQueryStatusTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -79,7 +79,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOf
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceReset_Tracing(nullptr);
+    result = zeFenceResetTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -319,7 +319,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingW
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceCreate_Tracing(fence_create_args.hCommandQueue0, &fence_create_args.desc0, &fence_create_args.hFence0);
+    result = zeFenceCreateTracing(fence_create_args.hCommandQueue0, &fence_create_args.desc0, &fence_create_args.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(fence_create_args.hFence1, fence_create_args.hFenceAPI);
     validateDefaultUserDataFinal();
@@ -449,7 +449,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracing
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceDestroy_Tracing(fence_destroy_args.hFence0);
+    result = zeFenceDestroyTracing(fence_destroy_args.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -590,7 +590,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchroniz
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceHostSynchronize_Tracing(fence_host_synchronize_args.hFence0, fence_host_synchronize_args.timeout0);
+    result = zeFenceHostSynchronizeTracing(fence_host_synchronize_args.hFence0, fence_host_synchronize_args.timeout0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -719,7 +719,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceQueryStatus_Tracing(fence_query_status_args.hFence0);
+    result = zeFenceQueryStatusTracing(fence_query_status_args.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }
@@ -848,7 +848,7 @@ TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWr
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeFenceReset_Tracing(fence_reset_args.hFence0);
+    result = zeFenceResetTracing(fence_reset_args.hFence0);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     validateDefaultUserDataFinal();
 }

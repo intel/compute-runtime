@@ -688,7 +688,7 @@ TEST_F(InternalsEventTest, givenGpuHangOnPrintingEnqueueOutputAndBlockedKernelWi
 }
 
 TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
-    auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, nullptr, false);
+    auto pCmdQ = makeReleaseable<MockCommandQueue>(mockContext, pClDevice, nullptr, false);
     MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -709,7 +709,7 @@ TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelI
 }
 
 TEST_F(InternalsEventTest, GivenMapOperationNonZeroCopyBufferWhenSubmittingCommandsThenTaskLevelIsIncremented) {
-    auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, nullptr, false);
+    auto pCmdQ = makeReleaseable<MockCommandQueue>(mockContext, pClDevice, nullptr, false);
     MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -937,7 +937,7 @@ TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
 
 TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, props, false);
+    auto pCmdQ = makeReleaseable<MockCommandQueue>(mockContext, pClDevice, props, false);
     MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
@@ -1163,7 +1163,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(*pCmdQ, kernelOperation, surfaces, kernel);
 
-    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
+    auto virtualEvent = makeReleaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     virtualEvent->setCommand(std::move(command));
 
@@ -1183,7 +1183,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
                                                                   taskLevel, taskCount) {}
     };
 
-    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
+    auto virtualEvent = makeReleaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     virtualEvent->submitCommand(false);
 
@@ -1216,7 +1216,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyWhenMappingOrUnmappingThe
     pDevice->resetCommandStreamReceiver(csr);
 
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, props, false);
+    auto pCmdQ = makeReleaseable<MockCommandQueue>(mockContext, pClDevice, props, false);
 
     MockNonZeroCopyBuff buffer(executionStamp);
 

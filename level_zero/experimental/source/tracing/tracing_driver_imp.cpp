@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGet_Tracing(uint32_t *pCount,
-                    ze_driver_handle_t *phDrivers) {
+zeDriverGetTracing(uint32_t *pCount,
+                   ze_driver_handle_t *phDrivers) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Driver.pfnGet,
                                pCount,
@@ -23,7 +23,7 @@ zeDriverGet_Tracing(uint32_t *pCount,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDriverGetCb_t, Driver, pfnGetCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGet,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGet,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -33,8 +33,8 @@ zeDriverGet_Tracing(uint32_t *pCount,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetProperties_Tracing(ze_driver_handle_t hDriver,
-                              ze_driver_properties_t *properties) {
+zeDriverGetPropertiesTracing(ze_driver_handle_t hDriver,
+                             ze_driver_properties_t *properties) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Driver.pfnGetProperties,
                                hDriver,
@@ -47,7 +47,7 @@ zeDriverGetProperties_Tracing(ze_driver_handle_t hDriver,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDriverGetPropertiesCb_t, Driver, pfnGetPropertiesCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetProperties,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetProperties,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -57,8 +57,8 @@ zeDriverGetProperties_Tracing(ze_driver_handle_t hDriver,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
-                              ze_api_version_t *version) {
+zeDriverGetApiVersionTracing(ze_driver_handle_t hDrivers,
+                             ze_api_version_t *version) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Driver.pfnGetApiVersion, hDrivers, version);
 
@@ -70,7 +70,7 @@ zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDriverGetApiVersionCb_t, Driver, pfnGetApiVersionCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetApiVersion,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetApiVersion,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -80,8 +80,8 @@ zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetIpcProperties_Tracing(ze_driver_handle_t hDriver,
-                                 ze_driver_ipc_properties_t *pIpcProperties) {
+zeDriverGetIpcPropertiesTracing(ze_driver_handle_t hDriver,
+                                ze_driver_ipc_properties_t *pIpcProperties) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties,
                                hDriver,
@@ -95,7 +95,7 @@ zeDriverGetIpcProperties_Tracing(ze_driver_handle_t hDriver,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDriverGetIpcPropertiesCb_t, Driver, pfnGetIpcPropertiesCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
@@ -105,9 +105,9 @@ zeDriverGetIpcProperties_Tracing(ze_driver_handle_t hDriver,
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetExtensionProperties_Tracing(ze_driver_handle_t hDriver,
-                                       uint32_t *pCount,
-                                       ze_driver_extension_properties_t *pExtensionProperties) {
+zeDriverGetExtensionPropertiesTracing(ze_driver_handle_t hDriver,
+                                      uint32_t *pCount,
+                                      ze_driver_extension_properties_t *pExtensionProperties) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Driver.pfnGetExtensionProperties,
                                hDriver,
@@ -123,7 +123,7 @@ zeDriverGetExtensionProperties_Tracing(ze_driver_handle_t hDriver,
 
     ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDriverGetExtensionPropertiesCb_t, Driver, pfnGetExtensionPropertiesCb);
 
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetExtensionProperties,
+    return L0::apiTracerWrapperImp(driver_ddiTable.core_ddiTable.Driver.pfnGetExtensionProperties,
                                    &tracerParams,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,

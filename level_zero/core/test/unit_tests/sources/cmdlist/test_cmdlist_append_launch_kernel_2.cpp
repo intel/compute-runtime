@@ -802,11 +802,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThr
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
-                                                                                          device,
-                                                                                          NEO::EngineGroupType::RenderCompute,
-                                                                                          0u,
-                                                                                          returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                         device,
+                                                                                         NEO::EngineGroupType::RenderCompute,
+                                                                                         0u,
+                                                                                         returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
 
@@ -834,11 +834,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThre
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
-                                                                                          device,
-                                                                                          NEO::EngineGroupType::RenderCompute,
-                                                                                          0u,
-                                                                                          returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                         device,
+                                                                                         NEO::EngineGroupType::RenderCompute,
+                                                                                         0u,
+                                                                                         returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
 
@@ -864,11 +864,11 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
-                                                                                          device,
-                                                                                          NEO::EngineGroupType::RenderCompute,
-                                                                                          0u,
-                                                                                          returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily,
+                                                                                         device,
+                                                                                         NEO::EngineGroupType::RenderCompute,
+                                                                                         0u,
+                                                                                         returnValue)));
     EXPECT_NE(nullptr, commandList);
     EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
 
@@ -1284,7 +1284,7 @@ struct MultiTileCommandListAppendLaunchFunctionXeHpCoreFixture : public MultiDev
         contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
         ze_result_t returnValue;
-        commandList = whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+        commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     }
 

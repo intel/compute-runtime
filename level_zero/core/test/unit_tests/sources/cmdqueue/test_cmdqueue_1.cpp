@@ -29,13 +29,13 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     ASSERT_NE(nullptr, commandQueue);
@@ -64,13 +64,13 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
 TEST_F(CommandQueueCreate, whenSynchronizeByPollingTaskCountThenCallsPrintOutputOnPrintfFunctionsStoredAndClearsFunctionContainer) {
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     Mock<Kernel> kernel1, kernel2;
 
@@ -91,13 +91,13 @@ HWTEST_F(CommandQueueCreate, givenGpuHangOnSecondReserveWhenReservingLinearStrea
     ze_result_t returnValue;
     NEO::WaitStatus waitStatus{NEO::WaitStatus::NotReady};
 
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
 
@@ -132,13 +132,13 @@ HWTEST_F(CommandQueueCreate, whenReserveLinearStreamThenBufferAllocationSwitched
     ze_result_t returnValue;
     NEO::WaitStatus waitStatus{NEO::WaitStatus::NotReady};
 
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
 
@@ -206,13 +206,13 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueWithInvalidProductFamilyThenF
 TEST_F(CommandQueueCreate, whenCmdBuffersAllocationsAreCreatedThenSizeIsNotLessThanQueuesLinearStreamSize) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
     size_t maxSize = commandQueue->commandStream->getMaxAvailableSpace();
 
@@ -238,19 +238,19 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
     Mock<Kernel> kernel;
     kernel.immutableData.device = device;
 
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
@@ -288,7 +288,7 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
@@ -309,15 +309,15 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitWhenDispatchTaskCountWr
 
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
 
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
@@ -345,13 +345,13 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ResidencyContainer container;
     commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
@@ -366,13 +366,13 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
@@ -385,13 +385,13 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr.get(),
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::OUT_OF_MEMORY);
@@ -403,13 +403,13 @@ TEST_F(CommandQueueCreate, whenCommandQueueCreatedThenExpectLinearStreamInitiali
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
 
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(commandQueue, nullptr);
 
     size_t commandStreamSize = MemoryConstants::kiloByte * 128u;
@@ -427,16 +427,16 @@ HWTEST_F(CommandQueueCreate, givenQueueInAsyncModeAndRugularCmdListWithAppendBar
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
@@ -448,16 +448,16 @@ HWTEST_F(CommandQueueCreate, givenQueueInSyncModeAndRugularCmdListWithAppendBarr
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
 
     commandList->appendBarrier(nullptr, 0, nullptr);
@@ -1579,16 +1579,16 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadScratchSize(0u);
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList1->setCommandListPerThreadScratchSize(0u);
     auto commandListHandle0 = commandList0->toHandle();
     auto commandListHandle1 = commandList1->toHandle();
@@ -1688,8 +1688,8 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     NEO::CommandStreamReceiver *csr;
     l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::Compute, 0u, returnValue)));
     auto commandListHandle = commandList->toHandle();
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
@@ -1716,15 +1716,15 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadScratchSize(512u);
     commandList1->setCommandListPerThreadScratchSize(0u);
     auto commandListHandle0 = commandList0->toHandle();
@@ -1752,13 +1752,13 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandList1->reset();
     commandList1->setCommandListPerThreadScratchSize(0u);
 
-    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
-                                                            device,
-                                                            csr,
-                                                            &desc,
-                                                            false,
-                                                            false,
-                                                            returnValue));
+    auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
@@ -1788,15 +1788,15 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadScratchSize(0u);
     commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
@@ -1824,13 +1824,13 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandList1->reset();
     commandList1->setCommandListPerThreadScratchSize(0u);
 
-    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
-                                                            device,
-                                                            csr,
-                                                            &desc,
-                                                            false,
-                                                            false,
-                                                            returnValue));
+    auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
@@ -1860,15 +1860,15 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadScratchSize(512u);
     commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
@@ -1896,13 +1896,13 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandList1->reset();
     commandList1->setCommandListPerThreadScratchSize(1024u);
 
-    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
-                                                            device,
-                                                            csr,
-                                                            &desc,
-                                                            false,
-                                                            false,
-                                                            returnValue));
+    auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
@@ -1932,15 +1932,15 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadScratchSize(0u);
     commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
@@ -1968,13 +1968,13 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandList1->reset();
     commandList1->setCommandListPerThreadScratchSize(2048u);
 
-    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
-                                                            device,
-                                                            csr,
-                                                            &desc,
-                                                            false,
-                                                            false,
-                                                            returnValue));
+    auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
@@ -2002,15 +2002,15 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList0 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-    auto commandList1 = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList0 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandList1 = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList0->setCommandListPerThreadPrivateScratchSize(0u);
     commandList1->setCommandListPerThreadPrivateScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
@@ -2036,13 +2036,13 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     commandList1->reset();
     commandList1->setCommandListPerThreadPrivateScratchSize(2048u);
 
-    auto commandQueue1 = whitebox_cast(CommandQueue::create(productFamily,
-                                                            device,
-                                                            csr,
-                                                            &desc,
-                                                            false,
-                                                            false,
-                                                            returnValue));
+    auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
+                                                           device,
+                                                           csr,
+                                                           &desc,
+                                                           false,
+                                                           false,
+                                                           returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
@@ -2069,14 +2069,14 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList->setCommandListPerThreadPrivateScratchSize(0u);
     auto commandListHandle = commandList->toHandle();
 
@@ -2111,14 +2111,14 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     ze_result_t returnValue;
-    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily,
-                                                           device,
-                                                           csr,
-                                                           &desc,
-                                                           false,
-                                                           false,
-                                                           returnValue));
-    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    auto commandList = std::unique_ptr<CommandList>(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     commandList->setCommandListPerThreadPrivateScratchSize(0u);
     auto commandListHandle = commandList->toHandle();
 

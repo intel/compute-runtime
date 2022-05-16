@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetTracingWrapperWithOneSetOfP
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGet_Tracing(nullptr, nullptr, nullptr);
+    result = zeDeviceGetTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -35,7 +35,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetPropertiesTracingWrapperWit
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -50,7 +50,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetComputePropertiesTracingWra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetComputeProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetComputePropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -65,7 +65,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetMemoryPropertiesTracingWrap
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetMemoryProperties_Tracing(nullptr, nullptr, nullptr);
+    result = zeDeviceGetMemoryPropertiesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -82,7 +82,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetCachePropertiesTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetCacheProperties_Tracing(nullptr, nullptr, nullptr);
+    result = zeDeviceGetCachePropertiesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -98,7 +98,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetImagePropertiesTracingWrapp
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetImageProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetImagePropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -117,7 +117,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetSubDevicesTracingWrapperWit
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetSubDevices_Tracing(nullptr, &pcount, nullptr);
+    result = zeDeviceGetSubDevicesTracing(nullptr, &pcount, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -136,7 +136,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetP2PPropertiesTracingWrapper
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetP2PProperties_Tracing(nullptr, nullptr, &pP2PProperties);
+    result = zeDeviceGetP2PPropertiesTracing(nullptr, nullptr, &pP2PProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -155,7 +155,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceCanAccessPeerTracingWrapperWit
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceCanAccessPeer_Tracing(nullptr, nullptr, &value);
+    result = zeDeviceCanAccessPeerTracing(nullptr, nullptr, &value);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -173,7 +173,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetCacheConfigTracingWrapperWi
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeKernelSetCacheConfig_Tracing(nullptr, flags);
+    result = zeKernelSetCacheConfigTracing(nullptr, flags);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -189,7 +189,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetModulePropertiesTracingWrap
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetModuleProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetModulePropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -205,7 +205,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetMemoryAccessPropertiesTraci
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetMemoryAccessProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetMemoryAccessPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -220,7 +220,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetCommandQueueGroupProperties
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetCommandQueueGroupProperties_Tracing(nullptr, nullptr, nullptr);
+    result = zeDeviceGetCommandQueueGroupPropertiesTracing(nullptr, nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -235,7 +235,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetExternalMemoryPropertiesTra
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetExternalMemoryProperties_Tracing(nullptr, nullptr);
+    result = zeDeviceGetExternalMemoryPropertiesTracing(nullptr, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }
@@ -250,7 +250,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingDeviceGetStatusTracingWrapperWithOne
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeDeviceGetStatus_Tracing(nullptr);
+    result = zeDeviceGetStatusTracing(nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

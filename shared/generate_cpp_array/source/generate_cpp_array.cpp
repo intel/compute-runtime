@@ -13,7 +13,7 @@
 
 constexpr int MIN_ARG_COUNT = 7;
 
-static void show_usage(std::string name) {
+static void showUsage(std::string name) {
     std::cerr << "Usage " << name << "<option(s)> - ALL BUT -p, --platform MUST BE SPECIFIED\n"
               << "Options :\n"
               << "\t -f, --file\t\tA file which content will be parsed into a uint32_t array in a .cpp file\n"
@@ -73,7 +73,7 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, st
 
 int main(int argc, char *argv[]) {
     if (argc < MIN_ARG_COUNT) {
-        show_usage(argv[0]);
+        showUsage(argv[0]);
         return 1;
     }
     std::string fileName;

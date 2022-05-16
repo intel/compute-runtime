@@ -1662,8 +1662,8 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
         pSampler->setArg(const_cast<void *>(samplerState), clDevice.getHardwareInfo());
 
         patch<uint32_t, uint32_t>(pSampler->getSnapWaValue(), crossThreadData, argAsSmp.metadataPayload.samplerSnapWa);
-        patch<uint32_t, uint32_t>(GetAddrModeEnum(pSampler->addressingMode), crossThreadData, argAsSmp.metadataPayload.samplerAddressingMode);
-        patch<uint32_t, uint32_t>(GetNormCoordsEnum(pSampler->normalizedCoordinates), crossThreadData, argAsSmp.metadataPayload.samplerNormalizedCoords);
+        patch<uint32_t, uint32_t>(getAddrModeEnum(pSampler->addressingMode), crossThreadData, argAsSmp.metadataPayload.samplerAddressingMode);
+        patch<uint32_t, uint32_t>(getNormCoordsEnum(pSampler->normalizedCoordinates), crossThreadData, argAsSmp.metadataPayload.samplerNormalizedCoords);
         if (arg.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor) {
             const auto &explicitArgsExtendedDescriptors = kernelInfo.kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors;
             UNRECOVERABLE_IF(argIndex >= explicitArgsExtendedDescriptors.size());
@@ -1816,7 +1816,7 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
     if (arg.is<ArgDescriptor::ArgTImage>()) {
         cl_mem mem = *(static_cast<const cl_mem *>(argValue));
         MemObj *pMemObj = nullptr;
-        WithCastToInternal(mem, &pMemObj);
+        withCastToInternal(mem, &pMemObj);
         if (pMemObj) {
             auto accessQualifier = arg.getTraits().accessQualifier;
             cl_mem_flags flags = pMemObj->getFlags();

@@ -949,7 +949,7 @@ HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgC
 
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     auto alloc = image->getAllocation();
@@ -999,7 +999,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostProduct
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     result = zeImageDestroy(image->toHandle());
@@ -1014,7 +1014,7 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostPr
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     image->destroy();
@@ -1028,7 +1028,7 @@ HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostProd
     auto result = Image::create(IGFX_UNKNOWN, device, &desc, &imagePtr);
     ASSERT_NE(ZE_RESULT_SUCCESS, result);
 
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_EQ(nullptr, image);
 }
 
@@ -1048,7 +1048,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostProd
 
     auto result = Image::create(productFamily, device, &desc, &imagePtr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto image = whitebox_cast(imagePtr);
+    auto image = whiteboxCast(imagePtr);
     ASSERT_NE(nullptr, image);
 
     auto alloc = image->getAllocation();

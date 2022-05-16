@@ -625,7 +625,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenOutputPrinted) {
-    auto userEvent = make_releaseable<UserEvent>(context);
+    auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);
     std::string testString = "test";
@@ -672,7 +672,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenOutputPrinted) {
-    auto userEvent = make_releaseable<UserEvent>(context);
+    auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*pClDevice);
     std::string testString = "test";

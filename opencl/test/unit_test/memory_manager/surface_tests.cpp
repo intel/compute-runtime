@@ -27,25 +27,25 @@ typedef ::testing::Types<NullSurface, HostPtrSurface, MemObjSurface, GeneralSurf
 
 namespace createSurface {
 template <typename surfType>
-Surface *Create(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation);
+Surface *create(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation);
 
 template <>
-Surface *Create<NullSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
+Surface *create<NullSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
     return new NullSurface;
 }
 
 template <>
-Surface *Create<HostPtrSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
+Surface *create<HostPtrSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
     return new HostPtrSurface(data, 10, gfxAllocation);
 }
 
 template <>
-Surface *Create<MemObjSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
+Surface *create<MemObjSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
     return new MemObjSurface(buffer);
 }
 
 template <>
-Surface *Create<GeneralSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
+Surface *create<GeneralSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
     return new GeneralSurface(gfxAllocation);
 }
 } // namespace createSurface
@@ -72,7 +72,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(engine, PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
     csr->setupContext(*osContext);
 
-    Surface *surface = createSurface::Create<TypeParam>(this->data,
+    Surface *surface = createSurface::create<TypeParam>(this->data,
                                                         &this->buffer,
                                                         &this->gfxAllocation);
     ASSERT_NE(nullptr, surface); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
@@ -100,7 +100,7 @@ class CoherentMemObjSurface : public SurfaceTest<MemObjSurface> {
 };
 
 TEST_F(CoherentMemObjSurface, GivenCoherentMemObjWhenCreatingSurfaceFromMemObjThenSurfaceIsCoherent) {
-    Surface *surface = createSurface::Create<MemObjSurface>(this->data,
+    Surface *surface = createSurface::create<MemObjSurface>(this->data,
                                                             &this->buffer,
                                                             &this->gfxAllocation);
 

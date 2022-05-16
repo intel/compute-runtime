@@ -16,7 +16,7 @@
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
 TEST_F(MockEventTests, GivenEventCreatedFromUserEventsThatIsNotSignaledThenDoNotFlushToCsr) {
-    uEvent = make_releaseable<UserEvent>();
+    uEvent = makeReleaseable<UserEvent>();
     cl_event retEvent = nullptr;
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);

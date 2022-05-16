@@ -19,7 +19,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingInitTracingWrapperWithOneSetOfProlog
 
     setTracerCallbacksAndEnableTracer();
 
-    result = zeInit_Tracing(ZE_INIT_FLAG_GPU_ONLY);
+    result = zeInitTracing(ZE_INIT_FLAG_GPU_ONLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(defaultUserData, 1);
 }

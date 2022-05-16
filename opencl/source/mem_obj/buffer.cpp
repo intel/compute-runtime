@@ -101,7 +101,7 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
                                             void *hostPtr,
                                             cl_int &retVal) {
     Context *pContext = nullptr;
-    retVal = validateObjects(WithCastToInternal(context, &pContext));
+    retVal = validateObjects(withCastToInternal(context, &pContext));
     if (retVal != CL_SUCCESS) {
         return nullptr;
     }

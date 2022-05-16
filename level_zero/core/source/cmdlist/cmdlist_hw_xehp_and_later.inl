@@ -77,7 +77,7 @@ void CommandListCoreFamily<gfxCoreFamily>::applyMemoryRangesBarrier(uint32_t num
     }
     for (size_t subrangeNumber = 0; subrangeNumber < subranges.size(); subrangeNumber += NEO::maxFlushSubrangeCount) {
         size_t rangeCount = subranges.size() <= subrangeNumber + NEO::maxFlushSubrangeCount ? subranges.size() - subrangeNumber : NEO::maxFlushSubrangeCount;
-        NEO::Range<NEO::L3Range> range = CreateRange(subranges.begin() + subrangeNumber, rangeCount);
+        NEO::Range<NEO::L3Range> range = createRange(subranges.begin() + subrangeNumber, rangeCount);
 
         NEO::flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, device->getHwInfo());
     }

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "opencl/source/sharings/va/cl_va_api.h"
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/utilities/api_intercept.h"
@@ -38,7 +40,7 @@ clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASu
     Context *pContext = nullptr;
     cl_mem image = nullptr;
 
-    returnCode = validateObject(WithCastToInternal(context, &pContext));
+    returnCode = validateObject(withCastToInternal(context, &pContext));
     ErrorCodeHelper err(errcodeRet, returnCode);
 
     if (returnCode != CL_SUCCESS) {
@@ -69,7 +71,7 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
                    "numEntries", numEntries);
 
     Platform *pPlatform = nullptr;
-    status = validateObjects(WithCastToInternal(platform, &pPlatform));
+    status = validateObjects(withCastToInternal(platform, &pPlatform));
     if (status != CL_SUCCESS) {
         status = CL_INVALID_PLATFORM;
     } else {
@@ -104,7 +106,7 @@ clEnqueueAcquireVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
 
     CommandQueue *pCommandQueue = nullptr;
 
-    status = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue));
+    status = validateObjects(withCastToInternal(commandQueue, &pCommandQueue));
 
     if (status == CL_SUCCESS) {
         status = pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
@@ -131,7 +133,7 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
 
     CommandQueue *pCommandQueue = nullptr;
 
-    status = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue));
+    status = validateObjects(withCastToInternal(commandQueue, &pCommandQueue));
 
     if (status == CL_SUCCESS) {
         status = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
