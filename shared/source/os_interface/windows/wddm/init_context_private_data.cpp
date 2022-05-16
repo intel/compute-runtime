@@ -11,13 +11,13 @@
 namespace NEO {
 
 CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
-    CREATECONTEXT_PVTDATA PrivateData = {};
-    PrivateData.IsProtectedProcess = FALSE;
-    PrivateData.IsDwm = FALSE;
-    PrivateData.GpuVAContext = TRUE;
-    PrivateData.IsMediaUsage = false;
+    CREATECONTEXT_PVTDATA privateData = {};
+    privateData.IsProtectedProcess = FALSE;
+    privateData.IsDwm = FALSE;
+    privateData.GpuVAContext = TRUE;
+    privateData.IsMediaUsage = false;
 
-    return PrivateData;
+    return privateData;
 }
 
 } // namespace NEO
