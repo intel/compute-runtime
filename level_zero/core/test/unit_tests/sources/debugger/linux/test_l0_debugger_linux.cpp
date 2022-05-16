@@ -230,7 +230,7 @@ TEST_F(L0DebuggerLinuxTest, givenModuleHandleZeroWhenRemoveZebinModuleIsCalledTh
     EXPECT_EQ(0u, drmMock->unregisterCalledCount);
 }
 
-HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAndDestroyedThanDebuggerL0IsNotified) {
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenCommandQueuesAreCreatedAndDestroyedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
     neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
@@ -251,6 +251,37 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndCommandQueuesAreCreatedAnd
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
 
     commandQueue2->destroy();
+    EXPECT_EQ(1u, drmMock->unregisterCalledCount);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
+}
+
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAndDestroyedThenDebuggerL0IsNotified) {
+    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
+
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    drmMock->ioctlCallsCount = 0;
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    ze_command_list_handle_t commandList1 = nullptr;
+    ze_command_list_handle_t commandList2 = nullptr;
+
+    returnValue = device->createCommandListImmediate(&queueDesc, &commandList1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueCreatedCount);
+
+    returnValue = device->createCommandListImmediate(&queueDesc, &commandList2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
+
+    CommandList::fromHandle(commandList1)->destroy();
+    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
+
+    CommandList::fromHandle(commandList2)->destroy();
     EXPECT_EQ(1u, drmMock->unregisterCalledCount);
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
