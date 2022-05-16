@@ -91,15 +91,15 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         ioctl_cnt.gemCreate++;
     } break;
     case DRM_IOCTL_I915_GEM_SET_TILING: {
-        auto *setTilingParams = (drm_i915_gem_set_tiling *)arg;
-        setTilingMode = setTilingParams->tiling_mode;
+        auto *setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
+        setTilingMode = setTilingParams->tilingMode;
         setTilingHandle = setTilingParams->handle;
         setTilingStride = setTilingParams->stride;
         ioctl_cnt.gemSetTiling++;
     } break;
     case DRM_IOCTL_I915_GEM_GET_TILING: {
-        auto *getTilingParams = (drm_i915_gem_get_tiling *)arg;
-        getTilingParams->tiling_mode = getTilingModeOut;
+        auto *getTilingParams = static_cast<NEO::GemGetTiling *>(arg);
+        getTilingParams->tilingMode = getTilingModeOut;
         getTilingHandleIn = getTilingParams->handle;
         ioctl_cnt.gemGetTiling++;
     } break;

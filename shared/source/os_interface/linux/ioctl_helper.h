@@ -99,6 +99,22 @@ struct GemUserPtr {
     uint32_t handle;
 };
 
+struct GemSetTiling {
+    uint32_t handle;
+    uint32_t tilingMode;
+    uint32_t stride;
+    uint32_t swizzleMode;
+};
+
+struct GemGetTiling {
+    bool isTilingDisabled() const;
+
+    uint32_t handle;
+    uint32_t tilingMode;
+    uint32_t swizzleMode;
+    uint32_t physSwizzleMode;
+};
+
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}

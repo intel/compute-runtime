@@ -816,12 +816,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     }
 
     if (properties.imgInfo) {
-        drm_i915_gem_get_tiling getTiling = {0};
+        GemGetTiling getTiling{};
         getTiling.handle = boHandle;
         ret = drm.ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
 
         if (ret == 0) {
-            if (getTiling.tiling_mode == I915_TILING_NONE) {
+            if (getTiling.isTilingDisabled()) {
                 properties.imgInfo->linearStorage = true;
             }
         }

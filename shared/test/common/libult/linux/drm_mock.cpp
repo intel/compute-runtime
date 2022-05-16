@@ -183,8 +183,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
         ioctlCount.gemSetTiling++;
-        auto setTilingParams = static_cast<drm_i915_gem_set_tiling *>(arg);
-        setTilingMode = setTilingParams->tiling_mode;
+        auto setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
+        setTilingMode = setTilingParams->tilingMode;
         setTilingHandle = setTilingParams->handle;
         setTilingStride = setTilingParams->stride;
         return 0;
