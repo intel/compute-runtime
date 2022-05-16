@@ -378,6 +378,37 @@ TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenD
     EXPECT_EQ(3u, storageInfo.getNumBanks());
 }
 
+TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenMultiStoragePlacementIsOverridenThenSpecifiedBanksAreUsed) {
+    DebugManagerStateRestore restorer;
+    auto proposedTiles = allTilesMask;
+    proposedTiles[0] = 0;
+
+    DebugManager.flags.OverrideMultiStoragePlacement.set(proposedTiles.to_ulong());
+
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+    EXPECT_EQ(proposedTiles, storageInfo.memoryBanks);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenUnifiedSharedMemoryWhenKmdMigrationIsUsedThenPreferredTileIsUsed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+
+    AllocationProperties properties{mockRootDeviceIndex, false, 512 * KB, AllocationType::UNIFIED_SHARED_MEMORY, true, allTilesMask};
+
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+    DeviceBitfield preferredTile;
+    EXPECT_TRUE(properties.subDevicesBitfield.count() > 1);
+    const auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
+    UNRECOVERABLE_IF(!properties.subDevicesBitfield.test(leastOccupiedBank));
+    preferredTile.set(leastOccupiedBank);
+
+    EXPECT_EQ(preferredTile, storageInfo.memoryBanks);
+}
+
 TEST_F(MultiDeviceStorageInfoTest, givenLeastOccupiedBankAndOtherBitsEnabledInSubDeviceBitfieldWhenCreateStorageInfoThenTakeLeastOccupiedBankAsMemoryBank) {
     AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::UNKNOWN, false, singleTileMask};
     auto leastOccupiedBank = memoryManager->getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);

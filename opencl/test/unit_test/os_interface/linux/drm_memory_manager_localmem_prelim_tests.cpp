@@ -485,10 +485,53 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     }
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetWhenCreateSharedUnifiedMemoryAllocationWithDevicesThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetWhenCreateSharedUnifiedMemoryAllocationThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
     DebugManager.flags.UsmInitialPlacement.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(5);
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+    regionInfo[3].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(2, 0)};
+    regionInfo[4].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(3, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 4;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo));
+    mock->queryEngineInfo();
+
+    SVMAllocsManager unifiedMemoryManager(memoryManager, false);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device.get();
+
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    EXPECT_NE(ptr, nullptr);
+
+    auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
+    EXPECT_NE(allocation, nullptr);
+
+    const auto memRegions = mock->context.receivedCreateGemExt.value().memoryRegions;
+    EXPECT_EQ(memRegions.size(), 2u);
+    EXPECT_EQ(memRegions[0].memoryClass, I915_MEMORY_CLASS_DEVICE);
+    EXPECT_EQ(memRegions[0].memoryInstance, regionInfo[1].region.memoryInstance);
+    EXPECT_EQ(memRegions[1].memoryClass, I915_MEMORY_CLASS_SYSTEM);
+    EXPECT_EQ(memRegions[1].memoryInstance, 1u);
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialPlacementSetWhenCreateSharedUnifiedMemoryAllocationWithMultiStoragePlacementThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.UsmInitialPlacement.set(1);
+    DebugManager.flags.OverrideMultiStoragePlacement.set(0xF);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 

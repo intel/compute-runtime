@@ -150,6 +150,12 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
     case AllocationType::UNIFIED_SHARED_MEMORY:
         storageInfo.memoryBanks = allTilesValue;
+        if (DebugManager.flags.UseKmdMigration.get() != -1) {
+            storageInfo.memoryBanks = preferredTile;
+        }
+        if (DebugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
+            storageInfo.memoryBanks = DebugManager.flags.OverrideMultiStoragePlacement.get();
+        }
         break;
     default:
         break;
