@@ -6710,7 +6710,7 @@ struct Demarshaller<TOK_S_GMM_TEXTURE_INFO_REC> {
                             tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                         }
                     }
-                    WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                    WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                 } break;
                 };
@@ -7791,7 +7791,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                         tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
-                                WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                             } break;
                             };
@@ -8777,7 +8777,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                         tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
-                                WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                             } break;
                             };
@@ -9763,7 +9763,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                         tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                     }
                                 }
-                                WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                             } break;
                             };
@@ -10891,7 +10891,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                     tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
-                                            WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                            WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                                         } break;
                                         };
@@ -11877,7 +11877,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                     tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
-                                            WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                            WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                                         } break;
                                         };
@@ -12863,7 +12863,7 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                     tokPlatform = tokPlatform + sizeof(TokenVariableLength) / sizeof(uint32_t) + varLen->valuePaddedSizeInDwords;
                                                 }
                                             }
-                                            WCH_ASSERT(tok__Platform == tok__PlatformEnd);
+                                            WCH_ASSERT(tokPlatform == tokPlatformEnd);
 #endif
                                         } break;
                                         };

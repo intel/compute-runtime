@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   )
 
   add_dependencies(${TEST_NAME} ${NEO_DYNAMIC_LIB_NAME})
+  target_include_directories(${TEST_NAME} PRIVATE ${KHRONOS_HEADERS_DIR})
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${OPENCL_BLACK_BOX_TEST_PROJECT_FOLDER})
 
   if(UNIX)
