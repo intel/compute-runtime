@@ -161,6 +161,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceState, -1, "-1: f
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceStateForScratchSpace, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state for scratch space")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredSlmAllocationSizePerDss, -1, "-1: default, >=0: program value for preferred SLM allocation size per dss")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceGrfNumProgrammingWithScm, -1, "-1: default, 0: do not program grf num with SCM, 1: program grf num with SCM")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadArbitrationPolicyProgrammingWithScm, -1, "-1: default, 0: do not program thread arbitration policy with SCM, 1: program thread arbitration policy with SCM")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL3PrefetchForComputeWalker, -1, "-1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceZPassAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePixelAsyncComputeThreadLimit, -1, "-1: default, >0: Limit value in STATE_COMPUTE_MODE")

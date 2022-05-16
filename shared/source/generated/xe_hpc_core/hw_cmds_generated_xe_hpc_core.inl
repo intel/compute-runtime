@@ -5172,7 +5172,8 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
             // DWORD 1
             uint64_t Reserved_32 : BITFIELD_RANGE(32, 63);
             // DWORD 2
-            uint32_t Reserved_64 : BITFIELD_RANGE(0, 6);
+            uint32_t Reserved_64 : BITFIELD_RANGE(0, 1);
+            uint32_t Reserved_66 : BITFIELD_RANGE(2, 6);
             uint32_t SoftwareExceptionEnable : BITFIELD_RANGE(7, 7);
             uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
             uint32_t MaskStackExceptionEnable : BITFIELD_RANGE(11, 11);

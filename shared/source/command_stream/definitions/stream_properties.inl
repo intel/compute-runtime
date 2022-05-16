@@ -24,7 +24,7 @@ struct StateComputeModeProperties {
     void clearIsDirty();
 
     bool isDirtyExtra() const;
-    void setPropertiesExtra(bool reportNumGrf);
+    void setPropertiesExtra(bool reportNumGrf, bool reportThreadArbitrationPolicy);
     void setPropertiesExtra(const StateComputeModeProperties &properties);
     void clearIsDirtyExtra();
 };

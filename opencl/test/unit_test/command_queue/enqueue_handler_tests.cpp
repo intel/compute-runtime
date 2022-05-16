@@ -592,6 +592,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
     }
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     MockKernelWithInternals kernelInternals(*pClDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;

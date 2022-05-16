@@ -51,9 +51,12 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
-    this->threadArbitrationPolicy.set(threadArbitrationPolicy);
+    bool reportThreadArbitrationPolicy = hwInfoConfig.isThreadArbitrationPolicyReportedWithScm();
+    if (reportThreadArbitrationPolicy) {
+        this->threadArbitrationPolicy.set(threadArbitrationPolicy);
+    }
 
-    setPropertiesExtra(reportNumGrf);
+    setPropertiesExtra(reportNumGrf, reportThreadArbitrationPolicy);
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {

@@ -120,7 +120,7 @@ template <PRODUCT_FAMILY gfxProduct>
 void HwInfoConfigHw<gfxProduct>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) {}
 
 template <PRODUCT_FAMILY gfxProduct>
-void HwInfoConfigHw<gfxProduct>::updateIddCommand(void *const commandPtr, uint32_t numGrf) {}
+void HwInfoConfigHw<gfxProduct>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
@@ -355,6 +355,14 @@ template <PRODUCT_FAMILY gfxProduct>
 bool HwInfoConfigHw<gfxProduct>::isGrfNumReportedWithScm() const {
     if (DebugManager.flags.ForceGrfNumProgrammingWithScm.get() != -1) {
         return DebugManager.flags.ForceGrfNumProgrammingWithScm.get();
+    }
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() const {
+    if (DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get() != -1) {
+        return DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.get();
     }
     return true;
 }

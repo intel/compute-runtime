@@ -154,6 +154,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
 
     auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
 
@@ -192,13 +193,13 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
                                                                             flags.threadArbitrationPolicy, *defaultHwInfo);
 
     flushTask(true);
-    findCmd(true); // first time
+    findCmd(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm()); // first time
 
     flushTask(false);
     findCmd(false); // not changed
 
     flushTask(true);
-    findCmd(true); // changed
+    findCmd(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm()); // changed
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }

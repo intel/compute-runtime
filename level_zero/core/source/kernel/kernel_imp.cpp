@@ -1056,7 +1056,7 @@ ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint
     return ZE_RESULT_SUCCESS;
 }
 
-int32_t KernelImp::getSchedulingHintExp() {
+int32_t KernelImp::getSchedulingHintExp() const {
     return this->schedulingHintExpFlag;
 }
 } // namespace L0

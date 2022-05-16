@@ -353,7 +353,7 @@ void HwInfoConfigHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, cons
 }
 
 template <>
-void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf) {
+void HwInfoConfigHw<IGFX_UNKNOWN>::updateIddCommand(void *const commandPtr, uint32_t numGrf, int32_t threadArbitrationPolicy) {
 }
 
 template <>

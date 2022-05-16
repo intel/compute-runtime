@@ -152,7 +152,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() = 0;
 
     virtual ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) = 0;
-    virtual int32_t getSchedulingHintExp() = 0;
 
     Kernel() = default;
     Kernel(const Kernel &) = delete;

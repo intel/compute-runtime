@@ -52,6 +52,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     ADDMETHOD_CONST_NOBASE(getIsaAllocation, GraphicsAllocation *, &mockAllocation, ());
     ADDMETHOD_CONST_NOBASE(getDynamicStateHeapData, const uint8_t *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(requiresGenerationOfLocalIdsByRuntime, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getSchedulingHintExp, int32_t, ThreadArbitrationPolicy::NotPresent, ());
     ADDMETHOD_CONST_NOBASE(getSlmPolicy, SlmPolicy, SlmPolicy::SlmPolicyNone, ());
 };
 } // namespace NEO

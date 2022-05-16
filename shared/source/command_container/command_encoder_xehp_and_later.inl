@@ -39,9 +39,6 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const HardwareInfo &hwInfo) {
-
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    hwInfoConfig.updateIddCommand(pInterfaceDescriptor, numGrf);
 }
 
 template <typename Family>
@@ -79,6 +76,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     EncodeDispatchKernel<Family>::setGrfInfo(&idd, kernelDescriptor.kernelAttributes.numGrfRequired, sizeCrossThreadData,
                                              sizePerThreadData, hwInfo);
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfoConfig.updateIddCommand(&idd, kernelDescriptor.kernelAttributes.numGrfRequired,
+                                  args.dispatchInterface->getSchedulingHintExp());
+
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();
     bool inlineDataProgramming = EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(kernelDescriptor);

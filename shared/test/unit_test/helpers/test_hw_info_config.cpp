@@ -70,6 +70,22 @@ HWTEST_F(HwInfoConfigTest, givenForceGrfNumProgrammingWithScmFlagSetWhenIsGrfNum
     EXPECT_TRUE(hwInfoConfig.isGrfNumReportedWithScm());
 }
 
+HWTEST_F(HwInfoConfigTest, whenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenTrueIsReturned) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
+}
+
+HWTEST_F(HwInfoConfigTest, givenForceThreadArbitrationPolicyProgrammingWithScmFlagSetWhenIsThreadArbitrationPolicyReportedWithScmIsQueriedThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+
+    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);
+    EXPECT_FALSE(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
+
+    DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    EXPECT_TRUE(hwInfoConfig.isThreadArbitrationPolicyReportedWithScm());
+}
+
 HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectFalse, isNotXeHpOrXeHpcCore) {
     const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
