@@ -4476,6 +4476,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAddressin
         switch (addressingMode.second) {
         default:
             EXPECT_EQ(AddressingMode::MemoryAddressingModeStateful, addressingMode.second);
+            EXPECT_FALSE(argAsPointer.accessedUsingStatelessAddressingMode);
             break;
         case AddressingMode::MemoryAddressingModeStateless:
             EXPECT_EQ(16, argAsPointer.stateless);
