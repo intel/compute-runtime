@@ -388,9 +388,11 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
         auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
         SIP::sr_ident srMagic;
         memset(srMagic.magic, 0, sizeof(SIP::sr_ident::magic));
-        readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
 
-        if (0 != strcmp(srMagic.magic, "srmagic")) {
+        auto status = readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
+        DEBUG_BREAK_IF(status != ZE_RESULT_SUCCESS);
+
+        if (status != ZE_RESULT_SUCCESS || 0 != strcmp(srMagic.magic, "srmagic")) {
             PRINT_DEBUGGER_ERROR_LOG("checkThreadIsResumed - Failed to read srMagic for thread %s\n", EuThread::toString(threadID).c_str());
             return resumed;
         }

@@ -898,6 +898,28 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
 }
 
+TEST(DebugSessionTest, givenErrorFromReadGpuMemoryWhenCallingCheckThreadIsResumedThenThreadIsAssumedRunning) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+    bool resumed = sessionMock->checkThreadIsResumed(threadId);
+
+    EXPECT_TRUE(resumed);
+    EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
+}
+
 TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThreadHasBeenResumed) {
     class InternalMockDebugSession : public MockDebugSession {
       public:
