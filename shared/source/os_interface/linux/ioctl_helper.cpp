@@ -59,11 +59,11 @@ void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64
     drmExecObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
 
     if (DebugManager.flags.UseAsyncDrmExec.get() == 1) {
-        drmExecObject.flags |= EXEC_OBJECT_ASYNC;
+        drmExecObject.flags |= static_cast<decltype(drmExecObject.flags)>(EXEC_OBJECT_ASYNC);
     }
 
     if (isMarkedForCapture) {
-        drmExecObject.flags |= EXEC_OBJECT_CAPTURE;
+        drmExecObject.flags |= static_cast<decltype(drmExecObject.flags)>(EXEC_OBJECT_CAPTURE);
     }
     drmExecObject.rsvd1 = drmContextId;
     drmExecObject.rsvd2 = 0;
