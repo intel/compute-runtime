@@ -311,15 +311,15 @@ prelim_drm_i915_query_distance_info translateToi915(const DistanceInfo &distance
     return dist;
 }
 
-uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     std::vector<prelim_drm_i915_query_distance_info> i915Distances(distanceInfos.size());
     std::transform(distanceInfos.begin(), distanceInfos.end(), i915Distances.begin(), translateToi915);
 
     for (auto i = 0u; i < i915Distances.size(); i++) {
-        queryItems[i].query_id = PRELIM_DRM_I915_QUERY_DISTANCE_INFO;
+        queryItems[i].queryId = PRELIM_DRM_I915_QUERY_DISTANCE_INFO;
         queryItems[i].length = sizeof(prelim_drm_i915_query_distance_info);
         queryItems[i].flags = 0u;
-        queryItems[i].data_ptr = reinterpret_cast<__u64>(&i915Distances[i]);
+        queryItems[i].dataPtr = reinterpret_cast<uint64_t>(&i915Distances[i]);
     }
 
     drm_i915_query query{};

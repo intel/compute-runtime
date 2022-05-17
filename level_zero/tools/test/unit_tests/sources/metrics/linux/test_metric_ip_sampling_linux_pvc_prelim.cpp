@@ -72,7 +72,7 @@ class DrmPrelimMock : public DrmMock {
         distances[3].engine = engines[3].engine;
         distances[3].region = {I915_MEMORY_CLASS_DEVICE, 3};
 
-        std::vector<drm_i915_query_item> queryItems{distances.size()};
+        std::vector<QueryItem> queryItems{distances.size()};
         for (auto i = 0u; i < distances.size(); i++) {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }
@@ -91,7 +91,7 @@ class DrmPrelimMock : public DrmMock {
         distances[0].engine = engines[0].engine;
         distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
 
-        std::vector<drm_i915_query_item> queryItems{distances.size()};
+        std::vector<QueryItem> queryItems{distances.size()};
         for (auto i = 0u; i < distances.size(); i++) {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }

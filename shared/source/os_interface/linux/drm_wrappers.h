@@ -49,4 +49,12 @@ struct GemGetTiling {
     uint32_t swizzleMode;
     uint32_t physSwizzleMode;
 };
+
+struct QueryItem {
+    uint64_t queryId;
+    int32_t length;
+    uint32_t flags;
+    uint64_t dataPtr;
+};
+
 } // namespace NEO

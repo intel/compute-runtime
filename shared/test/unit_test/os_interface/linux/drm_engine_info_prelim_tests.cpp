@@ -777,8 +777,8 @@ struct DistanceQueryDrmTests : ::testing::Test {
 
         bool supportDistanceInfoQuery = true;
         bool handleQueryItem(void *arg) override {
-            auto *queryItem = reinterpret_cast<drm_i915_query_item *>(arg);
-            if (queryItem->query_id == DrmPrelimHelper::getDistanceInfoQueryId() && !supportDistanceInfoQuery) {
+            auto *queryItem = reinterpret_cast<QueryItem *>(arg);
+            if (queryItem->queryId == DrmPrelimHelper::getDistanceInfoQueryId() && !supportDistanceInfoQuery) {
                 queryItem->length = -EINVAL;
                 return true; // successful query with incorrect length
             }

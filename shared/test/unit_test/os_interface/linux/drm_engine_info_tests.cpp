@@ -119,7 +119,7 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
     distances[3].engine = engines[3].engine;
     distances[3].region = {I915_MEMORY_CLASS_DEVICE, 1};
 
-    std::vector<drm_i915_query_item> queryItems{distances.size()};
+    std::vector<QueryItem> queryItems{distances.size()};
     for (auto i = 0u; i < distances.size(); i++) {
         queryItems[i].length = sizeof(drm_i915_query_engine_info);
     }
@@ -169,7 +169,7 @@ TEST(EngineInfoTest, whenCreateEngineInfoAndInvalidQueryThenNoEnginesSet) {
     distances[3].engine = engines[3].engine;
     distances[3].region = {I915_MEMORY_CLASS_DEVICE, 1};
 
-    std::vector<drm_i915_query_item> queryItems{distances.size()};
+    std::vector<QueryItem> queryItems{distances.size()};
     for (auto i = 0u; i < distances.size(); i++) {
         queryItems[i].length = -1;
     }
@@ -185,7 +185,7 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
     auto hwInfo = *defaultHwInfo.get();
     std::vector<DistanceInfo> distances;
     std::vector<EngineCapabilities> engines;
-    std::vector<drm_i915_query_item> queryItems;
+    std::vector<QueryItem> queryItems;
 
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), &hwInfo, 0, distances, queryItems, engines);
     EXPECT_EQ(0u, engineInfo->getEngineTileIndex({I915_ENGINE_CLASS_RENDER, 1}));

@@ -52,7 +52,7 @@ class DrmTipMock : public DrmMock {
                 return EINVAL;
             }
             for (auto i = 0u; i < query->num_items; i++) {
-                handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+                handleQueryItem(reinterpret_cast<QueryItem *>(query->items_ptr) + i);
             }
             return 0;
         } else if (request == DRM_IOCTL_I915_GEM_MMAP_OFFSET) {
@@ -64,8 +64,8 @@ class DrmTipMock : public DrmMock {
         return handleKernelSpecificRequests(request, arg);
     }
 
-    virtual void handleQueryItem(drm_i915_query_item *queryItem) {
-        switch (queryItem->query_id) {
+    virtual void handleQueryItem(QueryItem *queryItem) {
+        switch (queryItem->queryId) {
         case DRM_I915_QUERY_MEMORY_REGIONS:
             if (queryMemoryRegionInfoSuccessCount == 0) {
                 queryItem->length = -EINVAL;
@@ -78,7 +78,7 @@ class DrmTipMock : public DrmMock {
                     queryItem->length = regionInfoSize;
                 } else {
                     EXPECT_EQ(regionInfoSize, queryItem->length);
-                    auto queryMemoryRegionInfo = reinterpret_cast<drm_i915_query_memory_regions *>(queryItem->data_ptr);
+                    auto queryMemoryRegionInfo = reinterpret_cast<drm_i915_query_memory_regions *>(queryItem->dataPtr);
                     EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
                     queryMemoryRegionInfo->num_regions = numberOfRegions;
                     queryMemoryRegionInfo->regions[0].region.memory_class = I915_MEMORY_CLASS_SYSTEM;

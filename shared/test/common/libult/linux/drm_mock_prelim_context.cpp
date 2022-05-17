@@ -11,6 +11,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
@@ -255,12 +256,12 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
 }
 
 bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
-    auto queryItem = reinterpret_cast<drm_i915_query_item *>(arg);
+    auto queryItem = reinterpret_cast<QueryItem *>(arg);
 
     auto &gtSystemInfo = hwInfo->gtSystemInfo;
     const auto numberOfCCS = gtSystemInfo.CCSInfo.IsValid && !disableCcsSupport ? gtSystemInfo.CCSInfo.NumberOfCCSEnabled : 0u;
 
-    switch (queryItem->query_id) {
+    switch (queryItem->queryId) {
     case PRELIM_DRM_I915_QUERY_ENGINE_INFO: {
         auto numberOfTiles = gtSystemInfo.MultiTileArchInfo.IsValid ? gtSystemInfo.MultiTileArchInfo.TileCount : 1u;
         uint32_t numberOfEngines = numberOfTiles * (4u + numberOfCCS + static_cast<uint32_t>(supportedCopyEnginesMask.count()));
@@ -269,7 +270,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             queryItem->length = engineInfoSize;
         } else {
             EXPECT_EQ(engineInfoSize, queryItem->length);
-            auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItem->data_ptr);
+            auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItem->dataPtr);
             EXPECT_EQ(0u, queryEngineInfo->num_engines);
             queryEngineInfo->num_engines = numberOfEngines;
             auto p = queryEngineInfo->engines;
@@ -309,7 +310,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             queryItem->length = regionInfoSize;
         } else {
             EXPECT_EQ(regionInfoSize, queryItem->length);
-            auto queryMemoryRegionInfo = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(queryItem->data_ptr);
+            auto queryMemoryRegionInfo = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(queryItem->dataPtr);
             EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
             queryMemoryRegionInfo->num_regions = numberOfRegions;
             queryMemoryRegionInfo->regions[0].region.memory_class = PRELIM_I915_MEMORY_CLASS_SYSTEM;
@@ -329,7 +330,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             return false;
         }
 
-        auto queryDistanceInfo = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItem->data_ptr);
+        auto queryDistanceInfo = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItem->dataPtr);
         switch (queryDistanceInfo->region.memory_class) {
         case PRELIM_I915_MEMORY_CLASS_SYSTEM:
             EXPECT_EQ(sizeof(prelim_drm_i915_query_distance_info), static_cast<size_t>(queryItem->length));
@@ -365,7 +366,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             queryItem->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
             break;
         } else {
-            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->data_ptr);
+            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->dataPtr);
             if (failRetTopology) {
                 return false;
             }

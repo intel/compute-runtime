@@ -8,6 +8,7 @@
 #include "mock_os_layer.h"
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include <cassert>
 #include <dirent.h>
@@ -251,15 +252,15 @@ int drmVersion(drm_version_t *version) {
 }
 
 int drmQueryItem(drm_i915_query *query) {
-    auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(query->items_ptr);
+    auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->items_ptr);
     if (queryItemArg->length == 0) {
-        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
+        if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
             queryItemArg->length = sizeof(drm_i915_query_topology_info) + 1;
             return 0;
         }
     } else {
-        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->data_ptr);
+        if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->dataPtr);
             topologyArg->max_slices = 1;
             topologyArg->max_subslices = 1;
             topologyArg->max_eus_per_subslice = 3;

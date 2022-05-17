@@ -10,7 +10,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <cstring>
@@ -241,20 +240,20 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
         ioctlCount.query++;
         auto queryArg = static_cast<drm_i915_query *>(arg);
-        auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(queryArg->items_ptr);
+        auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->items_ptr);
         storedQueryItem = *queryItemArg;
 
         auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
         auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
 
         if (queryItemArg->length == 0) {
-            if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
                 queryItemArg->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
                 return 0;
             }
         } else {
-            if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
-                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->data_ptr);
+            if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
+                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->dataPtr);
                 if (this->failRetTopology) {
                     return -1;
                 }
@@ -290,7 +289,7 @@ int DrmMockEngine::handleRemainingRequests(unsigned long request, void *arg) {
             return EINVAL;
         }
         for (auto i = 0u; i < query->num_items; i++) {
-            handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+            handleQueryItem(reinterpret_cast<QueryItem *>(query->items_ptr) + i);
         }
         return 0;
     }

@@ -24,6 +24,7 @@
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/ioctl_strings.h"
@@ -674,8 +675,8 @@ bool Drm::isi915Version(int fileDescriptor) {
 
 std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     drm_i915_query query{};
-    drm_i915_query_item queryItem{};
-    queryItem.query_id = queryId;
+    QueryItem queryItem{};
+    queryItem.queryId = queryId;
     queryItem.length = 0; // query length first
     queryItem.flags = queryItemFlags;
     query.items_ptr = reinterpret_cast<__u64>(&queryItem);
@@ -687,7 +688,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     }
 
     auto data = std::vector<uint8_t>(queryItem.length, 0);
-    queryItem.data_ptr = castToUint64(data.data());
+    queryItem.dataPtr = castToUint64(data.data());
 
     ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
     if (ret != 0 || queryItem.length <= 0) {
@@ -1093,14 +1094,14 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
         return true;
     }
 
-    std::vector<drm_i915_query_item> queryItems{distanceInfos.size()};
+    std::vector<QueryItem> queryItems{distanceInfos.size()};
     auto ret = ioctlHelper->queryDistances(this, queryItems, distanceInfos);
     if (ret != 0) {
         return false;
     }
 
     const bool queryUnsupported = std::all_of(queryItems.begin(), queryItems.end(),
-                                              [](const drm_i915_query_item &item) { return item.length == -EINVAL; });
+                                              [](const QueryItem &item) { return item.length == -EINVAL; });
     if (queryUnsupported) {
         DEBUG_BREAK_IF(tileCount != 1);
         this->engineInfo.reset(new EngineInfo(this, hwInfo, engines));

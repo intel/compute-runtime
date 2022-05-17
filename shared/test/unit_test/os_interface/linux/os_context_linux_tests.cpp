@@ -19,7 +19,6 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <memory>

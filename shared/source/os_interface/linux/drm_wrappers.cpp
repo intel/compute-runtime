@@ -45,4 +45,10 @@ static_assert(sizeof(ExecObject) == sizeof(drm_i915_gem_exec_object2));
 
 static_assert(sizeof(ExecBuffer) == sizeof(drm_i915_gem_execbuffer2));
 
+static_assert(sizeof(QueryItem) == sizeof(drm_i915_query_item));
+static_assert(offsetof(QueryItem, queryId) == offsetof(drm_i915_query_item, query_id));
+static_assert(offsetof(QueryItem, length) == offsetof(drm_i915_query_item, length));
+static_assert(offsetof(QueryItem, flags) == offsetof(drm_i915_query_item, flags));
+static_assert(offsetof(QueryItem, dataPtr) == offsetof(drm_i915_query_item, data_ptr));
+
 } // namespace NEO

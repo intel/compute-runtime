@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,10 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
-void DrmMockEngine::handleQueryItem(drm_i915_query_item *queryItem) {
-    switch (queryItem->query_id) {
+void DrmMockEngine::handleQueryItem(QueryItem *queryItem) {
+    switch (queryItem->queryId) {
     case DRM_I915_QUERY_ENGINE_INFO:
         if (queryEngineInfoSuccessCount == 0) {
             queryItem->length = -EINVAL;
@@ -24,7 +23,7 @@ void DrmMockEngine::handleQueryItem(drm_i915_query_item *queryItem) {
                 queryItem->length = engineInfoSize;
             } else {
                 EXPECT_EQ(engineInfoSize, queryItem->length);
-                auto queryEnginenInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItem->data_ptr);
+                auto queryEnginenInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItem->dataPtr);
                 EXPECT_EQ(0u, queryEnginenInfo->num_engines);
                 queryEnginenInfo->num_engines = numberOfEngines;
                 queryEnginenInfo->engines[0].engine.engine_class = I915_ENGINE_CLASS_RENDER;
@@ -43,7 +42,7 @@ void DrmMockEngine::handleQueryItem(drm_i915_query_item *queryItem) {
                 queryItem->length = deviceBlobSize;
             } else {
                 EXPECT_EQ(deviceBlobSize, queryItem->length);
-                auto deviceBlobData = reinterpret_cast<uint32_t *>(queryItem->data_ptr);
+                auto deviceBlobData = reinterpret_cast<uint32_t *>(queryItem->dataPtr);
                 memcpy(deviceBlobData, &dummyDeviceBlobData, deviceBlobSize);
             }
         }

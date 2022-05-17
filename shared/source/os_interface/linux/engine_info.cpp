@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include <array>
 
@@ -76,7 +77,7 @@ EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineC
     setSupportedEnginesInfo(hwInfo, computeEngines, bcsInfoMask);
 }
 
-EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<drm_i915_query_item> &queryItems, const std::vector<EngineCapabilities> &engineInfos)
+EngineInfo::EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<QueryItem> &queryItems, const std::vector<EngineCapabilities> &engineInfos)
     : engines(engineInfos), tileToEngineToInstanceMap(tileCount) {
     auto tile = 0u;
     auto computeEnginesPerTile = 0u;

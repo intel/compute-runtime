@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -51,14 +52,14 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int 
             return EINVAL;
         }
         for (auto i = 0u; i < query->num_items; i++) {
-            auto queryItemPtr = reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i;
-            if (queryItemPtr->query_id == PRELIM_DRM_I915_QUERY_DISTANCE_INFO) {
+            auto queryItemPtr = reinterpret_cast<QueryItem *>(query->items_ptr) + i;
+            if (queryItemPtr->queryId == PRELIM_DRM_I915_QUERY_DISTANCE_INFO) {
                 if (queryDistanceIoctlRetVal != 0) {
                     return queryDistanceIoctlRetVal;
                 }
-                auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->data_ptr);
+                auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->dataPtr);
                 distance->distance = (distance->engine.engine_instance == distance->region.memory_instance) ? 0 : 100;
-            } else if (queryItemPtr->query_id == PRELIM_DRM_I915_QUERY_ENGINE_INFO) {
+            } else if (queryItemPtr->queryId == PRELIM_DRM_I915_QUERY_ENGINE_INFO) {
                 auto numberOfTiles = 2u;
                 uint32_t numberOfEngines = numberOfTiles * 6u;
                 int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);
@@ -66,7 +67,7 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int 
                     queryItemPtr->length = engineInfoSize;
                 } else {
                     EXPECT_EQ(engineInfoSize, queryItemPtr->length);
-                    auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItemPtr->data_ptr);
+                    auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItemPtr->dataPtr);
                     EXPECT_EQ(0u, queryEngineInfo->num_engines);
                     queryEngineInfo->num_engines = numberOfEngines;
                     auto p = queryEngineInfo->engines;

@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/drm/i915_drm.h"
@@ -144,7 +145,7 @@ std::vector<EngineCapabilities> IoctlHelperUpstream::translateToEngineCaps(const
     return engines;
 }
 
-uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<drm_i915_query_item> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     for (auto &query : queryItems) {
         query.length = -EINVAL;
     }

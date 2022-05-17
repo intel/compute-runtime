@@ -11,8 +11,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
-#include "drm/i915_drm.h"
-
 namespace NEO {
 
 class DrmMockDefault : public DrmMock {

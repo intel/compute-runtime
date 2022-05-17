@@ -216,11 +216,11 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) 
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     std::vector<DistanceInfo> distanceInfos;
-    std::vector<drm_i915_query_item> queries(4);
+    std::vector<QueryItem> queries(4);
     auto ret = drm->getIoctlHelper()->queryDistances(drm.get(), queries, distanceInfos);
     EXPECT_EQ(0u, ret);
     const bool queryUnsupported = std::all_of(queries.begin(), queries.end(),
-                                              [](const drm_i915_query_item &item) { return item.length == -EINVAL; });
+                                              [](const QueryItem &item) { return item.length == -EINVAL; });
     EXPECT_TRUE(queryUnsupported);
 }
 

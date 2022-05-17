@@ -24,7 +24,7 @@ int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
         }
 
         for (auto i = 0u; i < query->num_items; ++i) {
-            const auto queryItem = reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i;
+            const auto queryItem = reinterpret_cast<QueryItem *>(query->items_ptr) + i;
             if (!this->handleQueryItem(queryItem)) {
                 return EINVAL;
             }

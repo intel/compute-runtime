@@ -36,8 +36,8 @@ struct QueryTopologyTests : ::testing::Test {
         using DrmQueryMock::DrmQueryMock;
 
         bool handleQueryItem(void *arg) override {
-            const auto queryItem = reinterpret_cast<drm_i915_query_item *>(arg);
-            if (queryItem->query_id != DrmPrelimHelper::getQueryComputeSlicesIoctl()) {
+            const auto queryItem = reinterpret_cast<QueryItem *>(arg);
+            if (queryItem->queryId != DrmPrelimHelper::getQueryComputeSlicesIoctl()) {
                 return DrmQueryMock::handleQueryItem(queryItem);
             }
 
@@ -53,7 +53,7 @@ struct QueryTopologyTests : ::testing::Test {
             if (queryItem->length == 0) {
                 queryItem->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
             } else {
-                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->data_ptr);
+                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->dataPtr);
 
                 uint16_t finalSVal = queryComputeSlicesSCount;
                 uint16_t finalSSVal = queryComputeSlicesSSCount;

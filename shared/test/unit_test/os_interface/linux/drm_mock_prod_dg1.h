@@ -24,8 +24,8 @@ class DrmMockProdDg1 : public DrmTipMock {
         rootDeviceEnvironment.setHwInfo(inputHwInfo);
     }
 
-    void handleQueryItem(drm_i915_query_item *queryItem) override {
-        switch (queryItem->query_id) {
+    void handleQueryItem(QueryItem *queryItem) override {
+        switch (queryItem->queryId) {
         case DRM_I915_QUERY_MEMORY_REGIONS:
             if (queryMemoryRegionInfoSuccessCount == 0) {
                 queryItem->length = -EINVAL;
@@ -38,7 +38,7 @@ class DrmMockProdDg1 : public DrmTipMock {
                     queryItem->length = regionInfoSize;
                 } else {
                     EXPECT_EQ(regionInfoSize, queryItem->length);
-                    auto queryMemoryRegionInfo = reinterpret_cast<PROD_DG1::drm_i915_query_memory_regions *>(queryItem->data_ptr);
+                    auto queryMemoryRegionInfo = reinterpret_cast<PROD_DG1::drm_i915_query_memory_regions *>(queryItem->dataPtr);
                     EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
                     queryMemoryRegionInfo->num_regions = numberOfRegions;
                     queryMemoryRegionInfo->regions[0].region.memory_class = I915_MEMORY_CLASS_SYSTEM;

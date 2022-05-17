@@ -304,7 +304,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
     distances[2].engine = {I915_ENGINE_CLASS_COPY, 4};
     distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
-    std::vector<drm_i915_query_item> queryItems(distances.size());
+    std::vector<QueryItem> queryItems(distances.size());
     auto ret = drm->getIoctlHelper()->queryDistances(drm.get(), queryItems, distances);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(0, distances[0].distance);

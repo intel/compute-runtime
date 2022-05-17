@@ -231,7 +231,7 @@ class DrmMock : public Drm {
     //DRM_IOCTL_I915_GEM_MMAP
     uint64_t lockedPtr[4];
     //DRM_IOCTL_I915_QUERY
-    drm_i915_query_item storedQueryItem = {};
+    QueryItem storedQueryItem = {};
     //DRM_IOCTL_I915_GEM_WAIT
     drm_i915_gem_wait receivedGemWait = {};
     //DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT
@@ -291,7 +291,7 @@ class DrmMockEngine : public DrmMock {
 
     int handleRemainingRequests(unsigned long request, void *arg) override;
 
-    void handleQueryItem(drm_i915_query_item *queryItem);
+    void handleQueryItem(QueryItem *queryItem);
     bool failQueryDeviceBlob = false;
 };
 

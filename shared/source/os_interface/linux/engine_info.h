@@ -9,7 +9,6 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
-#include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "sku_info.h"
 
@@ -26,7 +25,7 @@ struct EngineInfo {
     using EngineToInstanceMap = std::map<aub_stream::EngineType, EngineClassInstance>;
 
     EngineInfo(Drm *drm, HardwareInfo *hwInfo, const std::vector<EngineCapabilities> &engineInfos);
-    EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<drm_i915_query_item> &queryItems, const std::vector<EngineCapabilities> &engineInfos);
+    EngineInfo(Drm *drm, HardwareInfo *hwInfo, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<QueryItem> &queryItems, const std::vector<EngineCapabilities> &engineInfos);
 
     ~EngineInfo() = default;
 
