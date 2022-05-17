@@ -161,7 +161,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
         commandContainer.addToResidencyContainer(eventAlloc);
-        l3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo);
+        bool flushRequired = !!event->signalScope &&
+                             !launchParams.isKernelSplitOperation;
+        l3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(flushRequired, hwInfo);
         isTimestampEvent = event->isUsingContextEndOffset();
         eventAddress = event->getPacketAddress(this->device);
     }
@@ -362,9 +364,18 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_
             appendSignalEventPostWalker(hEvent, false);
         }
     } else {
-        if (hEvent && beforeWalker) {
+        if (hEvent) {
             auto event = Event::fromHandle(hEvent);
-            event->zeroKernelCount();
+            if (beforeWalker) {
+                event->zeroKernelCount();
+            } else {
+                const auto &hwInfo = this->device->getHwInfo();
+                if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo)) {
+                    NEO::PipeControlArgs args;
+                    args.dcFlushEnable = true;
+                    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+                }
+            }
         }
     }
 }

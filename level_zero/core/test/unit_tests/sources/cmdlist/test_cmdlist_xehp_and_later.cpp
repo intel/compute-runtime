@@ -280,6 +280,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
 }
 
 using AppendMemoryCopyXeHpAndLater = Test<DeviceFixture>;
+using MultiTileAppendMemoryCopyXeHpAndLater = Test<ImplicitScalingRootDevice>;
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
           givenCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernels,
@@ -341,7 +342,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 }
 
-HWTEST2_F(AppendMemoryCopyXeHpAndLater,
+HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
           givenMultiTileCommandListWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernels,
           IsAtLeastXeHpCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
@@ -350,9 +351,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
 
     MockAppendMemoryCopy<gfxCoreFamily> commandList;
     commandList.appendMemoryCopyKernelWithGACallBase = true;
-    commandList.partitionCount = 2;
 
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(2u, commandList.partitionCount);
     void *srcPtr = reinterpret_cast<void *>(0x1231);
     void *dstPtr = reinterpret_cast<void *>(0x200002345);
 
@@ -403,7 +404,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
-          givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWaHandled,
+          givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushAddedOnce,
           isXeHpOrXeHpgCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
@@ -415,6 +416,87 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     commandList.appendMemoryCopyKernelWithGACallBase = true;
 
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1231);
+    void *dstPtr = reinterpret_cast<void *>(0x200002345);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+
+    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
+    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + event->getSinglePacketSize();
+    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 2 * event->getSinglePacketSize();
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
+    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
+    EXPECT_EQ(3u, event->getPacketsInUse());
+    EXPECT_EQ(3u, event->getKernelCount());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList.commandContainer.getCommandStream()->getUsed()));
+
+    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, itorWalkers.size());
+    auto firstWalker = itorWalkers[0];
+    auto secondWalker = itorWalkers[1];
+    auto thirdWalker = itorWalkers[2];
+
+    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+    auto itorPipeControls = findAll<PIPE_CONTROL *>(firstWalker, cmdList.end());
+
+    uint32_t postSyncPipeControls = 0;
+    uint32_t dcFlushFound = 0;
+    for (auto it : itorPipeControls) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            postSyncPipeControls++;
+        }
+        if (cmd->getDcFlushEnable()) {
+            dcFlushFound++;
+        }
+    }
+    EXPECT_EQ(0u, postSyncPipeControls);
+    EXPECT_EQ(1u, dcFlushFound);
+}
+
+HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
+          givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlusAddedForScopedEvent,
+          isXeHpOrXeHpgCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    MockAppendMemoryCopy<gfxCoreFamily> commandList;
+    commandList.appendMemoryCopyKernelWithGACallBase = true;
+
+    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(2u, commandList.partitionCount);
+    auto &commandContainer = commandList.commandContainer;
+
     void *srcPtr = reinterpret_cast<void *>(0x1231);
     void *dstPtr = reinterpret_cast<void *>(0x200002345);
 
@@ -435,7 +517,10 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     uint64_t secondKernelEventAddress = event->getGpuAddress(device) + 2 * event->getSinglePacketSize();
     uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 4 * event->getSinglePacketSize();
 
+    size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
+    size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
     EXPECT_EQ(6u, event->getPacketsInUse());
@@ -443,8 +528,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandList.commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
 
     auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(3u, itorWalkers.size());
@@ -464,113 +550,29 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    auto itorPipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    uint64_t eventGpuAddress = firstKernelEventAddress + event->getSinglePacketSize();
-    if (event->isUsingContextEndOffset()) {
-        eventGpuAddress += event->getContextEndOffset();
-    }
+    auto itorPipeControls = findAll<PIPE_CONTROL *>(thirdWalker, cmdList.end());
+
     uint32_t postSyncPipeControls = 0;
+    uint32_t dcFlushFound = 0;
+
     for (auto it : itorPipeControls) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_FALSE(cmd->getWorkloadPartitionIdOffsetEnable());
-            EXPECT_TRUE(cmd->getDcFlushEnable());
-            EXPECT_EQ(eventGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             postSyncPipeControls++;
-            eventGpuAddress += (2 * event->getSinglePacketSize());
+        }
+        if (cmd->getDcFlushEnable()) {
+            dcFlushFound++;
         }
     }
-    EXPECT_EQ(3u, postSyncPipeControls);
-}
 
-HWTEST2_F(AppendMemoryCopyXeHpAndLater,
-          givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlushWaHandled,
-          isXeHpOrXeHpgCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-
-    MockAppendMemoryCopy<gfxCoreFamily> commandList;
-    commandList.appendMemoryCopyKernelWithGACallBase = true;
-    commandList.partitionCount = 2;
-
-    commandList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    void *srcPtr = reinterpret_cast<void *>(0x1231);
-    void *dstPtr = reinterpret_cast<void *>(0x200002345);
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-
-    uint64_t firstKernelEventAddress = event->getGpuAddress(device);
-    uint64_t secondKernelEventAddress = event->getGpuAddress(device) + 4 * event->getSinglePacketSize();
-    uint64_t thirdKernelEventAddress = event->getGpuAddress(device) + 8 * event->getSinglePacketSize();
-
-    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
-    EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
-    EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
-    EXPECT_EQ(12u, event->getPacketsInUse());
-    EXPECT_EQ(3u, event->getKernelCount());
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandList.commandContainer.getCommandStream()->getUsed()));
-
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(3u, itorWalkers.size());
-    auto firstWalker = itorWalkers[0];
-    auto secondWalker = itorWalkers[1];
-    auto thirdWalker = itorWalkers[2];
-
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
-    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-    EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
-
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
-    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-    EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
-
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*thirdWalker);
-    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-    EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
-
-    auto itorPipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    uint64_t eventGpuAddress = firstKernelEventAddress + 2 * event->getSinglePacketSize();
-    if (event->isUsingContextEndOffset()) {
-        eventGpuAddress += event->getContextEndOffset();
-    }
-    uint32_t postSyncPipeControls = 0;
-    for (auto it : itorPipeControls) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
-            EXPECT_TRUE(cmd->getDcFlushEnable());
-            EXPECT_EQ(eventGpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-            postSyncPipeControls++;
-            eventGpuAddress += (4 * event->getSinglePacketSize());
-        }
-    }
-    EXPECT_EQ(3u, postSyncPipeControls);
+    constexpr uint32_t expectedDcFlush = 2; //dc flush for last cross-tile sync and separately for signal scope event after last kernel split
+    EXPECT_EQ(0u, postSyncPipeControls);
+    EXPECT_EQ(expectedDcFlush, dcFlushFound);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
           givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, isXeHpOrXeHpgCore) {
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -601,7 +603,10 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(itorWalker, cmdList.end());
     uint32_t postSyncFound = 0;
     uint32_t dcFlushFound = 0;
     ASSERT_NE(0u, pipeControls.size());
@@ -616,16 +621,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
         }
     }
 
-    uint32_t expectedDcFlushFound = 2u;
+    constexpr uint32_t expectedDcFlushFound = 1u;
 
-    auto &hwInfo = device->getHwInfo();
-    auto &hwInfoConfig = (*NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily));
-    const auto waPair = hwInfoConfig.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, true);
-    if (waPair.first) {
-        expectedDcFlushFound++;
-    }
-
-    EXPECT_EQ(2u, postSyncFound);
+    EXPECT_EQ(0u, postSyncFound);
     EXPECT_EQ(expectedDcFlushFound, dcFlushFound);
 }
 

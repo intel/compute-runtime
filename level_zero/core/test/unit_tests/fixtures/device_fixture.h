@@ -177,6 +177,13 @@ struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {
     NEO::Device *neoDevice = nullptr;
 };
 
+struct ImplicitScalingRootDevice : public SingleRootMultiSubDeviceFixture {
+    void SetUp() {
+        DebugManager.flags.EnableImplicitScaling.set(1);
+        SingleRootMultiSubDeviceFixture::SetUp();
+    }
+};
+
 struct ContextFixture : DeviceFixture {
     void SetUp();
     void TearDown();
