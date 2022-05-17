@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/windows/os_context_win.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
@@ -26,6 +28,10 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescripto
       residencyController(wddm, contextId) {}
 
 void OsContextWin::initializeContext() {
+
+    if (wddm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+        debuggableContext = wddm.getRootDeviceEnvironment().osInterface->isDebugAttachAvailable() && !isInternalEngine();
+    }
     auto wddmInterface = wddm.getWddmInterface();
     UNRECOVERABLE_IF(!wddm.createContext(*this));
 

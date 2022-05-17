@@ -100,6 +100,7 @@ if(WIN32)
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_direct_submission.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
   )
 else()
   list(APPEND NEO_CORE_tests_mocks

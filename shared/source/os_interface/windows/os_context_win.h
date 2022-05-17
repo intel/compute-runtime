@@ -35,6 +35,7 @@ class OsContextWin : public OsContext {
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController() { return residencyController; }
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
+    MOCKABLE_VIRTUAL bool isDebuggableContext() { return debuggableContext; };
 
   protected:
     void initializeContext() override;
@@ -43,5 +44,6 @@ class OsContextWin : public OsContext {
     HardwareQueue hardwareQueue;
     Wddm &wddm;
     WddmResidencyController residencyController;
+    bool debuggableContext = false;
 };
 } // namespace NEO

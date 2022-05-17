@@ -89,6 +89,14 @@ TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
     EXPECT_FALSE(wddm->isDebugAttachAvailable());
 }
 
+TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineThenDebuggableContextReturnsFalse) {
+    executionEnvironment->setDebuggingEnabled();
+    wddm->init();
+    OsContextWin osContext(*wddm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
+    osContext.ensureContextInitialized();
+    EXPECT_FALSE(osContext.isDebuggableContext());
+}
+
 TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);

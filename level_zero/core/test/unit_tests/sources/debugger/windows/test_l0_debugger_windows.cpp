@@ -16,9 +16,9 @@
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
+#include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -31,14 +31,6 @@ using namespace NEO;
 
 namespace L0 {
 namespace ult {
-
-struct WddmEuDebugInterfaceMock : public WddmMock {
-    WddmEuDebugInterfaceMock(RootDeviceEnvironment &rootDeviceEnvironment) : WddmMock(rootDeviceEnvironment) {}
-
-    bool isDebugAttachAvailable() override {
-        return true;
-    }
-};
 
 struct L0DebuggerWindowsFixture {
     void SetUp() {
