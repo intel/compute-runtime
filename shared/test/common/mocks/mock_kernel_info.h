@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/kernel/kernel_arg_descriptor_extended_device_side_enqueue.h"
 #include "shared/source/kernel/kernel_arg_descriptor_extended_vme.h"
 #include "shared/source/program/kernel_info.h"
@@ -13,6 +15,7 @@
 #include "patch_list.h"
 
 #include <array>
+
 namespace NEO {
 
 class MockKernelInfo : public KernelInfo {

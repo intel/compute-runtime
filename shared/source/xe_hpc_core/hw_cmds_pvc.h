@@ -10,6 +10,8 @@
 
 #include "device_ids_configs_pvc.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 struct PVC : public XE_HPC_COREFamily {

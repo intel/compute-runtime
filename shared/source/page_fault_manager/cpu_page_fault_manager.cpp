@@ -7,11 +7,12 @@
 
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include <algorithm>
-#include <mutex>
 
 namespace NEO {
 void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {

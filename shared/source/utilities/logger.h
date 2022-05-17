@@ -15,6 +15,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 
 namespace NEO {
 class Kernel;

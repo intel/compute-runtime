@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include <cstddef>
 #include <cstdint>

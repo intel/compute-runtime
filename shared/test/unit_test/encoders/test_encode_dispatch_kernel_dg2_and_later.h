@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"

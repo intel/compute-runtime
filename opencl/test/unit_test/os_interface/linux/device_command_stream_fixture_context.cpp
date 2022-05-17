@@ -11,6 +11,8 @@
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
+#include <iostream>
+
 int DrmMockCustomPrelimContext::ioctlExtra(unsigned long request, void *arg) {
     switch (request) {
     case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {

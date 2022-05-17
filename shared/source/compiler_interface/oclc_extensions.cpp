@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
+#include <sstream>
 #include <string>
 
 namespace NEO {

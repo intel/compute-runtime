@@ -7,11 +7,14 @@
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include "drm/i915_drm.h"
+
+#include <sstream>
 
 namespace NEO {
 

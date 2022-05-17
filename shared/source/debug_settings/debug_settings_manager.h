@@ -6,13 +6,10 @@
  */
 
 #pragma once
-#include <condition_variable>
-#include <fstream>
-#include <mutex>
-#include <sstream>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdio>
+#include <memory>
 #include <string>
-#include <thread>
 
 enum class DebugFunctionalityLevel {
     None,   // Debug functionality disabled
@@ -127,8 +124,6 @@ class DebugSettingsManager {
 
   protected:
     std::unique_ptr<SettingsReader> readerImpl;
-    std::mutex mtx;
-    std::string logFileName;
 
     bool isLoopAtDriverInitEnabled() const {
         auto loopingEnabled = flags.LoopAtDriverInit.get();

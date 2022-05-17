@@ -7,11 +7,14 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+
+#include <iostream>
 
 namespace NEO {
 

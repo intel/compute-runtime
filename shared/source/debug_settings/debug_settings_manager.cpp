@@ -15,6 +15,7 @@
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 

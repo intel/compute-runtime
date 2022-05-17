@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/heap_helper.h"
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <memory>
 #include <mutex>
@@ -37,6 +36,10 @@ class BindlessHeapsHelper {
     };
     BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     ~BindlessHeapsHelper();
+
+    BindlessHeapsHelper(const BindlessHeapsHelper &) = delete;
+    BindlessHeapsHelper &operator=(const BindlessHeapsHelper &) = delete;
+
     GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
 
     SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);

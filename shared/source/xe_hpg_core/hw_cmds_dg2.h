@@ -10,6 +10,8 @@
 
 #include "device_ids_configs_dg2.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 struct DG2 : public XE_HPG_COREFamily {

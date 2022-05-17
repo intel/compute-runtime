@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 
 #include "shared/source/utilities/debug_settings_reader.h"
 
+#include <cstdint>
+#include <istream>
 #include <map>
-#include <sstream>
-#include <stdint.h>
 #include <string>
 
 namespace NEO {

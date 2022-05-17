@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/helpers/string.h"
 
-#include <sstream>
+#include <ostream>
 #include <string>
 
 namespace NEO {

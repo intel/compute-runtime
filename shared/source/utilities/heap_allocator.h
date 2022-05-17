@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <unordered_map>
 #include <vector>
 
 namespace NEO {

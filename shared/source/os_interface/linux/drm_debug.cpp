@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_debug.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 

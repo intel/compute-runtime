@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/helpers/hw_info.h"

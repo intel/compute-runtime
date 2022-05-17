@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <array>

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/driver_info.h"

@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
 #include <cstdint>
 #include <string>
 
-#pragma once
 namespace NEO {
 struct ApiSpecificConfig {
     enum ApiType { OCL,

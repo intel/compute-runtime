@@ -10,7 +10,7 @@
 #include <cstdint>
 
 namespace NEO {
-typedef uint64_t FlushStamp;
+using FlushStamp = uint64_t;
 struct CompletionStamp {
     uint32_t taskCount;
     uint32_t taskLevel;

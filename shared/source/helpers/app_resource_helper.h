@@ -5,7 +5,11 @@
  *
  */
 
-#include "shared/source/memory_manager/graphics_allocation.h"
+#pragma once
+
+#include "shared/source/memory_manager/allocation_type.h"
+
+#include <cstddef>
 
 namespace NEO {
 struct AppResourceHelper {
@@ -13,5 +17,4 @@ struct AppResourceHelper {
     static const char *getResourceTagStr(AllocationType type);
     static void copyResourceTagStr(char *dst, AllocationType type, size_t size);
 };
-
 } // namespace NEO

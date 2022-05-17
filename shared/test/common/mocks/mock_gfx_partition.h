@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/memory_manager/gfx_partition.h"
 
 #include "gtest/gtest.h"

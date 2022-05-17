@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include <functional>
 #include <memory>
 #include <new>
+#include <type_traits>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))

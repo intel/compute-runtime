@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"

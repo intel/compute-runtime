@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 
+#include <sstream>
+
 namespace NEO {
 namespace SWTags {
 

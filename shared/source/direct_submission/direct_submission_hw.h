@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <memory>

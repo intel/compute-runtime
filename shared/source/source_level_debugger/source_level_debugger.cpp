@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@
 
 #include "igfx_debug_interchange_types.h"
 #include "lib_names.h"
+
+#include <fstream>
 
 #define IGFXDBG_CURRENT_VERSION 4
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 
 #include <memory>
+#include <string>
 
 namespace NEO {
 class SettingsReaderCreator {

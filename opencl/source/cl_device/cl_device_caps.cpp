@@ -21,6 +21,7 @@
 
 #include "driver_version.h"
 
+#include <sstream>
 #include <string>
 
 namespace NEO {

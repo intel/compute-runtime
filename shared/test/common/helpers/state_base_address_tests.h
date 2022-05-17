@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/state_base_address.h"

@@ -7,8 +7,10 @@
 
 #pragma once
 #include <bitset>
+#include <cstdint>
 #include <memory>
 #include <vector>
+
 namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;

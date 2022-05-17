@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+
+#include <string>
 
 namespace NEO {
 

@@ -8,6 +8,7 @@
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"

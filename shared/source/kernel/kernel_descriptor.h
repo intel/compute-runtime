@@ -13,7 +13,6 @@
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
-#include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <array>

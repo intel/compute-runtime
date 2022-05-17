@@ -8,16 +8,12 @@
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
-class GraphicsAllocation;
-
-using HeapContainer = std::vector<GraphicsAllocation *>;
 
 constexpr size_t defaultHeapSize = 64 * KB;
 
@@ -30,7 +26,7 @@ inline size_t getDefaultHeapSize() {
 }
 
 class IndirectHeap : public LinearStream {
-    typedef LinearStream BaseClass;
+    using BaseClass = LinearStream;
 
   public:
     using Type = IndirectHeapType;

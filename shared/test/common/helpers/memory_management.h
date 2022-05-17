@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,10 +50,10 @@ struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
     void *callstack[CallStackSize];
     bool fastLeakDetectionEnabled = false;
 };
-enum : int {
-    maxEvents = 1024 * 1024,
-    fastEvents = 1024 * 1024
-};
+
+constexpr auto maxEvents = 1024 * 1024;
+constexpr auto fastEvents = 1024 * 1024;
+
 extern AllocationEvent eventsAllocated[maxEvents];
 extern AllocationEvent eventsDeallocated[maxEvents];
 

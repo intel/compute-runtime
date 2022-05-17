@@ -11,10 +11,10 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/print.h"
 
-#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 

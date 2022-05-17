@@ -6,10 +6,14 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/allocation_type.h"
+
+#include <cstdint>
 
 namespace NEO {
+enum class HeapIndex : uint32_t;
 struct HardwareInfo;
+
 struct HeapAssigner {
     HeapAssigner();
     ~HeapAssigner() = default;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -486,9 +487,9 @@ void programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramme
 //inital setup section
 1. MI_LOAD_REGISTER(PREDICATION_MASK, active partition mask )
 //loop 1 - loop as long as there are partitions to be serviced
-2. MI_ATOMIC_INC( ATOMIC LOCATION #31 within CMD buffer ) 
+2. MI_ATOMIC_INC( ATOMIC LOCATION #31 within CMD buffer )
 3. MI_LOAD_REGISTER_REG ( ATOMIC RESULT -> WPARID )
-4. MI_SET_PREDICATE( WPARID MODE ) 
+4. MI_SET_PREDICATE( WPARID MODE )
 5. BATCH_BUFFER_START( LOCATION #28 ) // this will not be executed if partition outside of active virtual partitions
 //loop 1 ends here, if we are here it means there are no more partitions
 6. MI_SET_PREDICATE ( OFF )

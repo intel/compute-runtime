@@ -6,12 +6,14 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/product_config_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
+
 using namespace NEO;
 
 using HwInfoConfigTestDg2 = ::testing::Test;

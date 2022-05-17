@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 
