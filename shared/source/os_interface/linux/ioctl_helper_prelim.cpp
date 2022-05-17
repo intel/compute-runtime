@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 namespace NEO {
 

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/utilities/wait_util.h"
 

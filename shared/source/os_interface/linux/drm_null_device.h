@@ -9,6 +9,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/device_time_drm.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include "drm/i915_drm.h"
 

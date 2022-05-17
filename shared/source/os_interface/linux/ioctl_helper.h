@@ -25,6 +25,8 @@ class Drm;
 class IoctlHelper;
 enum class CacheRegion : uint16_t;
 struct HardwareInfo;
+struct ExecBuffer;
+struct ExecObject;
 
 extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
@@ -70,50 +72,9 @@ struct UuidRegisterResult {
     uint32_t handle;
 };
 
-struct RegisterRead {
-    uint64_t offset;
-    uint64_t value;
-};
-
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
-
-struct ExecObject {
-    uint8_t data[56];
-};
-
-struct ExecBuffer {
-    uint8_t data[64];
-};
-
-struct GemCreate {
-    uint64_t size;
-    uint32_t handle;
-};
-
-struct GemUserPtr {
-    uint64_t userPtr;
-    uint64_t userSize;
-    uint32_t flags;
-    uint32_t handle;
-};
-
-struct GemSetTiling {
-    uint32_t handle;
-    uint32_t tilingMode;
-    uint32_t stride;
-    uint32_t swizzleMode;
-};
-
-struct GemGetTiling {
-    bool isTilingDisabled() const;
-
-    uint32_t handle;
-    uint32_t tilingMode;
-    uint32_t swizzleMode;
-    uint32_t physSwizzleMode;
-};
 
 class IoctlHelper {
   public:
