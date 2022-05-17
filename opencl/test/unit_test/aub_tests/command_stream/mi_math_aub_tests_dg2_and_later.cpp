@@ -116,7 +116,6 @@ struct MiMath : public AUBFixture, public ::testing::Test {
         pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_OR); // join parts of address and locate in ACCU
         pAluParam->DW0.BitField.Operand1 = 0;
         pAluParam->DW0.BitField.Operand2 = 0;
-        pAluParam++;
     }
 
     static constexpr size_t bufferSize = MemoryConstants::pageSize;
@@ -207,7 +206,6 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_STOREIND); // store to memory from ACCU, value from register R1
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_ACCU);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_1);
-    pAluParam++;
 
     flushStream();
 
@@ -229,7 +227,7 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     auto bufferB = std::unique_ptr<Buffer>(Buffer::create(context,
                                                           CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
                                                           bufferSize, bufferBMemory, retVal));
-    ASSERT_NE(nullptr, buffer);
+    ASSERT_NE(nullptr, bufferB);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     csr->makeResident(*buffer->getGraphicsAllocation(rootDeviceIndex));
@@ -246,7 +244,7 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
 
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_0), static_cast<uint32_t>(AluRegisters::R_1), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of buffer load to ACCU register
 
-    MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(4 * sizeof(MI_MATH_ALU_INST_INLINE)));
+    MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(3 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
@@ -258,11 +256,10 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
-    pAluParam++;
 
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::R_3), static_cast<uint32_t>(AluRegisters::R_4), static_cast<uint32_t>(AluRegisters::R_2)); // GPU address of bufferB load to ACCU register
 
-    pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(2 * sizeof(MI_MATH_ALU_INST_INLINE)));
+    pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(3 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
@@ -274,7 +271,6 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::OPCODE_FENCE); // to be sure that all writes and reads are completed
     pAluParam->DW0.BitField.Operand1 = 0;
     pAluParam->DW0.BitField.Operand2 = 0;
-    pAluParam++;
 
     flushStream();
 
@@ -337,7 +333,6 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_STORE); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
-    pAluParam++;
 
     storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), CS_GPR_R1);
     storeValueInRegisterToMemory<FamilyType>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + 4, CS_GPR_R2);
@@ -409,7 +404,6 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_STORE); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_2);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
-    pAluParam++;
 
     storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), CS_GPR_R1);
     storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, CS_GPR_R2);
@@ -490,7 +484,6 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::OPCODE_STORE); // load value to shift to SRCB
     pAluParam->DW0.BitField.Operand1 = static_cast<uint32_t>(AluRegisters::R_5);
     pAluParam->DW0.BitField.Operand2 = static_cast<uint32_t>(AluRegisters::R_ACCU);
-    pAluParam++;
 
     storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress(), CS_GPR_R4);
     storeValueInRegisterToMemory<FamilyType>(allocation->getGpuAddress() + 4, CS_GPR_R5);
