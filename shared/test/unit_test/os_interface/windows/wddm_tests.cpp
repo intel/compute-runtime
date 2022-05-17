@@ -74,11 +74,6 @@ TEST_F(WddmTests, whenCheckedIfResourcesCleanupCanBeSkippedThenReturnsFalse) {
     EXPECT_FALSE(wddm->skipResourceCleanup());
 }
 
-TEST_F(WddmTests, whenCheckedIfDebugAttachAvailableThenReturnsFalse) {
-    init();
-    EXPECT_FALSE(wddm->isDebugAttachAvailable());
-}
-
 TEST_F(WddmTests, whenCreatingContextWithPowerHintSuccessIsReturned) {
     init();
     auto newContext = osContext.get();

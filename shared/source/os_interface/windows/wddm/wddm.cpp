@@ -1029,10 +1029,6 @@ bool Wddm::isShutdownInProgress() {
     return NEO::isShutdownInProgress();
 }
 
-bool Wddm::isDebugAttachAvailable() {
-    return false;
-}
-
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
         this->virtualFree(reservedAddress, 0);
