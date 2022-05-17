@@ -1147,6 +1147,12 @@ struct ModuleDynamicLinkTests : public Test<ModuleFixture> {
         module1 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
         module2 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
     }
+    void TearDown() override {
+        module0.reset(nullptr);
+        module1.reset(nullptr);
+        module2.reset(nullptr);
+        Test<ModuleFixture>::TearDown();
+    }
     std::unique_ptr<WhiteBox<::L0::Module>> module0;
     std::unique_ptr<WhiteBox<::L0::Module>> module1;
     std::unique_ptr<WhiteBox<::L0::Module>> module2;

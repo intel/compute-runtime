@@ -167,8 +167,6 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
 };
 
 HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsReturned) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_device_mem_alloc_desc_t devProperties = {};
     devProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
 
@@ -179,32 +177,18 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
     devProperties.pNext = &importNTHandle;
 
-    NEO::MockDevice *neoDevice = nullptr;
-    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
-    executionEnvironment->memoryManager.reset(new MemoryManagerNTHandleMock(*executionEnvironment));
-
-    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
-
-    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
-
-    context->addDeviceAndSubDevices(device);
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
     void *ptr;
-
-    result = context->allocDeviceMem(device, &devProperties, 100, 1, &ptr);
-
+    auto result = context->allocDeviceMem(device, &devProperties, 100, 1, &ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
     auto alloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
-
     ASSERT_EQ(alloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
     result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    delete device;
 }
 
 HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
@@ -220,16 +204,10 @@ HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHa
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
     devProperties.pNext = &importNTHandle;
 
-    NEO::MockDevice *neoDevice = nullptr;
-    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
-    executionEnvironment->memoryManager.reset(new MemoryManagerNTHandleMock(*executionEnvironment));
-
-    neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0);
-
-    driverHandle->setMemoryManager(executionEnvironment->memoryManager.get());
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto device = L0::Device::create(driverHandle.get(), neoDevice, false, &result);
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
     std::vector<osHandle> handles{6, 7};
     AllocationProperties properties = {device->getRootDeviceIndex(),
@@ -240,10 +218,8 @@ HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHa
                                        device->getNEODevice()->getDeviceBitfield()};
     bool requireSpecificBitness{};
     bool isHostIpcAllocation{};
-    auto ptr = executionEnvironment->memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation);
+    auto ptr = execEnv->memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation);
     EXPECT_EQ(nullptr, ptr);
-
-    delete device;
 }
 
 HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErrorIsReturned) {

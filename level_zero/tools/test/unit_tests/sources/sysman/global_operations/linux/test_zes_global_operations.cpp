@@ -148,10 +148,11 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pSysmanDeviceImp->pDiagnosticsHandleContext = pDiagnosticsHandleContextOld;
         pSysmanDeviceImp->pFirmwareHandleContext = pFirmwareHandleContextOld;
         pSysmanDeviceImp->pRasHandleContext = pRasHandleContextOld;
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccessOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOld;
+
+        SysmanDeviceFixture::TearDown();
     }
 };
 class SysmanGlobalOperationsIntegratedFixture : public SysmanGlobalOperationsFixture {
@@ -237,7 +238,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDevice
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDevicePropertiesWhenVendorIsUnKnownThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getFalseValString));
-    neoDevice->deviceInfo.vendorId = 1806; //Unknown Vendor id
+    neoDevice->deviceInfo.vendorId = 1806; // Unknown Vendor id
     pGlobalOperationsImp->init();
     zes_device_properties_t properties;
     ze_result_t result = zesDeviceGetProperties(device, &properties);

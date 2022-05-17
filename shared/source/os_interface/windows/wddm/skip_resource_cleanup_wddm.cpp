@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 
 namespace NEO {
 
-bool Wddm::skipResourceCleanup() const {
-    return false;
+bool Wddm::isDriverAvaliable() {
+    return true;
 }
 
 } // namespace NEO

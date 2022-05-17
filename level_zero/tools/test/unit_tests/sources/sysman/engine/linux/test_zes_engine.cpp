@@ -76,12 +76,13 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOriginal);
         pLinuxSysmanImp->pDrm = pOriginalDrm;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_engine_handle_t> getEngineHandles(uint32_t count) {

@@ -242,7 +242,6 @@ TEST_F(ContextGetStatusTest, givenCallToContextGetStatusThenCorrectErrorCodeIsRe
 
     res = context->getStatus();
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, res);
-
     context->destroy();
 }
 

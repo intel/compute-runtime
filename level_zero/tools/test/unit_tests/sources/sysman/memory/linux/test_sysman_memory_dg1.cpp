@@ -66,7 +66,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pDrm = pOriginalDrm;
         if (pDrm != nullptr) {
             delete pDrm;
@@ -76,6 +75,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             delete pMemoryManager;
             pMemoryManager = nullptr;
         }
+        SysmanDeviceFixture::TearDown();
     }
 
     void setLocalSupportedAndReinit(bool supported) {

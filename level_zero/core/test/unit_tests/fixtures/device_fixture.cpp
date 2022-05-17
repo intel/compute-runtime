@@ -23,6 +23,7 @@ void DeviceFixture::SetUp() {
     setupWithExecutionEnvironment(*executionEnvironment);
 }
 void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &executionEnvironment) {
+    execEnv = &executionEnvironment;
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), &executionEnvironment, 0u);
     mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -37,10 +38,13 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    executionEnvironment.incRefInternal();
 }
 
 void DeviceFixture::TearDown() {
     context->destroy();
+    driverHandle.reset(nullptr);
+    execEnv->decRefInternal();
 }
 
 void PageFaultDeviceFixture::SetUp() {

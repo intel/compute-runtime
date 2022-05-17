@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,12 @@ GmmHelper *RootDeviceEnvironment::getGmmHelper() const {
 }
 GmmClientContext *RootDeviceEnvironment::getGmmClientContext() const {
     return gmmHelper->getClientContext();
+}
+
+void RootDeviceEnvironment::prepareForCleanup() const {
+    if (osInterface && osInterface->getDriverModel()) {
+        osInterface->getDriverModel()->isDriverAvaliable();
+    }
 }
 
 bool RootDeviceEnvironment::initAilConfiguration() {

@@ -595,6 +595,8 @@ struct DeviceTest : public ::testing::Test {
         NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
+        execEnv = neoDevice->getExecutionEnvironment();
+        execEnv->incRefInternal();
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -602,8 +604,14 @@ struct DeviceTest : public ::testing::Test {
         device = driverHandle->devices[0];
     }
 
+    void TearDown() override {
+        driverHandle.reset(nullptr);
+        execEnv->decRefInternal();
+    }
+
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::ExecutionEnvironment *execEnv;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;
     const uint32_t rootDeviceIndex = 1u;

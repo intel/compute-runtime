@@ -198,7 +198,6 @@ class ZesPciFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
-        SysmanDeviceFixture::TearDown();
         if (nullptr != pPciImp->pOsPci) {
             delete pPciImp->pOsPci;
         }
@@ -211,6 +210,7 @@ class ZesPciFixture : public SysmanDeviceFixture {
             delete memoryManager;
             memoryManager = nullptr;
         }
+        SysmanDeviceFixture::TearDown();
     }
 };
 

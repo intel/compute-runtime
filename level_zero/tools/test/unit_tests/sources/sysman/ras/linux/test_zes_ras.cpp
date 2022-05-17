@@ -49,8 +49,8 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {

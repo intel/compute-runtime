@@ -55,8 +55,9 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
+        pMockFwInterface.reset(nullptr);
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+        SysmanDeviceFixture::TearDown();
     }
 
     void clearAndReinitHandles(std::vector<ze_device_handle_t> &deviceHandles) {

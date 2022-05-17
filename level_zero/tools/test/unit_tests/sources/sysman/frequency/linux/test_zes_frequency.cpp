@@ -85,8 +85,8 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanDeviceFixture::TearDown();
     }
 
     double clockValue(const double calculatedClock) {

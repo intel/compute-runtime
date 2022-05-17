@@ -286,6 +286,7 @@ TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriv
 
     ::testing::internal::CaptureStderr();
     auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->incRefInternal();
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockSourceLevelDebugger());
@@ -306,6 +307,9 @@ TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriv
     std::string output = testing::internal::GetCapturedStderr();
 
     EXPECT_EQ(std::string("Source Level Debugger cannot be used with Environment Variable enabling program debugging.\n"), output);
+
+    driverHandle.reset(nullptr);
+    executionEnvironment->decRefInternal();
 }
 
 } // namespace ult

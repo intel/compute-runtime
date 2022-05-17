@@ -787,8 +787,6 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
     }
     mockDescriptor.payloadMappings.implicitArgs.rtDispatchGlobals.pointerSize = 4;
 
-    NEO::MemoryManager *currMemoryManager = new NEO::FailMemoryManager(0, *neoDevice->executionEnvironment);
-
     std::unique_ptr<MockImmutableData> mockKernelImmutableData =
         std::make_unique<MockImmutableData>(32u);
     mockKernelImmutableData->kernelDescriptor = &mockDescriptor;
@@ -812,7 +810,11 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAll
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(nullptr);
-    neoDevice->injectMemoryManager(currMemoryManager);
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new FailMemoryManager(0, *execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, kernel->initialize(&kernelDesc));
 }

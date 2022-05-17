@@ -83,6 +83,7 @@ struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
 
 TEST_F(OsContextWinTestNoCleanup, givenReinitializeContextWhenContextIsInitThenContextIsNotDestroyed) {
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_FALSE(this->wddm->isDriverAvaliable());
     EXPECT_TRUE(this->wddm->skipResourceCleanup());
     EXPECT_NO_THROW(osContext->reInitializeContext());
     EXPECT_NO_THROW(osContext->ensureContextInitialized());

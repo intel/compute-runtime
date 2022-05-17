@@ -122,6 +122,14 @@ void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices
     }
 }
 
+void ExecutionEnvironment::prepareForCleanup() const {
+    for (auto &rootDeviceEnvironment : rootDeviceEnvironments) {
+        if (rootDeviceEnvironment) {
+            rootDeviceEnvironment->prepareForCleanup();
+        }
+    }
+}
+
 void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDeviceIndexForReInit) {
     rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this);
 }

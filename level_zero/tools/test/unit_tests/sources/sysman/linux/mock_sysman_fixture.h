@@ -85,6 +85,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+
         DeviceFixture::TearDown();
         unsetenv("ZES_ENABLE_SYSMAN");
     }

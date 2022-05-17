@@ -189,6 +189,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        module.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
@@ -238,6 +239,8 @@ struct ModuleFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        kernel.reset(nullptr);
+        module.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
@@ -287,6 +290,10 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     }
 
     void TearDown() {
+        kernel.reset(nullptr);
+        for (auto &module : modules) {
+            module.reset(nullptr);
+        }
         MultiDeviceFixture::TearDown();
     }
 
@@ -375,6 +382,7 @@ struct ModuleWithZebinFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        module.reset(nullptr);
         DeviceFixture::TearDown();
     }
     std::unique_ptr<MockModuleWithZebin> module;

@@ -643,14 +643,19 @@ TEST_F(WddmLinuxTest, givenRequestFor32bitAllocationWithoutPreexistingHostPtrWhe
 TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsAliveThenReturnsFalse) {
     osEnvironment->gdi->getDeviceState = getDeviceStateMock;
     gdiMockConfig.getDeviceStateClb.returnValue = STATUS_SUCCESS;
-    EXPECT_FALSE(this->wddm->skipResourceCleanup());
+    EXPECT_TRUE(this->wddm->isDriverAvaliable());
     EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
 }
 
 TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsLostThenReturnsTrue) {
     osEnvironment->gdi->getDeviceState = getDeviceStateMock;
     gdiMockConfig.getDeviceStateClb.returnValue = -1;
-    EXPECT_TRUE(this->wddm->skipResourceCleanup());
+    EXPECT_FALSE(this->wddm->isDriverAvaliable());
+    EXPECT_EQ(0, this->wddm->getGdi()->destroyAllocation2(nullptr));
+    EXPECT_EQ(0, this->wddm->getGdi()->waitForSynchronizationObjectFromCpu(nullptr));
+    EXPECT_EQ(0, this->wddm->getGdi()->destroyPagingQueue(nullptr));
+    EXPECT_EQ(0, this->wddm->getGdi()->destroyDevice(nullptr));
+    EXPECT_EQ(0, this->wddm->getGdi()->closeAdapter(nullptr));
     EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
 }
 

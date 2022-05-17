@@ -52,9 +52,9 @@ class ZesFirmwareFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_firmware_handle_t> getFirmwareHandles(uint32_t count) {

@@ -271,6 +271,55 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMe
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
 
+uint64_t isDriverAvaliableCounter = 0u;
+
+class DriverModelMock : public DriverModel {
+  public:
+    DriverModelMock(DriverModelType driverModelType) : DriverModel(driverModelType) {
+    }
+
+    bool isDriverAvaliable() override {
+        isDriverAvaliableCounter++;
+        return true;
+    }
+    void setGmmInputArgs(void *args) override {
+    }
+
+    uint32_t getDeviceHandle() const override {
+        return 0;
+    }
+
+    PhysicalDevicePciBusInfo getPciBusInfo() const override {
+        return {};
+    }
+    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override {
+        return {};
+    }
+
+    bool skipResourceCleanup() const {
+        return skipResourceCleanupVar;
+    }
+
+    bool isGpuHangDetected(OsContext &osContext) override {
+        return false;
+    }
+};
+
+TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvaliableIsCalled) {
+    VariableBackup<uint64_t> varBackup = &isDriverAvaliableCounter;
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+
+    std::unique_ptr<OSInterface> osInterface = std::make_unique<OSInterface>();
+    osInterface->setDriverModel(std::make_unique<DriverModelMock>(DriverModelType::UNKNOWN));
+
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
+
+    executionEnvironment->prepareForCleanup();
+
+    EXPECT_EQ(1u, isDriverAvaliableCounter);
+}
+
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.SetCommandStreamReceiver.set(10);

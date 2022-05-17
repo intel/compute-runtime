@@ -99,6 +99,11 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnv
 };
 
 struct NoCleanupWddmMock : WddmMock {
+    using WddmMock::WddmMock;
+    bool isDriverAvaliable() override {
+        return false;
+    }
+
     bool skipResourceCleanup() {
         return true;
     }
@@ -109,7 +114,7 @@ struct WddmFixtureWithMockGdiDllWddmNoCleanup : public GdiDllFixture, public Moc
         MockExecutionEnvironmentGmmFixture::SetUp();
         GdiDllFixture::SetUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        wddm = static_cast<NoCleanupWddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+        wddm = new NoCleanupWddmMock(*rootDeviceEnvironment);
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();

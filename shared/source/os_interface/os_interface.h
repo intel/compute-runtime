@@ -83,14 +83,19 @@ class DriverModel : public NonCopyableClass {
         return std::numeric_limits<size_t>::max();
     }
 
-    virtual bool skipResourceCleanup() const {
-        return false;
+    virtual bool isDriverAvaliable() {
+        return true;
+    }
+
+    bool skipResourceCleanup() const {
+        return skipResourceCleanupVar;
     }
 
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
 
   protected:
     DriverModelType driverModelType;
+    bool skipResourceCleanupVar = false;
 };
 
 class OSInterface : public NonCopyableClass {

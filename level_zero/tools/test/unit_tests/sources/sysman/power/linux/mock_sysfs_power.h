@@ -396,9 +396,9 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {
@@ -474,10 +474,10 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         for (const auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
             delete pmtMapElement.second;
         }
-        SysmanMultiDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
+        SysmanMultiDeviceFixture::TearDown();
     }
 
     std::vector<zes_pwr_handle_t> getPowerHandles(uint32_t count) {

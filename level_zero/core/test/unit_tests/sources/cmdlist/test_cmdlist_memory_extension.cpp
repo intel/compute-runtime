@@ -53,6 +53,9 @@ class CommandListMemoryExtensionFixture : public DeviceFixture {
 
     void TearDown() {
         context->freeMem(ptr);
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
+        commandList.reset(nullptr);
         DeviceFixture::TearDown();
     }
 

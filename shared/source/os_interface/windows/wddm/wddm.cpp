@@ -937,14 +937,13 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
 bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) {
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (lastFenceValue > *monitoredFence.cpuAddress) {
+    if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
         waitFromCpu.ObjectCount = 1;
         waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
         waitFromCpu.hAsyncEvent = NULL_HANDLE;
-
         status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
     }

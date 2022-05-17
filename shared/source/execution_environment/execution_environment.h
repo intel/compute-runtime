@@ -30,6 +30,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void sortNeoDevices();
     void sortNeoDevicesDRM();
     void sortNeoDevicesWDDM();
+    void prepareForCleanup() const;
     void setDebuggingEnabled() {
         debuggingEnabled = true;
     }

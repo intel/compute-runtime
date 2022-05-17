@@ -173,7 +173,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 
 WaitStatus CommandStreamReceiver::waitForTaskCount(uint32_t requiredTaskCount) {
     auto address = getTagAddress();
-    if (address) {
+    if (!skipResourceCleanup() && address) {
         this->downloadTagAllocation(requiredTaskCount);
         return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
     }
@@ -268,10 +268,6 @@ bool CommandStreamReceiver::isGpuHangDetected() const {
 }
 
 void CommandStreamReceiver::cleanupResources() {
-    if (this->skipResourceCleanup()) {
-        return;
-    }
-
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
 

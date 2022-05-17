@@ -92,8 +92,8 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         pSysfsAccess->cleanUpMap();
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_sched_handle_t> getSchedHandles(uint32_t count) {

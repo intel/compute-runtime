@@ -36,12 +36,6 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
 }
 
 Device::~Device() {
-    if (false == commandStreamReceivers.empty()) {
-        if (commandStreamReceivers[0]->skipResourceCleanup()) {
-            return;
-        }
-    }
-
     finalizeRayTracing();
 
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());

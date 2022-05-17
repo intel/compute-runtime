@@ -936,6 +936,11 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         expectedImplicitArgs.groupCountZ = 3;
     }
 
+    void TearDown() override {
+        commandList.reset(nullptr);
+        CmdlistAppendLaunchKernelTests::TearDown();
+    }
+
     template <typename FamilyType>
     void dispatchKernelWithImplicitArgs() {
         expectedImplicitArgs.globalSizeX = expectedImplicitArgs.localSizeX * expectedImplicitArgs.groupCountX;

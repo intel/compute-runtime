@@ -54,11 +54,11 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
-        SysmanDeviceFixture::TearDown();
         if (pMemoryManager != nullptr) {
             delete pMemoryManager;
             pMemoryManager = nullptr;
         }
+        SysmanDeviceFixture::TearDown();
     }
 
     void setLocalSupportedAndReinit(bool supported) {

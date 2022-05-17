@@ -124,8 +124,8 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanMultiDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        SysmanMultiDeviceFixture::TearDown();
     }
 
     std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {
@@ -244,8 +244,8 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_temp_handle_t> getTempHandles(uint32_t count) {

@@ -36,6 +36,8 @@ struct TimestampEvent : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
         DeviceFixture::TearDown();
     }
 

@@ -712,6 +712,8 @@ class EventSynchronizeTest : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
@@ -1054,6 +1056,8 @@ class TimestampEventCreate : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
@@ -1187,6 +1191,8 @@ class TimestampDeviceEventCreate : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
@@ -1756,6 +1762,9 @@ struct EventSizeFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        eventObj0.reset(nullptr);
+        eventObj1.reset(nullptr);
+        eventPool.reset(nullptr);
         DeviceFixture::TearDown();
     }
 

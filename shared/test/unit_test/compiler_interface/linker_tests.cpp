@@ -1361,7 +1361,7 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     NEO::Linker::ExternalFunctionsT externalFunctions;
 
     std::vector<char> instructionSegment;
-    instructionSegment.resize(relocA.r_offset + sizeof(uintptr_t), 0);
+    instructionSegment.resize(relocA.r_offset + sizeof(uint64_t), 0);
     NEO::Linker::PatchableSegment seg0;
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = relocA.r_offset;
@@ -1379,7 +1379,7 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     ASSERT_EQ(1U, unresolvedExternals.size());
     EXPECT_TRUE(unresolvedExternals[0].internalError);
 
-    patchableInstructionSegments[0].segmentSize = relocA.r_offset + sizeof(uintptr_t);
+    patchableInstructionSegments[0].segmentSize = relocA.r_offset + sizeof(uint64_t);
     linkResult = linker.link(
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
         patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,

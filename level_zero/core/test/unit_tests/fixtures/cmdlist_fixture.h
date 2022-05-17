@@ -40,6 +40,9 @@ class CommandListFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
+        commandList.reset(nullptr);
         DeviceFixture::TearDown();
     }
 
