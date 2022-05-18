@@ -71,6 +71,11 @@ template <>
 void CommandStreamReceiverHw<Family>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {}
 
 template <>
+constexpr bool CommandStreamReceiverHw<Family>::isGlobalAtomicsProgrammingRequired(bool currentValue) const {
+    return currentValue != this->lastSentUseGlobalAtomics;
+}
+
+template <>
 void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     if (DebugManager.flags.UseClearColorAllocationForBlitter.get()) {

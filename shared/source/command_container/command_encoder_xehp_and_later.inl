@@ -204,13 +204,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         }
     }
 
-    bool requiresGlobalAtomicsUpdate = false;
-    if (args.partitionCount > 1) {
-        requiresGlobalAtomicsUpdate = container.lastSentUseGlobalAtomics != args.useGlobalAtomics;
-        container.lastSentUseGlobalAtomics = args.useGlobalAtomics;
-    }
+    if (shouldUpdateGlobalAtomics(container.lastSentUseGlobalAtomics, args.useGlobalAtomics, args.partitionCount > 1) ||
+        container.isAnyHeapDirty() ||
+        args.requiresUncachedMocs) {
 
-    if (container.isAnyHeapDirty() || args.requiresUncachedMocs || requiresGlobalAtomicsUpdate) {
         PipeControlArgs syncArgs;
         syncArgs.dcFlushEnable = MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo);
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), syncArgs);

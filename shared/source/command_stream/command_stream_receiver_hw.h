@@ -177,6 +177,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
     void configurePostSyncWriteOffset();
     void unregisterDirectSubmissionFromController();
+    constexpr bool isGlobalAtomicsProgrammingRequired(bool currentValue) const;
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

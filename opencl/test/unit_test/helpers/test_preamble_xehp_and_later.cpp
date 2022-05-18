@@ -489,6 +489,71 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StateBaseAddressXeHPAndLaterTests, givenNonZeroInte
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+namespace {
+
+template <typename FamilyType, typename CommandStreamReceiverType>
+void flushTaskAndcheckForSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, CommandStreamReceiverType &csr, bool shouldBePresent) {
+    size_t offset = csr.commandStream.getUsed();
+
+    sbaTest->flushTask(csr);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(csr.commandStream, offset);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+    if (shouldBePresent) {
+        EXPECT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
+    } else {
+        EXPECT_EQ(nullptr, hwParserCsr.cmdStateBaseAddress);
+    }
+}
+
+template <typename FamilyType>
+void testGlobalAtomicsImpactOnSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, bool multiOsCtx, bool multiSubDevices, bool expectSBA) {
+
+    auto &commandStreamReceiver = sbaTest->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.multiOsContextCapable = multiOsCtx;
+    sbaTest->flushTaskFlags.areMultipleSubDevicesInContext = multiSubDevices;
+
+    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, true);
+    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, false);
+
+    commandStreamReceiver.lastSentUseGlobalAtomics ^= true;
+    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, expectSBA);
+    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, false);
+
+    commandStreamReceiver.lastSentUseGlobalAtomics ^= true;
+    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, expectSBA);
+}
+
+} /* namespace */
+
+struct XeHpGlobalAtomicsStateBaseAddressTests : public StateBaseAddressXeHPAndLaterTests,
+                                                public ::testing::WithParamInterface<std::tuple<bool, bool>> {};
+
+HWTEST2_P(XeHpGlobalAtomicsStateBaseAddressTests, givenMultiOSContextOrMultiSubDeviceWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressIsReprorammed, IsXEHP) {
+    auto [multiOsCtx, multiSubDevices] = GetParam();
+    testGlobalAtomicsImpactOnSBA<FamilyType>(this, multiOsCtx, multiSubDevices, multiOsCtx || multiSubDevices);
+}
+
+INSTANTIATE_TEST_CASE_P(XeHpGlobalAtomicsStateBaseAddress,
+                        XeHpGlobalAtomicsStateBaseAddressTests,
+                        ::testing::Combine(
+                            ::testing::Bool(),
+                            ::testing::Bool()));
+
+using NonXeHpGlobalAtomicsStateBaseAddressTests = XeHpGlobalAtomicsStateBaseAddressTests;
+
+HWTEST2_P(NonXeHpGlobalAtomicsStateBaseAddressTests, givenAnyMultiOSContextValueWithAnySubDeviceNumberWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressProgrammingIsNeverAffected, IsNotXEHP) {
+    auto [multiOsCtx, multiSubDevices] = GetParam();
+    testGlobalAtomicsImpactOnSBA<FamilyType>(this, multiOsCtx, multiSubDevices, false);
+}
+
+INSTANTIATE_TEST_CASE_P(NonXeHpGlobalAtomicsStateBaseAddress,
+                        NonXeHpGlobalAtomicsStateBaseAddressTests,
+                        ::testing::Combine(
+                            ::testing::Bool(),
+                            ::testing::Bool()));
+
 using RenderSurfaceStateXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenAppendingRssThenProgramGpuCoherency) {

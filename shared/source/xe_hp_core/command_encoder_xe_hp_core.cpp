@@ -73,6 +73,15 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
     }
 }
 
+template <>
+constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool predicate) {
+    if (predicate && currentVal != refVal) {
+        currentVal = refVal;
+        return true;
+    }
+    return false;
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

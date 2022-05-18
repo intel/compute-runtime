@@ -59,6 +59,7 @@ using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 
 using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
+using IsNotXEHP = IsNotWithinProducts<IGFX_XE_HP_SDV, IGFX_XE_HP_SDV>;
 
 using IsDG2 = IsProduct<IGFX_DG2>;
 
