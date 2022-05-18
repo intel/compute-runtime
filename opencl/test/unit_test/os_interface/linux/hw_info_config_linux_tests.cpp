@@ -11,43 +11,38 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
 #include <cstring>
 
-namespace NEO {
+struct DummyHwConfig : NEO::HwInfoConfigHw<IGFX_UNKNOWN> {
+    const uint32_t hwConfigTestMidThreadBit = 1 << 8;
+    const uint32_t hwConfigTestThreadGroupBit = 1 << 9;
+    const uint32_t hwConfigTestMidBatchBit = 1 << 10;
+    int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override {
+        FeatureTable *featureTable = &hwInfo->featureTable;
+        featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
+        featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
+        featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
 
-constexpr uint32_t hwConfigTestMidThreadBit = 1 << 8;
-constexpr uint32_t hwConfigTestThreadGroupBit = 1 << 9;
-constexpr uint32_t hwConfigTestMidBatchBit = 1 << 10;
-
-template <>
-int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    FeatureTable *featureTable = &hwInfo->featureTable;
-    featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
-    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
-    featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
-
-    if (hwInfo->platform.usDeviceID == 30) {
-        GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
-        gtSystemInfo->EdramSizeInKb = 128 * 1000;
+        if (hwInfo->platform.usDeviceID == 30) {
+            GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
+            gtSystemInfo->EdramSizeInKb = 128 * 1000;
+        }
+        if (hwInfo->platform.usDeviceID & hwConfigTestMidThreadBit) {
+            featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
+        }
+        if (hwInfo->platform.usDeviceID & hwConfigTestThreadGroupBit) {
+            featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;
+        }
+        if (hwInfo->platform.usDeviceID & hwConfigTestMidBatchBit) {
+            featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
+        }
+        return (hwInfo->platform.usDeviceID == 10) ? -1 : 0;
     }
-    if (hwInfo->platform.usDeviceID & hwConfigTestMidThreadBit) {
-        featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
-    }
-    if (hwInfo->platform.usDeviceID & hwConfigTestThreadGroupBit) {
-        featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;
-    }
-    if (hwInfo->platform.usDeviceID & hwConfigTestMidBatchBit) {
-        featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
-    }
-    return (hwInfo->platform.usDeviceID == 10) ? -1 : 0;
-}
-} // namespace NEO
-
-struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
 using namespace NEO;
@@ -100,12 +95,13 @@ struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
         drm->storedDeviceID = 1;
 
         testPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
+        hwInfoConfigFactoryBackup = &hwConfig;
     }
 
     void TearDown() override {
         HwInfoConfigTestLinux::TearDown();
     }
-
+    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(IGFX_UNKNOWN)]};
     DummyHwConfig hwConfig;
 };
 
@@ -261,7 +257,7 @@ HWTEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledMidThreadOnWhenCon
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestMidThreadBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit;
 
     UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo, true);
 
@@ -277,7 +273,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledThreadGroupOnWhenCon
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestThreadGroupBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestThreadGroupBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -314,7 +310,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledMidBatchOnWhenConfig
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestMidBatchBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -337,7 +333,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, WhenConfiguringHwInfoThenPreemptionIsSupporte
 TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmDisabledAllPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport = 0;
-    drm->storedDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -350,7 +346,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledAllPreemptionDriverT
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -363,7 +359,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledAllPreemptionDriverM
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -376,7 +372,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenConfigPreemptionDrmEnabledAllPreemptionD
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
+    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
