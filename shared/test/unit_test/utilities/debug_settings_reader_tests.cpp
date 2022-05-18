@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include "gtest/gtest.h"
 
@@ -31,7 +30,7 @@ class MockSettingsReader : public SettingsReader {
 };
 
 TEST(SettingsReader, WhenCreatingSettingsReaderThenReaderIsCreated) {
-    SettingsReader *reader = SettingsReader::create(oclRegPath);
+    SettingsReader *reader = SettingsReader::create(ApiSpecificConfig::getRegistryPath());
     EXPECT_NE(nullptr, reader);
     delete reader;
 }
@@ -41,7 +40,7 @@ TEST(SettingsReader, GivenNoSettingsFileWhenCreatingSettingsReaderThenOsReaderIs
     auto fileReader = std::unique_ptr<SettingsReader>(SettingsReader::createFileReader());
     EXPECT_EQ(nullptr, fileReader.get());
 
-    auto osReader = std::unique_ptr<SettingsReader>(SettingsReader::create(oclRegPath));
+    auto osReader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
     EXPECT_NE(nullptr, osReader.get());
 }
 
@@ -51,7 +50,7 @@ TEST(SettingsReader, GivenSettingsFileExistsWhenCreatingSettingsReaderThenReader
         const char data[] = "ProductFamilyOverride = test";
         writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
     }
-    auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(oclRegPath));
+    auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
     EXPECT_NE(nullptr, reader.get());
     std::string defaultValue("unk");
     EXPECT_STREQ("test", reader->getSetting("ProductFamilyOverride", defaultValue).c_str());
@@ -75,13 +74,13 @@ TEST(SettingsReader, WhenCreatingFileReaderThenReaderIsCreated) {
 }
 
 TEST(SettingsReader, WhenCreatingOsReaderThenReaderIsCreated) {
-    SettingsReader *reader = SettingsReader::createOsReader(false, oclRegPath);
+    SettingsReader *reader = SettingsReader::createOsReader(false, ApiSpecificConfig::getRegistryPath());
     EXPECT_NE(nullptr, reader);
     delete reader;
 }
 
 TEST(SettingsReader, GivenRegKeyWhenCreatingOsReaderThenReaderIsCreated) {
-    std::string regKey = oclRegPath;
+    std::string regKey = ApiSpecificConfig::getRegistryPath();
     std::unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(false, regKey));
     EXPECT_NE(nullptr, reader);
 }

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/utilities/debug_file_reader_tests.inl"
+#include "shared/test/unit_test/utilities/debug_file_reader_tests.inl"
 
 using namespace NEO;
 
