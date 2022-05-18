@@ -671,11 +671,11 @@ TEST(FileLogger, GivenNullsWhenDumpingKernelArgsThenFileIsNotCreated) {
 }
 
 TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOccur) {
-    std::string path = ".";
+    std::string path = "ocl_test";
     std::vector<std::string> files = Directory::getFiles(path);
     size_t initialNumberOfFiles = files.size();
 
-    std::string testFile = "testfile";
+    std::string testFile = "ocl_test/testfile";
     DebugVariables flags;
     flags.DumpKernels.set(true);
     flags.LogApiCalls.set(true);
