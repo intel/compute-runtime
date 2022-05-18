@@ -29,8 +29,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.initializeTagAllocation();
-    *csr.tagAddress = 0u;
     csr.taskCount.store(5u);
 
     DirectSubmissionControllerMock controller;
@@ -41,19 +39,9 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 0u);
-
-    *csr.tagAddress = 5u;
-    controller.checkNewSubmissions();
-    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
 
     csr.taskCount.store(6u);
-    controller.checkNewSubmissions();
-    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
-
-    *csr.tagAddress = 6u;
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
@@ -69,36 +57,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr.taskCount.store(8u);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
-
-    controller.unregisterDirectSubmission(&csr);
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionWithMultiplePartitionsWhenCheckNewSubmissionThenCheckAllPartitions) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-
-    DeviceBitfield deviceBitfield(0b11);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    csr.postSyncWriteOffset = 32u;
-    csr.activePartitions = 2;
-    csr.initializeTagAllocation();
-    *csr.tagAddress = 5u;
-    auto nextPartitionTagAddress = ptrOffset(csr.tagAddress, csr.getPostSyncWriteOffset());
-    *nextPartitionTagAddress = 2u;
-    csr.taskCount.store(5u);
-
-    DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
-    controller.registerDirectSubmission(&csr);
-
-    controller.checkNewSubmissions();
-
-    EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 0u);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 8u);
 
     controller.unregisterDirectSubmission(&csr);
 }
@@ -119,6 +78,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     csr.startControllingDirectSubmissions();
     controller.registerDirectSubmission(&csr);
 
+    while (controller.directSubmissions[&csr].taskCount != 9u) {
+    }
     while (!controller.directSubmissions[&csr].isStopped) {
     }
 

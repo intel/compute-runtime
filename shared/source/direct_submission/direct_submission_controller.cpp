@@ -78,21 +78,17 @@ void DirectSubmissionController::checkNewSubmissions() {
         auto &state = directSubmission.second;
 
         auto taskCount = csr->peekTaskCount();
-        if (csr->testTaskCountReady(csr->getTagAddress(), taskCount)) {
-            if (taskCount == state.taskCount) {
-                if (state.isStopped) {
-                    continue;
-                } else {
-                    auto lock = csr->obtainUniqueOwnership();
-                    csr->stopDirectSubmission();
-                    state.isStopped = true;
-                }
+        if (taskCount == state.taskCount) {
+            if (state.isStopped) {
+                continue;
             } else {
-                state.isStopped = false;
-                state.taskCount = taskCount;
+                auto lock = csr->obtainUniqueOwnership();
+                csr->stopDirectSubmission();
+                state.isStopped = true;
             }
         } else {
             state.isStopped = false;
+            state.taskCount = taskCount;
         }
     }
 }
