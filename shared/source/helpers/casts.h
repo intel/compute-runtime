@@ -11,7 +11,7 @@
 
 namespace NEO {
 template <typename To, typename From>
-constexpr To r_pod_cast(From *f) { // NOLINT(readability-identifier-naming)
+constexpr To safePodCast(From *f) {
     typedef typename std::remove_pointer<From>::type FromType;
     typedef typename std::remove_pointer<To>::type ToType;
 

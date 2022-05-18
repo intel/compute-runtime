@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,11 +38,11 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update("----", 4);
     hash.update(&*internalOptions.begin(), internalOptions.size());
     hash.update("----", 4);
-    hash.update(r_pod_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
+    hash.update(safePodCast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(r_pod_cast<const char *>(std::to_string(hwInfo.featureTable.asHash()).c_str()), std::to_string(hwInfo.featureTable.asHash()).length());
+    hash.update(safePodCast<const char *>(std::to_string(hwInfo.featureTable.asHash()).c_str()), std::to_string(hwInfo.featureTable.asHash()).length());
     hash.update("----", 4);
-    hash.update(r_pod_cast<const char *>(std::to_string(hwInfo.workaroundTable.asHash()).c_str()), std::to_string(hwInfo.workaroundTable.asHash()).length());
+    hash.update(safePodCast<const char *>(std::to_string(hwInfo.workaroundTable.asHash()).c_str()), std::to_string(hwInfo.workaroundTable.asHash()).length());
 
     auto res = hash.finish();
     std::stringstream stream;
@@ -77,7 +77,7 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
             NEO::IoFunctions::fprintf(fp, "  eGTType=%d\n", hwInfo.platform.eGTType);
 
             NEO::IoFunctions::fprintf(fp, "---- feature table ----\n");
-            auto featureTable = r_pod_cast<const char *>(&hwInfo.featureTable.packed);
+            auto featureTable = safePodCast<const char *>(&hwInfo.featureTable.packed);
             for (size_t idx = 0; idx < sizeof(hwInfo.featureTable.packed); idx++) {
                 NEO::IoFunctions::fprintf(fp, "%02x.", (uint8_t)(featureTable[idx]));
             }
