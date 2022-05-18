@@ -626,5 +626,10 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenB
     context->freeMem(dstBuffer);
 }
 
+TEST(CommandList, whenAsMutableIsCalledNullptrIsReturned) {
+    MockCommandList cmdList;
+    EXPECT_EQ(nullptr, cmdList.asMutable());
+}
+
 } // namespace ult
 } // namespace L0

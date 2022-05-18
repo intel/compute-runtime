@@ -243,7 +243,7 @@ struct CommandListCoreFamily : CommandListImp {
     void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
     void appendSignalEventPostWalker(Event *event, bool workloadPartition);
-    void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
+    virtual void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();
     void appendMultiTileBarrier(NEO::Device &neoDevice);

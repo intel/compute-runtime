@@ -128,6 +128,8 @@ struct CommandList : _ze_command_list_handle_t {
                                                     const void *srcptr, size_t size, ze_event_handle_t hSignalEvent,
                                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
 
+    virtual void *asMutable() { return nullptr; };
+
     virtual ze_result_t reserveSpace(size_t size, void **ptr) = 0;
     virtual ze_result_t reset() = 0;
 

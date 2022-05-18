@@ -15,7 +15,7 @@ namespace L0 {
 void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {
 }
 
-DeviceImp::CmdListCreateFunT DeviceImp::getCmdListCreateFunc(const ze_command_list_desc_t *desc) {
+DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_command_list_desc_t *desc) {
     return &CommandList::create;
 }
 } // namespace L0
