@@ -417,6 +417,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceDefaultHeapSize, -1, "-1: no force (64kb), 
 DECLARE_DEBUG_VARIABLE(int32_t, PreferCopyEngineForCopyBufferToBuffer, -1, "-1: default, 0: prefer EUs, 1: prefer blitter")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force system memory placement")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force non-system memory placement")
+DECLARE_DEBUG_VARIABLE(int64_t, ForceUncachedGmmUsageType, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force uncached gmm resource type")
 DECLARE_DEBUG_VARIABLE(int64_t, DisableIndirectAccess, -1, "0: default,  0: Use indirect access settings provided by application, 1: Disable indirect access and ignore settings provided by application")
 DECLARE_DEBUG_VARIABLE(int32_t, UseVmBind, -1, "Use new residency model on Linux (requires kernel support), -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, PassBoundBOToExec, -1, "Pass bound BOs to exec call to keep dependencies")

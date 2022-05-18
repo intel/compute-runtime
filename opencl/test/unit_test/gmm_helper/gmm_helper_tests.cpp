@@ -939,6 +939,24 @@ TEST(GmmTest, givenConstSurfaceWhenDebugFlagIsSetThenReturnUncachedType) {
               CacheSettingsHelper::getGmmUsageType(AllocationType::CONSTANT_SURFACE, false, *defaultHwInfo));
 }
 
+TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncached) {
+    DebugManagerStateRestore restore;
+
+    constexpr int64_t bufferMask = 1 << (static_cast<int64_t>(AllocationType::BUFFER) - 1);
+    constexpr int64_t imageMask = 1 << (static_cast<int64_t>(AllocationType::IMAGE) - 1);
+
+    DebugManager.flags.ForceUncachedGmmUsageType.set(bufferMask | imageMask);
+
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER, false, *defaultHwInfo));
+
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, *defaultHwInfo));
+
+    EXPECT_NE(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER_HOST_MEMORY, false, *defaultHwInfo));
+}
+
 TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
