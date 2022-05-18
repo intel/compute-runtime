@@ -171,6 +171,8 @@ void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neo
             UNRECOVERABLE_IF(neoDevice->getDebugger() != nullptr && enableProgramDebugging);
         }
         rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.fusedEuEnabled = false;
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = false;
+        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = false;
 
         rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
     }
