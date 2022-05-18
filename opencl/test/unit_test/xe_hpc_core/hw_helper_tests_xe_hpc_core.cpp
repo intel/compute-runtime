@@ -43,72 +43,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGe
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileCsrWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoreThemInProperMemoryPool) {
-    const uint32_t numDevices = 4u;
-    const uint32_t tileIndex = 2u;
-    const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};
-    DebugManagerStateRestore restore;
-    VariableBackup<UltHwConfig> backup{&ultHwConfig};
-
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    DebugManager.flags.EnableLocalMemory.set(true);
-    initPlatform();
-
-    auto clDevice = platform()->getClDevice(0);
-    auto hwInfo = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x8; // not BD A0
-
-    auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
-    auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
-    } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
-    }
-    EXPECT_EQ(singleTileMask, heapAllocation->storageInfo.memoryBanks);
-
-    commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
-    auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
-    EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-}
-
-XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenMultiTileCsrWhenAllocatingCsrSpecificAllocationsAndIsNotBaseDieA0ThenStoreThemInLocalMemoryPool) {
-    const uint32_t numDevices = 4u;
-    const DeviceBitfield tile0Mask{0x1};
-    DebugManagerStateRestore restore;
-    VariableBackup<UltHwConfig> backup{&ultHwConfig};
-
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    DebugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    DebugManager.flags.EnableLocalMemory.set(true);
-    DebugManager.flags.OverrideLeastOccupiedBank.set(0u);
-    initPlatform();
-
-    auto clDevice = platform()->getClDevice(0);
-    auto hwInfo = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x8; // not BD A0
-
-    auto commandStreamReceiver = clDevice->getDefaultEngine().commandStreamReceiver;
-    auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, MemoryConstants::pageSize64k);
-    auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
-        EXPECT_EQ(AllocationType::INTERNAL_HEAP, heapAllocation->getAllocationType());
-    } else {
-        EXPECT_EQ(AllocationType::LINEAR_STREAM, heapAllocation->getAllocationType());
-    }
-    EXPECT_EQ(tile0Mask, heapAllocation->storageInfo.memoryBanks);
-
-    commandStreamReceiver->ensureCommandBufferAllocation(heap, heap.getAvailableSpace() + 1, 0u);
-    auto commandBufferAllocation = heap.getGraphicsAllocation();
-    EXPECT_EQ(AllocationType::COMMAND_BUFFER, commandBufferAllocation->getAllocationType());
-    EXPECT_NE(heapAllocation, commandBufferAllocation);
-    EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-}
-
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocatingCsrSpecificAllocationsThenStoreThemInProperMemoryPool) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
@@ -166,46 +100,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, GivenBarrierEncodingWhenCallingGetBarr
     EXPECT_EQ(16u, hwHelper.getBarriersCountFromHasBarriers(5u));
     EXPECT_EQ(24u, hwHelper.getBarriersCountFromHasBarriers(6u));
     EXPECT_EQ(32u, hwHelper.getBarriersCountFromHasBarriers(7u));
-}
-
-HWTEST2_F(HwHelperTestsXeHpcCore, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned, IsPVC) {
-    uint32_t steppings[] = {
-        REVISION_A0,
-        REVISION_B,
-        REVISION_C,
-        REVISION_D,
-        CommonConstants::invalidStepping,
-    };
-
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-
-    for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
-
-        if (stepping == REVISION_A0) {
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
-        } else if (stepping == REVISION_B) {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
-        } else {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_C, hardwareInfo));
-        }
-
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_C, REVISION_B, hardwareInfo));
-
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_D, REVISION_A0, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-        EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A1, REVISION_A0, hardwareInfo));
-    }
 }
 
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenCccsDisabledButDebugVariableSetWhenIsCooperativeEngineSupportedEnabledAndGetGpgpuEnginesCalledThenSetCccsProperly) {
@@ -720,20 +614,6 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskedIfFenceAllocatio
     EXPECT_TRUE(helper.isFenceAllocationRequired(hwInfo));
 }
 
-HWTEST2_F(HwHelperTestsXeHpcCore, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned, IsPVC) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
-}
-
-HWTEST2_F(HwHelperTestsXeHpcCore, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned, IsPVC) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(*defaultHwInfo));
-}
-
 XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(0);
@@ -1004,29 +884,4 @@ XE_HPC_CORETEST_F(HwHelperTestsXeHpcCore, givenHwHelperWhenAskingForPatIndexWaTh
     const auto &hwHelper = HwHelper::get(renderCoreFamily);
 
     EXPECT_TRUE(hwHelper.isPatIndexFallbackWaRequired());
-}
-
-HWTEST2_F(HwHelperTestsXeHpcCore, GivenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue, IsPVC) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.EUCount *= 2;
-
-    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
-
-    struct {
-        unsigned short revId;
-        uint32_t expectedRatio;
-    } testInputs[] = {
-        {0x0, 8},
-        {0x1, 8},
-        {0x3, 16},
-        {0x5, 16},
-        {0x6, 16},
-        {0x7, 16},
-    };
-
-    for (auto &testInput : testInputs) {
-        hwInfo.platform.usRevId = testInput.revId;
-        EXPECT_EQ(expectedValue * testInput.expectedRatio, helper.getComputeUnitsUsedForScratch(&hwInfo));
-    }
 }

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -22,24 +21,6 @@ HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointers
 
 using DeviceTestXeHpc = Test<DeviceFixture>;
 
-HWTEST2_F(DeviceTestXeHpc, whenCallingGetMemoryPropertiesWithNonNullPtrAndBdRevisionIsNotA0ThenmaxClockRateReturnedIsZero, IsXeHpcCore) {
-    uint32_t count = 0;
-    auto device = driverHandle->devices[0];
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x8; // not BD A0
-
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 0u);
-}
-
 HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
@@ -49,7 +30,8 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMulti
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
-    hwInfo.platform.usRevId = 0x3;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
@@ -69,7 +51,8 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
-    hwInfo.platform.usRevId = 0x6;
+    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
@@ -79,44 +62,6 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
 
     static_cast<DeviceImp *>(device)->releaseResources();
     delete device;
-}
-
-using DeviceTestPvc = Test<DeviceFixture>;
-
-HWTEST2_F(DeviceTestPvc, givenPvcAStepWhenCreatingMultiTileDeviceThenExpectImplicitScalingDisabled, IsPVC) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(2);
-    VariableBackup<bool> apiSupportBackup(&NEO::ImplicitScaling::apiSupport, true);
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
-    auto hwInfo = *NEO::defaultHwInfo;
-    hwInfo.platform.usRevId = 0x3;
-
-    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto device = Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue);
-    ASSERT_NE(nullptr, device);
-
-    EXPECT_FALSE(device->isImplicitScalingCapable());
-
-    static_cast<DeviceImp *>(device)->releaseResources();
-    delete device;
-}
-
-HWTEST2_F(DeviceTestPvc, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsPVC) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 3200u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 
 using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<9, 1>>;
@@ -397,22 +342,20 @@ HWTEST2_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenTwoQueueGro
     EXPECT_EQ(count, 2u);
 }
 
-class DeviceCopyQueueGroupFixture : public DeviceFixture {
+class DeviceCopyQueueGroupXeHpcFixture : public DeviceFixture {
   public:
     void SetUp() {
         DebugManager.flags.EnableBlitterOperationsSupport.set(0);
         DeviceFixture::SetUp();
     }
-
     void TearDown() {
         DeviceFixture::TearDown();
     }
     DebugManagerStateRestore restorer;
 };
+using DeviceCopyQueueGroupXeHpcTest = Test<DeviceCopyQueueGroupXeHpcFixture>;
 
-using DeviceCopyQueueGroupTest = Test<DeviceCopyQueueGroupFixture>;
-
-HWTEST2_F(DeviceCopyQueueGroupTest,
+HWTEST2_F(DeviceCopyQueueGroupXeHpcTest,
           givenBlitterSupportAndEnableBlitterOperationsSupportSetToZeroThenNoCopyEngineIsReturned, IsXeHpcCore) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
@@ -444,12 +387,6 @@ HWTEST2_F(DeviceTestXeHpc, givenReturnedDevicePropertiesThenExpectedPropertyFlag
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
     EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
-}
-
-HWTEST2_F(DeviceTestXeHpc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16, IsPVC) {
-    ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    device->getProperties(&properties);
-    EXPECT_EQ(16u, properties.physicalEUSimdWidth);
 }
 
 } // namespace ult

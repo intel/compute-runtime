@@ -22,6 +22,8 @@ if(TESTS_XE_HPC_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_xe_hpc_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/xe_hpc_core_test_ocl_fixtures.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/xe_hpc_core_test_ocl_fixtures.cpp
   )
 
   get_property(NEO_CORE_TESTS_XE_HPC_CORE GLOBAL PROPERTY NEO_CORE_TESTS_XE_HPC_CORE)

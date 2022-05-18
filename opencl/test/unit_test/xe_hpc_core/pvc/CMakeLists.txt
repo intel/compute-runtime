@@ -13,6 +13,7 @@ if(TESTS_PVC)
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_pvc.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_pvc.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_xe_hpc_core_pvc})
   add_subdirectories()

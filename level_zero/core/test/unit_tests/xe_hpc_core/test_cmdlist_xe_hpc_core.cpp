@@ -55,57 +55,6 @@ HWTEST2_F(CommandListAppendLaunchKernelXeHpcCore, givenKernelUsingSyncBufferWhen
 
 using CommandListStatePrefetchXeHpcCore = Test<ModuleFixture>;
 
-HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenDebugFlagSetWhenPrefetchApiCalledAndIsNotBaseDieA0ThenProgramStatePrefetch, IsXeHpcCore) {
-    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
-    DebugManagerStateRestore restore;
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    constexpr size_t size = MemoryConstants::cacheLineSize * 2;
-    constexpr size_t alignment = MemoryConstants::pageSize64k;
-    constexpr size_t offset = MemoryConstants::cacheLineSize;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->allocDeviceMem(device->toHandle(), &deviceDesc, size + offset, alignment, &ptr);
-    EXPECT_NE(nullptr, ptr);
-
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x8; // not BD A0
-
-    auto cmdListBaseOffset = pCommandList->commandContainer.getCommandStream()->getUsed();
-
-    {
-        auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-        EXPECT_EQ(cmdListBaseOffset, pCommandList->commandContainer.getCommandStream()->getUsed());
-    }
-
-    {
-        DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
-
-        auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-
-        EXPECT_EQ(cmdListBaseOffset + sizeof(STATE_PREFETCH), pCommandList->commandContainer.getCommandStream()->getUsed());
-
-        auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(ptrOffset(pCommandList->commandContainer.getCommandStream()->getCpuBase(), cmdListBaseOffset));
-
-        EXPECT_EQ(statePrefetchCmd->getAddress(), reinterpret_cast<uint64_t>(ptrOffset(ptr, offset)));
-        EXPECT_FALSE(statePrefetchCmd->getKernelInstructionPrefetch());
-        EXPECT_EQ(mocsIndexForL3, statePrefetchCmd->getMemoryObjectControlState());
-        EXPECT_EQ(1u, statePrefetchCmd->getPrefetchSize());
-
-        EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), pCommandList->commandContainer.getResidencyContainer().back()->getGpuAddress());
-    }
-
-    context->freeMem(ptr);
-}
-
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenUnifiedSharedMemoryWhenPrefetchApiCalledThenDontSetMemPrefetch, IsXeHpcCore) {
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -271,92 +220,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     context->freeMem(ptr);
 }
 
-HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenCommandBufferIsExhaustedWhenPrefetchApiCalledAndIsNotBaseDieA0ThenProgramStatePrefetch, IsXeHpcCore) {
-    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-
-    DebugManagerStateRestore restore;
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    constexpr size_t size = MemoryConstants::cacheLineSize * 2;
-    constexpr size_t alignment = MemoryConstants::pageSize64k;
-    constexpr size_t offset = MemoryConstants::cacheLineSize;
-    constexpr uint32_t mocsIndexForL3 = (2 << 1);
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->allocDeviceMem(device->toHandle(), &deviceDesc, size + offset, alignment, &ptr);
-    EXPECT_NE(nullptr, ptr);
-
-    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x8; // not BD A0
-
-    auto firstBatchBufferAllocation = pCommandList->commandContainer.getCommandStream()->getGraphicsAllocation();
-
-    auto useSize = pCommandList->commandContainer.getCommandStream()->getAvailableSpace();
-    useSize -= sizeof(MI_BATCH_BUFFER_END);
-    pCommandList->commandContainer.getCommandStream()->getSpace(useSize);
-
-    DebugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.set(1);
-
-    auto ret = pCommandList->appendMemoryPrefetch(ptrOffset(ptr, offset), size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    auto secondBatchBufferAllocation = pCommandList->commandContainer.getCommandStream()->getGraphicsAllocation();
-
-    EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
-
-    auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(pCommandList->commandContainer.getCommandStream()->getCpuBase());
-
-    EXPECT_EQ(statePrefetchCmd->getAddress(), reinterpret_cast<uint64_t>(ptrOffset(ptr, offset)));
-    EXPECT_FALSE(statePrefetchCmd->getKernelInstructionPrefetch());
-    EXPECT_EQ(mocsIndexForL3, statePrefetchCmd->getMemoryObjectControlState());
-    EXPECT_EQ(1u, statePrefetchCmd->getPrefetchSize());
-
-    NEO::ResidencyContainer::iterator it = pCommandList->commandContainer.getResidencyContainer().end();
-    it--;
-    EXPECT_EQ(secondBatchBufferAllocation->getGpuAddress(), (*it)->getGpuAddress());
-    it--;
-    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), (*it)->getGpuAddress());
-
-    context->freeMem(ptr);
-}
-
-using CommandListEventFenceTestsPvc = Test<ModuleFixture>;
-
-HWTEST2_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded, IsPVC) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
-
-    auto hwInfo = commandList->commandContainer.getDevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->platform.usRevId = 0x00;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = 0;
-    eventDesc.wait = 0;
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    commandList->appendEventForProfiling(event->toHandle(), false, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
-
-    auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(cmdList.end(), itor);
-}
-
 using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
@@ -448,33 +311,5 @@ HWTEST2_F(CommandListAppendRangesBarrierXeHpcCore, givenCallToAppendRangesBarrie
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
 }
-
-using CommandListAppendBarrierXeHpcCore = Test<DeviceFixture>;
-
-HWTEST2_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrierThenPipeControlIsProgrammedAndHdcAndUnTypedFlushesAreSet, IsPVC) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
-    ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr);
-    EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
-
-    // PC for STATE_BASE_ADDRESS from list initialization
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
-
-    // PC for appendBarrier
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-}
-
 } // namespace ult
 } // namespace L0
