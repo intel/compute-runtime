@@ -24,6 +24,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_multipartition_prologue.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_cmdlist_memory_extension.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)
