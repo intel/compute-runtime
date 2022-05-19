@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
@@ -99,9 +100,15 @@ class GeneralSurface : public Surface {
     GeneralSurface(GraphicsAllocation *gfxAlloc) : Surface(gfxAlloc->isCoherent()) {
         gfxAllocation = gfxAlloc;
     };
+    GeneralSurface(GraphicsAllocation *gfxAlloc, bool needsMigration) : GeneralSurface(gfxAlloc) {
+        this->needsMigration = needsMigration;
+    }
     ~GeneralSurface() override = default;
 
     void makeResident(CommandStreamReceiver &csr) override {
+        if (needsMigration) {
+            csr.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gfxAllocation->getGpuAddress()));
+        }
         csr.makeResident(*gfxAllocation);
     };
     Surface *duplicate() override { return new GeneralSurface(gfxAllocation); };
@@ -111,6 +118,7 @@ class GeneralSurface : public Surface {
     }
 
   protected:
+    bool needsMigration = false;
     GraphicsAllocation *gfxAllocation;
 };
 } // namespace NEO

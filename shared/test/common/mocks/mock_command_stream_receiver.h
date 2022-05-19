@@ -39,6 +39,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::newResources;
     using CommandStreamReceiver::osContext;
+    using CommandStreamReceiver::ownershipMutex;
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::preemptionAllocation;
     using CommandStreamReceiver::tagAddress;
@@ -159,6 +160,13 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return status;
     }
     void postInitFlagsSetup() override {}
+    bool isOwnershipMutexLocked() {
+        bool isLocked = !this->ownershipMutex.try_lock();
+        if (!isLocked) {
+            this->ownershipMutex.unlock();
+        }
+        return isLocked;
+    }
 
     static constexpr size_t tagSize = 256;
     static volatile uint32_t mockTagAddress[tagSize];

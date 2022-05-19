@@ -106,6 +106,7 @@ class MockKernel : public Kernel {
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
+    using Kernel::isUnifiedMemorySyncRequired;
     using Kernel::kernelArgHandlers;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
@@ -250,6 +251,7 @@ class MockKernel : public Kernel {
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
     uint32_t setArgSvmAllocCalls = 0;
+    uint32_t moveArgsToGpuDomainCalls = 0;
 
     bool canKernelTransformImages = true;
     bool isPatchedOverride = true;

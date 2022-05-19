@@ -228,7 +228,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL CommandStreamReceiver *getBcsCommandStreamReceiver(aub_stream::EngineType bcsEngineType);
     CommandStreamReceiver *getBcsForAuxTranslation();
     MOCKABLE_VIRTUAL CommandStreamReceiver &selectCsrForBuiltinOperation(const CsrSelectionArgs &args);
-    void initializeBcsEngine(bool internalUsage);
+    void constructBcsEngine(bool internalUsage);
+    MOCKABLE_VIRTUAL void initializeBcsEngine(bool internalUsage);
     Device &getDevice() const noexcept;
     ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }

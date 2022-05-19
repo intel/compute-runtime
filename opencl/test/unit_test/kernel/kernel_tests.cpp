@@ -1328,6 +1328,57 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenM
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
+class MockGeneralSurface : public GeneralSurface {
+  public:
+    using GeneralSurface::needsMigration;
+};
+
+HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelDoesNotRequireUnifiedMemorySyncThenSurfaceDoesNotNeedMigration) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
+
+    auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
+    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
+    mockKernel.mockKernel->setUnifiedMemorySyncRequirement(false);
+    std::vector<NEO::Surface *> residencySurfaces;
+    mockKernel.mockKernel->getResidency(residencySurfaces);
+    EXPECT_FALSE(reinterpret_cast<MockGeneralSurface *>(residencySurfaces[0])->needsMigration);
+    for (auto surface : residencySurfaces) {
+        delete surface;
+    }
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
+}
+
+HWTEST_F(KernelResidencyTest, givenSvmArgWhenKernelRequireUnifiedMemorySyncThenSurfaceNeedMigration) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockKernelWithInternals mockKernel(*this->pClDevice, nullptr, true);
+
+    auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
+    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
+    mockKernel.mockKernel->setUnifiedMemorySyncRequirement(true);
+    std::vector<NEO::Surface *> residencySurfaces;
+    mockKernel.mockKernel->getResidency(residencySurfaces);
+    EXPECT_TRUE(reinterpret_cast<MockGeneralSurface *>(residencySurfaces[0])->needsMigration);
+    for (auto surface : residencySurfaces) {
+        delete surface;
+    }
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
+}
+
 HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeResidentIsCalledThenAllocationIsDecommited) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
@@ -1834,6 +1885,60 @@ HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTun
     result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
     EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
     EXPECT_NE(mockKernel.mockKernel->isSingleSubdevicePreferred(), mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
+}
+
+HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultManagerThenPageFaultDoesNotMoveAllocation) {
+    auto mockPageFaultManager = std::make_unique<MockPageFaultManager>();
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
+    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    mockPageFaultManager->insertAllocation(reinterpret_cast<void *>(unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    Kernel::SimpleKernelArgInfo kernelArgInfo;
+    kernelArgInfo.object = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
+    kernelArgInfo.type = Kernel::kernelArgType::SVM_ALLOC_OBJ;
+
+    std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
+    kernelArguments.resize(1);
+    kernelArguments[0] = kernelArgInfo;
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
+    mockKernel.mockKernel->setKernelArguments(kernelArguments);
+    mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    EXPECT_EQ(mockPageFaultManager->transferToGpuCalled, 0);
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
+    static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset();
+}
+
+HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenIsUnifiedMemorySyncRequiredIsFalseThenPageFaultDoesNotMoveAllocation) {
+    auto mockPageFaultManager = new MockPageFaultManager();
+    static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
+    MockKernelWithInternals mockKernel(*this->pClDevice);
+
+    auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
+    auto sharedProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, mockKernel.mockContext->getRootDeviceIndices(), mockKernel.mockContext->getDeviceBitfields());
+    auto unifiedMemoryAllocation = svmAllocationsManager->createSharedUnifiedMemoryAllocation(4096u, sharedProperties, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()));
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    mockPageFaultManager->insertAllocation(reinterpret_cast<void *>(unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
+
+    Kernel::SimpleKernelArgInfo kernelArgInfo;
+    kernelArgInfo.object = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
+    kernelArgInfo.type = Kernel::kernelArgType::SVM_ALLOC_OBJ;
+
+    std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
+    kernelArguments.resize(1);
+    kernelArguments[0] = kernelArgInfo;
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    mockKernel.kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
+    mockKernel.mockKernel->setKernelArguments(kernelArguments);
+    mockKernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    mockKernel.mockKernel->isUnifiedMemorySyncRequired = false;
+    EXPECT_EQ(mockPageFaultManager->transferToGpuCalled, 0);
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
+    static_cast<MockMemoryManager *>(this->pDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset();
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {

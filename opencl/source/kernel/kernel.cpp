@@ -1280,8 +1280,14 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
+                bool needsMigration = false;
+                auto pageFaultManager = executionEnvironment.memoryManager->getPageFaultManager();
+                if (pageFaultManager &&
+                    this->isUnifiedMemorySyncRequired) {
+                    needsMigration = true;
+                }
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
-                dst.push_back(new GeneralSurface(pSVMAlloc));
+                dst.push_back(new GeneralSurface(pSVMAlloc, needsMigration));
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObject<MemObj>(clMem);

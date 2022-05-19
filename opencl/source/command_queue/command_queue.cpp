@@ -88,7 +88,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
 
         if (!deferCmdQBcsInitialization) {
-            this->initializeBcsEngine(internalUsage);
+            this->constructBcsEngine(internalUsage);
         }
     }
 
@@ -274,7 +274,7 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     return *selectedCsr;
 }
 
-void CommandQueue::initializeBcsEngine(bool internalUsage) {
+void CommandQueue::constructBcsEngine(bool internalUsage) {
     if (bcsAllowed && !bcsInitialized) {
         auto &hwInfo = device->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -291,6 +291,10 @@ void CommandQueue::initializeBcsEngine(bool internalUsage) {
             bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
         }
     }
+}
+
+void CommandQueue::initializeBcsEngine(bool internalUsage) {
+    constructBcsEngine(internalUsage);
 }
 
 Device &CommandQueue::getDevice() const noexcept {

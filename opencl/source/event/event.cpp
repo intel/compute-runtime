@@ -570,6 +570,7 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
 void Event::submitCommand(bool abortTasks) {
     std::unique_ptr<Command> cmdToProcess(cmdToSubmit.exchange(nullptr));
     if (cmdToProcess.get() != nullptr) {
+        getCommandQueue()->initializeBcsEngine(getCommandQueue()->isSpecial());
         auto lockCSR = getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
         if (this->isProfilingEnabled()) {

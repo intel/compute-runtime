@@ -104,6 +104,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
     using BaseClass::CommandStreamReceiver::newResources;
     using BaseClass::CommandStreamReceiver::osContext;
+    using BaseClass::CommandStreamReceiver::ownershipMutex;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::postSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
@@ -124,6 +125,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::userPauseConfirmation;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
     using BaseClass::CommandStreamReceiver::workPartitionAllocation;
+    ;
 
     UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                              uint32_t rootDeviceIndex,

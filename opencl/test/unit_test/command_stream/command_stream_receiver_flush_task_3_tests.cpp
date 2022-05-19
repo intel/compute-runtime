@@ -1830,6 +1830,50 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     EXPECT_EQ(numGrfRequired, csr->savedDispatchFlags.numGrfRequired);
 }
 
+class MockCommandQueueInitializeBcs : public MockCommandQueue {
+  public:
+    MockCommandQueueInitializeBcs() : MockCommandQueue(nullptr, nullptr, 0, false) {}
+    MockCommandQueueInitializeBcs(Context &context) : MockCommandQueueInitializeBcs(&context, context.getDevice(0), nullptr, false) {}
+    MockCommandQueueInitializeBcs(Context *context, ClDevice *device, const cl_queue_properties *props, bool internalUsage)
+        : MockCommandQueue(context, device, props, internalUsage) {
+    }
+    void initializeBcsEngine(bool internalUsage) override {
+        if (initializeBcsEngineCalledTimes == 0) {
+            auto th = std::thread([&]() {
+                isCsrLocked = reinterpret_cast<MockCommandStreamReceiver *>(&this->getGpgpuCommandStreamReceiver())->isOwnershipMutexLocked();
+            });
+            th.join();
+        }
+        initializeBcsEngineCalledTimes++;
+        MockCommandQueue::initializeBcsEngine(internalUsage);
+    }
+    int initializeBcsEngineCalledTimes = 0;
+    bool isCsrLocked = false;
+};
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenInitializeBcsCalledThenCrsIsNotLocked) {
+    MockContext mockContext;
+    auto csr = new MockCommandStreamReceiver(*pDevice->executionEnvironment, 0, pDevice->getDeviceBitfield());
+    pDevice->resetCommandStreamReceiver(csr);
+    uint32_t numGrfRequired = 666u;
+
+    auto pCmdQ = std::make_unique<MockCommandQueueInitializeBcs>(&mockContext, pClDevice, nullptr, false);
+    auto mockProgram = std::make_unique<MockProgram>(&mockContext, false, toClDeviceVector(*pClDevice));
+
+    auto pKernel = MockKernel::create(*pDevice, mockProgram.get(), numGrfRequired);
+    auto kernelInfos = MockKernel::toKernelInfoContainer(pKernel->getKernelInfo(), rootDeviceIndex);
+    MultiDeviceKernel multiDeviceKernel(MockMultiDeviceKernel::toKernelVector(pKernel), kernelInfos);
+    auto event = std::make_unique<MockEvent<Event>>(pCmdQ.get(), CL_COMMAND_MARKER, 0, 0);
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()}));
+
+    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+
+    std::vector<Surface *> surfaces;
+    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, blockedCommandsData, surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel, 1));
+    event->submitCommand(false);
+    EXPECT_FALSE(pCmdQ->isCsrLocked);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCallingAddPipeControlThenDcFlushIsEnabled) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);

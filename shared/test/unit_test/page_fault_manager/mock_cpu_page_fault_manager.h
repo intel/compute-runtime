@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,11 +62,16 @@ class MockPageFaultManager : public PageFaultManager {
     void *getAubAndTbxHandlerAddress() {
         return reinterpret_cast<void *>(PageFaultManager::handleGpuDomainTransferForAubAndTbx);
     }
+    void moveAllocationToGpuDomain(void *ptr) override {
+        moveAllocationToGpuDomainCalled++;
+        PageFaultManager::moveAllocationToGpuDomain(ptr);
+    }
 
     int allowMemoryAccessCalled = 0;
     int protectMemoryCalled = 0;
     int transferToCpuCalled = 0;
     int transferToGpuCalled = 0;
+    int moveAllocationToGpuDomainCalled = 0;
     void *transferToCpuAddress = nullptr;
     void *transferToGpuAddress = nullptr;
     void *allowedMemoryAccessAddress = nullptr;
