@@ -155,14 +155,6 @@ void CommandQueue::initializeGpgpuInternals() const {
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
-    if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
-        this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-        if (DebugManager.flags.CsrDispatchMode.get() != 0) {
-            this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get()));
-        }
-        this->gpgpuEngine->commandStreamReceiver->enableNTo1SubmissionModel();
-    }
-
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
         auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
         auto debugSurface = this->gpgpuEngine->commandStreamReceiver->allocateDebugSurface(maxDbgSurfaceSize);
@@ -178,6 +170,14 @@ void CommandQueue::initializeGpgpuInternals() const {
 
     gpgpuEngine->osContext->ensureContextInitialized();
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
+
+    if (getCmdQueueProperties<cl_queue_properties>(propertiesVector.data(), CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) && !this->gpgpuEngine->commandStreamReceiver->isUpdateTagFromWaitEnabled()) {
+        this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+        if (DebugManager.flags.CsrDispatchMode.get() != 0) {
+            this->gpgpuEngine->commandStreamReceiver->overrideDispatchPolicy(static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get()));
+        }
+        this->gpgpuEngine->commandStreamReceiver->enableNTo1SubmissionModel();
+    }
 }
 
 CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
