@@ -364,21 +364,21 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
                         static_cast<uint16_t>(std::ceil(maxSlices / 8.0));
 
         if (queryItem->length == 0) {
-            queryItem->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
+            queryItem->length = static_cast<int32_t>(sizeof(QueryTopologyInfo) + dataSize);
             break;
         } else {
-            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->dataPtr);
+            auto topologyArg = reinterpret_cast<QueryTopologyInfo *>(queryItem->dataPtr);
             if (failRetTopology) {
                 return false;
             }
-            topologyArg->max_slices = maxSlices;
-            topologyArg->max_subslices = maxSubslices;
-            topologyArg->max_eus_per_subslice = maxEuPerSubslice;
+            topologyArg->maxSlices = maxSlices;
+            topologyArg->maxSubslices = maxSubslices;
+            topologyArg->maxEusPerSubslice = maxEuPerSubslice;
 
-            topologyArg->subslice_stride = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0));
-            topologyArg->eu_stride = static_cast<uint16_t>(std::ceil(maxEuPerSubslice / 8.0));
-            topologyArg->subslice_offset = static_cast<uint16_t>(std::ceil(maxSlices / 8.0));
-            topologyArg->eu_offset = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0)) * maxSlices;
+            topologyArg->subsliceStride = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0));
+            topologyArg->euStride = static_cast<uint16_t>(std::ceil(maxEuPerSubslice / 8.0));
+            topologyArg->subsliceOffset = static_cast<uint16_t>(std::ceil(maxSlices / 8.0));
+            topologyArg->euOffset = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0)) * maxSlices;
 
             int threadData = (threadsPerEu == 8) ? 0xff : 0x7f;
 
@@ -390,9 +390,9 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
                 }
             }
 
-            DEBUG_BREAK_IF(ptrDiff(data, topologyArg->data) != topologyArg->subslice_offset);
+            DEBUG_BREAK_IF(ptrDiff(data, topologyArg->data) != topologyArg->subsliceOffset);
 
-            data = ptrOffset(topologyArg->data, topologyArg->subslice_offset);
+            data = ptrOffset(topologyArg->data, topologyArg->subsliceOffset);
             for (uint32_t sliceId = 0; sliceId < maxSlices; sliceId++) {
                 for (uint32_t i = 0; i < maxSubslices; i++) {
                     data[0] |= 1 << (i % 8);
@@ -403,9 +403,9 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
                 }
             }
 
-            DEBUG_BREAK_IF(ptrDiff(data, topologyArg->data) != topologyArg->eu_offset);
-            auto size = dataSize - topologyArg->eu_offset;
-            memset(ptrOffset(topologyArg->data, topologyArg->eu_offset), threadData, size);
+            DEBUG_BREAK_IF(ptrDiff(data, topologyArg->data) != topologyArg->euOffset);
+            auto size = dataSize - topologyArg->euOffset;
+            memset(ptrOffset(topologyArg->data, topologyArg->euOffset), threadData, size);
         }
     } break;
 

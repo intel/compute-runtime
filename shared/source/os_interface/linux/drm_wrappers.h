@@ -71,4 +71,16 @@ struct GemContextParamSseu {
     uint16_t maxEusPerSubslice;
 };
 
+struct QueryTopologyInfo {
+    uint16_t flags;
+    uint16_t maxSlices;
+    uint16_t maxSubslices;
+    uint16_t maxEusPerSubslice;
+    uint16_t subsliceOffset;
+    uint16_t subsliceStride;
+    uint16_t euOffset;
+    uint16_t euStride;
+    uint8_t data[];
+};
+
 } // namespace NEO

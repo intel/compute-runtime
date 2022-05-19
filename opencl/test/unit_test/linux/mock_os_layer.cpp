@@ -255,15 +255,15 @@ int drmQueryItem(drm_i915_query *query) {
     auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->items_ptr);
     if (queryItemArg->length == 0) {
         if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            queryItemArg->length = sizeof(drm_i915_query_topology_info) + 1;
+            queryItemArg->length = sizeof(NEO::QueryTopologyInfo) + 1;
             return 0;
         }
     } else {
         if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->dataPtr);
-            topologyArg->max_slices = 1;
-            topologyArg->max_subslices = 1;
-            topologyArg->max_eus_per_subslice = 3;
+            auto topologyArg = reinterpret_cast<NEO::QueryTopologyInfo *>(queryItemArg->dataPtr);
+            topologyArg->maxSlices = 1;
+            topologyArg->maxSubslices = 1;
+            topologyArg->maxEusPerSubslice = 3;
             topologyArg->data[0] = 0xFF;
             return failOnEuTotal || failOnSubsliceTotal;
         }

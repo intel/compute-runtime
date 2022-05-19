@@ -51,9 +51,9 @@ struct QueryTopologyTests : ::testing::Test {
             auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
 
             if (queryItem->length == 0) {
-                queryItem->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
+                queryItem->length = static_cast<int32_t>(sizeof(QueryTopologyInfo) + dataSize);
             } else {
-                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItem->dataPtr);
+                auto topologyArg = reinterpret_cast<QueryTopologyInfo *>(queryItem->dataPtr);
 
                 uint16_t finalSVal = queryComputeSlicesSCount;
                 uint16_t finalSSVal = queryComputeSlicesSSCount;
@@ -65,9 +65,9 @@ struct QueryTopologyTests : ::testing::Test {
                     finalEUVal /= 2;
                 }
 
-                topologyArg->max_slices = finalSVal;
-                topologyArg->max_subslices = (finalSSVal / finalSVal);
-                topologyArg->max_eus_per_subslice = (finalEUVal / finalSSVal);
+                topologyArg->maxSlices = finalSVal;
+                topologyArg->maxSubslices = (finalSSVal / finalSVal);
+                topologyArg->maxEusPerSubslice = (finalEUVal / finalSSVal);
 
                 memset(topologyArg->data, 0xFF, dataSize);
             }

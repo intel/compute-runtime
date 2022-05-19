@@ -248,18 +248,18 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
         if (queryItemArg->length == 0) {
             if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-                queryItemArg->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
+                queryItemArg->length = static_cast<int32_t>(sizeof(QueryTopologyInfo) + dataSize);
                 return 0;
             }
         } else {
             if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-                auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->dataPtr);
+                auto topologyArg = reinterpret_cast<QueryTopologyInfo *>(queryItemArg->dataPtr);
                 if (this->failRetTopology) {
                     return -1;
                 }
-                topologyArg->max_slices = this->storedSVal;
-                topologyArg->max_subslices = this->storedSVal ? (this->storedSSVal / this->storedSVal) : 0;
-                topologyArg->max_eus_per_subslice = this->storedSSVal ? (this->storedEUVal / this->storedSSVal) : 0;
+                topologyArg->maxSlices = this->storedSVal;
+                topologyArg->maxSubslices = this->storedSVal ? (this->storedSSVal / this->storedSVal) : 0;
+                topologyArg->maxEusPerSubslice = this->storedSSVal ? (this->storedEUVal / this->storedSSVal) : 0;
 
                 if (this->disableSomeTopology) {
                     memset(topologyArg->data, 0xCA, dataSize);

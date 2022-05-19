@@ -754,7 +754,7 @@ void Drm::setNewResourceBoundToVM(uint32_t vmHandleId) {
     }
 }
 
-bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping) {
+bool Drm::translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping) {
     int sliceCount = 0;
     int subSliceCount = 0;
     int euCount = 0;
@@ -763,7 +763,7 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
     std::vector<int> sliceIndices;
     sliceIndices.reserve(maxSliceCount);
 
-    for (int x = 0; x < queryTopologyInfo->max_slices; x++) {
+    for (int x = 0; x < queryTopologyInfo->maxSlices; x++) {
         bool isSliceEnable = (queryTopologyInfo->data[x / 8] >> (x % 8)) & 1;
         if (!isSliceEnable) {
             continue;
@@ -772,10 +772,10 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
         sliceCount++;
 
         std::vector<int> subSliceIndices;
-        subSliceIndices.reserve(queryTopologyInfo->max_subslices);
+        subSliceIndices.reserve(queryTopologyInfo->maxSubslices);
 
-        for (int y = 0; y < queryTopologyInfo->max_subslices; y++) {
-            size_t yOffset = (queryTopologyInfo->subslice_offset + x * queryTopologyInfo->subslice_stride + y / 8);
+        for (int y = 0; y < queryTopologyInfo->maxSubslices; y++) {
+            size_t yOffset = (queryTopologyInfo->subsliceOffset + x * queryTopologyInfo->subsliceStride + y / 8);
             bool isSubSliceEnabled = (queryTopologyInfo->data[yOffset] >> (y % 8)) & 1;
             if (!isSubSliceEnabled) {
                 continue;
@@ -783,8 +783,8 @@ bool Drm::translateTopologyInfo(const drm_i915_query_topology_info *queryTopolog
             subSliceCount++;
             subSliceIndices.push_back(y);
 
-            for (int z = 0; z < queryTopologyInfo->max_eus_per_subslice; z++) {
-                size_t zOffset = (queryTopologyInfo->eu_offset + (x * queryTopologyInfo->max_subslices + y) * queryTopologyInfo->eu_stride + z / 8);
+            for (int z = 0; z < queryTopologyInfo->maxEusPerSubslice; z++) {
+                size_t zOffset = (queryTopologyInfo->euOffset + (x * queryTopologyInfo->maxSubslices + y) * queryTopologyInfo->euStride + z / 8);
                 bool isEUEnabled = (queryTopologyInfo->data[zOffset] >> (z % 8)) & 1;
                 if (!isEUEnabled) {
                     continue;
@@ -1164,7 +1164,7 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
                 success = false;
                 break;
             }
-            auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
+            auto data = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
 
             QueryTopologyData tileTopologyData = {};
             TopologyMapping mapping;
@@ -1180,7 +1180,7 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
 
             topologyData.maxSliceCount = std::max(topologyData.maxSliceCount, tileTopologyData.maxSliceCount);
             topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, tileTopologyData.maxSubSliceCount);
-            topologyData.maxEuCount = std::max(topologyData.maxEuCount, static_cast<int>(data->max_eus_per_subslice));
+            topologyData.maxEuCount = std::max(topologyData.maxEuCount, static_cast<int>(data->maxEusPerSubslice));
 
             this->topologyMap[i] = mapping;
         }
@@ -1199,11 +1199,11 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
     if (dataQuery.empty()) {
         return false;
     }
-    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.data());
+    auto data = reinterpret_cast<QueryTopologyInfo *>(dataQuery.data());
 
     TopologyMapping mapping;
     auto retVal = translateTopologyInfo(data, topologyData, mapping);
-    topologyData.maxEuCount = data->max_eus_per_subslice;
+    topologyData.maxEuCount = data->maxEusPerSubslice;
 
     this->topologyMap.clear();
     this->topologyMap[0] = mapping;

@@ -257,7 +257,7 @@ class Drm : public DriverModel {
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
     int getQueueSliceCount(GemContextParamSseu *sseu);
-    bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
+    bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
     std::string getSysFsPciPath();

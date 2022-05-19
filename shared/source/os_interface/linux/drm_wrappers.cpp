@@ -63,4 +63,15 @@ static_assert(offsetof(GemContextParamSseu, subsliceMask) == offsetof(drm_i915_g
 static_assert(offsetof(GemContextParamSseu, minEusPerSubslice) == offsetof(drm_i915_gem_context_param_sseu, min_eus_per_subslice));
 static_assert(offsetof(GemContextParamSseu, maxEusPerSubslice) == offsetof(drm_i915_gem_context_param_sseu, max_eus_per_subslice));
 
+static_assert(sizeof(QueryTopologyInfo) == sizeof(drm_i915_query_topology_info));
+static_assert(offsetof(QueryTopologyInfo, flags) == offsetof(drm_i915_query_topology_info, flags));
+static_assert(offsetof(QueryTopologyInfo, maxSlices) == offsetof(drm_i915_query_topology_info, max_slices));
+static_assert(offsetof(QueryTopologyInfo, maxSubslices) == offsetof(drm_i915_query_topology_info, max_subslices));
+static_assert(offsetof(QueryTopologyInfo, maxEusPerSubslice) == offsetof(drm_i915_query_topology_info, max_eus_per_subslice));
+static_assert(offsetof(QueryTopologyInfo, subsliceOffset) == offsetof(drm_i915_query_topology_info, subslice_offset));
+static_assert(offsetof(QueryTopologyInfo, subsliceStride) == offsetof(drm_i915_query_topology_info, subslice_stride));
+static_assert(offsetof(QueryTopologyInfo, euOffset) == offsetof(drm_i915_query_topology_info, eu_offset));
+static_assert(offsetof(QueryTopologyInfo, euStride) == offsetof(drm_i915_query_topology_info, eu_stride));
+static_assert(offsetof(QueryTopologyInfo, data) == offsetof(drm_i915_query_topology_info, data));
+
 } // namespace NEO
