@@ -1139,6 +1139,25 @@ TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThen
     EXPECT_STREQ(testVersion.c_str(), caps.driverVersion);
 }
 
+TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenDebugVariableOverrideDeviceNameIsSpecifiedThenDeviceNameIsTakenFromDebugVariable) {
+    DebugManagerStateRestore restore;
+    const std::string testDeviceName = "testDeviceName";
+    const std::string debugDeviceName = "debugDeviceName";
+    DebugManager.flags.OverrideDeviceName.set(debugDeviceName);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    DriverInfoMock *driverInfoMock = new DriverInfoMock();
+    driverInfoMock->setDeviceName(testDeviceName);
+
+    device->driverInfo.reset(driverInfoMock);
+    device->initializeCaps();
+
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_STRNE(testDeviceName.c_str(), caps.name);
+    EXPECT_STREQ(debugDeviceName.c_str(), caps.name);
+}
+
 TEST_F(DeviceGetCapsTest, givenNoPciBusInfoThenPciBusInfoExtensionNotAvailable) {
     const PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
 

@@ -1016,6 +1016,20 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsNotEmptyThenDev
     EXPECT_STRNE(deviceProperties.name, name.c_str());
 }
 
+TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDebugVariableOverrideDeviceNameIsSpecifiedThenDeviceNameIsTakenFromDebugVariable) {
+    DebugManagerStateRestore restore;
+    const std::string testDeviceName = "test device name";
+    DebugManager.flags.OverrideDeviceName.set(testDeviceName);
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    ze_device_properties_t deviceProperties{};
+    auto name = device->getNEODevice()->getDeviceInfo().name;
+    deviceImp->driverInfo.reset();
+    deviceImp->getProperties(&deviceProperties);
+    EXPECT_STRNE(deviceProperties.name, name.c_str());
+    EXPECT_STREQ(deviceProperties.name, testDeviceName.c_str());
+}
+
 TEST_F(DeviceTest, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.type = ZE_DEVICE_TYPE_GPU;

@@ -75,10 +75,16 @@ void ClDevice::initializeCaps() {
 
     driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
-    name = getClDeviceName(hwInfo);
+    if (DebugManager.flags.OverrideDeviceName.get() != "unk") {
+        name.assign(DebugManager.flags.OverrideDeviceName.get().c_str());
+    } else {
+        name = getClDeviceName(hwInfo);
+        if (driverInfo) {
+            name.assign(driverInfo->getDeviceName(name).c_str());
+        }
+    }
 
     if (driverInfo) {
-        name.assign(driverInfo->getDeviceName(name).c_str());
         driverVersion.assign(driverInfo->getVersion(driverVersion).c_str());
         sharingFactory.verifyExtensionSupport(driverInfo.get());
     }
