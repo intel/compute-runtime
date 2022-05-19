@@ -111,7 +111,6 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void virtualFree(void *ptr, size_t size);
 
     MOCKABLE_VIRTUAL bool isShutdownInProgress();
-    MOCKABLE_VIRTUAL bool isDebugAttachAvailable();
 
     bool isGpuHangDetected(OsContext &osContext) override;
 
