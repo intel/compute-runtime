@@ -107,8 +107,8 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBuffer
 
     EXPECT_EQ(1u, mock->numRegions);
     auto memRegions = mock->memRegions;
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, memRegions.memory_class);
-    EXPECT_EQ(0u, memRegions.memory_instance);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, memRegions.memoryClass);
+    EXPECT_EQ(0u, memRegions.memoryInstance);
 
     EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());

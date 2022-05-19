@@ -28,7 +28,7 @@ class DrmTipMock : public DrmMock {
 
     //DRM_IOCTL_I915_GEM_CREATE_EXT
     drm_i915_gem_create_ext createExt{};
-    drm_i915_gem_memory_class_instance memRegions{};
+    MemoryClassInstance memRegions{};
     uint32_t numRegions = 0;
     int gemCreateExtRetVal = 0;
 
@@ -106,11 +106,11 @@ class DrmTipMock : public DrmMock {
                 return EINVAL;
             }
             this->numRegions = extMemRegions->num_regions;
-            this->memRegions = *reinterpret_cast<drm_i915_gem_memory_class_instance *>(extMemRegions->regions);
+            this->memRegions = *reinterpret_cast<MemoryClassInstance *>(extMemRegions->regions);
             if (this->numRegions == 0) {
                 return EINVAL;
             }
-            if ((this->memRegions.memory_class != I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memory_class != I915_MEMORY_CLASS_DEVICE)) {
+            if ((this->memRegions.memoryClass != I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memoryClass != I915_MEMORY_CLASS_DEVICE)) {
                 return EINVAL;
             }
             return gemCreateExtRetVal;

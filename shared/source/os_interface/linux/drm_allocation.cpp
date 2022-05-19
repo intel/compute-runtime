@@ -276,16 +276,16 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     }
 
     if (flags.device_preferred_location != enabledMemAdviseFlags.device_preferred_location) {
-        drm_i915_gem_memory_class_instance region{};
+        MemoryClassInstance region{};
         for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
             auto bo = bufferObjects[handleId];
             if (bo != nullptr) {
                 if (flags.device_preferred_location) {
-                    region.memory_class = I915_MEMORY_CLASS_DEVICE;
-                    region.memory_instance = handleId;
+                    region.memoryClass = I915_MEMORY_CLASS_DEVICE;
+                    region.memoryInstance = handleId;
                 } else {
-                    region.memory_class = -1;
-                    region.memory_instance = 0;
+                    region.memoryClass = -1;
+                    region.memoryInstance = 0;
                 }
                 success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
             }

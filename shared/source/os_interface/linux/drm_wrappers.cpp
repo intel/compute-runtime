@@ -74,4 +74,8 @@ static_assert(offsetof(QueryTopologyInfo, euOffset) == offsetof(drm_i915_query_t
 static_assert(offsetof(QueryTopologyInfo, euStride) == offsetof(drm_i915_query_topology_info, eu_stride));
 static_assert(offsetof(QueryTopologyInfo, data) == offsetof(drm_i915_query_topology_info, data));
 
+static_assert(sizeof(MemoryClassInstance) == sizeof(drm_i915_gem_memory_class_instance));
+static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(drm_i915_gem_memory_class_instance, memory_class));
+static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(drm_i915_gem_memory_class_instance, memory_instance));
+
 } // namespace NEO

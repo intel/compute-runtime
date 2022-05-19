@@ -156,7 +156,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
             return EINVAL;
         }
 
-        auto data = reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(extension->param.data);
+        auto data = reinterpret_cast<MemoryClassInstance *>(extension->param.data);
         if (!data) {
             return EINVAL;
         }
@@ -168,7 +168,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
 
         receivedCreateGemExt->memoryRegions.clear();
         for (uint32_t i = 0; i < extension->param.size; i++) {
-            receivedCreateGemExt->memoryRegions.push_back({data[i].memory_class, data[i].memory_instance});
+            receivedCreateGemExt->memoryRegions.push_back({data[i].memoryClass, data[i].memoryInstance});
         }
 
         const auto firstMemoryRegion = receivedCreateGemExt->memoryRegions[0];

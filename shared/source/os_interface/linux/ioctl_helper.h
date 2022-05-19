@@ -28,11 +28,6 @@ struct HardwareInfo;
 
 extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
-struct MemoryClassInstance {
-    uint16_t memoryClass;
-    uint16_t memoryInstance;
-};
-
 struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;

@@ -70,7 +70,7 @@ class DrmMockProdDg1 : public DrmTipMock {
                 return EINVAL;
             }
             numRegions = regionParam->size;
-            memRegions = *reinterpret_cast<drm_i915_gem_memory_class_instance *>(regionParam->data);
+            memRegions = *reinterpret_cast<MemoryClassInstance *>(regionParam->data);
             return gemCreateExtRetVal;
         }
         return -1;

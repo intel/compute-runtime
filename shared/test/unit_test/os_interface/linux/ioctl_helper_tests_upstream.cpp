@@ -96,7 +96,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(1u, drm->numRegions);
     EXPECT_EQ(1024u, drm->createExt.size);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memory_class);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {

@@ -35,12 +35,12 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int 
             (setparamRegion.param.param != (PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_MEMORY_REGIONS))) {
             return EINVAL;
         }
-        auto data = reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(setparamRegion.param.data);
+        auto data = reinterpret_cast<MemoryClassInstance *>(setparamRegion.param.data);
         if (data == nullptr) {
             return EINVAL;
         }
 
-        if ((data->memory_class != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memory_class != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
+        if ((data->memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
     } else if (request == PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE) {

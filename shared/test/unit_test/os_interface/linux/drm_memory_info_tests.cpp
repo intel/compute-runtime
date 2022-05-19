@@ -247,6 +247,6 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingle
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memory_class);
+    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, drm->memRegions.memoryClass);
     EXPECT_EQ(1024u, drm->createExt.size);
 }

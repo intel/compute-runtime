@@ -83,4 +83,9 @@ struct QueryTopologyInfo {
     uint8_t data[];
 };
 
+struct MemoryClassInstance {
+    uint16_t memoryClass;
+    uint16_t memoryInstance;
+};
+
 } // namespace NEO
