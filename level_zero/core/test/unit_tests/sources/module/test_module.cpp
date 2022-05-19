@@ -7,6 +7,8 @@
 
 #include "shared/source/compiler_interface/compiler_options/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
+#include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -19,6 +21,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
+#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -1973,6 +1976,36 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
     EXPECT_FALSE(success);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+
+    NEO::Ar::ArEncoder encoder;
+    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
+    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
+
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk." + requiredStepping, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, programTokens.storage));
+
+    NEO::TargetDevice target;
+    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.stepping = programTokens.header->SteppingId;
+    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+
+    auto arData = encoder.encode();
+    L0::ModuleTranslationUnit moduleTuValid(this->device);
+    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size());
+    EXPECT_TRUE(success);
+    EXPECT_NE(moduleTuValid.packedDeviceBinarySize, arData.size());
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {

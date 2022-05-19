@@ -278,8 +278,14 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
         if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
             this->unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
             this->unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
-            this->packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(archive.begin()), archive.size());
-            this->packedDeviceBinarySize = archive.size();
+            // If the Native Binary was an Archive, then packedTargetDeviceBinary will be the packed Binary for the Target Device.
+            if (singleDeviceBinary.packedTargetDeviceBinary.size() > 0) {
+                this->packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.packedTargetDeviceBinary.begin()), singleDeviceBinary.packedTargetDeviceBinary.size());
+                this->packedDeviceBinarySize = singleDeviceBinary.packedTargetDeviceBinary.size();
+            } else {
+                this->packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(archive.begin()), archive.size());
+                this->packedDeviceBinarySize = archive.size();
+            }
         }
     }
 

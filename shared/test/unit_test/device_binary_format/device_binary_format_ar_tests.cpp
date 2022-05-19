@@ -95,6 +95,36 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
     EXPECT_EQ(NEO::DeviceBinaryFormat::Patchtokens, unpacked.format);
 }
 
+TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTargetDeviceBinaryIsSet) {
+    PatchTokensTestData::ValidEmptyProgram programTokens;
+    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+
+    NEO::Ar::ArEncoder encoder;
+    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
+    std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
+    std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
+
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProductConfig, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct + "." + requiredStepping, programTokens.storage));
+    ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "unk." + requiredStepping, programTokens.storage));
+
+    NEO::TargetDevice target;
+    target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
+    target.productConfig = productConfig;
+    target.stepping = programTokens.header->SteppingId;
+    target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
+
+    auto arData = encoder.encode();
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    auto unpacked = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(arData, requiredProduct, target, unpackErrors, unpackWarnings);
+    EXPECT_NE(0U, unpacked.packedTargetDeviceBinary.size());
+}
+
 TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);

@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/helpers/string.h"
 
 namespace NEO {
 void searchForBinary(Ar::Ar &archiveData, const ConstStringRef filter, Ar::ArFileEntryHeaderAndData *&matched) {
@@ -70,7 +71,7 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Archive>(co
                     unpacked.intermediateRepresentation = unpackedGenericIr.intermediateRepresentation;
                 }
             }
-
+            unpacked.packedTargetDeviceBinary = ArrayRef<const uint8_t>(matchedFile->fileData.begin(), matchedFile->fileData.size());
             return unpacked;
         }
         if (binaryForRecompilation.intermediateRepresentation.empty() && (false == unpacked.intermediateRepresentation.empty())) {

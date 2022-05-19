@@ -72,6 +72,7 @@ struct SingleDeviceBinary {
     ArrayRef<const uint8_t> deviceBinary;
     ArrayRef<const uint8_t> debugData;
     ArrayRef<const uint8_t> intermediateRepresentation;
+    ArrayRef<const uint8_t> packedTargetDeviceBinary;
     ConstStringRef buildOptions;
     TargetDevice targetDevice;
 };
