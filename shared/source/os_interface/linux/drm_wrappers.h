@@ -88,4 +88,20 @@ struct MemoryClassInstance {
     uint16_t memoryInstance;
 };
 
+struct GemMmapOffset {
+    uint32_t handle;
+    uint32_t pad;
+    uint64_t offset;
+    uint64_t flags;
+    uint64_t extensions;
+};
+
+struct GemMmap {
+    uint32_t handle;
+    uint32_t pad;
+    uint64_t offset;
+    uint64_t size;
+    uint64_t addrPtr;
+    uint64_t flags;
+};
 } // namespace NEO

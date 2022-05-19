@@ -78,4 +78,18 @@ static_assert(sizeof(MemoryClassInstance) == sizeof(drm_i915_gem_memory_class_in
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(drm_i915_gem_memory_class_instance, memory_class));
 static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(drm_i915_gem_memory_class_instance, memory_instance));
 
+static_assert(sizeof(GemMmapOffset) == sizeof(drm_i915_gem_mmap_offset));
+static_assert(offsetof(GemMmapOffset, handle) == offsetof(drm_i915_gem_mmap_offset, handle));
+static_assert(offsetof(GemMmapOffset, pad) == offsetof(drm_i915_gem_mmap_offset, pad));
+static_assert(offsetof(GemMmapOffset, offset) == offsetof(drm_i915_gem_mmap_offset, offset));
+static_assert(offsetof(GemMmapOffset, flags) == offsetof(drm_i915_gem_mmap_offset, flags));
+static_assert(offsetof(GemMmapOffset, extensions) == offsetof(drm_i915_gem_mmap_offset, extensions));
+
+static_assert(sizeof(GemMmap) == sizeof(drm_i915_gem_mmap));
+static_assert(offsetof(GemMmap, handle) == offsetof(drm_i915_gem_mmap, handle));
+static_assert(offsetof(GemMmap, pad) == offsetof(drm_i915_gem_mmap, pad));
+static_assert(offsetof(GemMmap, offset) == offsetof(drm_i915_gem_mmap, offset));
+static_assert(offsetof(GemMmap, size) == offsetof(drm_i915_gem_mmap, size));
+static_assert(offsetof(GemMmap, addrPtr) == offsetof(drm_i915_gem_mmap, addr_ptr));
+static_assert(offsetof(GemMmap, flags) == offsetof(drm_i915_gem_mmap, flags));
 } // namespace NEO

@@ -69,7 +69,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         return 0;
     } break;
     case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
-        auto mmapArg = static_cast<drm_i915_gem_mmap_offset *>(arg);
+        auto mmapArg = static_cast<GemMmapOffset *>(arg);
         mmapArg->offset = 0;
         return mmapOffsetReturn;
     } break;

@@ -853,13 +853,13 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     auto drmInputAllocation = static_cast<DrmAllocation *>(inputGraphicsAllocation);
     if (drmInputAllocation->getMmapPtr()) {
         auto bo = drmInputAllocation->getBO();
-        drm_i915_gem_mmap mmapArg = {};
+        GemMmap mmapArg = {};
         mmapArg.handle = bo->peekHandle();
         mmapArg.size = bo->peekSize();
         if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
             return nullptr;
         }
-        srcPtr = addrToPtr(mmapArg.addr_ptr);
+        srcPtr = addrToPtr(mmapArg.addrPtr);
         inputGraphicsAllocation->lock(srcPtr);
     } else {
         srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
@@ -1099,14 +1099,14 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     if (bo == nullptr)
         return nullptr;
 
-    drm_i915_gem_mmap mmapArg = {};
+    GemMmap mmapArg = {};
     mmapArg.handle = bo->peekHandle();
     mmapArg.size = bo->peekSize();
     if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
         return nullptr;
     }
 
-    bo->setLockedAddress(reinterpret_cast<void *>(mmapArg.addr_ptr));
+    bo->setLockedAddress(reinterpret_cast<void *>(mmapArg.addrPtr));
 
     [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
     DEBUG_BREAK_IF(!success);
@@ -1634,7 +1634,7 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
 bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset) {
     constexpr uint64_t mmapOffsetFixed = 4;
 
-    drm_i915_gem_mmap_offset mmapOffset = {};
+    GemMmapOffset mmapOffset = {};
     mmapOffset.handle = bo.peekHandle();
     mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
     auto &drm = getDrm(rootDeviceIndex);

@@ -211,8 +211,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GEM_MMAP) {
         ioctlCount.gemMmap++;
-        auto mmapArg = static_cast<drm_i915_gem_mmap *>(arg);
-        mmapArg->addr_ptr = reinterpret_cast<__u64>(lockedPtr);
+        auto mmapArg = static_cast<GemMmap *>(arg);
+        mmapArg->addrPtr = reinterpret_cast<uint64_t>(lockedPtr);
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_WAIT) {

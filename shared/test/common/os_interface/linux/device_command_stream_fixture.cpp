@@ -122,13 +122,13 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         ioctl_cnt.handleToPrimeFd++;
     } break;
     case DRM_IOCTL_I915_GEM_MMAP: {
-        auto mmapParams = (drm_i915_gem_mmap *)arg;
+        auto mmapParams = static_cast<NEO::GemMmap *>(arg);
         mmapHandle = mmapParams->handle;
         mmapPad = mmapParams->pad;
         mmapOffset = mmapParams->offset;
         mmapSize = mmapParams->size;
         mmapFlags = mmapParams->flags;
-        mmapParams->addr_ptr = mmapAddrPtr;
+        mmapParams->addrPtr = mmapAddrPtr;
         ioctl_cnt.gemMmap++;
     } break;
     case DRM_IOCTL_I915_GEM_SET_DOMAIN: {
@@ -178,7 +178,7 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         ioctl_cnt.contextDestroy++;
     } break;
     case DRM_IOCTL_I915_GEM_MMAP_OFFSET: {
-        auto mmapOffsetParams = reinterpret_cast<drm_i915_gem_mmap_offset *>(arg);
+        auto mmapOffsetParams = reinterpret_cast<NEO::GemMmapOffset *>(arg);
         mmapOffsetParams->handle = mmapOffsetHandle;
         mmapOffsetParams->offset = mmapOffsetExpected;
         mmapOffsetFlags = mmapOffsetParams->flags;
