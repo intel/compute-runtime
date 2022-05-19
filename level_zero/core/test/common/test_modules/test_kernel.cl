@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,4 +48,14 @@ __kernel void test_get_group_count(__global uint *outGroupCount) {
     outGroupCount[0] = get_num_groups(0);
     outGroupCount[1] = get_num_groups(1);
     outGroupCount[2] = get_num_groups(2);
+}
+
+kernel void memcpy_bytes(__global char *dst, const __global char *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src[gid];
+}
+
+kernel __attribute__((work_group_size_hint(1, 1, 1))) void memcpy_bytes_attr(__global char *dst, const __global char *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = src[gid];
 }

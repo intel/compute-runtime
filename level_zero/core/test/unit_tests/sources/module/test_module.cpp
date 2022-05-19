@@ -153,7 +153,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegementsThenIsaIsTr
 
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     if (hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
-        EXPECT_EQ(5u, blitterCalled);
+        EXPECT_EQ(7u, blitterCalled);
     } else {
         EXPECT_EQ(0u, blitterCalled);
     }
