@@ -456,9 +456,9 @@ TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCou
 
     EXPECT_TRUE(drm->sliceCountChangeSupported);
     EXPECT_TRUE(drm->setQueueSliceCount(newSliceCount));
-    drm_i915_gem_context_param_sseu sseu = {};
+    GemContextParamSseu sseu = {};
     EXPECT_EQ(0, drm->getQueueSliceCount(&sseu));
-    EXPECT_EQ(drm->getSliceMask(newSliceCount), sseu.slice_mask);
+    EXPECT_EQ(drm->getSliceMask(newSliceCount), sseu.sliceMask);
 }
 
 namespace NEO {

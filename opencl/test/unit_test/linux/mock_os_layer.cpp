@@ -186,7 +186,7 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
         break;
 #endif
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(struct drm_i915_gem_context_param_sseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->ctx_id == 0) {
             ret = failOnSetParamSseu;
         } else {
             ret = -1;
@@ -203,7 +203,7 @@ int drmGetContextParam(drm_i915_gem_context_param *param) {
 
     switch (param->param) {
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(struct drm_i915_gem_context_param_sseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->ctx_id == 0) {
             ret = failOnGetParamSseu;
         } else {
             ret = -1;

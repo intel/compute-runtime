@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "igfxfmid.h"
@@ -24,20 +25,12 @@ class Drm;
 class IoctlHelper;
 enum class CacheRegion : uint16_t;
 struct HardwareInfo;
-struct ExecBuffer;
-struct ExecObject;
-struct QueryItem;
 
 extern IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT];
 
 struct MemoryClassInstance {
     uint16_t memoryClass;
     uint16_t memoryInstance;
-};
-
-struct EngineClassInstance {
-    uint16_t engineClass;
-    uint16_t engineInstance;
 };
 
 struct MemoryRegion {

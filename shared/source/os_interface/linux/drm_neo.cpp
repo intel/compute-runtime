@@ -370,13 +370,13 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     UNRECOVERABLE_IF(retVal != 0);
 }
 
-int Drm::getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu) {
+int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     drm_i915_gem_context_param contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_SSEU;
-    sseu->engine.engine_class = I915_ENGINE_CLASS_RENDER;
-    sseu->engine.engine_instance = I915_EXEC_DEFAULT;
+    sseu->engine.engineClass = I915_ENGINE_CLASS_RENDER;
+    sseu->engine.engineInstance = I915_EXEC_DEFAULT;
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
-    contextParam.size = sizeof(struct drm_i915_gem_context_param_sseu);
+    contextParam.size = sizeof(struct GemContextParamSseu);
 
     return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
 }
@@ -387,12 +387,12 @@ uint64_t Drm::getSliceMask(uint64_t sliceCount) {
 bool Drm::setQueueSliceCount(uint64_t sliceCount) {
     if (sliceCountChangeSupported) {
         drm_i915_gem_context_param contextParam = {};
-        sseu.slice_mask = getSliceMask(sliceCount);
+        sseu.sliceMask = getSliceMask(sliceCount);
 
         contextParam.param = I915_CONTEXT_PARAM_SSEU;
         contextParam.ctx_id = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
-        contextParam.size = sizeof(struct drm_i915_gem_context_param_sseu);
+        contextParam.size = sizeof(struct GemContextParamSseu);
         int retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
         if (retVal == 0) {
             return true;

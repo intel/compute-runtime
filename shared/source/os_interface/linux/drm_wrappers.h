@@ -57,4 +57,18 @@ struct QueryItem {
     uint64_t dataPtr;
 };
 
+struct EngineClassInstance {
+    uint16_t engineClass;
+    uint16_t engineInstance;
+};
+
+struct GemContextParamSseu {
+    EngineClassInstance engine;
+    uint32_t flags;
+    uint64_t sliceMask;
+    uint64_t subsliceMask;
+    uint16_t minEusPerSubslice;
+    uint16_t maxEusPerSubslice;
+};
+
 } // namespace NEO

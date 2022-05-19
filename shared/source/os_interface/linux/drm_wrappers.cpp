@@ -51,4 +51,16 @@ static_assert(offsetof(QueryItem, length) == offsetof(drm_i915_query_item, lengt
 static_assert(offsetof(QueryItem, flags) == offsetof(drm_i915_query_item, flags));
 static_assert(offsetof(QueryItem, dataPtr) == offsetof(drm_i915_query_item, data_ptr));
 
+static_assert(sizeof(EngineClassInstance) == sizeof(i915_engine_class_instance));
+static_assert(offsetof(EngineClassInstance, engineClass) == offsetof(i915_engine_class_instance, engine_class));
+static_assert(offsetof(EngineClassInstance, engineInstance) == offsetof(i915_engine_class_instance, engine_instance));
+
+static_assert(sizeof(GemContextParamSseu) == sizeof(drm_i915_gem_context_param_sseu));
+static_assert(offsetof(GemContextParamSseu, engine) == offsetof(drm_i915_gem_context_param_sseu, engine));
+static_assert(offsetof(GemContextParamSseu, flags) == offsetof(drm_i915_gem_context_param_sseu, flags));
+static_assert(offsetof(GemContextParamSseu, sliceMask) == offsetof(drm_i915_gem_context_param_sseu, slice_mask));
+static_assert(offsetof(GemContextParamSseu, subsliceMask) == offsetof(drm_i915_gem_context_param_sseu, subslice_mask));
+static_assert(offsetof(GemContextParamSseu, minEusPerSubslice) == offsetof(drm_i915_gem_context_param_sseu, min_eus_per_subslice));
+static_assert(offsetof(GemContextParamSseu, maxEusPerSubslice) == offsetof(drm_i915_gem_context_param_sseu, max_eus_per_subslice));
+
 } // namespace NEO

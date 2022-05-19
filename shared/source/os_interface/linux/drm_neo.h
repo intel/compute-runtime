@@ -256,7 +256,7 @@ class Drm : public DriverModel {
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
 
-    int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
+    int getQueueSliceCount(GemContextParamSseu *sseu);
     bool translateTopologyInfo(const drm_i915_query_topology_info *queryTopologyInfo, QueryTopologyData &data, TopologyMapping &mapping);
     std::string generateUUID();
     std::string generateElfUUID(const void *data);
@@ -294,7 +294,7 @@ class Drm : public DriverModel {
     };
 #pragma pack()
 
-    drm_i915_gem_context_param_sseu sseu{};
+    GemContextParamSseu sseu{};
     ADAPTER_BDF adapterBDF{};
     uint32_t pciDomain = 0;
 

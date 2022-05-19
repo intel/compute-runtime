@@ -112,7 +112,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
             if (storedRetValForSetSSEU == 0) {
-                storedParamSseu = (*static_cast<drm_i915_gem_context_param_sseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).slice_mask;
+                storedParamSseu = (*static_cast<GemContextParamSseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).sliceMask;
             }
             return this->storedRetValForSetSSEU;
         }
@@ -138,7 +138,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
             if (storedRetValForGetSSEU == 0) {
-                (*static_cast<drm_i915_gem_context_param_sseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).slice_mask = storedParamSseu;
+                (*static_cast<GemContextParamSseu *>(reinterpret_cast<void *>(receivedContextParamRequest.value))).sliceMask = storedParamSseu;
             }
             return this->storedRetValForGetSSEU;
         }
