@@ -351,6 +351,8 @@ WaitStatus CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<
                 return WaitStatus::GpuHang;
             }
         }
+    } else if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
     for (const CopyEngineState &copyEngine : copyEnginesToWait) {

@@ -18,6 +18,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
+#include "opencl/source/gtpin/gtpin_defs.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
@@ -55,18 +56,15 @@ struct ContextTest : public PlatformFixture,
     void SetUp() override {
         PlatformFixture::SetUp();
 
-        cl_platform_id platform = pPlatform;
-        properties = new cl_context_properties[3];
-        properties[0] = CL_CONTEXT_PLATFORM;
-        properties[1] = (cl_context_properties)platform;
-        properties[2] = 0;
+        properties.push_back(CL_CONTEXT_PLATFORM);
+        properties.push_back(reinterpret_cast<cl_context_properties>(pPlatform));
+        properties.push_back(0);
 
-        context = Context::create<WhiteBoxContext>(properties, ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
+        context = Context::create<WhiteBoxContext>(properties.data(), ClDeviceVector(devices, num_devices), nullptr, nullptr, retVal);
         ASSERT_NE(nullptr, context);
     }
 
     void TearDown() override {
-        delete[] properties;
         delete context;
         PlatformFixture::TearDown();
     }
@@ -77,7 +75,7 @@ struct ContextTest : public PlatformFixture,
 
     cl_int retVal = CL_SUCCESS;
     WhiteBoxContext *context = nullptr;
-    cl_context_properties *properties = nullptr;
+    std::vector<cl_context_properties> properties;
 };
 
 TEST_F(ContextTest, WhenCreatingContextThenDevicesAllDevicesExist) {
@@ -92,7 +90,7 @@ TEST_F(ContextTest, WhenCreatingContextThenMemoryManagerForContextIsSet) {
 
 TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreCopied) {
     auto contextProperties = context->getProperties();
-    EXPECT_NE(properties, contextProperties);
+    EXPECT_NE(properties.data(), contextProperties);
 }
 
 TEST_F(ContextTest, WhenCreatingContextThenPropertiesAreValid) {
@@ -716,3 +714,45 @@ TEST_F(AllocationReuseContextTest, givenHostPtrStoredInMapOperationsStorageAndRe
     EXPECT_EQ(InternalMemoryType::NOT_SPECIFIED, retrievedMemoryType);
     EXPECT_TRUE(retrievedCpuCopyStatus);
 }
+
+struct MockGTPinTestContext : Context {
+    using Context::svmAllocsManager;
+};
+
+struct MockSVMAllocManager : SVMAllocsManager {
+    MockSVMAllocManager() : SVMAllocsManager(nullptr, false) {}
+    ~MockSVMAllocManager() override {
+        svmAllocManagerDeleted = true;
+    }
+
+    inline static bool svmAllocManagerDeleted = false;
+};
+
+struct GTPinContextDestroyTest : ContextTest {
+    void SetUp() override {
+        ContextTest::SetUp();
+    }
+
+    void TearDown() override {
+        PlatformFixture::TearDown();
+    }
+};
+
+void onContextDestroy(gtpin::context_handle_t context) {
+    EXPECT_FALSE(MockSVMAllocManager::svmAllocManagerDeleted);
+}
+
+namespace NEO {
+extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
+TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotifiedBeforeSVMAllocManagerGetsDestroyed) {
+    auto mockContext = reinterpret_cast<MockGTPinTestContext *>(context);
+    if (mockContext->svmAllocsManager) {
+        delete mockContext->svmAllocsManager;
+    }
+    mockContext->svmAllocsManager = new MockSVMAllocManager();
+
+    GTPinCallbacks.onContextDestroy = onContextDestroy;
+    delete context;
+    EXPECT_TRUE(MockSVMAllocManager::svmAllocManagerDeleted);
+}
+} // namespace NEO

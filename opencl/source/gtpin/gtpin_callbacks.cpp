@@ -187,19 +187,17 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
 }
 
 void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
-    if (isGTPinInitialized) {
-        std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
-        size_t numElems = kernelExecQueue.size();
-        for (size_t n = 0; n < numElems;) {
-            if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
-                // Notify GT-Pin that execution of "command buffer" was completed
-                (*GTPinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
-                // Remove kernel's record from Kernel Execution Queue
-                kernelExecQueue.erase(kernelExecQueue.begin() + n);
-                numElems--;
-            } else {
-                n++;
-            }
+    std::unique_lock<GTPinLockType> lock{kernelExecQueueLock};
+    size_t numElems = kernelExecQueue.size();
+    for (size_t n = 0; n < numElems;) {
+        if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
+            // Notify GT-Pin that execution of "command buffer" was completed
+            (*GTPinCallbacks.onCommandBufferComplete)(kernelExecQueue[n].commandBuffer);
+            // Remove kernel's record from Kernel Execution Queue
+            kernelExecQueue.erase(kernelExecQueue.begin() + n);
+            numElems--;
+        } else {
+            n++;
         }
     }
 }

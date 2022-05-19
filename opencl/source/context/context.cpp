@@ -45,6 +45,8 @@ Context::Context(
 }
 
 Context::~Context() {
+    gtpinNotifyContextDestroy((cl_context)this);
+
     delete[] properties;
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < specialQueues.size(); rootDeviceIndex++) {
@@ -61,7 +63,6 @@ Context::~Context() {
     if (memoryManager && memoryManager->isAsyncDeleterEnabled()) {
         memoryManager->getDeferredDeleter()->removeClient();
     }
-    gtpinNotifyContextDestroy((cl_context)this);
     destructorCallbacks.invoke(this);
     for (auto &device : devices) {
         device->decRefInternal();
