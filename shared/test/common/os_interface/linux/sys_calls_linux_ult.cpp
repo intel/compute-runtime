@@ -44,6 +44,7 @@ uint32_t pwriteFuncCalled = 0u;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
+const char *drmVersion = "i915";
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -89,7 +90,7 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     if (fileDescriptor == fakeFileDescriptor) {
         if (request == DRM_IOCTL_VERSION) {
             auto pVersion = static_cast<drm_version_t *>(arg);
-            snprintf(pVersion->name, pVersion->name_len, "i915");
+            memcpy_s(pVersion->name, pVersion->name_len, drmVersion, strlen(drmVersion) + 1);
         }
     }
     if (request == DRM_IOCTL_I915_GEM_VM_CREATE) {

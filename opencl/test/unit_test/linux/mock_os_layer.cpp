@@ -246,7 +246,7 @@ int drmVirtualMemoryDestroy(drm_i915_gem_vm_control *control) {
 }
 
 int drmVersion(drm_version_t *version) {
-    strcpy(version->name, providedDrmVersion); // NOLINT(clang-analyzer-security.insecureAPI.strcpy)
+    memcpy_s(version->name, version->name_len, providedDrmVersion, strlen(providedDrmVersion) + 1);
 
     return failOnDrmVersion;
 }

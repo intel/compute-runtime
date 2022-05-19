@@ -563,7 +563,7 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
 
 void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath) {
     if (fileDescriptor >= 0) {
-        if (Drm::isi915Version(fileDescriptor)) {
+        if (Drm::isDrmSupported(fileDescriptor)) {
             hwDeviceIds.push_back(std::make_unique<HwDeviceIdDrm>(fileDescriptor, pciPath));
         } else {
             SysCalls::close(fileDescriptor);
@@ -658,7 +658,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
     return hwDeviceIds;
 }
 
-bool Drm::isi915Version(int fileDescriptor) {
+std::string Drm::getDrmVersion(int fileDescriptor) {
     drm_version_t version = {};
     char name[5] = {};
     version.name = name;
@@ -666,11 +666,11 @@ bool Drm::isi915Version(int fileDescriptor) {
 
     int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_VERSION, &version);
     if (ret) {
-        return false;
+        return {};
     }
 
     name[4] = '\0';
-    return strcmp(name, "i915") == 0;
+    return std::string(name);
 }
 
 std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {

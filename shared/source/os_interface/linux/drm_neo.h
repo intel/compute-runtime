@@ -202,7 +202,7 @@ class Drm : public DriverModel {
         return classHandles.size() > 0;
     }
 
-    static bool isi915Version(int fd);
+    static bool isDrmSupported(int fileDescriptor);
 
     static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
@@ -265,6 +265,7 @@ class Drm : public DriverModel {
     void printIoctlStatistics();
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
+    static std::string getDrmVersion(int fileDescriptor);
 
 #pragma pack(1)
     struct PCIConfig {
