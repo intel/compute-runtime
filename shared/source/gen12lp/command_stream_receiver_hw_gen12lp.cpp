@@ -61,7 +61,8 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 template <>
 void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                              GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                             uint32_t &compressionType, const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                             GMM_YUV_PLANE_ENUM plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         if (!gmmResourceInfo->getResourceFlags()->Info.Linear) {
@@ -92,11 +93,12 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;
     auto compressionDetails = 0u;
+    auto compressionType = 0u;
 
     getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails,
-                                rootDeviceEnvironment, blitProperties.srcPlane);
+                                compressionType, rootDeviceEnvironment, blitProperties.srcPlane);
     getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails,
-                                rootDeviceEnvironment, blitProperties.dstPlane);
+                                compressionType, rootDeviceEnvironment, blitProperties.dstPlane);
 
     blitCmd.setSourcePitch(srcRowPitch);
     blitCmd.setDestinationPitch(dstRowPitch);

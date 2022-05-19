@@ -269,7 +269,10 @@ void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitP
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                                 GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
+                                                                uint32_t &compressionType, const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                                GMM_YUV_PLANE_ENUM plane) {
+    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLodSurfaceState();
@@ -289,14 +292,17 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
         if (resInfo.MediaCompressed) {
             compressionDetails = gmmClientContext->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
             EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, plane);
+            compressionType = XY_BLOCK_COPY_BLT::COMPRESSION_TYPE::COMPRESSION_TYPE_MEDIA_COMPRESSION;
         } else if (resInfo.RenderCompressed) {
             compressionDetails = gmmClientContext->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
+            compressionType = XY_BLOCK_COPY_BLT::COMPRESSION_TYPE::COMPRESSION_TYPE_3D_COMPRESSION;
         }
     }
 }
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
+    using COMPRESSION_TYPE = typename GfxFamily::XY_BLOCK_COPY_BLT::COMPRESSION_TYPE;
     auto srcTileType = GMM_NOT_TILED;
     auto dstTileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
@@ -309,11 +315,13 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     auto dstMipTailLod = 0u;
     auto srcCompressionFormat = blitCmd.getSourceCompressionFormat();
     auto dstCompressionFormat = blitCmd.getDestinationCompressionFormat();
+    auto srcCompressionType = static_cast<uint32_t>(blitCmd.getSourceCompressionType());
+    auto dstCompressionType = static_cast<uint32_t>(blitCmd.getDestinationCompressionType());
 
     getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, srcTileType, srcMipTailLod, srcCompressionFormat,
-                                rootDeviceEnvironment, blitProperties.srcPlane);
+                                srcCompressionType, rootDeviceEnvironment, blitProperties.srcPlane);
     getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, dstTileType, dstMipTailLod, dstCompressionFormat,
-                                rootDeviceEnvironment, blitProperties.dstPlane);
+                                dstCompressionType, rootDeviceEnvironment, blitProperties.dstPlane);
 
     srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
@@ -332,6 +340,8 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProper
     blitCmd.setDestinationSurfaceDepth(static_cast<uint32_t>(blitProperties.dstSize.z));
     blitCmd.setSourceCompressionFormat(srcCompressionFormat);
     blitCmd.setDestinationCompressionFormat(dstCompressionFormat);
+    blitCmd.setSourceCompressionType(static_cast<COMPRESSION_TYPE>(srcCompressionType));
+    blitCmd.setDestinationCompressionType(static_cast<COMPRESSION_TYPE>(dstCompressionType));
 
     appendTilingType(srcTileType, dstTileType, blitCmd);
     appendClearColor(blitProperties, blitCmd);

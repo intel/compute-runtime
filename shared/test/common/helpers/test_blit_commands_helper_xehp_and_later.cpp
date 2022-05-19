@@ -534,7 +534,6 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenAppendSurfaceTypeThenCorrectSurfaceTypeIs
 }
 
 HWTEST2_F(BlitTests, givenInvalidResourceWhenAppendSurfaceTypeThenSurfaceTypeDoesNotChange, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_INVALID;
@@ -562,7 +561,6 @@ HWTEST2_F(BlitTests, givenInvalidResourceWhenAppendSurfaceTypeThenSurfaceTypeDoe
 }
 
 HWTEST2_F(BlitTests, givenResourcesWithoutGmmsWhenAppendSurfaceTypeThenSurfaceTypeDoesNotChange, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
@@ -583,7 +581,46 @@ HWTEST2_F(BlitTests, givenResourcesWithoutGmmsWhenAppendSurfaceTypeThenSurfaceTy
 }
 
 HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCompressionFormatIsSet, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    std::tuple<bool, bool, bool> params[]{
+        {false, false, false},
+        {false, true, true},
+        {true, false, true}};
+
+    for (auto &[mediaCompressed, renderCompressed, compressionExpected] : params) {
+        auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+        auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+        auto &resInfo = resourceInfo->getResourceFlags()->Info;
+        resInfo.MediaCompressed = mediaCompressed;
+        resInfo.RenderCompressed = renderCompressed;
+        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
+                                                 reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                 MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+        mockAllocationSrc.setGmm(gmm.get(), 0);
+        BlitProperties properties = {};
+        properties.srcAllocation = &mockAllocationSrc;
+        uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
+        GMM_TILE_TYPE tileType = GMM_NOT_TILED;
+        uint32_t mipTailLod = 0;
+        uint32_t compressionFormat = 0;
+        uint32_t compressionType = 0;
+        auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
+        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
+                                                                    compressionFormat, compressionType, pDevice->getRootDeviceEnvironment(),
+                                                                    GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+
+        if (compressionExpected) {
+            EXPECT_GT(compressionFormat, 0u);
+        } else {
+            EXPECT_EQ(compressionFormat, 0u);
+        }
+    }
+}
+
+HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCompressionTypeIsSet, IsWithinXeGfxFamily) {
+    using COMPRESSION_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_TYPE;
+    constexpr uint32_t undefinedCompressionType = 0x888;
+    constexpr uint32_t mediaCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_MEDIA_COMPRESSION);
+    constexpr uint32_t renderCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_3D_COMPRESSION);
 
     std::tuple<bool, bool, bool> params[]{
         {false, false, false},
@@ -606,21 +643,23 @@ HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCo
         GMM_TILE_TYPE tileType = GMM_NOT_TILED;
         uint32_t mipTailLod = 0;
         uint32_t compressionFormat = 0;
+        uint32_t compressionType = undefinedCompressionType;
         auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
         BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
-                                                                    compressionFormat, pDevice->getRootDeviceEnvironment(), GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
+                                                                    compressionFormat, compressionType, pDevice->getRootDeviceEnvironment(),
+                                                                    GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
-        if (compressionExpected) {
-            EXPECT_GT(compressionFormat, 0u);
+        if (!compressionExpected) {
+            EXPECT_EQ(compressionType, undefinedCompressionType);
+        } else if (mediaCompressed) {
+            EXPECT_EQ(compressionType, mediaCompressionType);
         } else {
-            EXPECT_EQ(compressionFormat, 0u);
+            EXPECT_EQ(compressionType, renderCompressionType);
         }
     }
 }
 
 HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompressionFormatIsProperlyAdjusted, CompressionParamsSupportedMatcher) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-
     struct {
         uint8_t returnedCompressionFormat;
         uint8_t expectedCompressionFormat;
@@ -661,12 +700,14 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     GMM_TILE_TYPE tileType = GMM_NOT_TILED;
     uint32_t mipTailLod = 0;
     uint32_t compressionFormat = 0;
+    uint32_t compressionType = 0;
     auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
 
     for (auto &testInput : testInputs) {
         gmmClientContext->compressionFormatToReturn = testInput.returnedCompressionFormat;
         BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
-                                                                    compressionFormat, pDevice->getRootDeviceEnvironment(), testInput.plane);
+                                                                    compressionFormat, compressionType,
+                                                                    pDevice->getRootDeviceEnvironment(), testInput.plane);
 
         EXPECT_EQ(testInput.expectedCompressionFormat, compressionFormat);
     }
@@ -716,7 +757,6 @@ struct MyMockResourecInfo : public GmmResourceInfo {
     GMM_RESOURCE_FLAG flags = {};
 };
 HWTEST2_F(BlitTests, givenResourceWithoutGmmWhenAppendImageCommandsThenPitchEqualPropertiesValue, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
@@ -742,7 +782,6 @@ HWTEST2_F(BlitTests, givenResourceWithoutGmmWhenAppendImageCommandsThenPitchEqua
     EXPECT_EQ(bltCmd.getSourcePitch(), properties.srcRowPitch);
 }
 HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImagesIsCalledThenSlicePitchIsCorrect, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
@@ -780,7 +819,6 @@ HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImag
 }
 
 HWTEST2_F(BlitTests, givenResourceInfoWithZeroPitchWhenAppendImageCommandsThenPitchEqualPropertiesValue, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     gmm->gmmResourceInfo.reset(new MyMockResourecInfo(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams));
@@ -811,7 +849,6 @@ HWTEST2_F(BlitTests, givenResourceInfoWithZeroPitchWhenAppendImageCommandsThenPi
 }
 
 HWTEST2_F(BlitTests, givenTiledAllocationWhenAppendBlitCommandsForImagesThenBlitCmdIsCorrect, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
@@ -848,7 +885,6 @@ HWTEST2_F(BlitTests, givenTiledAllocationWhenAppendBlitCommandsForImagesThenBlit
 }
 
 HWTEST2_F(BlitTests, givenAlocationsWhenAppendBlitCommandsForImagesThenSurfaceSizesAreProgrammedCorrectly, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -881,7 +917,6 @@ HWTEST2_F(BlitTests, givenAlocationsWhenAppendBlitCommandsForImagesThenSurfaceSi
 }
 
 HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageCommandsThenPitchEqualValueFromProperties, IsXeHpCore) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
@@ -914,6 +949,75 @@ HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageComma
     EXPECT_EQ(bltCmd.getSourcePitch(), properties.dstRowPitch);
     EXPECT_NE(bltCmd.getDestinationPitch(), gmm->gmmResourceInfo->getRenderPitch());
     EXPECT_NE(bltCmd.getSourcePitch(), gmm->gmmResourceInfo->getRenderPitch());
+}
+
+HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, isXeHpOrXeHpgCore) {
+    auto verifyCompressionFormat = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionFormat) {
+        if (mediaCompressed || renderCompressed) {
+            EXPECT_GT(compressionFormat, 0u);
+        } else {
+            EXPECT_EQ(compressionFormat, 0u);
+        }
+    };
+
+    auto verifyCompressionType = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionType) {
+        using COMPRESSION_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_TYPE;
+        constexpr auto mediaCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_MEDIA_COMPRESSION);
+        constexpr auto renderCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_3D_COMPRESSION);
+        if (mediaCompressed) {
+            EXPECT_EQ(compressionType, mediaCompressionType);
+        } else if (renderCompressed) {
+            EXPECT_EQ(compressionType, renderCompressionType);
+        } else {
+            EXPECT_EQ(compressionType, 0u);
+        }
+    };
+
+    BlitProperties properties = {};
+    properties.srcSize = {1, 1, 1};
+    properties.dstSize = {1, 1, 1};
+    properties.dstRowPitch = 0x100;
+    properties.srcRowPitch = 0x100;
+    auto srcSlicePitch = static_cast<uint32_t>(properties.srcSlicePitch);
+    auto dstSlicePitch = static_cast<uint32_t>(properties.dstSlicePitch);
+
+    std::tuple<bool, bool> params[]{
+        {false, false},
+        {false, true},
+        {true, false}};
+
+    for (auto &[mediaCompressedSrc, renderCompressedSrc] : params) {
+        auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+        auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
+        resourceInfoSrc->getResourceFlags()->Info.MediaCompressed = mediaCompressedSrc;
+        resourceInfoSrc->getResourceFlags()->Info.RenderCompressed = renderCompressedSrc;
+        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
+                                                 reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                 MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+        mockAllocationSrc.setGmm(gmmSrc.get(), 0);
+        properties.srcAllocation = &mockAllocationSrc;
+
+        for (auto &[mediaCompressedDst, renderCompressedDst] : params) {
+            auto gmmDst = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+            auto resourceInfoDst = static_cast<MockGmmResourceInfo *>(gmmDst->gmmResourceInfo.get());
+            resourceInfoDst->getResourceFlags()->Info.MediaCompressed = mediaCompressedDst;
+            resourceInfoDst->getResourceFlags()->Info.RenderCompressed = renderCompressedDst;
+            MockGraphicsAllocation mockAllocationDst(0, AllocationType::INTERNAL_HOST_MEMORY,
+                                                     reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                     MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+            mockAllocationDst.setGmm(gmmDst.get(), 0);
+            properties.dstAllocation = &mockAllocationDst;
+            auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+            BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd, pDevice->getRootDeviceEnvironment(),
+                                                                        srcSlicePitch, dstSlicePitch);
+
+            verifyCompressionFormat(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceCompressionFormat());
+            verifyCompressionFormat(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationCompressionFormat());
+
+            verifyCompressionType(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceCompressionType());
+            verifyCompressionType(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationCompressionType());
+        }
+    }
 }
 
 HWTEST2_F(BlitTests, givenLinearResorcesWhenAppendSliceOffsetsThenAdressAreOffsetted, IsXeHpCore) {
