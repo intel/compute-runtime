@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm/i915_drm.h"
+#include "test_files_setup.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -68,7 +69,7 @@ int open(const char *file, int flags) {
     if (strcmp(file, "/dev/dri/by-path/pci-0000:invalid-render") == 0) {
         return 0;
     }
-    if (strcmp(file, "./test_files/linux/by-path/pci-0000:00:02.0-render") == 0) {
+    if (strcmp(file, NEO_SHARED_TEST_FILES_DIR "/linux/by-path/pci-0000:00:02.0-render") == 0) {
         return fakeFileDescriptor;
     }
 

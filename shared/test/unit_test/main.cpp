@@ -29,6 +29,7 @@
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "gmock/gmock.h"
+#include "test_files_setup.h"
 
 #include <algorithm>
 #include <fstream>
@@ -319,6 +320,10 @@ int main(int argc, char **argv) {
     testBinaryFiles.append("/");
     testBinaryFiles.append(testFiles);
     testFiles = testBinaryFiles;
+
+    std::string nClFiles = NEO_SHARED_TEST_FILES_DIR;
+    nClFiles.append("/");
+    clFiles = nClFiles;
 
     std::string executionDirectory(hardwarePrefix[productFamily]);
     executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise

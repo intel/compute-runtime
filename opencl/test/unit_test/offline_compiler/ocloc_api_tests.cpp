@@ -37,10 +37,11 @@ TEST(OclocApiTests, WhenOclocVersionIsCalledThenCurrentOclocVersionIsReturned) {
 }
 
 TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
+    std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFileName.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
@@ -58,10 +59,11 @@ TEST(OclocApiTests, WhenGoodArgsAreGivenThenSuccessIsReturned) {
 }
 
 TEST(OclocApiTests, GivenQuietModeAndValidArgumentsWhenRunningOclocThenSuccessIsReturnedAndBuildSucceededMessageIsNotPrinted) {
+    std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFileName.c_str(),
         "-q",
         "-device",
         gEnvironment->devicePrefix.c_str()};
@@ -175,10 +177,11 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
 }
 
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
+    std::string clFileName(clFiles + "copybuffer.cl");
     const char *argv[] = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFileName.c_str(),
         "-device",
         NEO::familyName[NEO::DEFAULT_PLATFORM::hwInfo.platform.eRenderCoreFamily]};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
@@ -268,15 +271,16 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
 }
 
 TEST(OclocApiTests, givenInvalidInputOptionsAndInternalOptionsFilesWhenCmdlineIsPrintedThenTheyArePrinted) {
-    ASSERT_TRUE(fileExists("test_files/shouldfail.cl"));
-    ASSERT_TRUE(fileExists("test_files/shouldfail_options.txt"));
-    ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "shouldfail.cl"));
+    ASSERT_TRUE(fileExists(clFiles + "shouldfail_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "shouldfail_internal_options.txt"));
 
+    std::string clFileName(clFiles + "shouldfail.cl");
     const char *argv[] = {
         "ocloc",
         "-q",
         "-file",
-        "test_files/shouldfail.cl",
+        clFileName.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
@@ -297,7 +301,9 @@ TEST(OclocApiTests, givenInvalidInputOptionsAndInternalOptionsFilesWhenCmdlineIs
 }
 
 TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
-    ASSERT_TRUE(fileExists("test_files/shouldfail.cl"));
+    std::string clFileName(clFiles + "shouldfail.cl");
+
+    ASSERT_TRUE(fileExists(clFileName));
 
     const char *argv[] = {
         "ocloc",
@@ -307,7 +313,7 @@ TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmd
         "-internal_options",
         "-invalid_internal_option",
         "-file",
-        "test_files/shouldfail.cl",
+        clFileName.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
@@ -328,14 +334,15 @@ TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmd
 }
 
 TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
-    ASSERT_TRUE(fileExists("test_files/valid_kernel.cl"));
-    ASSERT_TRUE(fileExists("test_files/valid_kernel_ocloc_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "valid_kernel.cl"));
+    ASSERT_TRUE(fileExists(clFiles + "valid_kernel_ocloc_options.txt"));
+    std::string clFileName(clFiles + "valid_kernel.cl");
 
     const char *argv[] = {
         "ocloc",
         "-q",
         "-file",
-        "test_files/valid_kernel.cl",
+        clFileName.c_str(),
         "-device",
         gEnvironment->devicePrefix.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);

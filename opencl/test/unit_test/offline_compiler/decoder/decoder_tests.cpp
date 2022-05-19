@@ -406,7 +406,7 @@ TEST(DecoderTests, GivenProperStructWhenReadingStructFieldsThenFieldsVectorGetsP
 
 TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorrectly) {
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.parseTokens();
 
     EXPECT_EQ(static_cast<uint32_t>(28), (decoder.programHeader.size));
@@ -532,7 +532,7 @@ TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBin
 
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 
@@ -583,7 +583,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     std::stringstream ptmFile;
     MockDecoder decoder;
-    decoder.pathToPatch = "test_files/";
+    decoder.pathToPatch = clFiles;
     decoder.pathToDump = "non_existing_folder/";
     decoder.parseTokens();
 

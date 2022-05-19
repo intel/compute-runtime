@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/helpers/test_files.h"
 
 #include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 
@@ -21,7 +23,7 @@ std::vector<std::string> getBuiltInFileNames(bool imagesSupport) {
 }
 
 std::string getBuiltInHashFileName(uint64_t hash, bool imagesSupport) {
-    std::string hashName = "test_files/" + std::to_string(hash);
+    std::string hashName = sharedFiles + "/" + std::to_string(hash);
     if (imagesSupport) {
         hashName.append("_images");
     }

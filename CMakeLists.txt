@@ -819,9 +819,14 @@ endif()
 
 set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
 
+set(NEO_SHARED_BUILTINS_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins/kernels")
+set(NEO_SHARED_TEST_FILES_DIR "${NEO_SOURCE_DIR}/shared/test/common/test_files")
+set(NEO_OPENCL_TEST_FILES_DIR "${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files")
+
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${NEO_BUILD_DIR}/lib_names.h)
+configure_file(test_files_setup.h.in ${NEO_BUILD_DIR}/test_files_setup.h)
 
 if(BUILD_WITH_L0)
   add_subdirectory_unique(level_zero)

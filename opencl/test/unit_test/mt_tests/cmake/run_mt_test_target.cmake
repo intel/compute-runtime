@@ -12,9 +12,6 @@ list(GET mt_test_config 3 eu_per_ss)
 list(GET mt_test_config 4 revision_id)
 
 add_custom_target(run_${product}_${revision_id}_mt_unit_tests DEPENDS igdrcl_mt_tests)
-if(NOT WIN32)
-  add_dependencies(run_${product}_${revision_id}_mt_unit_tests copy_test_files_${product}_${revision_id})
-endif()
 
 unset(GTEST_OUTPUT)
 if(DEFINED GTEST_OUTPUT_DIR)

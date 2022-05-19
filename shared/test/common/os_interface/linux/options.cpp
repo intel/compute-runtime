@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "common/gtsysinfo.h"
 #include "igfxfmid.h"
+#include "test_files_setup.h"
 
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,9 +25,9 @@ const char *metricsLibraryDllName = "";
 const char *gdiDllName = "";
 const char *dxcoreDllName = "";
 #endif
-const char *sysFsPciPathPrefix = "./test_files/linux/devices/";
-const char *pciDevicesDirectory = "./test_files/linux/by-path";
-const char *sysFsProcPathPrefix = "./test_files/linux/proc/";
+const char *sysFsPciPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/devices/";
+const char *pciDevicesDirectory = NEO_SHARED_TEST_FILES_DIR "/linux/by-path";
+const char *sysFsProcPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/proc/";
 } // namespace Os
 
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {

@@ -441,7 +441,7 @@ TEST(EventsTracker, givenTwoEventsWithCommonParentEventThenDumpingProperGraph) {
 }
 
 TEST(EventsTracker, whenCalingCreateDumpStreamThenGettingValidFstreamInstance) {
-    std::string testFileName("test_files\\EventsTracker_testfile.gv");
+    std::string testFileName("EventsTracker_testfile.gv");
     std::shared_ptr<std::ostream> stream = EventsTracker::getEventsTracker().createDumpStream(testFileName);
 
     EXPECT_TRUE(stream->good());

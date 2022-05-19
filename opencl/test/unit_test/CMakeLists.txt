@@ -116,12 +116,7 @@ function(neo_copy_test_files target product)
                      COMMAND echo deleting and re-creating ${product} cache directory...
                      COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
-                     COMMAND echo copying built-in kernel files from ${BUILT_IN_KERNEL_DIR}/kernels to ${outputdir}/test_files
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILT_IN_KERNEL_DIR}/kernels ${outputdir}/test_files
-                     COMMAND echo copying test files from ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files to ${outputdir}/test_files
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files ${outputdir}/test_files
                      COMMAND WORKING_DIRECTORY ${TargetDir}
-                     DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
@@ -130,19 +125,13 @@ endfunction()
 function(neo_copy_test_files_with_revision target product revision_id)
   set(outputdir "${TargetDir}/${product}/${revision_id}")
   add_custom_target(${target})
-  add_dependencies(${target} copy_test_kernel_${product}_${revision_id})
   add_custom_command(
                      TARGET ${target}
                      POST_BUILD
                      COMMAND echo deleting and re-creating ${product} cache directory...
                      COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
-                     COMMAND echo copying built-in kernel files from ${BUILT_IN_KERNEL_DIR}/kernels to ${outputdir}/test_files
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${BUILT_IN_KERNEL_DIR}/kernels ${outputdir}/test_files
-                     COMMAND echo copying test files from ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files to ${outputdir}/test_files
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files ${outputdir}/test_files
                      COMMAND WORKING_DIRECTORY ${TargetDir}
-                     DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")

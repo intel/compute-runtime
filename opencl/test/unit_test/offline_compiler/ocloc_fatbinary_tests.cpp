@@ -574,7 +574,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenMutiplePlatformWhenSecon
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         platformTarget};
 
@@ -605,7 +605,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenClosedRangeTooExtensiveW
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configString.str()};
 
@@ -710,7 +710,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoPlatformsWhenFatBinar
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         platformsTarget};
 
@@ -764,7 +764,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsClosedRangeWhen
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         platformsTarget};
 
@@ -813,7 +813,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeToWhen
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         platformsTarget};
 
@@ -862,7 +862,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenPlatformsOpenRangeFromWh
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         platformsTarget};
 
@@ -916,7 +916,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenTwoConfigsWhenFatBinaryB
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configsTarget};
 
@@ -961,7 +961,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeFr
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configsTarget};
 
@@ -1006,7 +1006,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigOpenRangeTo
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configsTarget};
 
@@ -1059,7 +1059,7 @@ TEST_F(OclocFatBinaryGetTargetConfigsForFatbinary, GivenProductConfigClosedRange
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configsTarget};
 
@@ -1382,7 +1382,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationErrorWhenBuildingFatbina
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1410,7 +1410,7 @@ TEST(OclocFatBinaryHelpersTest, GivenPreviousCompilationSuccessAndFailingBuildWh
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1451,7 +1451,7 @@ TEST(OclocFatBinaryHelpersTest, GivenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1488,7 +1488,7 @@ TEST(OclocFatBinaryHelpersTest, GivenQuietModeWhenBuildingFatbinaryForTargetThen
     const std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-q",
         "-device",
         gEnvironment->devicePrefix.c_str()};

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/os_memory_linux.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -104,7 +105,7 @@ TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledAndBaseA
 TEST(OSMemoryLinux, GivenProcSelfMapsFileExistsWhenGetMemoryMapsIsQueriedThenValidValueIsReturned) {
     auto mockOSMemoryLinux = MockOSMemoryLinux::create();
 
-    std::string mapsFile = "test_files/linux/proc/self/maps";
+    std::string mapsFile(std::string(Os::sysFsProcPathPrefix) + "self/maps");
     EXPECT_TRUE(fileExists(mapsFile));
 
     OSMemory::MemoryMaps memoryMaps;

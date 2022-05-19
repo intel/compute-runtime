@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
@@ -238,7 +239,7 @@ TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
         size_t size = 0;
 
         for (auto &fileName : getBuiltInFileNames(supportsImages)) {
-            appendBuiltInStringFromFile(fileName, size);
+            appendBuiltInStringFromFile(sharedBuiltinsDir + "/" + fileName, size);
             ASSERT_NE(0u, size);
         }
 
@@ -1401,7 +1402,7 @@ TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValid
     };
     MockFileStorage mockEmbeddedStorage("root");
 
-    BuiltinResourceT br = mockEmbeddedStorage.loadImpl("test_files/copybuffer.cl");
+    BuiltinResourceT br = mockEmbeddedStorage.loadImpl(clFiles + "copybuffer.cl");
     EXPECT_NE(0u, br.size());
 
     BuiltinResourceT bnr = mockEmbeddedStorage.loadImpl("unknown.cl");

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/utilities/debug_file_reader.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -35,12 +36,13 @@ class TestSettingsFileReader : public SettingsFileReader {
         return settingStringMap.size();
     }
 
-    static const char *testPath;
-    static const char *stringTestPath;
+    static const std::string getTestPath() {
+        return clFiles + "igdrcl.config";
+    }
+    static const std::string getStringTestPath() {
+        return clFiles + "igdrcl_string.config";
+    }
 };
-
-const char *TestSettingsFileReader::testPath = "./test_files/igdrcl.config";
-const char *TestSettingsFileReader::stringTestPath = "./test_files/igdrcl_string.config";
 
 TEST(SettingsFileReader, GivenFilesDoesNotExistWhenCreatingFileReaderThenCreationSucceeds) {
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
@@ -59,7 +61,7 @@ TEST(SettingsFileReader, GivenFilesDoesNotExistWhenCreatingFileReaderThenCreatio
 
 TEST(SettingsFileReader, WhenGettingSettingThenCorrectStringValueIsReturned) {
     // Use test settings file
-    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::stringTestPath);
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getStringTestPath().c_str());
     ASSERT_NE(nullptr, reader);
 
     std::string retValue;
@@ -82,7 +84,7 @@ TEST(SettingsFileReader, WhenGettingSettingThenCorrectStringValueIsReturned) {
 }
 
 TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWhenItIsParsedThenProperValuesAreObtained) {
-    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::stringTestPath);
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getStringTestPath().c_str());
     ASSERT_NE(nullptr, reader.get());
 
     int32_t retValue = 0;
@@ -103,7 +105,7 @@ TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWh
 TEST(SettingsFileReader, GivenSettingNotInFileWhenGettingSettingThenProvidedDefaultIsReturned) {
 
     // Use test settings file
-    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::testPath);
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::getTestPath().c_str());
     ASSERT_NE(nullptr, reader);
 
     bool defaultBoolValue = false;
@@ -123,7 +125,7 @@ TEST(SettingsFileReader, GivenSettingNotInFileWhenGettingSettingThenProvidedDefa
 }
 
 TEST(SettingsFileReader, WhenGettingAppSpecificLocationThenCorrectLocationIsReturned) {
-    std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+    std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::getTestPath().c_str()));
     std::string appSpecific = "cl_cache_dir";
     EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
 }

@@ -49,23 +49,6 @@ function(compile_kernels_gen platform_name_with_type revision_id platform_name s
   set(compiled_kernels_${platform_name_with_type}_${revision_id} ${compiled_kernels_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_shared_copy_test_files target product revision_id)
-  string(TOLOWER ${product} product)
-  set(dest_dir "${TargetDir}/${product}/${revision_id}/test_files")
-  set(source_dir "${NEO_SOURCE_DIR}/shared/test/common/test_files")
-  add_custom_target(${target})
-  add_custom_command(
-                     TARGET ${target}
-                     POST_BUILD
-                     COMMAND echo copying test files from ${source_dir} to ${dest_dir}
-                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${source_dir} ${dest_dir}
-                     WORKING_DIRECTORY ${TargetDir}
-                     DEPENDS ${source_dir}
-  )
-  add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
-endfunction()
-
 file(GLOB_RECURSE TEST_KERNELS *.cl)
 file(GLOB_RECURSE TEST_KERNELS_IMAGES *_images.cl)
 add_custom_target(prepare_test_kernels_for_shared)
@@ -80,8 +63,7 @@ macro(macro_for_each_platform)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     foreach(REVISION_ID ${${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PLATFORM_IT} ${REVISION_ID})
-        add_dependencies(prepare_test_kernels_for_shared copy_test_kernel_${PLATFORM_IT_LOWER}_${REVISION_ID})
+        add_dependencies(prepare_test_kernels_for_shared copy_compiler_files)
       endif()
     endforeach()
   endforeach()

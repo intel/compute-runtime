@@ -32,6 +32,7 @@
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "gmock/gmock.h"
+#include "test_files_setup.h"
 
 #include <algorithm>
 #include <fstream>
@@ -335,13 +336,8 @@ int main(int argc, char **argv) {
     nBinaryKernelFiles.append(testFiles);
     testFiles = nBinaryKernelFiles;
 
-    std::string nClFiles = getRunPath(argv[0]);
+    std::string nClFiles = NEO_OPENCL_TEST_FILES_DIR;
     nClFiles.append("/");
-    nClFiles.append(hardwarePrefix[productFamily]);
-    nClFiles.append("/");
-    nClFiles.append(std::to_string(revId));
-    nClFiles.append("/");
-    nClFiles.append(clFiles);
     clFiles = nClFiles;
 
     std::string executionDirectory(hardwarePrefix[productFamily]);

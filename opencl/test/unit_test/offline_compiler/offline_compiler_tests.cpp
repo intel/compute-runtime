@@ -91,7 +91,7 @@ bool isAnyIrSectionDefined(const SectionHeaders &sectionHeaders) {
 }
 
 TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -101,7 +101,7 @@ TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -117,7 +117,7 @@ TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
 }
 
 TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsReturned) {
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -127,7 +127,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -150,7 +150,7 @@ TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsRe
 }
 
 TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuccessIsReturned) {
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -160,7 +160,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWhenBuildingMultiCommandThenSuc
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-out_dir",
@@ -199,7 +199,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
         }
     }
 
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -209,7 +209,7 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configStr,
         "-out_dir",
@@ -235,11 +235,11 @@ TEST_F(MultiCommandTests, GivenSpecifiedOutputDirWithProductConfigValueWhenBuild
 }
 
 TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
-    nameOfFileWithArgs = "test_files/ImANotExistedComandFile.txt";
+    nameOfFileWithArgs = "ImANotExistedComandFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
-        "test_files/ImANaughtyFile.txt",
+        "ImANaughtyFile.txt",
         "-q",
     };
 
@@ -253,7 +253,7 @@ TEST_F(MultiCommandTests, GivenMissingTextFileWithArgsWhenBuildingMultiCommandTh
     DebugManager.flags.PrintDebugMessages.set(false);
 }
 TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFileErrorIsReturned) {
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -263,7 +263,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/ImANaughtyFile.cl",
+        clFiles + "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -280,7 +280,7 @@ TEST_F(MultiCommandTests, GivenLackOfClFileWhenBuildingMultiCommandThenInvalidFi
     deleteFileWithArgs();
 }
 TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuccessIsReturned) {
-    nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
+    nameOfFileWithArgs = "ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
         "multi",
@@ -292,7 +292,7 @@ TEST_F(MultiCommandTests, GivenOutputFileListFlagWhenBuildingMultiCommandThenSuc
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -342,7 +342,7 @@ TEST(MultiCommandWhiteboxTest, GivenVerboseModeAndDefinedOutputFilenameAndDirect
 
     std::vector<std::string> singleArgs = {
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-output",
         "SpecialOutputFilename",
         "-out_dir",
@@ -612,7 +612,7 @@ TEST_F(OfflineCompilerTests, Given32BitModeFlagWhenParsingThenInternalOptionsCon
             "ocloc",
             "compile",
             "-file",
-            "test_files/copybuffer.cl",
+            clFiles + "copybuffer.cl",
             flag,
             "-device",
             gEnvironment->devicePrefix.c_str()};
@@ -636,7 +636,7 @@ TEST_F(OfflineCompilerTests, Given64BitModeFlagWhenParsingThenInternalOptionsCon
             "ocloc",
             "compile",
             "-file",
-            "test_files/copybuffer.cl",
+            clFiles + "copybuffer.cl",
             flag,
             "-device",
             gEnvironment->devicePrefix.c_str()};
@@ -656,7 +656,7 @@ TEST_F(OfflineCompilerTests, Given32BitModeFlagAnd64BitModeFlagWhenParsingThenEr
         "ocloc",
         "compile",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-32",
         "-64",
         "-device",
@@ -690,7 +690,7 @@ TEST_F(OfflineCompilerTests, GivenFlagStringWhenParsingThenInternalBooleanIsSetA
             "ocloc",
             "compile",
             "-file",
-            "test_files/copybuffer.cl",
+            clFiles + "copybuffer.cl",
             flagString,
             "-device",
             gEnvironment->devicePrefix.c_str()};
@@ -719,7 +719,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenOfflineCompilerIsCreatedThenSuccessIsR
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -757,7 +757,7 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         deviceString.str()};
 
@@ -780,7 +780,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturne
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "0x0"};
 
@@ -797,7 +797,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingRevisionValueWhenIn
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "9.1."};
     testing::internal::CaptureStdout();
@@ -812,7 +812,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithInvalidPatternThenInvalidD
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "9.1.."};
     testing::internal::CaptureStdout();
@@ -827,7 +827,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingMajorValueWhenInval
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         ".1.2"};
     testing::internal::CaptureStdout();
@@ -842,7 +842,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidRevisionValueIsPass
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "9.0.a"};
     testing::internal::CaptureStdout();
@@ -857,7 +857,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidMinorValueIsPassedT
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "9.a"};
     testing::internal::CaptureStdout();
@@ -872,7 +872,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenPassedValuesAreOutOfRangeT
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "256.350"};
     testing::internal::CaptureStdout();
@@ -909,7 +909,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenIn
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "0xnonexist"};
     testing::internal::CaptureStdout();
@@ -930,7 +930,7 @@ TEST_F(OfflineCompilerTests, givenDebugOptionThenInternalOptionShouldContainKern
         "-options",
         "-g",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -949,7 +949,7 @@ TEST_F(OfflineCompilerTests, givenDashGInBiggerOptionStringWhenInitializingThenI
         "-options",
         "-gNotRealDashGOption",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -965,7 +965,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerf
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-internal_options",
         "-ze-allow-zebin -ze-exclude-ir-from-zebin",
         "-device",
@@ -981,7 +981,7 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndFclInitFailureWhenInitIsPerfo
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1004,7 +1004,7 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerfo
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1027,7 +1027,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenInitIsPerformedThenIrExcl
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-exclude_ir",
         "-internal_options",
         "-ze-allow-zebin",
@@ -1046,7 +1046,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentAndExcludeIrFromZebinInternal
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-exclude_ir",
         "-internal_options",
         "-ze-allow-zebin -ze-exclude-ir-from-zebin",
@@ -1068,7 +1068,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenCompilingKernelThenIrShou
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-exclude_ir",
         "-device",
         gEnvironment->devicePrefix.c_str()};
@@ -1093,7 +1093,7 @@ TEST_F(OfflineCompilerTests, givenLackOfExcludeIrArgumentWhenCompilingKernelThen
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1117,7 +1117,7 @@ TEST_F(OfflineCompilerTests, givenZeroSizeInputFileWhenInitializationIsPerformed
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1137,7 +1137,7 @@ TEST_F(OfflineCompilerTests, givenInvalidIgcOutputWhenCompilingKernelThenOutOfHo
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1160,7 +1160,7 @@ TEST_F(OfflineCompilerTests, givenIgcBuildFailureWhenCompilingKernelThenBuildPro
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1183,7 +1183,7 @@ TEST_F(OfflineCompilerTests, givenInvalidFclOutputWhenCompilingKernelThenOutOfHo
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1206,7 +1206,7 @@ TEST_F(OfflineCompilerTests, givenFclTranslationContextCreationFailureWhenCompil
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1230,7 +1230,7 @@ TEST_F(OfflineCompilerTests, givenFclTranslationContextCreationFailureAndErrorMe
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1254,7 +1254,7 @@ TEST_F(OfflineCompilerTests, givenVariousClStdValuesWhenCompilingSourceThenCorre
         std::vector<std::string> argv = {
             "ocloc",
             "-file",
-            "test_files/copybuffer.cl",
+            clFiles + "copybuffer.cl",
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
@@ -1301,7 +1301,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1341,7 +1341,7 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         configStr};
 
@@ -1368,7 +1368,7 @@ TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-llvm_text"};
@@ -1391,7 +1391,7 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-spirv_input"};
@@ -1407,7 +1407,7 @@ TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectResult) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1451,7 +1451,7 @@ TEST_F(OfflineCompilerTests, GivenCppFileWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-cpp_file"};
@@ -1474,7 +1474,7 @@ TEST_F(OfflineCompilerTests, GivenOutputDirWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-out_dir",
@@ -1511,7 +1511,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/ImANaughtyFile.cl",
+        clFiles + "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1529,7 +1529,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidFlagWhenBuildingThenInvalidCommandLineE
     std::vector<std::string> argv = {
         "ocloc",
         "-n",
-        "test_files/ImANaughtyFile.cl",
+        clFiles + "ImANaughtyFile.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1562,7 +1562,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidOptionsWhenBuildingThenInvalidCommandLi
     std::vector<std::string> argvB = {
         "ocloc",
         "-file",
-        "test_files/ImANaughtyFile.cl",
+        clFiles + "ImANaughtyFile.cl",
         "-device"};
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB, true, retVal, oclocArgHelperWithoutInput.get());
@@ -1578,7 +1578,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenInvalidDevic
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         "foobar"};
 
@@ -1594,7 +1594,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/shouldfail.cl",
+        clFiles + "shouldfail.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1667,8 +1667,10 @@ TEST(OfflineCompilerTest, GivenDelimitersWhenGettingStringThenParseIsCorrect) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
+    std::string kernelFileName(sharedBuiltinsDir + "/copy_buffer_to_buffer.builtin_kernel");
+
     size_t srcSize = 0;
-    auto ptrSrc = loadDataFromFile("test_files/copy_buffer_to_buffer.builtin_kernel", srcSize);
+    auto ptrSrc = loadDataFromFile(kernelFileName.c_str(), srcSize);
 
     const std::string src = ptrSrc.get();
     ASSERT_EQ(srcSize, src.size());
@@ -1804,7 +1806,7 @@ TEST(OfflineCompilerTest, GivenSourceCodeWhenBuildingThenSuccessIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1825,7 +1827,7 @@ TEST(OfflineCompilerTest, givenSpvOnlyOptionPassedWhenCmdLineParsedThenGenerateO
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-output",
         "myOutputFileName",
         "-spv_only",
@@ -1860,7 +1862,7 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/emptykernel.cl",
+        clFiles + "emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2041,7 +2043,7 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/emptykernel.cl",
+        clFiles + "emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2079,7 +2081,7 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/emptykernel.cl",
+        clFiles + "emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2100,13 +2102,13 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
-    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
+    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", clFiles + "binary_with_zeroes",
                                          "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm);
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
-    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", "test_files/binary_with_zeroes",
+    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", clFiles + "binary_with_zeroes",
                                           "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV);
@@ -2125,7 +2127,7 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/emptykernel.cl",
+        clFiles + "emptykernel.cl",
         "-spirv_input",
         "-device",
         gEnvironment->devicePrefix.c_str(),
@@ -2150,7 +2152,7 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-output",
         "myOutputFileName",
         "-device",
@@ -2178,7 +2180,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-output",
         "myOutputFileName",
         "-device",
@@ -2236,14 +2238,14 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCom
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    ASSERT_TRUE(fileExists("test_files/shouldfail_options.txt"));
-    ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "shouldfail_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "shouldfail_internal_options.txt"));
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        "test_files/shouldfail.cl",
+        clFiles + "shouldfail.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2269,13 +2271,13 @@ TEST(OfflineCompilerTest, givenInputOptionsFileWithSpecialCharsWhenOfflineCompil
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    ASSERT_TRUE(fileExists("test_files/simple_kernels_opts_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "simple_kernels_opts_options.txt"));
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        "test_files/simple_kernels_opts.cl",
+        clFiles + "simple_kernels_opts.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2290,13 +2292,13 @@ TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptW
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    ASSERT_TRUE(fileExists("test_files/stateful_copy_buffer_ocloc_options.txt"));
+    ASSERT_TRUE(fileExists(clFiles + "stateful_copy_buffer_ocloc_options.txt"));
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        "test_files/stateful_copy_buffer.cl",
+        clFiles + "stateful_copy_buffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2486,8 +2488,8 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
 TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitializedThenOptionsAreReadFromFile) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    const char *kernelFileName = "test_files/kernel_for_specific_device.skl";
-    const char *optionsFileName = "test_files/kernel_for_specific_device_options.txt";
+    std::string kernelFileName(clFiles + "kernel_for_specific_device.skl");
+    std::string optionsFileName(clFiles + "kernel_for_specific_device_options.txt");
 
     ASSERT_TRUE(fileExists(kernelFileName));
     ASSERT_TRUE(fileExists(optionsFileName));
@@ -2513,7 +2515,7 @@ TEST(OfflineCompilerTest, givenHexadecimalRevisionIdWhenCompilerIsInitializedThe
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-revision_id",
@@ -2535,7 +2537,7 @@ TEST(OfflineCompilerTest, givenDebugVariableSetWhenInitializingThenOverrideRevis
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-revision_id",
@@ -2554,7 +2556,7 @@ TEST(OfflineCompilerTest, givenDecimalRevisionIdWhenCompilerIsInitializedThenPas
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-revision_id",
@@ -2573,7 +2575,7 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2601,7 +2603,7 @@ TEST(OfflineCompilerTest, whenDeviceIsSpecifiedThenDefaultConfigFromTheDeviceIsU
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2669,7 +2671,7 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
             "ocloc",
             "-q",
             "-file",
-            "test_files/copybuffer.cl",
+            clFiles + "copybuffer.cl",
             "-device",
             gEnvironment->devicePrefix.c_str()};
 
@@ -2711,7 +2713,7 @@ TEST(OclocCompile, givenCommandLineWithoutDeviceWhenCompilingToSpirvThenSucceeds
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-spv_only"};
 
     int retVal = ocloc.initialize(argv.size(), argv);
@@ -2728,7 +2730,7 @@ TEST(OclocCompile, givenDeviceAndInternalOptionsOptionWhenCompilingToSpirvThenIn
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-internal_options",
         "-cl-ext=+custom_param",
         "-device",
@@ -2751,7 +2753,7 @@ TEST(OclocCompile, givenNoDeviceAndInternalOptionsOptionWhenCompilingToSpirvThen
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-internal_options",
         "-cl-ext=+custom_param",
         "-spv_only"};
@@ -2782,7 +2784,7 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
         "ocloc",
         "-q",
         "-file",
-        "test_files/binary_with_zeroes",
+        clFiles + "binary_with_zeroes",
         "-out_dir",
         "offline_compiler_test",
         "-device",
@@ -2805,7 +2807,7 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-spv_only",
         "--format",
         "patchtokens"};
@@ -2814,7 +2816,7 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
         "ocloc",
         "-q",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-spv_only",
         "--format",
         "zebin"};
@@ -2835,7 +2837,7 @@ TEST(OclocCompile, givenFormatFlagWithUnknownFormatPassedThenPrintWarning) {
     std::vector<std::string> argvUnknownFormatEnforced = {
         "ocloc",
         "-file",
-        "test_files/copybuffer.cl",
+        clFiles + "copybuffer.cl",
         "-spv_only",
         "--format",
         "banana"};

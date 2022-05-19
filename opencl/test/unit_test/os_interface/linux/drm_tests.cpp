@@ -9,11 +9,13 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -26,6 +28,13 @@
 #include <memory>
 
 using namespace NEO;
+
+std::string getLinuxDevicesPath(const char *file) {
+    std::string resultString(Os::sysFsPciPathPrefix);
+    resultString += file;
+
+    return resultString;
+}
 
 TEST(DrmTest, WhenGettingDeviceIdThenCorrectIdReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -886,7 +895,7 @@ TEST(DrmQueryTest, GivenNonTileArchitectureWhenFrequencyIsQueriedThenFallbackToL
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
     EXPECT_TRUE(fileExists(gtMaxFreqFile));
 
     drm.setPciPath("device");
@@ -909,7 +918,7 @@ TEST(DrmQueryTest, GivenTileArchitectureIsInvalidWhenFrequencyIsQueriedThenFallb
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
 
-    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
     EXPECT_TRUE(fileExists(gtMaxFreqFile));
 
     drm.setPciPath("device");
@@ -932,7 +941,7 @@ TEST(DrmQueryTest, GivenRpsMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValue
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt0/rps_max_freq_mhz";
+    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt0/rps_max_freq_mhz");
     EXPECT_TRUE(fileExists(rpsMaxFreqFile));
 
     drm.setPciPath("device");
@@ -955,7 +964,7 @@ TEST(DrmQueryTest, GivenRpsMaxFreqFilesExistWhenFrequenciesAreQueriedThenValidVa
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt1/rps_max_freq_mhz";
+    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt1/rps_max_freq_mhz");
     EXPECT_TRUE(fileExists(rpsMaxFreqFile));
 
     drm.setPciPath("device");
@@ -978,10 +987,10 @@ TEST(DrmQueryTest, GivenRpsMaxFreqFileDoesntExistWhenFrequencyIsQueriedThenFallb
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 3;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
-    std::string rpsMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt/gt2/rps_max_freq_mhz";
+    std::string rpsMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt/gt2/rps_max_freq_mhz");
     EXPECT_FALSE(fileExists(rpsMaxFreqFile));
 
-    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
+    std::string gtMaxFreqFile = getLinuxDevicesPath("device/drm/card1/gt_max_freq_mhz");
     EXPECT_TRUE(fileExists(gtMaxFreqFile));
 
     drm.setPciPath("device");
@@ -1007,7 +1016,7 @@ TEST(DrmQueryTest, givenUapiPrelimVersionThenReturnCorrectString) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    std::string prelimVersionFile = "test_files/linux/devices/device/drm/card1/prelim_uapi_version";
+    std::string prelimVersionFile = getLinuxDevicesPath("device/drm/card1/prelim_uapi_version");
     EXPECT_TRUE(fileExists(prelimVersionFile));
 
     drm.setPciPath("device");

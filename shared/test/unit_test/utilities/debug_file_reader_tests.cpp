@@ -13,7 +13,7 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
 
     // Use test settings file
     std::unique_ptr<TestSettingsFileReader> reader =
-        std::unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+        std::unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::getTestPath().c_str()));
 
     ASSERT_NE(nullptr, reader);
 

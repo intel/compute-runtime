@@ -18,8 +18,8 @@
 using namespace NEO;
 
 TEST(CpuInfoAarch64, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidValueIsReturned) {
-    VariableBackup<const char *> pathPrefixBackup(&Os::sysFsProcPathPrefix, "./test_files");
-    std::string cpuinfoFile = "./test_files/cpuinfo";
+    VariableBackup<const char *> pathPrefixBackup(&Os::sysFsProcPathPrefix, ".");
+    std::string cpuinfoFile = "cpuinfo";
     EXPECT_FALSE(fileExists(cpuinfoFile));
 
     {
