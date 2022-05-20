@@ -45,6 +45,6 @@ class DirectSubmissionController {
     std::atomic_bool keepControlling = true;
     std::atomic_bool runControlling = false;
 
-    int timeout = 5;
+    int timeout = 5000;
 };
 } // namespace NEO

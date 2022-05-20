@@ -15,8 +15,6 @@
 namespace NEO {
 
 DirectSubmissionController::DirectSubmissionController() {
-    timeout = 5;
-
     if (DebugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeout = DebugManager.flags.DirectSubmissionControllerTimeout.get();
     }
@@ -55,7 +53,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
             return nullptr;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(controller->timeout));
+        std::this_thread::sleep_for(std::chrono::microseconds(controller->timeout));
     }
 
     while (true) {
@@ -64,7 +62,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
             return nullptr;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(controller->timeout));
+        std::this_thread::sleep_for(std::chrono::microseconds(controller->timeout));
 
         controller->checkNewSubmissions();
     }
