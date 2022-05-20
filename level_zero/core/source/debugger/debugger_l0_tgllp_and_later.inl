@@ -34,25 +34,24 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     UNRECOVERABLE_IF(!singleAddressSpaceSbaTracking);
 
     std::vector<std::pair<size_t, uint64_t>> fieldOffsetAndValue;
-    auto gmmHelper = device->getGmmHelper();
 
     if (sba.GeneralStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, GeneralStateBaseAddress), gmmHelper->decanonize(sba.GeneralStateBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, GeneralStateBaseAddress), sba.GeneralStateBaseAddress});
     }
     if (sba.SurfaceStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress), gmmHelper->decanonize(sba.SurfaceStateBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress), sba.SurfaceStateBaseAddress});
     }
     if (sba.DynamicStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, DynamicStateBaseAddress), gmmHelper->decanonize(sba.DynamicStateBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, DynamicStateBaseAddress), sba.DynamicStateBaseAddress});
     }
     if (sba.IndirectObjectBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress), gmmHelper->decanonize(sba.IndirectObjectBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress), sba.IndirectObjectBaseAddress});
     }
     if (sba.InstructionBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, InstructionBaseAddress), gmmHelper->decanonize(sba.InstructionBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, InstructionBaseAddress), sba.InstructionBaseAddress});
     }
     if (sba.BindlessSurfaceStateBaseAddress) {
-        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress), gmmHelper->decanonize(sba.BindlessSurfaceStateBaseAddress)});
+        fieldOffsetAndValue.push_back({offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress), sba.BindlessSurfaceStateBaseAddress});
     }
     const auto cmdStreamGpuBase = cmdStream.getGpuBase();
     const auto cmdStreamCpuBase = reinterpret_cast<uint64_t>(cmdStream.getCpuBase());

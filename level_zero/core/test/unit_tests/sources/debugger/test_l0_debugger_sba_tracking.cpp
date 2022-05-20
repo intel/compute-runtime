@@ -426,10 +426,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenC
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress);
 
-    auto gmmHelper = neoDevice->getGmmHelper();
-    auto decanonizedAddress = gmmHelper->decanonize(dsba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(dsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(dsba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -495,10 +493,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     ASSERT_NE(cmdList.end(), sdiItor);
     auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    auto gmmHelper = neoDevice->getGmmHelper();
-    auto decanonizedAddress = gmmHelper->decanonize(gsba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(gsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(gsba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -507,9 +503,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress);
 
-    decanonizedAddress = gmmHelper->decanonize(ssba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -517,9 +512,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress);
-    decanonizedAddress = gmmHelper->decanonize(dsba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(dsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(dsba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -527,9 +521,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress);
-    decanonizedAddress = gmmHelper->decanonize(ioba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(ioba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(ioba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -537,9 +530,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, InstructionBaseAddress);
-    decanonizedAddress = gmmHelper->decanonize(iba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(iba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(iba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 
@@ -547,9 +539,8 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress);
-    decanonizedAddress = gmmHelper->decanonize(ssba);
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
-    EXPECT_EQ(static_cast<uint32_t>(decanonizedAddress >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
     EXPECT_TRUE(cmdSdi->getStoreQword());
 }
