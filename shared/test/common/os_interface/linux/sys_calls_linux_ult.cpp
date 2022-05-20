@@ -11,6 +11,7 @@
 #include "drm/i915_drm.h"
 #include "test_files_setup.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
