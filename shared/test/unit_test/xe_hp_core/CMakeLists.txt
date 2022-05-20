@@ -9,6 +9,7 @@ if(TESTS_XE_HP_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe_hp_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hp_core_tests.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xe_hp_core_tests.cpp
   )
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)

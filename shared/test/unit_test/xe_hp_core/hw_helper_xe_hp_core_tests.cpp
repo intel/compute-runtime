@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
-using HwHelperTestXeHP = ::testing::Test;
+using HwHelperXeHpCoreTest = ::testing::Test;
 
-XEHPTEST_F(HwHelperTestXeHP, givenSteppingAorBWhenCheckingSipWAThenTrueIsReturned) {
+XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingAorBWhenCheckingSipWAThenTrueIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto renderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     auto productFamily = defaultHwInfo->platform.eProductFamily;
@@ -28,7 +28,7 @@ XEHPTEST_F(HwHelperTestXeHP, givenSteppingAorBWhenCheckingSipWAThenTrueIsReturne
     EXPECT_TRUE(helper.isSipWANeeded(hwInfo));
 }
 
-XEHPTEST_F(HwHelperTestXeHP, givenSteppingCWhenCheckingSipWAThenFalseIsReturned) {
+XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingCWhenCheckingSipWAThenFalseIsReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto renderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     auto productFamily = defaultHwInfo->platform.eProductFamily;
@@ -38,4 +38,9 @@ XEHPTEST_F(HwHelperTestXeHP, givenSteppingCWhenCheckingSipWAThenFalseIsReturned)
 
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, hwInfo);
     EXPECT_FALSE(helper.isSipWANeeded(hwInfo));
+}
+
+XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenHwHelperWhenGettingLinuxCompletionFenceSupportThenTrueIsReturned) {
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.isLinuxCompletionFenceSupported());
 }
