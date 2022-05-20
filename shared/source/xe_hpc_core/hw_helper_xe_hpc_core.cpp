@@ -449,6 +449,11 @@ bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
     return true;
 }
 
+template <>
+inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"
