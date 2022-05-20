@@ -201,7 +201,7 @@ class DrmMockCustom : public Drm {
     drm_i915_getparam_t recordedGetParam = {0};
     int getParamRetValue = 0;
     //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
-    drm_i915_gem_context_param recordedGetContextParam = {0};
+    NEO::GemContextParam recordedGetContextParam = {0};
     __u64 getContextParamRetValue = 0;
     //DRM_IOCTL_I915_GEM_WAIT
     int64_t gemWaitTimeout = 0;

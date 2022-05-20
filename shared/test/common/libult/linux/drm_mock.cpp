@@ -86,7 +86,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         receivedContextCreateSetParam = *reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
         if (receivedContextCreateSetParam.base.name == I915_CONTEXT_CREATE_EXT_SETPARAM) {
             receivedContextParamRequestCount++;
-            receivedContextParamRequest = receivedContextCreateSetParam.param;
+            receivedContextParamRequest = *reinterpret_cast<GemContextParam *>(&receivedContextCreateSetParam.param);
             if (receivedContextCreateSetParam.param.param == I915_CONTEXT_PARAM_VM) {
                 return this->storedRetVal;
             }
@@ -103,7 +103,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM) && (arg != nullptr)) {
         ioctlCount.contextSetParam++;
         receivedContextParamRequestCount++;
-        receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
+        receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PRIORITY) {
             return this->storedRetVal;
         }
@@ -131,9 +131,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
         receivedContextParamRequestCount++;
-        receivedContextParamRequest = *static_cast<drm_i915_gem_context_param *>(arg);
+        receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_GTT_SIZE) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedGTTSize;
+            static_cast<GemContextParam *>(arg)->value = this->storedGTTSize;
             return this->storedRetValForGetGttSize;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
@@ -143,12 +143,12 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
             return this->storedRetValForGetSSEU;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedPersistentContextsSupport;
+            static_cast<GemContextParam *>(arg)->value = this->storedPersistentContextsSupport;
             return this->storedRetValForPersistant;
         }
 
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = this->storedRetValForVmId;
+            static_cast<GemContextParam *>(arg)->value = this->storedRetValForVmId;
             return 0u;
         }
     }

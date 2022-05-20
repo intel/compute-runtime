@@ -110,4 +110,12 @@ struct GemSetDomain {
     uint32_t readDomains;
     uint32_t writeDomain;
 };
+
+struct GemContextParam {
+    uint32_t contextId;
+    uint32_t size;
+    uint64_t param;
+    uint64_t value;
+};
+
 } // namespace NEO

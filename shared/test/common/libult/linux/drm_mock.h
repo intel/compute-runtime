@@ -204,7 +204,7 @@ class DrmMock : public Drm {
     uint32_t ioctlCallsCount = 0;
 
     uint32_t receivedContextParamRequestCount = 0;
-    drm_i915_gem_context_param receivedContextParamRequest = {};
+    GemContextParam receivedContextParamRequest = {};
     uint64_t receivedRecoverableContextValue = std::numeric_limits<uint64_t>::max();
 
     bool queryPageFaultSupportCalled = false;

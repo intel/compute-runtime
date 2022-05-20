@@ -4533,14 +4533,14 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
 
     auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
 
-    drm_i915_gem_context_param paramToCopy = {};
-    paramToCopy.ctx_id = contextHandle;
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = contextHandle;
     paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
     paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
     paramToCopy.value = 0;
-    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(drm_i915_gem_context_param));
+    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(GemContextParam));
 
-    auto valueOffset = offsetof(drm_i915_gem_context_param, value);
+    auto valueOffset = offsetof(GemContextParam, value);
     auto *engines = ptrOffset(memory, offset + valueOffset);
     i915_context_param_engines enginesParam;
     enginesParam.extensions = 0;

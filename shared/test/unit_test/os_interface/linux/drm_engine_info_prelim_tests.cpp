@@ -143,7 +143,7 @@ static void givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(std:
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(haveLocalMemory ? 4u : 3u, drm->ioctlCallsCount);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     EXPECT_EQ(ptrDiff(enginesStruct.engines + 1u, &enginesStruct), drm->receivedContextParamRequest.size);
     auto extensions = drm->receivedContextParamEngines.extensions;
@@ -170,7 +170,7 @@ static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(s
     auto engineFlag = drm->bindDrmContext(drmContextId, tileId, engineType, false);
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     auto extensions = drm->receivedContextParamEngines.extensions;
     EXPECT_NE(0ull, extensions);
@@ -261,7 +261,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
         } else {
             EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
             EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-            EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+            EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
             EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
             auto extensions = drm->receivedContextParamEngines.extensions;
             EXPECT_NE(0ull, extensions);
@@ -307,7 +307,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBi
         if (drm->supportedCopyEnginesMask.test(engineIndex)) {
             EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
             EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-            EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+            EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
             EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
             auto extensions = drm->receivedContextParamEngines.extensions;
             EXPECT_NE(0ull, extensions);
@@ -440,7 +440,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContex
         auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
@@ -482,7 +482,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numberOfCCS, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
@@ -524,7 +524,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numberOfCCS, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
@@ -590,7 +590,7 @@ TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBa
         auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
@@ -621,7 +621,7 @@ TEST(DrmTest, givenEngineInstancedDeviceWhenCreatingContextThenDontUseVirtualEng
         auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, true);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+        EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         auto extensions = drm->receivedContextParamEngines.extensions;
@@ -649,7 +649,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNotEnoughCcsEnginesWhenCreatingContex
 
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
     auto extensions = drm->receivedContextParamEngines.extensions;
@@ -675,7 +675,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNonCcsEnginesWhenCreatingContextThenD
 
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
-    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
     auto extensions = drm->receivedContextParamEngines.extensions;

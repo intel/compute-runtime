@@ -51,7 +51,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         }
     } break;
     case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM: {
-        auto gp = static_cast<drm_i915_gem_context_param *>(arg);
+        auto gp = static_cast<GemContextParam *>(arg);
         if (gp->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
             gp->value = contextDebugSupported ? PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 : 0;
             return 0;
@@ -194,10 +194,10 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         return 0;
     } break;
     case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM: {
-        const auto req = reinterpret_cast<drm_i915_gem_context_param *>(arg);
+        const auto req = reinterpret_cast<GemContextParam *>(arg);
         if (req->param == PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS) {
             receivedSetContextParamValue = req->value;
-            receivedSetContextParamCtxId = req->ctx_id;
+            receivedSetContextParamCtxId = req->contextId;
         }
 
         return !contextDebugSupported ? EINVAL : 0;

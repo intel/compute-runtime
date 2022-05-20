@@ -986,7 +986,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
 uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
     uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
 
-    drm_i915_gem_context_param getContextParam = {};
+    GemContextParam getContextParam = {};
     getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
     [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);

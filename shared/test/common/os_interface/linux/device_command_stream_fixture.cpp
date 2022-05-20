@@ -165,7 +165,7 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
 
     case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM: {
         ioctl_cnt.contextGetParam++;
-        auto getContextParam = (drm_i915_gem_context_param *)arg;
+        auto getContextParam = static_cast<NEO::GemContextParam *>(arg);
         recordedGetContextParam = *getContextParam;
         getContextParam->value = getContextParamRetValue;
     } break;

@@ -170,7 +170,7 @@ int drmGetParam(drm_i915_getparam_t *param) {
     return ret;
 }
 
-int drmSetContextParam(drm_i915_gem_context_param *param) {
+int drmSetContextParam(NEO::GemContextParam *param) {
     assert(param);
     int ret = 0;
 
@@ -186,7 +186,7 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
         break;
 #endif
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->contextId == 0) {
             ret = failOnSetParamSseu;
         } else {
             ret = -1;
@@ -198,12 +198,12 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
     }
     return ret;
 }
-int drmGetContextParam(drm_i915_gem_context_param *param) {
+int drmGetContextParam(NEO::GemContextParam *param) {
     int ret = 0;
 
     switch (param->param) {
     case I915_CONTEXT_PARAM_SSEU:
-        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->ctx_id == 0) {
+        if (param->size == sizeof(NEO::GemContextParamSseu) && param->value != 0 && param->contextId == 0) {
             ret = failOnGetParamSseu;
         } else {
             ret = -1;
@@ -296,10 +296,10 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 res = drmGetParam(va_arg(vl, drm_i915_getparam_t *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
-                res = drmSetContextParam(va_arg(vl, drm_i915_gem_context_param *));
+                res = drmSetContextParam(va_arg(vl, NEO::GemContextParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
-                res = drmGetContextParam(va_arg(vl, drm_i915_gem_context_param *));
+                res = drmGetContextParam(va_arg(vl, NEO::GemContextParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
                 res = drmContextCreate(va_arg(vl, drm_i915_gem_context_create_ext *));

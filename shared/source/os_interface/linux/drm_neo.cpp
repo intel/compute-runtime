@@ -295,7 +295,7 @@ int Drm::getExecSoftPin(int &execSoftPin) {
 }
 
 int Drm::enableTurboBoost() {
-    drm_i915_gem_context_param contextParam = {};
+    GemContextParam contextParam = {};
 
     contextParam.param = I915_CONTEXT_PRIVATE_PARAM_BOOST;
     contextParam.value = 1;
@@ -319,7 +319,7 @@ std::string Drm::getSysFsPciPath() {
 }
 
 int Drm::queryGttSize(uint64_t &gttSizeOutput) {
-    drm_i915_gem_context_param contextParam = {0};
+    GemContextParam contextParam = {0};
     contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
 
     int ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
@@ -361,8 +361,8 @@ void Drm::checkQueueSliceSupport() {
 }
 
 void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
-    drm_i915_gem_context_param gcp = {};
-    gcp.ctx_id = drmContextId;
+    GemContextParam gcp = {};
+    gcp.contextId = drmContextId;
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
 
@@ -371,7 +371,7 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
 }
 
 int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
-    drm_i915_gem_context_param contextParam = {};
+    GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_SSEU;
     sseu->engine.engineClass = I915_ENGINE_CLASS_RENDER;
     sseu->engine.engineInstance = I915_EXEC_DEFAULT;
@@ -386,11 +386,11 @@ uint64_t Drm::getSliceMask(uint64_t sliceCount) {
 }
 bool Drm::setQueueSliceCount(uint64_t sliceCount) {
     if (sliceCountChangeSupported) {
-        drm_i915_gem_context_param contextParam = {};
+        GemContextParam contextParam = {};
         sseu.sliceMask = getSliceMask(sliceCount);
 
         contextParam.param = I915_CONTEXT_PARAM_SSEU;
-        contextParam.ctx_id = 0;
+        contextParam.contextId = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
         contextParam.size = sizeof(struct GemContextParamSseu);
         int retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
@@ -402,7 +402,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
 }
 
 void Drm::checkNonPersistentContextsSupport() {
-    drm_i915_gem_context_param contextParam = {};
+    GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
@@ -414,16 +414,16 @@ void Drm::checkNonPersistentContextsSupport() {
 }
 
 void Drm::setNonPersistentContext(uint32_t drmContextId) {
-    drm_i915_gem_context_param contextParam = {};
-    contextParam.ctx_id = drmContextId;
+    GemContextParam contextParam = {};
+    contextParam.contextId = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
 void Drm::setUnrecoverableContext(uint32_t drmContextId) {
-    drm_i915_gem_context_param contextParam = {};
-    contextParam.ctx_id = drmContextId;
+    GemContextParam contextParam = {};
+    contextParam.contextId = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_RECOVERABLE;
     contextParam.value = 0;
     contextParam.size = 0;
@@ -482,8 +482,8 @@ void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
 }
 
 int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
-    drm_i915_gem_context_param param{};
-    param.ctx_id = drmContextId;
+    GemContextParam param{};
+    param.contextId = drmContextId;
     param.value = 0;
     param.param = I915_CONTEXT_PARAM_VM;
     auto retVal = this->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &param);
@@ -1315,8 +1315,8 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
         }
     }
 
-    drm_i915_gem_context_param param{};
-    param.ctx_id = drmContextId;
+    GemContextParam param{};
+    param.contextId = drmContextId;
     param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
     param.param = I915_CONTEXT_PARAM_ENGINES;
     param.value = castToUint64(&contextEngines);
