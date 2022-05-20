@@ -5,12 +5,14 @@
  *
  */
 
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/kernel_filename_helper.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/device_binary_format/elf/elf_tests_data.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
@@ -20,6 +22,7 @@
 
 #include "compiler_options.h"
 #include "gtest/gtest.h"
+#include "program_debug_data.h"
 
 #include <algorithm>
 #include <memory>
@@ -300,6 +303,11 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
+    auto &refBin = pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinary;
+    auto refBinSize = pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinarySize;
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(refBin.get(), refBinSize))) {
+        GTEST_SKIP();
+    }
     auto retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -313,9 +321,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinInitializedWhenCreatingProgramF
     auto retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
-    EXPECT_NE(kernelInfo->debugData.vIsa, nullptr);
-    EXPECT_NE(0u, kernelInfo->debugData.vIsaSize);
+    EXPECT_TRUE(pProgram->wasDebuggerNotified);
 
     NEO::isGTPinInitialized = gtpinInitializedBackup;
 }
@@ -327,9 +333,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgr
     auto retVal = pProgram->build(pProgram->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
-    EXPECT_EQ(kernelInfo->debugData.vIsa, nullptr);
-    EXPECT_EQ(0u, kernelInfo->debugData.vIsaSize);
+    EXPECT_FALSE(pProgram->wasDebuggerNotified);
 
     NEO::isGTPinInitialized = gtpinInitializedBackup;
 }
@@ -344,15 +348,41 @@ TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenProcessDebugDataIsCalledThenKernelInfosAreFilledWithDebugData) {
-    auto retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    iOpenCL::SProgramDebugDataHeaderIGC debugDataHeader{};
+    debugDataHeader.NumberOfKernels = 1u;
+
+    char mockKernelName[] = "CopyBuffer";
+    constexpr size_t mockKernelDebugDataSize = 0x10;
+    PatchTokenBinary::SKernelDebugDataHeaderIGC mockKernelDebugHeader{};
+    mockKernelDebugHeader.KernelNameSize = sizeof(mockKernelName);
+    mockKernelDebugHeader.SizeVisaDbgInBytes = mockKernelDebugDataSize;
+
+    char mockKerneDebugData[mockKernelDebugDataSize];
+    memset(mockKerneDebugData, '\x01', mockKernelDebugDataSize);
+
+    KernelInfo *mockKernelInfo = new KernelInfo{};
+    mockKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "CopyBuffer";
+    pProgram->addKernelInfo(mockKernelInfo, pDevice->getRootDeviceIndex());
+
+    constexpr size_t mockDebugDataSize = sizeof(iOpenCL::SProgramDebugDataHeaderIGC) + sizeof(PatchTokenBinary::KernelFromPatchtokens) + sizeof(mockKernelName) + mockKernelDebugDataSize;
+
+    char *mockDebugData = new char[mockDebugDataSize];
+    auto dataPtr = mockDebugData;
+
+    memcpy_s(dataPtr, mockDebugDataSize, &debugDataHeader, sizeof(iOpenCL::SProgramDebugDataHeaderIGC));
+    dataPtr = ptrOffset(dataPtr, sizeof(iOpenCL::SProgramDebugDataHeaderIGC));
+    memcpy_s(dataPtr, mockDebugDataSize, &mockKernelDebugHeader, sizeof(PatchTokenBinary::SKernelDebugDataHeaderIGC));
+    dataPtr = ptrOffset(dataPtr, sizeof(PatchTokenBinary::SKernelDebugDataHeaderIGC));
+    memcpy_s(dataPtr, mockDebugDataSize, &mockKernelName, sizeof(mockKernelName));
+    dataPtr = ptrOffset(dataPtr, sizeof(mockKernelName));
+    memcpy_s(dataPtr, mockDebugDataSize, mockKerneDebugData, mockKernelDebugDataSize);
+    pProgram->buildInfos[pDevice->getRootDeviceIndex()].debugData.reset(mockDebugData);
 
     pProgram->processDebugData(pDevice->getRootDeviceIndex());
+    auto receivedKernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer", pDevice->getRootDeviceIndex());
-
-    EXPECT_NE(0u, kernelInfo->debugData.vIsaSize);
-    EXPECT_NE(nullptr, kernelInfo->debugData.vIsa);
+    EXPECT_NE(0u, receivedKernelInfo->debugData.vIsaSize);
+    EXPECT_NE(nullptr, receivedKernelInfo->debugData.vIsa);
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithNonZebinaryFormatAndKernelDebugEnabledWhenProgramIsBuiltThenProcessDebugDataIsCalledAndDebuggerNotified) {
@@ -360,9 +390,25 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithNonZebinaryFormatAndKerne
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
     pProgram->enableKernelDebug();
 
-    cl_int retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_FALSE(pProgram->wasCreateDebugZebinCalled);
-    EXPECT_TRUE(pProgram->wasProcessDebugDataCalled);
-    EXPECT_EQ(1u, sourceLevelDebugger->notifyKernelDebugDataCalled);
+    auto mockElf = std::make_unique<MockElfBinaryPatchtokens<>>(pDevice->getHardwareInfo());
+    auto mockElfSize = mockElf->storage.size();
+    auto mockElfData = mockElf->storage.data();
+
+    pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinarySize = mockElfSize;
+    pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinary.reset(new char[mockElfSize]);
+    memcpy_s(pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinary.get(), pProgram->buildInfos[pDevice->getRootDeviceIndex()].unpackedDeviceBinarySize,
+             mockElfData, mockElfSize);
+
+    KernelInfo *mockKernelInfo = new KernelInfo{};
+    mockKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "CopyBuffer";
+    pProgram->addKernelInfo(mockKernelInfo, pDevice->getRootDeviceIndex());
+
+    auto counter = 0u;
+    for (const auto &device : pProgram->getDevices()) {
+        pProgram->notifyDebuggerWithDebugData(device);
+
+        EXPECT_FALSE(pProgram->wasCreateDebugZebinCalled);
+        EXPECT_TRUE(pProgram->wasProcessDebugDataCalled);
+        EXPECT_EQ(++counter, sourceLevelDebugger->notifyKernelDebugDataCalled);
+    }
 }

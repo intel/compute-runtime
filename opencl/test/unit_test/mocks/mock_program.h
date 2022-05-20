@@ -189,6 +189,11 @@ class MockProgram : public Program {
         wasCreateDebugZebinCalled = true;
     }
 
+    void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) override {
+        Program::debugNotify(deviceVector, phasesReached);
+        wasDebuggerNotified = true;
+    }
+
     std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
@@ -198,6 +203,7 @@ class MockProgram : public Program {
     int isOptionValueValidOverride = -1;
     bool wasProcessDebugDataCalled = false;
     bool wasCreateDebugZebinCalled = false;
+    bool wasDebuggerNotified = false;
 };
 
 class MockProgramAppendKernelDebugOptions : public Program {

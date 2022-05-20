@@ -41,14 +41,6 @@ cl_int Program::build(
     UNRECOVERABLE_IF(defaultClDevice == nullptr);
     auto &defaultDevice = defaultClDevice->getDevice();
 
-    enum class BuildPhase {
-        Init,
-        SourceCodeNotification,
-        BinaryCreation,
-        BinaryProcessing,
-        DebugDataNotification
-    };
-
     std::unordered_map<uint32_t, BuildPhase> phaseReached;
     for (const auto &clDevice : deviceVector) {
         phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::Init;
@@ -194,14 +186,7 @@ cl_int Program::build(
         }
 
         if (isKernelDebugEnabled() || gtpinIsGTPinInitialized()) {
-            for (auto &clDevice : deviceVector) {
-                auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-                if (BuildPhase::DebugDataNotification == phaseReached[rootDeviceIndex]) {
-                    continue;
-                }
-                notifyDebuggerWithDebugData(clDevice);
-                phaseReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
-            }
+            debugNotify(deviceVector, phaseReached);
         }
     } while (false);
 
@@ -266,6 +251,17 @@ void Program::extractInternalOptions(const std::string &options, std::string &in
             CompilerOptions::concatenateAppend(internalOptions, optionString);
             CompilerOptions::concatenateAppend(internalOptions, *(element + 1));
         }
+    }
+}
+
+void Program::debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) {
+    for (auto &clDevice : deviceVector) {
+        auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+        if (BuildPhase::DebugDataNotification == phasesReached[rootDeviceIndex]) {
+            continue;
+        }
+        notifyDebuggerWithDebugData(clDevice);
+        phasesReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
     }
 }
 

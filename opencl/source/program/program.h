@@ -30,6 +30,7 @@ namespace PatchTokenBinary {
 struct ProgramFromPatchtokens;
 }
 
+enum class BuildPhase;
 class BuiltinDispatchInfoBuilder;
 class ClDevice;
 class Context;
@@ -71,6 +72,14 @@ constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
 class Program : public BaseObject<_cl_program> {
   public:
     static const cl_ulong objectMagic = 0x5651C89100AAACFELL;
+
+    enum class BuildPhase {
+        Init,
+        SourceCodeNotification,
+        BinaryCreation,
+        BinaryProcessing,
+        DebugDataNotification
+    };
 
     enum class CreatedFrom {
         SOURCE,
@@ -276,6 +285,7 @@ class Program : public BaseObject<_cl_program> {
         this->context = pContext;
     }
 
+    MOCKABLE_VIRTUAL void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached);
     void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
