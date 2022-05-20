@@ -92,4 +92,10 @@ static_assert(offsetof(GemMmap, offset) == offsetof(drm_i915_gem_mmap, offset));
 static_assert(offsetof(GemMmap, size) == offsetof(drm_i915_gem_mmap, size));
 static_assert(offsetof(GemMmap, addrPtr) == offsetof(drm_i915_gem_mmap, addr_ptr));
 static_assert(offsetof(GemMmap, flags) == offsetof(drm_i915_gem_mmap, flags));
+
+static_assert(sizeof(GemSetDomain) == sizeof(drm_i915_gem_set_domain));
+static_assert(offsetof(GemSetDomain, handle) == offsetof(drm_i915_gem_set_domain, handle));
+static_assert(offsetof(GemSetDomain, readDomains) == offsetof(drm_i915_gem_set_domain, read_domains));
+static_assert(offsetof(GemSetDomain, writeDomain) == offsetof(drm_i915_gem_set_domain, write_domain));
+
 } // namespace NEO

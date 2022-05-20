@@ -132,10 +132,10 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         ioctl_cnt.gemMmap++;
     } break;
     case DRM_IOCTL_I915_GEM_SET_DOMAIN: {
-        auto setDomainParams = (drm_i915_gem_set_domain *)arg;
+        auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);
         setDomainHandle = setDomainParams->handle;
-        setDomainReadDomains = setDomainParams->read_domains;
-        setDomainWriteDomain = setDomainParams->write_domain;
+        setDomainReadDomains = setDomainParams->readDomains;
+        setDomainWriteDomain = setDomainParams->writeDomain;
         ioctl_cnt.gemSetDomain++;
     } break;
 

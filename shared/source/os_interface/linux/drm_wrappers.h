@@ -104,4 +104,10 @@ struct GemMmap {
     uint64_t addrPtr;
     uint64_t flags;
 };
+
+struct GemSetDomain {
+    uint32_t handle;
+    uint32_t readDomains;
+    uint32_t writeDomain;
+};
 } // namespace NEO
