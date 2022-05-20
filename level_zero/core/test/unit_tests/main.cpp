@@ -344,7 +344,11 @@ int main(int argc, char **argv) {
     testFiles = testBinaryFiles;
     testFilesApiSpecific = testBinaryFilesApiSpecific;
 
-    std::string executionDirectory(hardwarePrefix[productFamily]);
+    std::string executionDirectory("");
+    if (testMode != TestMode::AubTests) {
+        executionDirectory += "level_zero/";
+    }
+    executionDirectory += hardwarePrefix[productFamily];
     executionDirectory += NEO::executionDirectorySuffix; //_aub for aub_tests, empty otherwise
     executionDirectory += "/";
     executionDirectory += std::to_string(revId);

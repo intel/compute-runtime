@@ -108,7 +108,7 @@ target_link_libraries(igdrcl_tests gmock-gtest ${NEO_EXTRA_LIBS})
 set(BUILT_IN_KERNEL_DIR "${NEO_SOURCE_DIR}/shared/source/built_ins")
 
 function(neo_copy_test_files target product)
-  set(outputdir "${TargetDir}/${product}")
+  set(outputdir "${TargetDir}/opencl/${product}")
   add_custom_target(${target})
   add_custom_command(
                      TARGET ${target}
@@ -123,7 +123,7 @@ function(neo_copy_test_files target product)
 endfunction()
 
 function(neo_copy_test_files_with_revision target product revision_id)
-  set(outputdir "${TargetDir}/${product}/${revision_id}")
+  set(outputdir "${TargetDir}/opencl/${product}/${revision_id}")
   add_custom_target(${target})
   add_custom_command(
                      TARGET ${target}

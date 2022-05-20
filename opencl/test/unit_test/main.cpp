@@ -340,7 +340,11 @@ int main(int argc, char **argv) {
     nClFiles.append("/");
     clFiles = nClFiles;
 
-    std::string executionDirectory(hardwarePrefix[productFamily]);
+    std::string executionDirectory("");
+    if (testMode != TestMode::AubTests) {
+        executionDirectory += "opencl/";
+    }
+    executionDirectory += hardwarePrefix[productFamily];
     executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
     executionDirectory += "/";
     executionDirectory += std::to_string(revId);
