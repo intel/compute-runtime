@@ -441,7 +441,7 @@ HWTEST2_F(AppendFillTest,
 }
 
 HWTEST2_F(MultiTileAppendFillTest,
-          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfilingAndSingleDcFlushWhenRequired, IsAtLeastXeHpCore) {
+          givenMultiTileCmdListCallToAppendMemoryFillWhenSignalScopeTimestampEventUsesComputeWalkerPostSyncThenSeparateKernelsUsesPostSyncProfilingAndSingleDcFlushWithPostSync, IsAtLeastXeHpCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
@@ -474,7 +474,22 @@ HWTEST2_F(MultiTileAppendFillTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
-    EXPECT_EQ(4u, event->getPacketsInUse());
+    // two kernels and each kernel uses two packets (for two tiles), in total 4
+    uint32_t expectedPacketsInUse = 4;
+
+    uint32_t expectedDcFlush = 0;
+    uint32_t expectedPostSyncPipeControl = 0;
+
+    if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getHwInfo())) {
+        //laster kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
+        expectedPacketsInUse = 6;
+        // 1st dc flush after cross-tile sync, 2nd dc flush for signal scope event
+        expectedDcFlush = 2;
+        //cache flush with event signal
+        expectedPostSyncPipeControl = 1;
+    }
+
+    EXPECT_EQ(expectedPacketsInUse, event->getPacketsInUse());
     EXPECT_EQ(2u, event->getKernelCount());
 
     GenCmdList cmdList;
@@ -504,6 +519,7 @@ HWTEST2_F(MultiTileAppendFillTest,
     for (auto it : itorPipeControls) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
             postSyncPipeControls++;
         }
         if (cmd->getDcFlushEnable()) {
@@ -511,12 +527,7 @@ HWTEST2_F(MultiTileAppendFillTest,
         }
     }
 
-    uint32_t expectedDcFlush =
-        NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getHwInfo())
-            ? 2 // 1st dc flush after cross-tile sync, 2nd dc flush for signal scope event
-            : 0;
-
-    EXPECT_EQ(0u, postSyncPipeControls);
+    EXPECT_EQ(expectedPostSyncPipeControl, postSyncPipeControls);
     EXPECT_EQ(expectedDcFlush, dcFlushFound);
 }
 

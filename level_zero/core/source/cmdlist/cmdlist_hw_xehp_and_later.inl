@@ -371,9 +371,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(ze_
             } else {
                 const auto &hwInfo = this->device->getHwInfo();
                 if (NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(!!event->signalScope, hwInfo)) {
-                    NEO::PipeControlArgs args;
-                    args.dcFlushEnable = true;
-                    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+                    programEventL3Flush<gfxCoreFamily>(hEvent, this->device, this->partitionCount, this->commandContainer);
                 }
             }
         }

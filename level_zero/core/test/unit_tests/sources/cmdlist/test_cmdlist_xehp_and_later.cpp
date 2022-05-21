@@ -404,7 +404,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
-          givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushAddedOnce,
+          givenCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWithPostSyncAddedOnce,
           isXeHpOrXeHpgCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
@@ -439,7 +439,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100002345, event->toHandle(), 0, nullptr);
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
-    EXPECT_EQ(3u, event->getPacketsInUse());
+    EXPECT_EQ(4u, event->getPacketsInUse());
     EXPECT_EQ(3u, event->getKernelCount());
 
     GenCmdList cmdList;
@@ -465,6 +465,11 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
     EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
+    uint64_t l3FlushPostSyncAddress = thirdKernelEventAddress + event->getSinglePacketSize();
+    if (event->isUsingContextEndOffset()) {
+        l3FlushPostSyncAddress += event->getContextEndOffset();
+    }
+
     auto itorPipeControls = findAll<PIPE_CONTROL *>(firstWalker, cmdList.end());
 
     uint32_t postSyncPipeControls = 0;
@@ -473,17 +478,19 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             postSyncPipeControls++;
+            EXPECT_EQ(l3FlushPostSyncAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
         }
         if (cmd->getDcFlushEnable()) {
             dcFlushFound++;
         }
     }
-    EXPECT_EQ(0u, postSyncPipeControls);
+    EXPECT_EQ(1u, postSyncPipeControls);
     EXPECT_EQ(1u, dcFlushFound);
 }
 
 HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
-          givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlusAddedForScopedEvent,
+          givenMultiTileCommandListAndEventWithSignalScopeWhenTimestampProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateMultiTileKernelsAndL3FlushWithPostSyncAddedForScopedEvent,
           isXeHpOrXeHpgCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
@@ -523,7 +530,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
 
     EXPECT_EQ(3u, commandList.appendMemoryCopyKernelWithGACalled);
     EXPECT_EQ(0u, commandList.appendMemoryCopyBlitCalled);
-    EXPECT_EQ(6u, event->getPacketsInUse());
+    EXPECT_EQ(8u, event->getPacketsInUse());
     EXPECT_EQ(3u, event->getKernelCount());
 
     GenCmdList cmdList;
@@ -550,6 +557,11 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
     EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(thirdKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
+    uint64_t l3FlushPostSyncAddress = thirdKernelEventAddress + 2 * event->getSinglePacketSize();
+    if (event->isUsingContextEndOffset()) {
+        l3FlushPostSyncAddress += event->getContextEndOffset();
+    }
+
     auto itorPipeControls = findAll<PIPE_CONTROL *>(thirdWalker, cmdList.end());
 
     uint32_t postSyncPipeControls = 0;
@@ -558,6 +570,9 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
     for (auto it : itorPipeControls) {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(l3FlushPostSyncAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
+            EXPECT_EQ(Event::STATE_SIGNALED, cmd->getImmediateData());
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncPipeControls++;
         }
         if (cmd->getDcFlushEnable()) {
@@ -566,12 +581,12 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLater,
     }
 
     constexpr uint32_t expectedDcFlush = 2; //dc flush for last cross-tile sync and separately for signal scope event after last kernel split
-    EXPECT_EQ(0u, postSyncPipeControls);
+    EXPECT_EQ(1u, postSyncPipeControls);
     EXPECT_EQ(expectedDcFlush, dcFlushFound);
 }
 
 HWTEST2_F(AppendMemoryCopyXeHpAndLater,
-          givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, isXeHpOrXeHpgCore) {
+          givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushWithPostSyncForLastPC, isXeHpOrXeHpgCore) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -623,7 +638,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLater,
 
     constexpr uint32_t expectedDcFlushFound = 1u;
 
-    EXPECT_EQ(0u, postSyncFound);
+    EXPECT_EQ(1u, postSyncFound);
     EXPECT_EQ(expectedDcFlushFound, dcFlushFound);
 }
 
