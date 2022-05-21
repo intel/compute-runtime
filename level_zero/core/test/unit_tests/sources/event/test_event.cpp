@@ -1334,6 +1334,92 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSe
     }
 }
 
+TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel) {
+    typename MockTimestampPackets32::Packet packetData[4];
+    event->hostAddress = packetData;
+
+    constexpr uint32_t kernelStartValue = 5u;
+    constexpr uint32_t kernelEndValue = 10u;
+
+    constexpr uint32_t waStartValue = 2u;
+    constexpr uint32_t waEndValue = 15u;
+
+    //1st kernel 1st packet
+    packetData[0].contextStart = kernelStartValue;
+    packetData[0].contextEnd = kernelEndValue;
+    packetData[0].globalStart = kernelStartValue;
+    packetData[0].globalEnd = kernelEndValue;
+
+    //1st kernel 2nd packet for L3 Flush
+    packetData[1].contextStart = waStartValue;
+    packetData[1].contextEnd = waEndValue;
+    packetData[1].globalStart = waStartValue;
+    packetData[1].globalEnd = waEndValue;
+
+    //2nd kernel 1st packet
+    packetData[2].contextStart = kernelStartValue;
+    packetData[2].contextEnd = kernelEndValue;
+    packetData[2].globalStart = kernelStartValue;
+    packetData[2].globalEnd = kernelEndValue;
+
+    event->setPacketsInUse(2u);
+    event->setL3FlushForCurrentKernel();
+
+    event->increaseKernelCount();
+    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
+
+    ze_kernel_timestamp_result_t results;
+    event->queryKernelTimestamp(&results);
+
+    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.context.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.global.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.context.kernelEnd);
+    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
+}
+
+TEST_F(TimestampEventCreate, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel) {
+    typename MockTimestampPackets32::Packet packetData[4];
+    event->hostAddress = packetData;
+
+    constexpr uint32_t kernelStartValue = 5u;
+    constexpr uint32_t kernelEndValue = 10u;
+
+    constexpr uint32_t waStartValue = 2u;
+    constexpr uint32_t waEndValue = 15u;
+
+    //1st kernel 1st packet
+    packetData[0].contextStart = kernelStartValue;
+    packetData[0].contextEnd = kernelEndValue;
+    packetData[0].globalStart = kernelStartValue;
+    packetData[0].globalEnd = kernelEndValue;
+
+    //2nd kernel 1st packet
+    packetData[1].contextStart = kernelStartValue;
+    packetData[1].contextEnd = kernelEndValue;
+    packetData[1].globalStart = kernelStartValue;
+    packetData[1].globalEnd = kernelEndValue;
+
+    //2nd kernel 2nd packet for L3 Flush
+    packetData[2].contextStart = waStartValue;
+    packetData[2].contextEnd = waEndValue;
+    packetData[2].globalStart = waStartValue;
+    packetData[2].globalEnd = waEndValue;
+
+    EXPECT_EQ(1u, event->getPacketsUsedInLastKernel());
+
+    event->increaseKernelCount();
+    event->setPacketsInUse(2u);
+    event->setL3FlushForCurrentKernel();
+
+    ze_kernel_timestamp_result_t results;
+    event->queryKernelTimestamp(&results);
+
+    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.context.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(kernelStartValue), results.global.kernelStart);
+    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.context.kernelEnd);
+    EXPECT_EQ(static_cast<uint64_t>(kernelEndValue), results.global.kernelEnd);
+}
+
 HWTEST_EXCLUDE_PRODUCT(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_GEN12LP_CORE);
 
 TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyReturned) {
@@ -1753,6 +1839,32 @@ TEST_F(EventTests, givenEventUseMultiplePacketsWhenHostSignalThenExpectAllPacket
         EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);
         hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
     }
+}
+
+TEST_F(EventTests, WhenSettingL3FlushOnEventThenSetOnParticularKernel) {
+    auto event = whiteboxCast(Event::create<uint32_t>(eventPool, &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+
+    event->setL3FlushForCurrentKernel();
+    EXPECT_TRUE(event->getL3FlushForCurrenKernel());
+
+    event->increaseKernelCount();
+    EXPECT_EQ(2u, event->getKernelCount());
+
+    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+
+    event->setL3FlushForCurrentKernel();
+    EXPECT_TRUE(event->getL3FlushForCurrenKernel());
+
+    event->reset();
+    EXPECT_FALSE(event->getL3FlushForCurrenKernel());
+
+    constexpr size_t expectedL3FlushOnKernelCount = 0;
+    EXPECT_EQ(expectedL3FlushOnKernelCount, event->l3FlushAppliedOnKernel.count());
+
+    event->destroy();
 }
 
 struct EventSizeFixture : public DeviceFixture {

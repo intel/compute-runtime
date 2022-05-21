@@ -68,22 +68,22 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
     contextStartTS = kernelEventCompletionData[0].getContextStartValue(0);
     contextEndTS = kernelEventCompletionData[0].getContextEndValue(0);
 
-    for (uint32_t i = 0; i < kernelCount; i++) {
-        for (auto packetId = 0u; packetId < kernelEventCompletionData[i].getPacketsUsed(); packetId++) {
-            if (this->l3FlushWaApplied && ((packetId % skipL3EventPacketIndex) != 0)) {
+    for (uint32_t kernelId = 0; kernelId < kernelCount; kernelId++) {
+        for (auto packetId = 0u; packetId < kernelEventCompletionData[kernelId].getPacketsUsed(); packetId++) {
+            if (this->l3FlushAppliedOnKernel.test(kernelId) && ((packetId % skipL3EventPacketIndex) != 0)) {
                 continue;
             }
-            if (globalStartTS > kernelEventCompletionData[i].getGlobalStartValue(packetId)) {
-                globalStartTS = kernelEventCompletionData[i].getGlobalStartValue(packetId);
+            if (globalStartTS > kernelEventCompletionData[kernelId].getGlobalStartValue(packetId)) {
+                globalStartTS = kernelEventCompletionData[kernelId].getGlobalStartValue(packetId);
             }
-            if (contextStartTS > kernelEventCompletionData[i].getContextStartValue(packetId)) {
-                contextStartTS = kernelEventCompletionData[i].getContextStartValue(packetId);
+            if (contextStartTS > kernelEventCompletionData[kernelId].getContextStartValue(packetId)) {
+                contextStartTS = kernelEventCompletionData[kernelId].getContextStartValue(packetId);
             }
-            if (contextEndTS < kernelEventCompletionData[i].getContextEndValue(packetId)) {
-                contextEndTS = kernelEventCompletionData[i].getContextEndValue(packetId);
+            if (contextEndTS < kernelEventCompletionData[kernelId].getContextEndValue(packetId)) {
+                contextEndTS = kernelEventCompletionData[kernelId].getContextEndValue(packetId);
             }
-            if (globalEndTS < kernelEventCompletionData[i].getGlobalEndValue(packetId)) {
-                globalEndTS = kernelEventCompletionData[i].getGlobalEndValue(packetId);
+            if (globalEndTS < kernelEventCompletionData[kernelId].getGlobalEndValue(packetId)) {
+                globalEndTS = kernelEventCompletionData[kernelId].getGlobalEndValue(packetId);
             }
         }
     }
@@ -256,6 +256,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     }
     hostEventSetValue(Event::STATE_INITIAL);
     resetPackets();
+    this->l3FlushAppliedOnKernel.reset();
     return ZE_RESULT_SUCCESS;
 }
 

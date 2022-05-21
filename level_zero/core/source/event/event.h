@@ -15,6 +15,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
+#include <bitset>
 #include <chrono>
 #include <limits>
 
@@ -106,6 +107,12 @@ struct Event : _ze_event_handle_t {
     void zeroKernelCount() {
         kernelCount = 0;
     }
+    bool getL3FlushForCurrenKernel() {
+        return l3FlushAppliedOnKernel.test(kernelCount - 1);
+    }
+    void setL3FlushForCurrentKernel() {
+        l3FlushAppliedOnKernel.set(kernelCount - 1);
+    }
 
     uint64_t globalStartTS;
     uint64_t globalEndTS;
@@ -121,9 +128,9 @@ struct Event : _ze_event_handle_t {
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
 
-    bool l3FlushWaApplied = false;
-
   protected:
+    std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
+
     size_t contextStartOffset = 0u;
     size_t contextEndOffset = 0u;
     size_t globalStartOffset = 0u;

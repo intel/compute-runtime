@@ -19,6 +19,8 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass = ::L0::Event;
+    using BaseClass::hostAddress;
+    using BaseClass::l3FlushAppliedOnKernel;
 };
 
 using Event = WhiteBox<::L0::Event>;
@@ -64,6 +66,7 @@ struct Mock<EventPool> : public EventPool {
 
 class MockEvent : public ::L0::Event {
   public:
+    using ::L0::Event::l3FlushAppliedOnKernel;
     MockEvent() {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),

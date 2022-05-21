@@ -329,10 +329,10 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWit
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(true, event->l3FlushWaApplied);
+    EXPECT_EQ(true, event->getL3FlushForCurrenKernel());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWithoutWalkerPartitionThenEventL3FlushWaNotSet, IsXeHpCore) {
+HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWithoutWalkerPartitionThenEventL3FlushNotSet, IsXeHpCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     Mock<::L0::Kernel> kernel;
@@ -360,7 +360,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventZeroScopeWit
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(false, event->l3FlushWaApplied);
+    EXPECT_EQ(false, event->getL3FlushForCurrenKernel());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWithoutWalkerPartitionThenSkipOddPacketsDuringQuery, IsXeHpCore) {
@@ -392,7 +392,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL3Flush, givenKernelWithEventHostScopeWit
     result = pCommandList->appendLaunchKernelWithParams(kernel.toHandle(), &groupCount, event->toHandle(), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(true, event->l3FlushWaApplied);
+    EXPECT_EQ(true, event->getL3FlushForCurrenKernel());
     EXPECT_EQ(2u, event->getPacketsInUse());
 
     typename MockTimestampPackets32::Packet data[3] = {};

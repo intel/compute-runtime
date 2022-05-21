@@ -105,7 +105,7 @@ void programEventL3Flush(ze_event_handle_t hEvent,
         event->setPacketsInUse(event->getPacketsUsedInLastKernel() + 1);
     }
 
-    event->l3FlushWaApplied = true;
+    event->setL3FlushForCurrentKernel();
 
     auto &cmdListStream = *commandContainer.getCommandStream();
     NEO::PipeControlArgs args;
