@@ -163,7 +163,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
-    bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
+    MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) {
         if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {

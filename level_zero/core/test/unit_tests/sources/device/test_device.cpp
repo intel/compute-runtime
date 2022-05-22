@@ -1851,7 +1851,7 @@ TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSuccessfullyCompletes) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -1864,7 +1864,7 @@ TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerSu
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-HWTEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyAndDeviceLostSynchronizeThenCanAccessPeerReturnsDeviceLost) {
+HWTEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyAndDeviceLostSynchronizeThenCanAccessPeerReturnsDeviceLost) {
     constexpr size_t devicesCount{2};
     ASSERT_LE(devicesCount, driverHandle->devices.size());
 
@@ -2095,7 +2095,7 @@ TEST_F(MultipleDevicesP2PDevice0Access1Atomic1Device1Access1Atomic1Test, WhenCal
     EXPECT_TRUE(p2pProperties.flags & ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS);
 }
 
-TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -2109,7 +2109,7 @@ TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerRe
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenCanAccessPeerCalledTwiceThenCanAccessPeerReturnsSameValueEachTime) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 

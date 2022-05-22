@@ -1990,6 +1990,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     }
 
     void SetUp() override {
+        DebugManagerStateRestore restorer;
         NEO::MockCompilerEnableGuard mock(true);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
@@ -2017,11 +2018,20 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
             context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
+            for (auto j = 0u; j < deviceImp->subDevices.size(); j++) {
+                auto subDevice = deviceImp->subDevices[j];
+                context->getDevices().insert(std::make_pair(subDevice->toHandle(), subDevice));
+            }
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
         }
         context->rootDeviceIndices.remove_duplicates();
+
+        currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager, driverHandle->devices[0]->isImplicitScalingCapable());
+        prevSvmAllocsManager = driverHandle->svmAllocsManager;
+        driverHandle->svmAllocsManager = currSvmAllocsManager;
     }
 
     void createKernel() {
@@ -2034,13 +2044,16 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
     }
 
     void TearDown() override {
+        driverHandle->svmAllocsManager = prevSvmAllocsManager;
+        delete currSvmAllocsManager;
         driverHandle->setMemoryManager(prevMemoryManager);
         delete currMemoryManager;
     }
 
-    DebugManagerStateRestore restorer;
     NEO::MemoryManager *prevMemoryManager = nullptr;
     NEO::MemoryManager *currMemoryManager = nullptr;
+    NEO::SVMAllocsManager *prevSvmAllocsManager = nullptr;
+    NEO::SVMAllocsManager *currSvmAllocsManager = nullptr;
     std::unique_ptr<DriverHandleImp> driverHandle;
 
     std::unique_ptr<UltDeviceFactory> deviceFactory;
@@ -2290,6 +2303,37 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
           IsAtLeastSkl) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t result = context->allocDeviceMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
+
+    uint32_t pattern = 1;
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenSubDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
+          IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device = driverHandle->devices[1];
+    L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
+    L0::Device *device1 = deviceImp->subDevices[0];
 
     size_t size = 1024;
     size_t alignment = 1u;

@@ -554,10 +554,22 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     } else {
         alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
         UNRECOVERABLE_IF(alloc == nullptr);
-        uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
         ze_ipc_memory_flags_t flags = {};
 
-        peerPtr = this->importFdHandle(device, flags, handle, &alloc);
+        if (!deviceImp->isSubdevice && deviceImp->isImplicitScalingCapable()) {
+            uint32_t numHandles = alloc->getNumHandles();
+            UNRECOVERABLE_IF(numHandles == 0);
+            std::vector<NEO::osHandle> handles;
+            for (uint32_t i = 0; i < numHandles; i++) {
+                int handle = static_cast<int>(alloc->peekInternalHandle(this->getMemoryManager(), i));
+                handles.push_back(handle);
+            }
+            peerPtr = this->importFdHandles(device, flags, handles, &alloc);
+        } else {
+            uint64_t handle = alloc->peekInternalHandle(this->getMemoryManager());
+            peerPtr = this->importFdHandle(device, flags, handle, &alloc);
+        }
+
         if (peerPtr == nullptr) {
             return nullptr;
         }

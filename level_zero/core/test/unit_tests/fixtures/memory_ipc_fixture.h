@@ -443,6 +443,10 @@ class IpcImplicitScalingMockGraphicsAllocation : public NEO::MemoryAllocation {
     uint32_t getNumHandles() override {
         return 2u;
     }
+
+    bool isResident(uint32_t contextId) const override {
+        return false;
+    }
 };
 
 class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
@@ -450,7 +454,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0,
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
@@ -465,7 +469,21 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0,
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
+                                                                  NEO::AllocationType::BUFFER,
+                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  0x1000,
+                                                                  0,
+                                                                  sizeof(uint32_t),
+                                                                  MemoryPool::System4KBPages);
+        alloc->setGpuBaseAddress(0xabcd);
+        return alloc;
+    }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+        if (failOnCreateGraphicsAllocationFromSharedHandle) {
+            return nullptr;
+        }
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
@@ -476,7 +494,7 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         return alloc;
     }
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
-        auto alloc = new NEO::MockGraphicsAllocation(0,
+        auto alloc = new NEO::MockGraphicsAllocation(0u,
                                                      NEO::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(sharedHandleAddress++),
                                                      0x1000,
@@ -486,6 +504,14 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     };
+
+    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
+        delete gfxAllocation;
+    }
+
+    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override {
+        delete gfxAllocation;
+    }
 
     uint64_t sharedHandleAddress = 0x1234;
 
