@@ -21,7 +21,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_system_info_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp

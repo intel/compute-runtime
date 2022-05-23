@@ -20,8 +20,6 @@
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
 #include "gtest/gtest.h"
 
 #include <fstream>
@@ -503,7 +501,8 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
 }
 
 TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsUsed) {
-    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
@@ -517,7 +516,8 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
 }
 
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsQueriedAndStored) {
-    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
@@ -536,7 +536,8 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
 }
 
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImplicitVmIdPerContextIsQueriedAndStoredAtSubDeviceIndex) {
-    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
@@ -559,7 +560,8 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
 }
 
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenImplicitVmIdsPerContextAreQueriedAndStoredAtSubDeviceIndices) {
-    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingEnabled();
 
     DrmMock drmMock(rootEnv);
