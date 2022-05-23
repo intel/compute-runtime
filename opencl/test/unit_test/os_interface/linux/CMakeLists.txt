@@ -44,25 +44,12 @@ endif()
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_prelim.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests_prelim.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_prelim_fixtures.h
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_prelim_tests.cpp
   )
 
   if(TESTS_XE_HPC_CORE)
     list(APPEND IGDRCL_SRCS_tests_os_interface_linux
          ${CMAKE_CURRENT_SOURCE_DIR}/cl_mem_cache_clos_tests_xe_hpc.cpp
-    )
-  endif()
-
-  if(TESTS_XEHP_AND_LATER)
-    list(APPEND IGDRCL_SRCS_tests_os_interface_linux
-         ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later_prelim_tests.cpp
     )
   endif()
 

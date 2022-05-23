@@ -23,12 +23,15 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_cache_info_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_with_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_vm_bind_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
@@ -38,6 +41,11 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
     list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
          ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prod_dg1.h
          ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_dg1.cpp
+    )
+  endif()
+  if(TESTS_XEHP_AND_LATER)
+    list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
+         ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later_prelim_tests.cpp
     )
   endif()
 endif()

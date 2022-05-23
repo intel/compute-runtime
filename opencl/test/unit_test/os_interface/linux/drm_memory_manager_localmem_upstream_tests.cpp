@@ -16,13 +16,13 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_impl.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_memory_info.h"
 
 #include "gtest/gtest.h"
 

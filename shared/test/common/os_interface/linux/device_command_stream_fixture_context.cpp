@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_context.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture_context.h"
 
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 

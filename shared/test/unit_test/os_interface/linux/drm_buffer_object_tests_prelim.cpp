@@ -7,10 +7,9 @@
 
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture_prelim.h"
 
 using namespace NEO;
 

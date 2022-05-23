@@ -20,9 +20,8 @@
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 
 #include "gtest/gtest.h"
 
@@ -956,39 +955,13 @@ HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionW
         DeviceBitfield deviceBitfield{0x0};
         AllocationProperties properties(0, MemoryConstants::pageSize, allocationType, deviceBitfield);
 
-        allocData.flags.preferCompressed = CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo);
+        allocData.flags.preferCompressed = true;
         auto buffer = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
         ASSERT_NE(nullptr, buffer);
         EXPECT_EQ(1u, buffer->getDefaultGmm()->resourceParams.Flags.Info.RenderCompressed);
 
         memoryManager->freeGraphicsMemory(buffer);
     }
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
-
-    DeviceBitfield deviceBitfield{0x0};
-    AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::SVM_GPU,
-                                    deviceBitfield);
-
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
-}
-
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenProvidingPrintfSurfaceThenPreferCompressedBuffer) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    DebugManager.flags.EnableStatelessCompression.set(1);
-
-    DeviceBitfield deviceBitfield{0x0};
-    AllocationProperties properties(0, MemoryConstants::pageSize,
-                                    AllocationType::PRINTF_SURFACE,
-                                    deviceBitfield);
-
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenChunkSizeBasedColouringPolicyWhenAllocatingInDevicePoolOnAllMemoryBanksThenDivideAllocationIntoEqualBufferObjectsWithGivenChunkSize) {

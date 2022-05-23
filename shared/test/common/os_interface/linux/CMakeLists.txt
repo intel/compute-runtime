@@ -12,5 +12,13 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_cache_info.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_device_blob.h
   )
-  add_subdirectories()
+  if(NEO_ENABLE_i915_PRELIM_DETECTION)
+    target_sources(${TARGET_NAME} PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_context.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_fixture_prelim.h
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_prelim_fixtures.h
+    )
+  endif()
 endif()
+add_subdirectories()

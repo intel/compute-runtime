@@ -7,15 +7,15 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
+#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_mock_memory_info.h"
 
 #include "gtest/gtest.h"
 
