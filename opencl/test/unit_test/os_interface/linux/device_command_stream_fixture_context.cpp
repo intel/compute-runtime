@@ -52,7 +52,7 @@ void DrmMockCustomPrelimContext::execBufferExtensions(void *arg) {
     const auto execbuf = reinterpret_cast<NEO::MockExecBuffer *>(arg);
     if ((execbuf->hasUseExtensionsFlag()) &&
         (execbuf->getCliprectsPtr() != 0)) {
-        i915_user_extension *base = reinterpret_cast<i915_user_extension *>(execbuf->getCliprectsPtr());
+        DrmUserExtension *base = reinterpret_cast<DrmUserExtension *>(execbuf->getCliprectsPtr());
         if (base->name == PRELIM_DRM_I915_GEM_EXECBUFFER_EXT_USER_FENCE) {
             prelim_drm_i915_gem_execbuffer_ext_user_fence *userFenceExt =
                 reinterpret_cast<prelim_drm_i915_gem_execbuffer_ext_user_fence *>(execbuf->getCliprectsPtr());

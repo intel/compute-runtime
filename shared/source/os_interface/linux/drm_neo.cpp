@@ -441,7 +441,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
         gcc.flags |= ioctlHelper->getDirectSubmissionFlag();
     }
 
-    drm_i915_gem_context_create_ext_setparam extSetparam = {};
+    GemContextCreateExtSetParam extSetparam = {};
 
     if (drmVmId > 0) {
         extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;

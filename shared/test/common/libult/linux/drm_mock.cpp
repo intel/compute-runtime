@@ -83,7 +83,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         if (create->extensions == 0) {
             return this->storedRetVal;
         }
-        receivedContextCreateSetParam = *reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
+        receivedContextCreateSetParam = *reinterpret_cast<GemContextCreateExtSetParam *>(create->extensions);
         if (receivedContextCreateSetParam.base.name == I915_CONTEXT_CREATE_EXT_SETPARAM) {
             receivedContextParamRequestCount++;
             receivedContextParamRequest = *reinterpret_cast<GemContextParam *>(&receivedContextCreateSetParam.param);

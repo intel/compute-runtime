@@ -59,7 +59,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
     } break;
     case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT: {
         auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
-        auto setParam = reinterpret_cast<drm_i915_gem_context_create_ext_setparam *>(create->extensions);
+        auto setParam = reinterpret_cast<GemContextCreateExtSetParam *>(create->extensions);
         if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_ACC) {
             const auto paramAcc = reinterpret_cast<prelim_drm_i915_gem_context_param_acc *>(setParam->param.value);
             receivedContextParamAcc = GemContextParamAcc{paramAcc->trigger, paramAcc->notify, paramAcc->granularity};
@@ -422,7 +422,7 @@ void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr, bool bind) {
     }
 
     size_t uuidIndex{0};
-    auto baseExt = reinterpret_cast<i915_user_extension *>(ptr);
+    auto baseExt = reinterpret_cast<DrmUserExtension *>(ptr);
     while (baseExt) {
         if (baseExt->name == PRELIM_I915_VM_BIND_EXT_USER_FENCE) {
             const auto *ext = reinterpret_cast<prelim_drm_i915_vm_bind_ext_user_fence *>(baseExt);
@@ -439,7 +439,7 @@ void DrmMockPrelimContext::storeVmBindExtensions(uint64_t ptr, bool bind) {
             }
         }
 
-        baseExt = reinterpret_cast<i915_user_extension *>(baseExt->next_extension);
+        baseExt = reinterpret_cast<DrmUserExtension *>(baseExt->nextExtension);
     }
 }
 

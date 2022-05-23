@@ -70,12 +70,12 @@ TEST(DrmQueryTest, givenCooperativeEngineWhenCreateDrmContextThenRunAloneContext
     const auto &extSetparam = drm.receivedContextCreateSetParam;
 
     EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-    EXPECT_EQ(0u, extSetparam.base.next_extension);
+    EXPECT_EQ(0u, extSetparam.base.nextExtension);
     EXPECT_EQ(0u, extSetparam.base.flags);
 
     EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getRunAloneContextParam()), extSetparam.param.param);
     EXPECT_EQ(0u, extSetparam.param.size);
-    EXPECT_EQ(0u, extSetparam.param.ctx_id);
+    EXPECT_EQ(0u, extSetparam.param.contextId);
     EXPECT_EQ(0u, extSetparam.param.value);
 }
 
@@ -98,12 +98,12 @@ TEST(DrmQueryTest, givenForceRunAloneContextFlagSetWhenCreateDrmContextThenRunAl
 
         auto extSetparam = drm.receivedContextCreateSetParam;
         EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-        EXPECT_EQ(0u, extSetparam.base.next_extension);
+        EXPECT_EQ(0u, extSetparam.base.nextExtension);
         EXPECT_EQ(0u, extSetparam.base.flags);
 
         EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getRunAloneContextParam()), extSetparam.param.param);
         EXPECT_EQ(0u, extSetparam.param.size);
-        EXPECT_EQ(0u, extSetparam.param.ctx_id);
+        EXPECT_EQ(0u, extSetparam.param.contextId);
         EXPECT_EQ(0u, extSetparam.param.value);
     }
 }
@@ -124,12 +124,12 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedTh
     auto extSetparam = drm.receivedContextCreateSetParam;
 
     EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-    EXPECT_EQ(0u, extSetparam.base.next_extension);
+    EXPECT_EQ(0u, extSetparam.base.nextExtension);
     EXPECT_EQ(0u, extSetparam.base.flags);
 
     EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getAccContextParam()), extSetparam.param.param);
     EXPECT_EQ(DrmPrelimHelper::getAccContextParamSize(), extSetparam.param.size);
-    EXPECT_EQ(0u, extSetparam.param.ctx_id);
+    EXPECT_EQ(0u, extSetparam.param.contextId);
     EXPECT_NE(0u, extSetparam.param.value);
 
     auto paramAcc = drm.context.receivedContextParamAcc;
@@ -158,12 +158,12 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
         auto extSetparam = drm.receivedContextCreateSetParam;
 
         EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-        EXPECT_EQ(0u, extSetparam.base.next_extension);
+        EXPECT_EQ(0u, extSetparam.base.nextExtension);
         EXPECT_EQ(0u, extSetparam.base.flags);
 
         EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getAccContextParam()), extSetparam.param.param);
         EXPECT_EQ(DrmPrelimHelper::getAccContextParamSize(), extSetparam.param.size);
-        EXPECT_EQ(0u, extSetparam.param.ctx_id);
+        EXPECT_EQ(0u, extSetparam.param.contextId);
         EXPECT_NE(0u, extSetparam.param.value);
 
         auto paramAcc = drm.context.receivedContextParamAcc;
@@ -193,12 +193,12 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
         auto extSetparam = drm.receivedContextCreateSetParam;
 
         EXPECT_EQ(static_cast<uint32_t>(I915_CONTEXT_CREATE_EXT_SETPARAM), extSetparam.base.name);
-        EXPECT_EQ(0u, extSetparam.base.next_extension);
+        EXPECT_EQ(0u, extSetparam.base.nextExtension);
         EXPECT_EQ(0u, extSetparam.base.flags);
 
         EXPECT_EQ(static_cast<uint64_t>(DrmPrelimHelper::getAccContextParam()), extSetparam.param.param);
         EXPECT_EQ(DrmPrelimHelper::getAccContextParamSize(), extSetparam.param.size);
-        EXPECT_EQ(0u, extSetparam.param.ctx_id);
+        EXPECT_EQ(0u, extSetparam.param.contextId);
         EXPECT_NE(0u, extSetparam.param.value);
 
         auto paramAcc = drm.context.receivedContextParamAcc;

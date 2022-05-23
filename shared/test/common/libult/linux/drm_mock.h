@@ -198,7 +198,7 @@ class DrmMock : public Drm {
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
     std::vector<drm_i915_reset_stats> resetStatsToReturn{};
 
-    drm_i915_gem_context_create_ext_setparam receivedContextCreateSetParam = {};
+    GemContextCreateExtSetParam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;
     uint32_t receivedDestroyContextId = 0;
     uint32_t ioctlCallsCount = 0;

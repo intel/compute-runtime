@@ -118,4 +118,16 @@ struct GemContextParam {
     uint64_t value;
 };
 
+struct DrmUserExtension {
+    uint64_t nextExtension;
+    uint32_t name;
+    uint32_t flags;
+    uint32_t reserved[4];
+};
+
+struct GemContextCreateExtSetParam {
+    DrmUserExtension base;
+    GemContextParam param;
+};
+
 } // namespace NEO

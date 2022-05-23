@@ -393,9 +393,9 @@ uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enab
     return flags;
 }
 
-uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, drm_i915_gem_context_create_ext_setparam &extSetparam) {
+uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, GemContextCreateExtSetParam &extSetparam) {
     gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
-    extSetparam.base.next_extension = gcc.extensions;
+    extSetparam.base.nextExtension = gcc.extensions;
     gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
 
     auto ioctlResult = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
@@ -409,16 +409,16 @@ uint32_t gemCreateContextAcc(Drm *drm, drm_i915_gem_context_create_ext &gcc, uin
     paramAcc.notify = 1;
     paramAcc.granularity = granularity;
 
-    i915_user_extension userExt = {};
+    DrmUserExtension userExt{};
     userExt.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
 
-    drm_i915_gem_context_param ctxParam = {};
+    GemContextParam ctxParam = {};
     ctxParam.param = PRELIM_I915_CONTEXT_PARAM_ACC;
-    ctxParam.ctx_id = 0;
+    ctxParam.contextId = 0;
     ctxParam.size = sizeof(paramAcc);
     ctxParam.value = reinterpret_cast<uint64_t>(&paramAcc);
 
-    drm_i915_gem_context_create_ext_setparam extSetparam = {};
+    GemContextCreateExtSetParam extSetparam{};
     extSetparam.base = userExt;
     extSetparam.param = ctxParam;
 
@@ -437,7 +437,7 @@ uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, drm_i915
 }
 
 uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
-    struct drm_i915_gem_context_create_ext_setparam extSetparam = {};
+    GemContextCreateExtSetParam extSetparam{};
     extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
     extSetparam.param.param = PRELIM_I915_CONTEXT_PARAM_RUNALONE;
     return gemCreateContextExt(drm, gcc, extSetparam);

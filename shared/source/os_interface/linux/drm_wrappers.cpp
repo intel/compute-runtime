@@ -104,4 +104,14 @@ static_assert(offsetof(GemContextParam, size) == offsetof(drm_i915_gem_context_p
 static_assert(offsetof(GemContextParam, param) == offsetof(drm_i915_gem_context_param, param));
 static_assert(offsetof(GemContextParam, value) == offsetof(drm_i915_gem_context_param, value));
 
+static_assert(sizeof(DrmUserExtension) == sizeof(i915_user_extension));
+static_assert(offsetof(DrmUserExtension, nextExtension) == offsetof(i915_user_extension, next_extension));
+static_assert(offsetof(DrmUserExtension, name) == offsetof(i915_user_extension, name));
+static_assert(offsetof(DrmUserExtension, flags) == offsetof(i915_user_extension, flags));
+static_assert(offsetof(DrmUserExtension, reserved) == offsetof(i915_user_extension, rsvd));
+
+static_assert(sizeof(GemContextCreateExtSetParam) == sizeof(drm_i915_gem_context_create_ext_setparam));
+static_assert(offsetof(GemContextCreateExtSetParam, base) == offsetof(drm_i915_gem_context_create_ext_setparam, base));
+static_assert(offsetof(GemContextCreateExtSetParam, param) == offsetof(drm_i915_gem_context_create_ext_setparam, param));
+
 } // namespace NEO
