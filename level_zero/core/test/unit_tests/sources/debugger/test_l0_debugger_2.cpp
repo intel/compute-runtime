@@ -425,5 +425,86 @@ HWTEST2_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     commandList->destroy();
 }
 
+HWTEST_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecutedOnCopyOnlyCmdQThenKernelDebugCommandsAreNotAdded) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    auto &selectorCopyEngine = neoDevice->getSelectorCopyEngine();
+    auto deviceBitfield = neoDevice->getDeviceBitfield();
+    auto bcsEngine = neoDevice->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, false), EngineUsage::Regular);
+
+    if (!bcsEngine) {
+        GTEST_SKIP();
+    }
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, bcsEngine->commandStreamReceiver, &queueDesc, true, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    auto commandList = CommandList::create(productFamily, device, EngineGroupType::Copy, 0u, returnValue);
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    char src[8];
+    char dest[8];
+    auto result = commandList->appendMemoryCopy(dest, src, 8, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+
+    size_t debugModeRegisterCount = 0;
+    size_t tdDebugControlRegisterCount = 0;
+    uint32_t globalSipFound = 0;
+
+    for (size_t i = 0; i < miLoadImm.size(); i++) {
+        MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
+        ASSERT_NE(nullptr, miLoad);
+
+        if (miLoad->getRegisterOffset() == DebugModeRegisterOffset<FamilyType>::registerOffset) {
+            debugModeRegisterCount++;
+        }
+        if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
+            tdDebugControlRegisterCount++;
+        }
+
+        if (miLoad->getRegisterOffset() == GlobalSipRegister<FamilyType>::registerOffset) {
+            globalSipFound++;
+        }
+    }
+    // those register should not be used
+    EXPECT_EQ(0u, debugModeRegisterCount);
+    EXPECT_EQ(0u, tdDebugControlRegisterCount);
+    EXPECT_EQ(0u, globalSipFound);
+
+    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+        auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
+
+        if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {
+            ASSERT_EQ(0u, stateSipCmds.size());
+        }
+    }
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->destroy();
+    }
+
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

@@ -432,7 +432,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         commandList->migrateSharedAllocations();
     }
 
-    if (stateSipRequired) {
+    if (!isCopyOnlyCommandQueue && stateSipRequired) {
         NEO::PreemptionHelper::programStateSipEndWa<GfxFamily>(child, *neoDevice);
     }
 
