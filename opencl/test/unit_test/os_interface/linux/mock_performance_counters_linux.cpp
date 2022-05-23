@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "mock_performance_counters_linux.h"
 
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 
-#include "opencl/test/unit_test/os_interface/linux/mock_os_time_linux.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 namespace NEO {
