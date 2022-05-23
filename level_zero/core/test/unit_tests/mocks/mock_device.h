@@ -98,6 +98,7 @@ struct Mock<Device> : public Device {
 template <>
 struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
+    using Base::adjustCommandQueueDesc;
     using Base::debugSession;
     using Base::implicitScalingCapable;
 

@@ -1085,6 +1085,42 @@ TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse)
     EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(*defaultHwInfo));
 }
 
+TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenDescOrdinalIsNotModified) {
+    DebugManagerStateRestore restore;
+    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+
+    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    ze_command_queue_desc_t desc = {};
+    EXPECT_EQ(desc.ordinal, 0u);
+
+    auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
+    engineGroups.clear();
+    NEO::Device::EngineGroupT engineGroupCompute{};
+    engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
+    NEO::Device::EngineGroupT engineGroupRender{};
+    engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
+    engineGroups.push_back(engineGroupCompute);
+    engineGroups.push_back(engineGroupRender);
+
+    uint32_t expectedOrdinal = 1u;
+    deviceImp->adjustCommandQueueDesc(desc);
+    EXPECT_EQ(desc.ordinal, expectedOrdinal);
+}
+
+TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
+    DebugManagerStateRestore restore;
+    int nodeOrdinal = -1;
+    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+
+    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    ze_command_queue_desc_t desc = {};
+    EXPECT_EQ(desc.ordinal, 0u);
+
+    deviceImp->adjustCommandQueueDesc(desc);
+    EXPECT_EQ(desc.ordinal, 0u);
+}
+
 struct DeviceHwInfoTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();

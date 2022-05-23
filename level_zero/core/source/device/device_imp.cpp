@@ -198,6 +198,25 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
     return returnValue;
 }
 
+void DeviceImp::adjustCommandQueueDesc(ze_command_queue_desc_t &desc) {
+    auto nodeOrdinal = NEO::DebugManager.flags.NodeOrdinal.get();
+    if (nodeOrdinal != -1) {
+        const NEO::HardwareInfo &hwInfo = neoDevice->getHardwareInfo();
+        const NEO::HwHelper &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+
+        auto engineGroupTyp = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
+        uint32_t currentEngineIndex = 0u;
+        for (const auto &engine : engineGroups) {
+            if (engine.engineGroupType == engineGroupTyp) {
+                desc.ordinal = currentEngineIndex;
+                break;
+            }
+            currentEngineIndex++;
+        }
+    }
+}
+
 ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
                                           ze_command_queue_handle_t *commandQueue) {
     auto &platform = neoDevice->getHardwareInfo().platform;
@@ -207,21 +226,24 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
     auto &subDeviceEngineGroups = this->getSubDeviceCopyEngineGroups();
 
+    ze_command_queue_desc_t commandQueueDesc = *desc;
+    adjustCommandQueueDesc(commandQueueDesc);
+
     if (!this->isQueueGroupOrdinalValid(desc->ordinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     bool isCopyOnly = false;
-    if (desc->ordinal < numEngineGroups) {
-        isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[desc->ordinal].engineGroupType);
+    if (commandQueueDesc.ordinal < numEngineGroups) {
+        isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[commandQueueDesc.ordinal].engineGroupType);
     } else {
-        isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(subDeviceEngineGroups[desc->ordinal - numEngineGroups].engineGroupType);
+        isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(subDeviceEngineGroups[commandQueueDesc.ordinal - numEngineGroups].engineGroupType);
     }
 
-    if (desc->priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
+    if (commandQueueDesc.priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
         getCsrForLowPriority(&csr);
     } else {
-        auto ret = getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+        auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -230,7 +252,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     UNRECOVERABLE_IF(csr == nullptr);
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, desc, isCopyOnly, false, returnValue);
+    *commandQueue = CommandQueue::create(platform.eProductFamily, this, csr, &commandQueueDesc, isCopyOnly, false, returnValue);
 
     return returnValue;
 }

@@ -134,6 +134,7 @@ struct DeviceImp : public Device {
     CmdListCreateFunT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
 
   protected:
+    void adjustCommandQueueDesc(ze_command_queue_desc_t &desc);
     NEO::Device::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;
