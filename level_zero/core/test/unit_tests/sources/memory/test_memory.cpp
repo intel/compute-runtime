@@ -1345,6 +1345,7 @@ struct ContextMemoryTests : public MemoryRelaxedSizeTests {
 
 TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGlobalMemorySize) {
     size_t allocationSize = neoDevice->getDeviceInfo().globalMemSize;
+    const size_t unsupportedAllocationSize = allocationSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
@@ -1352,11 +1353,11 @@ TEST_F(ContextMemoryTests, givenMultipleSubDevicesWhenAllocatingThenUseCorrectGl
     ze_device_mem_alloc_desc_t deviceDesc = {};
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
 
-    ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, allocationSize, alignment, &ptr);
+    ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, unsupportedAllocationSize, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
     EXPECT_EQ(nullptr, ptr);
 
-    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocationSize, alignment, &ptr);
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, unsupportedAllocationSize, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
     EXPECT_EQ(nullptr, ptr);
 

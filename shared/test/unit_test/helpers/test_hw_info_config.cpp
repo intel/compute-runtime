@@ -69,3 +69,8 @@ HWTEST_F(HwInfoConfigTest, givenForceGrfNumProgrammingWithScmFlagSetWhenIsGrfNum
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     EXPECT_TRUE(hwInfoConfig.isGrfNumReportedWithScm());
 }
+
+HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectFalse, isNotXeHpOrXeHpcCore) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
+}

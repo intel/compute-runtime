@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,4 +135,9 @@ XEHPTEST_F(TestXeHPHwInfoConfig, givenXeHpCoreWhenIsBlitterForImagesSupportedIsC
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
 
     EXPECT_TRUE(hwInfoConfig.isBlitterForImagesSupported());
+}
+
+XEHPTEST_F(TestXeHPHwInfoConfig, givenHwInfoConfigWhenIsImplicitScalingSupportedThenExpectTrue) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(hwInfoConfig.isImplicitScalingSupported(*defaultHwInfo));
 }

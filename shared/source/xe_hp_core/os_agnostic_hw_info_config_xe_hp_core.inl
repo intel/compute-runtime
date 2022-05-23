@@ -134,3 +134,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}

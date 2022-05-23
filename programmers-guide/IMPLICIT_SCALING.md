@@ -32,7 +32,7 @@ To manage the resources on those sub-devices, the UMD introduces two main develo
 * *Implicit scaling* model, on which application allocates and submits to the root device and driver is responsible for distribution of work and memory across tiles.
 * *Explicit scaling* model, on which application is responsible for distributing work and memory across tiles using sub-device handles.
 
-When doing allocations in implicit scaling mode, driver *colors* an allocation among the available tiles. Default coloring divides an allocation size evenly by the number of avaialable tiles. Other policies include dividing the allocation in chunks of a given size, which are then interleaved on each tile.
+When doing allocations in implicit scaling mode, driver *colors* an allocation among the available tiles. Default coloring divides an allocation size evenly by the number of available tiles. Other policies include dividing the allocation in chunks of a given size, which are then interleaved on each tile.
 
 When scheduling a kernel for execution, driver distributes the kernel workgroups among the available tiles. Default mechanism is called *Static Partitioning*, where the workgroups are evenly distributed among tiles. For instance, in a 2-tile system, half of the workgroups go to tile 0, and the other half to tile 1.
 
@@ -40,7 +40,7 @@ The number of CCSs, or compute engines, currently available with implicit scalin
 
 No implicit scaling support is available for BCSs. Considering that, two models are followed in terms of discovery of copy engines:
 
-* In Level Zero, the copy engines from sub-device 0 are exposed also in the root device. This to align the engine model on both the implicit and the non-implicit-scaling scenarios.
+* In Level Zero, the copy engines from sub-device 0 are exposed also in the root device. This is to align the engine model on both the implicit and the non-implicit-scaling scenarios.
 * In OpenCL, copy engines are not exposed in the root device.
 
 Since implicit scaling is only done for EUs, which are associated only with kernels submitted to CCS, BCSs are currently not being exposed and access to them are done through sub-device handles.

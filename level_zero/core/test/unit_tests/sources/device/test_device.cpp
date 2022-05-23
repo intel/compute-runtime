@@ -2236,7 +2236,7 @@ TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccess
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWithRootDeviceThenCorrectMappingIsUsedAndApiSliceIdsForSubdeviceReturned) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWithRootDeviceThenCorrectMappingIsUsedAndApiSliceIdsForSubdeviceReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     auto deviceImp0 = static_cast<DeviceImp *>(device0);
     auto hwInfo = device0->getHwInfo();
@@ -2279,7 +2279,7 @@ TEST_F(MultipleDevicesTest, givenTopologyForTwoSubdevicesWhenGettingApiSliceIdWi
     EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount + 0u, sliceId);
 }
 
-TEST_F(MultipleDevicesTest, givenTopologyForSingleSubdeviceWhenGettingApiSliceIdWithRootDeviceThenCorrectApiSliceIdsForFirstSubDeviceIsReturned) {
+TEST_F(MultipleDevicesDisabledImplicitScalingTest, givenTopologyForSingleSubdeviceWhenGettingApiSliceIdWithRootDeviceThenCorrectApiSliceIdsForFirstSubDeviceIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];
     auto deviceImp0 = static_cast<DeviceImp *>(device0);
     auto hwInfo = device0->getHwInfo();

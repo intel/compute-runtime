@@ -1314,7 +1314,14 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
     EXPECT_THROW(device->createCommandQueue(&desc, &commandQueueHandle), std::exception);
 }
 
-using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceFixture>;
+struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
+    void SetUp() {
+        DebugManager.flags.EnableImplicitScaling = false;
+        MultiDeviceFixture::SetUp();
+    }
+};
+
+using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture>;
 
 TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     auto device = driverHandle->devices[0];

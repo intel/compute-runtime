@@ -109,7 +109,7 @@ bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(
 
 template <>
 bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
-    return (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B);
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
 bool isBaseDieA0(const HardwareInfo &hwInfo) {
@@ -173,4 +173,9 @@ bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardware
     }
 
     return false;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

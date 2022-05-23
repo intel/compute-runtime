@@ -22,7 +22,7 @@ bool ImplicitScalingDispatch<Family>::platformSupportsImplicitScaling(const Hard
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::ApiType::OCL) {
         return true;
     } else {
-        return HwInfoConfig::get(hwInfo.platform.eProductFamily)->getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+        return HwInfoConfig::get(hwInfo.platform.eProductFamily)->isImplicitScalingSupported(hwInfo);
     }
 }
 

@@ -110,6 +110,7 @@ class HwInfoConfig {
     virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
+    virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -202,6 +203,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
+    bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwInfoConfigHw() = default;

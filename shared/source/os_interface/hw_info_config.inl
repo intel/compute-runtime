@@ -399,4 +399,9 @@ bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardware
            (HwInfoConfig::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
             !allocation.isAllocationLockable());
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO
