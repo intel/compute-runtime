@@ -287,7 +287,7 @@ void ClDevice::initializeCaps() {
     //copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
-    deviceInfo.globalMemCacheSize = systemInfo.L3BankCount * 128 * KB;
+    deviceInfo.globalMemCacheSize = systemInfo.L3CacheSizeInKb * KB;
     deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;

@@ -203,6 +203,7 @@ void PVC_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
 
+        gtSysInfo->L3CacheSizeInKb = 1;
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;

@@ -173,6 +173,7 @@ void XE_HP_SDV_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeature
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
 
+        gtSysInfo->L3CacheSizeInKb = 1;
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;

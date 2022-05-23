@@ -161,6 +161,7 @@ void ADLP_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->MaxSlicesSupported = ADLP::maxSlicesSupported;
         gtSysInfo->MaxSubSlicesSupported = ADLP::maxSubslicesSupported;
 
+        gtSysInfo->L3CacheSizeInKb = 1;
         gtSysInfo->L3BankCount = 1;
 
         gtSysInfo->CCSInfo.IsValid = true;
