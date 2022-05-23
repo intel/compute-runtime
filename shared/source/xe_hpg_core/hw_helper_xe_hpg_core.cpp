@@ -90,6 +90,7 @@ std::string HwHelperHw<Family>::getExtensions() const {
     extensions += "cl_intel_split_work_group_barrier ";
     extensions += "cl_intel_subgroup_local_block_io ";
     extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
 
     return extensions;
 }
