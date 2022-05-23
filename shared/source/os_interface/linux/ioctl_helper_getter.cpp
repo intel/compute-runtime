@@ -20,7 +20,7 @@ std::map<std::string, std::shared_ptr<IoctlHelper>> ioctlHelperImpls{
     {"", std::make_shared<IoctlHelperUpstream>()},
     {"2.0", std::make_shared<IoctlHelperPrelim20>()}};
 
-IoctlHelper *IoctlHelper::get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion) {
+IoctlHelper *IoctlHelper::get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion) {
     auto productSpecificIoctlHelper = ioctlHelperFactory[productFamily];
     if (productSpecificIoctlHelper) {
         return productSpecificIoctlHelper->clone();

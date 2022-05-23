@@ -67,7 +67,7 @@ using VmBindExtUserFenceT = uint8_t[56];
 class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
-    static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion);
+    static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion);
     static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
     virtual IoctlHelper *clone() = 0;
 

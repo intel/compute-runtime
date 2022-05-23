@@ -13,7 +13,7 @@
 namespace NEO {
 IoctlHelper *ioctlHelperFactory[IGFX_MAX_PRODUCT] = {};
 
-IoctlHelper *IoctlHelper::get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion) {
+IoctlHelper *IoctlHelper::get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion) {
     auto productSpecificIoctlHelper = ioctlHelperFactory[productFamily];
     if (productSpecificIoctlHelper) {
         return productSpecificIoctlHelper->clone();
