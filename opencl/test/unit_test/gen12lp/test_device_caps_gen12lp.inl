@@ -27,6 +27,7 @@ HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalBlo
     const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_split_work_group_barrier")));
 }
 
 HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension, IsTGLLP) {

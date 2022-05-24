@@ -280,10 +280,9 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_subgroup_non_uniform_arithmetic ",
         "cl_khr_subgroup_shuffle ",
         "cl_khr_subgroup_shuffle_relative ",
-        "cl_khr_subgroup_clustered_reduce ",
-        "cl_intel_device_attribute_query ",
-        "cl_khr_suggested_local_work_size ",
-        "cl_intel_split_work_group_barrier "};
+        "cl_khr_subgroup_clustered_reduce "
+        "cl_intel_device_attribute_query "
+        "cl_khr_suggested_local_work_size "};
 
     for (auto extension : supportedExtensions) {
         auto foundOffset = extensionString.find(extension);
