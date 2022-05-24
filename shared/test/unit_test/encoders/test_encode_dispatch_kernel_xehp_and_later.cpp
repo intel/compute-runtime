@@ -345,8 +345,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     uint32_t dims[] = {2, 1, 1};
     uint32_t numBindingTable = 1;
     uint32_t numSamplers = 1;
-    SAMPLER_STATE samplerState;
-    BINDING_TABLE_STATE bindingTable;
+    SAMPLER_STATE samplerState{};
+    BINDING_TABLE_STATE bindingTable{};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
