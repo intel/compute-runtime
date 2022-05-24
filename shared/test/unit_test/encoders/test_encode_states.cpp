@@ -30,7 +30,7 @@ HWTEST_F(CommandEncodeStatesTest, GivenCommandStreamWhenEncodeCopySamplerStateTh
     }
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
-    SAMPLER_STATE samplerState;
+    SAMPLER_STATE samplerState{};
 
     auto dsh = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto usedBefore = dsh->getUsed();
