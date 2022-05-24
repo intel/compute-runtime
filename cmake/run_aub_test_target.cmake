@@ -61,7 +61,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
     set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_aub_tests_results.json")
-    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
   endif()
 
   add_custom_command(
@@ -85,7 +84,6 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
     set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ze_intel_gpu_${product}_${revision_id}_aub_tests_results.json")
-    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
   endif()
 
   add_custom_command(

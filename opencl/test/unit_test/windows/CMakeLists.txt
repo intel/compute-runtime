@@ -43,10 +43,11 @@ if(WIN32)
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                              ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen_common${BRANCH_DIR_SUFFIX}
   )
+  add_dependencies(unit_tests igdrcl_windows_dll_tests)
 
   create_project_source_tree(igdrcl_windows_dll_tests)
 
-  add_custom_target(run_windows_dll_tests ALL DEPENDS unit_tests igdrcl_windows_dll_tests)
+  add_custom_target(run_windows_dll_tests ALL DEPENDS unit_tests)
   add_custom_command(
                      TARGET run_windows_dll_tests
                      POST_BUILD

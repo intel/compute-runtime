@@ -15,7 +15,6 @@ if(NOT NEO_SKIP_SHARED_UNIT_TESTS)
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
     set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/shared_${product}_${revision_id}_unit_tests_results.json")
-    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
   endif()
 
   if(NOT TARGET run_shared_tests)
@@ -44,7 +43,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   unset(GTEST_OUTPUT)
   if(DEFINED GTEST_OUTPUT_DIR)
     set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_unit_tests_results.json")
-    message(STATUS "GTest output set to ${GTEST_OUTPUT}")
   endif()
 
   if(NOT TARGET run_ocl_tests)
@@ -69,7 +67,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
     unset(GTEST_OUTPUT)
     if(DEFINED GTEST_OUTPUT_DIR)
       set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_windows_${product}_${revision_id}_unit_tests_results.json")
-      message(STATUS "GTest output set to ${GTEST_OUTPUT}")
     endif()
     add_custom_command(
                        TARGET run_${product}_${revision_id}_ocl_tests

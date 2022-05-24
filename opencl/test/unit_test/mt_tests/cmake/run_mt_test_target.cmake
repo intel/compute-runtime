@@ -16,7 +16,6 @@ add_custom_target(run_${product}_${revision_id}_mt_unit_tests DEPENDS igdrcl_mt_
 unset(GTEST_OUTPUT)
 if(DEFINED GTEST_OUTPUT_DIR)
   set(GTEST_OUTPUT "--gtest_output=json:${GTEST_OUTPUT_DIR}/ocl_${product}_${revision_id}_mt_unit_tests_results.json")
-  message(STATUS "GTest output set to ${GTEST_OUTPUT}")
 endif()
 
 add_dependencies(run_mt_unit_tests run_${product}_${revision_id}_mt_unit_tests)
