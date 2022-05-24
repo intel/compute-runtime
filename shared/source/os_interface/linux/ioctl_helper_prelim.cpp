@@ -393,17 +393,17 @@ uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enab
     return flags;
 }
 
-uint32_t gemCreateContextExt(Drm *drm, drm_i915_gem_context_create_ext &gcc, GemContextCreateExtSetParam &extSetparam) {
+uint32_t gemCreateContextExt(Drm *drm, GemContextCreateExt &gcc, GemContextCreateExtSetParam &extSetparam) {
     gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
     extSetparam.base.nextExtension = gcc.extensions;
     gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
 
     auto ioctlResult = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
     UNRECOVERABLE_IF(ioctlResult != 0);
-    return gcc.ctx_id;
+    return gcc.contextId;
 }
 
-uint32_t gemCreateContextAcc(Drm *drm, drm_i915_gem_context_create_ext &gcc, uint16_t trigger, uint8_t granularity) {
+uint32_t gemCreateContextAcc(Drm *drm, GemContextCreateExt &gcc, uint16_t trigger, uint8_t granularity) {
     prelim_drm_i915_gem_context_param_acc paramAcc = {};
     paramAcc.trigger = trigger;
     paramAcc.notify = 1;
@@ -424,7 +424,7 @@ uint32_t gemCreateContextAcc(Drm *drm, drm_i915_gem_context_create_ext &gcc, uin
 
     return gemCreateContextExt(drm, gcc, extSetparam);
 }
-uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) {
     uint16_t trigger = 0;
     if (DebugManager.flags.AccessCountersTrigger.get() != -1) {
         trigger = static_cast<uint16_t>(DebugManager.flags.AccessCountersTrigger.get());
@@ -436,7 +436,7 @@ uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, drm_i915
     return gemCreateContextAcc(drm, gcc, trigger, granularity);
 }
 
-uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) {
     GemContextCreateExtSetParam extSetparam{};
     extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
     extSetparam.param.param = PRELIM_I915_CONTEXT_PARAM_RUNALONE;

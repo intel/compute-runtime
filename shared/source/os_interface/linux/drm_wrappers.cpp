@@ -114,4 +114,9 @@ static_assert(sizeof(GemContextCreateExtSetParam) == sizeof(drm_i915_gem_context
 static_assert(offsetof(GemContextCreateExtSetParam, base) == offsetof(drm_i915_gem_context_create_ext_setparam, base));
 static_assert(offsetof(GemContextCreateExtSetParam, param) == offsetof(drm_i915_gem_context_create_ext_setparam, param));
 
+static_assert(sizeof(GemContextCreateExt) == sizeof(drm_i915_gem_context_create_ext));
+static_assert(offsetof(GemContextCreateExt, contextId) == offsetof(drm_i915_gem_context_create_ext, ctx_id));
+static_assert(offsetof(GemContextCreateExt, flags) == offsetof(drm_i915_gem_context_create_ext, flags));
+static_assert(offsetof(GemContextCreateExt, extensions) == offsetof(drm_i915_gem_context_create_ext, extensions));
+
 } // namespace NEO

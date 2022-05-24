@@ -130,4 +130,10 @@ struct GemContextCreateExtSetParam {
     GemContextParam param;
 };
 
+struct GemContextCreateExt {
+    uint32_t contextId;
+    uint32_t flags;
+    uint64_t extensions;
+};
+
 } // namespace NEO

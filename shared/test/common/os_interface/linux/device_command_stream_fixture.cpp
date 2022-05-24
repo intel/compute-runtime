@@ -171,8 +171,8 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     } break;
 
     case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT: {
-        auto contextCreateParam = reinterpret_cast<drm_i915_gem_context_create_ext *>(arg);
-        contextCreateParam->ctx_id = ++ioctl_cnt.contextCreate;
+        auto contextCreateParam = static_cast<NEO::GemContextCreateExt *>(arg);
+        contextCreateParam->contextId = ++ioctl_cnt.contextCreate;
     } break;
     case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY: {
         ioctl_cnt.contextDestroy++;

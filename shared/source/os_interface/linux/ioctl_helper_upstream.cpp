@@ -188,11 +188,11 @@ uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enab
     return 0u;
 }
 
-uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) {
     return EINVAL;
 }
 
-uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, drm_i915_gem_context_create_ext &gcc) {
+uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) {
     return EINVAL;
 }
 

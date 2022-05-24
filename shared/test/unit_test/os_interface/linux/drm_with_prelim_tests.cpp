@@ -134,7 +134,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
-    drm_i915_gem_context_create_ext arg{};
+    GemContextCreateExt arg{};
     auto ret = IoctlHelper::ioctl(drm.get(), DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &arg);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -398,7 +398,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
     drm->ioctlRetVal = EINVAL;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(drm.get(), gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
@@ -407,7 +407,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCou
     drm->ioctlRetVal = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
@@ -416,7 +416,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
     drm->ioctlRetVal = EINVAL;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     EXPECT_THROW(ioctlHelper->createCooperativeContext(drm.get(), gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
@@ -425,7 +425,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsC
     drm->ioctlRetVal = 0u;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(drm.get(), gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }

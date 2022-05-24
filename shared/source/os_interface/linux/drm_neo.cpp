@@ -432,7 +432,7 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
 }
 
 uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
-    drm_i915_gem_context_create_ext gcc = {};
+    GemContextCreateExt gcc{};
 
     if (DebugManager.flags.DirectSubmissionDrmContext.get() != -1) {
         isDirectSubmissionRequested = DebugManager.flags.DirectSubmissionDrmContext.get();
@@ -464,7 +464,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
     auto ioctlResult = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
 
     UNRECOVERABLE_IF(ioctlResult != 0);
-    return gcc.ctx_id;
+    return gcc.contextId;
 }
 
 void Drm::destroyDrmContext(uint32_t drmContextId) {

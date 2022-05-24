@@ -216,10 +216,10 @@ int drmGetContextParam(NEO::GemContextParam *param) {
     return ret;
 }
 
-int drmContextCreate(drm_i915_gem_context_create_ext *create) {
+int drmContextCreate(NEO::GemContextCreateExt *create) {
     assert(create);
 
-    create->ctx_id = 1;
+    create->contextId = 1;
     return failOnContextCreate;
 }
 
@@ -302,7 +302,7 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 res = drmGetContextParam(va_arg(vl, NEO::GemContextParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
-                res = drmContextCreate(va_arg(vl, drm_i915_gem_context_create_ext *));
+                res = drmContextCreate(va_arg(vl, NEO::GemContextCreateExt *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
                 res = drmContextDestroy(va_arg(vl, drm_i915_gem_context_destroy *));

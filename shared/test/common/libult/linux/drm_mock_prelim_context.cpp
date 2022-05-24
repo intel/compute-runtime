@@ -58,7 +58,7 @@ int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) 
         }
     } break;
     case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT: {
-        auto create = static_cast<drm_i915_gem_context_create_ext *>(arg);
+        auto create = static_cast<GemContextCreateExt *>(arg);
         auto setParam = reinterpret_cast<GemContextCreateExtSetParam *>(create->extensions);
         if (setParam->param.param == PRELIM_I915_CONTEXT_PARAM_ACC) {
             const auto paramAcc = reinterpret_cast<prelim_drm_i915_gem_context_param_acc *>(setParam->param.value);

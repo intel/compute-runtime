@@ -269,7 +269,7 @@ TEST(IoctlHelperTestsUpstream, whenCreateContextWithAccessCountersIsCalledThenEr
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     IoctlHelperUpstream ioctlHelper{};
 
     EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createContextWithAccessCounters(drm.get(), gcc));
@@ -280,7 +280,7 @@ TEST(IoctlHelperTestsUpstream, whenCreateCooperativeContexIsCalledThenErrorIsRet
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
-    drm_i915_gem_context_create_ext gcc{};
+    GemContextCreateExt gcc{};
     IoctlHelperUpstream ioctlHelper{};
 
     EXPECT_EQ(static_cast<uint32_t>(EINVAL), ioctlHelper.createCooperativeContext(drm.get(), gcc));
