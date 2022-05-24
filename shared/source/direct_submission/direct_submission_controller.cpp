@@ -8,6 +8,7 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include <chrono>
@@ -17,6 +18,9 @@ namespace NEO {
 DirectSubmissionController::DirectSubmissionController() {
     if (DebugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeout = DebugManager.flags.DirectSubmissionControllerTimeout.get();
+    }
+    if (DebugManager.flags.DirectSubmissionControllerDivisor.get() != -1) {
+        timeoutDivisor = DebugManager.flags.DirectSubmissionControllerDivisor.get();
     }
 
     directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
@@ -33,6 +37,7 @@ DirectSubmissionController::~DirectSubmissionController() {
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.insert(std::make_pair(csr, DirectSubmissionState{}));
+    this->adjustTimeout(csr);
 }
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
@@ -90,6 +95,15 @@ void DirectSubmissionController::checkNewSubmissions() {
 
 void DirectSubmissionController::sleep() {
     std::this_thread::sleep_for(std::chrono::microseconds(this->timeout));
+}
+
+void DirectSubmissionController::adjustTimeout(CommandStreamReceiver *csr) {
+    if (EngineHelpers::isCcs(csr->getOsContext().getEngineType())) {
+        this->ccsCount++;
+        if (this->ccsCount > 1u) {
+            this->timeout /= this->timeoutDivisor;
+        }
+    }
 }
 
 } // namespace NEO

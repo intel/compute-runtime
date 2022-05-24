@@ -39,6 +39,9 @@ class DirectSubmissionController {
     void checkNewSubmissions();
     MOCKABLE_VIRTUAL void sleep();
 
+    void adjustTimeout(CommandStreamReceiver *csr);
+
+    uint32_t ccsCount = 0u;
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
 
@@ -47,5 +50,6 @@ class DirectSubmissionController {
     std::atomic_bool runControlling = false;
 
     int timeout = 5000;
+    int timeoutDivisor = 4;
 };
 } // namespace NEO

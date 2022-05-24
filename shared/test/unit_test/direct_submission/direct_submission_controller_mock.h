@@ -17,6 +17,7 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::directSubmissionsMutex;
     using DirectSubmissionController::keepControlling;
     using DirectSubmissionController::timeout;
+    using DirectSubmissionController::timeoutDivisor;
 
     void sleep() override {
         DirectSubmissionController::sleep();
