@@ -40,6 +40,7 @@ class DrmGemCloseWorker {
   protected:
     void close(BufferObject *workItem);
     void closeThread();
+    void processQueue(std::queue<BufferObject *> &inputQueue);
     static void *worker(void *arg);
     std::atomic<bool> active{true};
 
