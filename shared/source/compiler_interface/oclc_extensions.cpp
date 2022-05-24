@@ -44,7 +44,8 @@ const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_subgroup_shuffle_relative "
                                    "cl_khr_subgroup_clustered_reduce "
                                    "cl_intel_device_attribute_query "
-                                   "cl_khr_suggested_local_work_size ";
+                                   "cl_khr_suggested_local_work_size "
+                                   "cl_intel_split_work_group_barrier ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;

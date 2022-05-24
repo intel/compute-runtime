@@ -134,7 +134,6 @@ template <>
 std::string HwHelperHw<Family>::getExtensions() const {
     std::string extensions;
     extensions += "cl_intel_subgroup_local_block_io ";
-    extensions += "cl_intel_split_work_group_barrier ";
 
     return extensions;
 }
