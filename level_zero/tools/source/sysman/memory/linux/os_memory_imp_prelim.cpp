@@ -232,8 +232,8 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    pBandwidth->timestamp |= timeStampH;
-    pBandwidth->timestamp = (pBandwidth->timestamp << 32) | timeStampL;
+    pBandwidth->timestamp = timeStampH;
+    pBandwidth->timestamp = (pBandwidth->timestamp << 32) | static_cast<uint64_t>(timeStampL);
 
     uint64_t hbmFrequency = 0;
     getHbmFrequency(productFamily, stepping, hbmFrequency);
