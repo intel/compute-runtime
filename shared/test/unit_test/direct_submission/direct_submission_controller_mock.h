@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,5 +17,12 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::directSubmissionsMutex;
     using DirectSubmissionController::keepControlling;
     using DirectSubmissionController::timeout;
+
+    void sleep() override {
+        DirectSubmissionController::sleep();
+        this->sleepCalled = true;
+    }
+
+    bool sleepCalled = false;
 };
 } // namespace NEO

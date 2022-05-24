@@ -48,22 +48,19 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
 
     while (!controller->runControlling.load()) {
-
         if (!controller->keepControlling.load()) {
             return nullptr;
         }
 
-        std::this_thread::sleep_for(std::chrono::microseconds(controller->timeout));
+        controller->sleep();
     }
 
     while (true) {
-
         if (!controller->keepControlling.load()) {
             return nullptr;
         }
 
-        std::this_thread::sleep_for(std::chrono::microseconds(controller->timeout));
-
+        controller->sleep();
         controller->checkNewSubmissions();
     }
 }
@@ -89,6 +86,10 @@ void DirectSubmissionController::checkNewSubmissions() {
             state.taskCount = taskCount;
         }
     }
+}
+
+void DirectSubmissionController::sleep() {
+    std::this_thread::sleep_for(std::chrono::microseconds(this->timeout));
 }
 
 } // namespace NEO

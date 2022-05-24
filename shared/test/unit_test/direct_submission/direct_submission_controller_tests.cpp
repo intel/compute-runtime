@@ -96,6 +96,9 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStarted
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
 
     controller.startControlling();
+
+    while (!controller.sleepCalled) {
+    }
     controller.keepControlling.store(false);
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();
@@ -105,6 +108,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStar
     DirectSubmissionControllerMock controller;
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
 
+    while (!controller.sleepCalled) {
+    }
     controller.keepControlling.store(false);
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();

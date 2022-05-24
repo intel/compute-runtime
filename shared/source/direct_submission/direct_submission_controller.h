@@ -37,6 +37,7 @@ class DirectSubmissionController {
 
     static void *controlDirectSubmissionsState(void *self);
     void checkNewSubmissions();
+    MOCKABLE_VIRTUAL void sleep();
 
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
