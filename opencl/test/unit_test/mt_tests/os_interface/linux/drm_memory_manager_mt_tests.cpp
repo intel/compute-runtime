@@ -29,7 +29,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 
         int ioctl(unsigned long request, void *arg) override {
             if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
-                auto *primeToHandleParams = (drm_prime_handle *)arg;
+                auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = 10;
             }
             return 0;
@@ -88,7 +88,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
         int ioctl(unsigned long request, void *arg) override {
             if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
-                auto *primeToHandleParams = (drm_prime_handle *)arg;
+                auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = primeFdHandle;
 
                 // PrimeFdHandle should not be lower than closeHandle

@@ -47,12 +47,12 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int 
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closReserveArg->clos_index = 1u;
     } else if (request == DRM_IOCTL_I915_QUERY) {
-        auto query = static_cast<drm_i915_query *>(arg);
-        if (query->items_ptr == 0) {
+        auto query = static_cast<Query *>(arg);
+        if (query->itemsPtr == 0) {
             return EINVAL;
         }
-        for (auto i = 0u; i < query->num_items; i++) {
-            auto queryItemPtr = reinterpret_cast<QueryItem *>(query->items_ptr) + i;
+        for (auto i = 0u; i < query->numItems; i++) {
+            auto queryItemPtr = reinterpret_cast<QueryItem *>(query->itemsPtr) + i;
             if (queryItemPtr->queryId == PRELIM_DRM_I915_QUERY_DISTANCE_INFO) {
                 if (queryDistanceIoctlRetVal != 0) {
                     return queryDistanceIoctlRetVal;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
 namespace NEO {
 
@@ -162,4 +163,37 @@ struct ResetStats {
     uint32_t reserved;
 };
 
+struct GetParam {
+    int32_t param;
+    int *value;
+};
+
+struct Query {
+    uint32_t numItems;
+    uint32_t flags;
+    uint64_t itemsPtr;
+};
+
+struct GemClose {
+    uint32_t handle;
+    uint32_t reserved;
+};
+
+struct PrimeHandle {
+    uint32_t handle;
+    uint32_t flags;
+    int32_t fileDescriptor;
+};
+
+struct DrmVersion {
+    int versionMajor;
+    int versionMinor;
+    int versionPatch;
+    size_t nameLen;
+    char *name;
+    size_t dateLen;
+    char *date;
+    size_t descLen;
+    char *desc;
+};
 } // namespace NEO

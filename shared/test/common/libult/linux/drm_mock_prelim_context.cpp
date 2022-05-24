@@ -40,7 +40,7 @@ constexpr std::array<uint64_t, 9> copyEnginesCapsMap = {{
 int DrmMockPrelimContext::handlePrelimRequest(unsigned long request, void *arg) {
     switch (request) {
     case DRM_IOCTL_I915_GETPARAM: {
-        auto gp = static_cast<drm_i915_getparam_t *>(arg);
+        auto gp = static_cast<GetParam *>(arg);
         if (gp->param == PRELIM_I915_PARAM_HAS_PAGE_FAULT) {
             *gp->value = hasPageFaultQueryValue;
             return hasPageFaultQueryReturn;

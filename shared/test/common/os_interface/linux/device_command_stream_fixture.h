@@ -168,48 +168,48 @@ class DrmMockCustom : public Drm {
     NEO::MockExecObject execBufferBufferObjects{};
 
     //DRM_IOCTL_I915_GEM_CREATE
-    __u64 createParamsSize = 0;
-    __u32 createParamsHandle = 0;
+    uint64_t createParamsSize = 0;
+    uint32_t createParamsHandle = 0;
     //DRM_IOCTL_I915_GEM_SET_TILING
-    __u32 setTilingMode = 0;
-    __u32 setTilingHandle = 0;
-    __u32 setTilingStride = 0;
+    uint32_t setTilingMode = 0;
+    uint32_t setTilingHandle = 0;
+    uint32_t setTilingStride = 0;
     //DRM_IOCTL_I915_GEM_GET_TILING
-    __u32 getTilingModeOut = I915_TILING_NONE;
-    __u32 getTilingHandleIn = 0;
+    uint32_t getTilingModeOut = I915_TILING_NONE;
+    uint32_t getTilingHandleIn = 0;
     //DRM_IOCTL_PRIME_FD_TO_HANDLE
-    __u32 outputHandle = 0;
-    __s32 inputFd = 0;
+    uint32_t outputHandle = 0;
+    int32_t inputFd = 0;
     //DRM_IOCTL_PRIME_HANDLE_TO_FD
-    __u32 inputHandle = 0;
-    __s32 outputFd = 0;
-    __s32 inputFlags = 0;
+    uint32_t inputHandle = 0;
+    int32_t outputFd = 0;
+    int32_t inputFlags = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
-    __u32 returnHandle = 0;
+    uint32_t returnHandle = 0;
     //DRM_IOCTL_I915_GEM_MMAP
-    __u32 mmapHandle = 0;
-    __u32 mmapPad = 0;
-    __u64 mmapOffset = 0;
-    __u64 mmapSize = 0;
-    __u64 mmapAddrPtr = 0x7F4000001000;
-    __u64 mmapFlags = 0;
+    uint32_t mmapHandle = 0;
+    uint32_t mmapPad = 0;
+    uint64_t mmapOffset = 0;
+    uint64_t mmapSize = 0;
+    uint64_t mmapAddrPtr = 0x7F4000001000;
+    uint64_t mmapFlags = 0;
     //DRM_IOCTL_I915_GEM_SET_DOMAIN
-    __u32 setDomainHandle = 0;
-    __u32 setDomainReadDomains = 0;
-    __u32 setDomainWriteDomain = 0;
+    uint32_t setDomainHandle = 0;
+    uint32_t setDomainReadDomains = 0;
+    uint32_t setDomainWriteDomain = 0;
     //DRM_IOCTL_I915_GETPARAM
-    drm_i915_getparam_t recordedGetParam = {0};
+    NEO::GetParam recordedGetParam = {0};
     int getParamRetValue = 0;
     //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
     NEO::GemContextParam recordedGetContextParam = {0};
-    __u64 getContextParamRetValue = 0;
+    uint64_t getContextParamRetValue = 0;
     //DRM_IOCTL_I915_GEM_WAIT
     int64_t gemWaitTimeout = 0;
     //DRM_IOCTL_I915_GEM_MMAP_OFFSET
-    __u32 mmapOffsetHandle = 0;
-    __u32 mmapOffsetPad = 0;
-    __u64 mmapOffsetExpected = 0;
-    __u64 mmapOffsetFlags = 0;
+    uint32_t mmapOffsetHandle = 0;
+    uint32_t mmapOffsetPad = 0;
+    uint64_t mmapOffsetExpected = 0;
+    uint64_t mmapOffsetFlags = 0;
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
 

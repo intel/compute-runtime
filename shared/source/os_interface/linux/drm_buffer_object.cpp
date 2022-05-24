@@ -62,7 +62,7 @@ void BufferObject::setAddress(uint64_t address) {
 }
 
 bool BufferObject::close() {
-    drm_gem_close close = {};
+    GemClose close{};
     close.handle = this->handle;
 
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);

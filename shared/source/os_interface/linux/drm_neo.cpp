@@ -268,7 +268,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
 }
 
 int Drm::getParamIoctl(int param, int *dstValue) {
-    drm_i915_getparam_t getParam = {};
+    GetParam getParam{};
     getParam.param = param;
     getParam.value = dstValue;
 
@@ -659,10 +659,10 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 }
 
 std::string Drm::getDrmVersion(int fileDescriptor) {
-    drm_version_t version = {};
+    DrmVersion version = {};
     char name[5] = {};
     version.name = name;
-    version.name_len = 5;
+    version.nameLen = 5;
 
     int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_VERSION, &version);
     if (ret) {
@@ -674,13 +674,13 @@ std::string Drm::getDrmVersion(int fileDescriptor) {
 }
 
 std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
-    drm_i915_query query{};
+    Query query{};
     QueryItem queryItem{};
     queryItem.queryId = queryId;
     queryItem.length = 0; // query length first
     queryItem.flags = queryItemFlags;
-    query.items_ptr = reinterpret_cast<__u64>(&queryItem);
-    query.num_items = 1;
+    query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
+    query.numItems = 1;
 
     auto ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
     if (ret != 0 || queryItem.length <= 0) {

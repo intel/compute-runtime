@@ -132,7 +132,7 @@ struct dirent *readdir(DIR *dir) {
     return &entries[entryIndex++];
 }
 
-int drmGetParam(drm_i915_getparam_t *param) {
+int drmGetParam(NEO::GetParam *param) {
     assert(param);
     int ret = 0;
 
@@ -245,14 +245,14 @@ int drmVirtualMemoryDestroy(NEO::GemVmControl *control) {
     return (control->vmId > 0) ? 0 : -1;
 }
 
-int drmVersion(drm_version_t *version) {
-    memcpy_s(version->name, version->name_len, providedDrmVersion, strlen(providedDrmVersion) + 1);
+int drmVersion(NEO::DrmVersion *version) {
+    memcpy_s(version->name, version->nameLen, providedDrmVersion, strlen(providedDrmVersion) + 1);
 
     return failOnDrmVersion;
 }
 
-int drmQueryItem(drm_i915_query *query) {
-    auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->items_ptr);
+int drmQueryItem(NEO::Query *query) {
+    auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->itemsPtr);
     if (queryItemArg->length == 0) {
         if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
             queryItemArg->length = sizeof(NEO::QueryTopologyInfo) + 1;
@@ -293,7 +293,7 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
         if (res == 0) {
             switch (request) {
             case DRM_IOCTL_I915_GETPARAM:
-                res = drmGetParam(va_arg(vl, drm_i915_getparam_t *));
+                res = drmGetParam(va_arg(vl, NEO::GetParam *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
                 res = drmSetContextParam(va_arg(vl, NEO::GemContextParam *));
@@ -314,10 +314,10 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 res = drmVirtualMemoryDestroy(va_arg(vl, NEO::GemVmControl *));
                 break;
             case DRM_IOCTL_VERSION:
-                res = drmVersion(va_arg(vl, drm_version_t *));
+                res = drmVersion(va_arg(vl, NEO::DrmVersion *));
                 break;
             case DRM_IOCTL_I915_QUERY:
-                res = drmQueryItem(va_arg(vl, drm_i915_query *));
+                res = drmQueryItem(va_arg(vl, NEO::Query *));
                 break;
             default:
                 res = drmOtherRequests(request, vl);

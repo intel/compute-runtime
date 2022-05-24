@@ -678,8 +678,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     bool areBosSharedObjects = true;
 
     for (auto handle : handles) {
-        drm_prime_handle openFd = {0, 0, 0};
-        openFd.fd = handle;
+        PrimeHandle openFd = {0, 0, 0};
+        openFd.fileDescriptor = handle;
 
         auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
 
@@ -762,8 +762,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     std::unique_lock<std::mutex> lock(mtx);
 
-    drm_prime_handle openFd = {0, 0, 0};
-    openFd.fd = handle;
+    PrimeHandle openFd{};
+    openFd.fileDescriptor = handle;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
 
@@ -1134,14 +1134,14 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
 }
 
 int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex) {
-    drm_prime_handle openFd = {0, 0, 0};
+    PrimeHandle openFd{};
 
     openFd.flags = DRM_CLOEXEC | DRM_RDWR;
     openFd.handle = boHandle;
 
     getDrm(rootDeviceindex).ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
 
-    return openFd.fd;
+    return openFd.fileDescriptor;
 }
 
 uint32_t DrmMemoryManager::getDefaultDrmContextId(uint32_t rootDeviceIndex) const {
@@ -1878,8 +1878,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 }
 
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
-    drm_prime_handle openFd = {0, 0, 0};
-    openFd.fd = handle;
+    PrimeHandle openFd{};
+    openFd.fileDescriptor = handle;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);

@@ -141,4 +141,33 @@ static_assert(offsetof(ResetStats, batchActive) == offsetof(drm_i915_reset_stats
 static_assert(offsetof(ResetStats, batchPending) == offsetof(drm_i915_reset_stats, batch_pending));
 static_assert(offsetof(ResetStats, reserved) == offsetof(drm_i915_reset_stats, pad));
 
+static_assert(sizeof(GetParam) == sizeof(struct drm_i915_getparam));
+static_assert(offsetof(GetParam, param) == offsetof(struct drm_i915_getparam, param));
+static_assert(offsetof(GetParam, value) == offsetof(struct drm_i915_getparam, value));
+
+static_assert(sizeof(Query) == sizeof(struct drm_i915_query));
+static_assert(offsetof(Query, numItems) == offsetof(struct drm_i915_query, num_items));
+static_assert(offsetof(Query, flags) == offsetof(struct drm_i915_query, flags));
+static_assert(offsetof(Query, itemsPtr) == offsetof(struct drm_i915_query, items_ptr));
+
+static_assert(sizeof(GemClose) == sizeof(drm_gem_close));
+static_assert(offsetof(GemClose, handle) == offsetof(drm_gem_close, handle));
+static_assert(offsetof(GemClose, reserved) == offsetof(drm_gem_close, pad));
+
+static_assert(sizeof(PrimeHandle) == sizeof(drm_prime_handle));
+static_assert(offsetof(PrimeHandle, handle) == offsetof(drm_prime_handle, handle));
+static_assert(offsetof(PrimeHandle, flags) == offsetof(drm_prime_handle, flags));
+static_assert(offsetof(PrimeHandle, fileDescriptor) == offsetof(drm_prime_handle, fd));
+
+static_assert(sizeof(DrmVersion) == sizeof(drm_version));
+static_assert(offsetof(DrmVersion, versionMajor) == offsetof(drm_version, version_major));
+static_assert(offsetof(DrmVersion, versionMinor) == offsetof(drm_version, version_minor));
+static_assert(offsetof(DrmVersion, versionPatch) == offsetof(drm_version, version_patchlevel));
+static_assert(offsetof(DrmVersion, nameLen) == offsetof(drm_version, name_len));
+static_assert(offsetof(DrmVersion, name) == offsetof(drm_version, name));
+static_assert(offsetof(DrmVersion, dateLen) == offsetof(drm_version, date_len));
+static_assert(offsetof(DrmVersion, date) == offsetof(drm_version, date));
+static_assert(offsetof(DrmVersion, descLen) == offsetof(drm_version, desc_len));
+static_assert(offsetof(DrmVersion, desc) == offsetof(drm_version, desc));
+
 } // namespace NEO

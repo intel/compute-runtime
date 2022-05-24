@@ -23,7 +23,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
-        auto gp = static_cast<drm_i915_getparam_t *>(arg);
+        auto gp = static_cast<GetParam *>(arg);
         if (gp->param == I915_PARAM_EU_TOTAL) {
             if (0 == this->storedRetValForEUVal) {
                 *gp->value = this->storedEUVal;
@@ -189,16 +189,16 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
         ioctlCount.primeFdToHandle++;
-        auto primeToHandleParams = static_cast<drm_prime_handle *>(arg);
+        auto primeToHandleParams = static_cast<PrimeHandle *>(arg);
         //return BO
         primeToHandleParams->handle = outputHandle;
-        inputFd = primeToHandleParams->fd;
+        inputFd = primeToHandleParams->fileDescriptor;
         return fdToHandleRetVal;
     }
     if (request == DRM_IOCTL_PRIME_HANDLE_TO_FD) {
         ioctlCount.handleToPrimeFd++;
-        auto primeToFdParams = static_cast<drm_prime_handle *>(arg);
-        primeToFdParams->fd = outputFd;
+        auto primeToFdParams = static_cast<PrimeHandle *>(arg);
+        primeToFdParams->fileDescriptor = outputFd;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
@@ -238,8 +238,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
         ioctlCount.query++;
-        auto queryArg = static_cast<drm_i915_query *>(arg);
-        auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->items_ptr);
+        auto queryArg = static_cast<Query *>(arg);
+        auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->itemsPtr);
         storedQueryItem = *queryItemArg;
 
         auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
@@ -283,12 +283,12 @@ int DrmMockEngine::handleRemainingRequests(unsigned long request, void *arg) {
             return EINVAL;
         }
         i915QuerySuccessCount--;
-        auto query = static_cast<drm_i915_query *>(arg);
-        if (query->items_ptr == 0) {
+        auto query = static_cast<Query *>(arg);
+        if (query->itemsPtr == 0) {
             return EINVAL;
         }
-        for (auto i = 0u; i < query->num_items; i++) {
-            handleQueryItem(reinterpret_cast<QueryItem *>(query->items_ptr) + i);
+        for (auto i = 0u; i < query->numItems; i++) {
+            handleQueryItem(reinterpret_cast<QueryItem *>(query->itemsPtr) + i);
         }
         return 0;
     }

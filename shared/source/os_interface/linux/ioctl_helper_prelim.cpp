@@ -30,7 +30,7 @@ IoctlHelper *IoctlHelperPrelim20::clone() {
 
 bool IoctlHelperPrelim20::isVmBindAvailable(Drm *drm) {
     int vmBindSupported = 0;
-    drm_i915_getparam_t getParam = {};
+    GetParam getParam{};
     getParam.param = PRELIM_I915_PARAM_HAS_VM_BIND;
     getParam.value = &vmBindSupported;
     int retVal = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GETPARAM, &getParam);
@@ -322,9 +322,9 @@ uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<QueryItem> &q
         queryItems[i].dataPtr = reinterpret_cast<uint64_t>(&i915Distances[i]);
     }
 
-    drm_i915_query query{};
-    query.items_ptr = reinterpret_cast<__u64>(queryItems.data());
-    query.num_items = static_cast<uint32_t>(queryItems.size());
+    Query query{};
+    query.itemsPtr = reinterpret_cast<__u64>(queryItems.data());
+    query.numItems = static_cast<uint32_t>(queryItems.size());
     auto ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_QUERY, &query);
     for (auto i = 0u; i < i915Distances.size(); i++) {
         distanceInfos[i].distance = i915Distances[i].distance;

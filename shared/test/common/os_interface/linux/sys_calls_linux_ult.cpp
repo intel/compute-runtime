@@ -92,8 +92,8 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
 
     if (fileDescriptor == fakeFileDescriptor) {
         if (request == DRM_IOCTL_VERSION) {
-            auto pVersion = static_cast<drm_version_t *>(arg);
-            memcpy_s(pVersion->name, pVersion->name_len, drmVersion, std::min(pVersion->name_len, strlen(drmVersion) + 1));
+            auto pVersion = static_cast<DrmVersion *>(arg);
+            memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
         }
     }
     if (request == DRM_IOCTL_I915_GEM_VM_CREATE) {

@@ -47,12 +47,12 @@ class DrmTipMock : public DrmMock {
                 return EINVAL;
             }
             i915QuerySuccessCount--;
-            auto query = static_cast<drm_i915_query *>(arg);
-            if (query->items_ptr == 0) {
+            auto query = static_cast<Query *>(arg);
+            if (query->itemsPtr == 0) {
                 return EINVAL;
             }
-            for (auto i = 0u; i < query->num_items; i++) {
-                handleQueryItem(reinterpret_cast<QueryItem *>(query->items_ptr) + i);
+            for (auto i = 0u; i < query->numItems; i++) {
+                handleQueryItem(reinterpret_cast<QueryItem *>(query->itemsPtr) + i);
             }
             return 0;
         } else if (request == DRM_IOCTL_I915_GEM_MMAP_OFFSET) {

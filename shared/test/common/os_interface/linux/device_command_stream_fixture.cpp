@@ -104,21 +104,21 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
         ioctl_cnt.gemGetTiling++;
     } break;
     case DRM_IOCTL_PRIME_FD_TO_HANDLE: {
-        auto *primeToHandleParams = (drm_prime_handle *)arg;
+        auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
         //return BO
         primeToHandleParams->handle = outputHandle;
-        inputFd = primeToHandleParams->fd;
+        inputFd = primeToHandleParams->fileDescriptor;
         ioctl_cnt.primeFdToHandle++;
         if (failOnPrimeFdToHandle == true) {
             return -1;
         }
     } break;
     case DRM_IOCTL_PRIME_HANDLE_TO_FD: {
-        auto *handleToPrimeParams = (drm_prime_handle *)arg;
+        auto *handleToPrimeParams = static_cast<NEO::PrimeHandle *>(arg);
         //return FD
         inputHandle = handleToPrimeParams->handle;
         inputFlags = handleToPrimeParams->flags;
-        handleToPrimeParams->fd = outputFd;
+        handleToPrimeParams->fileDescriptor = outputFd;
         ioctl_cnt.handleToPrimeFd++;
     } break;
     case DRM_IOCTL_I915_GEM_MMAP: {
@@ -155,7 +155,7 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
 
     case DRM_IOCTL_I915_GETPARAM: {
         ioctl_cnt.contextGetParam++;
-        auto getParam = (drm_i915_getparam_t *)arg;
+        auto getParam = static_cast<NEO::GetParam *>(arg);
         recordedGetParam = *getParam;
         *getParam->value = getParamRetValue;
     } break;

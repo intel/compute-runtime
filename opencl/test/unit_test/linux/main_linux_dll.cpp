@@ -469,7 +469,7 @@ TEST_F(DrmTests, GivenErrorCodeWhenCreatingDrmThenDrmCreatedOnlyWithSpecificErro
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
 
-    drm_i915_getparam_t getParam;
+    GetParam getParam{};
     int lDeviceId;
 
     VariableBackup<decltype(ioctlCnt)> backupIoctlCnt(&ioctlCnt);

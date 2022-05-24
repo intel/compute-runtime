@@ -18,13 +18,13 @@ int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
         }
         i915QuerySuccessCount--;
 
-        auto query = static_cast<drm_i915_query *>(arg);
-        if (query->items_ptr == 0) {
+        auto query = static_cast<Query *>(arg);
+        if (query->itemsPtr == 0) {
             return EINVAL;
         }
 
-        for (auto i = 0u; i < query->num_items; ++i) {
-            const auto queryItem = reinterpret_cast<QueryItem *>(query->items_ptr) + i;
+        for (auto i = 0u; i < query->numItems; ++i) {
+            const auto queryItem = reinterpret_cast<QueryItem *>(query->itemsPtr) + i;
             if (!this->handleQueryItem(queryItem)) {
                 return EINVAL;
             }
