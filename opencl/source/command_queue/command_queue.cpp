@@ -1007,8 +1007,8 @@ void CommandQueue::processProperties(const cl_queue_properties *properties) {
                     const HardwareInfo &hwInfo = getDevice().getHardwareInfo();
                     const HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-                    auto engineGroupTyp = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
-                    selectedQueueFamilyIndex = static_cast<cl_uint>(getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupTyp));
+                    auto engineGroupType = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), EngineUsage::Regular, hwInfo);
+                    selectedQueueFamilyIndex = static_cast<cl_uint>(getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType));
                     const auto &engines = getDevice().getRegularEngineGroups()[selectedQueueFamilyIndex].engines;
                     for (const auto &engine : engines) {
                         if (engine.getEngineType() == static_cast<aub_stream::EngineType>(nodeOrdinal)) {

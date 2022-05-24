@@ -205,10 +205,10 @@ void DeviceImp::adjustCommandQueueDesc(ze_command_queue_desc_t &desc) {
         const NEO::HwHelper &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
 
-        auto engineGroupTyp = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
+        auto engineGroupType = hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(nodeOrdinal), NEO::EngineUsage::Regular, hwInfo);
         uint32_t currentEngineIndex = 0u;
         for (const auto &engine : engineGroups) {
-            if (engine.engineGroupType == engineGroupTyp) {
+            if (engine.engineGroupType == engineGroupType) {
                 desc.ordinal = currentEngineIndex;
                 break;
             }
@@ -229,7 +229,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     ze_command_queue_desc_t commandQueueDesc = *desc;
     adjustCommandQueueDesc(commandQueueDesc);
 
-    if (!this->isQueueGroupOrdinalValid(desc->ordinal)) {
+    if (!this->isQueueGroupOrdinalValid(commandQueueDesc.ordinal)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
