@@ -48,12 +48,12 @@ using namespace NEO;
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBoHandle) {
     FlushStamp handleToWait = 123;
-    drm_i915_gem_wait expectedWait = {};
-    expectedWait.bo_handle = static_cast<uint32_t>(handleToWait);
-    expectedWait.timeout_ns = -1;
+    GemWait expectedWait = {};
+    expectedWait.boHandle = static_cast<uint32_t>(handleToWait);
+    expectedWait.timeoutNs = -1;
 
     csr->waitForFlushStamp(handleToWait);
-    EXPECT_TRUE(memcmp(&expectedWait, &mock->receivedGemWait, sizeof(drm_i915_gem_wait)) == 0);
+    EXPECT_TRUE(memcmp(&expectedWait, &mock->receivedGemWait, sizeof(GemWait)) == 0);
     EXPECT_EQ(1, mock->ioctlCount.gemWait);
 }
 

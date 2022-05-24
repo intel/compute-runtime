@@ -136,4 +136,30 @@ struct GemContextCreateExt {
     uint64_t extensions;
 };
 
+struct GemContextDestroy {
+    uint32_t contextId;
+    uint32_t reserved;
+};
+
+struct GemVmControl {
+    uint64_t extensions;
+    uint32_t flags;
+    uint32_t vmId;
+};
+
+struct GemWait {
+    uint32_t boHandle;
+    uint32_t flags;
+    int64_t timeoutNs;
+};
+
+struct ResetStats {
+    uint32_t contextId;
+    uint32_t flags;
+    uint32_t resetCount;
+    uint32_t batchActive;
+    uint32_t batchPending;
+    uint32_t reserved;
+};
+
 } // namespace NEO

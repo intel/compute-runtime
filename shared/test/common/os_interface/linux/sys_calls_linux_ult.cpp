@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm/i915_drm.h"
@@ -97,17 +98,17 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GEM_VM_CREATE) {
         ioctlVmCreateCalled++;
-        auto control = static_cast<drm_i915_gem_vm_control *>(arg);
+        auto control = static_cast<GemVmControl *>(arg);
         ioctlVmCreateExtensionArg = control->extensions;
-        control->vm_id = ++vmId;
+        control->vmId = ++vmId;
         vmFlags |= control->flags;
         return ioctlVmCreateReturned;
     }
     if (request == DRM_IOCTL_I915_GEM_VM_DESTROY) {
-        auto control = static_cast<drm_i915_gem_vm_control *>(arg);
+        auto control = static_cast<GemVmControl *>(arg);
         vmId--;
         vmFlags = 0;
-        return (control->vm_id > 0) ? 0 : -1;
+        return (control->vmId > 0) ? 0 : -1;
     }
     if (request == invalidIoctl) {
         errno = 0;

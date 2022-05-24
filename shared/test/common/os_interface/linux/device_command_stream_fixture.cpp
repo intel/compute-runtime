@@ -140,8 +140,8 @@ int DrmMockCustom::ioctl(unsigned long request, void *arg) {
     } break;
 
     case DRM_IOCTL_I915_GEM_WAIT: {
-        auto gemWaitParams = (drm_i915_gem_wait *)arg;
-        gemWaitTimeout = gemWaitParams->timeout_ns;
+        auto gemWaitParams = static_cast<NEO::GemWait *>(arg);
+        gemWaitTimeout = gemWaitParams->timeoutNs;
         ioctl_cnt.gemWait++;
     } break;
 

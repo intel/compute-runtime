@@ -196,7 +196,7 @@ class DrmMock : public Drm {
     bool capturedCooperativeContextRequest = false;
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
-    std::vector<drm_i915_reset_stats> resetStatsToReturn{};
+    std::vector<ResetStats> resetStatsToReturn{};
 
     GemContextCreateExtSetParam receivedContextCreateSetParam = {};
     uint32_t receivedContextCreateFlags = 0;
@@ -213,27 +213,27 @@ class DrmMock : public Drm {
     std::vector<MockExecBuffer> execBuffers{};
     std::vector<MockExecObject> receivedBos{};
     //DRM_IOCTL_I915_GEM_CREATE
-    __u64 createParamsSize = 0;
-    __u32 createParamsHandle = 0;
+    uint64_t createParamsSize = 0;
+    uint32_t createParamsHandle = 0;
     //DRM_IOCTL_I915_GEM_SET_TILING
-    __u32 setTilingMode = 0;
-    __u32 setTilingHandle = 0;
-    __u32 setTilingStride = 0;
+    uint32_t setTilingMode = 0;
+    uint32_t setTilingHandle = 0;
+    uint32_t setTilingStride = 0;
     //DRM_IOCTL_PRIME_FD_TO_HANDLE
-    __u32 outputHandle = 0;
-    __s32 inputFd = 0;
+    uint32_t outputHandle = 0;
+    int32_t inputFd = 0;
     int fdToHandleRetVal = 0;
     //DRM_IOCTL_HANDLE_TO_FD
-    __s32 outputFd = 0;
+    int32_t outputFd = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
-    __u32 returnHandle = 0;
-    __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
+    uint32_t returnHandle = 0;
+    uint64_t gpuMemSize = 3u * MemoryConstants::gigaByte;
     //DRM_IOCTL_I915_GEM_MMAP
     uint64_t lockedPtr[4];
     //DRM_IOCTL_I915_QUERY
     QueryItem storedQueryItem = {};
     //DRM_IOCTL_I915_GEM_WAIT
-    drm_i915_gem_wait receivedGemWait = {};
+    GemWait receivedGemWait = {};
     //DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT
     uint32_t storedDrmContextId{};
     //DRM_IOCTL_GEM_CLOSE

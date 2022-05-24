@@ -119,4 +119,26 @@ static_assert(offsetof(GemContextCreateExt, contextId) == offsetof(drm_i915_gem_
 static_assert(offsetof(GemContextCreateExt, flags) == offsetof(drm_i915_gem_context_create_ext, flags));
 static_assert(offsetof(GemContextCreateExt, extensions) == offsetof(drm_i915_gem_context_create_ext, extensions));
 
+static_assert(sizeof(GemContextDestroy) == sizeof(drm_i915_gem_context_destroy));
+static_assert(offsetof(GemContextDestroy, contextId) == offsetof(drm_i915_gem_context_destroy, ctx_id));
+static_assert(offsetof(GemContextDestroy, reserved) == offsetof(drm_i915_gem_context_destroy, pad));
+
+static_assert(sizeof(GemVmControl) == sizeof(drm_i915_gem_vm_control));
+static_assert(offsetof(GemVmControl, extensions) == offsetof(drm_i915_gem_vm_control, extensions));
+static_assert(offsetof(GemVmControl, flags) == offsetof(drm_i915_gem_vm_control, flags));
+static_assert(offsetof(GemVmControl, vmId) == offsetof(drm_i915_gem_vm_control, vm_id));
+
+static_assert(sizeof(GemWait) == sizeof(drm_i915_gem_wait));
+static_assert(offsetof(GemWait, boHandle) == offsetof(drm_i915_gem_wait, bo_handle));
+static_assert(offsetof(GemWait, flags) == offsetof(drm_i915_gem_wait, flags));
+static_assert(offsetof(GemWait, timeoutNs) == offsetof(drm_i915_gem_wait, timeout_ns));
+
+static_assert(sizeof(ResetStats) == sizeof(drm_i915_reset_stats));
+static_assert(offsetof(ResetStats, contextId) == offsetof(drm_i915_reset_stats, ctx_id));
+static_assert(offsetof(ResetStats, flags) == offsetof(drm_i915_reset_stats, flags));
+static_assert(offsetof(ResetStats, resetCount) == offsetof(drm_i915_reset_stats, reset_count));
+static_assert(offsetof(ResetStats, batchActive) == offsetof(drm_i915_reset_stats, batch_active));
+static_assert(offsetof(ResetStats, batchPending) == offsetof(drm_i915_reset_stats, batch_pending));
+static_assert(offsetof(ResetStats, reserved) == offsetof(drm_i915_reset_stats, pad));
+
 } // namespace NEO

@@ -1105,11 +1105,11 @@ TEST(DrmTest, GivenZeroBatchActiveAndZeroBatchPendingResetStatsWhenIsGpuHangIsCa
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    drm_i915_reset_stats resetStats{};
-    resetStats.ctx_id = 0;
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
-    resetStats.ctx_id = 3;
+    resetStats.contextId = 3;
     drm.resetStatsToReturn.push_back(resetStats);
 
     bool isGpuHangDetected{};
@@ -1129,12 +1129,12 @@ TEST(DrmTest, GivenBatchActiveGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThen
     mockOsContextLinux.drmContextIds.push_back(0);
     mockOsContextLinux.drmContextIds.push_back(3);
 
-    drm_i915_reset_stats resetStats{};
-    resetStats.ctx_id = 0;
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
     drm.resetStatsToReturn.push_back(resetStats);
 
-    resetStats.ctx_id = 3;
-    resetStats.batch_active = 2;
+    resetStats.contextId = 3;
+    resetStats.batchActive = 2;
     drm.resetStatsToReturn.push_back(resetStats);
 
     bool isGpuHangDetected{};
@@ -1153,9 +1153,9 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     MockOsContextLinux mockOsContextLinux{drm, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(8);
 
-    drm_i915_reset_stats resetStats{};
-    resetStats.ctx_id = 8;
-    resetStats.batch_pending = 7;
+    ResetStats resetStats{};
+    resetStats.contextId = 8;
+    resetStats.batchPending = 7;
     drm.resetStatsToReturn.push_back(resetStats);
 
     bool isGpuHangDetected{};

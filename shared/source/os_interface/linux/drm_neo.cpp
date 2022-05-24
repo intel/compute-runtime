@@ -335,13 +335,13 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     for (const auto drmContextId : drmContextIds) {
-        drm_i915_reset_stats resetStats{};
-        resetStats.ctx_id = drmContextId;
+        ResetStats resetStats{};
+        resetStats.contextId = drmContextId;
 
         const auto retVal{ioctl(DRM_IOCTL_I915_GET_RESET_STATS, &resetStats)};
         UNRECOVERABLE_IF(retVal != 0);
 
-        if (resetStats.batch_active > 0 || resetStats.batch_pending > 0) {
+        if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             return true;
         }
@@ -468,15 +468,15 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
 }
 
 void Drm::destroyDrmContext(uint32_t drmContextId) {
-    drm_i915_gem_context_destroy destroy = {};
-    destroy.ctx_id = drmContextId;
+    GemContextDestroy destroy{};
+    destroy.contextId = drmContextId;
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
-    drm_i915_gem_vm_control ctl = {};
-    ctl.vm_id = drmVmId;
+    GemVmControl ctl = {};
+    ctl.vmId = drmVmId;
     auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_DESTROY, &ctl);
     UNRECOVERABLE_IF(ret != 0);
 }
@@ -874,9 +874,9 @@ const TopologyMap &Drm::getTopologyMap() {
 int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     UNRECOVERABLE_IF(isVmBindAvailable());
 
-    drm_i915_gem_wait wait = {};
-    wait.bo_handle = waitHandle;
-    wait.timeout_ns = timeout;
+    GemWait wait{};
+    wait.boHandle = waitHandle;
+    wait.timeoutNs = timeout;
 
     int ret = ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
     if (ret != 0) {
@@ -1501,7 +1501,7 @@ int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObj
 }
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
-    drm_i915_gem_vm_control ctl = {};
+    GemVmControl ctl{};
 
     std::optional<MemoryClassInstance> regionInstanceClass;
 
@@ -1530,8 +1530,8 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
 
     if (ret == 0) {
-        drmVmId = ctl.vm_id;
-        if (ctl.vm_id == 0) {
+        drmVmId = ctl.vmId;
+        if (ctl.vmId == 0) {
             // 0 is reserved for invalid/unassigned ppgtt
             return -1;
         }

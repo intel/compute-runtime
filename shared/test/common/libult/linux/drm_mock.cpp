@@ -94,8 +94,8 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {
         ioctlCount.contextDestroy++;
-        auto destroy = static_cast<drm_i915_gem_context_destroy *>(arg);
-        this->receivedDestroyContextId = destroy->ctx_id;
+        auto destroy = static_cast<GemContextDestroy *>(arg);
+        this->receivedDestroyContextId = destroy->contextId;
         return this->storedRetVal;
     }
 
@@ -216,7 +216,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GEM_WAIT) {
         ioctlCount.gemWait++;
-        receivedGemWait = *static_cast<drm_i915_gem_wait *>(arg);
+        receivedGemWait = *static_cast<GemWait *>(arg);
         return 0;
     }
     if (request == DRM_IOCTL_GEM_CLOSE) {
@@ -225,9 +225,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     }
     if (request == DRM_IOCTL_I915_GET_RESET_STATS && arg != nullptr) {
         ioctlCount.gemResetStats++;
-        auto outResetStats = static_cast<drm_i915_reset_stats *>(arg);
+        auto outResetStats = static_cast<ResetStats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
-            if (resetStats.ctx_id == outResetStats->ctx_id) {
+            if (resetStats.contextId == outResetStats->contextId) {
                 *outResetStats = resetStats;
                 return 0;
             }

@@ -223,26 +223,26 @@ int drmContextCreate(NEO::GemContextCreateExt *create) {
     return failOnContextCreate;
 }
 
-int drmContextDestroy(drm_i915_gem_context_destroy *destroy) {
+int drmContextDestroy(NEO::GemContextDestroy *destroy) {
     assert(destroy);
 
-    if (destroy->ctx_id == 1)
+    if (destroy->contextId == 1)
         return 0;
     else
         return -1;
 }
 
-int drmVirtualMemoryCreate(drm_i915_gem_vm_control *control) {
+int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
     assert(control);
-    control->vm_id = ++vmId;
+    control->vmId = ++vmId;
     return failOnVirtualMemoryCreate;
 }
 
-int drmVirtualMemoryDestroy(drm_i915_gem_vm_control *control) {
+int drmVirtualMemoryDestroy(NEO::GemVmControl *control) {
     assert(control);
 
     vmId--;
-    return (control->vm_id > 0) ? 0 : -1;
+    return (control->vmId > 0) ? 0 : -1;
 }
 
 int drmVersion(drm_version_t *version) {
@@ -305,13 +305,13 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 res = drmContextCreate(va_arg(vl, NEO::GemContextCreateExt *));
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
-                res = drmContextDestroy(va_arg(vl, drm_i915_gem_context_destroy *));
+                res = drmContextDestroy(va_arg(vl, NEO::GemContextDestroy *));
                 break;
             case DRM_IOCTL_I915_GEM_VM_CREATE:
-                res = drmVirtualMemoryCreate(va_arg(vl, drm_i915_gem_vm_control *));
+                res = drmVirtualMemoryCreate(va_arg(vl, NEO::GemVmControl *));
                 break;
             case DRM_IOCTL_I915_GEM_VM_DESTROY:
-                res = drmVirtualMemoryDestroy(va_arg(vl, drm_i915_gem_vm_control *));
+                res = drmVirtualMemoryDestroy(va_arg(vl, NEO::GemVmControl *));
                 break;
             case DRM_IOCTL_VERSION:
                 res = drmVersion(va_arg(vl, drm_version_t *));
