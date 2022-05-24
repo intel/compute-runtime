@@ -370,6 +370,20 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBarrier(uint32_t numRanges,
+                                                                                     const size_t *pRangeSizes,
+                                                                                     const void **pRanges,
+                                                                                     ze_event_handle_t hSignalEvent,
+                                                                                     uint32_t numWaitEvents,
+                                                                                     ze_event_handle_t *phWaitEvents) {
+    if (this->isFlushTaskSubmissionEnabled) {
+        checkAvailableSpace();
+    }
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
+    return flushImmediate(ret, true);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration) {
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {

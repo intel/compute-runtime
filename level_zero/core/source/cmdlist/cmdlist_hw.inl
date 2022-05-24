@@ -393,13 +393,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
     appendSignalEventPostWalker(hSignalEvent, workloadPartition);
 
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE) {
-        const auto executionResult = executeCommandListImmediate(true);
-        if (executionResult == ZE_RESULT_ERROR_DEVICE_LOST) {
-            return ZE_RESULT_ERROR_DEVICE_LOST;
-        }
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 

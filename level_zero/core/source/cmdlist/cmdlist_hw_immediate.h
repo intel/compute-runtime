@@ -106,7 +106,14 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                       uint32_t numWaitEvents,
                                       ze_event_handle_t *phWaitEvents) override;
 
-    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration);
+    ze_result_t appendMemoryRangesBarrier(uint32_t numRanges,
+                                          const size_t *pRangeSizes,
+                                          const void **pRanges,
+                                          ze_event_handle_t hSignalEvent,
+                                          uint32_t numWaitEvents,
+                                          ze_event_handle_t *phWaitEvents) override;
+
+    MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration);
 
     void checkAvailableSpace();
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);

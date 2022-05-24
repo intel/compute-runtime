@@ -235,5 +235,45 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+    ze_result_t result;
+    uint32_t numRanges = 1;
+    const size_t rangeSizes = 1;
+    const char *rangesBuffer[rangeSizes];
+    const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = cmdList.appendMemoryRangesBarrier(numRanges, &rangeSizes,
+                                               ranges, nullptr, 0,
+                                               nullptr);
+    EXPECT_EQ(0u, cmdList.executeCommandListImmediateCalledCount);
+    EXPECT_EQ(1u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierNotUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+    ze_result_t result;
+    uint32_t numRanges = 1;
+    const size_t rangeSizes = 1;
+    const char *rangesBuffer[rangeSizes];
+    const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = false;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    result = cmdList.appendMemoryRangesBarrier(numRanges, &rangeSizes,
+                                               ranges, nullptr, 0,
+                                               nullptr);
+    EXPECT_EQ(1u, cmdList.executeCommandListImmediateCalledCount);
+    EXPECT_EQ(0u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0

@@ -419,5 +419,31 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
     size_t dstBlitCopyRegionOffset = 0;
 };
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+  public:
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
+    MockCommandListImmediateHw() : BaseClass() {}
+    using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isSyncModeQueue;
+
+    ze_result_t executeCommandListImmediate(bool performMigration) override {
+        ++executeCommandListImmediateCalledCount;
+        return executeCommandListImmediateReturnValue;
+    }
+
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration) override {
+        ++executeCommandListImmediateWithFlushTaskCalledCount;
+        return executeCommandListImmediateWithFlushTaskReturnValue;
+    }
+
+    ze_result_t executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
+    uint32_t executeCommandListImmediateCalledCount = 0;
+
+    ze_result_t executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_SUCCESS;
+    uint32_t executeCommandListImmediateWithFlushTaskCalledCount = 0;
+};
+
 } // namespace ult
 } // namespace L0
