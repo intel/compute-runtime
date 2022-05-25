@@ -131,7 +131,7 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions() const {
+std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_subgroup_local_block_io ";
 

@@ -83,13 +83,17 @@ const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions() const {
+std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_create_buffer_with_properties ";
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
-    extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
-    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
+
+    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig.isMatrixMultiplyAccumulateSupported(hwInfo)) {
+        extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+        extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
+    }
 
     return extensions;
 }

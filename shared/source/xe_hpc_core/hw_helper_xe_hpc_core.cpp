@@ -280,7 +280,7 @@ uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions() const {
+std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
 
     extensions += "cl_intel_create_buffer_with_properties ";

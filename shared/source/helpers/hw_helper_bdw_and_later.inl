@@ -80,7 +80,7 @@ EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType
 }
 
 template <typename GfxFamily>
-std::string HwHelperHw<GfxFamily>::getExtensions() const {
+std::string HwHelperHw<GfxFamily>::getExtensions(const HardwareInfo &hwInfo) const {
     return "";
 }
 

@@ -180,3 +180,8 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}

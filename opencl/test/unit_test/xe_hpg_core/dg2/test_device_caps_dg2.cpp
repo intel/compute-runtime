@@ -9,8 +9,10 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
 #include "gtest/gtest.h"
 
@@ -74,4 +76,14 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenRevisionEnumThenProperMaxThreadsForWorkgroupIs
     hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A1, hardwareInfo);
     uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
     EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+}
+
+using Dg2DeviceCapsTest = ::testing::Test;
+DG2TEST_F(Dg2DeviceCapsTest, whenCheckingExtensionThenCorrectExtensionsAreReported) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto &extensions = deviceFactory.rootDevices[0]->deviceExtensions;
+
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_bfloat16_conversions")));
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 }

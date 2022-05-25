@@ -83,7 +83,7 @@ class HwHelper {
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
-    virtual std::string getExtensions() const = 0;
+    virtual std::string getExtensions(const HardwareInfo &hwInfo) const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
@@ -281,7 +281,7 @@ class HwHelperHw : public HwHelper {
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 
-    std::string getExtensions() const override;
+    std::string getExtensions(const HardwareInfo &hwInfo) const override;
 
     uint32_t getMetricsLibraryGenId() const override;
 

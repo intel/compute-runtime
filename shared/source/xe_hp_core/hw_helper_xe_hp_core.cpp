@@ -91,7 +91,7 @@ const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions() const {
+std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
