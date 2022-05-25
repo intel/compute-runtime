@@ -53,7 +53,7 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     30,                                                        // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Dg2,             // aubDeviceId
     0,                                                         // extraQuantityThreadsPerEU
-    128,                                                       // slmSize
+    64,                                                        // slmSize
     sizeof(DG2::GRF),                                          // grfSize
     36u,                                                       // timestampValidBits
     32u,                                                       // kernelTimestampValidBits
