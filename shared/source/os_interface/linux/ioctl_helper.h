@@ -66,7 +66,7 @@ class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
     static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion);
-    static uint32_t ioctl(Drm *drm, unsigned long request, void *arg);
+    static uint32_t ioctl(Drm *drm, DrmIoctl request, void *arg);
     virtual IoctlHelper *clone() = 0;
 
     virtual bool isVmBindAvailable(Drm *drm) = 0;
@@ -114,6 +114,7 @@ class IoctlHelper {
     virtual bool isContextDebugSupported(Drm *drm) = 0;
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
+    virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) = 0;
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
@@ -171,6 +172,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -184,6 +186,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
@@ -235,6 +238,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
 };
 
 } // namespace NEO

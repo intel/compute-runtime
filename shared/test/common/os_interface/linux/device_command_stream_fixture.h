@@ -20,6 +20,7 @@
 #include <cstdint>
 
 using NEO::Drm;
+using NEO::DrmIoctl;
 using NEO::HwDeviceIdDrm;
 using NEO::RootDeviceEnvironment;
 
@@ -61,20 +62,20 @@ class DrmMockSuccess : public Drm {
     using Drm::setupIoctlHelper;
     DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {}
 
-    int ioctl(unsigned long request, void *arg) override { return 0; };
+    int ioctl(DrmIoctl request, void *arg) override { return 0; };
 };
 
 class DrmMockFail : public Drm {
   public:
     DrmMockFail(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
 
-    int ioctl(unsigned long request, void *arg) override { return -1; };
+    int ioctl(DrmIoctl request, void *arg) override { return -1; };
 };
 
 class DrmMockTime : public DrmMockSuccess {
   public:
     using DrmMockSuccess::DrmMockSuccess;
-    int ioctl(unsigned long request, void *arg) override {
+    int ioctl(DrmIoctl request, void *arg) override {
         auto *reg = reinterpret_cast<NEO::RegisterRead *>(arg);
         reg->value = getVal() << 32;
         return 0;
@@ -130,9 +131,9 @@ class DrmMockCustom : public Drm {
 
     void testIoctls();
 
-    int ioctl(unsigned long request, void *arg) override;
+    int ioctl(DrmIoctl request, void *arg) override;
 
-    virtual int ioctlExtra(unsigned long request, void *arg) {
+    virtual int ioctlExtra(DrmIoctl request, void *arg) {
         return -1;
     }
 

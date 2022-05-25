@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+
 #include "drm/i915_drm.h"
 
 #include <cstddef>
@@ -170,4 +172,13 @@ static_assert(offsetof(DrmVersion, date) == offsetof(drm_version, date));
 static_assert(offsetof(DrmVersion, descLen) == offsetof(drm_version, desc_len));
 static_assert(offsetof(DrmVersion, desc) == offsetof(drm_version, desc));
 
+unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
+    switch (ioctlRequest) {
+    case DrmIoctl::Getparam:
+        return DRM_IOCTL_I915_GETPARAM;
+    default:
+        UNRECOVERABLE_IF(!ioctlHelper);
+        return ioctlHelper->getIoctlRequestValue(ioctlRequest);
+    }
+}
 } // namespace NEO

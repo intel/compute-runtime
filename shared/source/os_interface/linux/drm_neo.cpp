@@ -70,131 +70,81 @@ std::string getIoctlParamString(int param) {
     }
 }
 
-std::string getIoctlString(unsigned long request) {
-    switch (request) {
-    case DRM_IOCTL_I915_GEM_EXECBUFFER2:
+std::string getIoctlString(DrmIoctl ioctlRequest) {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemExecbuffer2:
         return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
-    case DRM_IOCTL_I915_GEM_WAIT:
+    case DrmIoctl::GemWait:
         return "DRM_IOCTL_I915_GEM_WAIT";
-    case DRM_IOCTL_GEM_CLOSE:
+    case DrmIoctl::GemClose:
         return "DRM_IOCTL_GEM_CLOSE";
-    case DRM_IOCTL_I915_GEM_USERPTR:
+    case DrmIoctl::GemUserptr:
         return "DRM_IOCTL_I915_GEM_USERPTR";
-    case DRM_IOCTL_I915_INIT:
-        return "DRM_IOCTL_I915_INIT";
-    case DRM_IOCTL_I915_FLUSH:
-        return "DRM_IOCTL_I915_FLUSH";
-    case DRM_IOCTL_I915_FLIP:
-        return "DRM_IOCTL_I915_FLIP";
-    case DRM_IOCTL_I915_BATCHBUFFER:
-        return "DRM_IOCTL_I915_BATCHBUFFER";
-    case DRM_IOCTL_I915_IRQ_EMIT:
-        return "DRM_IOCTL_I915_IRQ_EMIT";
-    case DRM_IOCTL_I915_IRQ_WAIT:
-        return "DRM_IOCTL_I915_IRQ_WAIT";
-    case DRM_IOCTL_I915_GETPARAM:
+    case DrmIoctl::Getparam:
         return "DRM_IOCTL_I915_GETPARAM";
-    case DRM_IOCTL_I915_SETPARAM:
-        return "DRM_IOCTL_I915_SETPARAM";
-    case DRM_IOCTL_I915_ALLOC:
-        return "DRM_IOCTL_I915_ALLOC";
-    case DRM_IOCTL_I915_FREE:
-        return "DRM_IOCTL_I915_FREE";
-    case DRM_IOCTL_I915_INIT_HEAP:
-        return "DRM_IOCTL_I915_INIT_HEAP";
-    case DRM_IOCTL_I915_CMDBUFFER:
-        return "DRM_IOCTL_I915_CMDBUFFER";
-    case DRM_IOCTL_I915_DESTROY_HEAP:
-        return "DRM_IOCTL_I915_DESTROY_HEAP";
-    case DRM_IOCTL_I915_SET_VBLANK_PIPE:
-        return "DRM_IOCTL_I915_SET_VBLANK_PIPE";
-    case DRM_IOCTL_I915_GET_VBLANK_PIPE:
-        return "DRM_IOCTL_I915_GET_VBLANK_PIPE";
-    case DRM_IOCTL_I915_VBLANK_SWAP:
-        return "DRM_IOCTL_I915_VBLANK_SWAP";
-    case DRM_IOCTL_I915_HWS_ADDR:
-        return "DRM_IOCTL_I915_HWS_ADDR";
-    case DRM_IOCTL_I915_GEM_INIT:
-        return "DRM_IOCTL_I915_GEM_INIT";
-    case DRM_IOCTL_I915_GEM_EXECBUFFER:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER";
-    case DRM_IOCTL_I915_GEM_EXECBUFFER2_WR:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER2_WR";
-    case DRM_IOCTL_I915_GEM_PIN:
-        return "DRM_IOCTL_I915_GEM_PIN";
-    case DRM_IOCTL_I915_GEM_UNPIN:
-        return "DRM_IOCTL_I915_GEM_UNPIN";
-    case DRM_IOCTL_I915_GEM_BUSY:
-        return "DRM_IOCTL_I915_GEM_BUSY";
-    case DRM_IOCTL_I915_GEM_SET_CACHING:
-        return "DRM_IOCTL_I915_GEM_SET_CACHING";
-    case DRM_IOCTL_I915_GEM_GET_CACHING:
-        return "DRM_IOCTL_I915_GEM_GET_CACHING";
-    case DRM_IOCTL_I915_GEM_THROTTLE:
-        return "DRM_IOCTL_I915_GEM_THROTTLE";
-    case DRM_IOCTL_I915_GEM_ENTERVT:
-        return "DRM_IOCTL_I915_GEM_ENTERVT";
-    case DRM_IOCTL_I915_GEM_LEAVEVT:
-        return "DRM_IOCTL_I915_GEM_LEAVEVT";
-    case DRM_IOCTL_I915_GEM_CREATE:
+    case DrmIoctl::GemCreate:
         return "DRM_IOCTL_I915_GEM_CREATE";
-    case DRM_IOCTL_I915_GEM_PREAD:
-        return "DRM_IOCTL_I915_GEM_PREAD";
-    case DRM_IOCTL_I915_GEM_PWRITE:
-        return "DRM_IOCTL_I915_GEM_PWRITE";
-    case DRM_IOCTL_I915_GEM_SET_DOMAIN:
+    case DrmIoctl::GemSetDomain:
         return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
-    case DRM_IOCTL_I915_GEM_SW_FINISH:
-        return "DRM_IOCTL_I915_GEM_SW_FINISH";
-    case DRM_IOCTL_I915_GEM_SET_TILING:
+    case DrmIoctl::GemSetTiling:
         return "DRM_IOCTL_I915_GEM_SET_TILING";
-    case DRM_IOCTL_I915_GEM_GET_TILING:
+    case DrmIoctl::GemGetTiling:
         return "DRM_IOCTL_I915_GEM_GET_TILING";
-    case DRM_IOCTL_I915_GEM_GET_APERTURE:
-        return "DRM_IOCTL_I915_GEM_GET_APERTURE";
-    case DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID:
-        return "DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID";
-    case DRM_IOCTL_I915_GEM_MADVISE:
-        return "DRM_IOCTL_I915_GEM_MADVISE";
-    case DRM_IOCTL_I915_OVERLAY_PUT_IMAGE:
-        return "DRM_IOCTL_I915_OVERLAY_PUT_IMAGE";
-    case DRM_IOCTL_I915_OVERLAY_ATTRS:
-        return "DRM_IOCTL_I915_OVERLAY_ATTRS";
-    case DRM_IOCTL_I915_SET_SPRITE_COLORKEY:
-        return "DRM_IOCTL_I915_SET_SPRITE_COLORKEY";
-    case DRM_IOCTL_I915_GET_SPRITE_COLORKEY:
-        return "DRM_IOCTL_I915_GET_SPRITE_COLORKEY";
-    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE";
-    case DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT:
+    case DrmIoctl::GemContextCreateExt:
         return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
-    case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
+    case DrmIoctl::GemContextDestroy:
         return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
-    case DRM_IOCTL_I915_REG_READ:
+    case DrmIoctl::RegRead:
         return "DRM_IOCTL_I915_REG_READ";
-    case DRM_IOCTL_I915_GET_RESET_STATS:
+    case DrmIoctl::GetResetStats:
         return "DRM_IOCTL_I915_GET_RESET_STATS";
-    case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM:
+    case DrmIoctl::GemContextGetparam:
         return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
-    case DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM:
+    case DrmIoctl::GemContextSetparam:
         return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
-    case DRM_IOCTL_I915_PERF_OPEN:
-        return "DRM_IOCTL_I915_PERF_OPEN";
-    case DRM_IOCTL_I915_PERF_ADD_CONFIG:
-        return "DRM_IOCTL_I915_PERF_ADD_CONFIG";
-    case DRM_IOCTL_I915_PERF_REMOVE_CONFIG:
-        return "DRM_IOCTL_I915_PERF_REMOVE_CONFIG";
-    case DRM_IOCTL_I915_QUERY:
+    case DrmIoctl::Query:
         return "DRM_IOCTL_I915_QUERY";
-    case DRM_IOCTL_I915_GEM_MMAP:
+    case DrmIoctl::GemMmap:
         return "DRM_IOCTL_I915_GEM_MMAP";
-    case DRM_IOCTL_PRIME_FD_TO_HANDLE:
+    case DrmIoctl::PrimeFdToHandle:
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
-    case DRM_IOCTL_PRIME_HANDLE_TO_FD:
+    case DrmIoctl::PrimeHandleToFd:
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
-    default:
-        return getIoctlStringRemaining(request);
+    case DrmIoctl::GemVmBind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
+    case DrmIoctl::GemVmUnbind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
+    case DrmIoctl::GemWaitUserFence:
+        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
+    case DrmIoctl::GemCreateExt:
+        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
+    case DrmIoctl::DG1GemCreateExt:
+        return "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT";
+    case DrmIoctl::GemVmAdvise:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
+    case DrmIoctl::GemVmPrefetch:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
+    case DrmIoctl::UuidRegister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
+    case DrmIoctl::UuidUnregister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
+    case DrmIoctl::DebuggerOpen:
+        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
+    case DrmIoctl::GemClosReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
+    case DrmIoctl::GemClosFree:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
+    case DrmIoctl::GemCacheReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
+    case DrmIoctl::GemMmapOffset:
+        return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
+    case DrmIoctl::GemVmCreate:
+        return "DRM_IOCTL_I915_GEM_VM_CREATE";
+    case DrmIoctl::GemVmDestroy:
+        return "DRM_IOCTL_I915_GEM_VM_DESTROY";
     }
+    UNRECOVERABLE_IF(true);
+    return "";
 }
 
 } // namespace IoctlToStringHelper
@@ -212,7 +162,8 @@ void Drm::queryAndSetVmBindPatIndexProgrammingSupport() {
     this->vmBindPatIndexProgrammingSupported = HwInfoConfig::get(hwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
 }
 
-int Drm::ioctl(unsigned long request, void *arg) {
+int Drm::ioctl(DrmIoctl request, void *arg) {
+    auto requestValue = getIoctlRequestValue(request, ioctlHelper.get());
     int ret;
     int returnedErrno;
     SYSTEM_ENTER();
@@ -230,7 +181,7 @@ int Drm::ioctl(unsigned long request, void *arg) {
         if (measureTime) {
             start = std::chrono::steady_clock::now();
         }
-        ret = SysCalls::ioctl(getFileDescriptor(), request, arg);
+        ret = SysCalls::ioctl(getFileDescriptor(), requestValue, arg);
 
         returnedErrno = errno;
 
@@ -272,7 +223,7 @@ int Drm::getParamIoctl(int param, int *dstValue) {
     getParam.param = param;
     getParam.value = dstValue;
 
-    int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+    int retVal = ioctl(DrmIoctl::Getparam, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
                IoctlToStringHelper::getIoctlParamString(param).c_str(),
@@ -299,7 +250,7 @@ int Drm::enableTurboBoost() {
 
     contextParam.param = I915_CONTEXT_PRIVATE_PARAM_BOOST;
     contextParam.value = 1;
-    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    return ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
@@ -322,7 +273,7 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
     GemContextParam contextParam = {0};
     contextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
 
-    int ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    int ret = ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (ret == 0) {
         gttSizeOutput = contextParam.value;
     }
@@ -338,7 +289,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
 
-        const auto retVal{ioctl(DRM_IOCTL_I915_GET_RESET_STATS, &resetStats)};
+        const auto retVal{ioctl(DrmIoctl::GetResetStats, &resetStats)};
         UNRECOVERABLE_IF(retVal != 0);
 
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
@@ -366,7 +317,7 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
+    auto retVal = ioctl(DrmIoctl::GemContextSetparam, &gcp);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
@@ -378,7 +329,7 @@ int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
     contextParam.size = sizeof(struct GemContextParamSseu);
 
-    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    return ioctl(DrmIoctl::GemContextGetparam, &contextParam);
 }
 
 uint64_t Drm::getSliceMask(uint64_t sliceCount) {
@@ -393,7 +344,7 @@ bool Drm::setQueueSliceCount(uint64_t sliceCount) {
         contextParam.contextId = 0;
         contextParam.value = reinterpret_cast<uint64_t>(&sseu);
         contextParam.size = sizeof(struct GemContextParamSseu);
-        int retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+        int retVal = ioctl(DrmIoctl::GemContextSetparam, &contextParam);
         if (retVal == 0) {
             return true;
         }
@@ -405,7 +356,7 @@ void Drm::checkNonPersistentContextsSupport() {
     GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+    auto retVal = ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (retVal == 0 && contextParam.value == 1) {
         nonPersistentContextsSupported = true;
     } else {
@@ -418,7 +369,7 @@ void Drm::setNonPersistentContext(uint32_t drmContextId) {
     contextParam.contextId = drmContextId;
     contextParam.param = I915_CONTEXT_PARAM_PERSISTENCE;
 
-    ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 void Drm::setUnrecoverableContext(uint32_t drmContextId) {
@@ -428,7 +379,7 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     contextParam.value = 0;
     contextParam.size = 0;
 
-    ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+    ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
 uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
@@ -461,7 +412,7 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
     if (isCooperativeContextRequested) {
         return ioctlHelper->createCooperativeContext(this, gcc);
     }
-    auto ioctlResult = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &gcc);
+    auto ioctlResult = ioctl(DrmIoctl::GemContextCreateExt, &gcc);
 
     UNRECOVERABLE_IF(ioctlResult != 0);
     return gcc.contextId;
@@ -470,14 +421,14 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
 void Drm::destroyDrmContext(uint32_t drmContextId) {
     GemContextDestroy destroy{};
     destroy.contextId = drmContextId;
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
+    auto retVal = ioctl(DrmIoctl::GemContextDestroy, &destroy);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     GemVmControl ctl = {};
     ctl.vmId = drmVmId;
-    auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_DESTROY, &ctl);
+    auto ret = SysCalls::ioctl(getFileDescriptor(), ioctlHelper->getIoctlRequestValue(DrmIoctl::GemVmDestroy), &ctl);
     UNRECOVERABLE_IF(ret != 0);
 }
 
@@ -486,7 +437,7 @@ int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
     param.contextId = drmContextId;
     param.value = 0;
     param.param = I915_CONTEXT_PARAM_VM;
-    auto retVal = this->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &param);
+    auto retVal = this->ioctl(DrmIoctl::GemContextGetparam, &param);
 
     vmId = static_cast<uint32_t>(param.value);
 
@@ -682,7 +633,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     query.itemsPtr = reinterpret_cast<uint64_t>(&queryItem);
     query.numItems = 1;
 
-    auto ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
+    auto ret = this->ioctl(DrmIoctl::Query, &query);
     if (ret != 0 || queryItem.length <= 0) {
         return {};
     }
@@ -690,7 +641,7 @@ std::vector<uint8_t> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
     auto data = std::vector<uint8_t>(queryItem.length, 0);
     queryItem.dataPtr = castToUint64(data.data());
 
-    ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
+    ret = this->ioctl(DrmIoctl::Query, &query);
     if (ret != 0 || queryItem.length <= 0) {
         return {};
     }
@@ -878,7 +829,7 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     wait.boHandle = waitHandle;
     wait.timeoutNs = timeout;
 
-    int ret = ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
+    int ret = ioctl(DrmIoctl::GemWait, &wait);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -1322,7 +1273,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     param.param = I915_CONTEXT_PARAM_ENGINES;
     param.value = castToUint64(&contextEngines);
 
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &param);
+    auto retVal = ioctl(DrmIoctl::GemContextSetparam, &param);
     UNRECOVERABLE_IF(retVal != 0);
 
     return I915_EXEC_DEFAULT;
@@ -1527,7 +1478,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
 
-    auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
+    auto ret = SysCalls::ioctl(getFileDescriptor(), ioctlHelper->getIoctlRequestValue(DrmIoctl::GemVmCreate), &ctl);
 
     if (ret == 0) {
         drmVmId = ctl.vmId;

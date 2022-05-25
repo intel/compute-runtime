@@ -53,8 +53,8 @@ class DrmMockProdDg1 : public DrmTipMock {
         }
     }
 
-    int handleKernelSpecificRequests(unsigned long request, void *arg) override {
-        if (request == DRM_IOCTL_I915_GEM_CREATE_EXT) {
+    int handleKernelSpecificRequests(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::DG1GemCreateExt) {
             auto createExtParams = static_cast<drm_i915_gem_create_ext *>(arg);
             if (createExtParams->size == 0) {
                 return EINVAL;

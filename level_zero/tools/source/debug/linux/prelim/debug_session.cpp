@@ -49,7 +49,7 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
         open.pid = config.pid;
         open.events = 0;
 
-        auto debugFd = DrmHelper::ioctl(device, PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN, &open);
+        auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::DebuggerOpen, &open);
         if (debugFd >= 0) {
             PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: %d, open.events: %d, debugFd: %d\n",
                                     open.pid, open.events, debugFd);

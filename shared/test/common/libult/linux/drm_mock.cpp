@@ -17,11 +17,11 @@
 const int DrmMock::mockFd;
 const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
 
-int DrmMock::ioctl(unsigned long request, void *arg) {
+int DrmMock::ioctl(DrmIoctl request, void *arg) {
     ioctlCallsCount++;
     ioctlCount.total++;
 
-    if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
+    if ((request == DrmIoctl::Getparam) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
         auto gp = static_cast<GetParam *>(arg);
         if (gp->param == I915_PARAM_EU_TOTAL) {
@@ -74,7 +74,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
     }
 
-    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT) && (arg != nullptr)) {
+    if ((request == DrmIoctl::GemContextCreateExt) && (arg != nullptr)) {
         ioctlCount.contextCreate++;
         auto create = static_cast<GemContextCreateExt *>(arg);
         create->contextId = this->storedDrmContextId;
@@ -92,14 +92,14 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
     }
 
-    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_DESTROY) && (arg != nullptr)) {
+    if ((request == DrmIoctl::GemContextDestroy) && (arg != nullptr)) {
         ioctlCount.contextDestroy++;
         auto destroy = static_cast<GemContextDestroy *>(arg);
         this->receivedDestroyContextId = destroy->contextId;
         return this->storedRetVal;
     }
 
-    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM) && (arg != nullptr)) {
+    if ((request == DrmIoctl::GemContextSetparam) && (arg != nullptr)) {
         ioctlCount.contextSetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
@@ -127,7 +127,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
     }
 
-    if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {
+    if ((request == DrmIoctl::GemContextGetparam) && (arg != nullptr)) {
         ioctlCount.contextGetParam++;
         receivedContextParamRequestCount++;
         receivedContextParamRequest = *static_cast<GemContextParam *>(arg);
@@ -152,7 +152,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
     }
 
-    if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
+    if (request == DrmIoctl::GemExecbuffer2) {
         ioctlCount.execbuffer2++;
         auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
         auto execObjects = reinterpret_cast<const MockExecObject *>(execbuf->getBuffersPtr());
@@ -162,14 +162,14 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
         return 0;
     }
-    if (request == DRM_IOCTL_I915_GEM_USERPTR) {
+    if (request == DrmIoctl::GemUserptr) {
         ioctlCount.gemUserptr++;
         auto userPtrParams = static_cast<NEO::GemUserPtr *>(arg);
         userPtrParams->handle = returnHandle;
         returnHandle++;
         return 0;
     }
-    if (request == DRM_IOCTL_I915_GEM_CREATE) {
+    if (request == DrmIoctl::GemCreate) {
         ioctlCount.gemCreate++;
         auto createParams = static_cast<NEO::GemCreate *>(arg);
         this->createParamsSize = createParams->size;
@@ -179,7 +179,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
         return 0;
     }
-    if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
+    if (request == DrmIoctl::GemSetTiling) {
         ioctlCount.gemSetTiling++;
         auto setTilingParams = static_cast<NEO::GemSetTiling *>(arg);
         setTilingMode = setTilingParams->tilingMode;
@@ -187,7 +187,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         setTilingStride = setTilingParams->stride;
         return 0;
     }
-    if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+    if (request == DrmIoctl::PrimeFdToHandle) {
         ioctlCount.primeFdToHandle++;
         auto primeToHandleParams = static_cast<PrimeHandle *>(arg);
         //return BO
@@ -195,35 +195,28 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         inputFd = primeToHandleParams->fileDescriptor;
         return fdToHandleRetVal;
     }
-    if (request == DRM_IOCTL_PRIME_HANDLE_TO_FD) {
+    if (request == DrmIoctl::PrimeHandleToFd) {
         ioctlCount.handleToPrimeFd++;
         auto primeToFdParams = static_cast<PrimeHandle *>(arg);
         primeToFdParams->fileDescriptor = outputFd;
         return 0;
     }
-    if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
-        ioctlCount.gemGetAperture++;
-        auto aperture = static_cast<drm_i915_gem_get_aperture *>(arg);
-        aperture->aper_available_size = gpuMemSize;
-        aperture->aper_size = gpuMemSize;
-        return 0;
-    }
-    if (request == DRM_IOCTL_I915_GEM_MMAP) {
+    if (request == DrmIoctl::GemMmap) {
         ioctlCount.gemMmap++;
         auto mmapArg = static_cast<GemMmap *>(arg);
         mmapArg->addrPtr = reinterpret_cast<uint64_t>(lockedPtr);
         return 0;
     }
-    if (request == DRM_IOCTL_I915_GEM_WAIT) {
+    if (request == DrmIoctl::GemWait) {
         ioctlCount.gemWait++;
         receivedGemWait = *static_cast<GemWait *>(arg);
         return 0;
     }
-    if (request == DRM_IOCTL_GEM_CLOSE) {
+    if (request == DrmIoctl::GemClose) {
         ioctlCount.gemClose++;
         return storedRetValForGemClose;
     }
-    if (request == DRM_IOCTL_I915_GET_RESET_STATS && arg != nullptr) {
+    if (request == DrmIoctl::GetResetStats && arg != nullptr) {
         ioctlCount.gemResetStats++;
         auto outResetStats = static_cast<ResetStats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
@@ -236,7 +229,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         return -1;
     }
 
-    if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
+    if (request == DrmIoctl::Query && arg != nullptr) {
         ioctlCount.query++;
         auto queryArg = static_cast<Query *>(arg);
         auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->itemsPtr);
@@ -277,8 +270,8 @@ int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, Va
     waitUserFenceParams.push_back({ctxIdx, address, value, dataWidth, timeout, flags});
     return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags);
 }
-int DrmMockEngine::handleRemainingRequests(unsigned long request, void *arg) {
-    if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {
+int DrmMockEngine::handleRemainingRequests(DrmIoctl request, void *arg) {
+    if ((request == DrmIoctl::Query) && (arg != nullptr)) {
         if (i915QuerySuccessCount == 0) {
             return EINVAL;
         }
@@ -294,69 +287,6 @@ int DrmMockEngine::handleRemainingRequests(unsigned long request, void *arg) {
     }
     return -1;
 }
-
-std::map<unsigned long, const char *> ioctlCodeStringMap = {
-    {DRM_IOCTL_I915_INIT, "DRM_IOCTL_I915_INIT"},
-    {DRM_IOCTL_I915_FLUSH, "DRM_IOCTL_I915_FLUSH"},
-    {DRM_IOCTL_I915_FLIP, "DRM_IOCTL_I915_FLIP"},
-    {DRM_IOCTL_GEM_CLOSE, "DRM_IOCTL_GEM_CLOSE"},
-    {DRM_IOCTL_I915_BATCHBUFFER, "DRM_IOCTL_I915_BATCHBUFFER"},
-    {DRM_IOCTL_I915_IRQ_EMIT, "DRM_IOCTL_I915_IRQ_EMIT"},
-    {DRM_IOCTL_I915_IRQ_WAIT, "DRM_IOCTL_I915_IRQ_WAIT"},
-    {DRM_IOCTL_I915_GETPARAM, "DRM_IOCTL_I915_GETPARAM"},
-    {DRM_IOCTL_I915_SETPARAM, "DRM_IOCTL_I915_SETPARAM"},
-    {DRM_IOCTL_I915_ALLOC, "DRM_IOCTL_I915_ALLOC"},
-    {DRM_IOCTL_I915_FREE, "DRM_IOCTL_I915_FREE"},
-    {DRM_IOCTL_I915_INIT_HEAP, "DRM_IOCTL_I915_INIT_HEAP"},
-    {DRM_IOCTL_I915_CMDBUFFER, "DRM_IOCTL_I915_CMDBUFFER"},
-    {DRM_IOCTL_I915_DESTROY_HEAP, "DRM_IOCTL_I915_DESTROY_HEAP"},
-    {DRM_IOCTL_I915_SET_VBLANK_PIPE, "DRM_IOCTL_I915_SET_VBLANK_PIPE"},
-    {DRM_IOCTL_I915_GET_VBLANK_PIPE, "DRM_IOCTL_I915_GET_VBLANK_PIPE"},
-    {DRM_IOCTL_I915_VBLANK_SWAP, "DRM_IOCTL_I915_VBLANK_SWAP"},
-    {DRM_IOCTL_I915_HWS_ADDR, "DRM_IOCTL_I915_HWS_ADDR"},
-    {DRM_IOCTL_I915_GEM_INIT, "DRM_IOCTL_I915_GEM_INIT"},
-    {DRM_IOCTL_I915_GEM_EXECBUFFER, "DRM_IOCTL_I915_GEM_EXECBUFFER"},
-    {DRM_IOCTL_I915_GEM_EXECBUFFER2, "DRM_IOCTL_I915_GEM_EXECBUFFER2"},
-    {DRM_IOCTL_I915_GEM_EXECBUFFER2_WR, "DRM_IOCTL_I915_GEM_EXECBUFFER2_WR"},
-    {DRM_IOCTL_I915_GEM_PIN, "DRM_IOCTL_I915_GEM_PIN"},
-    {DRM_IOCTL_I915_GEM_UNPIN, "DRM_IOCTL_I915_GEM_UNPIN"},
-    {DRM_IOCTL_I915_GEM_BUSY, "DRM_IOCTL_I915_GEM_BUSY"},
-    {DRM_IOCTL_I915_GEM_SET_CACHING, "DRM_IOCTL_I915_GEM_SET_CACHING"},
-    {DRM_IOCTL_I915_GEM_GET_CACHING, "DRM_IOCTL_I915_GEM_GET_CACHING"},
-    {DRM_IOCTL_I915_GEM_THROTTLE, "DRM_IOCTL_I915_GEM_THROTTLE"},
-    {DRM_IOCTL_I915_GEM_ENTERVT, "DRM_IOCTL_I915_GEM_ENTERVT"},
-    {DRM_IOCTL_I915_GEM_LEAVEVT, "DRM_IOCTL_I915_GEM_LEAVEVT"},
-    {DRM_IOCTL_I915_GEM_CREATE, "DRM_IOCTL_I915_GEM_CREATE"},
-    {DRM_IOCTL_I915_GEM_PREAD, "DRM_IOCTL_I915_GEM_PREAD"},
-    {DRM_IOCTL_I915_GEM_PWRITE, "DRM_IOCTL_I915_GEM_PWRITE"},
-    {DRM_IOCTL_I915_GEM_SET_DOMAIN, "DRM_IOCTL_I915_GEM_SET_DOMAIN"},
-    {DRM_IOCTL_I915_GEM_SW_FINISH, "DRM_IOCTL_I915_GEM_SW_FINISH"},
-    {DRM_IOCTL_I915_GEM_SET_TILING, "DRM_IOCTL_I915_GEM_SET_TILING"},
-    {DRM_IOCTL_I915_GEM_GET_TILING, "DRM_IOCTL_I915_GEM_GET_TILING"},
-    {DRM_IOCTL_I915_GEM_GET_APERTURE, "DRM_IOCTL_I915_GEM_GET_APERTURE"},
-    {DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID, "DRM_IOCTL_I915_GET_PIPE_FROM_CRTC_ID"},
-    {DRM_IOCTL_I915_GEM_MADVISE, "DRM_IOCTL_I915_GEM_MADVISE"},
-    {DRM_IOCTL_I915_OVERLAY_PUT_IMAGE, "DRM_IOCTL_I915_OVERLAY_PUT_IMAGE"},
-    {DRM_IOCTL_I915_OVERLAY_ATTRS, "DRM_IOCTL_I915_OVERLAY_ATTRS"},
-    {DRM_IOCTL_I915_SET_SPRITE_COLORKEY, "DRM_IOCTL_I915_SET_SPRITE_COLORKEY"},
-    {DRM_IOCTL_I915_GET_SPRITE_COLORKEY, "DRM_IOCTL_I915_GET_SPRITE_COLORKEY"},
-    {DRM_IOCTL_I915_GEM_WAIT, "DRM_IOCTL_I915_GEM_WAIT"},
-    {DRM_IOCTL_I915_GEM_CONTEXT_CREATE, "DRM_IOCTL_I915_GEM_CONTEXT_CREATE"},
-    {DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT"},
-    {DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY"},
-    {DRM_IOCTL_I915_REG_READ, "DRM_IOCTL_I915_REG_READ"},
-    {DRM_IOCTL_I915_GET_RESET_STATS, "DRM_IOCTL_I915_GET_RESET_STATS"},
-    {DRM_IOCTL_I915_GEM_USERPTR, "DRM_IOCTL_I915_GEM_USERPTR"},
-    {DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM"},
-    {DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM"},
-    {DRM_IOCTL_I915_PERF_OPEN, "DRM_IOCTL_I915_PERF_OPEN"},
-    {DRM_IOCTL_I915_PERF_ADD_CONFIG, "DRM_IOCTL_I915_PERF_ADD_CONFIG"},
-    {DRM_IOCTL_I915_PERF_REMOVE_CONFIG, "DRM_IOCTL_I915_PERF_REMOVE_CONFIG"},
-    {DRM_IOCTL_I915_QUERY, "DRM_IOCTL_I915_QUERY"},
-    {DRM_IOCTL_I915_GEM_MMAP, "DRM_IOCTL_I915_GEM_MMAP"},
-    {DRM_IOCTL_PRIME_FD_TO_HANDLE, "DRM_IOCTL_PRIME_FD_TO_HANDLE"},
-    {DRM_IOCTL_PRIME_HANDLE_TO_FD, "DRM_IOCTL_PRIME_HANDLE_TO_FD"},
-    {static_cast<unsigned long>(101010101), "101010101"}};
 
 std::map<int, const char *> ioctlParamCodeStringMap = {
     {I915_PARAM_CHIPSET_ID, "I915_PARAM_CHIPSET_ID"},

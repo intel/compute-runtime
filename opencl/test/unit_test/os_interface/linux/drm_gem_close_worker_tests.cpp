@@ -39,13 +39,8 @@ class DrmMockForWorker : public Drm {
     std::atomic<std::thread::id> ioctl_caller_thread_id;
     DrmMockForWorker(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     }
-    int ioctl(unsigned long request, void *arg) override {
-        if (_IOC_TYPE(request) == DRM_IOCTL_BASE) {
-            //when drm ioctl is called, try acquire mutex
-            //main thread can hold mutex, to prevent ioctl handling
-            std::lock_guard<std::mutex> lock(mutex);
-        }
-        if (request == DRM_IOCTL_GEM_CLOSE)
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::GemClose)
             gem_close_cnt++;
 
         ioctl_caller_thread_id = std::this_thread::get_id();

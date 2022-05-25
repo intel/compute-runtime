@@ -23,6 +23,6 @@ struct DrmMockCustomPrelimContext {
     uint64_t completionAddress = 0;
     uint64_t completionValue = 0;
 
-    int ioctlExtra(unsigned long request, void *arg);
+    int ioctlExtra(DrmIoctl request, void *arg);
     void execBufferExtensions(void *arg);
 };

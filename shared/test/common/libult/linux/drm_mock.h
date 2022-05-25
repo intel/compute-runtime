@@ -74,7 +74,7 @@ class DrmMock : public Drm {
         }
     }
 
-    int ioctl(unsigned long request, void *arg) override;
+    int ioctl(DrmIoctl request, void *arg) override;
     int getErrno() override {
         if (baseErrno) {
             return Drm::getErrno();
@@ -249,7 +249,7 @@ class DrmMock : public Drm {
     bool expectIoctlCallsOnDestruction = false;
     uint32_t expectedIoctlCallsOnDestruction = 0u;
 
-    virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
+    virtual int handleRemainingRequests(DrmIoctl request, void *arg) { return -1; }
 
     struct WaitUserFenceParams {
         uint32_t ctxId;
@@ -265,14 +265,14 @@ class DrmMock : public Drm {
 class DrmMockNonFailing : public DrmMock {
   public:
     using DrmMock::DrmMock;
-    int handleRemainingRequests(unsigned long request, void *arg) override { return 0; }
+    int handleRemainingRequests(DrmIoctl request, void *arg) override { return 0; }
 };
 
 class DrmMockReturnErrorNotSupported : public DrmMock {
   public:
     using DrmMock::DrmMock;
-    int ioctl(unsigned long request, void *arg) override {
-        if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::GemExecbuffer2) {
             return -1;
         }
         return 0;
@@ -289,7 +289,7 @@ class DrmMockEngine : public DrmMock {
         rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
     }
 
-    int handleRemainingRequests(unsigned long request, void *arg) override;
+    int handleRemainingRequests(DrmIoctl request, void *arg) override;
 
     void handleQueryItem(QueryItem *queryItem);
     bool failQueryDeviceBlob = false;

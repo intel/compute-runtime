@@ -138,7 +138,7 @@ struct DrmMockPrelimContext {
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
 
-    int handlePrelimRequest(unsigned long request, void *arg);
+    int handlePrelimRequest(DrmIoctl request, void *arg);
     bool handlePrelimQueryItem(void *arg);
     void storeVmBindExtensions(uint64_t ptr, bool bind);
 };

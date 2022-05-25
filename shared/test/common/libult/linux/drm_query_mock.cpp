@@ -11,8 +11,8 @@
 
 #include "gtest/gtest.h"
 
-int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
-    if (request == DRM_IOCTL_I915_QUERY && arg) {
+int DrmQueryMock::handleRemainingRequests(DrmIoctl request, void *arg) {
+    if (request == DrmIoctl::Query && arg) {
         if (i915QuerySuccessCount == 0) {
             return EINVAL;
         }
@@ -31,7 +31,7 @@ int DrmQueryMock::handleRemainingRequests(unsigned long request, void *arg) {
         }
 
         return 0;
-    } else if (request == DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM && receivedContextParamRequest.param == I915_CONTEXT_PARAM_ENGINES) {
+    } else if (request == DrmIoctl::GemContextSetparam && receivedContextParamRequest.param == I915_CONTEXT_PARAM_ENGINES) {
         EXPECT_LE(receivedContextParamRequest.size, sizeof(receivedContextParamEngines));
         memcpy(&receivedContextParamEngines, reinterpret_cast<const void *>(receivedContextParamRequest.value), receivedContextParamRequest.size);
         auto srcBalancer = reinterpret_cast<const i915_context_engines_load_balance *>(receivedContextParamEngines.extensions);

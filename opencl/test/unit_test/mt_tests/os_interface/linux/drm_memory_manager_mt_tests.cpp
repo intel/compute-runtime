@@ -27,8 +27,8 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
         using Drm::setupIoctlHelper;
         MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {}
 
-        int ioctl(unsigned long request, void *arg) override {
-            if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::PrimeFdToHandle) {
                 auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = 10;
             }
@@ -86,8 +86,8 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
         std::atomic<int> primeFdHandle;
         std::atomic<int> closeHandle;
 
-        int ioctl(unsigned long request, void *arg) override {
-            if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::PrimeFdToHandle) {
                 auto *primeToHandleParams = static_cast<PrimeHandle *>(arg);
                 primeToHandleParams->handle = primeFdHandle;
 
@@ -96,7 +96,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
                 EXPECT_EQ(closeHandle.load(), primeFdHandle.load());
             }
 
-            else if (request == DRM_IOCTL_GEM_CLOSE) {
+            else if (request == DrmIoctl::GemClose) {
                 closeHandle++;
                 std::this_thread::yield();
 

@@ -24,7 +24,7 @@ class DrmMockCustomPrelim : public DrmMockCustom {
         prelimVersion = "2.0";
     }
 
-    int ioctlExtra(unsigned long request, void *arg) override {
+    int ioctlExtra(DrmIoctl request, void *arg) override {
         return context.ioctlExtra(request, arg);
     }
 

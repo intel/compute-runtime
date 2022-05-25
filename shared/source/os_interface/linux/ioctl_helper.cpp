@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-uint32_t IoctlHelper::ioctl(Drm *drm, unsigned long request, void *arg) {
+uint32_t IoctlHelper::ioctl(Drm *drm, DrmIoctl request, void *arg) {
     return drm->ioctl(request, arg);
 }
 

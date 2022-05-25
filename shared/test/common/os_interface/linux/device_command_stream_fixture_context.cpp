@@ -11,21 +11,19 @@
 
 #include "third_party/uapi/prelim/drm/i915_drm.h"
 
-#include <iostream>
-
-int DrmMockCustomPrelimContext::ioctlExtra(unsigned long request, void *arg) {
+int DrmMockCustomPrelimContext::ioctlExtra(DrmIoctl request, void *arg) {
     switch (request) {
-    case PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT: {
+    case DrmIoctl::GemCreateExt: {
         auto createExtParams = reinterpret_cast<prelim_drm_i915_gem_create_ext *>(arg);
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;
     } break;
-    case PRELIM_DRM_IOCTL_I915_GEM_VM_BIND: {
+    case DrmIoctl::GemVmBind: {
     } break;
-    case PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND: {
+    case DrmIoctl::GemVmUnbind: {
     } break;
-    case PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE: {
+    case DrmIoctl::GemWaitUserFence: {
         const auto wait = reinterpret_cast<prelim_drm_i915_gem_wait_user_fence *>(arg);
         receivedGemWaitUserFence = WaitUserFence{
             wait->extensions,
@@ -40,8 +38,6 @@ int DrmMockCustomPrelimContext::ioctlExtra(unsigned long request, void *arg) {
         gemWaitUserFenceCalled++;
     } break;
     default: {
-        std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;
-        std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
         UNRECOVERABLE_IF(true);
     } break;
     }

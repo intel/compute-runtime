@@ -40,9 +40,9 @@ class DrmMockCustomImpl : public DrmMockCustom {
     __u32 createExtHandle = 0;
     __u64 createExtExtensions = 0;
 
-    int ioctlExtra(unsigned long request, void *arg) override {
+    int ioctlExtra(DrmIoctl request, void *arg) override {
         switch (request) {
-        case DRM_IOCTL_I915_GEM_CREATE_EXT: {
+        case DrmIoctl::GemCreateExt: {
             auto createExtParams = reinterpret_cast<drm_i915_gem_create_ext *>(arg);
             createExtSize = createExtParams->size;
             createExtHandle = createExtParams->handle;
@@ -50,7 +50,6 @@ class DrmMockCustomImpl : public DrmMockCustom {
             ioctlImpl_cnt.gemCreateExt++;
         } break;
         default: {
-            std::cout << "unexpected IOCTL: " << NEO::IoctlToStringHelper::getIoctlString(request) << std::endl;
             UNRECOVERABLE_IF(true);
         } break;
         }

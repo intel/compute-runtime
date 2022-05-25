@@ -8,6 +8,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -1172,4 +1173,51 @@ TEST(DrmTest, givenSetupIoctlHelperThenIoctlHelperNotNull) {
     drm.setupIoctlHelper(productFamily);
 
     EXPECT_NE(nullptr, drm.ioctlHelper.get());
+}
+
+TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded) {
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Getparam, nullptr), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
+    EXPECT_THROW(getIoctlRequestValue(DrmIoctl::DG1GemCreateExt, nullptr), std::runtime_error);
+}
+
+TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
+    std::map<DrmIoctl, const char *> ioctlCodeStringMap = {
+        {DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE"},
+        {DrmIoctl::Getparam, "DRM_IOCTL_I915_GETPARAM"},
+        {DrmIoctl::GemExecbuffer2, "DRM_IOCTL_I915_GEM_EXECBUFFER2"},
+        {DrmIoctl::GemCreate, "DRM_IOCTL_I915_GEM_CREATE"},
+        {DrmIoctl::GemSetDomain, "DRM_IOCTL_I915_GEM_SET_DOMAIN"},
+        {DrmIoctl::GemSetTiling, "DRM_IOCTL_I915_GEM_SET_TILING"},
+        {DrmIoctl::GemGetTiling, "DRM_IOCTL_I915_GEM_GET_TILING"},
+        {DrmIoctl::GemWait, "DRM_IOCTL_I915_GEM_WAIT"},
+        {DrmIoctl::GemContextCreateExt, "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT"},
+        {DrmIoctl::GemContextDestroy, "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY"},
+        {DrmIoctl::RegRead, "DRM_IOCTL_I915_REG_READ"},
+        {DrmIoctl::GetResetStats, "DRM_IOCTL_I915_GET_RESET_STATS"},
+        {DrmIoctl::GemUserptr, "DRM_IOCTL_I915_GEM_USERPTR"},
+        {DrmIoctl::GemContextGetparam, "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM"},
+        {DrmIoctl::GemContextSetparam, "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM"},
+        {DrmIoctl::Query, "DRM_IOCTL_I915_QUERY"},
+        {DrmIoctl::GemMmap, "DRM_IOCTL_I915_GEM_MMAP"},
+        {DrmIoctl::PrimeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE"},
+        {DrmIoctl::GemVmBind, "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND"},
+        {DrmIoctl::GemVmUnbind, "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND"},
+        {DrmIoctl::GemWaitUserFence, "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE"},
+        {DrmIoctl::GemCreateExt, "DRM_IOCTL_I915_GEM_CREATE_EXT"},
+        {DrmIoctl::DG1GemCreateExt, "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT"},
+        {DrmIoctl::GemVmAdvise, "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE"},
+        {DrmIoctl::GemVmPrefetch, "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH"},
+        {DrmIoctl::UuidRegister, "PRELIM_DRM_IOCTL_I915_UUID_REGISTER"},
+        {DrmIoctl::UuidUnregister, "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER"},
+        {DrmIoctl::DebuggerOpen, "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN"},
+        {DrmIoctl::GemClosReserve, "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE"},
+        {DrmIoctl::GemClosFree, "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE"},
+        {DrmIoctl::GemCacheReserve, "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE"},
+        {DrmIoctl::GemMmapOffset, "DRM_IOCTL_I915_GEM_MMAP_OFFSET"},
+        {DrmIoctl::GemVmCreate, "DRM_IOCTL_I915_GEM_VM_CREATE"},
+        {DrmIoctl::GemVmDestroy, "DRM_IOCTL_I915_GEM_VM_DESTROY"},
+        {DrmIoctl::PrimeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD"}};
+    for (auto &ioctlCodeString : ioctlCodeStringMap) {
+        EXPECT_STREQ(IoctlToStringHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
+    }
 }

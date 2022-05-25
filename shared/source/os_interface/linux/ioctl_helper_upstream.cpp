@@ -51,7 +51,7 @@ uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, const MemRegionsVec &memCla
         printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
-    auto ret = ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
+    auto ret = ioctl(drm, DrmIoctl::GemCreateExt, &createExt);
 
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;
@@ -161,7 +161,7 @@ uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
 }
 
 int IoctlHelperUpstream::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
-    return ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
+    return ioctl(drm, DrmIoctl::GemExecbuffer2, execBuffer);
 }
 
 bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindAvailable) {
@@ -244,4 +244,55 @@ bool IoctlHelperUpstream::isDebugAttachAvailable() {
     return false;
 }
 
+unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemExecbuffer2:
+        return DRM_IOCTL_I915_GEM_EXECBUFFER2;
+    case DrmIoctl::GemWait:
+        return DRM_IOCTL_I915_GEM_WAIT;
+    case DrmIoctl::GemClose:
+        return DRM_IOCTL_GEM_CLOSE;
+    case DrmIoctl::GemUserptr:
+        return DRM_IOCTL_I915_GEM_USERPTR;
+    case DrmIoctl::GemCreate:
+        return DRM_IOCTL_I915_GEM_CREATE;
+    case DrmIoctl::GemCreateExt:
+        return DRM_IOCTL_I915_GEM_CREATE_EXT;
+    case DrmIoctl::GemSetDomain:
+        return DRM_IOCTL_I915_GEM_SET_DOMAIN;
+    case DrmIoctl::GemSetTiling:
+        return DRM_IOCTL_I915_GEM_SET_TILING;
+    case DrmIoctl::GemGetTiling:
+        return DRM_IOCTL_I915_GEM_GET_TILING;
+    case DrmIoctl::GemContextCreateExt:
+        return DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT;
+    case DrmIoctl::GemContextDestroy:
+        return DRM_IOCTL_I915_GEM_CONTEXT_DESTROY;
+    case DrmIoctl::RegRead:
+        return DRM_IOCTL_I915_REG_READ;
+    case DrmIoctl::GetResetStats:
+        return DRM_IOCTL_I915_GET_RESET_STATS;
+    case DrmIoctl::GemContextGetparam:
+        return DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM;
+    case DrmIoctl::GemContextSetparam:
+        return DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM;
+    case DrmIoctl::Query:
+        return DRM_IOCTL_I915_QUERY;
+    case DrmIoctl::GemMmap:
+        return DRM_IOCTL_I915_GEM_MMAP;
+    case DrmIoctl::PrimeFdToHandle:
+        return DRM_IOCTL_PRIME_FD_TO_HANDLE;
+    case DrmIoctl::PrimeHandleToFd:
+        return DRM_IOCTL_PRIME_HANDLE_TO_FD;
+    case DrmIoctl::GemMmapOffset:
+        return DRM_IOCTL_I915_GEM_MMAP_OFFSET;
+    case DrmIoctl::GemVmCreate:
+        return DRM_IOCTL_I915_GEM_VM_CREATE;
+    case DrmIoctl::GemVmDestroy:
+        return DRM_IOCTL_I915_GEM_VM_DESTROY;
+    default:
+        UNRECOVERABLE_IF(true);
+        return 0u;
+    }
+}
 } // namespace NEO

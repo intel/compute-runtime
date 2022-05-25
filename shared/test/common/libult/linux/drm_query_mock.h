@@ -55,6 +55,6 @@ class DrmQueryMock : public DrmMock {
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     int storedRetValForSetParamEngines{0};
 
-    int handleRemainingRequests(unsigned long request, void *arg) override;
+    int handleRemainingRequests(DrmIoctl request, void *arg) override;
     virtual bool handleQueryItem(void *queryItem);
 };

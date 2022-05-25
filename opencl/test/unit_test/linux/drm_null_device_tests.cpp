@@ -55,36 +55,36 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProper
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {
-    EXPECT_EQ(drmNullDevice->ioctl(0, nullptr), 0);
+    EXPECT_EQ(drmNullDevice->ioctl(DrmIoctl::GemExecbuffer2, nullptr), 0);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENregReadOtherThenTimestampReadTHENalwaysSuccess) {
     RegisterRead arg;
 
     arg.offset = 0;
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), 0);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), 0);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp32bOr64bTHENerror) {
     RegisterRead arg;
 
     arg.offset = REG_GLOBAL_TIMESTAMP_LDW;
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), -1);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), -1);
 
     arg.offset = REG_GLOBAL_TIMESTAMP_UN;
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), -1);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), -1);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENgetGpuTimestamp36bTHENproperValues) {
     RegisterRead arg;
 
     arg.offset = REG_GLOBAL_TIMESTAMP_LDW | 1;
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), 0);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), 0);
     EXPECT_EQ(arg.value, 1000ULL);
 
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), 0);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), 0);
     EXPECT_EQ(arg.value, 2000ULL);
 
-    ASSERT_EQ(drmNullDevice->ioctl(DRM_IOCTL_I915_REG_READ, &arg), 0);
+    ASSERT_EQ(drmNullDevice->ioctl(DrmIoctl::RegRead, &arg), 0);
     EXPECT_EQ(arg.value, 3000ULL);
 }

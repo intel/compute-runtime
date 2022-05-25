@@ -9,9 +9,11 @@
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include "level_zero/core/source/device/device.h"
+
 namespace L0 {
 
-int DrmHelper::ioctl(Device *device, unsigned long request, void *arg) {
+int DrmHelper::ioctl(Device *device, NEO::DrmIoctl request, void *arg) {
     auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
     return drm->ioctl(request, arg);
 }

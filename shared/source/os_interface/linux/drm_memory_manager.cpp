@@ -247,7 +247,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 
     auto &drm = this->getDrm(rootDeviceIndex);
 
-    if (drm.ioctl(DRM_IOCTL_I915_GEM_USERPTR, &userptr) != 0) {
+    if (drm.ioctl(DrmIoctl::GemUserptr, &userptr) != 0) {
         return nullptr;
     }
 
@@ -518,7 +518,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
 
     auto &drm = getDrm(allocationData.rootDeviceIndex);
 
-    [[maybe_unused]] auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    [[maybe_unused]] auto ret = drm.ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -551,7 +551,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
 
-    [[maybe_unused]] auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
+    [[maybe_unused]] auto ret = drm.ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -681,7 +681,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         PrimeHandle openFd = {0, 0, 0};
         openFd.fileDescriptor = handle;
 
-        auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+        auto ret = this->getDrm(properties.rootDeviceIndex).ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
 
         if (ret != 0) {
             [[maybe_unused]] int err = errno;
@@ -767,7 +767,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
 
-    auto ret = drm.ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+    auto ret = drm.ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
 
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
@@ -817,7 +817,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (properties.imgInfo) {
         GemGetTiling getTiling{};
         getTiling.handle = boHandle;
-        ret = drm.ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
+        ret = drm.ioctl(DrmIoctl::GemGetTiling, &getTiling);
 
         if (ret == 0) {
             if (getTiling.isTilingDisabled()) {
@@ -856,7 +856,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
         GemMmap mmapArg = {};
         mmapArg.handle = bo->peekHandle();
         mmapArg.size = bo->peekSize();
-        if (getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
+        if (getDrm(rootDeviceIndex).ioctl(DrmIoctl::GemMmap, &mmapArg) != 0) {
             return nullptr;
         }
         srcPtr = addrToPtr(mmapArg.addrPtr);
@@ -988,7 +988,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
 
     GemContextParam getContextParam = {};
     getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
-    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
+    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).ioctl(DrmIoctl::GemContextGetparam, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);
 
     uint64_t gpuMemorySize = getContextParam.value;
@@ -1080,7 +1080,7 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     setDomain.readDomains = I915_GEM_DOMAIN_CPU;
     setDomain.writeDomain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
 
-    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &setDomain) == 0;
+    return getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
@@ -1102,7 +1102,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     GemMmap mmapArg = {};
     mmapArg.handle = bo->peekHandle();
     mmapArg.size = bo->peekSize();
-    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmapArg) != 0) {
+    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DrmIoctl::GemMmap, &mmapArg) != 0) {
         return nullptr;
     }
 
@@ -1139,7 +1139,7 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex)
     openFd.flags = DRM_CLOEXEC | DRM_RDWR;
     openFd.handle = boHandle;
 
-    getDrm(rootDeviceindex).ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
+    getDrm(rootDeviceindex).ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
 
     return openFd.fileDescriptor;
 }
@@ -1638,10 +1638,10 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     mmapOffset.handle = bo.peekHandle();
     mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
     auto &drm = getDrm(rootDeviceIndex);
-    auto ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+    auto ret = drm.ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
     if (ret != 0 && isLocalMemorySupported(rootDeviceIndex)) {
         mmapOffset.flags = flags;
-        ret = drm.ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &mmapOffset);
+        ret = drm.ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
     }
     if (ret != 0) {
         int err = drm.getErrno();
@@ -1884,7 +1884,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
 
-    auto ret = drm.ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+    auto ret = drm.ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
     if (ret != 0) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));

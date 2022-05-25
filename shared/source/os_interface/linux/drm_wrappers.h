@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 namespace NEO {
+class IoctlHelper;
 
 struct RegisterRead {
     uint64_t offset;
@@ -196,4 +197,44 @@ struct DrmVersion {
     size_t descLen;
     char *desc;
 };
+
+enum class DrmIoctl {
+    GemExecbuffer2,
+    GemWait,
+    GemUserptr,
+    Getparam,
+    GemCreate,
+    GemSetDomain,
+    GemSetTiling,
+    GemGetTiling,
+    GemContextCreateExt,
+    GemContextDestroy,
+    RegRead,
+    GetResetStats,
+    GemContextGetparam,
+    GemContextSetparam,
+    Query,
+    GemMmap,
+    GemMmapOffset,
+    GemVmCreate,
+    GemVmDestroy,
+    GemClose,
+    PrimeFdToHandle,
+    PrimeHandleToFd,
+    GemVmBind,
+    GemVmUnbind,
+    GemWaitUserFence,
+    DG1GemCreateExt,
+    GemCreateExt,
+    GemVmAdvise,
+    GemVmPrefetch,
+    UuidRegister,
+    UuidUnregister,
+    DebuggerOpen,
+    GemClosReserve,
+    GemClosFree,
+    GemCacheReserve,
+};
+
+unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 } // namespace NEO

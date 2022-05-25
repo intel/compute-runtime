@@ -20,10 +20,10 @@ namespace NEO {
 class DrmNullDevice : public Drm {
 
   public:
-    int ioctl(unsigned long request, void *arg) override {
-        if (request == DRM_IOCTL_I915_GETPARAM || request == DRM_IOCTL_I915_QUERY) {
+    int ioctl(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::Getparam || request == DrmIoctl::Query) {
             return Drm::ioctl(request, arg);
-        } else if (request == DRM_IOCTL_I915_REG_READ) {
+        } else if (request == DrmIoctl::RegRead) {
             auto *regArg = static_cast<RegisterRead *>(arg);
             // Handle only 36b timestamp
             if (regArg->offset == (REG_GLOBAL_TIMESTAMP_LDW | 1)) {

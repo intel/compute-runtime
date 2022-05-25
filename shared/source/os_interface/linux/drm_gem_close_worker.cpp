@@ -16,7 +16,6 @@
 #include <atomic>
 #include <iostream>
 #include <queue>
-#include <stdio.h>
 
 namespace NEO {
 

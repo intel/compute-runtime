@@ -50,7 +50,7 @@ uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec
     createExt.size = allocSize;
     createExt.extensions = reinterpret_cast<uintptr_t>(&setparamRegion);
 
-    ret = IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_CREATE_EXT, &createExt);
+    ret = IoctlHelper::ioctl(drm, DrmIoctl::DG1GemCreateExt, &createExt);
 
     handle = createExt.handle;
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_SETPARAM has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
@@ -64,6 +64,16 @@ std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(
         return IoctlHelperUpstream::translateToMemoryRegions(translated);
     }
     return IoctlHelperUpstream::translateToMemoryRegions(regionInfo);
+}
+
+template <>
+unsigned int IoctlHelperImpl<gfxProduct>::getIoctlRequestValue(DrmIoctl ioctlRequest) {
+    switch (ioctlRequest) {
+    case DrmIoctl::DG1GemCreateExt:
+        return DRM_IOCTL_I915_GEM_CREATE_EXT;
+    default:
+        return IoctlHelperUpstream::getIoctlRequestValue(ioctlRequest);
+    }
 }
 
 template class IoctlHelperImpl<gfxProduct>;

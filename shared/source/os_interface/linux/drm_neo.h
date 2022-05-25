@@ -80,7 +80,7 @@ class Drm : public DriverModel {
 
     ~Drm() override;
 
-    virtual int ioctl(unsigned long request, void *arg);
+    virtual int ioctl(DrmIoctl request, void *arg);
 
     int getDeviceID(int &devId);
     unsigned int getDeviceHandle() const override {
@@ -306,7 +306,7 @@ class Drm : public DriverModel {
         long long minTime = std::numeric_limits<long long>::max();
         long long maxTime = 0;
     };
-    std::unordered_map<unsigned long, IoctlStatisticsEntry> ioctlStatistics;
+    std::unordered_map<DrmIoctl, IoctlStatisticsEntry> ioctlStatistics;
 
     std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;

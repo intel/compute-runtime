@@ -16,8 +16,8 @@
 
 using namespace NEO;
 
-int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal) {
-    if (request == PRELIM_DRM_IOCTL_I915_GEM_CREATE_EXT) {
+int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal) {
+    if (request == DrmIoctl::GemCreateExt) {
         auto createExtParams = static_cast<prelim_drm_i915_gem_create_ext *>(arg);
         if (createExtParams->size == 0) {
             return EINVAL;
@@ -43,10 +43,10 @@ int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int 
         if ((data->memoryClass != PRELIM_I915_MEMORY_CLASS_SYSTEM) && (data->memoryClass != PRELIM_I915_MEMORY_CLASS_DEVICE)) {
             return EINVAL;
         }
-    } else if (request == PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE) {
+    } else if (request == DrmIoctl::GemClosReserve) {
         auto closReserveArg = static_cast<prelim_drm_i915_gem_clos_reserve *>(arg);
         closReserveArg->clos_index = 1u;
-    } else if (request == DRM_IOCTL_I915_QUERY) {
+    } else if (request == DrmIoctl::Query) {
         auto query = static_cast<Query *>(arg);
         if (query->itemsPtr == 0) {
             return EINVAL;

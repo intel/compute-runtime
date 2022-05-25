@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-extern int handlePrelimRequests(unsigned long request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal);
+extern int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int queryDistanceIoctlRetVal);
 
 class DrmPrelimMock : public DrmMock {
   public:
@@ -35,7 +35,7 @@ class DrmPrelimMock : public DrmMock {
         prelimVersion = "2.0";
     }
 
-    int handleRemainingRequests(unsigned long request, void *arg) override {
+    int handleRemainingRequests(DrmIoctl request, void *arg) override {
         return handlePrelimRequests(request, arg, ioctlRetVal, queryDistanceIoctlRetVal);
     }
 };
@@ -135,7 +135,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
-    auto ret = IoctlHelper::ioctl(drm.get(), DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT, &arg);
+    auto ret = IoctlHelper::ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
