@@ -246,12 +246,9 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
-
-    if ((!drm->isVmBindAvailable()) || (DebugManager.flags.PassBoundBOToExec.get() == 1)) {
-        for (auto &alloc : inputAllocationsForResidency) {
-            auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-            drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
-        }
+    for (auto &alloc : inputAllocationsForResidency) {
+        auto drmAlloc = static_cast<DrmAllocation *>(alloc);
+        drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
     }
 }
 

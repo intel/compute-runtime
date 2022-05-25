@@ -353,15 +353,11 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                           false,
                                                           returnValue));
     ResidencyContainer container;
-    uint32_t peekTaskCountBefore = commandQueue->csr->peekTaskCount();
-    uint32_t flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
-    NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
+    commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(csr->makeResidentCalledTimes, 0u);
-    EXPECT_EQ(ret, NEO::SubmissionStatus::SUCCESS);
-    EXPECT_EQ((peekTaskCountBefore + 1), commandQueue->csr->peekTaskCount());
-    EXPECT_EQ((flushedTaskCountBefore + 1), commandQueue->csr->peekLatestFlushedTaskCount());
+
     EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
     commandQueue->destroy();
 }
 
@@ -378,14 +374,9 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                           false,
                                                           returnValue));
     ResidencyContainer container;
-    uint32_t peekTaskCountBefore = commandQueue->csr->peekTaskCount();
-    uint32_t flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::FAILED);
-    EXPECT_EQ(peekTaskCountBefore, commandQueue->csr->peekTaskCount());
-    EXPECT_EQ(flushedTaskCountBefore, commandQueue->csr->peekLatestFlushedTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
-    EXPECT_EQ(commandQueue->commandStream->getGraphicsAllocation()->getResidencyTaskCount(commandQueue->csr->getOsContext().getContextId()), commandQueue->csr->peekTaskCount());
+
     commandQueue->destroy();
 }
 
@@ -1521,57 +1512,6 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteComma
 
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
-
-    commandQueue->destroy();
-    commandList->destroy();
-}
-
-HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphicsTaskCounts, IsAtLeastSkl) {
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
-    auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
-
-    commandQueue->initialize(false, false);
-    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    auto commandListHandle = commandList->toHandle();
-
-    void *alloc = alignedMalloc(0x100, 0x100);
-    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
-    graphicsAllocation1.updateTaskCount(3, csr->getOsContext().getContextId());
-    graphicsAllocation2.updateTaskCount(3, csr->getOsContext().getContextId());
-    commandList->commandContainer.addToResidencyContainer(&graphicsAllocation1);
-    commandList->commandContainer.addToResidencyContainer(&graphicsAllocation2);
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
-
-    EXPECT_EQ(0u, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
-    EXPECT_EQ(0u, graphicsAllocation2.getTaskCount(csr->getOsContext().getContextId()));
-
-    commandQueue->destroy();
-    commandList->destroy();
-    alignedFree(alloc);
-}
-
-HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompletionFalse, IsAtLeastSkl) {
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
-    auto commandQueue = new MockCommandQueueSubmitBatchBuffer<gfxCoreFamily>(device, csr, &desc);
-    commandQueue->submitBatchBufferResult = NEO::SubmissionStatus::FAILED;
-
-    commandQueue->initialize(false, false);
-    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
-    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    auto commandListHandle = commandList->toHandle();
-    uint32_t flushedTaskCountPrior = csr->peekTaskCount();
-    csr->setLatestFlushedTaskCount(flushedTaskCountPrior);
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
-    EXPECT_EQ(csr->peekLatestFlushedTaskCount(), flushedTaskCountPrior);
 
     commandQueue->destroy();
     commandList->destroy();
