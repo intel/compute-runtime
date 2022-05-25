@@ -139,7 +139,9 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
 
 template <typename GfxFamily>
 uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
-    return static_cast<uint64_t>((timeStamp & 0xffff'ffff) * frequency);
+    constexpr uint64_t mask = static_cast<uint64_t>(std::numeric_limits<typename GfxFamily::TimestampPacketType>::max());
+
+    return static_cast<uint64_t>((timeStamp & mask) * frequency);
 }
 
 constexpr uint32_t planarYuvMaxHeight = 16128;

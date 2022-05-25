@@ -32,11 +32,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, WhenGettingMaxBarriersPer
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenOnlyLow32BitsFromTimeStampAreUsedAndCorrectValueIsReturned) {
+    constexpr uint64_t mask = static_cast<uint64_t>(std::numeric_limits<typename FamilyType::TimestampPacketType>::max());
 
     auto &helper = HwHelper::get(renderCoreFamily);
     auto timeStamp = 0x00ff'ffff'ffff;
     auto frequency = 123456.0;
-    auto result = static_cast<uint64_t>((timeStamp & 0xffff'ffff) * frequency);
+    auto result = static_cast<uint64_t>((timeStamp & mask) * frequency);
 
     EXPECT_EQ(result, helper.getGpuTimeStampInNS(timeStamp, frequency));
 }
