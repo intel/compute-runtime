@@ -287,7 +287,8 @@ void ClDevice::initializeCaps() {
     //copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
-    deviceInfo.globalMemCacheSize = systemInfo.L3CacheSizeInKb * KB;
+    const auto subDevicesCount = std::max(getNumGenericSubDevices(), 1u);
+    deviceInfo.globalMemCacheSize = systemInfo.L3CacheSizeInKb * KB * subDevicesCount;
     deviceInfo.grfSize = hwInfo.capabilityTable.grfSize;
 
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;
@@ -302,7 +303,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.maxWorkItemDimensions = 3;
 
-    deviceInfo.maxComputUnits = systemInfo.EUCount * std::max(getNumGenericSubDevices(), 1u);
+    deviceInfo.maxComputUnits = systemInfo.EUCount * subDevicesCount;
     if (device.isEngineInstanced()) {
         deviceInfo.maxComputUnits /= systemInfo.CCSInfo.NumberOfCCSEnabled;
     }

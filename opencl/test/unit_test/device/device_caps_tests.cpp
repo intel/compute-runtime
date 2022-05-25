@@ -1545,3 +1545,17 @@ HWTEST_F(DeviceGetCapsTest, givenDSSCountEqualZeroWhenDeviceCreatedThenMaxEuPerD
 
     EXPECT_EQ(device->sharedDeviceInfo.maxNumEUsPerSubSlice, device->sharedDeviceInfo.maxNumEUsPerDualSubSlice);
 }
+
+TEST_F(DeviceGetCapsTest, givenRootDeviceWithSubDevicesWhenQueriedForCacheSizeThenValueIsMultiplied) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto singleRootDeviceCacheSize = deviceFactory.rootDevices[0]->deviceInfo.globalMemCacheSize;
+
+    for (uint32_t subDevicesCount : {2, 3, 4}) {
+        UltClDeviceFactory deviceFactory{1, subDevicesCount};
+        auto rootDeviceCacheSize = deviceFactory.rootDevices[0]->deviceInfo.globalMemCacheSize;
+        for (auto &subDevice : deviceFactory.rootDevices[0]->subDevices) {
+            EXPECT_EQ(singleRootDeviceCacheSize, subDevice->getDeviceInfo().globalMemCacheSize);
+            EXPECT_EQ(rootDeviceCacheSize, subDevice->getDeviceInfo().globalMemCacheSize * subDevicesCount);
+        }
+    }
+}
