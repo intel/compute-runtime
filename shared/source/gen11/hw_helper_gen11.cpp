@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen11/aub_mapper.h"
+#include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"

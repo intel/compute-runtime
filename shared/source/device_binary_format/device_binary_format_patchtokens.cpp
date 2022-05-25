@@ -12,6 +12,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/program/program_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/source/utilities/logger.h"
 

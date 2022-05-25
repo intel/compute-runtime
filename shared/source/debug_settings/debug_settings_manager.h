@@ -50,8 +50,6 @@ void printDebugString(bool showDebugLogs, Args &&...args) {
 #define NO_SANITIZE
 #endif
 
-class Kernel;
-class GraphicsAllocation;
 class SettingsReader;
 
 template <typename T>

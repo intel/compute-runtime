@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
+
 #include "level_zero/core/source/xe_hp_core/cmdlist_xe_hp_core.h"
 
 namespace L0 {

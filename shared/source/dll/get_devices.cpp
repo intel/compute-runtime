@@ -9,6 +9,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include "hw_cmds.h"
+
 namespace NEO {
 
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {

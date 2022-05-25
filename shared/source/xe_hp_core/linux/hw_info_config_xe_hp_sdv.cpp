@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
 
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_XE_HP_SDV;

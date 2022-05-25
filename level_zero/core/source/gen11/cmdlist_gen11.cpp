@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/gen11/cmdlist_gen11.inl"
 
+#include "shared/source/gen11/hw_cmds_base.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"

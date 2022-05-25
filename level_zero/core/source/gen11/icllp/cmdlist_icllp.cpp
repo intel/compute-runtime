@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gen11/hw_cmds_base.h"
+
 #include "level_zero/core/source/gen11/cmdlist_gen11.h"
 
 namespace L0 {

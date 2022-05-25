@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
-#include "shared/source/built_ins/sip.h"
+#include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
@@ -15,12 +15,13 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "hw_cmds.h"
+#include "igfxfmid.h"
+#include "sku_info.h"
 #include "third_party/aub_stream/headers/aubstream.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
-#include <type_traits>
 
 namespace NEO {
 class GmmHelper;
@@ -28,10 +29,10 @@ class GraphicsAllocation;
 class TagAllocatorBase;
 class LinearStream;
 class Gmm;
+class MemoryManager;
 struct AllocationData;
 struct AllocationProperties;
 struct EncodeSurfaceStateArgs;
-struct EngineControl;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 

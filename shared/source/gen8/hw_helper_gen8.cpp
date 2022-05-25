@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gen8/aub_mapper.h"
+#include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_base.inl"

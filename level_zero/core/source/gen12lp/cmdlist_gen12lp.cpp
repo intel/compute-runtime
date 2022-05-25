@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_base.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"

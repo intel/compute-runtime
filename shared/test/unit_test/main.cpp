@@ -29,6 +29,7 @@
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "gmock/gmock.h"
+#include "hw_cmds.h"
 #include "test_files_setup.h"
 
 #include <algorithm>

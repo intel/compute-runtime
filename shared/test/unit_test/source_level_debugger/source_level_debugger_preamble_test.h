@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

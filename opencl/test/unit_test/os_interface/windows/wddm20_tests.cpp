@@ -22,6 +22,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
+#include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

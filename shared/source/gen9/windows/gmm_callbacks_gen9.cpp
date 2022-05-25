@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen9/hw_cmds.h"
+#include "shared/source/gen9/hw_cmds_base.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/helpers/windows/gmm_callbacks.inl"
 

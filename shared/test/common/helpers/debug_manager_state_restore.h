@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/utilities/debug_settings_reader.h"
 
 using namespace NEO;
 
@@ -37,32 +36,4 @@ class DebugManagerStateRestore {
     void shrink(int64_t &flag) {}
     void shrink(int32_t &flag) {}
     void shrink(bool &flag) {}
-};
-
-class RegistryReaderMock : public SettingsReader {
-  public:
-    RegistryReaderMock() {}
-    ~RegistryReaderMock() override {}
-
-    uint64_t forceRetValue = 1;
-
-    int32_t getSetting(const char *settingName, int32_t defaultValue) override {
-        return static_cast<uint32_t>(forceRetValue);
-    }
-
-    int64_t getSetting(const char *settingName, int64_t defaultValue) override {
-        return forceRetValue;
-    }
-
-    bool getSetting(const char *settingName, bool defaultValue) override {
-        return true;
-    }
-
-    std::string getSetting(const char *settingName, const std::string &value) override {
-        return "";
-    }
-
-    const char *appSpecificLocation(const std::string &name) override {
-        return name.c_str();
-    }
 };

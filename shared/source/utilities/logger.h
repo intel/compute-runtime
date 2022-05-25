@@ -11,7 +11,6 @@
 #include <cinttypes>
 #include <cstddef>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -20,6 +19,7 @@
 namespace NEO {
 class Kernel;
 struct MultiDispatchInfo;
+class GraphicsAllocation;
 
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 

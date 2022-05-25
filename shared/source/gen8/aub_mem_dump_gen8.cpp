@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/aub_mem_dump/aub_mem_dump.inl"
 #include "shared/source/gen8/aub_mapper.h"
+#include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/helpers/hw_helper.h"
 
 namespace AubMemDump {

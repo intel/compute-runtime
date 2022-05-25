@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/implicit_scaling_xehp_and_later.inl"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
 
 namespace NEO {
 

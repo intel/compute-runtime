@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"

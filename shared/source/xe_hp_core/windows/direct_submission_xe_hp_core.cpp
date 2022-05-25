@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,7 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.inl"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.inl"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.inl"
-
-#include "hw_cmds.h"
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
 
 namespace NEO {
 using GfxFamily = XeHpFamily;

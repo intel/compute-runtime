@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
+#include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/helpers/register_offsets.h"
 
 namespace NEO {

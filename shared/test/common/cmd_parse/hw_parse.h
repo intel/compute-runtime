@@ -18,6 +18,8 @@
 
 namespace NEO {
 
+struct KernelInfo;
+
 struct HardwareParse {
     HardwareParse() {
         itorMediaInterfaceDescriptorLoad = cmdList.end();

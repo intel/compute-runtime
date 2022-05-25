@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

@@ -10,8 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_dg2_and_later.inl"
 #include "shared/source/os_interface/hw_info_config_xehp_and_later.inl"
-
-#include "hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds.h"
 
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;

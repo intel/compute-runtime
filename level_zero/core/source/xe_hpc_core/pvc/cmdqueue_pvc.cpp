@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_xe_hp_core_and_later.inl"
 
 #include "cmdqueue_extended.inl"
+
 namespace L0 {
 template struct CommandQueueHw<IGFX_XE_HPC_CORE>;
 static CommandQueuePopulateFactory<IGFX_PVC, CommandQueueHw<IGFX_XE_HPC_CORE>>
