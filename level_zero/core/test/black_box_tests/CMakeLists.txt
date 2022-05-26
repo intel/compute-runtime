@@ -25,6 +25,7 @@ set(TEST_TARGETS
     zello_dynamic_link
     zello_events
     zello_immediate
+    zello_host_pointer
 )
 
 include_directories(common)
