@@ -103,8 +103,8 @@ bool SingleMetricStreamerCollector::isDataAvailable() {
 
 void SingleMetricStreamerCollector::showResults() {
 
-    // Read raw buffer size.
-    uint32_t maxRawReportCount = maxRequestRawReportCount;
+    // Read raw buffer size. x2 to request more than the available reports
+    uint32_t maxRawReportCount = std::max(maxRequestRawReportCount, notifyReportCount * 2);
     size_t rawDataSize = 0;
     std::vector<uint8_t> rawData{};
 
@@ -185,7 +185,7 @@ void SingleMetricQueryCollector::showResults() {
     VALIDATECALL(zetMetricQueryGetData(queryHandle, &rawDataSize, nullptr));
 
     // Obtain report.
-    rawData.resize(rawDataSize);
+    rawData.resize(rawDataSize, 0);
     VALIDATECALL(zetMetricQueryGetData(queryHandle, &rawDataSize, rawData.data()));
 
     zmu::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));

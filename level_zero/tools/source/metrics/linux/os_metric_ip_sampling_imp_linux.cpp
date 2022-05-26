@@ -80,7 +80,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
-    std::array<uint64_t, 10u> properties;
+    std::array<uint64_t, 12u> properties;
     auto engineInfo = drm->getEngineInfo();
     if (engineInfo == nullptr) {
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -90,8 +90,10 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    notifyEveryNReports = std::max(notifyEveryNReports, 1u);
+
     if (!ioctlHelper->getEuStallProperties(properties, maxDssBufferSize, samplingUnit, defaultPollPeriodNs,
-                                           classInstance->engineInstance)) {
+                                           classInstance->engineInstance, notifyEveryNReports)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

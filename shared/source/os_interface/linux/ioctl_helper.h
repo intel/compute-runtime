@@ -100,7 +100,8 @@ class IoctlHelper {
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(Drm *drm, const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) = 0;
-    virtual bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) = 0;
+    virtual bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
+                                      uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
     virtual UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
     virtual UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
@@ -159,7 +160,8 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
-    bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
+    bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
+                              uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
     UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;
@@ -219,7 +221,8 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(Drm *drm, const VmBindParams &vmBindParams) override;
     int vmUnbind(Drm *drm, const VmBindParams &vmBindParams) override;
-    bool getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) override;
+    bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
+                              uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
     UuidRegisterResult registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) override;

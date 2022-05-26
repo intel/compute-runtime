@@ -38,6 +38,7 @@ class TestSettings {
     int32_t subDeviceId = -1;
     int32_t verboseLevel = 0;
     std::string metricGroupName = "TestOa";
+    uint32_t eventNReportCount = 1;
 
   private:
     TestSettings() = default;

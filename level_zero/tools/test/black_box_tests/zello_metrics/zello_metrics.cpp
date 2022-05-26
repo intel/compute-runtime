@@ -74,6 +74,7 @@ bool SingleDeviceTestRunner::run() {
     EXPECT(status == true);
     for (auto collector : collectorList) {
         status &= collector->isDataAvailable();
+        LOG(zmu::LogLevel::DEBUG) << "Data Available : " << std::boolalpha << status << std::endl;
     }
 
     EXPECT(status == true);
@@ -178,6 +179,8 @@ bool streamTest() {
             std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(executionCtxt.get());
         std::unique_ptr<SingleMetricStreamerCollector> collector =
             std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), metricGroupName.c_str());
+        auto testSettings = zmu::TestSettings::get();
+        collector->setNotifyReportCount(testSettings->eventNReportCount);
 
         std::unique_ptr<SingleDeviceTestRunner> testRunner = std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
         testRunner->addCollector(collector.get());

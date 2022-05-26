@@ -379,6 +379,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         {"subdevice", required_argument, nullptr, 's'},
         {"verboseLevel", required_argument, nullptr, 'v'},
         {"metricGroupName", required_argument, nullptr, 'm'},
+        {"eventNReports", required_argument, nullptr, 'e'},
         {0, 0, 0, 0},
     };
 
@@ -393,6 +394,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -s,   --subdevice <subdeviceId>       sub-device ID to run the test"
                      "\n  -v,   --verboseLevel <verboseLevel>   verbosity level(-2:error|-1:warning|(default)0:info|1:debug"
                      "\n  -m,   --metricGroupName <name>        metric group name"
+                     "\n  -e,   --eventNReports <report count>  report count threshold for event generation"
                      "\n  -h,   --help                          display help message"
                      "\n";
     };
@@ -402,7 +404,7 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         return;
     }
 
-    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:", longOpts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ht:d:s:v:m:e:", longOpts, nullptr)) != -1) {
         switch (opt) {
         case 't':
             testName = optarg;
@@ -422,6 +424,10 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
 
         case 'm':
             metricGroupName = optarg;
+            break;
+
+        case 'e':
+            eventNReportCount = std::atoi(optarg);
             break;
 
         case 'h':

@@ -257,8 +257,8 @@ TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindUserFenceThenProperV
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {
-    std::array<uint64_t, 10u> properties = {};
-    EXPECT_TRUE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1));
+    std::array<uint64_t, 12u> properties = {};
+    EXPECT_TRUE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
     EXPECT_EQ(properties[0], PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ);
     EXPECT_EQ(properties[1], 0x101u);
     EXPECT_EQ(properties[2], PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE);
@@ -269,6 +269,8 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
     EXPECT_EQ(properties[7], PRELIM_I915_ENGINE_CLASS_COMPUTE);
     EXPECT_EQ(properties[8], PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
     EXPECT_EQ(properties[9], 1u);
+    EXPECT_EQ(properties[10], PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT);
+    EXPECT_EQ(properties[11], 20u);
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {

@@ -126,7 +126,9 @@ std::optional<DrmParam> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
 
-bool IoctlHelperUpstream::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
+bool IoctlHelperUpstream::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
+                                               uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance,
+                                               uint64_t notifyNReports) {
     return false;
 }
 

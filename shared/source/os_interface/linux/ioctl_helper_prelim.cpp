@@ -300,7 +300,8 @@ std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return DrmParam::ParamHasPageFault;
 };
 
-bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
+bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
+                                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
     properties[0] = PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
     properties[1] = dssBufferSize;
     properties[2] = PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE;
@@ -311,6 +312,8 @@ bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 10u> &proper
     properties[7] = PRELIM_I915_ENGINE_CLASS_COMPUTE;
     properties[8] = PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE;
     properties[9] = engineInstance;
+    properties[10] = PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT;
+    properties[11] = notifyNReports;
 
     return true;
 }
