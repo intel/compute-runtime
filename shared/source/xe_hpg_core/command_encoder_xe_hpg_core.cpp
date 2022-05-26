@@ -111,13 +111,13 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isPrefetchDisablingRequired(hwInfo)) {
-        walkerCmd.setL3PrefetchDisable(true);
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+    bool l3PrefetchDisable = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isPrefetchDisablingRequired(hwInfo);
+    int32_t overrideL3PrefetchDisable = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
+    if (overrideL3PrefetchDisable != -1) {
+        l3PrefetchDisable = !overrideL3PrefetchDisable;
     }
-    if (DebugManager.flags.ForceL3PrefetchForComputeWalker.get() != -1) {
-        walkerCmd.setL3PrefetchDisable(!DebugManager.flags.ForceL3PrefetchForComputeWalker.get());
-    }
+    walkerCmd.setL3PrefetchDisable(l3PrefetchDisable);
 }
 
 template <>

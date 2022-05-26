@@ -48,6 +48,11 @@ struct EncodeDispatchKernelArgs {
     bool isCooperative = false;
 };
 
+struct EncodeWalkerArgs {
+    KernelExecutionType kernelExecutionType = KernelExecutionType::Default;
+    bool requiredSystemFence = false;
+};
+
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
@@ -57,7 +62,7 @@ struct EncodeDispatchKernel {
     static void encode(CommandContainer &container,
                        EncodeDispatchKernelArgs &args);
 
-    static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType);
+    static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     static void appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo,
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);

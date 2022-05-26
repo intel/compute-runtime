@@ -181,31 +181,31 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, KernelExecutionType kernelExecutionType) {
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
     const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
 
-    if (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() != -1) {
-        programGlobalFenceAsPostSyncOperationInComputeWalker = !!DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
+    auto programGlobalFenceAsPostSyncOperationInComputeWalker = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo) &&
+                                                                walkerArgs.requiredSystemFence;
+    int32_t overrideProgramSystemMemoryFence = DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
+    if (overrideProgramSystemMemoryFence != -1) {
+        programGlobalFenceAsPostSyncOperationInComputeWalker = !!overrideProgramSystemMemoryFence;
     }
-    if (programGlobalFenceAsPostSyncOperationInComputeWalker) {
-        auto &postSyncData = walkerCmd.getPostSync();
-        postSyncData.setSystemMemoryFenceRequest(true);
+    auto &postSyncData = walkerCmd.getPostSync();
+    postSyncData.setSystemMemoryFenceRequest(programGlobalFenceAsPostSyncOperationInComputeWalker);
+
+    int32_t forceL3PrefetchForComputeWalker = DebugManager.flags.ForceL3PrefetchForComputeWalker.get();
+    if (forceL3PrefetchForComputeWalker != -1) {
+        walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
     }
 
-    if (DebugManager.flags.ForceL3PrefetchForComputeWalker.get() != -1) {
-        walkerCmd.setL3PrefetchDisable(!DebugManager.flags.ForceL3PrefetchForComputeWalker.get());
+    auto programComputeDispatchAllWalkerEnableInComputeWalker = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo) &&
+                                                                walkerArgs.kernelExecutionType == KernelExecutionType::Concurrent;
+    int32_t overrideDispatchAllWalkerEnableInComputeWalker = DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
+    if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
+        programComputeDispatchAllWalkerEnableInComputeWalker = !!overrideDispatchAllWalkerEnableInComputeWalker;
     }
 
-    auto programComputeDispatchAllWalkerEnableInComputeWalker = hwInfoConfig.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
-    if (programComputeDispatchAllWalkerEnableInComputeWalker) {
-        if (kernelExecutionType == KernelExecutionType::Concurrent) {
-            walkerCmd.setComputeDispatchAllWalkerEnable(true);
-        }
-    }
-    if (DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get() != -1) {
-        walkerCmd.setComputeDispatchAllWalkerEnable(DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get());
-    }
+    walkerCmd.setComputeDispatchAllWalkerEnable(programComputeDispatchAllWalkerEnableInComputeWalker);
 }
 
 template <>

@@ -35,6 +35,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
     auto &postSyncData = walkerCmd.getPostSync();
     auto hwInfo = *defaultHwInfo;
 
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
     for (auto &testInput : testInputs) {
         for (auto &deviceId : PVC_XL_IDS) {
             hwInfo.platform.usDeviceID = deviceId;
@@ -43,8 +44,24 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
                 testInput.programGlobalFenceAsPostSyncOperationInComputeWalker);
 
             postSyncData.setSystemMemoryFenceRequest(false);
-            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, KernelExecutionType::Default);
+            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
             EXPECT_EQ(testInput.expectSystemMemoryFenceRequest, postSyncData.getSystemMemoryFenceRequest());
         }
+    }
+}
+
+PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemFenceRequiredThenEncodedWalkerFenceFieldSetToFalse) {
+    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    auto &postSyncData = walkerCmd.getPostSync();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usRevId = 0x3;
+
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false};
+    for (auto &deviceId : PVC_XL_IDS) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        postSyncData.setSystemMemoryFenceRequest(true);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
     }
 }
