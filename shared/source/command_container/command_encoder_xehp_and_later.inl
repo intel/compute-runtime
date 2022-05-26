@@ -444,6 +444,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 
         walkerCmd.setGenerateLocalId(1);
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
+        adjustWalkOrder(walkerCmd, requiredWorkGroupOrder);
     }
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
@@ -742,5 +743,8 @@ inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeReg
     storeRegMem->setMmioRemapEnable(true);
     storeRegMem->setWorkloadPartitionIdOffsetEnable(workloadPartition);
 }
+
+template <typename Family>
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder) {}
 
 } // namespace NEO
