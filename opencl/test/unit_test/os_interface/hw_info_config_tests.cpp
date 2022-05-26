@@ -12,12 +12,12 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -26,9 +26,7 @@
 using namespace NEO;
 
 void HwInfoConfigTest::SetUp() {
-    PlatformFixture::SetUp();
-
-    pInHwInfo = pPlatform->getClDevice(0)->getHardwareInfo();
+    pInHwInfo = *defaultHwInfo;
 
     testPlatform = &pInHwInfo.platform;
     testSkuTable = &pInHwInfo.featureTable;
@@ -36,10 +34,6 @@ void HwInfoConfigTest::SetUp() {
     testSysInfo = &pInHwInfo.gtSystemInfo;
 
     outHwInfo = {};
-}
-
-void HwInfoConfigTest::TearDown() {
-    PlatformFixture::TearDown();
 }
 
 HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
@@ -449,7 +443,12 @@ HWTEST_F(HwInfoConfigTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequir
     EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
 
-    MockGmm mockGmm(pPlatform->getClDevice(0)->getGmmHelper(), nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.initGmm();
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+
+    MockGmm mockGmm(gmmHelper, nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, false, {}, true);
     mockGmm.resourceParams.Flags.Info.NotLockable = true;
     graphicsAllocation.setDefaultGmm(&mockGmm);
 
