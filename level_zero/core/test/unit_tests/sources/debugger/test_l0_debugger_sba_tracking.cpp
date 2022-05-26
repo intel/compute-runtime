@@ -203,11 +203,12 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
     ASSERT_NE(cmdList.end(), sdiItor);
     auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    uint64_t gsbaGpuVa = cmdSba->getGeneralStateBaseAddress();
+    auto gmmHelper = neoDevice->getGmmHelper();
+
+    uint64_t gsbaGpuVa = gmmHelper->canonize(cmdSba->getGeneralStateBaseAddress());
     EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa >> 32), cmdSdi->getDataDword1());
 
-    auto gmmHelper = neoDevice->getGmmHelper();
     auto expectedGpuVa = gmmHelper->decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
 
@@ -386,7 +387,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenC
     uint64_t ssba = 0x1234567000;
     uint64_t iba = 0xfff80000;
     uint64_t ioba = 0x8100000;
-    uint64_t dsba = 0xffff0000aaaa0000;
+    uint64_t dsba = 0xffffffffaaaa0000;
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
     sbaAddresses.GeneralStateBaseAddress = gsba;
