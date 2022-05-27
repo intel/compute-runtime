@@ -745,7 +745,8 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     kernel.residencyContainer.push_back(gpuAlloc);
 
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     auto deviceImp = static_cast<DeviceImp *>(device);
     auto pageFaultCmdQueue = whiteboxCast(deviceImp->pageFaultCommandList->cmdQImmediate);
 

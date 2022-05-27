@@ -38,13 +38,6 @@ struct AlignedAllocationData {
     bool needsFlush = false;
 };
 
-struct CmdListKernelLaunchParams {
-    bool isIndirect = false;
-    bool isPredicate = false;
-    bool isCooperative = false;
-    bool isKernelSplitOperation = false;
-};
-
 struct EventPool;
 struct Event;
 
@@ -86,7 +79,8 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
                                    const ze_group_count_t *pThreadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                   ze_event_handle_t *phWaitEvents) override;
+                                   ze_event_handle_t *phWaitEvents,
+                                   const CmdListKernelLaunchParams &launchParams) override;
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t hKernel,
                                               const ze_group_count_t *pLaunchFuncArgs,
                                               ze_event_handle_t hSignalEvent,
@@ -224,7 +218,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                               const ze_group_count_t *pThreadGroupDimensions,
                                                               ze_event_handle_t hEvent,
                                                               const CmdListKernelLaunchParams &launchParams);
-    ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent);
+    ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent,
+                                        const CmdListKernelLaunchParams &launchParams);
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
     void clearCommandsToPatch();

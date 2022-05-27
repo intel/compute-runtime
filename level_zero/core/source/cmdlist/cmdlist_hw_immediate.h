@@ -25,7 +25,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
                                    const ze_group_count_t *pThreadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                   ze_event_handle_t *phWaitEvents) override;
+                                   ze_event_handle_t *phWaitEvents,
+                                   const CmdListKernelLaunchParams &launchParams) override;
 
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t hKernel,
                                            const ze_group_count_t *pDispatchArgumentsBuffer,

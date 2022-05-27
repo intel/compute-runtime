@@ -49,6 +49,7 @@ struct CmdListHelper {
     ze_group_count_t threadGroupDimensions;
     const uint32_t *groupSize = nullptr;
     uint32_t useOnlyGlobalTimestamp = std::numeric_limits<uint32_t>::max();
+    bool isBuiltin = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -60,7 +61,8 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
                                    const ze_group_count_t *pThreadGroupDimensions,
                                    ze_event_handle_t hEvent,
                                    uint32_t numWaitEvents,
-                                   ze_event_handle_t *phWaitEvents) override {
+                                   ze_event_handle_t *phWaitEvents,
+                                   const CmdListKernelLaunchParams &launchParams) override {
 
         const auto kernel = Kernel::fromHandle(hKernel);
         cmdListHelper.isaAllocation = kernel->getIsaAllocation();
@@ -81,6 +83,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
         auto element = arg.as<NEO::ArgDescValue>().elements[0];
         auto pDst = ptrOffset(crossThreadData, element.offset);
         cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
+        cmdListHelper.isBuiltin = launchParams.isBuiltInKernel;
 
         return ZE_RESULT_SUCCESS;
     }
@@ -143,6 +146,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
+
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
 
     context->freeMem(alloc);
 }
@@ -257,6 +262,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
+
+    EXPECT_TRUE(commandList.cmdListHelper.isBuiltin);
 
     context->freeMem(alloc);
 }

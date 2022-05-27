@@ -108,8 +108,9 @@ GEN9TEST_F(CommandListCreateGen9, GivenDisabledMidThreadPreemptionWhenLaunchingK
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
+    CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(functionThreadGroup.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr);
+                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
@@ -137,8 +138,9 @@ GEN9TEST_F(CommandListCreateGen9, GivenUsesFencesForReadWriteImagesWhenLaunching
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
+    CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(functionMidBatch.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr);
+                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::MidBatch, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();
@@ -171,12 +173,13 @@ GEN9TEST_F(CommandListCreateGen9, WhenCommandListHasLowerPreemptionLevelThenDoNo
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(NEO::PreemptionMode::MidThread, commandList->getCommandListPreemptionMode());
 
+    CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(functionThreadGroup.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr);
+                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     commandList->appendLaunchKernel(functionMidThread.toHandle(),
-                                    &dispatchFunctionArguments, nullptr, 0, nullptr);
+                                    &dispatchFunctionArguments, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(NEO::PreemptionMode::ThreadGroup, commandList->getCommandListPreemptionMode());
 
     auto result = commandList->close();

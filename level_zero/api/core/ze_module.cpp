@@ -160,7 +160,8 @@ zeCommandListAppendLaunchKernel(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    L0::CmdListKernelLaunchParams launchParams = {};
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

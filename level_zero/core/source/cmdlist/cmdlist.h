@@ -27,6 +27,14 @@ struct EventPool;
 struct Event;
 struct Kernel;
 
+struct CmdListKernelLaunchParams {
+    bool isIndirect = false;
+    bool isPredicate = false;
+    bool isCooperative = false;
+    bool isKernelSplitOperation = false;
+    bool isBuiltInKernel = false;
+};
+
 struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = 64u;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
@@ -76,7 +84,8 @@ struct CommandList : _ze_command_list_handle_t {
                                         ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions,
-                                           ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+                                           ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                           const CmdListKernelLaunchParams &launchParams) = 0;
     virtual ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t hKernel,
                                                       const ze_group_count_t *pLaunchFuncArgs,
                                                       ze_event_handle_t hSignalEvent,

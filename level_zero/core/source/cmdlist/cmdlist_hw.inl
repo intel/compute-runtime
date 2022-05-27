@@ -180,7 +180,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
                                                                      const ze_group_count_t *pThreadGroupDimensions,
                                                                      ze_event_handle_t hEvent,
                                                                      uint32_t numWaitEvents,
-                                                                     ze_event_handle_t *phWaitEvents) {
+                                                                     ze_event_handle_t *phWaitEvents,
+                                                                     const CmdListKernelLaunchParams &launchParams) {
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -198,7 +199,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ret;
     }
 
-    CmdListKernelLaunchParams launchParams = {};
     auto res = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
                                             hEvent, launchParams);
 
@@ -509,8 +509,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     ze_group_count_t functionArgs{pDstRegion->width / groupSizeX, pDstRegion->height / groupSizeY,
                                   pDstRegion->depth / groupSizeZ};
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
-                                                                    hEvent, numWaitEvents, phWaitEvents);
+                                                                    hEvent, numWaitEvents, phWaitEvents,
+                                                                    launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -627,8 +630,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     ze_group_count_t functionArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY,
                                   pSrcRegion->depth / groupSizeZ};
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
-                                                                        hEvent, numWaitEvents, phWaitEvents);
+                                                                        hEvent, numWaitEvents, phWaitEvents, launchParams);
 
     addFlushRequiredCommand(allocationStruct.needsFlush, hEvent);
 
@@ -735,8 +740,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     kernel->setArgumentValue(2, sizeof(srcOffset), &srcOffset);
     kernel->setArgumentValue(3, sizeof(dstOffset), &dstOffset);
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &functionArgs,
-                                                                    hEvent, numWaitEvents, phWaitEvents);
+                                                                    hEvent, numWaitEvents, phWaitEvents,
+                                                                    launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -854,7 +862,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     uint32_t groups = static_cast<uint32_t>((size + ((static_cast<uint64_t>(groupSizeX) * elementSize) - 1)) / (static_cast<uint64_t>(groupSizeX) * elementSize));
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
-    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isKernelSplitOperation = true;
+    launchParams.isBuiltInKernel = true;
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1287,8 +1298,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     builtinFunction->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
     builtinFunction->setArgumentValue(5, sizeof(dstPitches), &dstPitches);
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
-                                                                    phWaitEvents);
+                                                                    phWaitEvents, launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1341,10 +1354,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     builtinFunction->setArgumentValue(4, sizeof(srcPitch), &srcPitch);
     builtinFunction->setArgumentValue(5, sizeof(dstPitch), &dstPitch);
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),
                                                                     &dispatchFuncArgs, hSignalEvent,
                                                                     numWaitEvents,
-                                                                    phWaitEvents);
+                                                                    phWaitEvents,
+                                                                    launchParams);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1410,6 +1426,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isKernelSplitOperation = true;
+    launchParams.isBuiltInKernel = true;
+
     if (patternSize == 1) {
         Kernel *builtinFunction = nullptr;
 
@@ -1436,7 +1456,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         uint32_t groups = static_cast<uint32_t>(size) / groupSizeX;
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, launchParams);
         if (res) {
             return res;
         }
@@ -1450,7 +1470,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             builtinFunction->setArgBufferWithAlloc(0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
             builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
 
-            res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncRemainderArgs, hSignalEvent);
+            res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncRemainderArgs, hSignalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -1509,7 +1529,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         appendEventForProfilingAllWalkers(hSignalEvent, true);
 
         ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
-        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent);
+        res = appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, launchParams);
         if (res) {
             return res;
         }
@@ -1539,7 +1559,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                             patternGfxAlloc);
             builtinFunctionRemainder->setArgumentValue(3, sizeof(patternAllocationSize), &patternAllocationSize);
 
-            res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, hSignalEvent);
+            res = appendLaunchKernelSplit(builtinFunctionRemainder->toHandle(), &dispatchFuncArgs, hSignalEvent, launchParams);
             if (res) {
                 return res;
             }
@@ -2035,8 +2055,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
-    commandContainer.addToResidencyContainer(dstptrAllocationStruct.alloc);
+    auto dstPtrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
+    commandContainer.addToResidencyContainer(dstPtrAllocationStruct.alloc);
 
     std::unique_ptr<EventData[]> timestampsData = std::make_unique<EventData[]>(numEvents);
 
@@ -2104,13 +2124,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     ze_group_count_t dispatchFuncArgs{numEvents / groupSizeX, 1u, 1u};
 
-    auto dstValPtr = static_cast<uintptr_t>(dstptrAllocationStruct.alloc->getGpuAddress());
+    auto dstValPtr = static_cast<uintptr_t>(dstPtrAllocationStruct.alloc->getGpuAddress());
 
     builtinFunction->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress()), timestampsGPUData);
-    builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstptrAllocationStruct.alloc);
+    builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstPtrAllocationStruct.alloc);
 
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isBuiltInKernel = true;
     auto appendResult = appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
-                                           phWaitEvents);
+                                           phWaitEvents, launchParams);
     if (appendResult != ZE_RESULT_SUCCESS) {
         return appendResult;
     }

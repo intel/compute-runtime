@@ -66,6 +66,18 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::updateStreamProperties;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
+
+    ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+                                             const ze_group_count_t *pThreadGroupDimensions,
+                                             ze_event_handle_t hEvent,
+                                             const CmdListKernelLaunchParams &launchParams) override {
+
+        usedKernelLaunchParams = launchParams;
+        return BaseClass::appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
+                                                       hEvent, launchParams);
+    }
+
+    CmdListKernelLaunchParams usedKernelLaunchParams;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -123,7 +135,8 @@ struct MockCommandList : public CommandList {
                      (ze_kernel_handle_t hFunction,
                       const ze_group_count_t *pThreadGroupDimensions,
                       ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                      ze_event_handle_t *phWaitEvents));
+                      ze_event_handle_t *phWaitEvents,
+                      const CmdListKernelLaunchParams &launchParams));
 
     ADDMETHOD_NOBASE(appendLaunchCooperativeKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t hKernel,

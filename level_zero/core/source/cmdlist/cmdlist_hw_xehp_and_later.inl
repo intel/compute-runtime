@@ -346,12 +346,11 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileB
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
                                                                           const ze_group_count_t *pThreadGroupDimensions,
-                                                                          ze_event_handle_t hEvent) {
+                                                                          ze_event_handle_t hEvent,
+                                                                          const CmdListKernelLaunchParams &launchParams) {
     if (hEvent) {
         Event::fromHandle(hEvent)->increaseKernelCount();
     }
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isKernelSplitOperation = true;
     return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, hEvent, launchParams);
 }
 

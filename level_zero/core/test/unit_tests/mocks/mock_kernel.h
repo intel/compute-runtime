@@ -100,6 +100,10 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     using BaseClass = WhiteBox<::L0::Kernel>;
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_kernel_properties_t * pKernelProperties))
 
+    ADDMETHOD(setArgRedescribedImage, ze_result_t, true, ZE_RESULT_SUCCESS,
+              (uint32_t argIndex, ze_image_handle_t argVal),
+              (argIndex, argVal));
+
     Mock() : BaseClass(nullptr) {
         NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
         iOpenCL::SKernelBinaryHeaderCommon kernelHeader;
