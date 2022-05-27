@@ -170,3 +170,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }
+
+HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrderThenWalkerIsNotChanged, IsAtMostXeHpgCore) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd{};
+    WALKER_TYPE walkerOnStart{};
+
+    uint32_t yOrder = 2u;
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+
+    uint32_t linearOrder = 0u;
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+
+    uint32_t fakeOrder = 5u;
+    EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder);
+    EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+}
