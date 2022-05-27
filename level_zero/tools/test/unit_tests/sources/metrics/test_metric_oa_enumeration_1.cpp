@@ -1448,6 +1448,58 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhen
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
 }
 
+TEST_F(MetricEnumerationTest, givenValidMetricGroupWhenDeactivateIsDoneThenDomainsAreCleared) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+
+    // Metrics Discovery: metric set
+    Mock<IMetricSet_1_5> metricsSet0;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams0 = {};
+    metricsSetParams0.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+
+    zet_metric_group_handle_t metricGroupHandle[2] = {};
+
+    openMetricsAdapter();
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .Times(1)
+        .WillOnce(Return(&metricsSet0));
+
+    EXPECT_CALL(metricsSet0, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams0));
+
+    EXPECT_CALL(metricsSet0, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group handles.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    device->activateMetricGroups();
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenzetContextActivateMetricGroupsIsCalledThenReturnsApropriateResults) {
 
     // Metrics Discovery device.

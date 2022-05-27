@@ -118,6 +118,7 @@ ze_result_t MetricDeviceContext::activateMetricGroupsDeferred(uint32_t count, ze
 ze_result_t MetricDeviceContext::activateAllDomains() {
     for (auto &entry : domains) {
         auto &metricGroup = entry.second;
+        DEBUG_BREAK_IF(metricGroup.first == nullptr);
         MetricGroup::fromHandle(metricGroup.first)->activate();
         metricGroup.second = true;
     }
@@ -132,6 +133,7 @@ ze_result_t MetricDeviceContext::deActivateAllDomains() {
         }
         metricGroup = {};
     }
+    domains.clear();
     return ZE_RESULT_SUCCESS;
 }
 
