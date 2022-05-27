@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/hw_info_config.h"
-
-#include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include <memory>
 

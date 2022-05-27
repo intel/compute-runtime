@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
+#include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -46,47 +46,6 @@ struct DummyHwConfig : NEO::HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
 using namespace NEO;
-
-void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId);
-
-void HwInfoConfigTestLinux::SetUp() {
-    HwInfoConfigTest::SetUp();
-    executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-
-    osInterface = new OSInterface();
-    drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-
-    drm->storedDeviceID = pInHwInfo.platform.usDeviceID;
-    drm->storedDeviceRevID = 0;
-    drm->storedEUVal = pInHwInfo.gtSystemInfo.EUCount;
-    drm->storedSSVal = pInHwInfo.gtSystemInfo.SubSliceCount;
-
-    rt_cpuidex_func = CpuInfo::cpuidexFunc;
-    CpuInfo::cpuidexFunc = mockCpuidex;
-}
-
-void HwInfoConfigTestLinux::TearDown() {
-    CpuInfo::cpuidexFunc = rt_cpuidex_func;
-
-    delete osInterface;
-
-    HwInfoConfigTest::TearDown();
-}
-
-void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId) {
-    if (subfunctionId == 0) {
-        cpuInfo[0] = 0x7F;
-    }
-    if (subfunctionId == 1) {
-        cpuInfo[0] = 0x1F;
-    }
-    if (subfunctionId == 2) {
-        cpuInfo[0] = 0;
-    }
-}
 
 struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
     void SetUp() override {

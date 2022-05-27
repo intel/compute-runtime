@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -24,17 +24,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-void HwInfoConfigTest::SetUp() {
-    pInHwInfo = *defaultHwInfo;
-
-    testPlatform = &pInHwInfo.platform;
-    testSkuTable = &pInHwInfo.featureTable;
-    testWaTable = &pInHwInfo.workaroundTable;
-    testSysInfo = &pInHwInfo.gtSystemInfo;
-
-    outHwInfo = {};
-}
 
 HWTEST_F(HwInfoConfigTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
