@@ -30,6 +30,8 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 
 void DebuggerL0::initialize() {
 
+    initSbaTrackingMode();
+
     if (NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get() != -1) {
         setSingleAddressSpaceSbaTracking(NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.get());
     }

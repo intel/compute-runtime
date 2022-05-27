@@ -21,20 +21,21 @@ namespace L0 {
 namespace ult {
 
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
+using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
     EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSourceLevelDebuggerThenNullptrReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenGettingSourceLevelDebuggerThenNullptrReturned) {
     EXPECT_EQ(nullptr, neoDevice->getSourceLevelDebugger());
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInstanceIsReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInstanceIsReturned) {
     EXPECT_NE(nullptr, device->getL0Debugger());
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIsReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIsReturned) {
     neoDevice->setDebuggerActive(true);
     auto systemRoutine = SipKernel::getSipKernel(*neoDevice).getSipAllocation();
     ASSERT_NE(nullptr, systemRoutine);
@@ -49,12 +50,12 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
     EXPECT_EQ(expectedSipAllocation, systemRoutine);
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsReturned) {
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
     EXPECT_EQ(NEO::SipKernelType::DbgBindless, sipType);
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
+TEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
     auto &stateSaveAreaHeader = SipKernel::getSipKernel(*neoDevice).getStateSaveAreaHeader();
 
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
@@ -63,12 +64,12 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
     EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
 }
 
-TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
+TEST_P(L0DebuggerParameterizedTests, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
     EXPECT_TRUE(driverHandle->enableProgramDebugging);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.fusedEuEnabled);
 }
 
-TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenCompressionIsDisabled) {
+TEST_P(L0DebuggerParameterizedTests, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenCompressionIsDisabled) {
     EXPECT_TRUE(driverHandle->enableProgramDebugging);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(neoDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
@@ -137,7 +138,8 @@ TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUs
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded) {
+using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
+HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
@@ -203,7 +205,9 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValid
     commandQueue->destroy();
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
+using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
+
+HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     Mock<::L0::Kernel> kernel;
@@ -233,7 +237,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS) {
+HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     Mock<::L0::Kernel> kernel;
@@ -255,7 +259,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenDebugS
     EXPECT_EQ(actualMocs, mocsNoCache);
 }
 
-HWTEST_F(L0DebuggerTest, givenEnabledDebuggingWhenIsaTypeAllocatedOnMultitileDeviceThenSharedAllocationIsCreated) {
+HWTEST_P(L0DebuggerParameterizedTests, givenEnabledDebuggingWhenIsaTypeAllocatedOnMultitileDeviceThenSharedAllocationIsCreated) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
 
@@ -640,7 +644,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
+HWTEST_P(L0DebuggerParameterizedTests, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseBindlessDebugSip.set(1);
 
@@ -660,7 +664,7 @@ HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenRes
     EXPECT_EQ(1u, header->reserved1);
 }
 
-HWTEST_F(L0DebuggerTest, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
+HWTEST_P(L0DebuggerParameterizedTests, givenUseBindlessDebugSipZeroWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseBindlessDebugSip.set(0);
 
@@ -714,5 +718,8 @@ using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 HWTEST2_F(L0DebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
     EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
+
+INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
+
 } // namespace ult
 } // namespace L0

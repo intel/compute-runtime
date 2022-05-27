@@ -96,6 +96,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void notifyCommandQueueCreated();
     MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed();
     MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
+    void initSbaTrackingMode();
 
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;
     virtual size_t getSbaAddressLoadCommandsSize() = 0;
@@ -107,6 +108,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     void setSingleAddressSpaceSbaTracking(bool value) {
         singleAddressSpaceSbaTracking = value;
     }
+    bool getSingleAddressSpaceSbaTracking() { return singleAddressSpaceSbaTracking; }
 
   protected:
     static bool isAnyTrackedAddressChanged(SbaAddresses sba) {

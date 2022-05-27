@@ -25,6 +25,10 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
     return true;
 }
 
+void DebuggerL0::initSbaTrackingMode() {
+    singleAddressSpaceSbaTracking = true;
+}
+
 void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
 }
 

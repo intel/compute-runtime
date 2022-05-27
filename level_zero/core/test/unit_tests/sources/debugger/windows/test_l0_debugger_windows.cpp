@@ -77,5 +77,9 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledWhenDriverHandleIsCrea
     EXPECT_EQ(nullptr, neoDevice->getSourceLevelDebugger());
 }
 
+TEST_F(L0DebuggerWindowsTest, givenWindowsOSWhenL0DebuggerIsCreatedAddressModeIsSingleSpace) {
+    EXPECT_TRUE(device->getL0Debugger()->getSingleAddressSpaceSbaTracking());
+}
+
 } // namespace ult
 } // namespace L0

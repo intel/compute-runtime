@@ -84,5 +84,27 @@ struct L0DebuggerHwFixture : public L0DebuggerFixture {
     DebuggerL0 *debuggerHw = nullptr;
 };
 
+struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
+    void SetUp() {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+        L0DebuggerHwFixture::SetUp();
+    }
+    void TearDown() {
+        L0DebuggerHwFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+struct L0DebuggerHwParameterizedFixture : ::testing::TestWithParam<int>, public L0DebuggerHwFixture {
+    void SetUp() override {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
+        L0DebuggerHwFixture::SetUp();
+    }
+    void TearDown() override {
+        L0DebuggerHwFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
 } // namespace ult
 } // namespace L0

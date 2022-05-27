@@ -19,13 +19,45 @@
 namespace L0 {
 namespace ult {
 
+struct PerContextAddressSpaceFixture : public Test<DeviceFixture> {
+    void SetUp() override {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+        Test<DeviceFixture>::SetUp();
+    }
+
+    void TearDown() override {
+        Test<DeviceFixture>::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>, DeviceFixture {
+    void SetUp() override {
+        NEO::DebugManager.flags.DebuggerForceSbaTrackingMode.set(GetParam());
+        DeviceFixture::SetUp();
+    }
+
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
+
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 
-HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
+using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
+
+HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
 
-    EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
+    if (!debugger->getSingleAddressSpaceSbaTracking()) {
+        EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
+    }
     std::vector<NEO::GraphicsAllocation *> allocations;
 
     auto &allEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
@@ -68,11 +100,13 @@ HWTEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainVali
     }
 }
 
-HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocatedWithProperStorageInfo) {
+HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocatedWithProperStorageInfo) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
 
-    EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
+    if (!debugger->getSingleAddressSpaceSbaTracking()) {
+        EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
+    }
     std::vector<NEO::GraphicsAllocation *> allocations;
 
     for (auto &engine : device->getNEODevice()->getAllEngines()) {
@@ -160,8 +194,9 @@ HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffer
 }
 
 using NotGen8Or11 = AreNotGfxCores<IGFX_GEN8_CORE, IGFX_GEN11_CORE>;
+using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, NotGen8Or11) {
+HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, NotGen8Or11) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -220,7 +255,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
     commandQueue->destroy();
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted) {
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -255,7 +290,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsS
 
 using L0DebuggerSimpleTest = Test<DeviceFixture>;
 
-HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted) {
+HWTEST2_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -286,7 +321,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndDebuggerLogsWhenCommandQueu
     commandQueue->destroy();
 }
 
-HWTEST_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted) {
+HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
 
@@ -317,7 +352,7 @@ HWTEST_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueueI
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, NotGen8Or11) {
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, Gen12Plus) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     size_t usedSpaceBefore = 0;
@@ -347,7 +382,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsAtLeastSkl) {
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, Gen12Plus) {
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
@@ -375,10 +410,10 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaB
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
+HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
-
+    debugger->singleAddressSpaceSbaTracking = 0;
     debugger->sbaTrackingGpuVa.address = 0x45670000;
     auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
 
@@ -461,7 +496,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenC
     EXPECT_TRUE(cmdSdi->getStoreQword());
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThenNonCanonicalAddressesAreStored) {
+HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTrackingThenNonCanonicalAddressesAreStored) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
@@ -547,7 +582,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenCanonizedGpuVasWhenProgrammingSbaTrackingThe
     EXPECT_TRUE(cmdSdi->getStoreQword());
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed, Gen12Plus) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
@@ -567,7 +602,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStre
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNoTrackingCmdsAreAdded, Gen12Plus) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
     debugger->sbaTrackingGpuVa.address = 0x45670000;
@@ -590,7 +625,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNo
     EXPECT_EQ(sizeUsed, sizeUsed2);
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
+HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCapturingSBAThenTrackingCmdsAreAdded, Gen12Plus) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
     debugger->sbaTrackingGpuVa.address = 0x45670000;
@@ -633,6 +668,9 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
         EXPECT_NE(0u, sizeUsed);
     }
 }
+
+INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
+INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerSimpleParameterizedTest, ::testing::Values(0, 1));
 
 } // namespace ult
 } // namespace L0

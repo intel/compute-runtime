@@ -25,6 +25,10 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
     return false;
 }
 
+void DebuggerL0::initSbaTrackingMode() {
+    singleAddressSpaceSbaTracking = false;
+}
+
 void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
     if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
         auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();

@@ -19,17 +19,15 @@
 namespace L0 {
 namespace ult {
 
-using L0DebuggerTest = Test<L0DebuggerHwFixture>;
-
-struct L0DebuggerWithBlitterTest : public L0DebuggerTest {
+struct L0DebuggerWithBlitterTest : public L0DebuggerHwParameterizedFixture {
     void SetUp() override {
         VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-        L0DebuggerTest::SetUp();
+        L0DebuggerHwParameterizedFixture::SetUp();
     }
 };
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restorer;
@@ -58,7 +56,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandLi
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     DebugManagerStateRestore restorer;
@@ -87,7 +85,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandL
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSynchronizedThenSbaAddressesAreNotPrinted) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSynchronizedThenSbaAddressesAreNotPrinted) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
 
@@ -107,7 +105,8 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident) {
+using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
+HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, Gen12Plus) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -168,7 +167,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFl
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenExecutingThenDebuggerAllocationsAreNotResident) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenExecutingThenDebuggerAllocationsAreNotResident) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     Mock<::L0::Kernel> kernel;
@@ -209,7 +208,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
     Mock<::L0::Kernel> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
@@ -226,7 +225,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
     Mock<::L0::Kernel> kernel;
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
@@ -243,7 +242,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImm
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -259,7 +258,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryCopyThenSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -275,7 +274,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImm
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -296,7 +295,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImme
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegularCommandListForAppendMemoryCopyRegionThenSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -329,7 +328,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForRegu
     commandQueue->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendMemoryCopyRegionThenSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -348,7 +347,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImm
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -366,7 +365,7 @@ HWTEST2_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledComman
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendMemoryCopyCalledInLoopThenMultipleCommandBufferAreUsedAndSuccessIsReturned, Gen12Plus) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -384,7 +383,7 @@ HWTEST2_F(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledComma
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
+HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsedThenDebuggerPathsAreNotExecuted, IsAtLeastSkl) {
     ze_command_queue_desc_t queueDesc = {};
 
     std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
@@ -428,7 +427,7 @@ HWTEST2_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     commandList->destroy();
 }
 
-HWTEST_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecutedOnCopyOnlyCmdQThenKernelDebugCommandsAreNotAdded) {
+HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecutedOnCopyOnlyCmdQThenKernelDebugCommandsAreNotAdded) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
@@ -508,6 +507,7 @@ HWTEST_F(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
 
     commandQueue->destroy();
 }
+INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerWithBlitterTest, ::testing::Values(0, 1));
 
 } // namespace ult
 } // namespace L0

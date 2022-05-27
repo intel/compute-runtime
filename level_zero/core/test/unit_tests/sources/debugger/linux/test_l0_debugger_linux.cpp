@@ -73,6 +73,10 @@ TEST_F(L0DebuggerLinuxTest, whenDebuggerIsCreatedThenItCallsDrmToRegisterResourc
     EXPECT_TRUE(drmMock->registerClassesCalled);
 }
 
+TEST_F(L0DebuggerLinuxTest, givenLinuxOSWhenL0DebuggerIsCreatedAddressModeIsNotSingleSpace) {
+    EXPECT_FALSE(device->getL0Debugger()->getSingleAddressSpaceSbaTracking());
+}
+
 TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsCalled) {
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
 
