@@ -252,9 +252,8 @@ int IoctlHelperPrelim20::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t c
     return IoctlHelper::ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
 }
 
-bool IoctlHelperPrelim20::completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) {
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return hwHelper.isLinuxCompletionFenceSupported() && isVmBindAvailable;
+bool IoctlHelperPrelim20::completionFenceExtensionSupported(const bool isVmBindAvailable) {
+    return isVmBindAvailable;
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {

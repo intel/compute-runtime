@@ -69,8 +69,3 @@ XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignEngine
     auto &hwHelper = HwHelperHw<FamilyType>::get();
     EXPECT_TRUE(hwHelper.isAssignEngineRoundRobinSupported());
 }
-
-XE_HPC_CORETEST_F(HwHelperXeHpcCoreTest, givenHwHelperWhenGettingLinuxCompletionFenceSupportThenTrueIsReturned) {
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.isLinuxCompletionFenceSupported());
-}

@@ -164,7 +164,7 @@ int IoctlHelperUpstream::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t c
     return ioctl(drm, DRM_IOCTL_I915_GEM_EXECBUFFER2, execBuffer);
 }
 
-bool IoctlHelperUpstream::completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) {
+bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindAvailable) {
     return false;
 }
 

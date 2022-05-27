@@ -1122,7 +1122,7 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
 bool Drm::completionFenceSupport() {
     std::call_once(checkCompletionFenceOnce, [this]() {
         const bool vmBindAvailable = isVmBindAvailable();
-        bool support = ioctlHelper->completionFenceExtensionSupported(*getRootDeviceEnvironment().getHardwareInfo(), vmBindAvailable);
+        bool support = ioctlHelper->completionFenceExtensionSupported(vmBindAvailable);
         int32_t overrideCompletionFence = DebugManager.flags.EnableDrmCompletionFence.get();
         if (overrideCompletionFence != -1) {
             support = !!overrideCompletionFence;

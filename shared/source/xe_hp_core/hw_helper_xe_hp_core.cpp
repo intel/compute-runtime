@@ -151,11 +151,6 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
     return true;
 }
 
-template <>
-inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
-    return true;
-}
-
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

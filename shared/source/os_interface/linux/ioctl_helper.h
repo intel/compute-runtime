@@ -93,7 +93,7 @@ class IoctlHelper {
     virtual int32_t getComputeEngineClass() = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
-    virtual bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) = 0;
+    virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
     virtual std::optional<int> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
     virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) = 0;
@@ -150,7 +150,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
-    bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
+    bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
@@ -214,7 +214,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
-    bool completionFenceExtensionSupported(const HardwareInfo &hwInfo, const bool isVmBindAvailable) override;
+    bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
     std::optional<int> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;

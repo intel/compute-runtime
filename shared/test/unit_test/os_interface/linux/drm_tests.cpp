@@ -1056,11 +1056,9 @@ TEST(DrmTest, GivenCompletionFenceDebugFlagWhenCreatingDrmObjectThenExpectCorrec
     HardwareInfo *hwInfo = defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
 
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-
     DrmMock drmDefault{*executionEnvironment->rootDeviceEnvironments[0]};
     drmDefault.callBaseIsVmBindAvailable = true;
-    if (hwHelper.isLinuxCompletionFenceSupported() && drmDefault.isVmBindAvailable()) {
+    if (drmDefault.isVmBindAvailable()) {
         EXPECT_TRUE(drmDefault.completionFenceSupport());
     } else {
         EXPECT_FALSE(drmDefault.completionFenceSupport());

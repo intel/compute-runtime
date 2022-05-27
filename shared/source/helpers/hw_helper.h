@@ -155,7 +155,6 @@ class HwHelper {
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
-    virtual bool isLinuxCompletionFenceSupported() const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -396,7 +395,6 @@ class HwHelperHw : public HwHelper {
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
     bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;
-    bool isLinuxCompletionFenceSupported() const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
     bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;

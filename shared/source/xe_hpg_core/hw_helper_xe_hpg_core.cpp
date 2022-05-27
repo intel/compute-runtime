@@ -126,11 +126,6 @@ bool HwHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo) cons
 }
 
 template <>
-inline bool HwHelperHw<Family>::isLinuxCompletionFenceSupported() const {
-    return true;
-}
-
-template <>
 bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
     auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
     return hwInfoConfig.isTimestampWaitSupportedForEvents();

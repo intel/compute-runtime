@@ -156,11 +156,6 @@ inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::Ha
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isLinuxCompletionFenceSupported() const {
-    return false;
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::preferInternalBcsEngine() const {
     return false;
 }

@@ -39,8 +39,3 @@ XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenSteppingCWhenCheckingSipWAThenFalse
     hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_C, hwInfo);
     EXPECT_FALSE(helper.isSipWANeeded(hwInfo));
 }
-
-XE_HP_CORE_TEST_F(HwHelperXeHpCoreTest, givenHwHelperWhenGettingLinuxCompletionFenceSupportThenTrueIsReturned) {
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.isLinuxCompletionFenceSupported());
-}
