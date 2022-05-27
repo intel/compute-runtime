@@ -103,6 +103,10 @@ SubmissionStatus CommandStreamReceiver::submitBatchBuffer(BatchBuffer &batchBuff
     this->latestSentTaskCount = taskCount + 1;
 
     SubmissionStatus retVal = this->flush(batchBuffer, allocationsForResidency);
+
+    if (retVal != NEO::SubmissionStatus::SUCCESS) {
+        return retVal;
+    }
     if (!isUpdateTagFromWaitEnabled()) {
         this->latestFlushedTaskCount = taskCount + 1;
     }
@@ -155,11 +159,13 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     }
 }
 
-void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) {
+void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations) {
     for (auto &surface : allocationsForResidency) {
         this->makeNonResident(*surface);
     }
-    allocationsForResidency.clear();
+    if (clearAllocations) {
+        allocationsForResidency.clear();
+    }
     this->processEviction();
 }
 

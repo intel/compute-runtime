@@ -610,7 +610,7 @@ TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpda
     pKernel->makeResident(*csr.get());
     EXPECT_EQ(1u, csr->residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
     EXPECT_EQ(0u, csr->residency.size());
 
     delete pKernel;

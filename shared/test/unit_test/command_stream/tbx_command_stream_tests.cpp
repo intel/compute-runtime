@@ -326,7 +326,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResi
 
     ResidencyContainer allocationsForResidency{&allocation1, &allocation2, &allocation3};
 
-    tbxCsr.makeSurfacePackNonResident(allocationsForResidency);
+    tbxCsr.makeSurfacePackNonResident(allocationsForResidency, true);
     std::set<GraphicsAllocation *> expectedAllocationsForDownload = {&allocation1, &allocation3};
     EXPECT_EQ(expectedAllocationsForDownload, tbxCsr.allocationsForDownload);
 }

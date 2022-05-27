@@ -356,7 +356,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
 
     EXPECT_EQ(3u, residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     //check that each packet is not resident
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
@@ -378,7 +378,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
 
     EXPECT_EQ(3u, residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, residency.size());
 
@@ -621,7 +621,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFlushMultipleTimesThenSucc
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
     csr->flush(batchBuffer3, csr->getResidencyAllocations());
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
@@ -721,8 +721,27 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenClearResi
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
+
+    mm->freeGraphicsMemory(allocation1);
+    mm->freeGraphicsMemory(allocation2);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenNotClearResidencyAllocationsInCommandStreamReceiver) {
+    auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    ASSERT_NE(nullptr, allocation1);
+    ASSERT_NE(nullptr, allocation2);
+
+    csr->makeResident(*allocation1);
+    csr->makeResident(*allocation2);
+    EXPECT_NE(0u, csr->getResidencyAllocations().size());
+
+    csr->processResidency(csr->getResidencyAllocations(), 0u);
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), false);
+    EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
     mm->freeGraphicsMemory(allocation2);
@@ -739,7 +758,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMultipleMakeResidentWhenMa
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_FALSE(allocation1->isResident(csr->getOsContext().getContextId()));
@@ -759,7 +778,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationThatIsAlwaysResi
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_TRUE(allocation1->isResident(csr->getOsContext().getContextId()));

@@ -603,7 +603,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             this->submissionAggregator->recordCommandBuffer(commandBuffer);
         }
     } else {
-        this->makeSurfacePackNonResident(this->getResidencyAllocations());
+        this->makeSurfacePackNonResident(this->getResidencyAllocations(), true);
     }
 
     this->wasSubmittedToSingleSubdevice = dispatchFlags.useSingleSubdevice;
@@ -783,7 +783,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 this->latestFlushedTaskCount = lastTaskCount;
             }
 
-            this->makeSurfacePackNonResident(surfacesForSubmit);
+            this->makeSurfacePackNonResident(surfacesForSubmit, true);
             resourcePackage.clear();
         }
         this->totalMemoryUsed = 0;
@@ -1118,7 +1118,7 @@ std::optional<uint32_t> CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const B
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
 
     flush(batchBuffer, getResidencyAllocations());
-    makeSurfacePackNonResident(getResidencyAllocations());
+    makeSurfacePackNonResident(getResidencyAllocations(), true);
 
     if (updateTag) {
         latestFlushedTaskCount = newTaskCount;
@@ -1233,7 +1233,7 @@ void CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStr
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     flush(batchBuffer, allocationsForResidency);
-    makeSurfacePackNonResident(allocationsForResidency);
+    makeSurfacePackNonResident(allocationsForResidency, true);
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -249,7 +249,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     pKernel->makeResident(*csr.get());
     EXPECT_TRUE(csr->isMadeResident(mcsAlloc));
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_TRUE(csr->isMadeNonResident(mcsAlloc));
 

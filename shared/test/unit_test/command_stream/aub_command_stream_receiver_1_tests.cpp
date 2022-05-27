@@ -557,7 +557,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, commandBuffer->getResidencyTaskCount(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->makeSurfacePackNonResident(allocationsForResidency);
+    aubCsr->makeSurfacePackNonResident(allocationsForResidency, true);
 
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 }
@@ -603,7 +603,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, commandBuffer->getResidencyTaskCount(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->makeSurfacePackNonResident(allocationsForResidency);
+    aubCsr->makeSurfacePackNonResident(allocationsForResidency, true);
 
     EXPECT_FALSE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
@@ -673,7 +673,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, commandBuffer->getResidencyTaskCount(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->makeSurfacePackNonResident(allocationsForResidency);
+    aubCsr->makeSurfacePackNonResident(allocationsForResidency, true);
 
     EXPECT_FALSE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));

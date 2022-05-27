@@ -148,9 +148,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return nullptr;
     }
 
-    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) override {
+    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations) override {
         makeSurfacePackNonResidentCalled++;
-        BaseClass::makeSurfacePackNonResident(allocationsForResidency);
+        BaseClass::makeSurfacePackNonResident(allocationsForResidency, clearAllocations);
     }
 
     NEO::SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {

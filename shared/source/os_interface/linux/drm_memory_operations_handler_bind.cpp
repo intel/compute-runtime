@@ -117,15 +117,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContain
         return retVal;
     }
 
-    auto clearContainer = true;
-
-    if (DebugManager.flags.PassBoundBOToExec.get() != -1) {
-        clearContainer = !DebugManager.flags.PassBoundBOToExec.get();
-    }
-
-    if (clearContainer) {
-        residencyContainer.clear();
-    }
     return MemoryOperationsStatus::SUCCESS;
 }
 

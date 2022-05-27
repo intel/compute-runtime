@@ -840,7 +840,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidency
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
