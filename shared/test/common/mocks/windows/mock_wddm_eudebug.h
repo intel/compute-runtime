@@ -30,7 +30,7 @@ struct WddmEuDebugInterfaceMock : public WddmMock {
 
         switch (pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeActionType) {
         case DBGUMD_ACTION_ATTACH_DEBUGGER: {
-            pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = DBGUMD_ACTION_ESCAPE_SUCCESS;
+            pEscapeInfo->KmEuDbgL0EscapeInfo.EscapeReturnStatus = DBGUMD_RETURN_ESCAPE_SUCCESS;
             pEscapeInfo->KmEuDbgL0EscapeInfo.AttachDebuggerParams.hDebugHandle = debugHandle;
             break;
         }
