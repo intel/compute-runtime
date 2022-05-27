@@ -50,7 +50,9 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             requiresUncachedMocs,     // requiresUncachedMocs
             false,                    // useGlobalAtomics
             false,                    // isInternal
-            false                     // isCooperative
+            false,                    // isCooperative
+            false,                    // isHostScopeSignalEvent
+            false                     // isKernelUsingSystemAllocation
         };
 
         return args;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
@@ -108,6 +109,175 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandListImmediate.containsAnyKernel = true;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false);
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
+}
+
+using CommandListCreate = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+
+    commandList->indirectAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+    commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+}
+
+HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
+    for (auto testValue : ::testing::Bool()) {
+        MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+        commandList.initialize(device, NEO::EngineGroupType::Compute, 0u);
+        commandList.containsCooperativeKernelsFlag = testValue;
+        EXPECT_EQ(testValue, commandList.containsCooperativeKernels());
+        commandList.reset();
+        EXPECT_FALSE(commandList.containsCooperativeKernels());
+    }
+}
+
+HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenPartitionCountIsReversedToOne) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
+                                                                     device,
+                                                                     NEO::EngineGroupType::Compute,
+                                                                     0u,
+                                                                     returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, commandList->partitionCount);
+
+    returnValue = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, commandList->partitionCount);
+}
+
+HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    auto commandStream = commandList->commandContainer.getCommandStream();
+
+    auto usedSpaceBefore = commandStream->getUsed();
+
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+    MI_NOOP cmd = FamilyType::cmdInitNoop;
+    uint32_t uniqueIDforTest = 0x12345u;
+    cmd.setIdentificationNumber(uniqueIDforTest);
+
+    size_t sizeToReserveForCommand = sizeof(cmd);
+    void *ptrToReservedMemory = nullptr;
+    returnValue = commandList->reserveSpace(sizeToReserveForCommand, &ptrToReservedMemory);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    if (ptrToReservedMemory != nullptr) {
+        *reinterpret_cast<MI_NOOP *>(ptrToReservedMemory) = cmd;
+    }
+
+    auto usedSpaceAfter = commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandStream->getCpuBase(), usedSpaceAfter));
+
+    auto itor = cmdList.begin();
+    while (itor != cmdList.end()) {
+        using MI_NOOP = typename FamilyType::MI_NOOP;
+        itor = find<MI_NOOP *>(itor, cmdList.end());
+        if (itor == cmdList.end())
+            break;
+
+        auto cmd = genCmdCast<MI_NOOP *>(*itor);
+        if (uniqueIDforTest == cmd->getIdentificationNumber()) {
+            break;
+        }
+
+        itor++;
+    }
+    ASSERT_NE(itor, cmdList.end());
+}
+
+TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandListThenInvalidArgumentErrorIsReturned) {
+    auto numAvailableEngineGroups = static_cast<uint32_t>(neoDevice->getRegularEngineGroups().size());
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    desc.commandQueueGroupOrdinal = numAvailableEngineGroups;
+    auto returnValue = device->createCommandList(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    ze_command_queue_desc_t desc2 = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc2.ordinal = numAvailableEngineGroups;
+    desc2.index = 0;
+    returnValue = device->createCommandListImmediate(&desc2, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    desc2.ordinal = 0;
+    desc2.index = 0x1000;
+    returnValue = device->createCommandListImmediate(&desc2, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+}
+
+TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingCommandListThenValidateQueueOrdinalUsingSubDeviceEngines) {
+    NEO::UltDeviceFactory deviceFactory{1, 2};
+    auto &rootDevice = *deviceFactory.rootDevices[0];
+    auto &subDevice0 = *deviceFactory.subDevices[0];
+    rootDevice.regularEngineGroups.resize(1);
+    subDevice0.getRegularEngineGroups().push_back(NEO::Device::EngineGroupT{});
+    subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::Compute;
+    subDevice0.getRegularEngineGroups().back().engines.resize(1);
+    subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
+    auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
+    Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
+
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t cmdDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    cmdDesc.commandQueueGroupOrdinal = ordinal;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = ordinal;
+    queueDesc.index = 0;
+
+    l0RootDevice.driverHandle = driverHandle.get();
+
+    l0RootDevice.implicitScalingCapable = true;
+    auto returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
+    EXPECT_EQ(nullptr, commandList);
+
+    l0RootDevice.implicitScalingCapable = false;
+    returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_NE(nullptr, commandList);
+    L0::CommandList::fromHandle(commandList)->destroy();
+    commandList = nullptr;
+
+    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_NE(nullptr, commandList);
+    L0::CommandList::fromHandle(commandList)->destroy();
 }
 
 using CommandListTest = Test<DeviceFixture>;
@@ -279,7 +449,8 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionCalledThenBuiltinFlagIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -289,9 +460,57 @@ HWTEST2_F(CommandListTest, givenComputeCommandListAnd2dRegionWhenMemoryCopyRegio
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
     commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionCalledThenBuiltinFlagIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -301,6 +520,53 @@ HWTEST2_F(CommandListTest, givenComputeCommandListAnd3dRegionWhenMemoryCopyRegio
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
 }
 
 using ImageSupport = IsNotAnyGfxCores<IGFX_GEN8_CORE, IGFX_XE_HPC_CORE>;
@@ -314,18 +580,18 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBui
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    imageHWSrc->initialize(device, &zeDesc);
-    imageHWDst->initialize(device, &zeDesc);
+    auto imageHwSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHwDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHwSrc->initialize(device, &zeDesc);
+    imageHwDst->initialize(device, &zeDesc);
 
     ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
-    commandList->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
+    commandList->appendImageCopyRegion(imageHwDst->toHandle(), imageHwSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToMemoryThenBuiltinFlagIsSet, ImageSupport) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToExternalHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
     auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
     mockBuiltinKernel->setArgRedescribedImageCallBase = false;
@@ -337,12 +603,71 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToMemoryThenB
 
     ze_image_desc_t zeDesc = {};
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    imageHW->initialize(device, &zeDesc);
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
 
     ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
-    commandList->appendImageCopyToMemory(dstPtr, imageHW->toHandle(), &srcRegion, nullptr, 0, nullptr);
+    commandList->appendImageCopyToMemory(dstPtr, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmHostMemoryThenBuiltinFlagAndDestinationAllocSystemIsSet, ImageSupport) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyToMemory(dstBuffer, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToUsmDeviceMemoryThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, ImageSupport) {
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+    auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+    mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    commandList->appendImageCopyToMemory(dstBuffer, imageHw->toHandle(), &srcRegion, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBuiltinFlagIsSet, ImageSupport) {
@@ -360,16 +685,16 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
     zeDesc.type = ZE_IMAGE_TYPE_3D;
     zeDesc.height = 2;
     zeDesc.depth = 2;
-    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    imageHW->initialize(device, &zeDesc);
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
 
     Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
     Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
-    commandList->appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyThenBuiltinFlagIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
@@ -379,14 +704,59 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyThenBuiltinFlagI
     commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillThenBuiltinFlagIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
-    static constexpr size_t allocSize = 4096;
-    static constexpr size_t patternSize = 8;
+    constexpr size_t allocSize = 4096;
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAllocationThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t allocSize = 4096;
+    constexpr size_t patternSize = 8;
     uint8_t pattern[patternSize] = {1, 2, 3, 4};
 
     void *dstBuffer = nullptr;
@@ -397,6 +767,32 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillThenBuiltinFlagI
     commandList->appendMemoryFill(dstBuffer, pattern, patternSize, allocSize, nullptr, 0, nullptr);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+
+    constexpr size_t patternSize = 8;
+    uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->appendMemoryFill(dstBuffer, pattern, patternSize, size, nullptr, 0, nullptr);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 
     context->freeMem(dstBuffer);
 }

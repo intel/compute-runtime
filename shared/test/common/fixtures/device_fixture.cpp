@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,9 +31,10 @@ void DeviceFixture::TearDown() {
     pDevice = nullptr;
 }
 
-MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
+MockDevice *DeviceFixture::createWithUsDeviceIdRevId(unsigned short usDeviceId, unsigned short usRevId) {
     hardwareInfo = *defaultHwInfo;
     hardwareInfo.platform.usDeviceID = usDeviceId;
+    hardwareInfo.platform.usRevId = usRevId;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
 }
 } // namespace NEO

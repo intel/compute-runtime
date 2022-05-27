@@ -157,6 +157,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
     bool l3FlushEnable = false;
+    bool isHostSignalScopeEvent = false;
     if (hEvent) {
         auto event = Event::fromHandle(hEvent);
         eventAlloc = &event->getAllocation(this->device);
@@ -166,6 +167,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         l3FlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(flushRequired, hwInfo);
         isTimestampEvent = event->isUsingContextEndOffset();
         eventAddress = event->getPacketAddress(this->device);
+        isHostSignalScopeEvent = !!(event->signalScope & ZE_EVENT_SCOPE_FLAG_HOST);
+    }
+
+    bool isKernelUsingSystemAllocation = false;
+    if (!launchParams.isBuiltInKernel) {
+        auto &kernelAllocations = kernel->getResidencyContainer();
+        for (auto &allocation : kernelAllocations) {
+            if (allocation == nullptr) {
+                continue;
+            }
+            if (allocation->getAllocationType() == NEO::AllocationType::BUFFER_HOST_MEMORY) {
+                isKernelUsingSystemAllocation = true;
+            }
+        }
+    } else {
+        isKernelUsingSystemAllocation = launchParams.isDestinationAllocationInSystemMemory;
     }
 
     if (kernel->hasIndirectAllocationsAllowed()) {
@@ -176,6 +193,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         }
         if (unifiedMemoryControls.indirectHostAllocationsAllowed) {
             this->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+            isKernelUsingSystemAllocation = true;
         }
         if (unifiedMemoryControls.indirectSharedAllocationsAllowed) {
             this->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
@@ -227,7 +245,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->containsStatelessUncachedResource,                  // requiresUncachedMocs
         kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         internalUsage,                                            // isInternal
-        launchParams.isCooperative                                // isCooperative
+        launchParams.isCooperative,                               // isCooperative
+        isHostSignalScopeEvent,                                   // isHostScopeSignalEvent
+        isKernelUsingSystemAllocation                             // isKernelUsingSystemAllocation
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;

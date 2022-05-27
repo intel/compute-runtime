@@ -16,7 +16,7 @@ struct DeviceFixture {
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo); // NOLINT(readability-identifier-naming)
     void TearDown();                                       // NOLINT(readability-identifier-naming)
 
-    MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
+    MockDevice *createWithUsDeviceIdRevId(unsigned short usDeviceId, unsigned short usRevId);
 
     MockDevice *pDevice = nullptr;
     volatile uint32_t *pTagMemory = nullptr;

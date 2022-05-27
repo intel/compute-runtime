@@ -33,6 +33,7 @@ struct CmdListKernelLaunchParams {
     bool isCooperative = false;
     bool isKernelSplitOperation = false;
     bool isBuiltInKernel = false;
+    bool isDestinationAllocationInSystemMemory = false;
 };
 
 struct CommandList : _ze_command_list_handle_t {

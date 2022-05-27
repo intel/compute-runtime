@@ -265,7 +265,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                             args.dispatchInterface->getSlmTotalSize(),
                                                             args.dispatchInterface->getSlmPolicy());
 
-    EncodeWalkerArgs walkerArgs{args.isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default, true};
+    EncodeWalkerArgs walkerArgs{
+        args.isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default,
+        args.isHostScopeSignalEvent || args.isKernelUsingSystemAllocation};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);

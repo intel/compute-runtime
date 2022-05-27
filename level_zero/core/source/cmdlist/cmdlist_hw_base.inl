@@ -131,7 +131,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         this->containsStatelessUncachedResource,                // requiresUncachedMocs
         false,                                                  // useGlobalAtomics
         internalUsage,                                          // isInternal
-        launchParams.isCooperative                              // isCooperative
+        launchParams.isCooperative,                             // isCooperative
+        false,                                                  // isHostScopeSignalEvent
+        false                                                   // isKernelUsingSystemAllocation
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);

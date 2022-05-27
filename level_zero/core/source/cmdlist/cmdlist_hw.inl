@@ -630,8 +630,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     ze_group_count_t functionArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY,
                                   pSrcRegion->depth / groupSizeZ};
 
+    auto dstAllocationType = allocationStruct.alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
                                                                         hEvent, numWaitEvents, phWaitEvents, launchParams);
 
@@ -862,9 +866,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
     uint32_t groups = static_cast<uint32_t>((size + ((static_cast<uint64_t>(groupSizeX) * elementSize) - 1)) / (static_cast<uint64_t>(groupSizeX) * elementSize));
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
+    auto dstAllocationType = dstPtrAlloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isKernelSplitOperation = true;
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (dstAllocationType == NEO::AllocationType::SVM_CPU) ||
+        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
+
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, launchParams);
 }
 
@@ -1298,8 +1308,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     builtinFunction->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
     builtinFunction->setArgumentValue(5, sizeof(dstPitches), &dstPitches);
 
+    auto dstAllocationType = dstAlignedAllocation->alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
                                                                     phWaitEvents, launchParams);
 }
@@ -1354,8 +1368,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     builtinFunction->setArgumentValue(4, sizeof(srcPitch), &srcPitch);
     builtinFunction->setArgumentValue(5, sizeof(dstPitch), &dstPitch);
 
+    auto dstAllocationType = dstAlignedAllocation->alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinFunction->toHandle(),
                                                                     &dispatchFuncArgs, hSignalEvent,
                                                                     numWaitEvents,
@@ -1429,6 +1447,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isKernelSplitOperation = true;
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
 
     if (patternSize == 1) {
         Kernel *builtinFunction = nullptr;
@@ -2129,8 +2148,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     builtinFunction->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress()), timestampsGPUData);
     builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstPtrAllocationStruct.alloc);
 
+    auto dstAllocationType = dstPtrAllocationStruct.alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
+    launchParams.isDestinationAllocationInSystemMemory =
+        (dstAllocationType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
+        (dstAllocationType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     auto appendResult = appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams);
     if (appendResult != ZE_RESULT_SUCCESS) {

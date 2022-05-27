@@ -458,5 +458,53 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     uint32_t executeCommandListImmediateWithFlushTaskCalledCount = 0;
 };
 
+struct CmdListHelper {
+    NEO::GraphicsAllocation *isaAllocation = nullptr;
+    NEO::ResidencyContainer residencyContainer;
+    ze_group_count_t threadGroupDimensions;
+    const uint32_t *groupSize = nullptr;
+    uint32_t useOnlyGlobalTimestamp = std::numeric_limits<uint32_t>::max();
+    bool isBuiltin = false;
+    bool isDstInSystem = false;
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+
+  public:
+    CmdListHelper cmdListHelper;
+    ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
+                                   const ze_group_count_t *pThreadGroupDimensions,
+                                   ze_event_handle_t hEvent,
+                                   uint32_t numWaitEvents,
+                                   ze_event_handle_t *phWaitEvents,
+                                   const CmdListKernelLaunchParams &launchParams) override {
+
+        const auto kernel = Kernel::fromHandle(hKernel);
+        cmdListHelper.isaAllocation = kernel->getIsaAllocation();
+        cmdListHelper.residencyContainer = kernel->getResidencyContainer();
+        cmdListHelper.groupSize = kernel->getGroupSize();
+        cmdListHelper.threadGroupDimensions = *pThreadGroupDimensions;
+
+        auto kernelName = kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName;
+        NEO::ArgDescriptor arg;
+        if (kernelName == "QueryKernelTimestamps") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[2u];
+        } else if (kernelName == "QueryKernelTimestampsWithOffsets") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[3u];
+        } else {
+            return ZE_RESULT_SUCCESS;
+        }
+        auto crossThreadData = kernel->getCrossThreadData();
+        auto element = arg.as<NEO::ArgDescValue>().elements[0];
+        auto pDst = ptrOffset(crossThreadData, element.offset);
+        cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
+        cmdListHelper.isBuiltin = launchParams.isBuiltInKernel;
+        cmdListHelper.isDstInSystem = launchParams.isDestinationAllocationInSystemMemory;
+
+        return ZE_RESULT_SUCCESS;
+    }
+};
+
 } // namespace ult
 } // namespace L0
