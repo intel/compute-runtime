@@ -16,14 +16,6 @@
 
 using namespace NEO;
 
-namespace NEO {
-namespace SysCalls {
-extern uint32_t ioctlVmCreateCalled;
-extern int ioctlVmCreateReturned;
-extern uint64_t ioctlVmCreateExtensionArg;
-} // namespace SysCalls
-} // namespace NEO
-
 TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -106,19 +98,12 @@ struct DrmVmTestFixture {
 
         drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0], testHwInfo);
         ASSERT_NE(nullptr, drm);
-
-        backupIoctlVmCreateCount = std::make_unique<VariableBackup<uint32_t>>(&NEO::SysCalls::ioctlVmCreateCalled, 0u);
-        backupIoctlVmCreateReturn = std::make_unique<VariableBackup<int>>(&NEO::SysCalls::ioctlVmCreateReturned, 0u);
-        backupIoctlVmCreateExtensionArg = std::make_unique<VariableBackup<uint64_t>>(&NEO::SysCalls::ioctlVmCreateExtensionArg, 0ull);
     }
 
     void TearDown() {} // NOLINT(readability-identifier-naming)
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-    std::unique_ptr<VariableBackup<uint32_t>> backupIoctlVmCreateCount;
-    std::unique_ptr<VariableBackup<int>> backupIoctlVmCreateReturn;
-    std::unique_ptr<VariableBackup<uint64_t>> backupIoctlVmCreateExtensionArg;
     std::unique_ptr<DrmQueryMock> drm;
 
     NEO::HardwareInfo *testHwInfo = nullptr;
@@ -139,10 +124,11 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryT
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(1u + tileCount, memoryInfo->getDrmRegionInfos().size());
 
+    drm->ioctlCount.reset();
     bool ret = drm->createVirtualMemoryAddressSpace(tileCount);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(tileCount, NEO::SysCalls::ioctlVmCreateCalled);
-    EXPECT_NE(0ull, NEO::SysCalls::ioctlVmCreateExtensionArg);
+    EXPECT_EQ(tileCount, drm->ioctlCount.gemVmCreate.load());
+    EXPECT_NE(0ull, drm->receivedGemVmControl.extensions);
 }
 
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion) {
@@ -157,16 +143,17 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCre
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(1u + tileCount, memoryInfo->getDrmRegionInfos().size());
 
+    drm->ioctlCount.reset();
     bool ret = drm->createVirtualMemoryAddressSpace(tileCount);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(tileCount, NEO::SysCalls::ioctlVmCreateCalled);
-    EXPECT_EQ(0ull, NEO::SysCalls::ioctlVmCreateExtensionArg);
+    EXPECT_EQ(tileCount, drm->ioctlCount.gemVmCreate.load());
+    EXPECT_EQ(0ull, drm->receivedGemVmControl.extensions);
 }
 
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryFailsThenExpectDebugInformation) {
     NEO::DebugManager.flags.PrintDebugMessages.set(1);
     NEO::DebugManager.flags.EnableLocalMemory.set(1);
-    NEO::SysCalls::ioctlVmCreateReturned = 1;
+    drm->storedRetValForVmCreate = 1;
 
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -177,11 +164,12 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryF
     ASSERT_NE(nullptr, memoryInfo);
     EXPECT_EQ(1u + tileCount, memoryInfo->getDrmRegionInfos().size());
 
+    drm->ioctlCount.reset();
     testing::internal::CaptureStderr();
     bool ret = drm->createVirtualMemoryAddressSpace(tileCount);
     EXPECT_FALSE(ret);
-    EXPECT_EQ(1u, NEO::SysCalls::ioctlVmCreateCalled);
-    EXPECT_NE(0ull, NEO::SysCalls::ioctlVmCreateExtensionArg);
+    EXPECT_EQ(1, drm->ioctlCount.gemVmCreate.load());
+    EXPECT_NE(0ull, drm->receivedGemVmControl.extensions);
 
     std::string output = testing::internal::GetCapturedStderr();
     auto pos = output.find("INFO: Cannot create Virtual Memory at memory bank");

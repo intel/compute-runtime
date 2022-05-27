@@ -251,6 +251,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithoutDeviceMemo
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
+    drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
@@ -270,6 +271,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithDeviceMemoryA
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
+    drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
         {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},

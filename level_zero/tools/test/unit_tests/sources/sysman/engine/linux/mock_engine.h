@@ -127,12 +127,7 @@ struct Mock<EngineSysfsAccess> : public EngineSysfsAccess {
     Mock<EngineSysfsAccess>() = default;
 };
 
-class DrmMockEngineInfoFailing : public DrmMock {
-  public:
-    using DrmMock::DrmMock;
-    DrmMockEngineInfoFailing(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
-    int handleRemainingRequests(unsigned long request, void *arg) override { return -1; }
-};
+using DrmMockEngineInfoFailing = DrmMock;
 
 } // namespace ult
 } // namespace L0

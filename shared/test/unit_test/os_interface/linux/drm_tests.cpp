@@ -495,7 +495,9 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
     OsContextLinux osContext(drmMock, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized();
 
-    EXPECT_EQ(SysCalls::vmId, drmMock.getVirtualMemoryAddressSpace(0));
+    drmMock.latestCreatedVmId = 0u;
+    auto expectedVmId = drmMock.latestCreatedVmId + 1;
+    EXPECT_EQ(expectedVmId, drmMock.getVirtualMemoryAddressSpace(0));
 
     auto &contextIds = osContext.getDrmContextIds();
     EXPECT_EQ(1u, contextIds.size());
@@ -682,6 +684,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingTimestampFrequencyThenCaptur
     testing::internal::CaptureStdout(); // start capturing
 
     int ret = drm.getTimestampFrequency(frequency);
+    DebugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_EQ(0, ret);

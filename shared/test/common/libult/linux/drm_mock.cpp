@@ -92,6 +92,14 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         }
     }
 
+    if ((request == DrmIoctl::GemVmCreate) && (arg != nullptr)) {
+        ioctlCount.gemVmCreate++;
+        auto gemVmControl = static_cast<GemVmControl *>(arg);
+        receivedGemVmControl = *gemVmControl;
+        gemVmControl->vmId = ++latestCreatedVmId;
+        return storedRetValForVmCreate;
+    }
+
     if ((request == DrmIoctl::GemContextDestroy) && (arg != nullptr)) {
         ioctlCount.contextDestroy++;
         auto destroy = static_cast<GemContextDestroy *>(arg);

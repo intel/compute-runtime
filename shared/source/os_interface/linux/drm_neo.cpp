@@ -428,7 +428,7 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     GemVmControl ctl = {};
     ctl.vmId = drmVmId;
-    auto ret = SysCalls::ioctl(getFileDescriptor(), ioctlHelper->getIoctlRequestValue(DrmIoctl::GemVmDestroy), &ctl);
+    auto ret = Drm::ioctl(DrmIoctl::GemVmDestroy, &ctl);
     UNRECOVERABLE_IF(ret != 0);
 }
 
@@ -1478,7 +1478,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
 
-    auto ret = SysCalls::ioctl(getFileDescriptor(), ioctlHelper->getIoctlRequestValue(DrmIoctl::GemVmCreate), &ctl);
+    auto ret = ioctlHelper->ioctl(this, DrmIoctl::GemVmCreate, &ctl);
 
     if (ret == 0) {
         drmVmId = ctl.vmId;

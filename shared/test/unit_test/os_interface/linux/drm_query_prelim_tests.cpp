@@ -9,20 +9,15 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-namespace NEO {
-namespace SysCalls {
-extern uint32_t vmFlags;
-extern uint64_t ioctlVmCreateExtensionArg;
-} // namespace SysCalls
-} // namespace NEO
 
 TEST(DrmQueryTest, givenDirectSubmissionActiveWhenCreateDrmContextThenProperFlagIsSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
@@ -235,7 +230,7 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_TRUE(NEO::SysCalls::vmFlags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
 TEST(DrmBufferObjectTestPrelim, givenLocalMemoryDisabledWhenCreateDrmVirtualMemoryThenVmRegionExtensionIsNotPassed) {
@@ -250,7 +245,7 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryDisabledWhenCreateDrmVirtualMemo
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_EQ(NEO::SysCalls::ioctlVmCreateExtensionArg, 0ull);
+    EXPECT_EQ(drm.receivedGemVmControl.extensions, 0ull);
 }
 
 TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemoryThenVmRegionExtensionIsPassed) {
@@ -271,7 +266,7 @@ TEST(DrmBufferObjectTestPrelim, givenLocalMemoryEnabledWhenCreateDrmVirtualMemor
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_NE(NEO::SysCalls::ioctlVmCreateExtensionArg, 0ull);
+    EXPECT_NE(drm.receivedGemVmControl.extensions, 0ull);
 }
 
 TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingThenSetProperAddressAndSize) {
@@ -303,7 +298,7 @@ TEST(DrmBufferObjectTestPrelim, givenPageFaultNotSupportedWhenCallingCreateDrmVi
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_FALSE(NEO::SysCalls::vmFlags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
+    EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
 
     drm.destroyDrmVirtualMemory(vmId);
 }
@@ -319,15 +314,19 @@ TEST(DrmBufferObjectTestPrelim, givenPageFaultSupportedWhenVmBindIsAvailableThen
         drm.bindAvailable = vmBindAvailable;
 
         uint32_t vmId = 0;
+        drm.ioctlCount.gemVmCreate = 0;
         drm.createDrmVirtualMemory(vmId);
+        EXPECT_EQ(1, drm.ioctlCount.gemVmCreate.load());
 
         if (drm.isVmBindAvailable()) {
-            EXPECT_TRUE(NEO::SysCalls::vmFlags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
+            EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
         } else {
-            EXPECT_FALSE(NEO::SysCalls::vmFlags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
+            EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getEnablePageFaultVmCreateFlag());
         }
 
+        VariableBackup<uint32_t> ioctlCountBackup(&SysCalls::ioctlVmDestroyCalled, 0u);
         drm.destroyDrmVirtualMemory(vmId);
+        EXPECT_EQ(1u, SysCalls::ioctlVmDestroyCalled);
     }
 }
 

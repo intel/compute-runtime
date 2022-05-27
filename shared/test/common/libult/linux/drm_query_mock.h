@@ -30,7 +30,7 @@ class DrmQueryMock : public DrmMock {
         setupIoctlHelper(IGFX_UNKNOWN);
 
         EXPECT_TRUE(queryMemoryInfo());
-        EXPECT_EQ(2u, ioctlCallsCount);
+        EXPECT_EQ(2u + virtualMemoryIds.size(), ioctlCallsCount);
         ioctlCallsCount = 0;
     }
 

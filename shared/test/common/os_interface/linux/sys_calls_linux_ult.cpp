@@ -32,13 +32,8 @@ int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
 bool dlOpenCalled = 0;
 constexpr int fakeFileDescriptor = 123;
-uint32_t vmId = 0;
 bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
-uint32_t ioctlVmCreateCalled = 0u;
-int ioctlVmCreateReturned = 0u;
-uint32_t vmFlags = 0u;
-uint64_t ioctlVmCreateExtensionArg = 0ull;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
 int fstatFuncRetVal = 0;
@@ -48,6 +43,7 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
+uint32_t ioctlVmDestroyCalled = 0u;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -96,18 +92,9 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
             memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
         }
     }
-    if (request == DRM_IOCTL_I915_GEM_VM_CREATE) {
-        ioctlVmCreateCalled++;
-        auto control = static_cast<GemVmControl *>(arg);
-        ioctlVmCreateExtensionArg = control->extensions;
-        control->vmId = ++vmId;
-        vmFlags |= control->flags;
-        return ioctlVmCreateReturned;
-    }
     if (request == DRM_IOCTL_I915_GEM_VM_DESTROY) {
+        ioctlVmDestroyCalled++;
         auto control = static_cast<GemVmControl *>(arg);
-        vmId--;
-        vmFlags = 0;
         return (control->vmId > 0) ? 0 : -1;
     }
     if (request == invalidIoctl) {

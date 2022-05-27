@@ -18,7 +18,7 @@ void Ioctls::reset() {
     gemCreate = 0;
     gemSetTiling = 0;
     gemGetTiling = 0;
-    gemGetAperture = 0;
+    gemVmCreate = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
     gemMmap = 0;

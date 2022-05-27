@@ -180,6 +180,7 @@ class DrmMock : public Drm {
     int storedRetValForPooledEU = 0;
     int storedRetValForMinEUinPool = 0;
     int storedRetValForPersistant = 0;
+    int storedRetValForVmCreate = 0;
     int storedPreemptionSupport =
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
@@ -238,6 +239,9 @@ class DrmMock : public Drm {
     uint32_t storedDrmContextId{};
     //DRM_IOCTL_GEM_CLOSE
     int storedRetValForGemClose = 0;
+
+    GemVmControl receivedGemVmControl{};
+    uint32_t latestCreatedVmId = 0u;
 
     uint64_t storedGTTSize = 1ull << 47;
     uint64_t storedParamSseu = ULONG_MAX;

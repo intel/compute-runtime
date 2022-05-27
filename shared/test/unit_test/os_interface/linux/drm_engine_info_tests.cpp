@@ -19,7 +19,7 @@ TEST(DrmTest, whenQueryingEngineInfoThenSingleIoctlIsCalled) {
     EXPECT_NE(nullptr, drm);
 
     drm->queryEngineInfo();
-    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_EQ(1u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
 }
 
 TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
@@ -32,7 +32,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
         {{0, 0}, 0, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions));
     drm->queryEngineInfo();
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
+    EXPECT_EQ(2u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
 
     ASSERT_NE(nullptr, engineInfo);
@@ -46,7 +46,7 @@ TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoCreate
     ASSERT_NE(nullptr, drm);
 
     drm->queryEngineInfo();
-    EXPECT_EQ(2u, drm->ioctlCallsCount);
+    EXPECT_EQ(2u + drm->virtualMemoryIds.size(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
 
     ASSERT_NE(nullptr, engineInfo);

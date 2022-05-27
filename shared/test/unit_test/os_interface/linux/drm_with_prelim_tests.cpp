@@ -108,6 +108,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
+    drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
@@ -135,12 +136,14 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
+    drm->ioctlCallsCount = 0;
     auto ret = IoctlHelper::ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
+    drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc(drm.get());
 
@@ -150,7 +153,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegio
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocThenReturnNone) {
     drm->ioctlRetVal = -1;
-
+    drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closAlloc(drm.get());
 
@@ -160,6 +163,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
     auto ioctlHelper = drm->getIoctlHelper();
+    drm->ioctlCallsCount = 0;
     auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::Region2, cacheRegion);
@@ -168,6 +172,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFreeThenReturnNone) {
     drm->ioctlRetVal = -1;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
@@ -177,6 +182,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
+    drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
 
@@ -186,6 +192,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectR
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAllocWaysThenReturnNone) {
     drm->ioctlRetVal = -1;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
@@ -205,6 +212,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueRe
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDontUpdateMemAdviceFlags) {
+    drm->ioctlCallsCount = 0;
     drm->ioctlRetVal = -1;
 
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
@@ -222,6 +230,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
+    drm->ioctlCallsCount = 0;
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
@@ -237,6 +246,7 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
+    drm->ioctlCallsCount = 0;
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
@@ -313,6 +323,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
+    drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
         {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
@@ -343,6 +354,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet) {
+    drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
         {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
@@ -358,6 +370,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {
+    drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
         {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
         {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
@@ -378,6 +391,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditio
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenFalseReturned) {
+    drm->ioctlCallsCount = 0;
     drm->queryDistanceIoctlRetVal = -1;
 
     std::vector<MemoryRegion> memRegions{
@@ -396,6 +410,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCountersIsCalledThenErrorIsReturned) {
     drm->ioctlRetVal = EINVAL;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
@@ -405,6 +420,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCountersIsCalledThenSuccessIsReturned) {
     drm->ioctlRetVal = 0;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
@@ -414,6 +430,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCou
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsCalledThenErrorIsReturned) {
     drm->ioctlRetVal = EINVAL;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
@@ -423,6 +440,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsCalledThenSuccessIsReturned) {
     drm->ioctlRetVal = 0u;
+    drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};

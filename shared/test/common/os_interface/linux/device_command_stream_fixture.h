@@ -40,7 +40,7 @@ class Ioctls {
     std::atomic<int32_t> gemCreate;
     std::atomic<int32_t> gemSetTiling;
     std::atomic<int32_t> gemGetTiling;
-    std::atomic<int32_t> gemGetAperture;
+    std::atomic<int32_t> gemVmCreate;
     std::atomic<int32_t> primeFdToHandle;
     std::atomic<int32_t> handleToPrimeFd;
     std::atomic<int32_t> gemMmap;

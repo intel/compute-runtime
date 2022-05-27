@@ -41,6 +41,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlCallsCount = 0;
 
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
@@ -61,6 +62,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlCallsCount = 0;
 
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
@@ -83,6 +85,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1AndMemoryRegionQuerySupportedWhenQuerying
 
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
+    drm->ioctlCallsCount = 0;
 
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);

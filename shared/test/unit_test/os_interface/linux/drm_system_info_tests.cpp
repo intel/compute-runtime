@@ -24,7 +24,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsNotCreatedAndIoctl
     EXPECT_FALSE(drm.querySystemInfo());
 
     EXPECT_EQ(nullptr, drm.getSystemInfo());
-    EXPECT_EQ(1u, drm.ioctlCallsCount);
+    EXPECT_EQ(1u + drm.virtualMemoryIds.size(), drm.ioctlCallsCount);
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThenReturnZero) {
@@ -98,7 +98,7 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
     EXPECT_NE(0u, systemInfo->getMaxRCS());
     EXPECT_NE(0u, systemInfo->getMaxCCS());
 
-    EXPECT_EQ(2u, drm.ioctlCallsCount);
+    EXPECT_EQ(2u + drm.virtualMemoryIds.size(), drm.ioctlCallsCount);
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecificAtrributesThenReturnCorrectValues) {
