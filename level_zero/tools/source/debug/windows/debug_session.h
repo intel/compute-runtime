@@ -17,25 +17,6 @@
 
 namespace L0 {
 
-namespace KmHeadersWA {
-typedef enum __EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE {
-    DBGUMD_RETURN_ESCAPE_SUCCESS = 0, /* Default return type */
-    DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY = 1,
-    DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED = 2,
-    DBGUMD_RETURN_INVALID_ARGS = 3,
-    DBGUMD_RETURN_PERMISSION_DENIED = 4,
-    DBGUMD_RETURN_NOT_VALID_PROCESS = 5,
-    DBGUMD_RETURN_EU_DEBUG_NOT_SUPPORTED = 6,
-    DBGUMD_RETURN_KMD_DEBUG_ERROR = 7,
-    DBGUMD_RETURN_INVALID_SESSION_INFO = 8,
-    DBGUMD_RETURN_INVALID_EVENT_SEQ_NO = 9,
-
-    DBGUMD_RETURN_TYPE_MAX,
-
-    DBGUMD_RETURN_NOT_IMPLEMENTED = -1
-} EUDBG_L0DBGUMD_ESCAPE_RETURN_TYPE;
-} // namespace KmHeadersWA
-
 struct DebugSessionWindows : DebugSessionImp {
     DebugSessionWindows(const zet_debug_config_t &config, Device *device) : DebugSessionImp(config, device), processId(config.pid) {}
 
