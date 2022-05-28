@@ -38,14 +38,24 @@ ze_result_t DebugSessionWindows::initialize() {
     escapeInfo.KmEuDbgL0EscapeInfo.AttachDebuggerParams.ProcessId = processId;
 
     auto status = runEscape(escapeInfo);
-    if (STATUS_SUCCESS != status) {
+    if (STATUS_SUCCESS != status || DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
         PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_ATTACH_DEBUGGER: Failed - ProcessId: %d Status: %d EscapeReturnStatus: %d\n", processId, status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
         return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
     }
 
     debugHandle = escapeInfo.KmEuDbgL0EscapeInfo.AttachDebuggerParams.hDebugHandle;
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_ATTACH_DEBUGGER: SUCCESS - ProcessId: %d DebugHandle: 0x%ullx\n", processId, debugHandle);
-    return ZE_RESULT_SUCCESS;
+
+    auto result = ZE_RESULT_SUCCESS;
+    do {
+        result = readAndHandleEvent(100);
+    } while (result == ZE_RESULT_SUCCESS && !moduleDebugAreaCaptured);
+
+    if (moduleDebugAreaCaptured) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    return result;
 }
 
 bool DebugSessionWindows::closeConnection() {
@@ -84,6 +94,77 @@ NTSTATUS DebugSessionWindows::runEscape(KM_ESCAPE_INFO &escapeInfo) {
     escapeCommand.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;
 
     return wddm->escape(escapeCommand);
+}
+
+ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
+    KM_ESCAPE_INFO escapeInfo = {0};
+
+    union {
+        READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
+        uint8_t rawBytes[READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
+    } eventParamsBuffer;
+
+    escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_EVENT;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.TimeoutMs = timeoutMs;
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.EventParamsBufferSize = sizeof(eventParamsBuffer);
+    escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.EventParamBufferPtr = reinterpret_cast<uint64_t>(&eventParamsBuffer);
+
+    auto status = runEscape(escapeInfo);
+    if (STATUS_SUCCESS != status || DBGUMD_RETURN_ESCAPE_SUCCESS != escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus) {
+        PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_EVENT: Failed - Status: %d EscapeReturnStatus: %d\n", status, escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+        return DebugSessionWindows::translateEscapeReturnStatusToZeResult(escapeInfo.KmEuDbgL0EscapeInfo.EscapeReturnStatus);
+    }
+
+    switch (escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.ReadEventType) {
+    case DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION:
+        return handleModuleCreateEvent(eventParamsBuffer.eventParamsBuffer.ModuleCreateEventParams);
+    case DBGUMD_READ_EVENT_EU_ATTN_BIT_SET:
+        return handleEuAttentionBitsEvent(eventParamsBuffer.eventParamsBuffer.EuBitSetEventParams);
+    case DBGUMD_READ_EVENT_ALLOCATION_DATA_INFO:
+        return handleAllocationDataEvent(eventParamsBuffer.eventParamsBuffer.ReadAdditionalAllocDataParams);
+    case DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY:
+        return handleContextCreateDestroyEvent(eventParamsBuffer.eventParamsBuffer.ContextCreateDestroyEventParams);
+    case DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY:
+        return handleDeviceCreateDestroyEvent(eventParamsBuffer.eventParamsBuffer.DeviceCreateDestroyEventParams);
+    case DBGUMD_READ_EVENT_CREATE_DEBUG_DATA:
+        return handleCreateDebugDataEvent(eventParamsBuffer.eventParamsBuffer.ReadCreateDebugDataParams);
+    default:
+        break;
+    }
+
+    PRINT_DEBUGGER_ERROR_LOG("DBGUMD_ACTION_READ_EVENT: Unknown ReadEventType returned: %d\n", escapeInfo.KmEuDbgL0EscapeInfo.ReadEventParams.ReadEventType);
+    return ZE_RESULT_ERROR_UNKNOWN;
+}
+
+ze_result_t DebugSessionWindows::handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DebugSessionWindows::handleAllocationDataEvent(DBGUMD_READ_EVENT_READ_ALLOCATION_DATA_PARAMS &allocationDataParams) {
+    auto allocationDebugData = reinterpret_cast<GFX_ALLOCATION_DEBUG_DATA_INFO *>(allocationDataParams.DebugDataBufferPtr);
+    UNRECOVERABLE_IF(nullptr == allocationDebugData);
+
+    if (allocationDebugData->DataType == MODULE_HEAP_DEBUG_AREA) {
+        moduleDebugAreaCaptured = true;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionWindows::handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DebugSessionWindows::handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t escapeReturnStatus) {

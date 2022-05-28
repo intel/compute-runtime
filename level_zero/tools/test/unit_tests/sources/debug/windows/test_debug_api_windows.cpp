@@ -17,7 +17,10 @@ namespace ult {
 struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::debugHandle;
     using DebugSessionWindows::initialize;
+    using DebugSessionWindows::moduleDebugAreaCaptured;
     using DebugSessionWindows::processId;
+    using DebugSessionWindows::readAndHandleEvent;
+    using DebugSessionWindows::wddm;
 
     MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
 
@@ -28,7 +31,15 @@ struct MockDebugSessionWindows : DebugSessionWindows {
         return DebugSessionWindows::initialize();
     }
 
+    ze_result_t readAndHandleEvent(uint64_t timeoutMs) override {
+        if (resultReadAndHandleEvent != ZE_RESULT_FORCE_UINT32) {
+            return resultReadAndHandleEvent;
+        }
+        return DebugSessionWindows::readAndHandleEvent(timeoutMs);
+    }
+
     ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
+    ze_result_t resultReadAndHandleEvent = ZE_RESULT_FORCE_UINT32;
 };
 
 struct DebugApiWindowsFixture : public DeviceFixture {
@@ -93,15 +104,39 @@ TEST_F(DebugApiWindowsTest, givenDebugAttachAvailableAndInitializationFailedWhen
     EXPECT_EQ(nullptr, debugSession);
 }
 
-TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledThenAttachDebuggerEscapeIsInvoked) {
+TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndModuleDebugAreaNotCapturedThenAttachDebuggerAndReadEventEscapesAreInvokedAndErrorNotAvailableReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
+
+    // KMD event queue is empty
+    mockWddm->readEventOutParams.escapeReturnStatus = DBGUMD_RETURN_READ_EVENT_TIMEOUT_EXPIRED;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    auto result = session->initialize();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_FALSE(session->moduleDebugAreaCaptured);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
+}
+
+TEST_F(DebugApiWindowsTest, givenDebugSessionInitializeCalledAndModuleDebugAreaCapturedThenAttachDebuggerAndReadEventEscapesAreInvokedAndResultSuccessReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    GFX_ALLOCATION_DEBUG_DATA_INFO allocDebugDataInfo = {0};
+    allocDebugDataInfo.DataType = MODULE_HEAP_DEBUG_AREA;
+    mockWddm->readEventOutParams.readEventType = DBGUMD_READ_EVENT_ALLOCATION_DATA_INFO;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadAdditionalAllocDataParams.NumOfDebugData = 1;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadAdditionalAllocDataParams.DebugDataBufferPtr = reinterpret_cast<uint64_t>(&allocDebugDataInfo);
 
     auto session = std::make_unique<MockDebugSessionWindows>(config, device);
     auto result = session->initialize();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(session->moduleDebugAreaCaptured);
     EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
     EXPECT_EQ(session->processId, config.pid);
     EXPECT_EQ(session->debugHandle, mockWddm->debugHandle);
 }
@@ -118,16 +153,50 @@ TEST_F(DebugApiWindowsTest, givenDebugSessionInitializedAndCloseConnectionCalled
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
+    GFX_ALLOCATION_DEBUG_DATA_INFO allocDebugDataInfo = {0};
+    allocDebugDataInfo.DataType = MODULE_HEAP_DEBUG_AREA;
+    mockWddm->readEventOutParams.readEventType = DBGUMD_READ_EVENT_ALLOCATION_DATA_INFO;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadAdditionalAllocDataParams.NumOfDebugData = 1;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadAdditionalAllocDataParams.DebugDataBufferPtr = reinterpret_cast<uint64_t>(&allocDebugDataInfo);
+
     auto session = std::make_unique<MockDebugSessionWindows>(config, device);
     auto result = session->initialize();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_ATTACH_DEBUGGER]);
+    EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_EVENT]);
     EXPECT_EQ(session->processId, config.pid);
     EXPECT_EQ(session->debugHandle, mockWddm->debugHandle);
 
     EXPECT_TRUE(session->closeConnection());
     EXPECT_EQ(1, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_DETACH_DEBUGGER]);
+}
+
+TEST_F(DebugApiWindowsTest, givenUnsupportedEventTypeWhenReadAndHandleEventCalledThenResultUnsupportedFeatureIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    for (auto unsupportedEventType : {DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION,
+                                      DBGUMD_READ_EVENT_EU_ATTN_BIT_SET,
+                                      DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY,
+                                      DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY,
+                                      DBGUMD_READ_EVENT_CREATE_DEBUG_DATA}) {
+        mockWddm->readEventOutParams.readEventType = unsupportedEventType;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readAndHandleEvent(100));
+    }
+}
+
+TEST_F(DebugApiWindowsTest, givenUnknownEventTypeWhenReadAndHandleEventCalledThenResultUnknownIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+    mockWddm->readEventOutParams.readEventType = DBGUMD_READ_EVENT_MAX;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readAndHandleEvent(100));
 }
 
 TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeResultReturned) {

@@ -39,6 +39,14 @@ struct DebugSessionWindows : DebugSessionImp {
 
     ze_result_t readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) override;
 
+    MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
+    ze_result_t handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams);
+    ze_result_t handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU_ATTN_BIT_SET_PARAMS &euAttentionBitsParams);
+    ze_result_t handleAllocationDataEvent(DBGUMD_READ_EVENT_READ_ALLOCATION_DATA_PARAMS &allocationDataParams);
+    ze_result_t handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams);
+    ze_result_t handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams);
+    ze_result_t handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams);
+
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override;
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override;
     bool readModuleDebugArea() override;
@@ -46,9 +54,10 @@ struct DebugSessionWindows : DebugSessionImp {
 
     NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
 
-    NEO::Wddm *wddm = nullptr;
+    bool moduleDebugAreaCaptured = false;
     uint32_t processId = 0;
     uint64_t debugHandle = 0;
+    NEO::Wddm *wddm = nullptr;
 };
 
 } // namespace L0
