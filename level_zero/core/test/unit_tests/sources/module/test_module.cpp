@@ -1144,6 +1144,18 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlag
     EXPECT_EQ(expectedFlags, moduleProperties.flags);
 }
 
+struct ModuleFunctionPointerTests : public Test<ModuleFixture> {
+    void SetUp() override {
+        Test<ModuleFixture>::SetUp();
+        module0 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::User);
+    }
+    void TearDown() override {
+        module0.reset(nullptr);
+        Test<ModuleFixture>::TearDown();
+    }
+    std::unique_ptr<WhiteBox<::L0::Module>> module0;
+};
+
 struct ModuleDynamicLinkTests : public Test<DeviceFixture> {
     void SetUp() override {
         Test<DeviceFixture>::SetUp();
@@ -1724,6 +1736,104 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithFunctionDependenciesWhenOtherModul
 
     ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_LINK_FAILURE, res);
+}
+
+TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionPointerReturnsGpuAddressToFunction) {
+
+    uint64_t gpuAddress = 0x12345;
+
+    NEO::SymbolInfo symbolInfo{};
+    symbolInfo.segment = NEO::SegmentType::Instructions;
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module0->symbols["externalFunction"] = relocatedSymbol;
+
+    void *functionPointer = nullptr;
+    ze_result_t res = module0->getFunctionPointer("externalFunction", &functionPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(functionPointer), gpuAddress);
+}
+
+TEST_F(ModuleFunctionPointerTests, givenInvalidFunctionNameAndModuleWithExportedSymbolThenGetFunctionPointerReturnsFailure) {
+
+    uint64_t gpuAddress = 0x12345;
+
+    NEO::SymbolInfo symbolInfo{};
+    symbolInfo.segment = NEO::SegmentType::Instructions;
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    kernelImmData->kernelDescriptor = &kernelDescriptor;
+    printf("kern %p\n", kernelImmData->kernelDescriptor);
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module0->symbols["externalFunction"] = relocatedSymbol;
+
+    void *functionPointer = nullptr;
+    ze_result_t res = module0->getFunctionPointer("Invalid", &functionPointer);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_FUNCTION_NAME, res);
+}
+
+TEST_F(ModuleFunctionPointerTests, givenModuleWithExportedSymbolThenGetFunctionPointerReturnsGpuAddressToKernelFunction) {
+
+    uint64_t gpuAddress = 0x12345;
+
+    NEO::SymbolInfo symbolInfo{};
+    symbolInfo.segment = NEO::SegmentType::Instructions;
+    NEO::Linker::RelocatedSymbol relocatedSymbol{symbolInfo, gpuAddress};
+
+    char kernelHeap[MemoryConstants::pageSize] = {};
+
+    auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+    kernelInfo->heapInfo.KernelHeapSize = MemoryConstants::pageSize;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+    module0->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+    NEO::KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernelFunction";
+
+    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+    kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()}));
+
+    kernelImmData->kernelDescriptor = &kernelDescriptor;
+    printf("kern %p\n", kernelImmData->kernelDescriptor);
+    module0->kernelImmDatas.push_back(std::move(kernelImmData));
+
+    module0->symbols["externalFunction"] = relocatedSymbol;
+
+    void *functionPointer = nullptr;
+    ze_result_t res = module0->getFunctionPointer("kernelFunction", &functionPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(functionPointer), module0->kernelImmDatas[0]->getIsaGraphicsAllocation()->getGpuAddress());
 }
 
 class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
