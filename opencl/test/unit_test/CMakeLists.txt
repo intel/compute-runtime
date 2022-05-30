@@ -348,32 +348,6 @@ function(neo_gen_kernel_with_kernel_debug_options platform_name_with_type platfo
   set(kernels_to_compile_${platform_name_with_type}_${revision_id} ${kernels_to_compile_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernel_from_ll platform_name_with_type platform_name suffix filepath output_name compile_options)
-  get_filename_component(filename ${filepath} NAME)
-  get_filename_component(basename ${filepath} NAME_WE)
-  get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
-
-  set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
-
-  set(outputpath_base "${outputdir}/${output_name}_${suffix}")
-  set(output_files
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
-  )
-  string(CONCAT compile_options \" ${compile_options} \" )
-
-         add_custom_command(
-                     OUTPUT ${output_files}
-                     COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
-                     WORKING_DIRECTORY ${workdir}
-                     DEPENDS ${filepath} ocloc
-  )
-
-  list(APPEND kernels_to_compile_${platform_name_with_type} ${output_files})
-  set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
-endfunction()
-
 set(TEST_KERNEL test_files/CopyBuffer_simd16.cl)
 
 set(TEST_KERNEL_options

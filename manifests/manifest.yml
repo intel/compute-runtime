@@ -31,7 +31,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 1904-178
+    revision: 1904-179
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
