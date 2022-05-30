@@ -84,8 +84,6 @@ class IoctlHelper {
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
-    virtual int32_t getMemRegionsIoctlVal() = 0;
-    virtual int32_t getEngineInfoIoctlVal() = 0;
     virtual uint32_t getComputeSlicesIoctlVal() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
@@ -115,7 +113,7 @@ class IoctlHelper {
     virtual bool isContextDebugSupported(Drm *drm) = 0;
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
-    virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) = 0;
+    virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const = 0;
 
     uint32_t createDrmContext(Drm &drm, const OsContext &osContext, uint32_t drmVmId);
 
@@ -124,6 +122,9 @@ class IoctlHelper {
 
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
+
+  protected:
+    unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -144,8 +145,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
-    int32_t getMemRegionsIoctlVal() override;
-    int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
@@ -175,7 +174,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -189,7 +188,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint32_t vmId) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
@@ -210,8 +209,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
-    int32_t getMemRegionsIoctlVal() override;
-    int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
@@ -241,7 +238,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
 };
 
 } // namespace NEO

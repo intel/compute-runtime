@@ -214,6 +214,8 @@ enum class DrmIoctl {
     GemContextGetparam,
     GemContextSetparam,
     Query,
+    QueryEngineInfo,
+    QueryMemoryRegions,
     GemMmap,
     GemMmapOffset,
     GemVmCreate,

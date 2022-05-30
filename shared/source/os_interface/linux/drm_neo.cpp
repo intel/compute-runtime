@@ -142,6 +142,10 @@ std::string getIoctlString(DrmIoctl ioctlRequest) {
         return "DRM_IOCTL_I915_GEM_VM_CREATE";
     case DrmIoctl::GemVmDestroy:
         return "DRM_IOCTL_I915_GEM_VM_DESTROY";
+    case DrmIoctl::QueryEngineInfo:
+        return "DRM_I915_QUERY_ENGINE_INFO";
+    case DrmIoctl::QueryMemoryRegions:
+        return "DRM_I915_QUERY_MEMORY_REGIONS";
     }
     UNRECOVERABLE_IF(true);
     return "";
@@ -977,7 +981,7 @@ bool Drm::querySystemInfo() {
 }
 
 std::vector<uint8_t> Drm::getMemoryRegions() {
-    return this->query(ioctlHelper->getMemRegionsIoctlVal(), 0);
+    return this->query(ioctlHelper->getIoctlRequestValue(DrmIoctl::QueryMemoryRegions), 0);
 }
 
 bool Drm::queryMemoryInfo() {
@@ -991,7 +995,7 @@ bool Drm::queryMemoryInfo() {
 }
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), 0);
+    auto enginesQuery = this->query(ioctlHelper->getIoctlRequestValue(DrmIoctl::QueryEngineInfo), 0);
     if (enginesQuery.empty()) {
         return false;
     }

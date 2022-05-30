@@ -222,7 +222,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetMemRegionsIoctlValThenCorrect
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    EXPECT_EQ(DRM_I915_QUERY_MEMORY_REGIONS, drm->getIoctlHelper()->getMemRegionsIoctlVal());
+    EXPECT_EQ(static_cast<unsigned int>(DRM_I915_QUERY_MEMORY_REGIONS), getIoctlRequestValue(DrmIoctl::QueryMemoryRegions, drm->getIoctlHelper()));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetEngineInfoIoctlValThenCorrectValueReturned) {
@@ -230,7 +230,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetEngineInfoIoctlValThenCorrect
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    EXPECT_EQ(DRM_I915_QUERY_ENGINE_INFO, drm->getIoctlHelper()->getEngineInfoIoctlVal());
+    EXPECT_EQ(static_cast<unsigned int>(DRM_I915_QUERY_ENGINE_INFO), getIoctlRequestValue(DrmIoctl::QueryEngineInfo, drm->getIoctlHelper()));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDistancesThenReturnEinval) {

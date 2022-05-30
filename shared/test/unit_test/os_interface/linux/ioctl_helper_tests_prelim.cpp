@@ -187,11 +187,11 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetDirectSubmissionFlagThenCorrec
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetMemRegionsIoctlValThenCorrectValueReturned) {
-    EXPECT_EQ(PRELIM_DRM_I915_QUERY_MEMORY_REGIONS, ioctlHelper.getMemRegionsIoctlVal());
+    EXPECT_EQ(static_cast<unsigned int>(DRM_I915_QUERY_MEMORY_REGIONS), getIoctlRequestValue(DrmIoctl::QueryMemoryRegions, &ioctlHelper));
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetEngineInfoIoctlValThenCorrectValueReturned) {
-    EXPECT_EQ(PRELIM_DRM_I915_QUERY_ENGINE_INFO, ioctlHelper.getEngineInfoIoctlVal());
+    EXPECT_EQ(static_cast<unsigned int>(DRM_I915_QUERY_ENGINE_INFO), getIoctlRequestValue(DrmIoctl::QueryEngineInfo, &ioctlHelper));
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSameData) {
