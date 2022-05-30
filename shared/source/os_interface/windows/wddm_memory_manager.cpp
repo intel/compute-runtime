@@ -78,7 +78,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
-                                                       allocationData.type, nullptr, allocationData.size, nullptr,
+                                                       allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     if (!createWddmAllocation(allocation.get(), nullptr)) {
@@ -93,7 +93,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
-                                                       allocationData.type, nullptr, allocationData.imgInfo->size,
+                                                       allocationData.type, nullptr, 0, allocationData.imgInfo->size,
                                                        nullptr, MemoryPool::SystemCpuInaccessible,
                                                        0u, // shareable
                                                        maxOsContextCount);
@@ -119,7 +119,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
-                                                           allocationData.type, nullptr,
+                                                           allocationData.type, nullptr, 0,
                                                            sizeAligned, nullptr, allowLargePages ? MemoryPool::System64KBPages : MemoryPool::System4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
@@ -177,8 +177,10 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
 
     auto chunkSize = getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::UseUmdSystemPtr);
     auto numGmms = (alignedSize + chunkSize - 1) / chunkSize;
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(hostPtr)));
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, numGmms,
-                                                           allocationData.type, hostPtr, allocationData.size,
+                                                           allocationData.type, hostPtr, canonizedAddress, allocationData.size,
                                                            nullptr, memoryPool,
                                                            0u, // shareable
                                                            maxOsContextCount);
@@ -241,9 +243,11 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
         return nullptr;
     }
 
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(pSysMem));
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
-                                                           allocationData.type, pSysMem, sizeAligned,
+                                                           allocationData.type, pSysMem, canonizedAddress, sizeAligned,
                                                            nullptr, MemoryPool::System4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
@@ -286,9 +290,11 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(allocationData.hostPtr)));
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
-                                                           allocationData.type, const_cast<void *>(allocationData.hostPtr),
+                                                           allocationData.type, const_cast<void *>(allocationData.hostPtr), canonizedAddress,
                                                            allocationData.size, nullptr, MemoryPool::System4KBPages,
                                                            0u, // shareable
                                                            maxOsContextCount);
@@ -328,9 +334,14 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
             return nullptr;
         }
 
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+        auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(inputPtr)));
         auto allocation = new WddmAllocation(allocationData.rootDeviceIndex,
                                              1u, // numGmms
-                                             allocationData.type, const_cast<void *>(inputPtr), allocationData.size,
+                                             allocationData.type,
+                                             const_cast<void *>(inputPtr),
+                                             canonizedAddress,
+                                             allocationData.size,
                                              reserve, MemoryPool::System4KBPages,
                                              0u, // shareable
                                              maxOsContextCount);
@@ -372,9 +383,12 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
     }
 
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptrAligned)));
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                            1u, // numGmms
-                                                           allocationData.type, const_cast<void *>(ptrAligned), sizeAligned, nullptr,
+                                                           allocationData.type, const_cast<void *>(ptrAligned), canonizedAddress,
+                                                           sizeAligned, nullptr,
                                                            MemoryPool::System4KBPagesWith32BitGpuAddressing,
                                                            0u, // shareable
                                                            maxOsContextCount);
@@ -395,7 +409,6 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         return nullptr;
     }
     auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow));
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
 
     if (preferredAllocationMethod != GfxMemoryAllocationMethod::UseUmdSystemPtr) {
@@ -696,9 +709,13 @@ void WddmMemoryManager::obtainGpuAddressFromFragments(WddmAllocation *allocation
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(allocationData.hostPtr)));
     auto allocation = new WddmAllocation(allocationData.rootDeviceIndex,
                                          1u, // numGmms
-                                         allocationData.type, const_cast<void *>(allocationData.hostPtr),
+                                         allocationData.type,
+                                         const_cast<void *>(allocationData.hostPtr),
+                                         canonizedAddress,
                                          allocationData.size, nullptr, MemoryPool::System4KBPages,
                                          0u, // shareable
                                          maxOsContextCount);
@@ -1035,7 +1052,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     const size_t numGmms = (static_cast<uint64_t>(sizeAligned) + chunkSize - 1) / chunkSize;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, singleBankAllocation ? numGmms : numBanks,
-                                                           allocationData.type, nullptr, sizeAligned, nullptr, MemoryPool::LocalMemory, allocationData.flags.shareable, maxOsContextCount);
+                                                           allocationData.type, nullptr, 0, sizeAligned, nullptr, MemoryPool::LocalMemory, allocationData.flags.shareable, maxOsContextCount);
     if (singleBankAllocation) {
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo));

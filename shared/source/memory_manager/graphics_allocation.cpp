@@ -20,11 +20,11 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     fileLoggerInstance().logAllocation(this);
 }
 
-GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
+GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedGpuAddress,
                                        uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount)
     : rootDeviceIndex(rootDeviceIndex),
       gpuBaseAddress(baseAddress),
-      gpuAddress(GmmHelper::canonize(gpuAddress)),
+      gpuAddress(canonizedGpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),

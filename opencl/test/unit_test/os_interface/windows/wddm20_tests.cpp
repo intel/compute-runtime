@@ -95,7 +95,9 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndCompressedResourceWhenMappingGpu
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
     void *fakePtr = reinterpret_cast<void *>(0x100);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, 0x2100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(fakePtr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, canonizedAddress, 0x2100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
 
@@ -248,7 +250,10 @@ TEST_F(Wddm20Tests, whenInitPrivateDataThenDefaultValuesAreSet) {
 
 TEST_F(Wddm20Tests, WhenCreatingAllocationAndDestroyingAllocationThenCorrectResultReturned) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto ptr = mm.allocateSystemMemory(100, 0);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
 
     allocation.setDefaultGmm(gmm);
@@ -272,7 +277,9 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     size_t underlyingPages = underlyingSize / MemoryConstants::pageSize;
     size_t alignedPages = alignedSize / MemoryConstants::pageSize;
 
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, ptr, 0x2100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x2100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper());
 
     allocation.setDefaultGmm(gmm);
@@ -314,7 +321,9 @@ TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamt
 
 TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmSize) {
     void *fakePtr = reinterpret_cast<void *>(0x123);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(fakePtr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, canonizedAddress, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper()));
 
     allocation.setDefaultGmm(gmm.get());
@@ -401,7 +410,10 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
 
 TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto ptr = mm.allocateSystemMemory(100, 0);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
 
     allocation.setDefaultGmm(gmm);
@@ -427,7 +439,7 @@ TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
 
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
 
     allocation.setDefaultGmm(gmm.get());
@@ -447,7 +459,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 
 TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResourceFlagIsEnabled) {
     init();
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
     auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
     allocation.setDefaultGmm(gmm.get());
     auto status = wddm->createAllocation(&allocation);
@@ -464,7 +476,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
         using WddmMemoryManager::WddmMemoryManager;
     };
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(false, false, *executionEnvironment);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
     auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
     allocation.setDefaultGmm(gmm.get());
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
@@ -473,7 +485,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
 }
 
 TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_NE(nullptr, sharedHandleToModify);
     *sharedHandleToModify = 1234u;
@@ -481,14 +493,17 @@ TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsShar
 }
 
 TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
     auto sharedHandleToModify = allocation.getSharedHandleToModify();
     EXPECT_EQ(nullptr, sharedHandleToModify);
 }
 
 TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = getGmmHelper();
+    auto ptr = mm.allocateSystemMemory(100, 0);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
 
     allocation.setDefaultGmm(gmm);
@@ -925,8 +940,10 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     gdi->createAllocation2 = FailingCreateAllocation::mockCreateAllocation2;
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
+    auto gmmHelper = getGmmHelper();
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(fakePtr)));
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), fakePtr, 100, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation(0, AllocationType::UNKNOWN, fakePtr, canonizedAddress, 100, nullptr, MemoryPool::MemoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
 
     EXPECT_FALSE(wddm->createAllocation64k(&allocation));

@@ -714,9 +714,12 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimmingToBudgetThenEvictingStops) {
-    WddmAllocation allocation1(0, AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
-    WddmAllocation allocation2(0, AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
-    WddmAllocation allocation3(0, AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto ptr = reinterpret_cast<void *>(0x1000);
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation1(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x3000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation3(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -814,8 +817,10 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     }
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
-    WddmAllocation allocation1(0, AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
-    WddmAllocation allocation2(0, AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
+    WddmAllocation allocation1(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, AllocationType::UNKNOWN, ptr, canonizedAddress, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -873,9 +878,10 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     void *ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x3000);
     void *ptr3 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x5000);
 
-    WddmAllocation allocation1(0, AllocationType::UNKNOWN, ptr1, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
-    WddmAllocation allocation2(0, AllocationType::UNKNOWN, ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
-    WddmAllocation allocation3(0, AllocationType::UNKNOWN, ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    WddmAllocation allocation1(0, AllocationType::UNKNOWN, ptr1, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr1))), underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, AllocationType::UNKNOWN, ptr2, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr2))), underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation3(0, AllocationType::UNKNOWN, ptr3, gmmHelper->canonize(castToUint64(const_cast<void *>(ptr3))), underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -1086,7 +1092,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     MockWddmAllocation allocation1(gmmHelper);
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
-    WddmAllocation allocationToTrim(0, AllocationType::UNKNOWN, cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
+    WddmAllocation allocationToTrim(0, AllocationType::UNKNOWN, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 

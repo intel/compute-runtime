@@ -75,7 +75,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         : GraphicsAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount) {}
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
-                       uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount);
+                       uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount);
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
                        size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount);

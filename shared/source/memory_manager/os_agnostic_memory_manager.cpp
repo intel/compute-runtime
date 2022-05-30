@@ -186,9 +186,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(allocationData.hostPtr) & MemoryConstants::pageMask);
+
+        auto canonizedGpuAddress = gmmHelper->canonize(gpuVirtualAddress + offset);
         MemoryAllocation *memAlloc = new MemoryAllocation(
             allocationData.rootDeviceIndex, allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
-            gmmHelper->canonize(gpuVirtualAddress + offset), allocationData.size,
+            canonizedGpuAddress, allocationData.size,
             counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, false, false, maxOsContextCount);
 
         memAlloc->set32BitAllocation(true);
@@ -213,8 +215,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
+        auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
         memoryAllocation = new MemoryAllocation(allocationData.rootDeviceIndex, allocationData.type, ptrAlloc, ptrAlloc,
-                                                gmmHelper->canonize(gpuAddress),
+                                                canonizedGpuAddress,
                                                 allocationData.size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing,
                                                 false, allocationData.flags.flushL3, maxOsContextCount);
 
@@ -419,8 +422,10 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
                                                                   void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count,
                                                                   MemoryPool::Type pool, uint32_t rootDeviceIndex, bool uncacheable,
                                                                   bool flushL3Required, bool requireSpecificBitness) {
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
     if (!isLimitedRange(rootDeviceIndex)) {
-        return new MemoryAllocation(rootDeviceIndex, allocationType, driverAllocatedCpuPointer, pMem, gpuAddress, memSize,
+        auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
+        return new MemoryAllocation(rootDeviceIndex, allocationType, driverAllocatedCpuPointer, pMem, canonizedGpuAddress, memSize,
                                     count, pool, uncacheable, flushL3Required, maxOsContextCount);
     }
 
@@ -430,8 +435,8 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
 
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     uint64_t limitedGpuAddress = gfxPartition->heapAllocate(heap, alignedSize);
-    auto gmmHelper = getGmmHelper(rootDeviceIndex);
-    auto memoryAllocation = new MemoryAllocation(rootDeviceIndex, allocationType, driverAllocatedCpuPointer, pMem, limitedGpuAddress, memSize,
+    auto canonizedGpuAddress = gmmHelper->canonize(limitedGpuAddress);
+    auto memoryAllocation = new MemoryAllocation(rootDeviceIndex, allocationType, driverAllocatedCpuPointer, pMem, canonizedGpuAddress, memSize,
                                                  count, pool, uncacheable, flushL3Required, maxOsContextCount);
 
     if (heap == HeapIndex::HEAP_EXTERNAL) {
@@ -461,6 +466,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     MemoryAllocation *allocation = nullptr;
     status = AllocationStatus::RetryInNonDevicePool;
     auto numHandles = allocationData.storageInfo.getNumBanks();
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
 
     if (!this->localMemorySupported[allocationData.rootDeviceIndex]) {
         return nullptr;
@@ -477,7 +483,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         allocation = static_cast<MemoryAllocation *>(allocate32BitGraphicsMemoryImpl(adjustedAllocationData, true));
     } else if (allocationData.type == AllocationType::SVM_GPU) {
         auto storage = allocateSystemMemory(allocationData.size, MemoryConstants::pageSize2Mb);
-        allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, reinterpret_cast<uint64_t>(allocationData.hostPtr),
+        auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(allocationData.hostPtr));
+        allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
                                           allocationData.size, counter, MemoryPool::LocalMemory, false, allocationData.flags.flushL3, maxOsContextCount);
         counter++;
     } else {
@@ -518,9 +525,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         }
         auto sizeOfHeapChunk = sizeAligned64k;
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-        auto gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, sizeOfHeapChunk));
+        auto canonizedGpuAddress = gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, sizeOfHeapChunk));
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, systemMemory, systemMemory,
-                                          gpuAddress, sizeAligned64k, counter,
+                                          canonizedGpuAddress, sizeAligned64k, counter,
                                           MemoryPool::LocalMemory, false, allocationData.flags.flushL3, maxOsContextCount);
         counter++;
         allocation->setDefaultGmm(gmm.release());

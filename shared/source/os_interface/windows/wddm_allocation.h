@@ -24,12 +24,12 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
-    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable, size_t maxOsContextCount)
-        : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, reservedAddr, pool, shareable, maxOsContextCount) {}
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable, size_t maxOsContextCount)
+        : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, canonizedAddress, sizeIn, reservedAddr, pool, shareable, maxOsContextCount) {}
 
-    WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
+    WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn,
                    void *reservedAddr, MemoryPool::Type pool, uint32_t shareable, size_t maxOsContextCount)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, maxOsContextCount),
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, canonizedAddress, 0llu, sizeIn, pool, maxOsContextCount),
           shareable(shareable), trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
