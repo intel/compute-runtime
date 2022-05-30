@@ -16,6 +16,7 @@
 #include <level_zero/zet_ddi.h>
 
 #include "ze_ddi_tables.h"
+#include "zes_sysman_all_api_entrypoints.h"
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;
 
@@ -38,35 +39,35 @@ zesGetDeviceProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesDeviceGetProperties;
-    pDdiTable->pfnGetState = zesDeviceGetState;
-    pDdiTable->pfnReset = zesDeviceReset;
-    pDdiTable->pfnProcessesGetState = zesDeviceProcessesGetState;
-    pDdiTable->pfnPciGetProperties = zesDevicePciGetProperties;
-    pDdiTable->pfnPciGetState = zesDevicePciGetState;
-    pDdiTable->pfnPciGetBars = zesDevicePciGetBars;
-    pDdiTable->pfnPciGetStats = zesDevicePciGetStats;
-    pDdiTable->pfnEnumDiagnosticTestSuites = zesDeviceEnumDiagnosticTestSuites;
-    pDdiTable->pfnEnumEngineGroups = zesDeviceEnumEngineGroups;
-    pDdiTable->pfnEventRegister = zesDeviceEventRegister;
-    pDdiTable->pfnEnumFabricPorts = zesDeviceEnumFabricPorts;
-    pDdiTable->pfnEnumFans = zesDeviceEnumFans;
-    pDdiTable->pfnEnumFirmwares = zesDeviceEnumFirmwares;
-    pDdiTable->pfnEnumFrequencyDomains = zesDeviceEnumFrequencyDomains;
-    pDdiTable->pfnEnumLeds = zesDeviceEnumLeds;
-    pDdiTable->pfnEnumMemoryModules = zesDeviceEnumMemoryModules;
-    pDdiTable->pfnEnumPerformanceFactorDomains = zesDeviceEnumPerformanceFactorDomains;
-    pDdiTable->pfnEnumPowerDomains = zesDeviceEnumPowerDomains;
-    pDdiTable->pfnGetCardPowerDomain = zesDeviceGetCardPowerDomain;
-    pDdiTable->pfnEnumPsus = zesDeviceEnumPsus;
-    pDdiTable->pfnEnumRasErrorSets = zesDeviceEnumRasErrorSets;
-    pDdiTable->pfnEnumSchedulers = zesDeviceEnumSchedulers;
-    pDdiTable->pfnEnumStandbyDomains = zesDeviceEnumStandbyDomains;
-    pDdiTable->pfnEnumTemperatureSensors = zesDeviceEnumTemperatureSensors;
-    pDdiTable->pfnEccAvailable = zesDeviceEccAvailable;
-    pDdiTable->pfnEccConfigurable = zesDeviceEccConfigurable;
-    pDdiTable->pfnGetEccState = zesDeviceGetEccState;
-    pDdiTable->pfnSetEccState = zesDeviceSetEccState;
+    pDdiTable->pfnGetProperties = L0::zesDeviceGetProperties;
+    pDdiTable->pfnGetState = L0::zesDeviceGetState;
+    pDdiTable->pfnReset = L0::zesDeviceReset;
+    pDdiTable->pfnProcessesGetState = L0::zesDeviceProcessesGetState;
+    pDdiTable->pfnPciGetProperties = L0::zesDevicePciGetProperties;
+    pDdiTable->pfnPciGetState = L0::zesDevicePciGetState;
+    pDdiTable->pfnPciGetBars = L0::zesDevicePciGetBars;
+    pDdiTable->pfnPciGetStats = L0::zesDevicePciGetStats;
+    pDdiTable->pfnEnumDiagnosticTestSuites = L0::zesDeviceEnumDiagnosticTestSuites;
+    pDdiTable->pfnEnumEngineGroups = L0::zesDeviceEnumEngineGroups;
+    pDdiTable->pfnEventRegister = L0::zesDeviceEventRegister;
+    pDdiTable->pfnEnumFabricPorts = L0::zesDeviceEnumFabricPorts;
+    pDdiTable->pfnEnumFans = L0::zesDeviceEnumFans;
+    pDdiTable->pfnEnumFirmwares = L0::zesDeviceEnumFirmwares;
+    pDdiTable->pfnEnumFrequencyDomains = L0::zesDeviceEnumFrequencyDomains;
+    pDdiTable->pfnEnumLeds = L0::zesDeviceEnumLeds;
+    pDdiTable->pfnEnumMemoryModules = L0::zesDeviceEnumMemoryModules;
+    pDdiTable->pfnEnumPerformanceFactorDomains = L0::zesDeviceEnumPerformanceFactorDomains;
+    pDdiTable->pfnEnumPowerDomains = L0::zesDeviceEnumPowerDomains;
+    pDdiTable->pfnGetCardPowerDomain = L0::zesDeviceGetCardPowerDomain;
+    pDdiTable->pfnEnumPsus = L0::zesDeviceEnumPsus;
+    pDdiTable->pfnEnumRasErrorSets = L0::zesDeviceEnumRasErrorSets;
+    pDdiTable->pfnEnumSchedulers = L0::zesDeviceEnumSchedulers;
+    pDdiTable->pfnEnumStandbyDomains = L0::zesDeviceEnumStandbyDomains;
+    pDdiTable->pfnEnumTemperatureSensors = L0::zesDeviceEnumTemperatureSensors;
+    pDdiTable->pfnEccAvailable = L0::zesDeviceEccAvailable;
+    pDdiTable->pfnEccConfigurable = L0::zesDeviceEccConfigurable;
+    pDdiTable->pfnGetEccState = L0::zesDeviceGetEccState;
+    pDdiTable->pfnSetEccState = L0::zesDeviceSetEccState;
     return result;
 }
 
@@ -89,8 +90,8 @@ zesGetDriverProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnEventListen = zesDriverEventListen;
-    pDdiTable->pfnEventListenEx = zesDriverEventListenEx;
+    pDdiTable->pfnEventListen = L0::zesDriverEventListen;
+    pDdiTable->pfnEventListenEx = L0::zesDriverEventListenEx;
     return result;
 }
 
@@ -113,9 +114,9 @@ zesGetDiagnosticsProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesDiagnosticsGetProperties;
-    pDdiTable->pfnGetTests = zesDiagnosticsGetTests;
-    pDdiTable->pfnRunTests = zesDiagnosticsRunTests;
+    pDdiTable->pfnGetProperties = L0::zesDiagnosticsGetProperties;
+    pDdiTable->pfnGetTests = L0::zesDiagnosticsGetTests;
+    pDdiTable->pfnRunTests = L0::zesDiagnosticsRunTests;
 
     return result;
 }
@@ -140,8 +141,8 @@ zesGetEngineProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesEngineGetProperties;
-    pDdiTable->pfnGetActivity = zesEngineGetActivity;
+    pDdiTable->pfnGetProperties = L0::zesEngineGetProperties;
+    pDdiTable->pfnGetActivity = L0::zesEngineGetActivity;
 
     return result;
 }
@@ -165,12 +166,12 @@ zesGetFabricPortProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesFabricPortGetProperties;
-    pDdiTable->pfnGetLinkType = zesFabricPortGetLinkType;
-    pDdiTable->pfnGetConfig = zesFabricPortGetConfig;
-    pDdiTable->pfnSetConfig = zesFabricPortSetConfig;
-    pDdiTable->pfnGetState = zesFabricPortGetState;
-    pDdiTable->pfnGetThroughput = zesFabricPortGetThroughput;
+    pDdiTable->pfnGetProperties = L0::zesFabricPortGetProperties;
+    pDdiTable->pfnGetLinkType = L0::zesFabricPortGetLinkType;
+    pDdiTable->pfnGetConfig = L0::zesFabricPortGetConfig;
+    pDdiTable->pfnSetConfig = L0::zesFabricPortSetConfig;
+    pDdiTable->pfnGetState = L0::zesFabricPortGetState;
+    pDdiTable->pfnGetThroughput = L0::zesFabricPortGetThroughput;
 
     return result;
 }
@@ -194,12 +195,12 @@ zesGetFanProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesFanGetProperties;
-    pDdiTable->pfnGetConfig = zesFanGetConfig;
-    pDdiTable->pfnSetDefaultMode = zesFanSetDefaultMode;
-    pDdiTable->pfnSetFixedSpeedMode = zesFanSetFixedSpeedMode;
-    pDdiTable->pfnSetSpeedTableMode = zesFanSetSpeedTableMode;
-    pDdiTable->pfnGetState = zesFanGetState;
+    pDdiTable->pfnGetProperties = L0::zesFanGetProperties;
+    pDdiTable->pfnGetConfig = L0::zesFanGetConfig;
+    pDdiTable->pfnSetDefaultMode = L0::zesFanSetDefaultMode;
+    pDdiTable->pfnSetFixedSpeedMode = L0::zesFanSetFixedSpeedMode;
+    pDdiTable->pfnSetSpeedTableMode = L0::zesFanSetSpeedTableMode;
+    pDdiTable->pfnGetState = L0::zesFanGetState;
 
     return result;
 }
@@ -223,8 +224,8 @@ zesGetFirmwareProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesFirmwareGetProperties;
-    pDdiTable->pfnFlash = zesFirmwareFlash;
+    pDdiTable->pfnGetProperties = L0::zesFirmwareGetProperties;
+    pDdiTable->pfnFlash = L0::zesFirmwareFlash;
 
     return result;
 }
@@ -249,23 +250,23 @@ zesGetFrequencyProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesFrequencyGetProperties;
-    pDdiTable->pfnGetAvailableClocks = zesFrequencyGetAvailableClocks;
-    pDdiTable->pfnGetRange = zesFrequencyGetRange;
-    pDdiTable->pfnSetRange = zesFrequencySetRange;
-    pDdiTable->pfnGetState = zesFrequencyGetState;
-    pDdiTable->pfnGetThrottleTime = zesFrequencyGetThrottleTime;
-    pDdiTable->pfnOcGetCapabilities = zesFrequencyOcGetCapabilities;
-    pDdiTable->pfnOcGetFrequencyTarget = zesFrequencyOcGetFrequencyTarget;
-    pDdiTable->pfnOcSetFrequencyTarget = zesFrequencyOcSetFrequencyTarget;
-    pDdiTable->pfnOcGetVoltageTarget = zesFrequencyOcGetVoltageTarget;
-    pDdiTable->pfnOcSetVoltageTarget = zesFrequencyOcSetVoltageTarget;
-    pDdiTable->pfnOcSetMode = zesFrequencyOcSetMode;
-    pDdiTable->pfnOcGetMode = zesFrequencyOcGetMode;
-    pDdiTable->pfnOcGetIccMax = zesFrequencyOcGetIccMax;
-    pDdiTable->pfnOcSetIccMax = zesFrequencyOcSetIccMax;
-    pDdiTable->pfnOcGetTjMax = zesFrequencyOcGetTjMax;
-    pDdiTable->pfnOcSetTjMax = zesFrequencyOcSetTjMax;
+    pDdiTable->pfnGetProperties = L0::zesFrequencyGetProperties;
+    pDdiTable->pfnGetAvailableClocks = L0::zesFrequencyGetAvailableClocks;
+    pDdiTable->pfnGetRange = L0::zesFrequencyGetRange;
+    pDdiTable->pfnSetRange = L0::zesFrequencySetRange;
+    pDdiTable->pfnGetState = L0::zesFrequencyGetState;
+    pDdiTable->pfnGetThrottleTime = L0::zesFrequencyGetThrottleTime;
+    pDdiTable->pfnOcGetCapabilities = L0::zesFrequencyOcGetCapabilities;
+    pDdiTable->pfnOcGetFrequencyTarget = L0::zesFrequencyOcGetFrequencyTarget;
+    pDdiTable->pfnOcSetFrequencyTarget = L0::zesFrequencyOcSetFrequencyTarget;
+    pDdiTable->pfnOcGetVoltageTarget = L0::zesFrequencyOcGetVoltageTarget;
+    pDdiTable->pfnOcSetVoltageTarget = L0::zesFrequencyOcSetVoltageTarget;
+    pDdiTable->pfnOcSetMode = L0::zesFrequencyOcSetMode;
+    pDdiTable->pfnOcGetMode = L0::zesFrequencyOcGetMode;
+    pDdiTable->pfnOcGetIccMax = L0::zesFrequencyOcGetIccMax;
+    pDdiTable->pfnOcSetIccMax = L0::zesFrequencyOcSetIccMax;
+    pDdiTable->pfnOcGetTjMax = L0::zesFrequencyOcGetTjMax;
+    pDdiTable->pfnOcSetTjMax = L0::zesFrequencyOcSetTjMax;
 
     return result;
 }
@@ -289,10 +290,10 @@ zesGetLedProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesLedGetProperties;
-    pDdiTable->pfnGetState = zesLedGetState;
-    pDdiTable->pfnSetState = zesLedSetState;
-    pDdiTable->pfnSetColor = zesLedSetColor;
+    pDdiTable->pfnGetProperties = L0::zesLedGetProperties;
+    pDdiTable->pfnGetState = L0::zesLedGetState;
+    pDdiTable->pfnSetState = L0::zesLedSetState;
+    pDdiTable->pfnSetColor = L0::zesLedSetColor;
 
     return result;
 }
@@ -316,9 +317,9 @@ zesGetMemoryProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesMemoryGetProperties;
-    pDdiTable->pfnGetState = zesMemoryGetState;
-    pDdiTable->pfnGetBandwidth = zesMemoryGetBandwidth;
+    pDdiTable->pfnGetProperties = L0::zesMemoryGetProperties;
+    pDdiTable->pfnGetState = L0::zesMemoryGetState;
+    pDdiTable->pfnGetBandwidth = L0::zesMemoryGetBandwidth;
 
     return result;
 }
@@ -342,9 +343,9 @@ zesGetPerformanceFactorProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesPerformanceFactorGetProperties;
-    pDdiTable->pfnGetConfig = zesPerformanceFactorGetConfig;
-    pDdiTable->pfnSetConfig = zesPerformanceFactorSetConfig;
+    pDdiTable->pfnGetProperties = L0::zesPerformanceFactorGetProperties;
+    pDdiTable->pfnGetConfig = L0::zesPerformanceFactorGetConfig;
+    pDdiTable->pfnSetConfig = L0::zesPerformanceFactorSetConfig;
 
     return result;
 }
@@ -368,12 +369,12 @@ zesGetPowerProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesPowerGetProperties;
-    pDdiTable->pfnGetEnergyCounter = zesPowerGetEnergyCounter;
-    pDdiTable->pfnGetLimits = zesPowerGetLimits;
-    pDdiTable->pfnSetLimits = zesPowerSetLimits;
-    pDdiTable->pfnGetEnergyThreshold = zesPowerGetEnergyThreshold;
-    pDdiTable->pfnSetEnergyThreshold = zesPowerSetEnergyThreshold;
+    pDdiTable->pfnGetProperties = L0::zesPowerGetProperties;
+    pDdiTable->pfnGetEnergyCounter = L0::zesPowerGetEnergyCounter;
+    pDdiTable->pfnGetLimits = L0::zesPowerGetLimits;
+    pDdiTable->pfnSetLimits = L0::zesPowerSetLimits;
+    pDdiTable->pfnGetEnergyThreshold = L0::zesPowerGetEnergyThreshold;
+    pDdiTable->pfnSetEnergyThreshold = L0::zesPowerSetEnergyThreshold;
 
     return result;
 }
@@ -397,8 +398,8 @@ zesGetPsuProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesPsuGetProperties;
-    pDdiTable->pfnGetState = zesPsuGetState;
+    pDdiTable->pfnGetProperties = L0::zesPsuGetProperties;
+    pDdiTable->pfnGetState = L0::zesPsuGetState;
 
     return result;
 }
@@ -422,10 +423,10 @@ zesGetRasProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesRasGetProperties;
-    pDdiTable->pfnGetConfig = zesRasGetConfig;
-    pDdiTable->pfnSetConfig = zesRasSetConfig;
-    pDdiTable->pfnGetState = zesRasGetState;
+    pDdiTable->pfnGetProperties = L0::zesRasGetProperties;
+    pDdiTable->pfnGetConfig = L0::zesRasGetConfig;
+    pDdiTable->pfnSetConfig = L0::zesRasSetConfig;
+    pDdiTable->pfnGetState = L0::zesRasGetState;
 
     return result;
 }
@@ -449,14 +450,14 @@ zesGetSchedulerProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesSchedulerGetProperties;
-    pDdiTable->pfnGetCurrentMode = zesSchedulerGetCurrentMode;
-    pDdiTable->pfnGetTimeoutModeProperties = zesSchedulerGetTimeoutModeProperties;
-    pDdiTable->pfnGetTimesliceModeProperties = zesSchedulerGetTimesliceModeProperties;
-    pDdiTable->pfnSetTimeoutMode = zesSchedulerSetTimeoutMode;
-    pDdiTable->pfnSetTimesliceMode = zesSchedulerSetTimesliceMode;
-    pDdiTable->pfnSetExclusiveMode = zesSchedulerSetExclusiveMode;
-    pDdiTable->pfnSetComputeUnitDebugMode = zesSchedulerSetComputeUnitDebugMode;
+    pDdiTable->pfnGetProperties = L0::zesSchedulerGetProperties;
+    pDdiTable->pfnGetCurrentMode = L0::zesSchedulerGetCurrentMode;
+    pDdiTable->pfnGetTimeoutModeProperties = L0::zesSchedulerGetTimeoutModeProperties;
+    pDdiTable->pfnGetTimesliceModeProperties = L0::zesSchedulerGetTimesliceModeProperties;
+    pDdiTable->pfnSetTimeoutMode = L0::zesSchedulerSetTimeoutMode;
+    pDdiTable->pfnSetTimesliceMode = L0::zesSchedulerSetTimesliceMode;
+    pDdiTable->pfnSetExclusiveMode = L0::zesSchedulerSetExclusiveMode;
+    pDdiTable->pfnSetComputeUnitDebugMode = L0::zesSchedulerSetComputeUnitDebugMode;
 
     return result;
 }
@@ -480,9 +481,9 @@ zesGetStandbyProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesStandbyGetProperties;
-    pDdiTable->pfnGetMode = zesStandbyGetMode;
-    pDdiTable->pfnSetMode = zesStandbySetMode;
+    pDdiTable->pfnGetProperties = L0::zesStandbyGetProperties;
+    pDdiTable->pfnGetMode = L0::zesStandbyGetMode;
+    pDdiTable->pfnSetMode = L0::zesStandbySetMode;
 
     return result;
 }
@@ -506,10 +507,10 @@ zesGetTemperatureProcAddrTable(
         return result;
     }
 
-    pDdiTable->pfnGetProperties = zesTemperatureGetProperties;
-    pDdiTable->pfnGetConfig = zesTemperatureGetConfig;
-    pDdiTable->pfnSetConfig = zesTemperatureSetConfig;
-    pDdiTable->pfnGetState = zesTemperatureGetState;
+    pDdiTable->pfnGetProperties = L0::zesTemperatureGetProperties;
+    pDdiTable->pfnGetConfig = L0::zesTemperatureGetConfig;
+    pDdiTable->pfnSetConfig = L0::zesTemperatureSetConfig;
+    pDdiTable->pfnGetState = L0::zesTemperatureGetState;
 
     return result;
 }

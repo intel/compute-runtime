@@ -11,10 +11,6 @@
 #pragma once
 #endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,6 +28,7 @@ typedef enum _zex_mem_ipc_handles_version_t {
 
 } zex_mem_ipc_handles_version_t;
 
+namespace L0 {
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Returns an array IPC memory handles for the specified allocation
 ///
@@ -45,7 +42,7 @@ typedef enum _zex_mem_ipc_handles_version_t {
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
 ///         + `ptr` not known
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexMemGetIpcHandles(
     ze_context_handle_t hContext,    ///< [in] handle of the context object
     const void *ptr,                 ///< [in] pointer to the device memory allocation
@@ -71,7 +68,7 @@ zexMemGetIpcHandles(
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
 ///         + handles not known
-ZE_APIEXPORT ze_result_t ZE_APICALL
+ze_result_t ZE_APICALL
 zexMemOpenIpcHandles(
     ze_context_handle_t hContext,     ///< [in] handle of the context object
     ze_device_handle_t hDevice,       ///< [in] handle of the device to associate with the IPC memory handle
@@ -82,8 +79,6 @@ zexMemOpenIpcHandles(
     void **pptr                       ///< [out] pointer to device allocation in this process
 );
 
-#if defined(__cplusplus)
-} // extern "C"
-#endif
+} // namespace L0
 
 #endif // _ZEX_MEMORY_H

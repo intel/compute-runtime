@@ -13,7 +13,7 @@ namespace L0 {
 std::unordered_map<std::string, void *> getExtensionFunctionsLookupMap() {
     std::unordered_map<std::string, void *> lookupMap;
 
-#define addToMap(map, x) map[#x] = reinterpret_cast<void *>(&x)
+#define addToMap(map, x) map[#x] = reinterpret_cast<void *>(&L0::x)
     addToMap(lookupMap, zexDriverImportExternalPointer);
     addToMap(lookupMap, zexDriverReleaseImportedPointer);
     addToMap(lookupMap, zexDriverGetHostPointerBaseAddress);

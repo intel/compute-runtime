@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/api/driver_experimental/tracing/zet_tracing.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
@@ -14,6 +15,7 @@
 #include <level_zero/zet_ddi.h>
 
 #include "ze_ddi_tables.h"
+#include "zet_tools_all_api_entrypoints.h"
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;
 
@@ -27,7 +29,7 @@ zetGetContextProcAddrTable(
     if (ZE_MAJOR_VERSION(driver_ddiTable.version) != ZE_MAJOR_VERSION(version) ||
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
-    pDdiTable->pfnActivateMetricGroups = zetContextActivateMetricGroups;
+    pDdiTable->pfnActivateMetricGroups = L0::zetContextActivateMetricGroups;
     return result;
 }
 
@@ -42,9 +44,9 @@ zetGetMetricStreamerProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    pDdiTable->pfnOpen = zetMetricStreamerOpen;
-    pDdiTable->pfnClose = zetMetricStreamerClose;
-    pDdiTable->pfnReadData = zetMetricStreamerReadData;
+    pDdiTable->pfnOpen = L0::zetMetricStreamerOpen;
+    pDdiTable->pfnClose = L0::zetMetricStreamerClose;
+    pDdiTable->pfnReadData = L0::zetMetricStreamerReadData;
 
     return result;
 }
@@ -59,11 +61,11 @@ zetGetTracerExpProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = zetTracerExpCreate;
-    pDdiTable->pfnDestroy = zetTracerExpDestroy;
-    pDdiTable->pfnSetPrologues = zetTracerExpSetPrologues;
-    pDdiTable->pfnSetEpilogues = zetTracerExpSetEpilogues;
-    pDdiTable->pfnSetEnabled = zetTracerExpSetEnabled;
+    pDdiTable->pfnCreate = L0::zetTracerExpCreate;
+    pDdiTable->pfnDestroy = L0::zetTracerExpDestroy;
+    pDdiTable->pfnSetPrologues = L0::zetTracerExpSetPrologues;
+    pDdiTable->pfnSetEpilogues = L0::zetTracerExpSetEpilogues;
+    pDdiTable->pfnSetEnabled = L0::zetTracerExpSetEnabled;
     return result;
 }
 
@@ -77,10 +79,10 @@ zetGetCommandListProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnAppendMetricStreamerMarker = zetCommandListAppendMetricStreamerMarker;
-    pDdiTable->pfnAppendMetricQueryBegin = zetCommandListAppendMetricQueryBegin;
-    pDdiTable->pfnAppendMetricQueryEnd = zetCommandListAppendMetricQueryEnd;
-    pDdiTable->pfnAppendMetricMemoryBarrier = zetCommandListAppendMetricMemoryBarrier;
+    pDdiTable->pfnAppendMetricStreamerMarker = L0::zetCommandListAppendMetricStreamerMarker;
+    pDdiTable->pfnAppendMetricQueryBegin = L0::zetCommandListAppendMetricQueryBegin;
+    pDdiTable->pfnAppendMetricQueryEnd = L0::zetCommandListAppendMetricQueryEnd;
+    pDdiTable->pfnAppendMetricMemoryBarrier = L0::zetCommandListAppendMetricMemoryBarrier;
     return result;
 }
 
@@ -94,7 +96,7 @@ zetGetModuleProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetDebugInfo = zetModuleGetDebugInfo;
+    pDdiTable->pfnGetDebugInfo = L0::zetModuleGetDebugInfo;
     return result;
 }
 
@@ -108,7 +110,7 @@ zetGetKernelProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetProfileInfo = zetKernelGetProfileInfo;
+    pDdiTable->pfnGetProfileInfo = L0::zetKernelGetProfileInfo;
     return result;
 }
 
@@ -122,9 +124,9 @@ zetGetMetricGroupProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGet = zetMetricGroupGet;
-    pDdiTable->pfnGetProperties = zetMetricGroupGetProperties;
-    pDdiTable->pfnCalculateMetricValues = zetMetricGroupCalculateMetricValues;
+    pDdiTable->pfnGet = L0::zetMetricGroupGet;
+    pDdiTable->pfnGetProperties = L0::zetMetricGroupGetProperties;
+    pDdiTable->pfnCalculateMetricValues = L0::zetMetricGroupCalculateMetricValues;
     return result;
 }
 
@@ -139,8 +141,8 @@ zetGetMetricProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGet = zetMetricGet;
-    pDdiTable->pfnGetProperties = zetMetricGetProperties;
+    pDdiTable->pfnGet = L0::zetMetricGet;
+    pDdiTable->pfnGetProperties = L0::zetMetricGetProperties;
     return result;
 }
 
@@ -154,8 +156,8 @@ zetGetMetricQueryPoolProcAddrTable(
         ZE_MINOR_VERSION(driver_ddiTable.version) > ZE_MINOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = zetMetricQueryPoolCreate;
-    pDdiTable->pfnDestroy = zetMetricQueryPoolDestroy;
+    pDdiTable->pfnCreate = L0::zetMetricQueryPoolCreate;
+    pDdiTable->pfnDestroy = L0::zetMetricQueryPoolDestroy;
     return result;
 }
 
@@ -170,10 +172,10 @@ zetGetMetricQueryProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = zetMetricQueryCreate;
-    pDdiTable->pfnDestroy = zetMetricQueryDestroy;
-    pDdiTable->pfnReset = zetMetricQueryReset;
-    pDdiTable->pfnGetData = zetMetricQueryGetData;
+    pDdiTable->pfnCreate = L0::zetMetricQueryCreate;
+    pDdiTable->pfnDestroy = L0::zetMetricQueryDestroy;
+    pDdiTable->pfnReset = L0::zetMetricQueryReset;
+    pDdiTable->pfnGetData = L0::zetMetricQueryGetData;
     return result;
 }
 
@@ -188,7 +190,7 @@ zetGetDeviceProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetDebugProperties = zetDeviceGetDebugProperties;
+    pDdiTable->pfnGetDebugProperties = L0::zetDeviceGetDebugProperties;
     return result;
 }
 
@@ -203,17 +205,17 @@ zetGetDebugProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnAttach = zetDebugAttach;
-    pDdiTable->pfnDetach = zetDebugDetach;
-    pDdiTable->pfnReadEvent = zetDebugReadEvent;
-    pDdiTable->pfnAcknowledgeEvent = zetDebugAcknowledgeEvent;
-    pDdiTable->pfnInterrupt = zetDebugInterrupt;
-    pDdiTable->pfnResume = zetDebugResume;
-    pDdiTable->pfnReadMemory = zetDebugReadMemory;
-    pDdiTable->pfnWriteMemory = zetDebugWriteMemory;
-    pDdiTable->pfnGetRegisterSetProperties = zetDebugGetRegisterSetProperties;
-    pDdiTable->pfnReadRegisters = zetDebugReadRegisters;
-    pDdiTable->pfnWriteRegisters = zetDebugWriteRegisters;
+    pDdiTable->pfnAttach = L0::zetDebugAttach;
+    pDdiTable->pfnDetach = L0::zetDebugDetach;
+    pDdiTable->pfnReadEvent = L0::zetDebugReadEvent;
+    pDdiTable->pfnAcknowledgeEvent = L0::zetDebugAcknowledgeEvent;
+    pDdiTable->pfnInterrupt = L0::zetDebugInterrupt;
+    pDdiTable->pfnResume = L0::zetDebugResume;
+    pDdiTable->pfnReadMemory = L0::zetDebugReadMemory;
+    pDdiTable->pfnWriteMemory = L0::zetDebugWriteMemory;
+    pDdiTable->pfnGetRegisterSetProperties = L0::zetDebugGetRegisterSetProperties;
+    pDdiTable->pfnReadRegisters = L0::zetDebugReadRegisters;
+    pDdiTable->pfnWriteRegisters = L0::zetDebugWriteRegisters;
 
     return result;
 }
@@ -229,7 +231,7 @@ zetGetMetricGroupExpProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCalculateMultipleMetricValuesExp = zetMetricGroupCalculateMultipleMetricValuesExp;
+    pDdiTable->pfnCalculateMultipleMetricValuesExp = L0::zetMetricGroupCalculateMultipleMetricValuesExp;
 
     return result;
 }

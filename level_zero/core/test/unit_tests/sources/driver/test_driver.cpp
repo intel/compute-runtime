@@ -18,6 +18,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "level_zero/api/driver_experimental/public/zex_driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -653,10 +654,10 @@ struct HostImportApiFixture : public HostPointerManagerFixure {
 using DriverExperimentalApiTest = Test<HostImportApiFixture>;
 
 TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPointer) {
-    decltype(&zexDriverImportExternalPointer) expectedImport = zexDriverImportExternalPointer;
-    decltype(&zexDriverReleaseImportedPointer) expectedRelease = zexDriverReleaseImportedPointer;
-    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = zexDriverGetHostPointerBaseAddress;
-    decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = zexKernelGetBaseAddress;
+    decltype(&zexDriverImportExternalPointer) expectedImport = L0::zexDriverImportExternalPointer;
+    decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
+    decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
+    decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
 
     void *funPtr = nullptr;
 

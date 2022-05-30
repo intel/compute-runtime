@@ -216,15 +216,15 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         uint32_t setCount = 0;
         uint32_t totalMetricValueCount = 0;
         std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_TRUE(setCount == 1);
         EXPECT_TRUE(totalMetricValueCount == 40);
-        EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
                   ZE_RESULT_SUCCESS);
         EXPECT_TRUE(setCount == 1);
         EXPECT_TRUE(totalMetricValueCount == 20);
@@ -255,9 +255,9 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         uint32_t setCount = 0;
         uint32_t totalMetricValueCount = 0;
         std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize + 1, reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize + 1, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_ERROR_INVALID_SIZE);
     }
 }
@@ -283,15 +283,15 @@ TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCal
         uint32_t setCount = 0;
         uint32_t totalMetricValueCount = 0;
         std::vector<uint32_t> metricCounts(2);
-        EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_TRUE(setCount == 1);
         EXPECT_TRUE(totalMetricValueCount == 40);
-        EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
-                                                                 ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize + 1, reinterpret_cast<uint8_t *>(rawDataVector.data()),
-                                                                 &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
+        EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
+                                                                     ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize + 1, reinterpret_cast<uint8_t *>(rawDataVector.data()),
+                                                                     &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
                   ZE_RESULT_ERROR_INVALID_SIZE);
     }
 }

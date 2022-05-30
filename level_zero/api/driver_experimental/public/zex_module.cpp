@@ -9,9 +9,23 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
-ZE_DLLEXPORT ze_result_t ZE_APICALL
+namespace L0 {
+
+ze_result_t ZE_APICALL
 zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress) {
     return L0::Kernel::fromHandle(hKernel)->getBaseAddress(baseAddress);
+}
+
+} // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexKernelGetBaseAddress(
+    ze_kernel_handle_t hKernel,
+    uint64_t *baseAddress) {
+    return L0::zexKernelGetBaseAddress(hKernel, baseAddress);
+}
 }

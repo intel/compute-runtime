@@ -250,12 +250,12 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
 
     uint32_t dataCount = 0;
     uint32_t totalMetricCount = 0;
-    EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawSize, rawData.data(), &dataCount, &totalMetricCount, nullptr, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawSize, rawData.data(), &dataCount, &totalMetricCount, nullptr, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(totalMetricCount, subDeviceCount * metricsSetParams.MetricsCount * reportCount);
 
     std::vector<uint32_t> metricCounts(dataCount);
     std::vector<zet_typed_value_t> caculatedRawResults(totalMetricCount);
-    EXPECT_EQ(zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawSize, rawData.data(), &dataCount, &totalMetricCount, metricCounts.data(), caculatedRawResults.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawSize, rawData.data(), &dataCount, &totalMetricCount, metricCounts.data(), caculatedRawResults.data()), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricCounts[0], metricsSetParams.MetricsCount);
     EXPECT_EQ(metricCounts[1], metricsSetParams.MetricsCount);
 

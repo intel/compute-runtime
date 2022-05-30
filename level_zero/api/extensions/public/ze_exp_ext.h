@@ -7,12 +7,46 @@
 
 #pragma once
 
-#include <level_zero/ze_api.h>
+#include <level_zero/zet_api.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+namespace L0 {
 
-#if defined(__cplusplus)
-} // extern "C"
-#endif
+ze_result_t zeKernelSetGlobalOffsetExp(
+    ze_kernel_handle_t hKernel,
+    uint32_t offsetX,
+    uint32_t offsetY,
+    uint32_t offsetZ);
+
+ze_result_t zeImageGetMemoryPropertiesExp(
+    ze_image_handle_t hImage,
+    ze_image_memory_properties_exp_t *pMemoryProperties);
+
+ze_result_t zeImageGetAllocPropertiesExt(
+    ze_context_handle_t hContext,
+    ze_image_handle_t hImage,
+    ze_image_allocation_ext_properties_t *pAllocProperties);
+
+ze_result_t zeImageViewCreateExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_image_desc_t *desc,
+    ze_image_handle_t hImage,
+    ze_image_handle_t *phImageView);
+
+ze_result_t zeEventQueryTimestampsExp(
+    ze_event_handle_t hEvent,
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_kernel_timestamp_result_t *pTimestamps);
+
+ze_result_t zetMetricGroupCalculateMultipleMetricValuesExp(
+    zet_metric_group_handle_t hMetricGroup,
+    zet_metric_group_calculation_type_t type,
+    size_t rawDataSize,
+    const uint8_t *pRawData,
+    uint32_t *pSetCount,
+    uint32_t *pTotalMetricValueCount,
+    uint32_t *pMetricCounts,
+    zet_typed_value_t *pMetricValues);
+
+} // namespace L0
