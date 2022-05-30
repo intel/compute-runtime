@@ -8,9 +8,13 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "drm/i915_drm.h"
 
@@ -76,6 +80,30 @@ void IoctlHelper::logExecBuffer(const ExecBuffer &execBuffer, std::stringstream 
            << ", flags: " + std::to_string(drmExecBuffer.flags)
            << ", rsvd1: " + std::to_string(drmExecBuffer.rsvd1)
            << " }\n";
+}
+
+uint32_t IoctlHelper::createDrmContext(Drm &drm, const OsContext &osContext, uint32_t drmVmId) {
+
+    const auto numberOfCCS = drm.getRootDeviceEnvironment().getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    const bool debuggableContext = drm.isContextDebugSupported() && drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !osContext.isInternalEngine();
+    const bool debuggableContextCooperative = debuggableContext && numberOfCCS > 0;
+    auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable(), osContext.isCooperativeEngine() || debuggableContextCooperative);
+    if (drm.areNonPersistentContextsSupported()) {
+        drm.setNonPersistentContext(drmContextId);
+    }
+
+    if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+        drm.setUnrecoverableContext(drmContextId);
+    }
+
+    if (debuggableContext) {
+        drm.setContextDebugFlag(drmContextId);
+    }
+
+    if (drm.isPreemptionSupported() && osContext.isLowPriority()) {
+        drm.setLowPriorityContextParam(drmContextId);
+    }
+    return drmContextId;
 }
 
 } // namespace NEO

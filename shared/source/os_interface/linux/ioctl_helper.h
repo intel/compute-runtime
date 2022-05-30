@@ -20,6 +20,7 @@
 
 namespace NEO {
 class Drm;
+class OsContext;
 class IoctlHelper;
 enum class CacheRegion : uint16_t;
 struct HardwareInfo;
@@ -115,6 +116,8 @@ class IoctlHelper {
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
     virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) = 0;
+
+    uint32_t createDrmContext(Drm &drm, const OsContext &osContext, uint32_t drmVmId);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);

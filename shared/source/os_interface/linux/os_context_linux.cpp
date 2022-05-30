@@ -45,29 +45,10 @@ void OsContextLinux::initializeContext() {
         this->drmVmIds.resize(deviceBitfield.size(), 0);
     }
 
-    const auto numberOfCCS = drm.getRootDeviceEnvironment().getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-    const bool debuggableContext = drm.isContextDebugSupported() && drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !isInternalEngine();
-    const bool debuggableContextCooperative = debuggableContext && numberOfCCS > 0;
-
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
-            auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable(), isCooperativeEngine() || debuggableContextCooperative);
-            if (drm.areNonPersistentContextsSupported()) {
-                drm.setNonPersistentContext(drmContextId);
-            }
-
-            if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
-                drm.setUnrecoverableContext(drmContextId);
-            }
-
-            if (debuggableContext) {
-                drm.setContextDebugFlag(drmContextId);
-            }
-
-            if (drm.isPreemptionSupported() && isLowPriority()) {
-                drm.setLowPriorityContextParam(drmContextId);
-            }
+            auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId);
 
             this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType, isEngineInstanced());
             this->drmContextIds.push_back(drmContextId);
