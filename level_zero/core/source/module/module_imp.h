@@ -174,6 +174,9 @@ struct ModuleImp : public Module {
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
     std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
     uint32_t debugModuleHandle = 0;
+
+    NEO::Linker::PatchableSegments isaSegmentsForPatching;
+    std::vector<std::vector<char>> patchedIsaTempStorage;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

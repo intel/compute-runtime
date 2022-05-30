@@ -784,8 +784,7 @@ bool ModuleImp::linkBinary() {
         exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
         exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
     }
-    Linker::PatchableSegments isaSegmentsForPatching;
-    std::vector<std::vector<char>> patchedIsaTempStorage;
+
     Linker::KernelDescriptorsT kernelDescriptors;
     if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
@@ -990,17 +989,19 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         }
 
         // Resolve Unresolved Symbols in the Relocation Table between the Modules if Required.
-        NEO::Linker::PatchableSegments isaSegmentsForPatching;
-        std::vector<std::vector<char>> patchedIsaTempStorage;
+        auto &isaSegmentsForPatching = moduleId->isaSegmentsForPatching;
+        auto &patchedIsaTempStorage = moduleId->patchedIsaTempStorage;
         uint32_t numPatchedSymbols = 0u;
         std::vector<std::string> unresolvedSymbolLogMessages;
         if (moduleId->translationUnit->programInfo.linkerInput && moduleId->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-            patchedIsaTempStorage.reserve(moduleId->kernelImmDatas.size());
-            for (const auto &kernelInfo : moduleId->translationUnit->programInfo.kernelInfos) {
-                auto &kernHeapInfo = kernelInfo->heapInfo;
-                const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-                patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
-                isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+            if (patchedIsaTempStorage.empty()) {
+                patchedIsaTempStorage.reserve(moduleId->kernelImmDatas.size());
+                for (const auto &kernelInfo : moduleId->translationUnit->programInfo.kernelInfos) {
+                    auto &kernHeapInfo = kernelInfo->heapInfo;
+                    const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
+                    patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
+                    isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
+                }
             }
             for (const auto &unresolvedExternal : moduleId->unresolvedExternalsInfo) {
                 if (moduleLinkLog) {
