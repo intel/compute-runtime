@@ -275,7 +275,7 @@ ze_result_t DebugSessionLinux::initialize() {
     return ZE_RESULT_NOT_READY;
 }
 
-void *DebugSessionLinux::asyncThread(void *arg) {
+void *DebugSessionLinux::asyncThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
 
@@ -286,7 +286,7 @@ void *DebugSessionLinux::asyncThread(void *arg) {
     event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
     event->flags = 0;
 
-    while (self->asyncThreadActive) {
+    while (self->asyncThread.threadActive) {
         self->handleEventsAsync(event);
 
         self->sendInterrupts();
@@ -295,25 +295,16 @@ void *DebugSessionLinux::asyncThread(void *arg) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
 
-    self->asyncThreadFinished.store(true);
+    self->asyncThread.threadFinished.store(true);
     return nullptr;
 }
 
 void DebugSessionLinux::startAsyncThread() {
-    thread = NEO::Thread::create(asyncThread, reinterpret_cast<void *>(this));
+    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 void DebugSessionLinux::closeAsyncThread() {
-    asyncThreadActive.store(false);
-
-    if (thread) {
-        while (!asyncThreadFinished.load()) {
-            thread->yield();
-        }
-
-        thread->join();
-        thread.reset();
-    }
+    asyncThread.close();
 }
 
 void DebugSessionLinux::handleEventsAsync(prelim_drm_i915_debug_event *event) {
@@ -643,7 +634,7 @@ ze_result_t DebugSessionLinux::readEvent(uint64_t timeout, zet_debug_event_t *ou
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
         if (timeout > 0 && clientHandleToConnection[clientHandle]->apiEvents.size() == 0) {
-            readEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
+            apiEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
         }
 
         if (clientHandleToConnection[clientHandle]->apiEvents.size() > 0) {
@@ -651,7 +642,7 @@ ze_result_t DebugSessionLinux::readEvent(uint64_t timeout, zet_debug_event_t *ou
             clientHandleToConnection[clientHandle]->apiEvents.pop();
             return ZE_RESULT_SUCCESS;
         }
-    } while (timeout == UINT64_MAX && asyncThreadActive);
+    } while (timeout == UINT64_MAX && asyncThread.threadActive);
 
     return ZE_RESULT_NOT_READY;
 }

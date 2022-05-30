@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_thread.h"
+
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
@@ -77,6 +79,24 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ze_device_thread_t convertToApi(EuThread::ThreadId threadId);
 
     ze_result_t sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
+
+    struct ThreadHelper {
+        void close() {
+            threadActive.store(false);
+
+            if (thread) {
+                while (!threadFinished.load()) {
+                    thread->yield();
+                }
+
+                thread->join();
+                thread.reset();
+            }
+        }
+        std::unique_ptr<NEO::Thread> thread;
+        std::atomic<bool> threadActive{true};
+        std::atomic<bool> threadFinished{false};
+    };
 
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device);

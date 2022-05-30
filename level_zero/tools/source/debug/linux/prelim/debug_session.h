@@ -164,6 +164,7 @@ struct DebugSessionLinux : DebugSessionImp {
         Stopped,
         InterruptAll
     };
+
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
     bool checkAllEventsCollected();
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
@@ -190,10 +191,10 @@ struct DebugSessionLinux : DebugSessionImp {
 
         clientHandleToConnection[clientHandle]->apiEvents.push(debugEvent);
 
-        readEventCondition.notify_all();
+        apiEventCondition.notify_all();
     }
 
-    static void *asyncThread(void *arg);
+    static void *asyncThreadFunction(void *arg);
     void startAsyncThread() override;
     void closeAsyncThread();
     void handleEventsAsync(prelim_drm_i915_debug_event *event);
@@ -227,11 +228,9 @@ struct DebugSessionLinux : DebugSessionImp {
     uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
     void printContextVms();
 
-    std::atomic<bool> asyncThreadActive{true};
-    std::atomic<bool> asyncThreadFinished{false};
+    ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;
-    std::condition_variable readEventCondition;
-    std::unique_ptr<NEO::Thread> thread;
+    std::condition_variable apiEventCondition;
 
     int fd = 0;
     int ioctl(unsigned long request, void *arg);

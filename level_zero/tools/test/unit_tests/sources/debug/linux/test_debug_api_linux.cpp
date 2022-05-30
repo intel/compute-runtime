@@ -260,8 +260,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
 
-    using L0::DebugSessionLinux::asyncThreadActive;
-    using L0::DebugSessionLinux::asyncThreadFinished;
+    using L0::DebugSessionLinux::asyncThread;
     using L0::DebugSessionLinux::checkAllEventsCollected;
     using L0::DebugSessionLinux::clientHandle;
     using L0::DebugSessionLinux::clientHandleClosed;
@@ -288,7 +287,6 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::readSbaBuffer;
     using L0::DebugSessionLinux::readStateSaveAreaHeader;
     using L0::DebugSessionLinux::startAsyncThread;
-    using L0::DebugSessionLinux::thread;
     using L0::DebugSessionLinux::threadControl;
     using L0::DebugSessionLinux::ThreadControlCmd;
     using L0::DebugSessionLinux::typeToRegsetDesc;
@@ -1337,7 +1335,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClosingConnectionThenSysCallClose
 
     EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
     EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
-    EXPECT_FALSE(session->asyncThreadActive);
+    EXPECT_FALSE(session->asyncThread.threadActive);
 
     NEO::SysCalls::closeFuncCalled = 0;
     NEO::SysCalls::closeFuncArgPassed = 0;
@@ -5474,13 +5472,13 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
     while (handler->pollCounter == 0)
         ;
 
-    EXPECT_TRUE(session->asyncThreadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThread.threadFinished);
 
     session->closeAsyncThread();
 
-    EXPECT_FALSE(session->asyncThreadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThread.threadFinished);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
@@ -5500,13 +5498,13 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
     while (handler->pollCounter == 0)
         ;
 
-    EXPECT_TRUE(session->asyncThreadActive);
-    EXPECT_FALSE(session->asyncThreadFinished);
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThread.threadFinished);
 
     session->closeConnection();
 
-    EXPECT_FALSE(session->asyncThreadActive);
-    EXPECT_TRUE(session->asyncThreadFinished);
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThread.threadFinished);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenNoEventsAvailableWithinTimeoutWhenReadingEventThenNotReadyReturned) {
