@@ -156,7 +156,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint32_t vmId) override {
+    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override {
         if (allocSize == 0) {
             return EINVAL;
         }

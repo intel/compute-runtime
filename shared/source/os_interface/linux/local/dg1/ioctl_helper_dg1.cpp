@@ -23,7 +23,7 @@ IoctlHelper *IoctlHelperImpl<gfxProduct>::clone() {
 }
 
 template <>
-uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint32_t vmId) {
+uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
     auto ret = IoctlHelperUpstream::createGemExt(drm, memClassInstances, allocSize, handle, vmId);
     if (ret == 0) {
         return ret;

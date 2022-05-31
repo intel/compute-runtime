@@ -1839,7 +1839,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
 
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExt(&drm, memRegions, size, handle, std::numeric_limits<uint32_t>::max());
+    auto ret = memoryInfo->createGemExt(&drm, memRegions, size, handle, {});
 
     if (ret) {
         return nullptr;

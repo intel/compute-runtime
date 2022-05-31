@@ -53,7 +53,7 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint32_t vmId) {
+uint32_t MemoryInfo::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
     return drm->getIoctlHelper()->createGemExt(drm, memClassInstances, allocSize, handle, vmId);
 }
 
@@ -109,7 +109,7 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks
     auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
-    uint32_t vmId = std::numeric_limits<uint32_t>::max();
+    std::optional<uint32_t> vmId;
     if (!drm->isPerContextVMRequired()) {
         if (memoryBanks != 0 && DebugManager.flags.EnablePrivateBO.get()) {
             auto tileIndex = getTileIndex(memoryBanks, *pHwInfo);

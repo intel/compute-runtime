@@ -45,7 +45,7 @@ struct CreateGemExt {
     std::vector<MemoryClassInstance> memoryRegions{};
 
     struct VmPrivate {
-        uint32_t vmId{std::numeric_limits<uint32_t>::max()};
+        std::optional<uint32_t> vmId{};
     };
     VmPrivate vmPrivateExt{};
 };

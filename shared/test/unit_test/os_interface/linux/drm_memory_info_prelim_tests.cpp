@@ -373,7 +373,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
-    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle, std::numeric_limits<uint32_t>::max());
+    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -468,7 +468,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
 
     const auto &createExt = drm->context.receivedCreateGemExt;
     ASSERT_TRUE(createExt);
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), createExt->vmPrivateExt.vmId);
+    EXPECT_EQ(std::nullopt, createExt->vmPrivateExt.vmId);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextVMRequiredIsTrueWhenCreatingGemExtWithSingleRegionThenVmIdIsNotSet) {
@@ -498,5 +498,5 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
 
     const auto &createExt = drm->context.receivedCreateGemExt;
     ASSERT_TRUE(createExt);
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), createExt->vmPrivateExt.vmId);
+    EXPECT_EQ(std::nullopt, createExt->vmPrivateExt.vmId);
 }
