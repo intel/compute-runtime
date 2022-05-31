@@ -65,7 +65,7 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
                 }
                 auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->dataPtr);
                 distance->distance = (distance->engine.engine_instance == distance->region.memory_instance) ? 0 : 100;
-            } else if (queryItemPtr->queryId == DRM_I915_QUERY_ENGINE_INFO) {
+            } else if (queryItemPtr->queryId == PRELIM_DRM_I915_QUERY_ENGINE_INFO) {
                 auto numberOfTiles = 2u;
                 uint32_t numberOfEngines = numberOfTiles * 6u;
                 int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);

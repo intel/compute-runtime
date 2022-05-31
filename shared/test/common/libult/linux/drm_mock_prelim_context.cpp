@@ -274,7 +274,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     const auto numberOfCCS = gtSystemInfo.CCSInfo.IsValid && !disableCcsSupport ? gtSystemInfo.CCSInfo.NumberOfCCSEnabled : 0u;
 
     switch (queryItem->queryId) {
-    case DRM_I915_QUERY_ENGINE_INFO: {
+    case PRELIM_DRM_I915_QUERY_ENGINE_INFO: {
         auto numberOfTiles = gtSystemInfo.MultiTileArchInfo.IsValid ? gtSystemInfo.MultiTileArchInfo.TileCount : 1u;
         uint32_t numberOfEngines = numberOfTiles * (4u + numberOfCCS + static_cast<uint32_t>(supportedCopyEnginesMask.count()));
         int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);
@@ -306,7 +306,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
         break;
     }
 
-    case DRM_I915_QUERY_MEMORY_REGIONS: {
+    case PRELIM_DRM_I915_QUERY_MEMORY_REGIONS: {
         if (queryMemoryRegionInfoSuccessCount == 0) {
             queryItem->length = -EINVAL;
             return true;
