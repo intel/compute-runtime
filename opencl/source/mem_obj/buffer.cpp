@@ -147,7 +147,7 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
 
     if (memoryProperties.handle) {
         if (validateHandleType(memoryProperties, extMem)) {
-            extMem.handle = &memoryProperties.handle;
+            extMem.handle = reinterpret_cast<void *>(memoryProperties.handle);
             extMem.size = size;
             pBuffer = UnifiedBuffer::createSharedUnifiedBuffer(pContext, flags, extMem, &retVal);
         } else {

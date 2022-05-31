@@ -82,6 +82,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override;
 
     void *allocateSystemMemory(size_t size, size_t alignment) override;
 
@@ -220,6 +221,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t handleFenceCompletionCalled = 0u;
     uint32_t waitForEnginesCompletionCalled = 0u;
     uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
+    osHandle capturedSharedHandle = 0u;
+    osHandle invalidSharedHandle = -1;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;

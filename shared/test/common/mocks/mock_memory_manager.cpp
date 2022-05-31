@@ -152,6 +152,17 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromExistingStora
     return allocation;
 }
 
+GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+    if (handle != invalidSharedHandle) {
+        auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
+        this->capturedSharedHandle = handle;
+        return allocation;
+    } else {
+        this->capturedSharedHandle = handle;
+        return nullptr;
+    }
+}
+
 bool MockMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
     copyMemoryToAllocationBanksCalled++;
     copyMemoryToAllocationBanksParamsPassed.push_back({graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, handleMask});

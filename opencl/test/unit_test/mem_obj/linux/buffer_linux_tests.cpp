@@ -98,24 +98,31 @@ struct ValidExportHostPtr
         MemoryManagementFixture::TearDown();
     }
 
-    Buffer *createBuffer() {
-        return Buffer::create(
-            context.get(),
-            flags,
-            g_scTestBufferSizeInBytes,
-            pHostPtr,
-            retVal);
-    }
-
     cl_int retVal = CL_INVALID_VALUE;
     Buffer *buffer = nullptr;
 };
 
+TEST_F(ValidExportHostPtr, givenInvalidPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+
+    osHandle invalidHandle = static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->invalidSharedHandle;
+    cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, invalidHandle, 0};
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+
+    EXPECT_EQ(retVal, CL_INVALID_MEM_OBJECT);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
+    EXPECT_EQ(buffer, nullptr);
+
+    clReleaseMemObject(buffer);
+}
+
 TEST_F(ValidExportHostPtr, givenPropertiesWithDmaBufWhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
+
     cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x1234, 0};
-    auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+    cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), properties, flags, 0, g_scTestBufferSizeInBytes, nullptr, retVal);
+
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(static_cast<MockMemoryManager *>(pClExecutionEnvironment->memoryManager.get())->capturedSharedHandle, properties[1]);
+    EXPECT_NE(buffer, nullptr);
 
     clReleaseMemObject(buffer);
 }
