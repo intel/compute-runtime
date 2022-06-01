@@ -175,10 +175,6 @@ int IoctlHelperPrelim20::waitUserFence(Drm *drm, uint32_t ctxId, uint64_t addres
     return IoctlHelper::ioctl(drm, DrmIoctl::GemWaitUserFence, &wait);
 }
 
-uint32_t IoctlHelperPrelim20::getHwConfigIoctlVal() {
-    return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
-}
-
 uint32_t IoctlHelperPrelim20::getAtomicAdvise(bool isNonAtomic) {
     return isNonAtomic ? PRELIM_I915_VM_ADVISE_ATOMIC_NONE : PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
 }
@@ -229,10 +225,6 @@ uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
 
 int32_t IoctlHelperPrelim20::getMemRegionsIoctlVal() {
     return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
-}
-
-int32_t IoctlHelperPrelim20::getEngineInfoIoctlVal() {
-    return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
 }
 
 uint32_t IoctlHelperPrelim20::getComputeSlicesIoctlVal() {
@@ -636,6 +628,10 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassCompute:
         return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    case DrmParam::QueryEngineInfo:
+        return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
+    case DrmParam::QueryHwconfigTable:
+        return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
     default:
         return getDrmParamValueBase(drmParam);
     }

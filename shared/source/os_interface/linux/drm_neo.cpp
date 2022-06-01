@@ -966,7 +966,7 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 }
 
 bool Drm::querySystemInfo() {
-    auto request = ioctlHelper->getHwConfigIoctlVal();
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryHwconfigTable);
     auto deviceBlobQuery = this->query(request, 0);
     if (deviceBlobQuery.empty()) {
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s", "INFO: System Info query failed!\n");
@@ -991,7 +991,8 @@ bool Drm::queryMemoryInfo() {
 }
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
-    auto enginesQuery = this->query(ioctlHelper->getEngineInfoIoctlVal(), 0);
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryEngineInfo);
+    auto enginesQuery = this->query(request, 0);
     if (enginesQuery.empty()) {
         return false;
     }

@@ -244,6 +244,8 @@ enum class DrmParam {
     EngineClassVideoEnhance,
     EngineClassInvalid,
     EngineClassInvalidNone,
+    QueryEngineInfo,
+    QueryHwconfigTable,
 };
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);

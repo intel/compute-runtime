@@ -9,7 +9,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_mock_engine.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_engine.cpp
   )
 
   if(NEO_ENABLE_i915_PRELIM_DETECTION)

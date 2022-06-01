@@ -78,14 +78,12 @@ class IoctlHelper {
     virtual CacheRegion closFree(Drm *drm, CacheRegion closIndex) = 0;
     virtual int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
-    virtual uint32_t getHwConfigIoctlVal() = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual int32_t getMemRegionsIoctlVal() = 0;
-    virtual int32_t getEngineInfoIoctlVal() = 0;
     virtual uint32_t getComputeSlicesIoctlVal() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
@@ -139,14 +137,12 @@ class IoctlHelperUpstream : public IoctlHelper {
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
     int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
-    uint32_t getHwConfigIoctlVal() override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
-    int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
@@ -205,14 +201,12 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
     int waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
-    uint32_t getHwConfigIoctlVal() override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
     int32_t getMemRegionsIoctlVal() override;
-    int32_t getEngineInfoIoctlVal() override;
     uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;

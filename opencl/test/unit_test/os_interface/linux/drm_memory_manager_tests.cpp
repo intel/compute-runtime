@@ -5842,38 +5842,6 @@ TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrAndFailedMmapCal
     mock->ioctl_res = 0;
 }
 
-TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorrectRegionsSet) {
-    std::vector<MemoryRegion> memRegions(4);
-    memRegions[0] = {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0};
-    memRegions[1] = {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0};
-    memRegions[2] = {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0};
-    memRegions[3] = {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0};
-    auto memoryInfo = std::make_unique<MemoryInfo>(memRegions);
-
-    std::vector<EngineClassInstance> engines(3);
-    engines[0] = {I915_ENGINE_CLASS_RENDER, 0};
-    engines[1] = {I915_ENGINE_CLASS_COPY, 0};
-    engines[2] = {I915_ENGINE_CLASS_COPY, 2};
-
-    auto distances = std::vector<DistanceInfo>();
-    for (const auto &region : memRegions) {
-        if (region.region.memoryClass == I915_MEMORY_CLASS_SYSTEM) {
-            continue;
-        }
-        for (const auto &engine : engines) {
-            DistanceInfo dist{};
-            dist.engine = engine;
-            dist.region = {region.region.memoryClass, region.region.memoryInstance};
-            dist.distance = (region.region.memoryInstance == engine.engineInstance) ? 0 : 100;
-            distances.push_back(dist);
-        }
-    }
-    memoryInfo->assignRegionsFromDistances(distances);
-    EXPECT_EQ(1024u, memoryInfo->getMemoryRegionSize(1));
-    EXPECT_EQ(1024u, memoryInfo->getMemoryRegionSize(2));
-    EXPECT_EQ(0u, memoryInfo->getMemoryRegionSize(4));
-}
-
 TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {
     AllocationType validAllocations[] = {
         AllocationType::COMMAND_BUFFER,

@@ -62,6 +62,12 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_THROW(ioctlHelper.getIoctlRequestValue(DrmIoctl::DG1GemCreateExt), std::runtime_error);
 }
 
+TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturned) {
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), static_cast<int>(PRELIM_I915_ENGINE_CLASS_COMPUTE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryEngineInfo), static_cast<int>(PRELIM_DRM_I915_QUERY_ENGINE_INFO));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryHwconfigTable), static_cast<int>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE));
+}
+
 TEST_F(IoctlPrelimHelperTests, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
     for (auto &ioctlParamCodeString : ioctlParamCodeStringMap) {
         EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
@@ -178,10 +184,6 @@ TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsA
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.next_extension);
 }
 
-TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetHwConfigIoctlValThenCorrectValueReturned) {
-    EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE), ioctlHelper.getHwConfigIoctlVal());
-}
-
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetDirectSubmissionFlagThenCorrectValueReturned) {
     EXPECT_EQ(PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING, ioctlHelper.getDirectSubmissionFlag());
 }
@@ -190,14 +192,10 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetMemRegionsIoctlValThenCorrectV
     EXPECT_EQ(PRELIM_DRM_I915_QUERY_MEMORY_REGIONS, ioctlHelper.getMemRegionsIoctlVal());
 }
 
-TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetEngineInfoIoctlValThenCorrectValueReturned) {
-    EXPECT_EQ(PRELIM_DRM_I915_QUERY_ENGINE_INFO, ioctlHelper.getEngineInfoIoctlVal());
-}
-
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSameData) {
     std::vector<EngineCapabilities> expectedEngines(2);
-    expectedEngines[0] = {{I915_ENGINE_CLASS_RENDER, 0}, 0};
-    expectedEngines[1] = {{I915_ENGINE_CLASS_COPY, 1}, 0};
+    expectedEngines[0] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::EngineClassRender)), 0}, 0};
+    expectedEngines[1] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCopy)), 1}, 0};
 
     auto engineInfo = getEngineInfo(expectedEngines);
 

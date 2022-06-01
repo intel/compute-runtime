@@ -307,15 +307,16 @@ TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCrea
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistanceSet) {
+    auto ioctlHelper = drm->getIoctlHelper();
     std::vector<DistanceInfo> distances(3);
-    distances[0].engine = {I915_ENGINE_CLASS_RENDER, 0};
+    distances[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
     distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
-    distances[1].engine = {I915_ENGINE_CLASS_RENDER, 1};
+    distances[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1};
     distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
-    distances[2].engine = {I915_ENGINE_CLASS_COPY, 4};
+    distances[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 4};
     distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
-    auto ret = drm->getIoctlHelper()->queryDistances(drm.get(), queryItems, distances);
+    auto ret = ioctlHelper->queryDistances(drm.get(), queryItems, distances);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);

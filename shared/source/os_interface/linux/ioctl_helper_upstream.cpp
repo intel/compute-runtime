@@ -87,10 +87,6 @@ int IoctlHelperUpstream::waitUserFence(Drm *drm, uint32_t ctxId, uint64_t addres
     return 0;
 }
 
-uint32_t IoctlHelperUpstream::getHwConfigIoctlVal() {
-    return DRM_I915_QUERY_HWCONFIG_TABLE;
-}
-
 uint32_t IoctlHelperUpstream::getAtomicAdvise(bool isNonAtomic) {
     return 0;
 }
@@ -113,10 +109,6 @@ uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
 
 int32_t IoctlHelperUpstream::getMemRegionsIoctlVal() {
     return DRM_I915_QUERY_MEMORY_REGIONS;
-}
-
-int32_t IoctlHelperUpstream::getEngineInfoIoctlVal() {
-    return DRM_I915_QUERY_ENGINE_INFO;
 }
 
 uint32_t IoctlHelperUpstream::getComputeSlicesIoctlVal() {
@@ -296,6 +288,10 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassCompute:
         return 4;
+    case DrmParam::QueryEngineInfo:
+        return DRM_I915_QUERY_ENGINE_INFO;
+    case DrmParam::QueryHwconfigTable:
+        return DRM_I915_QUERY_HWCONFIG_TABLE;
     default:
         return getDrmParamValueBase(drmParam);
     }
