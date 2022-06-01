@@ -132,11 +132,11 @@ struct ContextImp : Context {
                             const ze_image_desc_t *desc,
                             ze_image_handle_t *phImage) override;
 
-    void addDeviceAndSubDevices(Device *device);
-
-    std::map<ze_device_handle_t, Device *> &getDevices() {
+    std::map<uint32_t, ze_device_handle_t> &getDevices() {
         return devices;
     }
+
+    void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
@@ -148,7 +148,7 @@ struct ContextImp : Context {
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
 
-    std::map<ze_device_handle_t, Device *> devices;
+    std::map<uint32_t, ze_device_handle_t> devices;
     DriverHandleImp *driverHandle = nullptr;
 };
 

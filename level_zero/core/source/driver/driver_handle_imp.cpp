@@ -59,20 +59,22 @@ ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
 
     if (numDevices == 0) {
         for (auto device : this->devices) {
-            context->addDeviceAndSubDevices(device);
+            auto neoDevice = device->getNEODevice();
+            context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), device->toHandle()));
+            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
+                                             neoDevice->getDeviceBitfield()});
         }
     } else {
         for (uint32_t i = 0; i < numDevices; i++) {
-            context->addDeviceAndSubDevices(Device::fromHandle(phDevices[i]));
+            auto neoDevice = Device::fromHandle(phDevices[i])->getNEODevice();
+            context->getDevices().insert(std::make_pair(neoDevice->getRootDeviceIndex(), phDevices[i]));
+            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
+                                             neoDevice->getDeviceBitfield()});
         }
     }
 
-    for (auto devicePair : context->getDevices()) {
-        auto neoDevice = devicePair.second->getNEODevice();
-        context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
-        context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(),
-                                         neoDevice->getDeviceBitfield()});
-    }
     context->rootDeviceIndices.remove_duplicates();
 
     return ZE_RESULT_SUCCESS;

@@ -62,7 +62,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     void *alloc;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
 
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -123,7 +123,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     void *alloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto result = context->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     void *offsetAlloc;
@@ -185,7 +185,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
 
     size_t eventCount = device->getNEODevice()->getDeviceInfo().maxWorkItemSizes[0] * 2u;
     std::unique_ptr<ze_event_handle_t[]> events = std::make_unique<ze_event_handle_t[]>(eventCount);
@@ -242,7 +242,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
-    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
 
     size_t eventCount = device->getNEODevice()->getDeviceInfo().maxWorkItemSizes[0] * 2u;
     std::unique_ptr<ze_event_handle_t[]> events = std::make_unique<ze_event_handle_t[]>(eventCount);
@@ -347,7 +347,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     void *alloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->getDevices().insert(std::make_pair(mockDevice.toHandle(), &mockDevice));
+    context->getDevices().insert(std::make_pair(mockDevice.getRootDeviceIndex(), mockDevice.toHandle()));
     auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -432,7 +432,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     void *alloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->getDevices().insert(std::make_pair(mockDevice.toHandle(), &mockDevice));
+    context->getDevices().insert(std::make_pair(mockDevice.getRootDeviceIndex(), mockDevice.toHandle()));
     auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
@@ -513,7 +513,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetA
 
     void *alloc;
     ze_device_mem_alloc_desc_t deviceDesc = {};
-    context->getDevices().insert(std::make_pair(mockDevice.toHandle(), &mockDevice));
+    context->getDevices().insert(std::make_pair(mockDevice.getRootDeviceIndex(), mockDevice.toHandle()));
     auto result = context->allocDeviceMem(&mockDevice, &deviceDesc, 128, 1, &alloc);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 

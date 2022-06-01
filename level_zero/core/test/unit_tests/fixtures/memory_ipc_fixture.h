@@ -115,7 +115,7 @@ struct MemoryExportImportTest : public ::testing::Test {
 
         context = std::make_unique<ContextFdMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -227,7 +227,7 @@ struct MemoryExportImportWSLTest : public ::testing::Test {
 
         context = std::make_unique<ContextMemHandleMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -323,7 +323,7 @@ struct MemoryExportImportWinHandleTest : public ::testing::Test {
 
         context = std::make_unique<ContextHandleMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -554,7 +554,7 @@ struct MemoryOpenIpcHandleTest : public ::testing::Test {
 
         context = std::make_unique<ContextIpcMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -679,7 +679,7 @@ struct MemoryExportImportImplicitScalingTest : public ::testing::Test {
 
         context = std::make_unique<ContextIpcMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});

@@ -39,7 +39,7 @@ TEST_F(MultiDeviceContextTests,
     ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
     for (size_t i = 0; i < driverHandle->devices.size(); i++) {
-        EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->toHandle()), contextImp->getDevices().end());
+        EXPECT_NE(contextImp->getDevices().find(driverHandle->devices[i]->getRootDeviceIndex()), contextImp->getDevices().end());
     }
 
     res = L0::Context::fromHandle(hContext)->destroy();
@@ -80,7 +80,7 @@ TEST_F(MultiDeviceContextTests,
 
     ContextImp *contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 
-    uint32_t expectedDeviceCountInContext = 1 + subDeviceCount1 + (subDeviceCount1 * subSubDeviceCount1);
+    uint32_t expectedDeviceCountInContext = 1;
     EXPECT_EQ(contextImp->getDevices().size(), expectedDeviceCountInContext);
 
     EXPECT_FALSE(contextImp->isDeviceDefinedForThisContext(L0::Device::fromHandle(device0)));

@@ -723,7 +723,7 @@ struct FreeExtTests : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -845,7 +845,7 @@ struct OutOfMemoryTests : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -921,7 +921,7 @@ struct MemoryRelaxedSizeTests : public ::testing::Test {
 
         context = std::make_unique<ContextRelaxedSizeMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -1428,7 +1428,7 @@ struct MemoryExportImportFailTest : public ::testing::Test {
 
         context = std::make_unique<ContextFailFdMock>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -1922,7 +1922,7 @@ struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -2017,12 +2017,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         EXPECT_NE(context, nullptr);
         for (auto i = 0u; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
-            L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
-            for (auto j = 0u; j < deviceImp->subDevices.size(); j++) {
-                auto subDevice = deviceImp->subDevices[j];
-                context->getDevices().insert(std::make_pair(subDevice->toHandle(), subDevice));
-            }
+            context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -2241,6 +2236,15 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
     ret = context->freeMem(ptr1);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          whenFreeingNotKnownPointerThenInvalidArgumentIsReturned,
+          IsAtLeastSkl) {
+    void *ptr = malloc(1u);
+    ze_result_t result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    free(ptr);
 }
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
@@ -2763,7 +2767,7 @@ struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -2801,7 +2805,7 @@ struct MemoryFailedOpenIpcHandleImplicitScalingTest : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -3082,7 +3086,7 @@ struct MemoryBitfieldTest : testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -3142,7 +3146,7 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     std::unique_ptr<ContextImp> context;
     context = std::make_unique<ContextImp>(driverHandle.get());
     EXPECT_NE(context, nullptr);
-    context->getDevices().insert(std::make_pair(device->toHandle(), device));
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
     auto neoDevice = device->getNEODevice();
     context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -3542,7 +3546,7 @@ struct SharedAllocFailTests : public ::testing::Test {
 
         context = std::make_unique<ContextImp>(driverHandle.get());
         EXPECT_NE(context, nullptr);
-        context->getDevices().insert(std::make_pair(device->toHandle(), device));
+        context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
         auto neoDevice = device->getNEODevice();
         context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
         context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -3614,7 +3618,7 @@ struct SharedAllocMultiDeviceTests : public ::testing::Test {
 
         for (uint32_t i = 0; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
@@ -3691,7 +3695,7 @@ struct MemAllocMultiSubDeviceTests : public ::testing::Test {
 
         for (uint32_t i = 0; i < numRootDevices; i++) {
             auto device = driverHandle->devices[i];
-            context->getDevices().insert(std::make_pair(device->toHandle(), device));
+            context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});

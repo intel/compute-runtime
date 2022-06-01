@@ -46,14 +46,6 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
 }
 
-void ContextImp::addDeviceAndSubDevices(Device *device) {
-    this->devices.insert(std::make_pair(device->toHandle(), device));
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    for (auto subDevice : deviceImp->subDevices) {
-        this->addDeviceAndSubDevices(subDevice);
-    }
-}
-
 ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
                                      size_t size,
                                      size_t alignment,
@@ -101,7 +93,8 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
 }
 
 bool ContextImp::isDeviceDefinedForThisContext(Device *inDevice) {
-    return (this->getDevices().find(inDevice->toHandle()) != this->getDevices().end());
+    uint32_t deviceIndex = inDevice->getRootDeviceIndex();
+    return (this->getDevices().find(deviceIndex) != this->getDevices().end());
 }
 
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
@@ -196,7 +189,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
         size += (MemoryConstants::pageSize * NEO::DebugManager.flags.ForceExtendedUSMBufferSize.get());
     }
 
-    auto device = this->devices.begin()->second;
+    auto device = Device::fromHandle(this->devices.begin()->second);
     if (hDevice != nullptr) {
         device = Device::fromHandle(hDevice);
     }
@@ -277,6 +270,25 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
+void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *device) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
+
+    auto iter = deviceImp->peerAllocations.allocations.find(ptr);
+    if (iter != deviceImp->peerAllocations.allocations.end()) {
+        auto peerAllocData = &iter->second;
+        auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
+        auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
+        this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
+        deviceImp->peerAllocations.allocations.erase(iter);
+    }
+
+    for (auto subDevice : deviceImp->subDevices) {
+        this->freePeerAllocations(ptr, blocking, subDevice);
+    }
+}
+
 ze_result_t ContextImp::freeMem(const void *ptr) {
     return this->freeMem(ptr, false);
 }
@@ -288,18 +300,7 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     }
 
     for (auto pairDevice : this->devices) {
-        DeviceImp *deviceImp = static_cast<DeviceImp *>(pairDevice.second);
-
-        std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
-
-        auto iter = deviceImp->peerAllocations.allocations.find(ptr);
-        if (iter != deviceImp->peerAllocations.allocations.end()) {
-            auto peerAllocData = &iter->second;
-            auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
-            auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
-            this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
-            deviceImp->peerAllocations.allocations.erase(iter);
-        }
+        this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
     }
 
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
@@ -534,7 +535,7 @@ ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
     memcpy_s(&rootDeviceIndex, sizeof(rootDeviceIndex),
              hIpc.data + sizeof(int) + sizeof(numEvents), sizeof(rootDeviceIndex));
 
-    Device *device = this->devices.begin()->second;
+    auto device = Device::fromHandle(this->devices.begin()->second);
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
     auto &hwHelper = device->getHwHelper();
