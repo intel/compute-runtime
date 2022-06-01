@@ -18,7 +18,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::activeTiles;
     using BaseClass::allocateResources;
     using BaseClass::completionFenceAllocation;
-    using BaseClass::completionRingBuffers;
     using BaseClass::cpuCachelineFlush;
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRingBuffer;
@@ -54,8 +53,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::performDiagnosticMode;
     using BaseClass::postSyncOffset;
     using BaseClass::reserved;
-    using BaseClass::ringBuffer;
-    using BaseClass::ringBuffer2;
+    using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
     using BaseClass::ringStart;
     using BaseClass::semaphoreData;
@@ -128,6 +126,10 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         BaseClass::performDiagnosticMode();
     }
 
+    bool isCompleted(uint32_t ringBufferIndex) override {
+        return this->isCompletedReturn;
+    }
+
     uint64_t updateTagValueReturn = 1ull;
     uint64_t tagAddressSetValue = MemoryConstants::pageSize;
     uint64_t tagValueSetValue = 1ull;
@@ -141,5 +143,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     bool submitReturn = true;
     bool handleResidencyReturn = true;
     bool callBaseResident = false;
+    bool isCompletedReturn = true;
 };
 } // namespace NEO

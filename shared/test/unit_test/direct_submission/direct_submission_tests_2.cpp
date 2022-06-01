@@ -585,9 +585,9 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
 
     std::string output = testing::internal::GetCapturedStdout();
 
-    auto pos = output.find("Ring buffer 1");
+    auto pos = output.find("Ring buffer 0");
     EXPECT_TRUE(pos != std::string::npos);
-    pos = output.find("Ring buffer 2");
+    pos = output.find("Ring buffer 1");
     EXPECT_TRUE(pos != std::string::npos);
     pos = output.find("Client buffer");
     EXPECT_TRUE(pos != std::string::npos);

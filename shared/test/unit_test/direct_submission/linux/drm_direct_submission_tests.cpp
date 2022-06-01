@@ -60,6 +60,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::allocateResources;
     using BaseClass::completionFenceAllocation;
     using BaseClass::completionFenceValue;
+    using BaseClass::currentRingBuffer;
     using BaseClass::currentTagData;
     using BaseClass::disableMonitorFence;
     using BaseClass::dispatchSwitchRingBufferSection;
@@ -69,11 +70,12 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::getTagAddressValue;
     using BaseClass::handleNewResourcesSubmission;
     using BaseClass::handleResidency;
+    using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
     using BaseClass::postSyncOffset;
-    using BaseClass::ringBuffer;
+    using BaseClass::ringBuffers;
     using BaseClass::ringStart;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
@@ -110,6 +112,22 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
     EXPECT_EQ(drmDirectSubmission.currentTagData.tagValue + 1, tagData.tagValue);
 
     *drmDirectSubmission.tagAddress = 1u;
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingIsCompletedThenProperValueReturned) {
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    EXPECT_TRUE(drm->isDirectSubmissionActive());
+    EXPECT_TRUE(drmDirectSubmission.allocateResources());
+
+    drmDirectSubmission.ringBuffers[0].completionFence = 1u;
+    EXPECT_FALSE(drmDirectSubmission.isCompleted(0u));
+
+    *drmDirectSubmission.tagAddress = 1u;
+    EXPECT_TRUE(drmDirectSubmission.isCompleted(0u));
+
+    drmDirectSubmission.ringBuffers[0].completionFence = 0u;
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsReturned) {
@@ -295,7 +313,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = nullptr;
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
-    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffer);
+    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
@@ -331,7 +349,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = commandStreamReceiver.getTagAllocation();
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
-    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffer);
+    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     MockBufferObject mockBO(drm);
@@ -368,7 +386,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(commandStreamReceiver);
     drmDirectSubmission.completionFenceAllocation = commandStreamReceiver.getTagAllocation();
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
-    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffer);
+    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     MockBufferObject mockBO(drm);
@@ -411,7 +429,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
 
     drmDirectSubmission.completionFenceAllocation = commandStreamReceiver.getTagAllocation();
     EXPECT_TRUE(drmDirectSubmission.allocateResources());
-    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffer);
+    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
     auto initialBO = ringBuffer->getBufferObjectToModify(0);
 
     MockBufferObject mockBO(drm);

@@ -175,22 +175,21 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleStopRingBuffer() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (this->disableMonitorFence) {
-        auto previousRingBuffer = this->currentRingBuffer == DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer ? DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::SecondBuffer : DirectSubmissionHw<GfxFamily, Dispatcher>::RingBufferUse::FirstBuffer;
         this->currentTagData.tagValue++;
 
-        bool updateCompletionRingBuffers = this->ringStart;
+        bool updateCompletionFences = this->ringStart;
         if (DebugManager.flags.EnableRingSwitchTagUpdateWa.get() == 0) {
-            updateCompletionRingBuffers = true;
+            updateCompletionFences = true;
         }
 
-        if (updateCompletionRingBuffers) {
-            this->completionRingBuffers[previousRingBuffer] = this->currentTagData.tagValue;
+        if (updateCompletionFences) {
+            this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
         }
     }
 
     if (this->ringStart) {
-        if (this->completionRingBuffers[this->currentRingBuffer] != 0) {
-            this->wait(static_cast<uint32_t>(this->completionRingBuffers[this->currentRingBuffer]));
+        if (this->ringBuffers[this->currentRingBuffer].completionFence != 0) {
+            this->wait(static_cast<uint32_t>(this->ringBuffers[this->currentRingBuffer].completionFence));
         }
     }
 }
@@ -199,7 +198,7 @@ template <typename GfxFamily, typename Dispatcher>
 uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
     if (!this->disableMonitorFence) {
         this->currentTagData.tagValue++;
-        this->completionRingBuffers[this->currentRingBuffer] = this->currentTagData.tagValue;
+        this->ringBuffers[this->currentRingBuffer].completionFence = this->currentTagData.tagValue;
     }
     return 0ull;
 }
@@ -208,6 +207,19 @@ template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     tagData.tagAddress = this->currentTagData.tagAddress;
     tagData.tagValue = this->currentTagData.tagValue + 1;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t ringBufferIndex) {
+    auto taskCount = this->ringBuffers[ringBufferIndex].completionFence;
+    auto pollAddress = this->tagAddress;
+    for (uint32_t i = 0; i < this->activeTiles; i++) {
+        if (*pollAddress < taskCount) {
+            return false;
+        }
+        pollAddress = ptrOffset(pollAddress, this->postSyncOffset);
+    }
+    return true;
 }
 
 template <typename GfxFamily, typename Dispatcher>

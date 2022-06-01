@@ -31,7 +31,7 @@ namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
 DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmissionInputParams &inputParams)
-    : osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex) {
+    : ringBuffers(RingBufferUse::initialRingBufferCount), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex) {
     memoryManager = inputParams.memoryManager;
     globalFenceAllocation = inputParams.globalFenceAllocation;
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
@@ -41,6 +41,10 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
+
+    if (DebugManager.flags.DirectSubmissionMaxRingBuffers.get() != -1) {
+        this->maxRingBufferCount = DebugManager.flags.DirectSubmissionMaxRingBuffers.get();
+    }
 
     if (DebugManager.flags.DirectSubmissionDisableCacheFlush.get() != -1) {
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
@@ -80,13 +84,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
                                                                  true, allocationSize,
                                                                  AllocationType::RING_BUFFER,
                                                                  isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
-    ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    UNRECOVERABLE_IF(ringBuffer == nullptr);
-    allocations.push_back(ringBuffer);
 
-    ringBuffer2 = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    UNRECOVERABLE_IF(ringBuffer2 == nullptr);
-    allocations.push_back(ringBuffer2);
+    for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
+        auto ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+        this->ringBuffers[ringBufferIndex].ringBuffer = ringBuffer;
+        UNRECOVERABLE_IF(ringBuffer == nullptr);
+        allocations.push_back(ringBuffer);
+        memset(ringBuffer->getUnderlyingBuffer(), 0, allocationSize);
+    }
 
     const AllocationProperties semaphoreAllocationProperties{rootDeviceIndex,
                                                              true, MemoryConstants::pageSize,
@@ -105,27 +110,23 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     }
 
     if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
-        printf("Ring buffer 1 - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
-               ringBuffer->getGpuAddress(),
-               ptrOffset(ringBuffer->getGpuAddress(), ringBuffer->getUnderlyingBufferSize()),
-               ringBuffer->getUnderlyingBuffer(),
-               ptrOffset(ringBuffer->getUnderlyingBuffer(), ringBuffer->getUnderlyingBufferSize()),
-               ringBuffer->getUnderlyingBufferSize());
+        for (uint32_t ringBufferIndex = 0; ringBufferIndex < RingBufferUse::initialRingBufferCount; ringBufferIndex++) {
+            const auto ringBuffer = this->ringBuffers[ringBufferIndex].ringBuffer;
 
-        printf("Ring buffer 2 - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
-               ringBuffer2->getGpuAddress(),
-               ptrOffset(ringBuffer2->getGpuAddress(), ringBuffer2->getUnderlyingBufferSize()),
-               ringBuffer2->getUnderlyingBuffer(),
-               ptrOffset(ringBuffer2->getUnderlyingBuffer(), ringBuffer2->getUnderlyingBufferSize()),
-               ringBuffer2->getUnderlyingBufferSize());
+            printf("Ring buffer %u - gpu address: %" PRIx64 " - %" PRIx64 ", cpu address: %p - %p, size: %zu \n",
+                   ringBufferIndex,
+                   ringBuffer->getGpuAddress(),
+                   ptrOffset(ringBuffer->getGpuAddress(), ringBuffer->getUnderlyingBufferSize()),
+                   ringBuffer->getUnderlyingBuffer(),
+                   ptrOffset(ringBuffer->getUnderlyingBuffer(), ringBuffer->getUnderlyingBufferSize()),
+                   ringBuffer->getUnderlyingBufferSize());
+        }
     }
 
     handleResidency();
-    ringCommandStream.replaceBuffer(ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
-    ringCommandStream.replaceGraphicsAllocation(ringBuffer);
+    ringCommandStream.replaceBuffer(this->ringBuffers[0u].ringBuffer->getUnderlyingBuffer(), minimumRequiredSize);
+    ringCommandStream.replaceGraphicsAllocation(this->ringBuffers[0].ringBuffer);
 
-    memset(ringBuffer->getUnderlyingBuffer(), 0, allocationSize);
-    memset(ringBuffer2->getUnderlyingBuffer(), 0, allocationSize);
     semaphorePtr = semaphores->getUnderlyingBuffer();
     semaphoreGpuVa = semaphores->getGpuAddress();
     semaphoreData = static_cast<volatile RingSemaphoreData *>(semaphorePtr);
@@ -525,27 +526,46 @@ inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline GraphicsAllocation *DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations() {
+    this->previousRingBuffer = this->currentRingBuffer;
     GraphicsAllocation *nextAllocation = nullptr;
-    if (currentRingBuffer == RingBufferUse::FirstBuffer) {
-        nextAllocation = ringBuffer2;
-        currentRingBuffer = RingBufferUse::SecondBuffer;
-    } else {
-        nextAllocation = ringBuffer;
-        currentRingBuffer = RingBufferUse::FirstBuffer;
+    for (uint32_t ringBufferIndex = 0; ringBufferIndex < this->ringBuffers.size(); ringBufferIndex++) {
+        if (ringBufferIndex != this->currentRingBuffer && this->isCompleted(ringBufferIndex)) {
+            this->currentRingBuffer = ringBufferIndex;
+            nextAllocation = this->ringBuffers[ringBufferIndex].ringBuffer;
+            break;
+        }
     }
+
+    if (nextAllocation == nullptr) {
+        if (this->ringBuffers.size() == this->maxRingBufferCount) {
+            this->currentRingBuffer = (this->currentRingBuffer + 1) % this->ringBuffers.size();
+            nextAllocation = this->ringBuffers[this->currentRingBuffer].ringBuffer;
+        } else {
+            bool isMultiOsContextCapable = osContext.getNumSupportedDevices() > 1u;
+            constexpr size_t minimumRequiredSize = 256 * MemoryConstants::kiloByte;
+            constexpr size_t additionalAllocationSize = MemoryConstants::pageSize;
+            const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
+            const AllocationProperties commandStreamAllocationProperties{rootDeviceIndex,
+                                                                         true, allocationSize,
+                                                                         AllocationType::RING_BUFFER,
+                                                                         isMultiOsContextCapable, false, osContext.getDeviceBitfield()};
+            nextAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+            this->currentRingBuffer = static_cast<uint32_t>(this->ringBuffers.size());
+            this->ringBuffers.emplace_back(0ull, nextAllocation);
+            auto ret = memoryOperationHandler->makeResidentWithinOsContext(&this->osContext, ArrayRef<GraphicsAllocation *>(&nextAllocation, 1u), false) == MemoryOperationsStatus::SUCCESS;
+            UNRECOVERABLE_IF(!ret);
+        }
+    }
+    UNRECOVERABLE_IF(this->currentRingBuffer == this->previousRingBuffer);
     return nextAllocation;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
-    if (ringBuffer) {
-        memoryManager->freeGraphicsMemory(ringBuffer);
-        ringBuffer = nullptr;
+    for (uint32_t ringBufferIndex = 0; ringBufferIndex < this->ringBuffers.size(); ringBufferIndex++) {
+        memoryManager->freeGraphicsMemory(this->ringBuffers[ringBufferIndex].ringBuffer);
     }
-    if (ringBuffer2) {
-        memoryManager->freeGraphicsMemory(ringBuffer2);
-        ringBuffer2 = nullptr;
-    }
+    this->ringBuffers.clear();
     if (semaphores) {
         memoryManager->freeGraphicsMemory(semaphores);
         semaphores = nullptr;

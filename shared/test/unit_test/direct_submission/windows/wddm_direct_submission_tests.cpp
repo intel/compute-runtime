@@ -59,8 +59,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     bool ret = wddmDirectSubmission->initialize(true, false);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(wddmDirectSubmission->ringStart);
-    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer);
-    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer2);
+    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[0].ringBuffer);
+    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
@@ -73,7 +73,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(0u, wddmDirectSubmission->ringCommandStream.getUsed());
 
     *wddmDirectSubmission->ringFence.cpuAddress = 1ull;
-    wddmDirectSubmission->completionRingBuffers[wddmDirectSubmission->currentRingBuffer] = 2ull;
+    wddmDirectSubmission->ringBuffers[wddmDirectSubmission->currentRingBuffer].completionFence = 2ull;
 
     wddmDirectSubmission.reset(nullptr);
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
@@ -90,8 +90,8 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     bool ret = wddmDirectSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(wddmDirectSubmission->ringStart);
-    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer);
-    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffer2);
+    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[0].ringBuffer);
+    EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
@@ -211,12 +211,27 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandlingRingBufferCompletionThen
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
     uint64_t completionValue = 0x12345679ull;
-    wddmDirectSubmission.handleCompletionRingBuffer(completionValue, contextFence);
+    wddmDirectSubmission.handleCompletionFence(completionValue, contextFence);
 
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_EQ(completionValue, wddm->waitFromCpuResult.uint64ParamPassed);
     EXPECT_EQ(address, wddm->waitFromCpuResult.monitoredFence->gpuAddress);
     EXPECT_EQ(value, wddm->waitFromCpuResult.monitoredFence->currentFenceValue);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenCallIsCompleteThenProperValueIsReturned) {
+    MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    *contextFence.cpuAddress = 0u;
+    wddmDirectSubmission.ringBuffers[0].completionFence = 1u;
+    EXPECT_FALSE(wddmDirectSubmission.isCompleted(0u));
+
+    *contextFence.cpuAddress = 1u;
+    EXPECT_TRUE(wddmDirectSubmission.isCompleted(0u));
+
+    wddmDirectSubmission.ringBuffers[0].completionFence = 0u;
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenExpectDispatchSwitchCommandsLinearStreamUpdated) {
@@ -226,14 +241,14 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     bool ret = wddmDirectSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
-    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffer->getGpuAddress() + usedSpace;
+    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
 
     uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
     EXPECT_EQ(expectedGpuVa, gpuVa);
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[1].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
     LinearStream tmpCmdBuffer;
-    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffer->getUnderlyingBuffer(),
+    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffers[0].ringBuffer->getUnderlyingBuffer(),
                                wddmDirectSubmission.ringCommandStream.getMaxAvailableSpace());
     tmpCmdBuffer.getSpace(usedSpace + wddmDirectSubmission.getSizeSwitchRingBufferSection());
     HardwareParse hwParse;
@@ -242,7 +257,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     ASSERT_NE(nullptr, bbStart);
     auto gmmHelper = device->getGmmHelper();
     uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[1].ringBuffer->getGpuAddress(), actualGpuVa);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThenExpectNoSwitchCommandsLinearStreamUpdated) {
@@ -255,14 +270,14 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     EXPECT_EQ(0u, usedSpace);
 
-    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffer->getGpuAddress();
+    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress();
 
     uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
     EXPECT_EQ(expectedGpuVa, gpuVa);
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[1].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
     LinearStream tmpCmdBuffer;
-    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffer->getUnderlyingBuffer(),
+    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffers[0].ringBuffer->getUnderlyingBuffer(),
                                wddmDirectSubmission.ringCommandStream.getMaxAvailableSpace());
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(tmpCmdBuffer, 0u);
@@ -270,24 +285,23 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     EXPECT_EQ(nullptr, bbStart);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectWaitCalled) {
-    using RingBufferUse = typename MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>::RingBufferUse;
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectNewRingBufferAllocated) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
     bool ret = wddmDirectSubmission.initialize(true, false);
     EXPECT_TRUE(ret);
     uint64_t expectedWaitFence = 0x10ull;
-    wddmDirectSubmission.completionRingBuffers[RingBufferUse::SecondBuffer] = expectedWaitFence;
+    wddmDirectSubmission.ringBuffers[1u].completionFence = expectedWaitFence;
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
-    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffer->getGpuAddress() + usedSpace;
+    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
 
     uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
     EXPECT_EQ(expectedGpuVa, gpuVa);
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[2u].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
 
     LinearStream tmpCmdBuffer;
-    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffer->getUnderlyingBuffer(),
+    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffers[0].ringBuffer->getUnderlyingBuffer(),
                                wddmDirectSubmission.ringCommandStream.getMaxAvailableSpace());
     tmpCmdBuffer.getSpace(usedSpace + wddmDirectSubmission.getSizeSwitchRingBufferSection());
     HardwareParse hwParse;
@@ -296,13 +310,48 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     ASSERT_NE(nullptr, bbStart);
     auto gmmHelper = device->getGmmHelper();
     uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[2u].ringBuffer->getGpuAddress(), actualGpuVa);
+
+    EXPECT_EQ(0u, wddm->waitFromCpuResult.called);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectWaitCalled) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionMaxRingBuffers.set(2u);
+
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = wddmDirectSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+    uint64_t expectedWaitFence = 0x10ull;
+    wddmDirectSubmission.ringBuffers[1u].completionFence = expectedWaitFence;
+    size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
+    uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
+
+    uint64_t gpuVa = wddmDirectSubmission.switchRingBuffers();
+    EXPECT_EQ(expectedGpuVa, gpuVa);
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers.size(), 2u);
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[1u].ringBuffer, wddmDirectSubmission.ringCommandStream.getGraphicsAllocation());
+
+    LinearStream tmpCmdBuffer;
+    tmpCmdBuffer.replaceBuffer(wddmDirectSubmission.ringBuffers[0].ringBuffer->getUnderlyingBuffer(),
+                               wddmDirectSubmission.ringCommandStream.getMaxAvailableSpace());
+    tmpCmdBuffer.getSpace(usedSpace + wddmDirectSubmission.getSizeSwitchRingBufferSection());
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(tmpCmdBuffer, usedSpace);
+    MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStart);
+    auto gmmHelper = device->getGmmHelper();
+    uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffers[1u].ringBuffer->getGpuAddress(), actualGpuVa);
 
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_EQ(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectCompletionRingBufferUpdated) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcompletionFenceUpdated) {
     uint64_t address = 0xFF00FF0000ull;
     uint64_t value = 0x12345678ull;
     MonitoredFence &contextFence = osContext->getResidencyController().getMonitoredFence();
@@ -314,7 +363,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectComple
     uint64_t actualTagValue = wddmDirectSubmission.updateTagValue();
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
-    EXPECT_EQ(value, wddmDirectSubmission.completionRingBuffers[wddmDirectSubmission.currentRingBuffer]);
+    EXPECT_EQ(value, wddmDirectSubmission.ringBuffers[wddmDirectSubmission.currentRingBuffer].completionFence);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenCreatingDestroyingThenSubmitterNotifiesResidencyLogger) {

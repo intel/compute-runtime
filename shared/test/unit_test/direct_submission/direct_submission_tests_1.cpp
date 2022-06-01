@@ -132,8 +132,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAlloca
 
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
     ASSERT_EQ(3u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
-    EXPECT_EQ(directSubmission.ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
-    EXPECT_EQ(directSubmission.ringBuffer2, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
     EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
 
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
@@ -158,8 +158,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocatio
 
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
     ASSERT_EQ(4u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
-    EXPECT_EQ(directSubmission.ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
-    EXPECT_EQ(directSubmission.ringBuffer2, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
     EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
     EXPECT_EQ(directSubmission.completionFenceAllocation, mockMemoryOperations->gfxAllocationsForMakeResident[3]);
 
@@ -174,8 +174,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStarted
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    EXPECT_NE(nullptr, directSubmission.ringBuffer);
-    EXPECT_NE(nullptr, directSubmission.ringBuffer2);
+    EXPECT_NE(nullptr, directSubmission.ringBuffers[0].ringBuffer);
+    EXPECT_NE(nullptr, directSubmission.ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, directSubmission.semaphores);
 
     EXPECT_NE(0u, directSubmission.ringCommandStream.getUsed());
@@ -188,42 +188,99 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStar
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.ringStart);
 
-    EXPECT_NE(nullptr, directSubmission.ringBuffer);
-    EXPECT_NE(nullptr, directSubmission.ringBuffer2);
+    EXPECT_NE(nullptr, directSubmission.ringBuffers[0].ringBuffer);
+    EXPECT_NE(nullptr, directSubmission.ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, directSubmission.semaphores);
 
     EXPECT_EQ(0u, directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPrimaryThenExpectNextSecondary) {
-    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::RingBufferUse;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
     GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations();
-    EXPECT_EQ(directSubmission.ringBuffer2, nextRing);
-    EXPECT_EQ(RingBufferUse::SecondBuffer, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSecondaryThenExpectNextPrimary) {
-    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::RingBufferUse;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 
     GraphicsAllocation *nextRing = directSubmission.switchRingBuffersAllocations();
-    EXPECT_EQ(directSubmission.ringBuffer2, nextRing);
-    EXPECT_EQ(RingBufferUse::SecondBuffer, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
 
     nextRing = directSubmission.switchRingBuffersAllocations();
-    EXPECT_EQ(directSubmission.ringBuffer, nextRing);
-    EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
 }
+
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionCurrentRingBuffersInUseWhenSwitchRingBufferThenAllocateNewInsteadOfWaiting) {
+    auto mockMemoryOperations = std::make_unique<MockMemoryOperations>();
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.isCompletedReturn = false;
+
+    bool ret = directSubmission.initialize(false, false);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+    EXPECT_EQ(2u, directSubmission.ringBuffers.size());
+
+    auto nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(3u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[2].ringBuffer, nextRing);
+    EXPECT_EQ(2u, directSubmission.currentRingBuffer);
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[3].ringBuffer, nextRing);
+    EXPECT_EQ(3u, directSubmission.currentRingBuffer);
+
+    directSubmission.isCompletedReturn = true;
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, nextRing);
+    EXPECT_EQ(1u, directSubmission.currentRingBuffer);
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(4u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, nextRing);
+    EXPECT_EQ(0u, directSubmission.currentRingBuffer);
+
+    directSubmission.isCompletedReturn = false;
+
+    nextRing = directSubmission.switchRingBuffersAllocations();
+    EXPECT_EQ(5u, directSubmission.ringBuffers.size());
+    EXPECT_EQ(directSubmission.ringBuffers[4].ringBuffer, nextRing);
+    EXPECT_EQ(4u, directSubmission.currentRingBuffer);
+
+    pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStartedThenExpectRingNotStarted) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
@@ -549,8 +606,8 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     bool ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
 
-    GraphicsAllocation *nulledAllocation = directSubmission->ringBuffer;
-    directSubmission->ringBuffer = nullptr;
+    GraphicsAllocation *nulledAllocation = directSubmission->ringBuffers[0u].ringBuffer;
+    directSubmission->ringBuffers[0u].ringBuffer = nullptr;
     directSubmission.reset(nullptr);
     memoryManager->freeGraphicsMemory(nulledAllocation);
 
@@ -559,8 +616,8 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     ret = directSubmission->initialize(false, false);
     EXPECT_TRUE(ret);
 
-    nulledAllocation = directSubmission->ringBuffer2;
-    directSubmission->ringBuffer2 = nullptr;
+    nulledAllocation = directSubmission->ringBuffers[1u].ringBuffer;
+    directSubmission->ringBuffers[1u].ringBuffer = nullptr;
     directSubmission.reset(nullptr);
     memoryManager->freeGraphicsMemory(nulledAllocation);
 

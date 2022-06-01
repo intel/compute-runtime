@@ -145,14 +145,23 @@ class DirectSubmissionHw {
     size_t getDiagnosticModeSection();
     void setPostSyncOffset();
 
-    enum RingBufferUse : uint32_t {
-        FirstBuffer,
-        SecondBuffer,
-        MaxBuffers
+    virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
+
+    struct RingBufferUse {
+        RingBufferUse() = default;
+        RingBufferUse(FlushStamp completionFence, GraphicsAllocation *ringBuffer) : completionFence(completionFence), ringBuffer(ringBuffer){};
+
+        constexpr static uint32_t initialRingBufferCount = 2u;
+
+        FlushStamp completionFence = 0ull;
+        GraphicsAllocation *ringBuffer = nullptr;
     };
+    std::vector<RingBufferUse> ringBuffers;
+    uint32_t currentRingBuffer = 0u;
+    uint32_t previousRingBuffer = 0u;
+    uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();
 
     LinearStream ringCommandStream;
-    FlushStamp completionRingBuffers[RingBufferUse::MaxBuffers] = {0ull, 0ull};
     std::unique_ptr<DirectSubmissionDiagnosticsCollector> diagnostic;
 
     uint64_t semaphoreGpuVa = 0u;
@@ -165,8 +174,6 @@ class DirectSubmissionHw {
     const HardwareInfo *hwInfo = nullptr;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
-    GraphicsAllocation *ringBuffer = nullptr;
-    GraphicsAllocation *ringBuffer2 = nullptr;
     GraphicsAllocation *semaphores = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     void *semaphorePtr = nullptr;
@@ -174,7 +181,6 @@ class DirectSubmissionHw {
     volatile void *workloadModeOneStoreAddress = nullptr;
 
     uint32_t currentQueueWorkCount = 1u;
-    RingBufferUse currentRingBuffer = RingBufferUse::FirstBuffer;
     uint32_t workloadMode = 0;
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;

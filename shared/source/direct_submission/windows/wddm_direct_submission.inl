@@ -42,7 +42,7 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Stopping Wddm ULLS\n");
     if (this->ringStart) {
         this->stopRingBuffer();
-        WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionRingBuffer(ringFence.lastSubmittedFence, ringFence);
+        WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(ringFence.lastSubmittedFence, ringFence);
     }
     this->deallocateResources();
     wddm->getWddmInterface()->destroyMonitorFence(ringFence);
@@ -89,9 +89,9 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (this->ringStart) {
-        if (this->completionRingBuffers[this->currentRingBuffer] != 0) {
+        if (this->ringBuffers[this->currentRingBuffer].completionFence != 0) {
             MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
-            handleCompletionRingBuffer(this->completionRingBuffers[this->currentRingBuffer], currentFence);
+            handleCompletionFence(this->ringBuffers[this->currentRingBuffer].completionFence, currentFence);
         }
     }
 }
@@ -102,13 +102,13 @@ uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
 
     currentFence.lastSubmittedFence = currentFence.currentFenceValue;
     currentFence.currentFenceValue++;
-    this->completionRingBuffers[this->currentRingBuffer] = currentFence.lastSubmittedFence;
+    this->ringBuffers[this->currentRingBuffer].completionFence = currentFence.lastSubmittedFence;
 
     return currentFence.lastSubmittedFence;
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionRingBuffer(uint64_t completionValue, MonitoredFence &fence) {
+void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionFence(uint64_t completionValue, MonitoredFence &fence) {
     wddm->waitFromCpu(completionValue, fence);
 }
 
@@ -119,6 +119,16 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &ta
 
     tagData.tagAddress = gmmHelper->canonize(currentFence.gpuAddress);
     tagData.tagValue = currentFence.currentFenceValue;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline bool WddmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t ringBufferIndex) {
+    MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
+    auto lastSubmittedFence = this->ringBuffers[ringBufferIndex].completionFence;
+    if (lastSubmittedFence > *currentFence.cpuAddress) {
+        return false;
+    }
+    return true;
 }
 
 } // namespace NEO
