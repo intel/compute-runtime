@@ -84,7 +84,7 @@ TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIs
     res = kernel->getBaseAddress(&baseAddress);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(baseAddress, 0u);
-    EXPECT_EQ(baseAddress, kernel->getImmutableData()->getKernelInfo()->kernelAllocation->getGpuAddress());
+    EXPECT_EQ(baseAddress, kernel->getImmutableData()->getIsaGraphicsAllocation()->getGpuAddress());
 }
 
 TEST(KernelArgTest, givenKernelWhenSetArgUnknownCalledThenSuccessRteurned) {

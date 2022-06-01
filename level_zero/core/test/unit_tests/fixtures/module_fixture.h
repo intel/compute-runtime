@@ -68,8 +68,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                                                                         0u,
                                                                         MemoryPool::System4KBPages,
                                                                         MemoryManager::maxOsContextCount));
-
-            kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
         }
 
         void setDevice(L0::Device *inDevice) {
