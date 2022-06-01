@@ -11,8 +11,6 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
-#include "opencl/extensions/public/cl_ext_private.h"
-
 using namespace NEO;
 
 using HwInfoConfigTestLinuxGen12lp = HwInfoConfigTestLinux;

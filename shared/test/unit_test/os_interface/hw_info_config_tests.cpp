@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,6 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
-
-#include "opencl/source/sampler/sampler.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 
@@ -154,18 +150,6 @@ HWTEST_F(HwInfoConfigTest, whenConvertingTimestampsToCsDomainThenNothingIsChange
 HWTEST_F(HwInfoConfigTest, whenOverrideGfxPartitionLayoutForWslThenReturnFalse) {
     auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_FALSE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());
-}
-
-HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged) {
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
-    auto context = clUniquePtr(new MockContext());
-    auto sampler = clUniquePtr(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
-    auto state = FamilyType::cmdInitSamplerState;
-    auto initialState = state;
-    hwInfoConfig->adjustSamplerState(&state, pInHwInfo);
-
-    EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
 
 HWTEST_F(HwInfoConfigTest, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
@@ -466,4 +450,15 @@ HWTEST2_F(HwInfoConfigTest, givenHwInfoConfigWhenGettingIsBlitCopyRequiredForLoc
     graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
 
     EXPECT_FALSE(hwInfoConfig.isBlitCopyRequiredForLocalMemory(pInHwInfo, graphicsAllocation));
+}
+
+HWTEST_F(HwInfoConfigTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto hwInfoConfig = HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
+
+    auto state = FamilyType::cmdInitSamplerState;
+    auto initialState = state;
+    hwInfoConfig->adjustSamplerState(&state, pInHwInfo);
+
+    EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }

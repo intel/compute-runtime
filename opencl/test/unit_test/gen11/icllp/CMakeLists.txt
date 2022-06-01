@@ -5,13 +5,7 @@
 #
 
 if(TESTS_ICLLP)
-  set(IGDRCL_SRCS_tests_gen11_icllp_excludes
-      ${CMAKE_CURRENT_SOURCE_DIR}/excludes_ocl_icllp.cpp
-  )
-  set_property(GLOBAL APPEND PROPERTY IGDRCL_SRCS_tests_excludes ${IGDRCL_SRCS_tests_gen11_icllp_excludes})
-
   set(IGDRCL_SRCS_tests_gen11_icllp
-      ${IGDRCL_SRCS_tests_gen11_icllp_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_icllp.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_icllp.cpp

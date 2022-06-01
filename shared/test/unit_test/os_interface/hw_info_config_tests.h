@@ -17,20 +17,11 @@ using namespace NEO;
 struct HwInfoConfigTest : public ::testing::Test {
     void SetUp() override {
         pInHwInfo = *defaultHwInfo;
-
         testPlatform = &pInHwInfo.platform;
-        testSkuTable = &pInHwInfo.featureTable;
-        testWaTable = &pInHwInfo.workaroundTable;
-        testSysInfo = &pInHwInfo.gtSystemInfo;
-
-        outHwInfo = {};
     }
 
     HardwareInfo pInHwInfo;
-    HardwareInfo outHwInfo;
+    HardwareInfo outHwInfo{};
 
     PLATFORM *testPlatform = nullptr;
-    FeatureTable *testSkuTable = nullptr;
-    WorkaroundTable *testWaTable = nullptr;
-    GT_SYSTEM_INFO *testSysInfo = nullptr;
 };
