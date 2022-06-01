@@ -106,4 +106,23 @@ uint32_t IoctlHelper::createDrmContext(Drm &drm, const OsContext &osContext, uin
     return drmContextId;
 }
 
+int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
+    switch (drmParam) {
+    case DrmParam::EngineClassRender:
+        return I915_ENGINE_CLASS_RENDER;
+    case DrmParam::EngineClassCopy:
+        return I915_ENGINE_CLASS_COPY;
+    case DrmParam::EngineClassVideo:
+        return I915_ENGINE_CLASS_VIDEO;
+    case DrmParam::EngineClassVideoEnhance:
+        return I915_ENGINE_CLASS_VIDEO_ENHANCE;
+    case DrmParam::EngineClassInvalid:
+        return I915_ENGINE_CLASS_INVALID;
+    case DrmParam::EngineClassInvalidNone:
+        return I915_ENGINE_CLASS_INVALID_NONE;
+    default:
+        UNRECOVERABLE_IF(true);
+        return 0;
+    }
+}
 } // namespace NEO

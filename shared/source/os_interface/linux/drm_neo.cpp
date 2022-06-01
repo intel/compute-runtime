@@ -324,7 +324,7 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
 int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_SSEU;
-    sseu->engine.engineClass = I915_ENGINE_CLASS_RENDER;
+    sseu->engine.engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender);
     sseu->engine.engineInstance = I915_EXEC_DEFAULT;
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
     contextParam.size = sizeof(struct GemContextParamSseu);
@@ -1016,25 +1016,18 @@ bool Drm::queryEngineInfo(bool isSysmanEnabled) {
             distanceInfo.region = region.region;
 
             for (const auto &engine : engines) {
-                switch (engine.engine.engineClass) {
-                case I915_ENGINE_CLASS_RENDER:
-                case I915_ENGINE_CLASS_COPY:
+                if (engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute) ||
+                    engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender) ||
+                    engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
                     distanceInfo.engine = engine.engine;
                     distanceInfos.push_back(distanceInfo);
-                    break;
-                case I915_ENGINE_CLASS_VIDEO:
-                case I915_ENGINE_CLASS_VIDEO_ENHANCE:
-                    if (isSysmanEnabled == true) {
+                } else if (isSysmanEnabled) {
+
+                    if (engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo) ||
+                        engine.engine.engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance)) {
                         distanceInfo.engine = engine.engine;
                         distanceInfos.push_back(distanceInfo);
                     }
-                    break;
-                default:
-                    if (engine.engine.engineClass == ioctlHelper->getComputeEngineClass()) {
-                        distanceInfo.engine = engine.engine;
-                        distanceInfos.push_back(distanceInfo);
-                    }
-                    break;
                 }
             }
         }
@@ -1218,14 +1211,14 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     bool setupVirtualEngines = false;
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
-    if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getComputeEngineClass() && numberOfCCS > 1u) {
+    if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute) && numberOfCCS > 1u) {
         numEnginesInContext = numberOfCCS + 1;
         balancer.num_siblings = numberOfCCS;
         setupVirtualEngines = true;
     }
 
     bool includeMainCopyEngineInGroup = false;
-    if (useVirtualEnginesForBcs && engine->engineClass == I915_ENGINE_CLASS_COPY && numberOfBCS > 1u) {
+    if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy) && numberOfBCS > 1u) {
         numEnginesInContext = static_cast<uint32_t>(numberOfBCS) + 1;
         balancer.num_siblings = numberOfBCS;
         setupVirtualEngines = true;
@@ -1242,11 +1235,11 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     if (setupVirtualEngines) {
         balancer.base.name = I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
         contextEngines.extensions = castToUint64(&balancer);
-        contextEngines.engines[0].engine_class = I915_ENGINE_CLASS_INVALID;
-        contextEngines.engines[0].engine_instance = I915_ENGINE_CLASS_INVALID_NONE;
+        contextEngines.engines[0].engine_class = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid);
+        contextEngines.engines[0].engine_instance = ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone);
 
         for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
-            if (useVirtualEnginesForBcs && engine->engineClass == I915_ENGINE_CLASS_COPY) {
+            if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)) {
                 auto mappedBcsEngineType = static_cast<aub_stream::EngineType>(EngineHelpers::mapBcsIndexToEngineType(engineIndex, includeMainCopyEngineInGroup));
                 bool isBcsEnabled = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.test(EngineHelpers::getBcsIndex(mappedBcsEngineType));
 
@@ -1258,7 +1251,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
             }
             UNRECOVERABLE_IF(!engine);
 
-            if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getComputeEngineClass()) {
+            if (useVirtualEnginesForCcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::EngineClassCompute)) {
                 engine = engineInfo->getEngineInstance(deviceIndex, static_cast<aub_stream::EngineType>(EngineHelpers::mapCcsIndexToEngineType(engineIndex)));
             }
             UNRECOVERABLE_IF(!engine);

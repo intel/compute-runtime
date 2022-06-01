@@ -91,7 +91,6 @@ class IoctlHelper {
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
-    virtual int32_t getComputeEngineClass() = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
@@ -116,6 +115,7 @@ class IoctlHelper {
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
     virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) = 0;
+    virtual int getDrmParamValue(DrmParam drmParam) const = 0;
 
     uint32_t createDrmContext(Drm &drm, const OsContext &osContext, uint32_t drmVmId);
 
@@ -124,6 +124,7 @@ class IoctlHelper {
 
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
+    int getDrmParamValueBase(DrmParam drmParam) const;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {
@@ -151,7 +152,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
-    int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
@@ -176,6 +176,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    int getDrmParamValue(DrmParam drmParam) const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -217,7 +218,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
-    int32_t getComputeEngineClass() override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
@@ -242,6 +242,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    int getDrmParamValue(DrmParam drmParam) const override;
 };
 
 } // namespace NEO

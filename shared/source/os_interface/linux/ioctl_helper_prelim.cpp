@@ -338,10 +338,6 @@ uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<QueryItem> &q
     return ret;
 }
 
-int32_t IoctlHelperPrelim20::getComputeEngineClass() {
-    return PRELIM_I915_ENGINE_CLASS_COMPUTE;
-}
-
 std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
 };
@@ -633,6 +629,15 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) {
     default:
         UNRECOVERABLE_IF(true);
         return 0u;
+    }
+}
+
+int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
+    switch (drmParam) {
+    case DrmParam::EngineClassCompute:
+        return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    default:
+        return getDrmParamValueBase(drmParam);
     }
 }
 

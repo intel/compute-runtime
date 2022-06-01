@@ -152,10 +152,6 @@ uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<QueryItem> &q
     return 0;
 }
 
-int32_t IoctlHelperUpstream::getComputeEngineClass() {
-    return 4;
-}
-
 uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
     return 0;
 }
@@ -293,6 +289,15 @@ unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) {
     default:
         UNRECOVERABLE_IF(true);
         return 0u;
+    }
+}
+
+int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
+    switch (drmParam) {
+    case DrmParam::EngineClassCompute:
+        return 4;
+    default:
+        return getDrmParamValueBase(drmParam);
     }
 }
 } // namespace NEO

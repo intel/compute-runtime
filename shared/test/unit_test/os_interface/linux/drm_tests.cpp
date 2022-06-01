@@ -1224,3 +1224,17 @@ TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
         EXPECT_STREQ(IoctlToStringHelper::getIoctlString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
     }
 }
+
+TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto ioctlHelper = drm.getIoctlHelper();
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideo));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassVideoEnhance));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalid));
+    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE), ioctlHelper->getDrmParamValue(DrmParam::EngineClassInvalidNone));
+
+    EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::EngineClassCompute), std::runtime_error);
+}

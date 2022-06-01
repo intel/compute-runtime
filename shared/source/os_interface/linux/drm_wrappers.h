@@ -236,5 +236,15 @@ enum class DrmIoctl {
     GemCacheReserve,
 };
 
+enum class DrmParam {
+    EngineClassRender,
+    EngineClassCompute,
+    EngineClassCopy,
+    EngineClassVideo,
+    EngineClassVideoEnhance,
+    EngineClassInvalid,
+    EngineClassInvalidNone,
+};
+
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 } // namespace NEO

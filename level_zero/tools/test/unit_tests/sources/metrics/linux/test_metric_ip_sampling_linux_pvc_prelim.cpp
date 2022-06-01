@@ -51,7 +51,7 @@ class DrmPrelimMock : public DrmMock {
     }
 
     bool queryEngineInfo() override {
-        uint16_t computeEngineClass = getIoctlHelper()->getComputeEngineClass();
+        uint16_t computeEngineClass = getIoctlHelper()->getDrmParamValue(DrmParam::EngineClassCompute);
         std::vector<EngineCapabilities> engines(4);
         engines[0].engine = {computeEngineClass, 0};
         engines[0].capabilities = 0;
@@ -82,7 +82,7 @@ class DrmPrelimMock : public DrmMock {
     }
 
     bool queryEngineInfo1SubDevice() {
-        uint16_t computeEngineClass = getIoctlHelper()->getComputeEngineClass();
+        uint16_t computeEngineClass = getIoctlHelper()->getDrmParamValue(DrmParam::EngineClassCompute);
         std::vector<EngineCapabilities> engines(1);
         engines[0].engine = {computeEngineClass, 0};
         engines[0].capabilities = 0;
