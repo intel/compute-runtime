@@ -123,6 +123,7 @@ class IoctlHelper {
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
     int getDrmParamValueBase(DrmParam drmParam) const;
+    unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
 };
 
 class IoctlHelperUpstream : public IoctlHelper {

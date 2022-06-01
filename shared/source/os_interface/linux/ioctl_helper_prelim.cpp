@@ -552,42 +552,6 @@ bool IoctlHelperPrelim20::isDebugAttachAvailable() {
 
 unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) {
     switch (ioctlRequest) {
-    case DrmIoctl::GemExecbuffer2:
-        return DRM_IOCTL_I915_GEM_EXECBUFFER2;
-    case DrmIoctl::GemWait:
-        return DRM_IOCTL_I915_GEM_WAIT;
-    case DrmIoctl::GemClose:
-        return DRM_IOCTL_GEM_CLOSE;
-    case DrmIoctl::GemUserptr:
-        return DRM_IOCTL_I915_GEM_USERPTR;
-    case DrmIoctl::GemCreate:
-        return DRM_IOCTL_I915_GEM_CREATE;
-    case DrmIoctl::GemSetDomain:
-        return DRM_IOCTL_I915_GEM_SET_DOMAIN;
-    case DrmIoctl::GemSetTiling:
-        return DRM_IOCTL_I915_GEM_SET_TILING;
-    case DrmIoctl::GemGetTiling:
-        return DRM_IOCTL_I915_GEM_GET_TILING;
-    case DrmIoctl::GemContextCreateExt:
-        return DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT;
-    case DrmIoctl::GemContextDestroy:
-        return DRM_IOCTL_I915_GEM_CONTEXT_DESTROY;
-    case DrmIoctl::RegRead:
-        return DRM_IOCTL_I915_REG_READ;
-    case DrmIoctl::GetResetStats:
-        return DRM_IOCTL_I915_GET_RESET_STATS;
-    case DrmIoctl::GemContextGetparam:
-        return DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM;
-    case DrmIoctl::GemContextSetparam:
-        return DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM;
-    case DrmIoctl::Query:
-        return DRM_IOCTL_I915_QUERY;
-    case DrmIoctl::GemMmap:
-        return DRM_IOCTL_I915_GEM_MMAP;
-    case DrmIoctl::PrimeFdToHandle:
-        return DRM_IOCTL_PRIME_FD_TO_HANDLE;
-    case DrmIoctl::PrimeHandleToFd:
-        return DRM_IOCTL_PRIME_HANDLE_TO_FD;
     case DrmIoctl::GemVmBind:
         return PRELIM_DRM_IOCTL_I915_GEM_VM_BIND;
     case DrmIoctl::GemVmUnbind:
@@ -612,15 +576,8 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) {
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
     case DrmIoctl::GemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
-    case DrmIoctl::GemMmapOffset:
-        return DRM_IOCTL_I915_GEM_MMAP_OFFSET;
-    case DrmIoctl::GemVmCreate:
-        return DRM_IOCTL_I915_GEM_VM_CREATE;
-    case DrmIoctl::GemVmDestroy:
-        return DRM_IOCTL_I915_GEM_VM_DESTROY;
     default:
-        UNRECOVERABLE_IF(true);
-        return 0u;
+        return getIoctlRequestValueBase(ioctlRequest);
     }
 }
 
