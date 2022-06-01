@@ -638,7 +638,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (args.allocation && !MemoryPool::isSystemMemoryPool(args.allocation->getMemoryPool())) {
+        if (args.allocation && !MemoryPoolHelper::isSystemMemoryPool(args.allocation->getMemoryPool())) {
             setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
             setBufferAuxParamsForCCS(surfaceState);
             compressionFormat = DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get();

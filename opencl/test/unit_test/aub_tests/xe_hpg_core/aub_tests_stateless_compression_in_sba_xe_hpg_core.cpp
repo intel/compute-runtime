@@ -172,7 +172,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleBufferI
     auto uncompressibleBufferInHostMemory = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_FORCE_HOST_MEMORY_INTEL, bufferSize, nullptr, retVal));
     auto uncompressibleAllocationInHostMemory = uncompressibleBufferInHostMemory->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
 
     retVal = pCmdQ->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -222,7 +222,7 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleHostMem
     auto uncompressibleHostMemAlloc = context->getSVMAllocsManager()->getSVMAllocs()->get(uncompressibleHostMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, uncompressibleHostMemAlloc);
     EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleHostMemAlloc->getAllocationType());
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleHostMemAlloc->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(uncompressibleHostMemAlloc->getMemoryPool()));
 
     retVal = clEnqueueMemcpyINTEL(pCmdQ, true, compressedDeviceMemAllocPtr, writePattern, bufferSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -554,7 +554,7 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressible
     auto uncompressibleBufferInHostMemory = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_FORCE_HOST_MEMORY_INTEL, bufferSize, nullptr, retVal));
     auto uncompressibleAllocationInHostMemory = uncompressibleBufferInHostMemory->getGraphicsAllocation(tileDevices[0]->getRootDeviceIndex());
     EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, uncompressibleAllocationInHostMemory->getAllocationType());
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(uncompressibleAllocationInHostMemory->getMemoryPool()));
 
     retVal = commandQueues[0][0]->enqueueWriteBuffer(compressedBuffer.get(), CL_FALSE, 0, bufferSize, writePattern, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);

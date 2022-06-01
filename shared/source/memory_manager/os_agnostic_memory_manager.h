@@ -19,28 +19,28 @@ class MemoryAllocation : public GraphicsAllocation {
     const bool uncacheable;
 
     MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool, size_t maxOsContextCount)
+                     MemoryPool pool, size_t maxOsContextCount)
         : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, maxOsContextCount) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool, size_t maxOsContextCount)
+                     MemoryPool pool, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, canonizedGpuAddress, baseAddress, sizeIn, pool, maxOsContextCount),
           id(0), uncacheable(false) {}
 
-    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
+    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount)
         : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount) {}
 
-    MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
+    MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount),
           id(0), uncacheable(false) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t canonizedGpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
+                     uint64_t count, MemoryPool pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
         : MemoryAllocation(rootDeviceIndex, 1, allocationType, driverAllocatedCpuPointer, pMem, canonizedGpuAddress, memSize,
                            count, pool, uncacheable, flushL3Required, maxOsContextCount) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t canonizedGpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
+                     uint64_t count, MemoryPool pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, pMem, canonizedGpuAddress, 0u, memSize, pool, maxOsContextCount),
           id(count), uncacheable(uncacheable) {
 
@@ -49,7 +49,7 @@ class MemoryAllocation : public GraphicsAllocation {
         allocationInfo.flags.flushL3Required = flushL3Required;
     }
 
-    void overrideMemoryPool(MemoryPool::Type pool);
+    void overrideMemoryPool(MemoryPool pool);
 
     void clearUsageInfo() {
         for (auto &info : usageInfos) {
@@ -109,7 +109,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     MemoryAllocation *createMemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                                             uint64_t count, MemoryPool::Type pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
+                                             uint64_t count, MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
     bool fakeBigAllocations = false;
 
   private:

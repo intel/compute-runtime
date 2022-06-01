@@ -1303,7 +1303,7 @@ bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloca
     return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
 }
 bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
-    if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
     }
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);

@@ -306,7 +306,7 @@ Buffer *Buffer::create(Context *context,
             }
         }
 
-        if (allocationInfo[rootDeviceIndex].allocateMemory && allocationInfo[rootDeviceIndex].memory && MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
+        if (allocationInfo[rootDeviceIndex].allocateMemory && allocationInfo[rootDeviceIndex].memory && MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
             memoryManager->addAllocationToHostPtrManager(allocationInfo[rootDeviceIndex].memory);
         }
 
@@ -330,7 +330,7 @@ Buffer *Buffer::create(Context *context,
             return nullptr;
         }
 
-        if (!MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
+        if (!MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
             allocationInfo[rootDeviceIndex].zeroCopyAllowed = false;
             if (hostPtr) {
                 if (!allocationInfo[rootDeviceIndex].isHostPtrSVM) {
@@ -376,7 +376,7 @@ Buffer *Buffer::create(Context *context,
     DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
             ", memoryStorage: ", allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer(),
             ", GPU address: ", allocationInfo[rootDeviceIndex].memory->getGpuAddress(),
-            ", memoryPool: ", allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+            ", memoryPool: ", getMemoryPoolString(allocationInfo[rootDeviceIndex].memory));
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         if (memoryProperties.flags.useHostPtr) {
@@ -399,7 +399,7 @@ Buffer *Buffer::create(Context *context,
         pBuffer->setHostPtrMinSize(size);
 
         if (allocationInfo[rootDeviceIndex].copyMemoryFromHostPtr && !copyExecuted) {
-            auto isLocalMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+            auto isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
             bool gpuCopyRequired = (allocationInfo[rootDeviceIndex].memory->isCompressionEnabled()) || isLocalMemory;
 
             if (gpuCopyRequired) {
@@ -652,7 +652,7 @@ bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
 
 bool Buffer::isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &device) {
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(device.getRootDeviceIndex());
-    if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
         if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
             return false;

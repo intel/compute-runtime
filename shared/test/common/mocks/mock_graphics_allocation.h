@@ -46,7 +46,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
         }
     }
 
-    void overrideMemoryPool(MemoryPool::Type pool) {
+    void overrideMemoryPool(MemoryPool pool) {
         this->memoryPool = pool;
     }
 };

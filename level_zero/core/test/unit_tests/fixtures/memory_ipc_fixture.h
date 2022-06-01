@@ -458,9 +458,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -473,9 +473,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -487,9 +487,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -498,9 +498,9 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
                                                      NEO::AllocationType::BUFFER,
                                                      reinterpret_cast<void *>(sharedHandleAddress++),
                                                      0x1000,
-                                                     0,
-                                                     sizeof(uint32_t),
-                                                     MemoryPool::System4KBPages);
+                                                     0u,
+                                                     MemoryPool::System4KBPages,
+                                                     MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     };
@@ -610,9 +610,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -622,9 +622,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -637,9 +637,9 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
                                                                   NEO::AllocationType::BUFFER,
                                                                   reinterpret_cast<void *>(sharedHandleAddress++),
                                                                   0x1000,
-                                                                  0,
-                                                                  sizeof(uint32_t),
-                                                                  MemoryPool::System4KBPages);
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }

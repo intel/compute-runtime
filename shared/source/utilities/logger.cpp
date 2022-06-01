@@ -95,7 +95,7 @@ void FileLogger<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
 
         ss << " ThreadID: " << thisThread;
         ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
-        ss << " MemoryPool: " << graphicsAllocation->getMemoryPool();
+        ss << " MemoryPool: " << getMemoryPoolString(graphicsAllocation);
         ss << " Root device index: " << graphicsAllocation->getRootDeviceIndex();
         ss << " GPU address: 0x" << std::hex << graphicsAllocation->getGpuAddress() << " - 0x" << std::hex << graphicsAllocation->getGpuAddress() + graphicsAllocation->getUnderlyingBufferSize() - 1;
 
@@ -231,6 +231,30 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
     default:
         return "ILLEGAL_VALUE";
     }
+}
+
+const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation) {
+    auto pool = graphicsAllocation->getMemoryPool();
+
+    switch (pool) {
+    case MemoryPool::MemoryNull:
+        return "MemoryNull";
+    case MemoryPool::System4KBPages:
+        return "System4KBPages";
+    case MemoryPool::System64KBPages:
+        return "System64KBPages";
+    case MemoryPool::System4KBPagesWith32BitGpuAddressing:
+        return "System4KBPagesWith32BitGpuAddressing";
+    case MemoryPool::System64KBPagesWith32BitGpuAddressing:
+        return "System64KBPagesWith32BitGpuAddressing";
+    case MemoryPool::SystemCpuInaccessible:
+        return "SystemCpuInaccessible";
+    case MemoryPool::LocalMemory:
+        return "LocalMemory";
+    }
+
+    UNRECOVERABLE_IF(true);
+    return "ILLEGAL_VALUE";
 }
 
 template class FileLogger<DebugFunctionalityLevel::None>;

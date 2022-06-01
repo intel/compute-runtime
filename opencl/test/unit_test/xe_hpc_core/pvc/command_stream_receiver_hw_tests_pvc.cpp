@@ -161,7 +161,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInDeviceMemoryWhenStatelessCompressionIsEnable
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(!MemoryPool::isSystemMemoryPool(allocation->getMemoryPool()));
+    EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
                                                                      0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
@@ -190,7 +190,7 @@ PVCTEST_F(PVcBcsTests, givenBufferInSystemMemoryWhenStatelessCompressionIsEnable
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(allocation->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation, allocation,
                                                                      0, 0, {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);

@@ -846,7 +846,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCommandStreamReceiverWh
 }
 
 struct MockDrmAllocationBindBO : public DrmAllocation {
-    MockDrmAllocationBindBO(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    MockDrmAllocationBindBO(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
         : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
     }
 
@@ -855,7 +855,7 @@ struct MockDrmAllocationBindBO : public DrmAllocation {
 };
 
 struct MockDrmAllocationBindBOs : public DrmAllocation {
-    MockDrmAllocationBindBOs(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    MockDrmAllocationBindBOs(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
         : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
     }
 

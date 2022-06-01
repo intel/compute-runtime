@@ -67,18 +67,18 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
     GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn,
-                       uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount)
+                       uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool pool, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, maxOsContextCount) {}
 
     GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn,
-                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
+                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount) {}
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
-                       uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount);
+                       uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool pool, size_t maxOsContextCount);
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
-                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount);
+                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount);
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
     void *getUnderlyingBuffer() const { return cpuPtr; }
@@ -152,7 +152,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setAllocationType(AllocationType allocationType);
     AllocationType getAllocationType() const { return allocationType; }
 
-    MemoryPool::Type getMemoryPool() const { return memoryPool; }
+    MemoryPool getMemoryPool() const { return memoryPool; }
 
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
@@ -326,7 +326,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *cpuPtr = nullptr;
     void *lockedPtr = nullptr;
 
-    MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
+    MemoryPool memoryPool = MemoryPool::MemoryNull;
     AllocationType allocationType = AllocationType::UNKNOWN;
 
     StackVec<UsageInfo, 32> usageInfos;

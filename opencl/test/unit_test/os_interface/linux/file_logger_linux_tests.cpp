@@ -44,7 +44,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
     gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
@@ -96,7 +96,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
     gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
@@ -135,7 +135,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
@@ -166,7 +166,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());

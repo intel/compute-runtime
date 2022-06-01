@@ -121,7 +121,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
                                                       0,
                                                       0,
                                                       4096,
-                                                      MemoryPool::System4KBPages,
+                                                      NEO::MemoryPool::System4KBPages,
                                                       NEO::MemoryManager::maxOsContextCount);
 
         immutableData.isaGraphicsAllocation.reset(allocation);

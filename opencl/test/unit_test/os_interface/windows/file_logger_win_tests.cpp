@@ -43,7 +43,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
     gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
@@ -88,7 +88,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << allocation.getMemoryPool();
+    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());

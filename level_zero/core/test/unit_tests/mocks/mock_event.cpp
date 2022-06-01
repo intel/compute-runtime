@@ -16,7 +16,7 @@ Mock<Event>::Mock() : mockAllocation(0,
                                      reinterpret_cast<uint64_t>(&memory),
                                      0,
                                      sizeof(memory),
-                                     MemoryPool::System4KBPages,
+                                     NEO::MemoryPool::System4KBPages,
                                      NEO::MemoryManager::maxOsContextCount) {}
 
 Mock<Event>::~Mock() {}

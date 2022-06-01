@@ -33,26 +33,26 @@ class DrmAllocation : public GraphicsAllocation {
         MemoryUnmapFunction unmapFunction;
     };
 
-    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool)
         : DrmAllocation(rootDeviceIndex, 1, allocationType, bo, ptrIn, sizeIn, sharedHandle, pool) {}
 
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount), bufferObjects(EngineLimits::maxHandleCount) {
         bufferObjects[0] = bo;
     }
 
-    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : DrmAllocation(rootDeviceIndex, 1, allocationType, bo, ptrIn, canonizedGpuAddress, sizeIn, pool) {}
 
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount), bufferObjects(EngineLimits::maxHandleCount) {
         bufferObjects[0] = bo;
     }
 
-    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : DrmAllocation(rootDeviceIndex, 1, allocationType, bos, ptrIn, canonizedGpuAddress, sizeIn, pool) {}
 
-    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool::Type pool)
+    DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount),
           bufferObjects(bos) {
     }

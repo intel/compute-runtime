@@ -63,10 +63,10 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProper
         blitCmd.setSourceCompressionFormat(compressionFormat);
     }
 
-    if (MemoryPool::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.dstAllocation->getMemoryPool())) {
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
-    if (MemoryPool::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(blitProperties.srcAllocation->getMemoryPool())) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
 
@@ -136,7 +136,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::Graphic
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
 
-    if (MemoryPool::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
         blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
     }
 

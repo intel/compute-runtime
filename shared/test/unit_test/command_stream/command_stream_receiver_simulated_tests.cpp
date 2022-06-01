@@ -530,7 +530,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
 
     int dummy = 1;
 
-    MemoryPool::Type poolsWith4kPages[] = {
+    MemoryPool poolsWith4kPages[] = {
         MemoryPool::System4KBPages,
         MemoryPool::System4KBPagesWith32BitGpuAddressing,
         MemoryPool::SystemCpuInaccessible};
@@ -563,7 +563,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenSpecificMemoryPoolAllocationWhenWrite
         }
     }
 
-    MemoryPool::Type poolsWith64kPages[] = {
+    MemoryPool poolsWith64kPages[] = {
         MemoryPool::System64KBPages,
         MemoryPool::System64KBPagesWith32BitGpuAddressing,
         MemoryPool::LocalMemory};

@@ -96,11 +96,11 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     }
 
     if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPool::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
+        if (!MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool())) {
             blitCmd.setSourceCompressible(MEM_COPY::SOURCE_COMPRESSIBLE::SOURCE_COMPRESSIBLE_COMPRESSIBLE);
             blitCmd.setCompressionFormat(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
-        if (!MemoryPool::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
+        if (!MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())) {
             blitCmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
             blitCmd.setCompressionFormat(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
@@ -136,7 +136,7 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocati
         blitCmd.setCompressionFormat40(compressionFormat);
     }
     if (DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPool::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
+        if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
             blitCmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
             blitCmd.setCompressionFormat40(DebugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }

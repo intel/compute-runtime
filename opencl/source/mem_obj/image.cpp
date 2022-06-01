@@ -334,7 +334,7 @@ Image *Image::create(Context *context,
                     allocProperties.flags.preferCompressed = preferCompression;
                     allocationInfo[rootDeviceIndex].memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
-                    if (allocationInfo[rootDeviceIndex].memory && MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
+                    if (allocationInfo[rootDeviceIndex].memory && MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool())) {
                         allocationInfo[rootDeviceIndex].zeroCopyAllowed = true;
                     }
                 }
@@ -431,7 +431,7 @@ Image *Image::create(Context *context,
                 }
 
                 bool isCpuTransferPreferrred = imgInfo.linearStorage &&
-                                               (MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool()) ||
+                                               (MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool()) ||
                                                 defaultHwHelper.isCpuImageTransferPreferred(hwInfo));
                 if (!isCpuTransferPreferrred) {
                     auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
@@ -445,7 +445,7 @@ Image *Image::create(Context *context,
                     }
                 } else {
                     void *pDestinationAddress = allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer();
-                    auto isNotInSystemMemory = !MemoryPool::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
+                    auto isNotInSystemMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo[rootDeviceIndex].memory->getMemoryPool());
                     if (isNotInSystemMemory) {
                         pDestinationAddress = context->getMemoryManager()->lockResource(allocationInfo[rootDeviceIndex].memory);
                     }

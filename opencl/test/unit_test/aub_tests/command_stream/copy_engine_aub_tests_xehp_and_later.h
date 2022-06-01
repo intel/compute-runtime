@@ -95,7 +95,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         if (compressed) {
             EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
         }
-        EXPECT_EQ(!inLocalMemory, MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool()));
+        EXPECT_EQ(!inLocalMemory, MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()));
 
         return buffer;
     }

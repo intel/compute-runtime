@@ -155,7 +155,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     uint8_t *mappedPtrStart;
     uint8_t *srcMemoryStart;
 
-    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(
+    bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(
                                                           srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     if (isGpuCopy) {
         mappedPtrStart = static_cast<uint8_t *>(mappedPtr);

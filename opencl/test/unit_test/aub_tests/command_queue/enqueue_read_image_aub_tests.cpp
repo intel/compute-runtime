@@ -153,7 +153,7 @@ struct AUBReadImage
 
         auto imageMemory = srcMemory;
         auto memoryPool = srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool();
-        bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPool::isSystemMemoryPool(memoryPool);
+        bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(memoryPool);
         if (!isGpuCopy) {
             imageMemory = reinterpret_cast<uint8_t *>(srcImage->getCpuAddress());
         }

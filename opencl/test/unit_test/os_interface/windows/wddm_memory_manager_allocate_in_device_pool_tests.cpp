@@ -368,7 +368,7 @@ TEST_F(WddmMemoryManagerTest, givenLocalMemoryAllocationWhenCpuPointerNotMeetRes
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, size, AllocationType::BUFFER, mockDeviceBitfield}, cpuPtr));
 
     ASSERT_NE(nullptr, allocation);
-    EXPECT_FALSE(MemoryPool::isSystemMemoryPool(allocation->getMemoryPool()));
+    EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
     if (is32bit && this->executionEnvironment->rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
         EXPECT_NE(nullptr, allocation->getReservedAddressPtr());
         EXPECT_EQ(alignUp(size, MemoryConstants::pageSize64k) + 2 * MemoryConstants::megaByte, allocation->getReservedAddressSize());

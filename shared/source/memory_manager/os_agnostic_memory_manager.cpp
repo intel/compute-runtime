@@ -420,7 +420,7 @@ void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, siz
 
 MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer,
                                                                   void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count,
-                                                                  MemoryPool::Type pool, uint32_t rootDeviceIndex, bool uncacheable,
+                                                                  MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable,
                                                                   bool flushL3Required, bool requireSpecificBitness) {
     auto gmmHelper = getGmmHelper(rootDeviceIndex);
     if (!isLimitedRange(rootDeviceIndex)) {
@@ -554,7 +554,7 @@ double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootD
     return 0.8;
 }
 
-void MemoryAllocation::overrideMemoryPool(MemoryPool::Type pool) {
+void MemoryAllocation::overrideMemoryPool(MemoryPool pool) {
     if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
         this->memoryPool = MemoryPool::LocalMemory;
         return;

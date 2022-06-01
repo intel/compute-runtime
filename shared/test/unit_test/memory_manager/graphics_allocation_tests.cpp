@@ -229,10 +229,10 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandles
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThenCorrectSizeForMemoryPoolUsedIsReturned) {
 
-    MemoryPool::Type page4kPools[] = {MemoryPool::MemoryNull,
-                                      MemoryPool::System4KBPages,
-                                      MemoryPool::System4KBPagesWith32BitGpuAddressing,
-                                      MemoryPool::SystemCpuInaccessible};
+    MemoryPool page4kPools[] = {MemoryPool::MemoryNull,
+                                MemoryPool::System4KBPages,
+                                MemoryPool::System4KBPagesWith32BitGpuAddressing,
+                                MemoryPool::SystemCpuInaccessible};
 
     for (auto pool : page4kPools) {
         MockGraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0u, static_cast<osHandle>(1), pool, MemoryManager::maxOsContextCount);
@@ -240,9 +240,9 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThen
         EXPECT_EQ(MemoryConstants::pageSize, graphicsAllocation.getUsedPageSize());
     }
 
-    MemoryPool::Type page64kPools[] = {MemoryPool::System64KBPages,
-                                       MemoryPool::System64KBPagesWith32BitGpuAddressing,
-                                       MemoryPool::LocalMemory};
+    MemoryPool page64kPools[] = {MemoryPool::System64KBPages,
+                                 MemoryPool::System64KBPagesWith32BitGpuAddressing,
+                                 MemoryPool::LocalMemory};
 
     for (auto pool : page64kPools) {
         MockGraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0u, 0, pool, MemoryManager::maxOsContextCount);

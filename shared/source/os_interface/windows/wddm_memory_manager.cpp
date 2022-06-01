@@ -925,7 +925,7 @@ bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloc
 }
 
 bool WddmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
-    if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
     }
     auto &wddm = getWddm(graphicsAllocation->getRootDeviceIndex());

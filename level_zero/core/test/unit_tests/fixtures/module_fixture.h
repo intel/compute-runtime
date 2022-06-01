@@ -65,9 +65,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                                                                         NEO::AllocationType::KERNEL_ISA,
                                                                         reinterpret_cast<void *>(0x1234),
                                                                         0x1000,
-                                                                        0,
-                                                                        sizeof(uint32_t),
-                                                                        MemoryPool::System4KBPages));
+                                                                        0u,
+                                                                        MemoryPool::System4KBPages,
+                                                                        MemoryManager::maxOsContextCount));
 
             kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
         }
@@ -319,9 +319,9 @@ struct ModuleWithZebinFixture : public DeviceFixture {
                                                                         NEO::AllocationType::KERNEL_ISA,
                                                                         reinterpret_cast<void *>(0x1234),
                                                                         0x1000,
-                                                                        0,
-                                                                        sizeof(uint32_t),
-                                                                        MemoryPool::System4KBPages));
+                                                                        0u,
+                                                                        MemoryPool::System4KBPages,
+                                                                        MemoryManager::maxOsContextCount));
         }
 
         ~MockImmutableData() override {
@@ -343,16 +343,16 @@ struct ModuleWithZebinFixture : public DeviceFixture {
                                                                                NEO::AllocationType::GLOBAL_SURFACE,
                                                                                reinterpret_cast<void *>(0x1234),
                                                                                0x1000,
-                                                                               0,
-                                                                               sizeof(uint32_t),
-                                                                               MemoryPool::System4KBPages);
+                                                                               0u,
+                                                                               MemoryPool::System4KBPages,
+                                                                               MemoryManager::maxOsContextCount);
             translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
                                                                                  NEO::AllocationType::GLOBAL_SURFACE,
                                                                                  reinterpret_cast<void *>(0x1234),
                                                                                  0x1000,
-                                                                                 0,
-                                                                                 sizeof(uint32_t),
-                                                                                 MemoryPool::System4KBPages);
+                                                                                 0u,
+                                                                                 MemoryPool::System4KBPages,
+                                                                                 MemoryManager::maxOsContextCount);
 
             translationUnit->programInfo.globalStrings.initData = &strings;
             translationUnit->programInfo.globalStrings.size = sizeof(strings);

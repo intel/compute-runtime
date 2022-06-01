@@ -1034,3 +1034,35 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
         EXPECT_FALSE(true);
     }
 }
+
+struct MemoryPoolTestCase {
+    MemoryPool pool;
+    const char *str;
+};
+
+MemoryPoolTestCase memoryPoolValues[] = {
+    {MemoryPool::MemoryNull, "MemoryNull"},
+    {MemoryPool::LocalMemory, "LocalMemory"},
+    {MemoryPool::System4KBPages, "System4KBPages"},
+    {MemoryPool::System4KBPagesWith32BitGpuAddressing, "System4KBPagesWith32BitGpuAddressing"},
+    {MemoryPool::System64KBPages, "System64KBPages"},
+    {MemoryPool::System64KBPagesWith32BitGpuAddressing, "System64KBPagesWith32BitGpuAddressing"},
+    {MemoryPool::SystemCpuInaccessible, "SystemCpuInaccessible"}};
+
+class MemoryPoolLogging : public ::testing::TestWithParam<MemoryPoolTestCase> {};
+
+TEST_P(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrectStringIsReturned) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+    auto input = GetParam();
+
+    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, input.pool, MemoryManager::maxOsContextCount);
+    auto result = getMemoryPoolString(&graphicsAllocation);
+
+    EXPECT_STREQ(result, input.str);
+}
+
+INSTANTIATE_TEST_CASE_P(AllMemoryPooles,
+                        MemoryPoolLogging,
+                        ::testing::ValuesIn(memoryPoolValues));

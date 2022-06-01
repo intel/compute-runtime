@@ -22,6 +22,7 @@ struct MultiDispatchInfo;
 class GraphicsAllocation;
 
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
+const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 
 template <DebugFunctionalityLevel DebugLevel>
 class FileLogger {

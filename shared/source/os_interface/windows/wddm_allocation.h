@@ -24,11 +24,11 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
-    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable, size_t maxOsContextCount)
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn, void *reservedAddr, MemoryPool pool, uint32_t shareable, size_t maxOsContextCount)
         : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, canonizedAddress, sizeIn, reservedAddr, pool, shareable, maxOsContextCount) {}
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn,
-                   void *reservedAddr, MemoryPool::Type pool, uint32_t shareable, size_t maxOsContextCount)
+                   void *reservedAddr, MemoryPool pool, uint32_t shareable, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, canonizedAddress, 0llu, sizeIn, pool, maxOsContextCount),
           shareable(shareable), trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
@@ -36,11 +36,11 @@ class WddmAllocation : public GraphicsAllocation {
         handles.resize(gmms.size());
     }
 
-    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, size_t maxOsContextCount)
+    WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, size_t maxOsContextCount)
         : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount) {}
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
-                   osHandle sharedHandle, MemoryPool::Type pool, size_t maxOsContextCount)
+                   osHandle sharedHandle, MemoryPool pool, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         handles.resize(gmms.size());

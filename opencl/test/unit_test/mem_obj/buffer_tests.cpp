@@ -354,7 +354,7 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuff
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
         EXPECT_EQ(AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
@@ -690,7 +690,7 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
@@ -965,7 +965,7 @@ TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     ASSERT_NE(nullptr, buffer);
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER_HOST_MEMORY);
     } else {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::BUFFER);
@@ -2017,8 +2017,8 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllo
 
     std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
 
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
 }
 
 TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAllocationsAreCreatedFromExisitingStorage) {

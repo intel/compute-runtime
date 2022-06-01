@@ -80,7 +80,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
     gmm->isCompressionEnabled = true;
     allocation->setDefaultGmm(gmm);
 
-    EXPECT_TRUE(!MemoryPool::isSystemMemoryPool(allocation->getMemoryPool()));
+    EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
@@ -110,7 +110,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInHos
             retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getMemoryPool()));
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 

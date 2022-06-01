@@ -384,7 +384,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenEvictImplFailsThenEvictWithinOsC
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResidentWithinOsContextReturnsError) {
     struct MockDrmAllocationBOsResident : public DrmAllocation {
-        MockDrmAllocationBOsResident(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool)
+        MockDrmAllocationBOsResident(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
             : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
         }
 
