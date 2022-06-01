@@ -83,8 +83,6 @@ class IoctlHelper {
     virtual bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
-    virtual int32_t getMemRegionsIoctlVal() = 0;
-    virtual uint32_t getComputeSlicesIoctlVal() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
     virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
@@ -143,8 +141,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
-    int32_t getMemRegionsIoctlVal() override;
-    uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
@@ -207,8 +203,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) override;
     uint32_t getDirectSubmissionFlag() override;
-    int32_t getMemRegionsIoctlVal() override;
-    uint32_t getComputeSlicesIoctlVal() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;

@@ -107,14 +107,6 @@ uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
     return 0u;
 }
 
-int32_t IoctlHelperUpstream::getMemRegionsIoctlVal() {
-    return DRM_I915_QUERY_MEMORY_REGIONS;
-}
-
-uint32_t IoctlHelperUpstream::getComputeSlicesIoctlVal() {
-    return 0;
-}
-
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
     return {};
 }
@@ -249,6 +241,10 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
         return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryHwconfigTable:
         return DRM_I915_QUERY_HWCONFIG_TABLE;
+    case DrmParam::QueryMemoryRegions:
+        return DRM_I915_QUERY_MEMORY_REGIONS;
+    case DrmParam::QueryComputeSlices:
+        return 0;
     default:
         return getDrmParamValueBase(drmParam);
     }

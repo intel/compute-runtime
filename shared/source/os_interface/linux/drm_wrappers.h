@@ -246,6 +246,8 @@ enum class DrmParam {
     EngineClassInvalidNone,
     QueryEngineInfo,
     QueryHwconfigTable,
+    QueryComputeSlices,
+    QueryMemoryRegions,
 };
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);

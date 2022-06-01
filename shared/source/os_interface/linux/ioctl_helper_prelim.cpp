@@ -223,14 +223,6 @@ uint32_t IoctlHelperPrelim20::getDirectSubmissionFlag() {
     return PRELIM_I915_CONTEXT_CREATE_FLAGS_LONG_RUNNING;
 }
 
-int32_t IoctlHelperPrelim20::getMemRegionsIoctlVal() {
-    return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
-}
-
-uint32_t IoctlHelperPrelim20::getComputeSlicesIoctlVal() {
-    return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
-}
-
 uint16_t IoctlHelperPrelim20::getWaitUserFenceSoftFlag() {
     return PRELIM_I915_UFENCE_WAIT_SOFT;
 };
@@ -589,6 +581,10 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
         return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryHwconfigTable:
         return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
+    case DrmParam::QueryComputeSlices:
+        return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
+    case DrmParam::QueryMemoryRegions:
+        return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
     default:
         return getDrmParamValueBase(drmParam);
     }

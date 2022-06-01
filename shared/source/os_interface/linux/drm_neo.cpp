@@ -977,7 +977,8 @@ bool Drm::querySystemInfo() {
 }
 
 std::vector<uint8_t> Drm::getMemoryRegions() {
-    return this->query(ioctlHelper->getMemRegionsIoctlVal(), 0);
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryMemoryRegions);
+    return this->query(request, 0);
 }
 
 bool Drm::queryMemoryInfo() {
@@ -1094,8 +1095,8 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
     int subSliceCount = 0;
     int euCount = 0;
 
-    const auto queryComputeSlicesIoctl = ioctlHelper->getComputeSlicesIoctlVal();
-    if (DebugManager.flags.UseNewQueryTopoIoctl.get() && this->engineInfo && hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount > 0 && queryComputeSlicesIoctl != 0) {
+    auto request = ioctlHelper->getDrmParamValue(DrmParam::QueryComputeSlices);
+    if (DebugManager.flags.UseNewQueryTopoIoctl.get() && this->engineInfo && hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount > 0 && request != 0) {
         bool success = true;
 
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount; i++) {
@@ -1105,7 +1106,7 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
             uint32_t flags = classInstance->engineClass;
             flags |= (classInstance->engineInstance << 8);
 
-            auto dataQuery = this->query(queryComputeSlicesIoctl, flags);
+            auto dataQuery = this->query(request, flags);
             if (dataQuery.empty()) {
                 success = false;
                 break;
