@@ -80,7 +80,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     auto gmm = std::make_unique<MockGmm>(gmmContext);
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
-                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory);
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
 
     uint32_t compressionFormat = gmmContext->getClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
@@ -100,7 +100,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     gmm->isCompressionEnabled = true;
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY, reinterpret_cast<void *>(0x1234),
-                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory);
+                                          0x1000, 0, sizeof(uint32_t), MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
 
     BlitCommandsHelper<FamilyType>::appendBlitCommandsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);

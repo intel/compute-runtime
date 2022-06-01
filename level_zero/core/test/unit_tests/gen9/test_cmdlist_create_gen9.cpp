@@ -57,9 +57,14 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
         if (!buffer) {
             buffer = alignedMalloc(isaSize, 64);
         }
-        auto allocation = new NEO::GraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
-                                                      buffer, reinterpret_cast<uint64_t>(buffer), 0, isaSize,
-                                                      MemoryPool::System4KBPages);
+        auto allocation = new NEO::GraphicsAllocation(0,
+                                                      NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                                      buffer,
+                                                      reinterpret_cast<uint64_t>(buffer),
+                                                      0,
+                                                      isaSize,
+                                                      MemoryPool::System4KBPages,
+                                                      MemoryManager::maxOsContextCount);
         if (isaBuffer != nullptr) {
             memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), isaBuffer, isaSize);
         }

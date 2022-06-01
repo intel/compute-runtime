@@ -10,9 +10,14 @@
 namespace L0 {
 namespace ult {
 
-Mock<Event>::Mock() : mockAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
-                                     &memory, reinterpret_cast<uint64_t>(&memory), 0, sizeof(memory),
-                                     MemoryPool::System4KBPages) {}
+Mock<Event>::Mock() : mockAllocation(0,
+                                     NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                     &memory,
+                                     reinterpret_cast<uint64_t>(&memory),
+                                     0,
+                                     sizeof(memory),
+                                     MemoryPool::System4KBPages,
+                                     NEO::MemoryManager::maxOsContextCount) {}
 
 Mock<Event>::~Mock() {}
 

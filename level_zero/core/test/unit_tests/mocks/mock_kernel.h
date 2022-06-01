@@ -115,9 +115,14 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
 
         this->kernelImmData = &immutableData;
 
-        auto allocation = new NEO::GraphicsAllocation(0, NEO::AllocationType::KERNEL_ISA,
-                                                      nullptr, 0, 0, 4096,
-                                                      MemoryPool::System4KBPages);
+        auto allocation = new NEO::GraphicsAllocation(0,
+                                                      NEO::AllocationType::KERNEL_ISA,
+                                                      nullptr,
+                                                      0,
+                                                      0,
+                                                      4096,
+                                                      MemoryPool::System4KBPages,
+                                                      NEO::MemoryManager::maxOsContextCount);
 
         immutableData.isaGraphicsAllocation.reset(allocation);
 

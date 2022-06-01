@@ -950,8 +950,7 @@ TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringT
     FullyEnabledFileLogger fileLogger(testFile, flags);
     auto input = GetParam();
 
-    GraphicsAllocation graphicsAllocation(0, input.type, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
-
+    GraphicsAllocation graphicsAllocation(0, input.type, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
     auto result = getAllocationTypeString(&graphicsAllocation);
 
     EXPECT_STREQ(result, input.str);
@@ -966,7 +965,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -978,7 +977,7 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
@@ -996,7 +995,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     testing::internal::CaptureStdout();
     fileLogger.logAllocation(&graphicsAllocation);
@@ -1014,7 +1013,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());

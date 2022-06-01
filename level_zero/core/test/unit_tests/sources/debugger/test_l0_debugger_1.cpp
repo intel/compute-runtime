@@ -553,10 +553,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
 
     NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages);
+                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages);
+                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
     auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -576,10 +576,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
 
     NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages);
+                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
-                                   MemoryPool::System4KBPages);
+                                   MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
     auto result = commandList->appendPageFaultCopy(&dstPtr, &srcPtr, 0x100, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -599,7 +599,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenDebuggerWithoutMemoryOperationsHandlerWhenNo
     StackVec<NEO::GraphicsAllocation *, 32> allocs;
     NEO::GraphicsAllocation alloc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                  MemoryPool::System4KBPages);
+                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     allocs.push_back(&alloc);
 
     debugger->notifyModuleLoadAllocations(allocs);

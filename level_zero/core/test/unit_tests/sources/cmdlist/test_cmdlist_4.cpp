@@ -315,10 +315,10 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     size_t size = 0x100000001;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                                  MemoryPool::System4KBPages);
+                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x100003456), size, 0, sizeof(uint32_t),
-                                                  MemoryPool::System4KBPages);
+                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
@@ -339,10 +339,10 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrIm
     size_t size = 0x100000001;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
-                                                  MemoryPool::System4KBPages);
+                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
                                                   reinterpret_cast<void *>(0x100003456), size, 0, sizeof(uint32_t),
-                                                  MemoryPool::System4KBPages);
+                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));

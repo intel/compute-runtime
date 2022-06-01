@@ -18,9 +18,14 @@ MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandList>(d
     this->device = device;
     size_t batchBufferSize = 65536u;
     batchBuffer = new uint8_t[batchBufferSize];
-    mockAllocation = new NEO::GraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
-                                                 &batchBuffer, reinterpret_cast<uint64_t>(&batchBuffer), 0, sizeof(batchBufferSize),
-                                                 MemoryPool::System4KBPages);
+    mockAllocation = new NEO::GraphicsAllocation(0,
+                                                 NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                                 &batchBuffer,
+                                                 reinterpret_cast<uint64_t>(&batchBuffer),
+                                                 0,
+                                                 sizeof(batchBufferSize),
+                                                 MemoryPool::System4KBPages,
+                                                 NEO::MemoryManager::maxOsContextCount);
 }
 
 MockCommandList::~MockCommandList() {

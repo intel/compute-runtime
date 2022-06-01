@@ -46,7 +46,8 @@ void MockSipKernel::createMockSipAllocation() {
                                            MemoryConstants::pageSize * 10u,
                                            0u,
                                            MemoryConstants::pageSize,
-                                           MemoryPool::System4KBPages, 3u);
+                                           MemoryPool::System4KBPages,
+                                           3u);
 }
 
 } // namespace NEO

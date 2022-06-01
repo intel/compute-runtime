@@ -32,9 +32,14 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
     void TestBodyImpl(size_t patternSize, COLOR_DEPTH expectedDepth) { // NOLINT(readability-identifier-naming)
         uint32_t streamBuffer[100] = {};
         LinearStream stream(streamBuffer, sizeof(streamBuffer));
-        MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
-                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                              MemoryPool::System4KBPages);
+        auto size = 0x1000;
+        MockGraphicsAllocation mockAllocation(0,
+                                              AllocationType::INTERNAL_HOST_MEMORY,
+                                              reinterpret_cast<void *>(0x1234),
+                                              size,
+                                              0u,
+                                              MemoryPool::System4KBPages,
+                                              MemoryManager::maxOsContextCount);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
         BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), *device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);

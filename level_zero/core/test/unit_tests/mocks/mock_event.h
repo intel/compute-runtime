@@ -68,9 +68,14 @@ class MockEvent : public ::L0::Event {
   public:
     using ::L0::Event::l3FlushAppliedOnKernel;
     MockEvent() {
-        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::AllocationType::INTERNAL_HOST_MEMORY,
-                                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                             MemoryPool::System4KBPages));
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                             NEO::AllocationType::INTERNAL_HOST_MEMORY,
+                                                             reinterpret_cast<void *>(0x1234),
+                                                             0x1000,
+                                                             0,
+                                                             sizeof(uint32_t),
+                                                             MemoryPool::System4KBPages,
+                                                             NEO::MemoryManager::maxOsContextCount));
         this->timestampSizeInDw = 1;
         this->contextStartOffset = 0;
         this->contextEndOffset = 4;
