@@ -21,6 +21,26 @@ HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointers
 
 using DeviceTestXeHpc = Test<DeviceFixture>;
 
+HWTEST2_F(DeviceTestXeHpc, WhenGettingImagePropertiesThenPropertiesAreNotSet, IsXeHpcCore) {
+    ze_image_properties_t properties{};
+
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = desc.format.y = desc.format.z = desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.width = 10;
+    desc.height = 10;
+    desc.depth = 10;
+
+    auto result = device->imageGetProperties(&desc, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(properties.samplerFilterFlags, 0u);
+}
+
 HWTEST2_F(DeviceTestXeHpc, givenXeHpcAStepAndDebugFlagOverridesWhenCreatingMultiTileDeviceThenExpectImplicitScalingEnabled, IsXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
