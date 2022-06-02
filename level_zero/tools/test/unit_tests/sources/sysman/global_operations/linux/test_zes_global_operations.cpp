@@ -101,8 +101,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pRasHandleContext.get(), &Mock<GlobalOperationsRasHandleContext>::initMock));
         ON_CALL(*pEngineHandleContext.get(), init())
             .WillByDefault(::testing::Invoke(pEngineHandleContext.get(), &Mock<GlobalOperationsEngineHandleContext>::initMock));
-        ON_CALL(*pFirmwareHandleContext.get(), init())
-            .WillByDefault(::testing::Invoke(pFirmwareHandleContext.get(), &Mock<GlobalOperationsFirmwareHandleContext>::initMock));
         ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::string &>(_)))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getValString));
         ON_CALL(*pSysfsAccess.get(), read(_, Matcher<uint64_t &>(_)))

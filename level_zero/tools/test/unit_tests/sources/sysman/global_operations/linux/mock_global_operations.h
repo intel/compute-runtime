@@ -77,11 +77,8 @@ struct GlobalOperationsDiagnosticsHandleContext : public DiagnosticsHandleContex
 };
 template <>
 struct Mock<GlobalOperationsDiagnosticsHandleContext> : public GlobalOperationsDiagnosticsHandleContext {
-    void initMock() {}
     Mock<GlobalOperationsDiagnosticsHandleContext>(OsSysman *pOsSysman) : GlobalOperationsDiagnosticsHandleContext(pOsSysman) {}
-    void init(void) override {
-        initMock();
-    }
+    ADDMETHOD_NOBASE_VOIDRETURN(init, ());
 };
 
 struct GlobalOperationsFirmwareHandleContext : public FirmwareHandleContext {
@@ -89,9 +86,8 @@ struct GlobalOperationsFirmwareHandleContext : public FirmwareHandleContext {
 };
 template <>
 struct Mock<GlobalOperationsFirmwareHandleContext> : public GlobalOperationsFirmwareHandleContext {
-    void initMock() {}
     Mock<GlobalOperationsFirmwareHandleContext>(OsSysman *pOsSysman) : GlobalOperationsFirmwareHandleContext(pOsSysman) {}
-    MOCK_METHOD(void, init, (), (override));
+    ADDMETHOD_NOBASE_VOIDRETURN(init, ());
 };
 
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
@@ -426,9 +422,9 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
     MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
 };
 
-class FirmwareInterface : public FirmwareUtil {};
+class GlobalOpsFwInterface : public FirmwareUtil {};
 template <>
-struct Mock<FirmwareInterface> : public FirmwareUtil {
+struct Mock<GlobalOpsFwInterface> : public GlobalOpsFwInterface {
 
     ze_result_t mockFwDeviceInit(void) {
         return ZE_RESULT_SUCCESS;
@@ -447,7 +443,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
         ifrStatus = false;
         return ZE_RESULT_SUCCESS;
     }
-    Mock<FirmwareInterface>() = default;
+    Mock<GlobalOpsFwInterface>() = default;
 
     MOCK_METHOD(ze_result_t, fwDeviceInit, (), (override));
     MOCK_METHOD(ze_result_t, getFirstDevice, (igsc_device_info * info), (override));
