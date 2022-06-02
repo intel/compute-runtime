@@ -83,10 +83,8 @@ bool SingleDeviceTestRunner::run() {
     }
 
     EXPECT(status == true);
-    if (zmu::TestSettings::get()->verboseLevel >= zmu::LogLevel::DEBUG) {
-        for (auto collector : collectorList) {
-            collector->showResults();
-        }
+    for (auto collector : collectorList) {
+        collector->showResults();
     }
 
     for (auto collector : collectorList) {
@@ -601,6 +599,7 @@ int main(int argc, char *argv[]) {
     auto testSettings = zmu::TestSettings::get();
     testSettings->parseArguments(argc, argv);
 
+    int32_t runStatus = 0;
     if (testSettings->testName == "all") {
         // Run all tests
         for (auto const &[testName, testFn] : tests) {
@@ -608,32 +607,41 @@ int main(int argc, char *argv[]) {
             // Run each test in a new process
             pid_t pid = fork();
             if (pid == 0) {
+                int32_t status = 0;
                 if (testFn() == true) {
                     LOG(zmu::LogLevel::INFO) << testName << " : PASS\n";
                 } else {
                     LOG(zmu::LogLevel::ERROR) << testName << " : FAIL \n";
+                    status = 1;
                 }
-                exit(0);
+                exit(status);
             }
 
-            int32_t status;
+            int32_t testStatus = 0;
             // Wait for the process to complete
-            waitpid(pid, &status, 0);
+            waitpid(pid, &testStatus, 0);
             LOG(zmu::LogLevel::INFO) << "\n== End " << testName << " == \n";
+            if (WIFEXITED(testStatus) != true) {
+                runStatus = 1;
+            } else {
+                runStatus += WEXITSTATUS(testStatus);
+            }
         }
-        return 0;
+        return std::min(1, runStatus);
     }
 
     // Run test.
     if (tests.find(testSettings->testName) != tests.end()) {
         if (tests[testSettings->testName]() == true) {
             LOG(zmu::LogLevel::INFO) << testSettings->testName << " : PASS\n";
+            runStatus = 0;
         } else {
             LOG(zmu::LogLevel::ERROR) << testSettings->testName << " : FAIL \n";
+            runStatus = 1;
         }
-        return 0;
+        return runStatus;
     } else {
-        // Verify  whether an unsupported test was passed as argument
+        // Unsupported test was passed as argument
         LOG(zmu::LogLevel::WARNING) << "Warning:Test " << testSettings->testName << " not available ..\n";
     }
 
@@ -642,6 +650,5 @@ int main(int argc, char *argv[]) {
     for (auto &test : tests) {
         LOG(zmu::LogLevel::INFO) << test.first.c_str() << std::endl;
     }
-
     return 0;
 }
