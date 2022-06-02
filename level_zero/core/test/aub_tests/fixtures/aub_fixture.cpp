@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"

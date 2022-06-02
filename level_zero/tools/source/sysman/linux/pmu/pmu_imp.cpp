@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+
+#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {
 

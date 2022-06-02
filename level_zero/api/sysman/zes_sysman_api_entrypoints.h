@@ -5,9 +5,10 @@
  *
  */
 
-#include "sysman/sysman.h"
-
 #pragma once
+#include "level_zero/core/source/driver/driver_handle.h"
+
+#include "sysman/sysman.h"
 
 namespace L0 {
 ze_result_t zesDeviceGetProperties(

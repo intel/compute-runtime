@@ -9,6 +9,7 @@
 
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 

@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 class MockPageFaultManager;

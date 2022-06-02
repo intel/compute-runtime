@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,8 @@
 
 #pragma once
 
-#include "level_zero/core/source/device/device.h"
+#include "shared/source/command_stream/preemption_mode.h"
+
 #include <level_zero/ze_api.h>
 
 #include <atomic>
@@ -19,6 +20,7 @@ class CommandStreamReceiver;
 }
 
 namespace L0 {
+struct Device;
 
 struct CommandQueue : _ze_command_queue_handle_t {
     template <typename Type>

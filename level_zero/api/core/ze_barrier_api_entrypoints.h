@@ -8,6 +8,7 @@
 #pragma once
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
 namespace L0 {

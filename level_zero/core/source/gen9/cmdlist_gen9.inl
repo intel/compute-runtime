@@ -12,6 +12,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>

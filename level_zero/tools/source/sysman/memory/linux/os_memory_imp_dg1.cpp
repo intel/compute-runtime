@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"

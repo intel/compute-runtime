@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
 

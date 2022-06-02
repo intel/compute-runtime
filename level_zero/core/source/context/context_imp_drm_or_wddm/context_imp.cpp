@@ -7,6 +7,9 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
+
 namespace L0 {
 
 bool ContextImp::isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) {

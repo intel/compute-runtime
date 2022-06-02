@@ -9,6 +9,8 @@
 
 #include "shared/source/built_ins/built_ins.h"
 
+#include "level_zero/core/source/kernel/kernel.h"
+
 namespace NEO {
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
     return nullptr;
@@ -17,6 +19,15 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
 
 namespace L0 {
 
+BuiltinFunctionsLibImpl::BuiltinData::~BuiltinData() {
+    func.reset();
+    module.reset();
+}
+BuiltinFunctionsLibImpl::BuiltinData::BuiltinData() = default;
+BuiltinFunctionsLibImpl::BuiltinData::BuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
+    module = std::move(mod);
+    func = std::move(ker);
+}
 std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {
     return std::unique_lock<BuiltinFunctionsLib::MutexType>(this->ownershipMutex);
 }

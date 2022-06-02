@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/core/source/module/module_build_log.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
@@ -11,6 +13,7 @@
 #include "level_zero/core/source/module/module.h"
 
 #include <memory>
+#include <string>
 
 namespace L0 {
 

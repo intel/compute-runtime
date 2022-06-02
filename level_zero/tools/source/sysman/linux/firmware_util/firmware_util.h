@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/core/source/device/device.h"
+#include <level_zero/zes_api.h>
 
 #ifdef IGSC_PRESENT
 #include "igsc_lib.h"

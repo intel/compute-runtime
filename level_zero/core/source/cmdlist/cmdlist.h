@@ -8,24 +8,23 @@
 #pragma once
 
 #include "shared/source/command_container/cmdcontainer.h"
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#include <map>
 #include <vector>
 
 struct _ze_command_list_handle_t {};
 
 namespace L0 {
+struct Device;
 struct EventPool;
 struct Event;
 struct Kernel;
+struct CommandQueue;
 
 struct CmdListKernelLaunchParams {
     bool isIndirect = false;

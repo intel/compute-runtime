@@ -7,13 +7,18 @@
 
 #pragma once
 
-#include "level_zero/core/source/driver/driver_handle.h"
+#include "shared/source/unified_memory/unified_memory.h"
+
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 struct _ze_context_handle_t {
     virtual ~_ze_context_handle_t() = default;
 };
+
+namespace NEO {
+class Device;
+}
 
 namespace L0 {
 struct DriverHandle;

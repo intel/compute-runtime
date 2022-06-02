@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>

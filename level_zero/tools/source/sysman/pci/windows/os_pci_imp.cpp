@@ -7,6 +7,8 @@
 
 #include "sysman/pci/windows/os_pci_imp.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
+
 namespace L0 {
 
 ze_result_t WddmPciImp::getProperties(zes_pci_properties_t *properties) {

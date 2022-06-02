@@ -26,6 +26,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
@@ -33,10 +34,13 @@
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
 #include <algorithm>

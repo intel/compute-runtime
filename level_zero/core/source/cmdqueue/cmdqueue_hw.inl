@@ -14,6 +14,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/command_stream/wait_status.h"

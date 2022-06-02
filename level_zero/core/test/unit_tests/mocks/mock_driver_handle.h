@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"

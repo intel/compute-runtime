@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"

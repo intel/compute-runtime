@@ -7,16 +7,7 @@
 
 #pragma once
 
-#include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/device/device.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_interface.h"
-
 #include "level_zero/core/source/debugger/debugger_l0.h"
-#include "level_zero/core/source/driver/driver.h"
-#include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/module/module.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 

@@ -30,6 +30,7 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 
@@ -1102,6 +1103,15 @@ bool ModuleImp::populateHostGlobalSymbolsMap(std::unordered_map<std::string, std
     return retVal;
 }
 
+ze_result_t ModuleImp::destroy() {
+    auto tempHandle = debugModuleHandle;
+    auto tempDevice = device;
+    delete this;
+    if (tempDevice->getL0Debugger() && tempHandle != 0) {
+        tempDevice->getL0Debugger()->removeZebinModule(tempHandle);
+    }
+    return ZE_RESULT_SUCCESS;
+}
 void ModuleImp::registerElfInDebuggerL0() {
     if (device->getL0Debugger() == nullptr) {
         return;

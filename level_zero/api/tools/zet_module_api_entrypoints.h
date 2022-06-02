@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 #include <level_zero/zet_api.h>
 

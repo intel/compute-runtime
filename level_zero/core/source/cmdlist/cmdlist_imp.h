@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #pragma once
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
-#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 

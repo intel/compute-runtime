@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -15,7 +16,10 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 

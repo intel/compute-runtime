@@ -42,15 +42,9 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     NEO::BuiltIns *builtInsLib;
 };
 struct BuiltinFunctionsLibImpl::BuiltinData {
-    MOCKABLE_VIRTUAL ~BuiltinData() {
-        func.reset();
-        module.reset();
-    }
-    BuiltinData() = default;
-    BuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
-        module = std::move(mod);
-        func = std::move(ker);
-    }
+    MOCKABLE_VIRTUAL ~BuiltinData();
+    BuiltinData();
+    BuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker);
 
     std::unique_ptr<Module> module;
     std::unique_ptr<Kernel> func;

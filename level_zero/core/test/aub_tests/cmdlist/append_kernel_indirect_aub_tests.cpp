@@ -12,6 +12,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 

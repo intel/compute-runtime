@@ -7,9 +7,13 @@
 
 #pragma once
 
+#include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
+
+#include <map>
 
 namespace L0 {
 class HostPointerManager;

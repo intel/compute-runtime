@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 

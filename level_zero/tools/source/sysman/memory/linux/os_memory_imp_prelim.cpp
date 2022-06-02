@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/linux/system_info.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "drm/intel_hwconfig_types.h"

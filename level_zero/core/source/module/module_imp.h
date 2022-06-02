@@ -10,12 +10,8 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/program/program_info.h"
-#include "shared/source/utilities/const_stringref.h"
 
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/module.h"
-
-#include "igfxfmid.h"
 
 #include <list>
 #include <memory>
@@ -85,15 +81,7 @@ struct ModuleImp : public Module {
 
     ~ModuleImp() override;
 
-    ze_result_t destroy() override {
-        auto tempHandle = debugModuleHandle;
-        auto tempDevice = device;
-        delete this;
-        if (tempDevice->getL0Debugger() && tempHandle != 0) {
-            tempDevice->getL0Debugger()->removeZebinModule(tempHandle);
-        }
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t destroy() override;
 
     ze_result_t createKernel(const ze_kernel_desc_t *desc,
                              ze_kernel_handle_t *phFunction) override;

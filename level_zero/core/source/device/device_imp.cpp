@@ -41,6 +41,7 @@
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/tools/source/debug/debug_session.h"

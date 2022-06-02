@@ -7,13 +7,17 @@
 
 #pragma once
 
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
+
+#include <map>
 
 namespace L0 {
 struct StructuresLookupTable;
+struct DriverHandleImp;
+struct Device;
 
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);

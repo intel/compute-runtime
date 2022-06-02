@@ -6,16 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/command_stream/submissions_aggregator.h"
-#include "shared/source/helpers/constants.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/residency_container.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
-#include "igfxfmid.h"
+namespace NEO {
+class ScratchSpaceController;
+}
 
 namespace L0 {
 
