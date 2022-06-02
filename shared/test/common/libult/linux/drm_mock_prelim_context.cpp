@@ -274,15 +274,15 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
     const auto numberOfCCS = gtSystemInfo.CCSInfo.IsValid && !disableCcsSupport ? gtSystemInfo.CCSInfo.NumberOfCCSEnabled : 0u;
 
     switch (queryItem->queryId) {
-    case PRELIM_DRM_I915_QUERY_ENGINE_INFO: {
+    case DRM_I915_QUERY_ENGINE_INFO: {
         auto numberOfTiles = gtSystemInfo.MultiTileArchInfo.IsValid ? gtSystemInfo.MultiTileArchInfo.TileCount : 1u;
         uint32_t numberOfEngines = numberOfTiles * (4u + numberOfCCS + static_cast<uint32_t>(supportedCopyEnginesMask.count()));
-        int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);
+        int engineInfoSize = sizeof(drm_i915_query_engine_info) + numberOfEngines * sizeof(drm_i915_engine_info);
         if (queryItem->length == 0) {
             queryItem->length = engineInfoSize;
         } else {
             EXPECT_EQ(engineInfoSize, queryItem->length);
-            auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItem->dataPtr);
+            auto queryEngineInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItem->dataPtr);
             EXPECT_EQ(0u, queryEngineInfo->num_engines);
             queryEngineInfo->num_engines = numberOfEngines;
             auto p = queryEngineInfo->engines;
@@ -306,7 +306,7 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
         break;
     }
 
-    case PRELIM_DRM_I915_QUERY_MEMORY_REGIONS: {
+    case DRM_I915_QUERY_MEMORY_REGIONS: {
         if (queryMemoryRegionInfoSuccessCount == 0) {
             queryItem->length = -EINVAL;
             return true;
@@ -317,12 +317,12 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
         auto numberOfLocalMemories = gtSystemInfo.MultiTileArchInfo.IsValid ? gtSystemInfo.MultiTileArchInfo.TileCount : 0u;
         auto numberOfRegions = 1u + numberOfLocalMemories;
 
-        int regionInfoSize = sizeof(prelim_drm_i915_query_memory_regions) + numberOfRegions * sizeof(prelim_drm_i915_memory_region_info);
+        int regionInfoSize = sizeof(drm_i915_query_memory_regions) + numberOfRegions * sizeof(drm_i915_memory_region_info);
         if (queryItem->length == 0) {
             queryItem->length = regionInfoSize;
         } else {
             EXPECT_EQ(regionInfoSize, queryItem->length);
-            auto queryMemoryRegionInfo = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(queryItem->dataPtr);
+            auto queryMemoryRegionInfo = reinterpret_cast<drm_i915_query_memory_regions *>(queryItem->dataPtr);
             EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
             queryMemoryRegionInfo->num_regions = numberOfRegions;
             queryMemoryRegionInfo->regions[0].region.memory_class = PRELIM_I915_MEMORY_CLASS_SYSTEM;

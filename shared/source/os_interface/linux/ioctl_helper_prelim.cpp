@@ -87,7 +87,7 @@ uint32_t IoctlHelperPrelim20::createGemExt(Drm *drm, const MemRegionsVec &memCla
 }
 
 std::vector<MemoryRegion> IoctlHelperPrelim20::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
-    auto *data = reinterpret_cast<const prelim_drm_i915_query_memory_regions *>(regionInfo.data());
+    auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
     auto memRegions = std::vector<MemoryRegion>(data->num_regions);
     for (uint32_t i = 0; i < data->num_regions; i++) {
         memRegions[i].probedSize = data->regions[i].probed_size;
@@ -278,7 +278,7 @@ uint64_t IoctlHelperPrelim20::getFlagsForVmBind(bool bindCapture, bool bindImmed
 }
 
 std::vector<EngineCapabilities> IoctlHelperPrelim20::translateToEngineCaps(const std::vector<uint8_t> &data) {
-    auto engineInfo = reinterpret_cast<const prelim_drm_i915_query_engine_info *>(data.data());
+    auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;
     engines.reserve(engineInfo->num_engines);
     for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
@@ -578,13 +578,13 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     case DrmParam::EngineClassCompute:
         return PRELIM_I915_ENGINE_CLASS_COMPUTE;
     case DrmParam::QueryEngineInfo:
-        return PRELIM_DRM_I915_QUERY_ENGINE_INFO;
+        return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryHwconfigTable:
         return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
     case DrmParam::QueryComputeSlices:
         return PRELIM_DRM_I915_QUERY_COMPUTE_SLICES;
     case DrmParam::QueryMemoryRegions:
-        return PRELIM_DRM_I915_QUERY_MEMORY_REGIONS;
+        return DRM_I915_QUERY_MEMORY_REGIONS;
     default:
         return getDrmParamValueBase(drmParam);
     }

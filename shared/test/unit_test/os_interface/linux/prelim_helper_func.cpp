@@ -65,15 +65,15 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
                 }
                 auto distance = reinterpret_cast<prelim_drm_i915_query_distance_info *>(queryItemPtr->dataPtr);
                 distance->distance = (distance->engine.engine_instance == distance->region.memory_instance) ? 0 : 100;
-            } else if (queryItemPtr->queryId == PRELIM_DRM_I915_QUERY_ENGINE_INFO) {
+            } else if (queryItemPtr->queryId == DRM_I915_QUERY_ENGINE_INFO) {
                 auto numberOfTiles = 2u;
                 uint32_t numberOfEngines = numberOfTiles * 6u;
-                int engineInfoSize = sizeof(prelim_drm_i915_query_engine_info) + numberOfEngines * sizeof(prelim_drm_i915_engine_info);
+                int engineInfoSize = sizeof(drm_i915_query_engine_info) + numberOfEngines * sizeof(drm_i915_engine_info);
                 if (queryItemPtr->length == 0) {
                     queryItemPtr->length = engineInfoSize;
                 } else {
                     EXPECT_EQ(engineInfoSize, queryItemPtr->length);
-                    auto queryEngineInfo = reinterpret_cast<prelim_drm_i915_query_engine_info *>(queryItemPtr->dataPtr);
+                    auto queryEngineInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItemPtr->dataPtr);
                     EXPECT_EQ(0u, queryEngineInfo->num_engines);
                     queryEngineInfo->num_engines = numberOfEngines;
                     auto p = queryEngineInfo->engines;
@@ -95,9 +95,9 @@ int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, int query
 
 std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions) {
     auto inputSize = static_cast<uint32_t>(inputRegions.size());
-    int length = sizeof(prelim_drm_i915_query_memory_regions) + inputSize * sizeof(prelim_drm_i915_memory_region_info);
+    int length = sizeof(drm_i915_query_memory_regions) + inputSize * sizeof(drm_i915_memory_region_info);
     auto data = std::vector<uint8_t>(length);
-    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_memory_regions *>(data.data());
+    auto memoryRegions = reinterpret_cast<drm_i915_query_memory_regions *>(data.data());
     memoryRegions->num_regions = inputSize;
 
     for (uint32_t i = 0; i < inputSize; i++) {
@@ -111,9 +111,9 @@ std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions
 
 std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines) {
     auto inputSize = static_cast<uint32_t>(inputEngines.size());
-    int length = sizeof(prelim_drm_i915_query_engine_info) + inputSize * sizeof(prelim_drm_i915_engine_info);
+    int length = sizeof(drm_i915_query_engine_info) + inputSize * sizeof(drm_i915_engine_info);
     auto data = std::vector<uint8_t>(length);
-    auto memoryRegions = reinterpret_cast<prelim_drm_i915_query_engine_info *>(data.data());
+    auto memoryRegions = reinterpret_cast<drm_i915_query_engine_info *>(data.data());
     memoryRegions->num_engines = inputSize;
 
     for (uint32_t i = 0; i < inputSize; i++) {
