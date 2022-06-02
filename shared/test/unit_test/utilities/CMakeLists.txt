@@ -17,6 +17,8 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/destructor_counted.h
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/io_functions_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/logger_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/logger_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp
