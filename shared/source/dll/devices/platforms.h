@@ -27,6 +27,7 @@ typedef enum {
     RPL_S = 0x0c0000,
     ADL_P = 0x0c0000,
     ADL_S = 0x0c0000,
+    ADL_N = 0x0c0000,
     RKL = 0x0c0000,
     TGL = 0x0c0000,
     XEHP_SDV = 0x0c0100,

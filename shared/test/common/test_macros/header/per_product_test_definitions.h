@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,6 +178,17 @@
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN12LP_CORE,          \
                       IGFX_ALDERLAKE_P)
+#endif
+
+#ifdef TESTS_ADLN
+#define ADLNTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN12LP_CORE, IGFX_ALDERLAKE_N)
+#define ADLNTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_GEN12LP_CORE,          \
+                      IGFX_ALDERLAKE_N)
 #endif
 
 #ifdef TESTS_XE_HP_SDV

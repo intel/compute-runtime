@@ -35,4 +35,8 @@ static EnableCompilerHwInfoConfig<IGFX_ALDERLAKE_S> enableCompilerHwInfoConfigAD
 static EnableGfxProductHw<IGFX_ALDERLAKE_P> enableGfxProductHwADLP;
 static EnableCompilerHwInfoConfig<IGFX_ALDERLAKE_P> enableCompilerHwInfoConfigADLP;
 #endif
+#ifdef SUPPORT_ADLN
+static EnableGfxProductHw<IGFX_ALDERLAKE_N> enableGfxProductHwADLN;
+static EnableCompilerHwInfoConfig<IGFX_ALDERLAKE_N> enableCompilerHwInfoConfigADLN;
+#endif
 } // namespace NEO
