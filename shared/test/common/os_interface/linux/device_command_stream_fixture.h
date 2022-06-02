@@ -44,7 +44,6 @@ class Ioctls {
     std::atomic<int32_t> gemVmCreate;
     std::atomic<int32_t> primeFdToHandle;
     std::atomic<int32_t> handleToPrimeFd;
-    std::atomic<int32_t> gemMmap;
     std::atomic<int32_t> gemMmapOffset;
     std::atomic<int32_t> gemSetDomain;
     std::atomic<int32_t> gemWait;
@@ -188,13 +187,6 @@ class DrmMockCustom : public Drm {
     int32_t inputFlags = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
-    //DRM_IOCTL_I915_GEM_MMAP
-    uint32_t mmapHandle = 0;
-    uint32_t mmapPad = 0;
-    uint64_t mmapOffset = 0;
-    uint64_t mmapSize = 0;
-    uint64_t mmapAddrPtr = 0x7F4000001000;
-    uint64_t mmapFlags = 0;
     //DRM_IOCTL_I915_GEM_SET_DOMAIN
     uint32_t setDomainHandle = 0;
     uint32_t setDomainReadDomains = 0;

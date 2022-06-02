@@ -87,14 +87,6 @@ static_assert(offsetof(GemMmapOffset, offset) == offsetof(drm_i915_gem_mmap_offs
 static_assert(offsetof(GemMmapOffset, flags) == offsetof(drm_i915_gem_mmap_offset, flags));
 static_assert(offsetof(GemMmapOffset, extensions) == offsetof(drm_i915_gem_mmap_offset, extensions));
 
-static_assert(sizeof(GemMmap) == sizeof(drm_i915_gem_mmap));
-static_assert(offsetof(GemMmap, handle) == offsetof(drm_i915_gem_mmap, handle));
-static_assert(offsetof(GemMmap, pad) == offsetof(drm_i915_gem_mmap, pad));
-static_assert(offsetof(GemMmap, offset) == offsetof(drm_i915_gem_mmap, offset));
-static_assert(offsetof(GemMmap, size) == offsetof(drm_i915_gem_mmap, size));
-static_assert(offsetof(GemMmap, addrPtr) == offsetof(drm_i915_gem_mmap, addr_ptr));
-static_assert(offsetof(GemMmap, flags) == offsetof(drm_i915_gem_mmap, flags));
-
 static_assert(sizeof(GemSetDomain) == sizeof(drm_i915_gem_set_domain));
 static_assert(offsetof(GemSetDomain, handle) == offsetof(drm_i915_gem_set_domain, handle));
 static_assert(offsetof(GemSetDomain, readDomains) == offsetof(drm_i915_gem_set_domain, read_domains));

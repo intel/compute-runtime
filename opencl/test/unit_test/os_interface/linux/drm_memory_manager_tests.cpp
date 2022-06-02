@@ -2627,7 +2627,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutCpuPtrThenReturnLockedPtrAndSetCpuDomain) {
     mock->ioctl_expected.gemCreate = 1;
     mock->ioctl_expected.gemMmapOffset = 1;
-    mock->ioctl_expected.gemMmap = 0;
     mock->ioctl_expected.gemSetDomain = 0;
     mock->ioctl_expected.gemSetTiling = 1;
     mock->ioctl_expected.gemWait = 1;
@@ -2656,12 +2655,10 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     EXPECT_NE(nullptr, drmAllocation->getBO()->peekLockedAddress());
 
-    // check DRM_IOCTL_I915_GEM_MMAP input params
+    // check DRM_IOCTL_I915_GEM_MMAP_OFFSET input params
     EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->mmapOffsetHandle);
-    EXPECT_EQ(0u, mock->mmapPad);
-    EXPECT_EQ(0u, mock->mmapOffset);
-    EXPECT_EQ(0u, mock->mmapSize);
-    EXPECT_EQ(0u, mock->mmapFlags);
+    EXPECT_EQ(0u, mock->mmapOffsetPad);
+    EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WC), mock->mmapOffsetFlags);
 
     memoryManager->unlockResource(allocation);
     EXPECT_EQ(nullptr, drmAllocation->getBO()->peekLockedAddress());

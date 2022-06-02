@@ -100,15 +100,6 @@ struct GemMmapOffset {
     uint64_t extensions;
 };
 
-struct GemMmap {
-    uint32_t handle;
-    uint32_t pad;
-    uint64_t offset;
-    uint64_t size;
-    uint64_t addrPtr;
-    uint64_t flags;
-};
-
 struct GemSetDomain {
     uint32_t handle;
     uint32_t readDomains;
@@ -216,7 +207,6 @@ enum class DrmIoctl {
     GemContextGetparam,
     GemContextSetparam,
     Query,
-    GemMmap,
     GemMmapOffset,
     GemVmCreate,
     GemVmDestroy,

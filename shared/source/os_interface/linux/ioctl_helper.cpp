@@ -166,8 +166,6 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM;
     case DrmIoctl::Query:
         return DRM_IOCTL_I915_QUERY;
-    case DrmIoctl::GemMmap:
-        return DRM_IOCTL_I915_GEM_MMAP;
     case DrmIoctl::PrimeFdToHandle:
         return DRM_IOCTL_PRIME_FD_TO_HANDLE;
     case DrmIoctl::PrimeHandleToFd:
@@ -290,8 +288,6 @@ std::string getIoctlString(DrmIoctl ioctlRequest) {
         return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
     case DrmIoctl::Query:
         return "DRM_IOCTL_I915_QUERY";
-    case DrmIoctl::GemMmap:
-        return "DRM_IOCTL_I915_GEM_MMAP";
     case DrmIoctl::PrimeFdToHandle:
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
     case DrmIoctl::PrimeHandleToFd:

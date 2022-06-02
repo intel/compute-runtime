@@ -1218,7 +1218,6 @@ TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
         {DrmIoctl::GemContextGetparam, "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM"},
         {DrmIoctl::GemContextSetparam, "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM"},
         {DrmIoctl::Query, "DRM_IOCTL_I915_QUERY"},
-        {DrmIoctl::GemMmap, "DRM_IOCTL_I915_GEM_MMAP"},
         {DrmIoctl::PrimeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE"},
         {DrmIoctl::GemVmBind, "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND"},
         {DrmIoctl::GemVmUnbind, "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND"},

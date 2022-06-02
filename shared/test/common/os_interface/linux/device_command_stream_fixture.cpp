@@ -22,7 +22,6 @@ void Ioctls::reset() {
     gemVmCreate = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
-    gemMmap = 0;
     gemMmapOffset = 0;
     gemSetDomain = 0;
     gemWait = 0;
@@ -52,7 +51,6 @@ void DrmMockCustom::testIoctls() {
     NEO_IOCTL_EXPECT_EQ(gemGetTiling);
     NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
     NEO_IOCTL_EXPECT_EQ(handleToPrimeFd);
-    NEO_IOCTL_EXPECT_EQ(gemMmap);
     NEO_IOCTL_EXPECT_EQ(gemMmapOffset);
     NEO_IOCTL_EXPECT_EQ(gemSetDomain);
     NEO_IOCTL_EXPECT_EQ(gemWait);
@@ -122,16 +120,6 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         inputFlags = handleToPrimeParams->flags;
         handleToPrimeParams->fileDescriptor = outputFd;
         ioctl_cnt.handleToPrimeFd++;
-    } break;
-    case DrmIoctl::GemMmap: {
-        auto mmapParams = static_cast<NEO::GemMmap *>(arg);
-        mmapHandle = mmapParams->handle;
-        mmapPad = mmapParams->pad;
-        mmapOffset = mmapParams->offset;
-        mmapSize = mmapParams->size;
-        mmapFlags = mmapParams->flags;
-        mmapParams->addrPtr = mmapAddrPtr;
-        ioctl_cnt.gemMmap++;
     } break;
     case DrmIoctl::GemSetDomain: {
         auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);

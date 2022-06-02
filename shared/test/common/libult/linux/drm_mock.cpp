@@ -209,12 +209,6 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         primeToFdParams->fileDescriptor = outputFd;
         return 0;
     }
-    if (request == DrmIoctl::GemMmap) {
-        ioctlCount.gemMmap++;
-        auto mmapArg = static_cast<GemMmap *>(arg);
-        mmapArg->addrPtr = reinterpret_cast<uint64_t>(lockedPtr);
-        return 0;
-    }
     if (request == DrmIoctl::GemWait) {
         ioctlCount.gemWait++;
         receivedGemWait = *static_cast<GemWait *>(arg);
