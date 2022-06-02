@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"

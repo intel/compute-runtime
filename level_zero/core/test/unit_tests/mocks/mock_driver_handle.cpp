@@ -10,13 +10,16 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "level_zero/core/source/driver/host_pointer_manager.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 namespace L0 {
 namespace ult {
 
 using MockDriverHandle = Mock<L0::ult::DriverHandle>;
 
-Mock<DriverHandle>::Mock() = default;
+Mock<DriverHandle>::Mock() {
+    this->devices.push_back(new Mock<Device>);
+};
 
 NEO::MemoryManager *Mock<DriverHandle>::getMemoryManager() {
     return memoryManager;
@@ -28,14 +31,14 @@ NEO::SVMAllocsManager *Mock<DriverHandle>::getSvmAllocManager() {
 
 ze_result_t Mock<DriverHandle>::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
     if (*pCount == 0) { // User wants to know number of devices
-        *pCount = this->num_devices;
+        *pCount = static_cast<uint32_t>(this->devices.size());
         return ZE_RESULT_SUCCESS;
     }
 
     if (phDevices == nullptr) // User is expected to allocate space
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 
-    phDevices[0] = &this->device;
+    phDevices[0] = this->devices.front();
 
     return ZE_RESULT_SUCCESS;
 }

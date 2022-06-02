@@ -38,6 +38,8 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 
+#include "encode_surface_state_args.h"
+
 #include <memory>
 
 namespace L0 {

@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "shared/source/os_interface/os_library.h"
-
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"

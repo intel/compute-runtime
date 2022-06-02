@@ -18,7 +18,6 @@
 namespace NEO {
 class CommandStreamReceiver;
 class DriverInfo;
-class OSTime;
 
 template <typename GfxFamily>
 class UltCommandStreamReceiver;

@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/device_factory.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 #include "sysman/linux/firmware_util/firmware_util.h"

@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device_imp.h"
 
 namespace L0 {

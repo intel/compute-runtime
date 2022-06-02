@@ -12,8 +12,8 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
 class MockPageFaultManager;
 namespace NEO {
@@ -26,6 +26,7 @@ struct Device;
 struct ContextImp;
 
 namespace ult {
+class MockBuiltins;
 
 struct MockDriverModel : NEO::DriverModel {
     size_t maxAllocSize;

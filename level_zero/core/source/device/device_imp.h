@@ -8,27 +8,22 @@
 #pragma once
 
 #include "shared/source/helpers/topology_map.h"
-#include "shared/source/memory_manager/allocations_list.h"
-#include "shared/source/memory_manager/memadvise_flags.h"
-#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-#include "shared/source/utilities/spinlock.h"
 
-#include "level_zero/core/source/builtin/builtin_functions_lib.h"
-#include "level_zero/core/source/cache/cache_reservation.h"
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/module/module.h"
-#include "level_zero/tools/source/debug/debug_session.h"
-#include "level_zero/tools/source/metrics/metric.h"
 
 #include <map>
 #include <mutex>
 
+namespace NEO {
+class AllocationsList;
+}
+
 namespace L0 {
 struct SysmanDevice;
+class CacheReservation;
 
 struct DeviceImp : public Device {
+    DeviceImp();
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
@@ -106,9 +101,9 @@ struct DeviceImp : public Device {
 
     bool isSubdevice = false;
     void *execEnvironment = nullptr;
-    std::unique_ptr<BuiltinFunctionsLib> builtins = nullptr;
-    std::unique_ptr<MetricDeviceContext> metricContext = nullptr;
-    std::unique_ptr<CacheReservation> cacheReservation = nullptr;
+    std::unique_ptr<BuiltinFunctionsLib> builtins;
+    std::unique_ptr<MetricDeviceContext> metricContext;
+    std::unique_ptr<CacheReservation> cacheReservation;
     uint32_t maxNumHwThreads = 0;
     uint32_t numSubDevices = 0;
     std::vector<Device *> subDevices;
@@ -139,7 +134,7 @@ struct DeviceImp : public Device {
 
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
-    std::unique_ptr<DebugSession> debugSession = nullptr;
+    std::unique_ptr<DebugSession> debugSession;
 };
 
 void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
