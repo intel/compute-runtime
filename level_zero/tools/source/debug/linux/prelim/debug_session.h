@@ -195,9 +195,20 @@ struct DebugSessionLinux : DebugSessionImp {
     }
 
     static void *asyncThreadFunction(void *arg);
+    static void *readInternalEventsThreadFunction(void *arg);
     void startAsyncThread() override;
     void closeAsyncThread();
-    void handleEventsAsync(prelim_drm_i915_debug_event *event);
+
+    void startInternalEventsThread() {
+        internalEventThread.thread = NEO::Thread::create(readInternalEventsThreadFunction, reinterpret_cast<void *>(this));
+    }
+    void closeInternalEventsThread() {
+        internalEventThread.close();
+    }
+
+    void handleEventsAsync();
+    void readInternalEventsAsync();
+    MOCKABLE_VIRTUAL std::unique_ptr<uint64_t[]> getInternalEvent();
 
     void handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
@@ -231,6 +242,11 @@ struct DebugSessionLinux : DebugSessionImp {
     ThreadHelper asyncThread;
     std::mutex asyncThreadMutex;
     std::condition_variable apiEventCondition;
+
+    ThreadHelper internalEventThread;
+    std::mutex internalEventThreadMutex;
+    std::condition_variable internalEventCondition;
+    std::queue<std::unique_ptr<uint64_t[]>> internalEventQueue;
 
     int fd = 0;
     int ioctl(unsigned long request, void *arg);

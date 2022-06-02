@@ -122,6 +122,10 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
     int poll(pollfd *pollFd, unsigned long int numberOfFds, int timeout) override {
         passedTimeout = timeout;
         pollCounter++;
+
+        if (eventQueue.empty() && pollRetVal >= 0) {
+            return 0;
+        }
         return pollRetVal;
     }
 
@@ -274,6 +278,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::handleEvent;
     using L0::DebugSessionLinux::handleEventsAsync;
     using L0::DebugSessionLinux::handleVmBindEvent;
+    using L0::DebugSessionLinux::internalEventQueue;
     using L0::DebugSessionLinux::interruptImp;
     using L0::DebugSessionLinux::ioctl;
     using L0::DebugSessionLinux::ioctlHandler;
@@ -283,6 +288,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::pushApiEvent;
     using L0::DebugSessionLinux::readEventImp;
     using L0::DebugSessionLinux::readGpuMemory;
+    using L0::DebugSessionLinux::readInternalEventsAsync;
     using L0::DebugSessionLinux::readModuleDebugArea;
     using L0::DebugSessionLinux::readSbaBuffer;
     using L0::DebugSessionLinux::readStateSaveAreaHeader;
@@ -380,6 +386,14 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return L0::DebugSessionLinux::checkThreadIsResumed(threadID);
     }
 
+    std::unique_ptr<uint64_t[]> getInternalEvent() override {
+        getInternalEventCounter++;
+        if (synchronousInternalEventRead) {
+            readInternalEventsAsync();
+        }
+        return DebugSessionLinux::getInternalEvent();
+    }
+
     bool allThreadsStopped = false;
     int64_t returnTimeDiff = -1;
     static constexpr uint64_t mockClientHandle = 1;
@@ -398,6 +412,9 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     std::vector<std::vector<ze_device_thread_t>> resumedThreads;
 
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
+
+    std::atomic<int> getInternalEventCounter = 0;
+    bool synchronousInternalEventRead = false;
 };
 
 size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slice, int subslice, int eu, int thread) {
@@ -2492,14 +2509,13 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientHandleIsInvalidDuringInitia
     ASSERT_NE(nullptr, session);
 
     auto handler = new MockIoctlHandler;
-    handler->pollRetVal = 1;
     handler->debugEventRetVal = -1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::invalidClientHandle;
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(0, session->getInternalEventCounter);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializationThenErrorIsPrintedAndReturned) {
@@ -2519,9 +2535,17 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializatio
     handler->debugEventRetVal = -1;
     session->ioctlHandler.reset(handler);
 
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
-    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(2, session->getInternalEventCounter);
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
     auto pos = errorMessage.find("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: -1 errno =");
@@ -2739,7 +2763,7 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
     vmBindDebugArea->client_handle = MockDebugSessionLinux::mockClientHandle;
     vmBindDebugArea->va_start = moduleDebugAddress;
     vmBindDebugArea->va_length = 0x1000;
-    vmBindDebugArea->vm_handle = 0;
+    vmBindDebugArea->vm_handle = 50;
     vmBindDebugArea->num_uuids = 1;
     auto uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindDebugAreaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
     typeOfUUID uuidTemp = 3;
@@ -2770,10 +2794,10 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    constexpr size_t readUuidCount = 1;
-    constexpr size_t dummyReadEventCount = 0;
-    constexpr size_t vmOpenDebugAreaCount = 1;
-    EXPECT_EQ(eventsCount + readUuidCount + dummyReadEventCount + vmOpenDebugAreaCount, static_cast<size_t>(handler->ioctlCalled));
+    EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
+
+    // Expect VM OPEN called
+    EXPECT_EQ(50u, handler->vmOpen.handle);
 }
 
 TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrectModuleDebugAreaReadThenErrorIsReturned) {
@@ -2937,17 +2961,17 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientCreateAndDestroyEventsReadO
     handler->eventQueue.push({reinterpret_cast<char *>(&clientCreate), static_cast<uint64_t>(clientCreate.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&clientDestroy), static_cast<uint64_t>(clientDestroy.base.size)});
     handler->pollRetVal = 1;
-    auto eventsCount = handler->eventQueue.size();
+    auto eventsCount = handler->eventQueue.size() + 1;
 
     session->ioctlHandler.reset(handler);
     session->clientHandle = 1;
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
-    EXPECT_EQ(eventsCount + 1, static_cast<size_t>(handler->ioctlCalled));
+    EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
 }
 
-TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenReadEventHasInvalidFlagsThenUnknownErrorIsReturned) {
+TEST_F(DebugApiLinuxTest, GivenEventWithInvalidFlagsWhenReadingEventThenUnknownErrorIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -2967,9 +2991,38 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenReadEventHasInvalid
 
     session->ioctlHandler.reset(handler);
 
-    ze_result_t result = session->initialize();
+    auto memory = std::make_unique<uint64_t[]>(MockDebugSessionLinux::maxEventSize / sizeof(uint64_t));
+    prelim_drm_i915_debug_event *event = reinterpret_cast<prelim_drm_i915_debug_event *>(memory.get());
+    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
+    event->flags = 0;
+    event->size = MockDebugSessionLinux::maxEventSize;
+
+    ze_result_t result = session->readEventImp(event);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
     EXPECT_EQ(eventsCount, static_cast<size_t>(handler->ioctlCalled));
+}
+
+TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenNoValidEventsAreReadThenResultNotReadyIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    prelim_drm_i915_debug_event_client clientInvalidFlag = {};
+    clientInvalidFlag.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    clientInvalidFlag.base.flags = 0x8000;
+    clientInvalidFlag.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    clientInvalidFlag.handle = 1;
+
+    auto handler = new MockIoctlHandler;
+    handler->eventQueue.push({reinterpret_cast<char *>(&clientInvalidFlag), static_cast<uint64_t>(clientInvalidFlag.base.size)});
+    handler->pollRetVal = 1;
+
+    session->ioctlHandler.reset(handler);
+
+    ze_result_t result = session->initialize();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
 TEST_F(DebugApiLinuxTest, GivenInvalidFlagsWhenReadingEventThenUnknownErrorIsReturned) {
@@ -2999,7 +3052,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidFlagsWhenReadingEventThenUnknownErrorIsRet
     EXPECT_EQ(1u, static_cast<size_t>(handler->ioctlCalled));
 }
 
-TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsProcessed) {
+TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsNotProcessed) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -3032,7 +3085,7 @@ TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsProcessed) {
     auto drmDebugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(data);
     ze_result_t result = session->readEventImp(drmDebugEvent);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, session->handleEventCalledCount);
+    EXPECT_EQ(0u, session->handleEventCalledCount);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndUnhandledEventTypeWhenHandlingEventThenMessageIsPrinted) {
@@ -3111,13 +3164,13 @@ TEST_F(DebugApiLinuxTest, GivenContextCreateAndDestroyEventsWhenInitializingThen
     handler->eventQueue.push({reinterpret_cast<char *>(&context2), static_cast<uint64_t>(context2.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&contextDestroy), static_cast<uint64_t>(contextDestroy.base.size)});
 
-    auto eventsCount = handler->eventQueue.size();
+    auto eventsCount = handler->eventQueue.size() + 1;
     handler->pollRetVal = 1;
 
     session->ioctlHandler.reset(handler);
     session->initialize();
 
-    EXPECT_EQ(eventsCount + 1, static_cast<size_t>(handler->ioctlCalled));
+    EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
 
     EXPECT_EQ(1u, session->clientHandleToConnection[clientHandle]->contextsCreated.size());
     EXPECT_EQ(session->clientHandleToConnection[clientHandle]->contextsCreated.end(), session->clientHandleToConnection[clientHandle]->contextsCreated.find(context.handle));
@@ -5325,7 +5378,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInvalidVmHandleWhenHandlingAttentionEven
 }
 using DebugApiLinuxAsyncThreadTest = Test<DebugApiLinuxFixture>;
 
-TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenHandlingEventsAsyncThenDetachEventIsGenerated) {
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5337,25 +5390,38 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenHandlingE
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    std::unique_ptr<prelim_drm_i915_debug_event, std::function<void(prelim_drm_i915_debug_event *)>> event(
-        reinterpret_cast<prelim_drm_i915_debug_event *>(malloc(sizeof(prelim_drm_i915_debug_event) + DebugSessionLinux::maxEventSize)), [](prelim_drm_i915_debug_event *ptr) { free(ptr); });
-    event->size = DebugSessionLinux::maxEventSize;
-    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0;
     errno = EINVAL;
-
-    session->handleEventsAsync(event.get());
+    session->readInternalEventsAsync();
 
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front().type);
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
     errno = 0;
 
-    session->handleEventsAsync(event.get());
+    session->readInternalEventsAsync();
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
 }
 
-TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenHandlingEventsAsyncThenNoEventIsReadAndGenerated) {
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInternalEventsAsyncThenDetachEventIsNotGenerated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = -1;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    errno = EBUSY;
+    session->readInternalEventsAsync();
+
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    errno = 0;
+}
+
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenReadingInternalEventsAsyncThenNoEventIsReadAndGenerated) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5367,20 +5433,14 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenHandlingEventsAsync
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    std::unique_ptr<prelim_drm_i915_debug_event, std::function<void(prelim_drm_i915_debug_event *)>> event(
-        reinterpret_cast<prelim_drm_i915_debug_event *>(malloc(sizeof(prelim_drm_i915_debug_event) + DebugSessionLinux::maxEventSize)), [](prelim_drm_i915_debug_event *ptr) { free(ptr); });
-    event->size = DebugSessionLinux::maxEventSize;
-    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0;
-
-    session->handleEventsAsync(event.get());
+    session->readInternalEventsAsync();
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventInput.type);
 
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
 }
 
-TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAsyncThenEventReadIsCalled) {
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyncThenEventReadIsCalled) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5391,6 +5451,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAs
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    session->synchronousInternalEventRead = true;
 
     uint64_t clientHandle = 2;
     prelim_drm_i915_debug_event_client client = {};
@@ -5401,13 +5462,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAs
 
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
 
-    std::unique_ptr<prelim_drm_i915_debug_event, std::function<void(prelim_drm_i915_debug_event *)>> event(
-        reinterpret_cast<prelim_drm_i915_debug_event *>(malloc(sizeof(prelim_drm_i915_debug_event) + DebugSessionLinux::maxEventSize)), [](prelim_drm_i915_debug_event *ptr) { free(ptr); });
-    event->size = DebugSessionLinux::maxEventSize;
-    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0;
-
-    session->handleEventsAsync(event.get());
+    session->readInternalEventsAsync();
 
     constexpr int clientEventCount = 1;
     constexpr int dummyReadEventCount = 1;
@@ -5417,7 +5472,37 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAs
     EXPECT_EQ(static_cast<decltype(prelim_drm_i915_debug_event::type)>(PRELIM_DRM_I915_DEBUG_EVENT_READ), handler->debugEventInput.type);
 }
 
-TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAsyncThenEventReadIsCalledForAtMost3Times) {
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenEventsAvailableWhenHandlingEventsAsyncThenEventIsProcessed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    session->synchronousInternalEventRead = true;
+
+    uint64_t clientHandle = 2;
+    prelim_drm_i915_debug_event_client client = {};
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = clientHandle;
+
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+
+    EXPECT_EQ(nullptr, session->clientHandleToConnection[clientHandle]);
+
+    session->handleEventsAsync();
+
+    EXPECT_EQ(1u, session->handleEventCalledCount);
+    EXPECT_NE(nullptr, session->clientHandleToConnection[clientHandle]);
+}
+
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingEventsAsyncThenEventReadIsCalledForAtMost3Times) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5441,18 +5526,12 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenHandlingEventsAs
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
 
-    std::unique_ptr<prelim_drm_i915_debug_event, std::function<void(prelim_drm_i915_debug_event *)>> event(
-        reinterpret_cast<prelim_drm_i915_debug_event *>(malloc(sizeof(prelim_drm_i915_debug_event) + DebugSessionLinux::maxEventSize)), [](prelim_drm_i915_debug_event *ptr) { free(ptr); });
-    event->size = DebugSessionLinux::maxEventSize;
-    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0;
-
-    session->handleEventsAsync(event.get());
+    session->readInternalEventsAsync();
 
     EXPECT_EQ(3, handler->ioctlCalled);
     EXPECT_EQ(DebugSessionLinux::maxEventSize, handler->debugEventInput.size);
     EXPECT_EQ(static_cast<decltype(prelim_drm_i915_debug_event::type)>(PRELIM_DRM_I915_DEBUG_EVENT_READ), handler->debugEventInput.type);
-    EXPECT_EQ(clientHandle, session->clientHandleToConnection[clientHandle]->client.handle);
+    EXPECT_EQ(3u, session->internalEventQueue.size());
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
@@ -5469,7 +5548,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
 
     session->startAsyncThread();
 
-    while (handler->pollCounter == 0)
+    while (session->getInternalEventCounter == 0)
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
@@ -5495,7 +5574,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
 
     session->startAsyncThread();
 
-    while (handler->pollCounter == 0)
+    while (session->getInternalEventCounter == 0)
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
@@ -5544,7 +5623,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     auto result = session->interrupt(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    while (handler->pollCounter == 0)
+    while (session->getInternalEventCounter == 0)
         ;
 
     session->closeAsyncThread();
@@ -5578,7 +5657,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     auto result = session->interrupt(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    while (handler->pollCounter == 0)
+    while (session->getInternalEventCounter == 0)
         ;
 
     session->closeAsyncThread();

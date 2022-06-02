@@ -41,6 +41,7 @@ DebugSessionLinux::DebugSessionLinux(const zet_debug_config_t &config, Device *d
 };
 DebugSessionLinux::~DebugSessionLinux() {
     closeAsyncThread();
+    closeInternalEventsThread();
 }
 
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
@@ -238,25 +239,22 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_NOT_READY;
     }
 
-    ze_result_t result = ZE_RESULT_NOT_READY;
-
-    uint8_t maxEventBuffer[sizeof(prelim_drm_i915_debug_event) + maxEventSize];
-    auto event = reinterpret_cast<prelim_drm_i915_debug_event *>(maxEventBuffer);
-
-    event->size = maxEventSize;
+    startInternalEventsThread();
 
     bool allEventsCollected = false;
-
+    bool eventAvailable = false;
     do {
-        event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-        event->flags = 0;
-        event->size = maxEventSize;
-
-        result = readEventImp(event);
+        auto eventMemory = getInternalEvent();
+        if (eventMemory != nullptr) {
+            handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
+            eventAvailable = true;
+        } else {
+            eventAvailable = false;
+        }
 
         allEventsCollected = checkAllEventsCollected();
 
-    } while (result == ZE_RESULT_SUCCESS && !allEventsCollected);
+    } while (eventAvailable && !allEventsCollected);
 
     if (clientHandleClosed == clientHandle && clientHandle != invalidClientHandle) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -269,9 +267,6 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
     return ZE_RESULT_NOT_READY;
 }
 
@@ -279,15 +274,8 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
 
-    uint8_t maxEventBuffer[sizeof(prelim_drm_i915_debug_event) + maxEventSize];
-    auto event = reinterpret_cast<prelim_drm_i915_debug_event *>(maxEventBuffer);
-
-    event->size = maxEventSize;
-    event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
-    event->flags = 0;
-
     while (self->asyncThread.threadActive) {
-        self->handleEventsAsync(event);
+        self->handleEventsAsync();
 
         self->sendInterrupts();
         self->generateEventsAndResumeStoppedThreads();
@@ -299,15 +287,56 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
     return nullptr;
 }
 
+void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
+    DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
+    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");
+
+    while (self->internalEventThread.threadActive) {
+        self->readInternalEventsAsync();
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread closing\n", "");
+
+    self->internalEventThread.threadFinished.store(true);
+    return nullptr;
+}
+
 void DebugSessionLinux::startAsyncThread() {
     asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 void DebugSessionLinux::closeAsyncThread() {
     asyncThread.close();
+    internalEventThread.close();
 }
 
-void DebugSessionLinux::handleEventsAsync(prelim_drm_i915_debug_event *event) {
+std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
+    std::unique_ptr<uint64_t[]> eventMemory;
+
+    {
+        std::unique_lock<std::mutex> lock(internalEventThreadMutex);
+
+        if (internalEventQueue.empty()) {
+            apiEventCondition.wait_for(lock, std::chrono::milliseconds(100));
+        }
+
+        if (!internalEventQueue.empty()) {
+            eventMemory = std::move(internalEventQueue.front());
+            internalEventQueue.pop();
+        }
+    }
+    return eventMemory;
+}
+
+void DebugSessionLinux::handleEventsAsync() {
+    auto eventMemory = getInternalEvent();
+    if (eventMemory != nullptr) {
+        handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
+    }
+}
+
+void DebugSessionLinux::readInternalEventsAsync() {
+
     struct pollfd pollFd = {
         .fd = fd,
         .events = POLLIN,
@@ -319,7 +348,7 @@ void DebugSessionLinux::handleEventsAsync(prelim_drm_i915_debug_event *event) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread readEvent poll() retCode: %d\n", numberOfFds);
 
-    if (numberOfFds < 0 && errno == EINVAL) {
+    if (!detached && numberOfFds < 0 && errno == EINVAL) {
         zet_debug_event_t debugEvent = {};
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
         debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_INVALID;
@@ -334,19 +363,32 @@ void DebugSessionLinux::handleEventsAsync(prelim_drm_i915_debug_event *event) {
 
         int maxLoopCount = 3;
         do {
+
+            uint8_t maxEventBuffer[sizeof(prelim_drm_i915_debug_event) + maxEventSize];
+            auto event = reinterpret_cast<prelim_drm_i915_debug_event *>(maxEventBuffer);
+            event->size = maxEventSize;
             event->type = PRELIM_DRM_I915_DEBUG_EVENT_READ;
             event->flags = 0;
-            event->size = maxEventSize;
 
             result = readEventImp(event);
             maxLoopCount--;
+
+            if (result == ZE_RESULT_SUCCESS) {
+                std::unique_lock<std::mutex> lock(internalEventThreadMutex);
+
+                auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
+                memcpy(memory.get(), event, maxEventSize);
+
+                internalEventQueue.push(std::move(memory));
+                internalEventCondition.notify_one();
+            }
         } while (result == ZE_RESULT_SUCCESS && maxLoopCount > 0);
     }
 }
 
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
-
+    internalEventThread.close();
     if (fd == 0) {
         return false;
     }
@@ -660,7 +702,6 @@ ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebu
             PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT unsupported flag = %d\n", (int)drmDebugEvent->flags);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
-        handleEvent(drmDebugEvent);
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_NOT_READY;
