@@ -305,9 +305,6 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     }
 
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
-    if (this->driverHandle->svmAllocsManager->getSvmMapOperation(ptr)) {
-        this->driverHandle->svmAllocsManager->removeSvmMapOperation(ptr);
-    }
     return ZE_RESULT_SUCCESS;
 }
 
