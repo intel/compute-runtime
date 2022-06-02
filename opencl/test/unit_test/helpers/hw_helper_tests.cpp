@@ -102,18 +102,18 @@ HWTEST_F(HwHelperTest, givenForceExtendedKernelIsaSizeSetWhenGettingISAPaddingTh
 HWTEST_F(HwHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePolicyIsSet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    class mockHwHelperHw : public HwHelperHw<FamilyType> {
+    class MockHwHelperHw : public HwHelperHw<FamilyType> {
       public:
         bool called = false;
         using HwHelperHw<FamilyType>::HwHelperHw;
-        mockHwHelperHw() {}
+        MockHwHelperHw() {}
         void setL1CachePolicy(bool useL1Cache, typename FamilyType::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) override {
             HwHelperHw<FamilyType>::setL1CachePolicy(useL1Cache, surfaceState, hwInfo);
             called = true;
         }
     };
 
-    mockHwHelperHw helper;
+    MockHwHelperHw helper;
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));

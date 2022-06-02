@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingInitTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingInitTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Global.pfnInit = [](ze_init_flags_t flags) { return ZE_RESULT_SUCCESS; };
 

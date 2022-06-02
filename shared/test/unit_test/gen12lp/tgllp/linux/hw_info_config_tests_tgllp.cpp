@@ -62,7 +62,7 @@ TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, negative) {
 
 template <typename T>
 class TgllpHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<TGLLP_1x6x16> tgllpTestTypes;
+typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;
 TYPED_TEST_CASE(TgllpHwInfoTests, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoTests, gtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

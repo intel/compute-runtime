@@ -31,7 +31,7 @@ DG2TEST_F(HwInfoConfigTestDg2, whenConvertingTimestampsToCsDomainThenGpuTicksAre
 DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DG2_CONFIG::setupHardwareInfoBase(&hwInfo, false);
+    Dg2HwConfig::setupHardwareInfoBase(&hwInfo, false);
 
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
@@ -47,7 +47,7 @@ DG2TEST_F(HwInfoConfigTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemIn
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    DG2_CONFIG::setupHardwareInfo(&hwInfo, false);
+    Dg2HwConfig::setupHardwareInfo(&hwInfo, false);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);

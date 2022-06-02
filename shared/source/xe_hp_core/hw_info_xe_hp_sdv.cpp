@@ -150,15 +150,15 @@ void XE_HP_SDV::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTab
     }
 }
 
-const HardwareInfo XE_HP_SDV_CONFIG::hwInfo = {
+const HardwareInfo XehpSdvHwConfig::hwInfo = {
     &XE_HP_SDV::platform,
     &XE_HP_SDV::featureTable,
     &XE_HP_SDV::workaroundTable,
-    &XE_HP_SDV_CONFIG::gtSystemInfo,
+    &XehpSdvHwConfig::gtSystemInfo,
     XE_HP_SDV::capabilityTable,
 };
-GT_SYSTEM_INFO XE_HP_SDV_CONFIG::gtSystemInfo = {0};
-void XE_HP_SDV_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO XehpSdvHwConfig::gtSystemInfo = {0};
+void XehpSdvHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;

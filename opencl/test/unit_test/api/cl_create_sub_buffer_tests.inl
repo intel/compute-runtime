@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 namespace ClCreateSubbufferTests {
 
 template <bool hasHostPtr, cl_mem_flags parentFlags>
-class clCreateSubBufferTemplateTests : public ApiFixture<>,
+class ClCreateSubBufferTemplateTests : public ApiFixture<>,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
     void SetUp() override {
         ApiFixture::SetUp();
@@ -42,7 +42,7 @@ class clCreateSubBufferTemplateTests : public ApiFixture<>,
 };
 
 struct clCreateSubBufferValidFlagsNoHostPtrTests
-    : public clCreateSubBufferTemplateTests<false, CL_MEM_READ_WRITE> {
+    : public ClCreateSubBufferTemplateTests<false, CL_MEM_READ_WRITE> {
 };
 
 TEST_P(clCreateSubBufferValidFlagsNoHostPtrTests, GivenValidFlagsWhenCreatingSubBufferThenSubBufferIsCreatedAndSuccessIsReturned) {
@@ -72,7 +72,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(validFlags));
 
 struct clCreateSubBufferInvalidFlagsHostPtrTests
-    : public clCreateSubBufferTemplateTests<true, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY> {
+    : public ClCreateSubBufferTemplateTests<true, CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY> {
 };
 
 TEST_P(clCreateSubBufferInvalidFlagsHostPtrTests, GivenInvalidFlagsWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
@@ -101,7 +101,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateSubBufferInvalidFlagsHostPtrTests,
     testing::ValuesIn(invalidFlags));
 
-class clCreateSubBufferTests : public api_tests {
+class ClCreateSubBufferTests : public api_tests {
     void SetUp() override {
         api_tests::SetUp();
         cl_mem_flags flg = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
@@ -121,7 +121,7 @@ class clCreateSubBufferTests : public api_tests {
     cl_uchar pHostPtr[64];
 };
 
-TEST_F(clCreateSubBufferTests, GivenInBoundsRegionWhenCreatingSubBufferThenSubBufferIsCreatedAndSuccessIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenInBoundsRegionWhenCreatingSubBufferThenSubBufferIsCreatedAndSuccessIsReturned) {
     cl_buffer_region region = {0, 12};
 
     auto subBuffer = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION,
@@ -132,7 +132,7 @@ TEST_F(clCreateSubBufferTests, GivenInBoundsRegionWhenCreatingSubBufferThenSubBu
     clReleaseMemObject(subBuffer);
 }
 
-TEST_F(clCreateSubBufferTests, GivenOutOfBoundsRegionWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenOutOfBoundsRegionWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
     cl_buffer_region region = {4, 68};
 
     auto subBuffer = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION,
@@ -141,7 +141,7 @@ TEST_F(clCreateSubBufferTests, GivenOutOfBoundsRegionWhenCreatingSubBufferThenIn
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateSubBufferTests, GivenSubBufferAsBufferWhenCreatingSubBufferThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenSubBufferAsBufferWhenCreatingSubBufferThenInvalidMemObjectErrorIsReturned) {
     cl_buffer_region region0 = {0, 60};
     cl_buffer_region region1 = {8, 20};
 
@@ -158,7 +158,7 @@ TEST_F(clCreateSubBufferTests, GivenSubBufferAsBufferWhenCreatingSubBufferThenIn
     clReleaseMemObject(subBuffer);
 }
 
-TEST_F(clCreateSubBufferTests, GivenInvalidBufferObjectWhenCreatingSubBufferThenInvalidMemObjectErrorIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenInvalidBufferObjectWhenCreatingSubBufferThenInvalidMemObjectErrorIsReturned) {
     cl_buffer_region region = {4, 60};
     cl_int trash[] = {0x01, 0x08, 0x88, 0xcc, 0xab, 0x55};
 
@@ -168,7 +168,7 @@ TEST_F(clCreateSubBufferTests, GivenInvalidBufferObjectWhenCreatingSubBufferThen
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateSubBufferTests, GivenInvalidOffsetWhenCreatingSubBufferThenMisalignedSubBufferOffsetErrorIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenInvalidOffsetWhenCreatingSubBufferThenMisalignedSubBufferOffsetErrorIsReturned) {
     cl_buffer_region region = {1, 60};
 
     auto subBuffer = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE,
@@ -177,7 +177,7 @@ TEST_F(clCreateSubBufferTests, GivenInvalidOffsetWhenCreatingSubBufferThenMisali
     EXPECT_EQ(CL_MISALIGNED_SUB_BUFFER_OFFSET, retVal);
 }
 
-TEST_F(clCreateSubBufferTests, GivenNoRegionWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
+TEST_F(ClCreateSubBufferTests, GivenNoRegionWhenCreatingSubBufferThenInvalidValueErrorIsReturned) {
     cl_buffer_region region = {4, 60};
 
     auto subBuffer = clCreateSubBuffer(buffer, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION,
@@ -194,7 +194,7 @@ TEST_F(clCreateSubBufferTests, GivenNoRegionWhenCreatingSubBufferThenInvalidValu
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateSubBufferTests, GivenBufferWithFlagsWhenCreatingSubBufferThenFlagsAreInherited) {
+TEST_F(ClCreateSubBufferTests, GivenBufferWithFlagsWhenCreatingSubBufferThenFlagsAreInherited) {
     cl_buffer_region region = {0, 60};
 
     auto subBuffer = clCreateSubBuffer(buffer, CL_MEM_READ_ONLY, CL_BUFFER_CREATE_TYPE_REGION,

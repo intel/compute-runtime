@@ -27,7 +27,7 @@ struct GLK : public SKLFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class GLK_1x3x6 : public GLK {
+class GlkHw1x3x6 : public GLK {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -36,7 +36,7 @@ class GLK_1x3x6 : public GLK {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class GLK_1x2x6 : public GLK {
+class GlkHw1x2x6 : public GLK {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

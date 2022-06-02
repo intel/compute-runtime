@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_module_desc_t *pDesc, ze_module_handle_t *phModule, ze_module_build_log_handle_t *phBuildLog) { return ZE_RESULT_SUCCESS; };
@@ -28,7 +28,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleCreateTracingWrapperWithOneSet
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnDestroy =
         [](ze_module_handle_t hModule) { return ZE_RESULT_SUCCESS; };
@@ -43,7 +43,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDestroyTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleBuildLogDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.ModuleBuildLog.pfnDestroy =
         [](ze_module_build_log_handle_t hModuleBuildLog) { return ZE_RESULT_SUCCESS; };
@@ -58,7 +58,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogDestroyTracingWrapperW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogGetStringTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleBuildLogGetStringTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.ModuleBuildLog.pfnGetString =
         [](ze_module_build_log_handle_t hModuleBuildLog, size_t *pSize, char *pBuildLog) { return ZE_RESULT_SUCCESS; };
@@ -76,7 +76,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleBuildLogGetStringTracingWrappe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetNativeBinaryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleGetNativeBinaryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnGetNativeBinary =
         [](ze_module_handle_t hModule, size_t *pSize, uint8_t *pModuleNativeBinary) { return ZE_RESULT_SUCCESS; };
@@ -93,7 +93,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetNativeBinaryTracingWrapperW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetGlobalPointerTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleGetGlobalPointerTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnGetGlobalPointer =
         [](ze_module_handle_t hModule, const char *pGlobalName, size_t *pSize, void **pPtr) { return ZE_RESULT_SUCCESS; };
@@ -111,7 +111,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetGlobalPointerTracingWrapper
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnCreate =
         [](ze_module_handle_t hModule, const ze_kernel_desc_t *pDesc, ze_kernel_handle_t *phKernel) { return ZE_RESULT_SUCCESS; };
@@ -128,7 +128,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelCreateTracingWrapperWithOneSet
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnDestroy =
         [](ze_kernel_handle_t hKernel) { return ZE_RESULT_SUCCESS; };
@@ -143,7 +143,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelDestroyTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetFunctionPointerTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleGetFunctionPointerTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnGetFunctionPointer =
         [](ze_module_handle_t hModule, const char *pKernelName, void **pfnFunction) { return ZE_RESULT_SUCCESS; };
@@ -160,7 +160,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetFunctionPointerTracingWrapp
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetGroupSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSetGroupSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnSetGroupSize =
         [](ze_kernel_handle_t hKernel, uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ) { return ZE_RESULT_SUCCESS; };
@@ -178,7 +178,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetGroupSizeTracingWrapperWith
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestGroupSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSuggestGroupSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnSuggestGroupSize =
         [](ze_kernel_handle_t hKernel, uint32_t globalSizeX, uint32_t globalSizeY, uint32_t globalSizeZ, uint32_t *groupSizeX, uint32_t *groupSizeY, uint32_t *groupSizeZ) { return ZE_RESULT_SUCCESS; };
@@ -199,7 +199,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestGroupSizeTracingWrapper
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetArgumentValueTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSetArgumentValueTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnSetArgumentValue =
         [](ze_kernel_handle_t hKernel, uint32_t argIndex, size_t argSize, const void *pArgValue) { return ZE_RESULT_SUCCESS; };
@@ -217,7 +217,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetArgumentValueTracingWrapper
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnGetProperties =
         [](ze_kernel_handle_t hKernel, ze_kernel_properties_t *pKernelProperties) { return ZE_RESULT_SUCCESS; };
@@ -232,7 +232,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetPropertiesTracingWrapperWit
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendLaunchKernel =
         [](ze_command_list_handle_t hCommandList, ze_kernel_handle_t hKernel, const ze_group_count_t *pLaunchFuncArgs,
@@ -252,7 +252,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelTracing
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelIndirectTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelIndirectTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendLaunchKernelIndirect =
         [](ze_command_list_handle_t hCommandList, ze_kernel_handle_t hKernel, const ze_group_count_t *pLaunchArgumentsBuffer,
@@ -272,7 +272,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchKernelIndirec
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchMultipleKernelsIndirectTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendLaunchMultipleKernelsIndirectTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendLaunchMultipleKernelsIndirect =
         [](ze_command_list_handle_t hCommandList, uint32_t numKernels, ze_kernel_handle_t *phKernels,
@@ -296,7 +296,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchMultipleKerne
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchCooperativeKernelTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendLaunchCooperativeKernelTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendLaunchCooperativeKernel =
         [](ze_command_list_handle_t hCommandList, ze_kernel_handle_t hKernel, const ze_group_count_t *pLaunchFuncArgs, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
@@ -311,7 +311,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendLaunchCooperativeKe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetKernelNamesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleGetKernelNamesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnGetKernelNames =
         [](ze_module_handle_t hDevice, uint32_t *pCount, const char **pNames) { return ZE_RESULT_SUCCESS; };
@@ -326,7 +326,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetKernelNamesTracingWrapperWi
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestMaxCooperativeGroupCountTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSuggestMaxCooperativeGroupCountTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnSuggestMaxCooperativeGroupCount =
         [](ze_kernel_handle_t hKernel, uint32_t *totalGroupCount) { return ZE_RESULT_SUCCESS; };
@@ -341,7 +341,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSuggestMaxCooperativeGroupCoun
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetIndirectAccessTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelGetIndirectAccessTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnGetIndirectAccess =
         [](ze_kernel_handle_t hKernel, ze_kernel_indirect_access_flags_t *pFlags) { return ZE_RESULT_SUCCESS; };
@@ -356,7 +356,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetIndirectAccessTracingWrappe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetNameTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelGetNameTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnGetName =
         [](ze_kernel_handle_t hKernel, size_t *pSize, char *pName) { return ZE_RESULT_SUCCESS; };
@@ -371,7 +371,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetNameTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetSourceAttributesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelGetSourceAttributesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnGetSourceAttributes =
         [](ze_kernel_handle_t hKernel, uint32_t *pSize, char **pString) { return ZE_RESULT_SUCCESS; };
@@ -386,7 +386,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelGetSourceAttributesTracingWrap
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetIndirectAccessTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingKernelSetIndirectAccessTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Kernel.pfnSetIndirectAccess =
         [](ze_kernel_handle_t hKernel, ze_kernel_indirect_access_flags_t flags) { return ZE_RESULT_SUCCESS; };
@@ -401,7 +401,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingKernelSetIndirectAccessTracingWrappe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDynamicLinkTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleDynamicLinkTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnDynamicLink =
         [](uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog) { return ZE_RESULT_SUCCESS; };
@@ -416,7 +416,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleDynamicLinkTracingWrapperWithO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingModuleGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingModuleGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Module.pfnGetProperties =
         [](ze_module_handle_t hModule, ze_module_properties_t *pModuleProperties) { return ZE_RESULT_SUCCESS; };

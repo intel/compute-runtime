@@ -162,15 +162,15 @@ void SKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo SKL_1x2x6::hwInfo = {
+const HardwareInfo SklHw1x2x6::hwInfo = {
     &SKL::platform,
     &SKL::featureTable,
     &SKL::workaroundTable,
-    &SKL_1x2x6::gtSystemInfo,
+    &SklHw1x2x6::gtSystemInfo,
     SKL::capabilityTable,
 };
-GT_SYSTEM_INFO SKL_1x2x6::gtSystemInfo = {0};
-void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO SklHw1x2x6::gtSystemInfo = {0};
+void SklHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -180,15 +180,15 @@ void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo SKL_1x3x6::hwInfo = {
+const HardwareInfo SklHw1x3x6::hwInfo = {
     &SKL::platform,
     &SKL::featureTable,
     &SKL::workaroundTable,
-    &SKL_1x3x6::gtSystemInfo,
+    &SklHw1x3x6::gtSystemInfo,
     SKL::capabilityTable,
 };
-GT_SYSTEM_INFO SKL_1x3x6::gtSystemInfo = {0};
-void SKL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO SklHw1x3x6::gtSystemInfo = {0};
+void SklHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -198,15 +198,15 @@ void SKL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo SKL_1x3x8::hwInfo = {
+const HardwareInfo SklHw1x3x8::hwInfo = {
     &SKL::platform,
     &SKL::featureTable,
     &SKL::workaroundTable,
-    &SKL_1x3x8::gtSystemInfo,
+    &SklHw1x3x8::gtSystemInfo,
     SKL::capabilityTable,
 };
-GT_SYSTEM_INFO SKL_1x3x8::gtSystemInfo = {0};
-void SKL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO SklHw1x3x8::gtSystemInfo = {0};
+void SklHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -216,15 +216,15 @@ void SKL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo SKL_2x3x8::hwInfo = {
+const HardwareInfo SklHw2x3x8::hwInfo = {
     &SKL::platform,
     &SKL::featureTable,
     &SKL::workaroundTable,
-    &SKL_2x3x8::gtSystemInfo,
+    &SklHw2x3x8::gtSystemInfo,
     SKL::capabilityTable,
 };
-GT_SYSTEM_INFO SKL_2x3x8::gtSystemInfo = {0};
-void SKL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO SklHw2x3x8::gtSystemInfo = {0};
+void SklHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -234,15 +234,15 @@ void SKL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 16;
 };
 
-const HardwareInfo SKL_3x3x8::hwInfo = {
+const HardwareInfo SklHw3x3x8::hwInfo = {
     &SKL::platform,
     &SKL::featureTable,
     &SKL::workaroundTable,
-    &SKL_3x3x8::gtSystemInfo,
+    &SklHw3x3x8::gtSystemInfo,
     SKL::capabilityTable,
 };
-GT_SYSTEM_INFO SKL_3x3x8::gtSystemInfo = {0};
-void SKL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO SklHw3x3x8::gtSystemInfo = {0};
+void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -252,23 +252,23 @@ void SKL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 24;
 };
 
-const HardwareInfo SKL::hwInfo = SKL_1x3x8::hwInfo;
+const HardwareInfo SKL::hwInfo = SklHw1x3x8::hwInfo;
 const uint64_t SKL::defaultHardwareInfoConfig = 0x000100030008;
 
 void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {
-        SKL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x200030008) {
-        SKL_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x300030008) {
-        SKL_3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100020006) {
-        SKL_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100030006) {
-        SKL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        SKL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

@@ -22,7 +22,7 @@ struct RKL : public TGLLPFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
-class RKL_HW_CONFIG : public RKL {
+class RklHwConfig : public RKL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

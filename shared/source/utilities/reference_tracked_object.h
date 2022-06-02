@@ -54,7 +54,8 @@ template <typename DerivedClass>
 class ReferenceTrackedObject;
 
 template <typename DataType>
-class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType *)> {
+class unique_ptr_if_unused : // NOLINT(readability-identifier-naming)
+                             public std::unique_ptr<DataType, void (*)(DataType *)> {
     using DeleterFuncType = void (*)(DataType *);
 
   public:

@@ -60,7 +60,7 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseTh
 
 template <typename T>
 using AdlpConfigHwInfoTests = ::testing::Test;
-using adlpConfigTestTypes = ::testing::Types<ADLP_CONFIG>;
+using adlpConfigTestTypes = ::testing::Types<AdlpHwConfig>;
 TYPED_TEST_CASE(AdlpConfigHwInfoTests, adlpConfigTestTypes);
 TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

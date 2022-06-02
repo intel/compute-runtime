@@ -178,16 +178,16 @@ void PVC::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTi
 FeatureTable PVC::featureTable;
 WorkaroundTable PVC::workaroundTable;
 
-const HardwareInfo PVC_CONFIG::hwInfo = {
+const HardwareInfo PvcHwConfig::hwInfo = {
     &PVC::platform,
     &PVC::featureTable,
     &PVC::workaroundTable,
-    &PVC_CONFIG::gtSystemInfo,
+    &PvcHwConfig::gtSystemInfo,
     PVC::capabilityTable,
 };
 
-GT_SYSTEM_INFO PVC_CONFIG::gtSystemInfo = {0};
-void PVC_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO PvcHwConfig::gtSystemInfo = {0};
+void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;

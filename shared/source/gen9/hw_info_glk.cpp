@@ -140,16 +140,16 @@ void GLK::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo GLK_1x3x6::hwInfo = {
+const HardwareInfo GlkHw1x3x6::hwInfo = {
     &GLK::platform,
     &GLK::featureTable,
     &GLK::workaroundTable,
-    &GLK_1x3x6::gtSystemInfo,
+    &GlkHw1x3x6::gtSystemInfo,
     GLK::capabilityTable,
 };
 
-GT_SYSTEM_INFO GLK_1x3x6::gtSystemInfo = {0};
-void GLK_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO GlkHw1x3x6::gtSystemInfo = {0};
+void GlkHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -159,16 +159,16 @@ void GLK_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo GLK_1x2x6::hwInfo = {
+const HardwareInfo GlkHw1x2x6::hwInfo = {
     &GLK::platform,
     &GLK::featureTable,
     &GLK::workaroundTable,
-    &GLK_1x2x6::gtSystemInfo,
+    &GlkHw1x2x6::gtSystemInfo,
     GLK::capabilityTable,
 };
 
-GT_SYSTEM_INFO GLK_1x2x6::gtSystemInfo = {0};
-void GLK_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO GlkHw1x2x6::gtSystemInfo = {0};
+void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GLK::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -178,17 +178,17 @@ void GLK_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo GLK::hwInfo = GLK_1x3x6::hwInfo;
+const HardwareInfo GLK::hwInfo = GlkHw1x3x6::hwInfo;
 const uint64_t GLK::defaultHardwareInfoConfig = 0x100030006;
 
 void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100020006) {
-        GLK_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        GlkHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100030006) {
-        GLK_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        GLK_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        GlkHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

@@ -25,7 +25,7 @@ struct ADLS : public TGLLPFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
-class ADLS_HW_CONFIG : public ADLS {
+class AdlsHwConfig : public ADLS {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

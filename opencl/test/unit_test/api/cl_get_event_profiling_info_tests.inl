@@ -269,7 +269,7 @@ TEST_F(clEventProfilingTests, GivenPerfCountersEnabledWhenCheckingPerfCountersTh
     delete pEvent;
 }
 
-class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixture,
+class ClEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixture,
                                               public PerformanceCountersDeviceFixture,
                                               public ::testing::Test {
   public:
@@ -303,7 +303,7 @@ class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
     size_t param_value_size_ret = 0;
 };
 
-TEST_F(clEventProfilingWithPerfCountersTests, GivenDisabledPerfCountersWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
+TEST_F(ClEventProfilingWithPerfCountersTests, GivenDisabledPerfCountersWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
     event->setPerfCountersEnabled(false);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
@@ -313,7 +313,7 @@ TEST_F(clEventProfilingWithPerfCountersTests, GivenDisabledPerfCountersWhenGetti
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersWhenGettingEventProfilingInfoThenSuccessIsReturned) {
+TEST_F(ClEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersWhenGettingEventProfilingInfoThenSuccessIsReturned) {
     event->setPerfCountersEnabled(true);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
@@ -323,7 +323,7 @@ TEST_F(clEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersWhenGettin
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersAndIncorrectParamValueSizeWhenGettingEventProfilingInfoThenProfilingInfoNotAvailableErrorIsReturned) {
+TEST_F(ClEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersAndIncorrectParamValueSizeWhenGettingEventProfilingInfoThenProfilingInfoNotAvailableErrorIsReturned) {
     event->setPerfCountersEnabled(true);
     cl_int retVal = clGetEventProfilingInfo(eventCl,
                                             CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,

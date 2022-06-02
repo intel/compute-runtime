@@ -101,7 +101,7 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, WhenConfiguringHwInfoThenEdramInformationIsC
 template <typename T>
 class CflHwInfoTests : public ::testing::Test {
 };
-typedef ::testing::Types<CFL_1x2x6, CFL_1x3x6, CFL_1x3x8, CFL_2x3x8, CFL_3x3x8> cflTestTypes;
+typedef ::testing::Types<CflHw1x2x6, CflHw1x3x6, CflHw1x3x8, CflHw2x3x8, CflHw3x3x8> cflTestTypes;
 TYPED_TEST_CASE(CflHwInfoTests, cflTestTypes);
 TYPED_TEST(CflHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

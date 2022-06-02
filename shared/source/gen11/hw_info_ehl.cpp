@@ -144,16 +144,16 @@ void EHL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo EHL_HW_CONFIG::hwInfo = {
+const HardwareInfo EhlHwConfig::hwInfo = {
     &EHL::platform,
     &EHL::featureTable,
     &EHL::workaroundTable,
-    &EHL_HW_CONFIG::gtSystemInfo,
+    &EhlHwConfig::gtSystemInfo,
     EHL::capabilityTable,
 };
 
-GT_SYSTEM_INFO EHL_HW_CONFIG::gtSystemInfo = {0};
-void EHL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO EhlHwConfig::gtSystemInfo = {0};
+void EhlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     EHL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -163,11 +163,11 @@ void EHL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo EHL::hwInfo = EHL_HW_CONFIG::hwInfo;
+const HardwareInfo EHL::hwInfo = EhlHwConfig::hwInfo;
 const uint64_t EHL::defaultHardwareInfoConfig = 0x100040008;
 
 void setupEHLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    EHL_HW_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+    EhlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 void (*EHL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupEHLHardwareInfoImpl;
 } // namespace NEO

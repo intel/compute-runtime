@@ -51,7 +51,7 @@ struct PVC : public XE_HPC_COREFamily {
     static constexpr uint32_t pvcSteppingBits = 0b111;
 };
 
-class PVC_CONFIG : public PVC {
+class PvcHwConfig : public PVC {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopy =
@@ -39,7 +39,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyTracingWr
     free(src);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryFillTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryFillTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryFill =
         [](ze_command_list_handle_t hCommandList,
@@ -67,7 +67,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryFillTracingWr
     free(dst);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyRegionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyRegionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyRegion =
         [](ze_command_list_handle_t hCommandList,
@@ -114,7 +114,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyRegionTra
     free(src);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopy =
         [](ze_command_list_handle_t hCommandList,
@@ -140,7 +140,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyTracingWra
     free(hSrcImage);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyRegionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyRegionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyRegion =
         [](ze_command_list_handle_t hCommandList,
@@ -168,7 +168,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyRegionTrac
     free(hSrcImage);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyToMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyToMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyToMemory =
         [](ze_command_list_handle_t hCommandList,
@@ -195,7 +195,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyToMemoryTr
     free(dstptr);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyFromMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendImageCopyFromMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyFromMemory =
         [](ze_command_list_handle_t hCommandList,
@@ -222,7 +222,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendImageCopyFromMemory
     free(srcptr);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemAdviseTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemAdviseTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemAdvise =
         [](ze_command_list_handle_t hCommandList,
@@ -247,7 +247,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemAdviseTracingWra
     free(ptr);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyFromContextTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryCopyFromContextTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext =
         [](ze_command_list_handle_t hCommandList,

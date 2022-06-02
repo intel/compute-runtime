@@ -25,7 +25,7 @@ struct LKF : public ICLFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
-class LKF_1x8x8 : public LKF {
+class LkfHw1x8x8 : public LKF {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

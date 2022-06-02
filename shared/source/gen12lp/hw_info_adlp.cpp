@@ -138,16 +138,16 @@ void ADLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     }
 }
 
-const HardwareInfo ADLP_CONFIG::hwInfo = {
+const HardwareInfo AdlpHwConfig::hwInfo = {
     &ADLP::platform,
     &ADLP::featureTable,
     &ADLP::workaroundTable,
-    &ADLP_CONFIG::gtSystemInfo,
+    &AdlpHwConfig::gtSystemInfo,
     ADLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO ADLP_CONFIG::gtSystemInfo = {0};
-void ADLP_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO AdlpHwConfig::gtSystemInfo = {0};
+void AdlpHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsDynamicallyPopulated = false;

@@ -45,7 +45,7 @@ LKFTEST_F(HwInfoConfigTestLinuxLkf, negative) {
 
 template <typename T>
 class LkfHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<LKF_1x8x8> lkfTestTypes;
+typedef ::testing::Types<LkfHw1x8x8> lkfTestTypes;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;

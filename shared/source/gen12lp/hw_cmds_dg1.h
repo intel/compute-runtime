@@ -24,7 +24,7 @@ struct DG1 : public TGLLPFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
-class DG1_CONFIG : public DG1 {
+class Dg1HwConfig : public DG1 {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

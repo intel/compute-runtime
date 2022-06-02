@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendBarrier =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hSignalEvent,
@@ -28,7 +28,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapp
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingCommandListAppendMemoryRangesBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryRangesBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryRangesBarrier =
         [](ze_command_list_handle_t hCommandList, uint32_t numRanges, const size_t *pRangeSizes, const void **pRanges,

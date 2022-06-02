@@ -53,7 +53,7 @@ class ZeAPITracingCoreTestsFixture {
     }
 };
 
-class zeAPITracingCoreTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
+class ZeApiTracingCoreTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
 
   protected:
     void SetUp() override {
@@ -65,7 +65,7 @@ class zeAPITracingCoreTests : public ZeAPITracingCoreTestsFixture, public ::test
     }
 };
 
-class zeAPITracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
+class ZeApiTracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
 
   protected:
     zet_core_callbacks_t prologCbs = {};
@@ -109,7 +109,7 @@ class zeAPITracingRuntimeTests : public ZeAPITracingCoreTestsFixture, public ::t
     }
 };
 
-class zeAPITracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
+class ZeApiTracingRuntimeMultipleArgumentsTests : public ZeAPITracingCoreTestsFixture, public ::testing::Test {
 
   protected:
     zet_core_callbacks_t prologCbs0 = {};

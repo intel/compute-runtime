@@ -26,7 +26,7 @@ struct EHL : public ICLFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class EHL_HW_CONFIG : public EHL {
+class EhlHwConfig : public EHL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

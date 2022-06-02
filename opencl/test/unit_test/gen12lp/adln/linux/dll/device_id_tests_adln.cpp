@@ -15,7 +15,7 @@ using namespace NEO;
 
 TEST(AdlnDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {0x46D0, &ADLN_CONFIG::hwInfo, &ADLN_CONFIG::setupHardwareInfo},
+        {0x46D0, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {

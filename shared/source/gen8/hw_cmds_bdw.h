@@ -27,7 +27,7 @@ struct BDW : public BDWFamily {
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
-class BDW_1x2x6 : public BDW {
+class BdwHw1x2x6 : public BDW {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -35,7 +35,7 @@ class BDW_1x2x6 : public BDW {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-class BDW_1x3x6 : public BDW {
+class BdwHw1x3x6 : public BDW {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -43,7 +43,7 @@ class BDW_1x3x6 : public BDW {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-class BDW_1x3x8 : public BDW {
+class BdwHw1x3x8 : public BDW {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -51,7 +51,7 @@ class BDW_1x3x8 : public BDW {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-class BDW_2x3x8 : public BDW {
+class BdwHw2x3x8 : public BDW {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

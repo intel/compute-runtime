@@ -137,16 +137,16 @@ void ADLN::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     }
 }
 
-const HardwareInfo ADLN_CONFIG::hwInfo = {
+const HardwareInfo AdlnHwConfig::hwInfo = {
     &ADLN::platform,
     &ADLN::featureTable,
     &ADLN::workaroundTable,
-    &ADLN_CONFIG::gtSystemInfo,
+    &AdlnHwConfig::gtSystemInfo,
     ADLN::capabilityTable,
 };
 
-GT_SYSTEM_INFO ADLN_CONFIG::gtSystemInfo = {0};
-void ADLN_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO AdlnHwConfig::gtSystemInfo = {0};
+void AdlnHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     ADLN::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;

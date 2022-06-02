@@ -142,16 +142,16 @@ void TGLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     }
 }
 
-const HardwareInfo TGLLP_1x6x16::hwInfo = {
+const HardwareInfo TgllpHw1x6x16::hwInfo = {
     &TGLLP::platform,
     &TGLLP::featureTable,
     &TGLLP::workaroundTable,
-    &TGLLP_1x6x16::gtSystemInfo,
+    &TgllpHw1x6x16::gtSystemInfo,
     TGLLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO TGLLP_1x6x16::gtSystemInfo = {0};
-void TGLLP_1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO TgllpHw1x6x16::gtSystemInfo = {0};
+void TgllpHw1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -170,16 +170,16 @@ void TGLLP_1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo TGLLP_1x2x16::hwInfo = {
+const HardwareInfo TgllpHw1x2x16::hwInfo = {
     &TGLLP::platform,
     &TGLLP::featureTable,
     &TGLLP::workaroundTable,
-    &TGLLP_1x2x16::gtSystemInfo,
+    &TgllpHw1x2x16::gtSystemInfo,
     TGLLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO TGLLP_1x2x16::gtSystemInfo = {0};
-void TGLLP_1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO TgllpHw1x2x16::gtSystemInfo = {0};
+void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     TGLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -198,17 +198,17 @@ void TGLLP_1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo TGLLP::hwInfo = TGLLP_1x6x16::hwInfo;
+const HardwareInfo TGLLP::hwInfo = TgllpHw1x6x16::hwInfo;
 const uint64_t TGLLP::defaultHardwareInfoConfig = 0x100060010;
 
 void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100060010) {
-        TGLLP_1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100020010) {
-        TGLLP_1x2x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        TgllpHw1x2x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        TGLLP_1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        TgllpHw1x6x16::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

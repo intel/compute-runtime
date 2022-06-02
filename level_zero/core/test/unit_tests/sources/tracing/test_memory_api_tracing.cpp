@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Mem.pfnAllocShared =
         [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) { return ZE_RESULT_SUCCESS; };
@@ -31,7 +31,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocSharedTracingWrapperWithOneS
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Mem.pfnAllocDevice =
         [](ze_context_handle_t hContext, const ze_device_mem_alloc_desc_t *deviceDesc, size_t size, size_t alignment, ze_device_handle_t hDevice, void **pptr) { return ZE_RESULT_SUCCESS; };
@@ -51,7 +51,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocDeviceTracingWrapperWithOneS
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnAllocHost =
         [](ze_context_handle_t hContext, const ze_host_mem_alloc_desc_t *hostDesc, size_t size, size_t alignment, void **pptr) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -70,7 +70,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemAllocHostTracingWrapperWithOneSet
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnFree =
         [](ze_context_handle_t hContext, void *ptr) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -85,7 +85,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemFreeTracingWrapperWithOneSetOfPro
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnGetAllocProperties =
         [](ze_context_handle_t hContext, const void *ptr, ze_memory_allocation_properties_t *pMemAllocProperties, ze_device_handle_t *phDevice) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -100,7 +100,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAllocPropertiesTracingWrapperW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnGetAddressRange =
         [](ze_context_handle_t hContext, const void *ptr, void **pBase, size_t *pSize) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -115,7 +115,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetAddressRangeTracingWrapperWith
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnGetIpcHandle =
         [](ze_context_handle_t hContext, const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -130,7 +130,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemGetIpcHandleTracingWrapperWithOne
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnOpenIpcHandle =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_ipc_mem_handle_t handle, ze_ipc_memory_flags_t flags, void **pptr) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -147,7 +147,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemOpenIpcHandleTracingWrapperWithOn
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.Mem.pfnCloseIpcHandle =
         [](ze_context_handle_t hContext, const void *ptr) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -162,7 +162,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingMemCloseIpcHandleTracingWrapperWithO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.PhysicalMem.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_physical_mem_desc_t *desc, ze_physical_mem_handle_t *phPhysicalMemory) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -178,7 +178,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemCreateTracingWrapperWithO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.PhysicalMem.pfnDestroy =
         [](ze_context_handle_t hContext, ze_physical_mem_handle_t hPhysicalMemory) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -194,7 +194,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingPhysicalMemDestroyTracingWrapperWith
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnFree =
         [](ze_context_handle_t hContext, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -210,7 +210,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemFreeTracingWrapperWithOneS
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnGetAccessAttribute =
         [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t *access, size_t *outSize) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -226,7 +226,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemGetAccessAttributeTracingW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnMap =
         [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_physical_mem_handle_t hPhysicalMemory, size_t offset, ze_memory_access_attribute_t access) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -242,7 +242,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemMapTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnQueryPageSize =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, size_t size, size_t *pagesize) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -258,7 +258,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemQueryPageSizeTracingWrappe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnReserve =
         [](ze_context_handle_t hContext, const void *pStart, size_t size, void **pptr) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -274,7 +274,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemReserveTracingWrapperWithO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnSetAccessAttribute =
         [](ze_context_handle_t hContext, const void *ptr, size_t size, ze_memory_access_attribute_t access) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;
@@ -290,7 +290,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemSetAccessAttributeTracingW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingVirtualMemUnmapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingVirtualMemUnmapTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     driver_ddiTable.core_ddiTable.VirtualMem.pfnUnmap =
         [](ze_context_handle_t hContext, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
     ze_result_t result;

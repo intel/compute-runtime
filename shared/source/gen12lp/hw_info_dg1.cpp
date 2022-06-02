@@ -151,16 +151,16 @@ void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo DG1_CONFIG::hwInfo = {
+const HardwareInfo Dg1HwConfig::hwInfo = {
     &DG1::platform,
     &DG1::featureTable,
     &DG1::workaroundTable,
-    &DG1_CONFIG::gtSystemInfo,
+    &Dg1HwConfig::gtSystemInfo,
     DG1::capabilityTable,
 };
 
-GT_SYSTEM_INFO DG1_CONFIG::gtSystemInfo = {0};
-void DG1_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
+void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -175,15 +175,15 @@ void DG1_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo DG1::hwInfo = DG1_CONFIG::hwInfo;
+const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
 const uint64_t DG1::defaultHardwareInfoConfig = 0x100060010;
 
 void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100060010) {
-        DG1_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        DG1_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

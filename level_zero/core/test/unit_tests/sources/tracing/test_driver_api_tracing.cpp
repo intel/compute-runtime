@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Driver.pfnGet =
         [](uint32_t *pCount, ze_driver_handle_t *phDrivers) { return ZE_RESULT_SUCCESS; };
@@ -25,7 +25,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetTracingWrapperWithOneSetO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Driver.pfnGetProperties =
         [](ze_driver_handle_t hDriver, ze_driver_properties_t *properties) { return ZE_RESULT_SUCCESS; };
@@ -39,7 +39,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetPropertiesTracingWrapperW
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetApiVersionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetApiVersionTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Driver.pfnGetApiVersion =
         [](ze_driver_handle_t hDrivers, ze_api_version_t *version) { return ZE_RESULT_SUCCESS; };
@@ -54,7 +54,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetApiVersionTracingWrapperW
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetIpcPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetIpcPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties =
         [](ze_driver_handle_t hDrivers,
@@ -70,7 +70,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetIpcPropertiesTracingWrapp
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingzeDriverGetExtensionPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingzeDriverGetExtensionPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Driver.pfnGetExtensionProperties =
         [](ze_driver_handle_t hDrivers,

@@ -149,15 +149,15 @@ void KBL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo KBL_1x2x6::hwInfo = {
+const HardwareInfo KblHw1x2x6::hwInfo = {
     &KBL::platform,
     &KBL::featureTable,
     &KBL::workaroundTable,
-    &KBL_1x2x6::gtSystemInfo,
+    &KblHw1x2x6::gtSystemInfo,
     KBL::capabilityTable,
 };
-GT_SYSTEM_INFO KBL_1x2x6::gtSystemInfo = {0};
-void KBL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO KblHw1x2x6::gtSystemInfo = {0};
+void KblHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -167,16 +167,16 @@ void KBL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo KBL_1x3x6::hwInfo = {
+const HardwareInfo KblHw1x3x6::hwInfo = {
     &KBL::platform,
     &KBL::featureTable,
     &KBL::workaroundTable,
-    &KBL_1x3x6::gtSystemInfo,
+    &KblHw1x3x6::gtSystemInfo,
     KBL::capabilityTable,
 };
 
-GT_SYSTEM_INFO KBL_1x3x6::gtSystemInfo = {0};
-void KBL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO KblHw1x3x6::gtSystemInfo = {0};
+void KblHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -186,15 +186,15 @@ void KBL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo KBL_1x3x8::hwInfo = {
+const HardwareInfo KblHw1x3x8::hwInfo = {
     &KBL::platform,
     &KBL::featureTable,
     &KBL::workaroundTable,
-    &KBL_1x3x8::gtSystemInfo,
+    &KblHw1x3x8::gtSystemInfo,
     KBL::capabilityTable,
 };
-GT_SYSTEM_INFO KBL_1x3x8::gtSystemInfo = {0};
-void KBL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO KblHw1x3x8::gtSystemInfo = {0};
+void KblHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -204,15 +204,15 @@ void KBL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo KBL_2x3x8::hwInfo = {
+const HardwareInfo KblHw2x3x8::hwInfo = {
     &KBL::platform,
     &KBL::featureTable,
     &KBL::workaroundTable,
-    &KBL_2x3x8::gtSystemInfo,
+    &KblHw2x3x8::gtSystemInfo,
     KBL::capabilityTable,
 };
-GT_SYSTEM_INFO KBL_2x3x8::gtSystemInfo = {0};
-void KBL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO KblHw2x3x8::gtSystemInfo = {0};
+void KblHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -222,15 +222,15 @@ void KBL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 16;
 };
 
-const HardwareInfo KBL_3x3x8::hwInfo = {
+const HardwareInfo KblHw3x3x8::hwInfo = {
     &KBL::platform,
     &KBL::featureTable,
     &KBL::workaroundTable,
-    &KBL_3x3x8::gtSystemInfo,
+    &KblHw3x3x8::gtSystemInfo,
     KBL::capabilityTable,
 };
-GT_SYSTEM_INFO KBL_3x3x8::gtSystemInfo = {0};
-void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO KblHw3x3x8::gtSystemInfo = {0};
+void KblHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     KBL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -240,23 +240,23 @@ void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 23;
 };
 
-const HardwareInfo KBL::hwInfo = KBL_1x3x6::hwInfo;
+const HardwareInfo KBL::hwInfo = KblHw1x3x6::hwInfo;
 const uint64_t KBL::defaultHardwareInfoConfig = 0x100030006;
 
 void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {
-        KBL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x200030008) {
-        KBL_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x300030008) {
-        KBL_3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100020006) {
-        KBL_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100030006) {
-        KBL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        KBL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        KblHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

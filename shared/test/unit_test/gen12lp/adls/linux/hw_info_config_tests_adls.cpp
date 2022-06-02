@@ -52,7 +52,7 @@ TEST(AdlsHwInfoTests, WhenSettingUpHwInfoThenConfigIsCorrect) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &hwInfo, &ADLS_HW_CONFIG::setupHardwareInfo};
+    DeviceDescriptor device = {0, &hwInfo, &AdlsHwConfig::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

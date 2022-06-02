@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-class clSetEventCallbackTests : public ApiFixture<>,
+class ClSetEventCallbackTests : public ApiFixture<>,
                                 public ::testing::Test {
 
     void SetUp() override {
@@ -39,7 +39,7 @@ class clSetEventCallbackTests : public ApiFixture<>,
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
 };
 
-TEST_F(clSetEventCallbackTests, GivenValidEventWhenSettingEventCallbackThenSuccessIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenValidEventWhenSettingEventCallbackThenSuccessIsReturned) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
 
@@ -47,14 +47,14 @@ TEST_F(clSetEventCallbackTests, GivenValidEventWhenSettingEventCallbackThenSucce
     event->decRefInternal();
 }
 
-TEST_F(clSetEventCallbackTests, GivenInvalidEventWhenSettingEventCallbackThenInvalidEventErrorIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenInvalidEventWhenSettingEventCallbackThenInvalidEventErrorIsReturned) {
     std::unique_ptr<char> event(new char[sizeof(Event)]);
     memset(event.get(), 0, sizeof(Event));
     retVal = clSetEventCallback(reinterpret_cast<cl_event>(event.get()), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clSetEventCallbackTests, GivenValidCallbackTypeWhenSettingEventCallbackThenSuccessIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenValidCallbackTypeWhenSettingEventCallbackThenSuccessIsReturned) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -70,19 +70,19 @@ TEST_F(clSetEventCallbackTests, GivenValidCallbackTypeWhenSettingEventCallbackTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clSetEventCallbackTests, GivenInvalidCallbackTypeWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenInvalidCallbackTypeWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE + CL_RUNNING + CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetEventCallbackTests, GivenNullCallbackWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenNullCallbackWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetEventCallbackTests, GivenMultipleCallbacksWhenSettingEventCallbackThenSuccessIsReturned) {
+TEST_F(ClSetEventCallbackTests, GivenMultipleCallbacksWhenSettingEventCallbackThenSuccessIsReturned) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -94,7 +94,7 @@ TEST_F(clSetEventCallbackTests, GivenMultipleCallbacksWhenSettingEventCallbackTh
     event->decRefInternal();
 }
 
-TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
+TEST_F(ClSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -102,7 +102,7 @@ TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteThenC
     EXPECT_EQ(cbInvoked, 1);
 }
 
-TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteThenCallbackWasInvokedThreeTimes) {
+TEST_F(ClSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteThenCallbackWasInvokedThreeTimes) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -115,7 +115,7 @@ TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteThen
     EXPECT_EQ(cbInvoked, 3);
 }
 
-TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedOnce) {
+TEST_F(ClSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedOnce) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     event->setStatus(CL_COMPLETE);
@@ -124,7 +124,7 @@ TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteMulti
     EXPECT_EQ(cbInvoked, 1);
 }
 
-TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedThreeTimes) {
+TEST_F(ClSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedThreeTimes) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -139,7 +139,7 @@ TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteMult
     EXPECT_EQ(cbInvoked, 3);
 }
 
-TEST_F(clSetEventCallbackTests, GivenUserDataWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
+TEST_F(ClSetEventCallbackTests, GivenUserDataWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
     std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     int data = 1;
     retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, &data);

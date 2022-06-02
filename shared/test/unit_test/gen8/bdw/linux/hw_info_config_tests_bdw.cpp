@@ -86,7 +86,7 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsC
 template <typename T>
 class BdwHwInfoTests : public ::testing::Test {
 };
-typedef ::testing::Types<BDW_1x2x6, BDW_1x3x6, BDW_1x3x8, BDW_2x3x8> bdwTestTypes;
+typedef ::testing::Types<BdwHw1x2x6, BdwHw1x3x6, BdwHw1x3x8, BdwHw2x3x8> bdwTestTypes;
 TYPED_TEST_CASE(BdwHwInfoTests, bdwTestTypes);
 TYPED_TEST(BdwHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

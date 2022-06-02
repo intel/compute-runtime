@@ -10,12 +10,12 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenRklSupportedDeviceIdThenHardwareInfoIsCorrect) {
-    std::array<DeviceDescriptor, 6> expectedDescriptors = {{{0x4C80, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo},
-                                                            {0x4C8A, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo},
-                                                            {0x4C8B, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo},
-                                                            {0x4C8C, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo},
-                                                            {0x4C90, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo},
-                                                            {0x4C9A, &RKL_HW_CONFIG::hwInfo, &RKL_HW_CONFIG::setupHardwareInfo}}};
+    std::array<DeviceDescriptor, 6> expectedDescriptors = {{{0x4C80, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
+                                                            {0x4C8A, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
+                                                            {0x4C8B, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
+                                                            {0x4C8C, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
+                                                            {0x4C90, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo},
+                                                            {0x4C9A, &RklHwConfig::hwInfo, &RklHwConfig::setupHardwareInfo}}};
 
     testImpl(expectedDescriptors);
 }

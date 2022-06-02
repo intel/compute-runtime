@@ -138,16 +138,16 @@ void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAnd
     }
 }
 
-const HardwareInfo ADLS_HW_CONFIG::hwInfo = {
+const HardwareInfo AdlsHwConfig::hwInfo = {
     &ADLS::platform,
     &ADLS::featureTable,
     &ADLS::workaroundTable,
-    &ADLS_HW_CONFIG::gtSystemInfo,
+    &AdlsHwConfig::gtSystemInfo,
     ADLS::capabilityTable,
 };
 
-GT_SYSTEM_INFO ADLS_HW_CONFIG::gtSystemInfo = {0};
-void ADLS_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO AdlsHwConfig::gtSystemInfo = {0};
+void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -167,11 +167,11 @@ void ADLS_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTa
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo ADLS::hwInfo = ADLS_HW_CONFIG::hwInfo;
+const HardwareInfo ADLS::hwInfo = AdlsHwConfig::hwInfo;
 const uint64_t ADLS::defaultHardwareInfoConfig = 0x100020010;
 
 void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    ADLS_HW_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
 void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupADLSHardwareInfoImpl;

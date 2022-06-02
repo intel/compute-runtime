@@ -26,7 +26,7 @@ struct ADLP : public TGLLPFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class ADLP_CONFIG : public ADLP {
+class AdlpHwConfig : public ADLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

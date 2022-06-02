@@ -906,7 +906,7 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithProperPa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class clUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
+class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
                                         public ::testing::Test {
   public:
     void SetUp() override {
@@ -920,7 +920,7 @@ class clUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
     cl_event event = nullptr;
 };
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMigrateMemINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
@@ -931,7 +931,7 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMigrateMemINTELIsCalledWith
     EXPECT_EQ(expectedCmd, actualCmd);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
 
     auto retVal = clEnqueueMemAdviseINTEL(this->pCmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, &event);
@@ -942,7 +942,7 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemAdviseINTELIsCalledWithE
     EXPECT_EQ(expectedCmd, actualCmd);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -963,7 +963,7 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemcpyINTELIsCalledWithEven
     clMemFreeINTEL(this->context, unifiedMemorySrc);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
@@ -982,7 +982,7 @@ TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemsetINTELIsCalledWithEven
     clMemFreeINTEL(this->context, unifiedMemorySharedAllocation);
 }
 
-TEST_F(clUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEventThenProperCmdTypeIsSet) {
+TEST_F(ClUnifiedSharedMemoryEventTests, whenClEnqueueMemFillINTELIsCalledWithEventThenProperCmdTypeIsSet) {
     const ClDeviceInfo &devInfo = this->context->getDevice(0u)->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();

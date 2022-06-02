@@ -141,16 +141,16 @@ void RKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo RKL_HW_CONFIG::hwInfo = {
+const HardwareInfo RklHwConfig::hwInfo = {
     &RKL::platform,
     &RKL::featureTable,
     &RKL::workaroundTable,
-    &RKL_HW_CONFIG::gtSystemInfo,
+    &RklHwConfig::gtSystemInfo,
     RKL::capabilityTable,
 };
 
-GT_SYSTEM_INFO RKL_HW_CONFIG::gtSystemInfo = {0};
-void RKL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO RklHwConfig::gtSystemInfo = {0};
+void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     RKL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -164,11 +164,11 @@ void RKL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
     gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
 };
 
-const HardwareInfo RKL::hwInfo = RKL_HW_CONFIG::hwInfo;
+const HardwareInfo RKL::hwInfo = RklHwConfig::hwInfo;
 const uint64_t RKL::defaultHardwareInfoConfig = 0x100020010;
 
 void setupRKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    RKL_HW_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+    RklHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
 void (*RKL::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupRKLHardwareInfoImpl;

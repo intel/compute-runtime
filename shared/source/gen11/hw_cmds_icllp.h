@@ -26,7 +26,7 @@ struct ICLLP : public ICLFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class ICLLP_1x8x8 : public ICLLP {
+class IcllpHw1x8x8 : public ICLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -35,7 +35,7 @@ class ICLLP_1x8x8 : public ICLLP {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class ICLLP_1x4x8 : public ICLLP {
+class IcllpHw1x4x8 : public ICLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -43,7 +43,7 @@ class ICLLP_1x4x8 : public ICLLP {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-class ICLLP_1x6x8 : public ICLLP {
+class IcllpHw1x6x8 : public ICLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

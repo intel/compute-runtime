@@ -140,15 +140,15 @@ void CFL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo CFL_1x2x6::hwInfo = {
+const HardwareInfo CflHw1x2x6::hwInfo = {
     &CFL::platform,
     &CFL::featureTable,
     &CFL::workaroundTable,
-    &CFL_1x2x6::gtSystemInfo,
+    &CflHw1x2x6::gtSystemInfo,
     CFL::capabilityTable,
 };
-GT_SYSTEM_INFO CFL_1x2x6::gtSystemInfo = {0};
-void CFL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO CflHw1x2x6::gtSystemInfo = {0};
+void CflHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -158,16 +158,16 @@ void CFL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo CFL_1x3x6::hwInfo = {
+const HardwareInfo CflHw1x3x6::hwInfo = {
     &CFL::platform,
     &CFL::featureTable,
     &CFL::workaroundTable,
-    &CFL_1x3x6::gtSystemInfo,
+    &CflHw1x3x6::gtSystemInfo,
     CFL::capabilityTable,
 };
 
-GT_SYSTEM_INFO CFL_1x3x6::gtSystemInfo = {0};
-void CFL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO CflHw1x3x6::gtSystemInfo = {0};
+void CflHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -177,16 +177,16 @@ void CFL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo CFL_1x3x8::hwInfo = {
+const HardwareInfo CflHw1x3x8::hwInfo = {
     &CFL::platform,
     &CFL::featureTable,
     &CFL::workaroundTable,
-    &CFL_1x3x8::gtSystemInfo,
+    &CflHw1x3x8::gtSystemInfo,
     CFL::capabilityTable,
 };
 
-GT_SYSTEM_INFO CFL_1x3x8::gtSystemInfo = {0};
-void CFL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO CflHw1x3x8::gtSystemInfo = {0};
+void CflHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -196,15 +196,15 @@ void CFL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo CFL_2x3x8::hwInfo = {
+const HardwareInfo CflHw2x3x8::hwInfo = {
     &CFL::platform,
     &CFL::featureTable,
     &CFL::workaroundTable,
-    &CFL_2x3x8::gtSystemInfo,
+    &CflHw2x3x8::gtSystemInfo,
     CFL::capabilityTable,
 };
-GT_SYSTEM_INFO CFL_2x3x8::gtSystemInfo = {0};
-void CFL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO CflHw2x3x8::gtSystemInfo = {0};
+void CflHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -214,15 +214,15 @@ void CFL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 16;
 };
 
-const HardwareInfo CFL_3x3x8::hwInfo = {
+const HardwareInfo CflHw3x3x8::hwInfo = {
     &CFL::platform,
     &CFL::featureTable,
     &CFL::workaroundTable,
-    &CFL_3x3x8::gtSystemInfo,
+    &CflHw3x3x8::gtSystemInfo,
     CFL::capabilityTable,
 };
-GT_SYSTEM_INFO CFL_3x3x8::gtSystemInfo = {0};
-void CFL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO CflHw3x3x8::gtSystemInfo = {0};
+void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -232,23 +232,23 @@ void CFL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 24;
 };
 
-const HardwareInfo CFL::hwInfo = CFL_1x3x6::hwInfo;
+const HardwareInfo CFL::hwInfo = CflHw1x3x6::hwInfo;
 const uint64_t CFL::defaultHardwareInfoConfig = 0x100030006;
 
 void setupCFLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {
-        CFL_1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x200030008) {
-        CFL_2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x300030008) {
-        CFL_3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100020006) {
-        CFL_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100030006) {
-        CFL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        CFL_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

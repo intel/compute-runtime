@@ -27,7 +27,7 @@ struct KBL : public SKLFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class KBL_1x2x6 : public KBL {
+class KblHw1x2x6 : public KBL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -36,7 +36,7 @@ class KBL_1x2x6 : public KBL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class KBL_1x3x6 : public KBL {
+class KblHw1x3x6 : public KBL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -45,7 +45,7 @@ class KBL_1x3x6 : public KBL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class KBL_1x3x8 : public KBL {
+class KblHw1x3x8 : public KBL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -54,7 +54,7 @@ class KBL_1x3x8 : public KBL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class KBL_2x3x8 : public KBL {
+class KblHw2x3x8 : public KBL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -63,7 +63,7 @@ class KBL_2x3x8 : public KBL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class KBL_3x3x8 : public KBL {
+class KblHw3x3x8 : public KBL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

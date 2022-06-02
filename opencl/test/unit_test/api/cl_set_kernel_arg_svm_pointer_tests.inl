@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture : public ApiFixture<> {
+class KernelArgSvmApiFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
@@ -55,7 +55,7 @@ class KernelArgSvmFixture : public ApiFixture<> {
     char pCrossThreadData[64]{};
 };
 
-typedef Test<KernelArgSvmFixture> clSetKernelArgSVMPointerTests;
+typedef Test<KernelArgSvmApiFixture> clSetKernelArgSVMPointerTests;
 
 namespace ULT {
 

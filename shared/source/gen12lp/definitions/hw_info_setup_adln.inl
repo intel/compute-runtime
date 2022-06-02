@@ -6,10 +6,10 @@
  */
 
 const uint64_t ADLN::defaultHardwareInfoConfig = 0x0;
-const HardwareInfo ADLN::hwInfo = ADLN_CONFIG::hwInfo;
+const HardwareInfo ADLN::hwInfo = AdlnHwConfig::hwInfo;
 
 void setupADLNHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    ADLN_CONFIG::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+    AdlnHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
 }
 
 void (*ADLN::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupADLNHardwareInfoImpl;

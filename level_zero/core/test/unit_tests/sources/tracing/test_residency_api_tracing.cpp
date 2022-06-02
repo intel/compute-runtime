@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnCreate = [](ze_driver_handle_t hContext, const ze_context_desc_t *desc, ze_context_handle_t *phContext) { return ZE_RESULT_SUCCESS; };
 
@@ -24,7 +24,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextCreateTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnDestroy = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
 
@@ -38,7 +38,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextDestroyTracingWrapperWithOneS
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnGetStatus = [](ze_context_handle_t hContext) { return ZE_RESULT_SUCCESS; };
 
@@ -52,7 +52,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextGetStatusTracingWrapperWithOn
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier = [](ze_context_handle_t hContext, ze_device_handle_t hDevice) { return ZE_RESULT_SUCCESS; };
 
@@ -66,7 +66,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextSystemBarrierTracingWrapperWi
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnMakeMemoryResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
 
@@ -80,7 +80,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeMemoryResidentTracingWrap
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnEvictMemory = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
 
@@ -94,7 +94,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextEvictMemoryTracingWrapperWith
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnMakeImageResident = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
 
@@ -108,7 +108,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingContextMakeImageResidentTracingWrapp
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingContextEvictImageTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingContextEvictImageTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Context.pfnEvictImage = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
 
@@ -135,7 +135,7 @@ struct {
     void *instanceData3;
 } MakeMemoryResident_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeMemoryResidentTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
@@ -302,7 +302,7 @@ struct {
     void *instanceData3;
 } EvictMemory_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingContextEvictMemoryTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -463,7 +463,7 @@ struct {
     void *instanceData3;
 } MakeImageResident_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeImageResidentTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
@@ -618,7 +618,7 @@ struct {
     void *instanceData3;
 } EvictImage_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingContextMakeImageResidentTracingWrapperWithMultiplefPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 

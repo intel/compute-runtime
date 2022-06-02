@@ -21,7 +21,7 @@ typedef api_tests clSVMAllocTests;
 
 namespace ULT {
 
-class clSVMAllocTemplateTests : public ApiFixture<>,
+class ClSvmAllocTemplateTests : public ApiFixture<>,
                                 public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     void SetUp() override {
@@ -34,7 +34,7 @@ class clSVMAllocTemplateTests : public ApiFixture<>,
     }
 };
 
-struct clSVMAllocValidFlagsTests : public clSVMAllocTemplateTests {
+struct clSVMAllocValidFlagsTests : public ClSvmAllocTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
@@ -112,7 +112,7 @@ INSTANTIATE_TEST_CASE_P(
     clSVMAllocValidFlagsTests,
     testing::ValuesIn(SVMAllocValidFlags));
 
-using clSVMAllocFtrFlagsTests = clSVMAllocTemplateTests;
+using clSVMAllocFtrFlagsTests = ClSvmAllocTemplateTests;
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlagsFtrFlags,
@@ -151,7 +151,7 @@ TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAlloc
     clSVMFree(pContext, svmPtr);
 };
 
-struct clSVMAllocInvalidFlagsTests : public clSVMAllocTemplateTests {
+struct clSVMAllocInvalidFlagsTests : public ClSvmAllocTemplateTests {
 };
 
 TEST_P(clSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsNotAllocated) {

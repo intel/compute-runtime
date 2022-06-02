@@ -152,15 +152,15 @@ void BXT::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo BXT_1x2x6::hwInfo = {
+const HardwareInfo BxtHw1x2x6::hwInfo = {
     &BXT::platform,
     &BXT::featureTable,
     &BXT::workaroundTable,
-    &BXT_1x2x6::gtSystemInfo,
+    &BxtHw1x2x6::gtSystemInfo,
     BXT::capabilityTable,
 };
-GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
-void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO BxtHw1x2x6::gtSystemInfo = {0};
+void BxtHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -170,15 +170,15 @@ void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo BXT_1x3x6::hwInfo = {
+const HardwareInfo BxtHw1x3x6::hwInfo = {
     &BXT::platform,
     &BXT::featureTable,
     &BXT::workaroundTable,
-    &BXT_1x3x6::gtSystemInfo,
+    &BxtHw1x3x6::gtSystemInfo,
     BXT::capabilityTable,
 };
-GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
-void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO BxtHw1x3x6::gtSystemInfo = {0};
+void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -188,17 +188,17 @@ void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo BXT::hwInfo = BXT_1x3x6::hwInfo;
+const HardwareInfo BXT::hwInfo = BxtHw1x3x6::hwInfo;
 const uint64_t BXT::defaultHardwareInfoConfig = 0x100030006;
 
 void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100020006) {
-        BXT_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BxtHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100030006) {
-        BXT_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        BXT_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BxtHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

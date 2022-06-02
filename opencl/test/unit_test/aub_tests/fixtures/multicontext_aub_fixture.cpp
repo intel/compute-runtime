@@ -175,7 +175,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 #ifdef SUPPORT_XE_HP_SDV
         if (localHwInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
             setupCalled = true;
-            XE_HP_SDV_CONFIG::setupHardwareInfo(&localHwInfo, true);
+            XehpSdvHwConfig::setupHardwareInfo(&localHwInfo, true);
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;
@@ -195,7 +195,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
             ASSERT_TRUE(numberOfEnabledTiles == 1);
             setupCalled = true;
 
-            DG2_CONFIG::setupHardwareInfo(&localHwInfo, true);
+            Dg2HwConfig::setupHardwareInfo(&localHwInfo, true);
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;
@@ -214,7 +214,7 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
         if (localHwInfo.platform.eProductFamily == IGFX_PVC) {
             setupCalled = true;
 
-            PVC_CONFIG::setupHardwareInfo(&localHwInfo, true);
+            PvcHwConfig::setupHardwareInfo(&localHwInfo, true);
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;

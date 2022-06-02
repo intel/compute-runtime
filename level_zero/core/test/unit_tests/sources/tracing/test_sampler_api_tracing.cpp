@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) { return ZE_RESULT_SUCCESS; };
 
@@ -24,7 +24,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSe
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) { return ZE_RESULT_SUCCESS; };
 
@@ -52,7 +52,7 @@ struct {
     void *instanceData3;
 } sampler_create_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingSamplerCreateTracingWrapperWithTwoSetsOfPrologEpilogsCheckArgumentsThenReturnSuccess) {
     ze_result_t result;
 
@@ -299,7 +299,7 @@ struct {
     void *instanceData3;
 } sampler_destroy_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests,
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingSamplerDestroyTracingWrapperWithTwoSetsOfPrologEpilogsCheckArgumentsThenReturnSuccess) {
     ze_result_t result;
 

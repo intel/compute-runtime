@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,9 +82,9 @@ class AtomicBackoff {
     uint32_t count = 1;
 };
 
-class clBuildProgramTracer {
+class ClBuildProgramTracer {
   public:
-    clBuildProgramTracer() {}
+    ClBuildProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numDevices,
@@ -142,7 +142,7 @@ class clBuildProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clBuildProgramTracer() {
+    ~ClBuildProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -153,9 +153,9 @@ class clBuildProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCloneKernelTracer {
+class ClCloneKernelTracer {
   public:
-    clCloneKernelTracer() {}
+    ClCloneKernelTracer() {}
 
     void enter(cl_kernel *sourceKernel,
                cl_int **errcodeRet) {
@@ -205,7 +205,7 @@ class clCloneKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCloneKernelTracer() {
+    ~ClCloneKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -216,9 +216,9 @@ class clCloneKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCompileProgramTracer {
+class ClCompileProgramTracer {
   public:
-    clCompileProgramTracer() {}
+    ClCompileProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numDevices,
@@ -282,7 +282,7 @@ class clCompileProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCompileProgramTracer() {
+    ~ClCompileProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -293,9 +293,9 @@ class clCompileProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateBufferTracer {
+class ClCreateBufferTracer {
   public:
-    clCreateBufferTracer() {}
+    ClCreateBufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -351,7 +351,7 @@ class clCreateBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateBufferTracer() {
+    ~ClCreateBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -362,9 +362,9 @@ class clCreateBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateCommandQueueTracer {
+class ClCreateCommandQueueTracer {
   public:
-    clCreateCommandQueueTracer() {}
+    ClCreateCommandQueueTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -418,7 +418,7 @@ class clCreateCommandQueueTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateCommandQueueTracer() {
+    ~ClCreateCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -429,9 +429,9 @@ class clCreateCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateCommandQueueWithPropertiesTracer {
+class ClCreateCommandQueueWithPropertiesTracer {
   public:
-    clCreateCommandQueueWithPropertiesTracer() {}
+    ClCreateCommandQueueWithPropertiesTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -485,7 +485,7 @@ class clCreateCommandQueueWithPropertiesTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateCommandQueueWithPropertiesTracer() {
+    ~ClCreateCommandQueueWithPropertiesTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -496,9 +496,9 @@ class clCreateCommandQueueWithPropertiesTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateContextTracer {
+class ClCreateContextTracer {
   public:
-    clCreateContextTracer() {}
+    ClCreateContextTracer() {}
 
     void enter(const cl_context_properties **properties,
                cl_uint *numDevices,
@@ -556,7 +556,7 @@ class clCreateContextTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateContextTracer() {
+    ~ClCreateContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -567,9 +567,9 @@ class clCreateContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateContextFromTypeTracer {
+class ClCreateContextFromTypeTracer {
   public:
-    clCreateContextFromTypeTracer() {}
+    ClCreateContextFromTypeTracer() {}
 
     void enter(const cl_context_properties **properties,
                cl_device_type *deviceType,
@@ -625,7 +625,7 @@ class clCreateContextFromTypeTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateContextFromTypeTracer() {
+    ~ClCreateContextFromTypeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -636,9 +636,9 @@ class clCreateContextFromTypeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImageTracer {
+class ClCreateImageTracer {
   public:
-    clCreateImageTracer() {}
+    ClCreateImageTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -696,7 +696,7 @@ class clCreateImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImageTracer() {
+    ~ClCreateImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -707,9 +707,9 @@ class clCreateImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImage2DTracer {
+class ClCreateImage2DTracer {
   public:
-    clCreateImage2DTracer() {}
+    ClCreateImage2DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -771,7 +771,7 @@ class clCreateImage2DTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImage2DTracer() {
+    ~ClCreateImage2DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -782,9 +782,9 @@ class clCreateImage2DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateImage3DTracer {
+class ClCreateImage3DTracer {
   public:
-    clCreateImage3DTracer() {}
+    ClCreateImage3DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -850,7 +850,7 @@ class clCreateImage3DTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateImage3DTracer() {
+    ~ClCreateImage3DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -861,9 +861,9 @@ class clCreateImage3DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateKernelTracer {
+class ClCreateKernelTracer {
   public:
-    clCreateKernelTracer() {}
+    ClCreateKernelTracer() {}
 
     void enter(cl_program *program,
                const char **kernelName,
@@ -915,7 +915,7 @@ class clCreateKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateKernelTracer() {
+    ~ClCreateKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -926,9 +926,9 @@ class clCreateKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateKernelsInProgramTracer {
+class ClCreateKernelsInProgramTracer {
   public:
-    clCreateKernelsInProgramTracer() {}
+    ClCreateKernelsInProgramTracer() {}
 
     void enter(cl_program *program,
                cl_uint *numKernels,
@@ -982,7 +982,7 @@ class clCreateKernelsInProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateKernelsInProgramTracer() {
+    ~ClCreateKernelsInProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -993,9 +993,9 @@ class clCreateKernelsInProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreatePipeTracer {
+class ClCreatePipeTracer {
   public:
-    clCreatePipeTracer() {}
+    ClCreatePipeTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -1053,7 +1053,7 @@ class clCreatePipeTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreatePipeTracer() {
+    ~ClCreatePipeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1064,9 +1064,9 @@ class clCreatePipeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithBinaryTracer {
+class ClCreateProgramWithBinaryTracer {
   public:
-    clCreateProgramWithBinaryTracer() {}
+    ClCreateProgramWithBinaryTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -1126,7 +1126,7 @@ class clCreateProgramWithBinaryTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithBinaryTracer() {
+    ~ClCreateProgramWithBinaryTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1137,9 +1137,9 @@ class clCreateProgramWithBinaryTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithBuiltInKernelsTracer {
+class ClCreateProgramWithBuiltInKernelsTracer {
   public:
-    clCreateProgramWithBuiltInKernelsTracer() {}
+    ClCreateProgramWithBuiltInKernelsTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -1195,7 +1195,7 @@ class clCreateProgramWithBuiltInKernelsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithBuiltInKernelsTracer() {
+    ~ClCreateProgramWithBuiltInKernelsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1206,9 +1206,9 @@ class clCreateProgramWithBuiltInKernelsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithILTracer {
+class ClCreateProgramWithIlTracer {
   public:
-    clCreateProgramWithILTracer() {}
+    ClCreateProgramWithIlTracer() {}
 
     void enter(cl_context *context,
                const void **il,
@@ -1262,7 +1262,7 @@ class clCreateProgramWithILTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithILTracer() {
+    ~ClCreateProgramWithIlTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1273,9 +1273,9 @@ class clCreateProgramWithILTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateProgramWithSourceTracer {
+class ClCreateProgramWithSourceTracer {
   public:
-    clCreateProgramWithSourceTracer() {}
+    ClCreateProgramWithSourceTracer() {}
 
     void enter(cl_context *context,
                cl_uint *count,
@@ -1331,7 +1331,7 @@ class clCreateProgramWithSourceTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateProgramWithSourceTracer() {
+    ~ClCreateProgramWithSourceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1342,9 +1342,9 @@ class clCreateProgramWithSourceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSamplerTracer {
+class ClCreateSamplerTracer {
   public:
-    clCreateSamplerTracer() {}
+    ClCreateSamplerTracer() {}
 
     void enter(cl_context *context,
                cl_bool *normalizedCoords,
@@ -1400,7 +1400,7 @@ class clCreateSamplerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSamplerTracer() {
+    ~ClCreateSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1411,9 +1411,9 @@ class clCreateSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSamplerWithPropertiesTracer {
+class ClCreateSamplerWithPropertiesTracer {
   public:
-    clCreateSamplerWithPropertiesTracer() {}
+    ClCreateSamplerWithPropertiesTracer() {}
 
     void enter(cl_context *context,
                const cl_sampler_properties **samplerProperties,
@@ -1465,7 +1465,7 @@ class clCreateSamplerWithPropertiesTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSamplerWithPropertiesTracer() {
+    ~ClCreateSamplerWithPropertiesTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1476,9 +1476,9 @@ class clCreateSamplerWithPropertiesTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateSubBufferTracer {
+class ClCreateSubBufferTracer {
   public:
-    clCreateSubBufferTracer() {}
+    ClCreateSubBufferTracer() {}
 
     void enter(cl_mem *buffer,
                cl_mem_flags *flags,
@@ -1534,7 +1534,7 @@ class clCreateSubBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateSubBufferTracer() {
+    ~ClCreateSubBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1545,9 +1545,9 @@ class clCreateSubBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateUserEventTracer {
+class ClCreateUserEventTracer {
   public:
-    clCreateUserEventTracer() {}
+    ClCreateUserEventTracer() {}
 
     void enter(cl_context *context,
                cl_int **errcodeRet) {
@@ -1597,7 +1597,7 @@ class clCreateUserEventTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateUserEventTracer() {
+    ~ClCreateUserEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1608,9 +1608,9 @@ class clCreateUserEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueBarrierTracer {
+class ClEnqueueBarrierTracer {
   public:
-    clEnqueueBarrierTracer() {}
+    ClEnqueueBarrierTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -1658,7 +1658,7 @@ class clEnqueueBarrierTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueBarrierTracer() {
+    ~ClEnqueueBarrierTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1669,9 +1669,9 @@ class clEnqueueBarrierTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueBarrierWithWaitListTracer {
+class ClEnqueueBarrierWithWaitListTracer {
   public:
-    clEnqueueBarrierWithWaitListTracer() {}
+    ClEnqueueBarrierWithWaitListTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEventsInWaitList,
@@ -1725,7 +1725,7 @@ class clEnqueueBarrierWithWaitListTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueBarrierWithWaitListTracer() {
+    ~ClEnqueueBarrierWithWaitListTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1736,9 +1736,9 @@ class clEnqueueBarrierWithWaitListTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferTracer {
+class ClEnqueueCopyBufferTracer {
   public:
-    clEnqueueCopyBufferTracer() {}
+    ClEnqueueCopyBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1802,7 +1802,7 @@ class clEnqueueCopyBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferTracer() {
+    ~ClEnqueueCopyBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1813,9 +1813,9 @@ class clEnqueueCopyBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferRectTracer {
+class ClEnqueueCopyBufferRectTracer {
   public:
-    clEnqueueCopyBufferRectTracer() {}
+    ClEnqueueCopyBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1887,7 +1887,7 @@ class clEnqueueCopyBufferRectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferRectTracer() {
+    ~ClEnqueueCopyBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1898,9 +1898,9 @@ class clEnqueueCopyBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyBufferToImageTracer {
+class ClEnqueueCopyBufferToImageTracer {
   public:
-    clEnqueueCopyBufferToImageTracer() {}
+    ClEnqueueCopyBufferToImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcBuffer,
@@ -1964,7 +1964,7 @@ class clEnqueueCopyBufferToImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyBufferToImageTracer() {
+    ~ClEnqueueCopyBufferToImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -1975,9 +1975,9 @@ class clEnqueueCopyBufferToImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyImageTracer {
+class ClEnqueueCopyImageTracer {
   public:
-    clEnqueueCopyImageTracer() {}
+    ClEnqueueCopyImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcImage,
@@ -2041,7 +2041,7 @@ class clEnqueueCopyImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyImageTracer() {
+    ~ClEnqueueCopyImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2052,9 +2052,9 @@ class clEnqueueCopyImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueCopyImageToBufferTracer {
+class ClEnqueueCopyImageToBufferTracer {
   public:
-    clEnqueueCopyImageToBufferTracer() {}
+    ClEnqueueCopyImageToBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *srcImage,
@@ -2118,7 +2118,7 @@ class clEnqueueCopyImageToBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueCopyImageToBufferTracer() {
+    ~ClEnqueueCopyImageToBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2129,9 +2129,9 @@ class clEnqueueCopyImageToBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueFillBufferTracer {
+class ClEnqueueFillBufferTracer {
   public:
-    clEnqueueFillBufferTracer() {}
+    ClEnqueueFillBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2195,7 +2195,7 @@ class clEnqueueFillBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueFillBufferTracer() {
+    ~ClEnqueueFillBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2206,9 +2206,9 @@ class clEnqueueFillBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueFillImageTracer {
+class ClEnqueueFillImageTracer {
   public:
-    clEnqueueFillImageTracer() {}
+    ClEnqueueFillImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -2270,7 +2270,7 @@ class clEnqueueFillImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueFillImageTracer() {
+    ~ClEnqueueFillImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2281,9 +2281,9 @@ class clEnqueueFillImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMapBufferTracer {
+class ClEnqueueMapBufferTracer {
   public:
-    clEnqueueMapBufferTracer() {}
+    ClEnqueueMapBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2349,7 +2349,7 @@ class clEnqueueMapBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMapBufferTracer() {
+    ~ClEnqueueMapBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2360,9 +2360,9 @@ class clEnqueueMapBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMapImageTracer {
+class ClEnqueueMapImageTracer {
   public:
-    clEnqueueMapImageTracer() {}
+    ClEnqueueMapImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -2432,7 +2432,7 @@ class clEnqueueMapImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMapImageTracer() {
+    ~ClEnqueueMapImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2443,9 +2443,9 @@ class clEnqueueMapImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMarkerTracer {
+class ClEnqueueMarkerTracer {
   public:
-    clEnqueueMarkerTracer() {}
+    ClEnqueueMarkerTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_event **event) {
@@ -2495,7 +2495,7 @@ class clEnqueueMarkerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMarkerTracer() {
+    ~ClEnqueueMarkerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2506,9 +2506,9 @@ class clEnqueueMarkerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMarkerWithWaitListTracer {
+class ClEnqueueMarkerWithWaitListTracer {
   public:
-    clEnqueueMarkerWithWaitListTracer() {}
+    ClEnqueueMarkerWithWaitListTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEventsInWaitList,
@@ -2562,7 +2562,7 @@ class clEnqueueMarkerWithWaitListTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMarkerWithWaitListTracer() {
+    ~ClEnqueueMarkerWithWaitListTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2573,9 +2573,9 @@ class clEnqueueMarkerWithWaitListTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueMigrateMemObjectsTracer {
+class ClEnqueueMigrateMemObjectsTracer {
   public:
-    clEnqueueMigrateMemObjectsTracer() {}
+    ClEnqueueMigrateMemObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numMemObjects,
@@ -2635,7 +2635,7 @@ class clEnqueueMigrateMemObjectsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueMigrateMemObjectsTracer() {
+    ~ClEnqueueMigrateMemObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2646,9 +2646,9 @@ class clEnqueueMigrateMemObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueNDRangeKernelTracer {
+class ClEnqueueNdRangeKernelTracer {
   public:
-    clEnqueueNDRangeKernelTracer() {}
+    ClEnqueueNdRangeKernelTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_kernel *kernel,
@@ -2712,7 +2712,7 @@ class clEnqueueNDRangeKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueNDRangeKernelTracer() {
+    ~ClEnqueueNdRangeKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2723,9 +2723,9 @@ class clEnqueueNDRangeKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueNativeKernelTracer {
+class ClEnqueueNativeKernelTracer {
   public:
-    clEnqueueNativeKernelTracer() {}
+    ClEnqueueNativeKernelTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void(CL_CALLBACK **userFunc)(void *),
@@ -2791,7 +2791,7 @@ class clEnqueueNativeKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueNativeKernelTracer() {
+    ~ClEnqueueNativeKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2802,9 +2802,9 @@ class clEnqueueNativeKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadBufferTracer {
+class ClEnqueueReadBufferTracer {
   public:
-    clEnqueueReadBufferTracer() {}
+    ClEnqueueReadBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2868,7 +2868,7 @@ class clEnqueueReadBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadBufferTracer() {
+    ~ClEnqueueReadBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2879,9 +2879,9 @@ class clEnqueueReadBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadBufferRectTracer {
+class ClEnqueueReadBufferRectTracer {
   public:
-    clEnqueueReadBufferRectTracer() {}
+    ClEnqueueReadBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -2955,7 +2955,7 @@ class clEnqueueReadBufferRectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadBufferRectTracer() {
+    ~ClEnqueueReadBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -2966,9 +2966,9 @@ class clEnqueueReadBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReadImageTracer {
+class ClEnqueueReadImageTracer {
   public:
-    clEnqueueReadImageTracer() {}
+    ClEnqueueReadImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -3036,7 +3036,7 @@ class clEnqueueReadImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReadImageTracer() {
+    ~ClEnqueueReadImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3047,9 +3047,9 @@ class clEnqueueReadImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMFreeTracer {
+class ClEnqueueSvmFreeTracer {
   public:
-    clEnqueueSVMFreeTracer() {}
+    ClEnqueueSvmFreeTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numSvmPointers,
@@ -3111,7 +3111,7 @@ class clEnqueueSVMFreeTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMFreeTracer() {
+    ~ClEnqueueSvmFreeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3122,9 +3122,9 @@ class clEnqueueSVMFreeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMapTracer {
+class ClEnqueueSvmMapTracer {
   public:
-    clEnqueueSVMMapTracer() {}
+    ClEnqueueSvmMapTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_bool *blockingMap,
@@ -3186,7 +3186,7 @@ class clEnqueueSVMMapTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMapTracer() {
+    ~ClEnqueueSvmMapTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3197,9 +3197,9 @@ class clEnqueueSVMMapTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMemFillTracer {
+class ClEnqueueSvmMemFillTracer {
   public:
-    clEnqueueSVMMemFillTracer() {}
+    ClEnqueueSvmMemFillTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void **svmPtr,
@@ -3261,7 +3261,7 @@ class clEnqueueSVMMemFillTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMemFillTracer() {
+    ~ClEnqueueSvmMemFillTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3272,9 +3272,9 @@ class clEnqueueSVMMemFillTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMemcpyTracer {
+class ClEnqueueSvmMemcpyTracer {
   public:
-    clEnqueueSVMMemcpyTracer() {}
+    ClEnqueueSvmMemcpyTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_bool *blockingCopy,
@@ -3336,7 +3336,7 @@ class clEnqueueSVMMemcpyTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMemcpyTracer() {
+    ~ClEnqueueSvmMemcpyTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3347,9 +3347,9 @@ class clEnqueueSVMMemcpyTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMMigrateMemTracer {
+class ClEnqueueSvmMigrateMemTracer {
   public:
-    clEnqueueSVMMigrateMemTracer() {}
+    ClEnqueueSvmMigrateMemTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numSvmPointers,
@@ -3411,7 +3411,7 @@ class clEnqueueSVMMigrateMemTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMMigrateMemTracer() {
+    ~ClEnqueueSvmMigrateMemTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3422,9 +3422,9 @@ class clEnqueueSVMMigrateMemTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueSVMUnmapTracer {
+class ClEnqueueSvmUnmapTracer {
   public:
-    clEnqueueSVMUnmapTracer() {}
+    ClEnqueueSvmUnmapTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                void **svmPtr,
@@ -3480,7 +3480,7 @@ class clEnqueueSVMUnmapTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueSVMUnmapTracer() {
+    ~ClEnqueueSvmUnmapTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3491,9 +3491,9 @@ class clEnqueueSVMUnmapTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueTaskTracer {
+class ClEnqueueTaskTracer {
   public:
-    clEnqueueTaskTracer() {}
+    ClEnqueueTaskTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_kernel *kernel,
@@ -3549,7 +3549,7 @@ class clEnqueueTaskTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueTaskTracer() {
+    ~ClEnqueueTaskTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3560,9 +3560,9 @@ class clEnqueueTaskTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueUnmapMemObjectTracer {
+class ClEnqueueUnmapMemObjectTracer {
   public:
-    clEnqueueUnmapMemObjectTracer() {}
+    ClEnqueueUnmapMemObjectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *memobj,
@@ -3620,7 +3620,7 @@ class clEnqueueUnmapMemObjectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueUnmapMemObjectTracer() {
+    ~ClEnqueueUnmapMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3631,9 +3631,9 @@ class clEnqueueUnmapMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWaitForEventsTracer {
+class ClEnqueueWaitForEventsTracer {
   public:
-    clEnqueueWaitForEventsTracer() {}
+    ClEnqueueWaitForEventsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numEvents,
@@ -3685,7 +3685,7 @@ class clEnqueueWaitForEventsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWaitForEventsTracer() {
+    ~ClEnqueueWaitForEventsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3696,9 +3696,9 @@ class clEnqueueWaitForEventsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteBufferTracer {
+class ClEnqueueWriteBufferTracer {
   public:
-    clEnqueueWriteBufferTracer() {}
+    ClEnqueueWriteBufferTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -3762,7 +3762,7 @@ class clEnqueueWriteBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteBufferTracer() {
+    ~ClEnqueueWriteBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3773,9 +3773,9 @@ class clEnqueueWriteBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteBufferRectTracer {
+class ClEnqueueWriteBufferRectTracer {
   public:
-    clEnqueueWriteBufferRectTracer() {}
+    ClEnqueueWriteBufferRectTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *buffer,
@@ -3849,7 +3849,7 @@ class clEnqueueWriteBufferRectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteBufferRectTracer() {
+    ~ClEnqueueWriteBufferRectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3860,9 +3860,9 @@ class clEnqueueWriteBufferRectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueWriteImageTracer {
+class ClEnqueueWriteImageTracer {
   public:
-    clEnqueueWriteImageTracer() {}
+    ClEnqueueWriteImageTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_mem *image,
@@ -3930,7 +3930,7 @@ class clEnqueueWriteImageTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueWriteImageTracer() {
+    ~ClEnqueueWriteImageTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -3941,9 +3941,9 @@ class clEnqueueWriteImageTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clFinishTracer {
+class ClFinishTracer {
   public:
-    clFinishTracer() {}
+    ClFinishTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -3991,7 +3991,7 @@ class clFinishTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clFinishTracer() {
+    ~ClFinishTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4002,9 +4002,9 @@ class clFinishTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clFlushTracer {
+class ClFlushTracer {
   public:
-    clFlushTracer() {}
+    ClFlushTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -4052,7 +4052,7 @@ class clFlushTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clFlushTracer() {
+    ~ClFlushTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4063,9 +4063,9 @@ class clFlushTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetCommandQueueInfoTracer {
+class ClGetCommandQueueInfoTracer {
   public:
-    clGetCommandQueueInfoTracer() {}
+    ClGetCommandQueueInfoTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_command_queue_info *paramName,
@@ -4121,7 +4121,7 @@ class clGetCommandQueueInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetCommandQueueInfoTracer() {
+    ~ClGetCommandQueueInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4132,9 +4132,9 @@ class clGetCommandQueueInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetContextInfoTracer {
+class ClGetContextInfoTracer {
   public:
-    clGetContextInfoTracer() {}
+    ClGetContextInfoTracer() {}
 
     void enter(cl_context *context,
                cl_context_info *paramName,
@@ -4190,7 +4190,7 @@ class clGetContextInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetContextInfoTracer() {
+    ~ClGetContextInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4201,9 +4201,9 @@ class clGetContextInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceAndHostTimerTracer {
+class ClGetDeviceAndHostTimerTracer {
   public:
-    clGetDeviceAndHostTimerTracer() {}
+    ClGetDeviceAndHostTimerTracer() {}
 
     void enter(cl_device_id *device,
                cl_ulong **deviceTimestamp,
@@ -4255,7 +4255,7 @@ class clGetDeviceAndHostTimerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceAndHostTimerTracer() {
+    ~ClGetDeviceAndHostTimerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4266,9 +4266,9 @@ class clGetDeviceAndHostTimerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceIDsTracer {
+class ClGetDeviceIDsTracer {
   public:
-    clGetDeviceIDsTracer() {}
+    ClGetDeviceIDsTracer() {}
 
     void enter(cl_platform_id *platform,
                cl_device_type *deviceType,
@@ -4324,7 +4324,7 @@ class clGetDeviceIDsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceIDsTracer() {
+    ~ClGetDeviceIDsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4335,9 +4335,9 @@ class clGetDeviceIDsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetDeviceInfoTracer {
+class ClGetDeviceInfoTracer {
   public:
-    clGetDeviceInfoTracer() {}
+    ClGetDeviceInfoTracer() {}
 
     void enter(cl_device_id *device,
                cl_device_info *paramName,
@@ -4393,7 +4393,7 @@ class clGetDeviceInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetDeviceInfoTracer() {
+    ~ClGetDeviceInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4404,9 +4404,9 @@ class clGetDeviceInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetEventInfoTracer {
+class ClGetEventInfoTracer {
   public:
-    clGetEventInfoTracer() {}
+    ClGetEventInfoTracer() {}
 
     void enter(cl_event *event,
                cl_event_info *paramName,
@@ -4462,7 +4462,7 @@ class clGetEventInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetEventInfoTracer() {
+    ~ClGetEventInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4473,9 +4473,9 @@ class clGetEventInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetEventProfilingInfoTracer {
+class ClGetEventProfilingInfoTracer {
   public:
-    clGetEventProfilingInfoTracer() {}
+    ClGetEventProfilingInfoTracer() {}
 
     void enter(cl_event *event,
                cl_profiling_info *paramName,
@@ -4531,7 +4531,7 @@ class clGetEventProfilingInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetEventProfilingInfoTracer() {
+    ~ClGetEventProfilingInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4542,9 +4542,9 @@ class clGetEventProfilingInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetExtensionFunctionAddressTracer {
+class ClGetExtensionFunctionAddressTracer {
   public:
-    clGetExtensionFunctionAddressTracer() {}
+    ClGetExtensionFunctionAddressTracer() {}
 
     void enter(const char **funcName) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -4592,7 +4592,7 @@ class clGetExtensionFunctionAddressTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetExtensionFunctionAddressTracer() {
+    ~ClGetExtensionFunctionAddressTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4603,9 +4603,9 @@ class clGetExtensionFunctionAddressTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetExtensionFunctionAddressForPlatformTracer {
+class ClGetExtensionFunctionAddressForPlatformTracer {
   public:
-    clGetExtensionFunctionAddressForPlatformTracer() {}
+    ClGetExtensionFunctionAddressForPlatformTracer() {}
 
     void enter(cl_platform_id *platform,
                const char **funcName) {
@@ -4655,7 +4655,7 @@ class clGetExtensionFunctionAddressForPlatformTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetExtensionFunctionAddressForPlatformTracer() {
+    ~ClGetExtensionFunctionAddressForPlatformTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4666,9 +4666,9 @@ class clGetExtensionFunctionAddressForPlatformTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetHostTimerTracer {
+class ClGetHostTimerTracer {
   public:
-    clGetHostTimerTracer() {}
+    ClGetHostTimerTracer() {}
 
     void enter(cl_device_id *device,
                cl_ulong **hostTimestamp) {
@@ -4718,7 +4718,7 @@ class clGetHostTimerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetHostTimerTracer() {
+    ~ClGetHostTimerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4729,9 +4729,9 @@ class clGetHostTimerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetImageInfoTracer {
+class ClGetImageInfoTracer {
   public:
-    clGetImageInfoTracer() {}
+    ClGetImageInfoTracer() {}
 
     void enter(cl_mem *image,
                cl_image_info *paramName,
@@ -4787,7 +4787,7 @@ class clGetImageInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetImageInfoTracer() {
+    ~ClGetImageInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4798,9 +4798,9 @@ class clGetImageInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelArgInfoTracer {
+class ClGetKernelArgInfoTracer {
   public:
-    clGetKernelArgInfoTracer() {}
+    ClGetKernelArgInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndx,
@@ -4858,7 +4858,7 @@ class clGetKernelArgInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelArgInfoTracer() {
+    ~ClGetKernelArgInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4869,9 +4869,9 @@ class clGetKernelArgInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelInfoTracer {
+class ClGetKernelInfoTracer {
   public:
-    clGetKernelInfoTracer() {}
+    ClGetKernelInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_kernel_info *paramName,
@@ -4927,7 +4927,7 @@ class clGetKernelInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelInfoTracer() {
+    ~ClGetKernelInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -4938,9 +4938,9 @@ class clGetKernelInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelSubGroupInfoTracer {
+class ClGetKernelSubGroupInfoTracer {
   public:
-    clGetKernelSubGroupInfoTracer() {}
+    ClGetKernelSubGroupInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_device_id *device,
@@ -5002,7 +5002,7 @@ class clGetKernelSubGroupInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelSubGroupInfoTracer() {
+    ~ClGetKernelSubGroupInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5013,9 +5013,9 @@ class clGetKernelSubGroupInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetKernelWorkGroupInfoTracer {
+class ClGetKernelWorkGroupInfoTracer {
   public:
-    clGetKernelWorkGroupInfoTracer() {}
+    ClGetKernelWorkGroupInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_device_id *device,
@@ -5073,7 +5073,7 @@ class clGetKernelWorkGroupInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetKernelWorkGroupInfoTracer() {
+    ~ClGetKernelWorkGroupInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5084,9 +5084,9 @@ class clGetKernelWorkGroupInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetMemObjectInfoTracer {
+class ClGetMemObjectInfoTracer {
   public:
-    clGetMemObjectInfoTracer() {}
+    ClGetMemObjectInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_mem_info *paramName,
@@ -5142,7 +5142,7 @@ class clGetMemObjectInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetMemObjectInfoTracer() {
+    ~ClGetMemObjectInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5153,9 +5153,9 @@ class clGetMemObjectInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPipeInfoTracer {
+class ClGetPipeInfoTracer {
   public:
-    clGetPipeInfoTracer() {}
+    ClGetPipeInfoTracer() {}
 
     void enter(cl_mem *pipe,
                cl_pipe_info *paramName,
@@ -5211,7 +5211,7 @@ class clGetPipeInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPipeInfoTracer() {
+    ~ClGetPipeInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5222,9 +5222,9 @@ class clGetPipeInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPlatformIDsTracer {
+class ClGetPlatformIDsTracer {
   public:
-    clGetPlatformIDsTracer() {}
+    ClGetPlatformIDsTracer() {}
 
     void enter(cl_uint *numEntries,
                cl_platform_id **platforms,
@@ -5276,7 +5276,7 @@ class clGetPlatformIDsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPlatformIDsTracer() {
+    ~ClGetPlatformIDsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5287,9 +5287,9 @@ class clGetPlatformIDsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetPlatformInfoTracer {
+class ClGetPlatformInfoTracer {
   public:
-    clGetPlatformInfoTracer() {}
+    ClGetPlatformInfoTracer() {}
 
     void enter(cl_platform_id *platform,
                cl_platform_info *paramName,
@@ -5345,7 +5345,7 @@ class clGetPlatformInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetPlatformInfoTracer() {
+    ~ClGetPlatformInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5356,9 +5356,9 @@ class clGetPlatformInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetProgramBuildInfoTracer {
+class ClGetProgramBuildInfoTracer {
   public:
-    clGetProgramBuildInfoTracer() {}
+    ClGetProgramBuildInfoTracer() {}
 
     void enter(cl_program *program,
                cl_device_id *device,
@@ -5416,7 +5416,7 @@ class clGetProgramBuildInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetProgramBuildInfoTracer() {
+    ~ClGetProgramBuildInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5427,9 +5427,9 @@ class clGetProgramBuildInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetProgramInfoTracer {
+class ClGetProgramInfoTracer {
   public:
-    clGetProgramInfoTracer() {}
+    ClGetProgramInfoTracer() {}
 
     void enter(cl_program *program,
                cl_program_info *paramName,
@@ -5485,7 +5485,7 @@ class clGetProgramInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetProgramInfoTracer() {
+    ~ClGetProgramInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5496,9 +5496,9 @@ class clGetProgramInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetSamplerInfoTracer {
+class ClGetSamplerInfoTracer {
   public:
-    clGetSamplerInfoTracer() {}
+    ClGetSamplerInfoTracer() {}
 
     void enter(cl_sampler *sampler,
                cl_sampler_info *paramName,
@@ -5554,7 +5554,7 @@ class clGetSamplerInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetSamplerInfoTracer() {
+    ~ClGetSamplerInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5565,9 +5565,9 @@ class clGetSamplerInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetSupportedImageFormatsTracer {
+class ClGetSupportedImageFormatsTracer {
   public:
-    clGetSupportedImageFormatsTracer() {}
+    ClGetSupportedImageFormatsTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -5625,7 +5625,7 @@ class clGetSupportedImageFormatsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetSupportedImageFormatsTracer() {
+    ~ClGetSupportedImageFormatsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5636,9 +5636,9 @@ class clGetSupportedImageFormatsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clLinkProgramTracer {
+class ClLinkProgramTracer {
   public:
-    clLinkProgramTracer() {}
+    ClLinkProgramTracer() {}
 
     void enter(cl_context *context,
                cl_uint *numDevices,
@@ -5702,7 +5702,7 @@ class clLinkProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clLinkProgramTracer() {
+    ~ClLinkProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5713,9 +5713,9 @@ class clLinkProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseCommandQueueTracer {
+class ClReleaseCommandQueueTracer {
   public:
-    clReleaseCommandQueueTracer() {}
+    ClReleaseCommandQueueTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5763,7 +5763,7 @@ class clReleaseCommandQueueTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseCommandQueueTracer() {
+    ~ClReleaseCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5774,9 +5774,9 @@ class clReleaseCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseContextTracer {
+class ClReleaseContextTracer {
   public:
-    clReleaseContextTracer() {}
+    ClReleaseContextTracer() {}
 
     void enter(cl_context *context) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5824,7 +5824,7 @@ class clReleaseContextTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseContextTracer() {
+    ~ClReleaseContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5835,9 +5835,9 @@ class clReleaseContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseDeviceTracer {
+class ClReleaseDeviceTracer {
   public:
-    clReleaseDeviceTracer() {}
+    ClReleaseDeviceTracer() {}
 
     void enter(cl_device_id *device) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5885,7 +5885,7 @@ class clReleaseDeviceTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseDeviceTracer() {
+    ~ClReleaseDeviceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5896,9 +5896,9 @@ class clReleaseDeviceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseEventTracer {
+class ClReleaseEventTracer {
   public:
-    clReleaseEventTracer() {}
+    ClReleaseEventTracer() {}
 
     void enter(cl_event *event) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -5946,7 +5946,7 @@ class clReleaseEventTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseEventTracer() {
+    ~ClReleaseEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -5957,9 +5957,9 @@ class clReleaseEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseKernelTracer {
+class ClReleaseKernelTracer {
   public:
-    clReleaseKernelTracer() {}
+    ClReleaseKernelTracer() {}
 
     void enter(cl_kernel *kernel) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6007,7 +6007,7 @@ class clReleaseKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseKernelTracer() {
+    ~ClReleaseKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6018,9 +6018,9 @@ class clReleaseKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseMemObjectTracer {
+class ClReleaseMemObjectTracer {
   public:
-    clReleaseMemObjectTracer() {}
+    ClReleaseMemObjectTracer() {}
 
     void enter(cl_mem *memobj) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6068,7 +6068,7 @@ class clReleaseMemObjectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseMemObjectTracer() {
+    ~ClReleaseMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6079,9 +6079,9 @@ class clReleaseMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseProgramTracer {
+class ClReleaseProgramTracer {
   public:
-    clReleaseProgramTracer() {}
+    ClReleaseProgramTracer() {}
 
     void enter(cl_program *program) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6129,7 +6129,7 @@ class clReleaseProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseProgramTracer() {
+    ~ClReleaseProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6140,9 +6140,9 @@ class clReleaseProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clReleaseSamplerTracer {
+class ClReleaseSamplerTracer {
   public:
-    clReleaseSamplerTracer() {}
+    ClReleaseSamplerTracer() {}
 
     void enter(cl_sampler *sampler) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6190,7 +6190,7 @@ class clReleaseSamplerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clReleaseSamplerTracer() {
+    ~ClReleaseSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6201,9 +6201,9 @@ class clReleaseSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainCommandQueueTracer {
+class ClRetainCommandQueueTracer {
   public:
-    clRetainCommandQueueTracer() {}
+    ClRetainCommandQueueTracer() {}
 
     void enter(cl_command_queue *commandQueue) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6251,7 +6251,7 @@ class clRetainCommandQueueTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainCommandQueueTracer() {
+    ~ClRetainCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6262,9 +6262,9 @@ class clRetainCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainContextTracer {
+class ClRetainContextTracer {
   public:
-    clRetainContextTracer() {}
+    ClRetainContextTracer() {}
 
     void enter(cl_context *context) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6312,7 +6312,7 @@ class clRetainContextTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainContextTracer() {
+    ~ClRetainContextTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6323,9 +6323,9 @@ class clRetainContextTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainDeviceTracer {
+class ClRetainDeviceTracer {
   public:
-    clRetainDeviceTracer() {}
+    ClRetainDeviceTracer() {}
 
     void enter(cl_device_id *device) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6373,7 +6373,7 @@ class clRetainDeviceTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainDeviceTracer() {
+    ~ClRetainDeviceTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6384,9 +6384,9 @@ class clRetainDeviceTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainEventTracer {
+class ClRetainEventTracer {
   public:
-    clRetainEventTracer() {}
+    ClRetainEventTracer() {}
 
     void enter(cl_event *event) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6434,7 +6434,7 @@ class clRetainEventTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainEventTracer() {
+    ~ClRetainEventTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6445,9 +6445,9 @@ class clRetainEventTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainKernelTracer {
+class ClRetainKernelTracer {
   public:
-    clRetainKernelTracer() {}
+    ClRetainKernelTracer() {}
 
     void enter(cl_kernel *kernel) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6495,7 +6495,7 @@ class clRetainKernelTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainKernelTracer() {
+    ~ClRetainKernelTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6506,9 +6506,9 @@ class clRetainKernelTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainMemObjectTracer {
+class ClRetainMemObjectTracer {
   public:
-    clRetainMemObjectTracer() {}
+    ClRetainMemObjectTracer() {}
 
     void enter(cl_mem *memobj) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6556,7 +6556,7 @@ class clRetainMemObjectTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainMemObjectTracer() {
+    ~ClRetainMemObjectTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6567,9 +6567,9 @@ class clRetainMemObjectTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainProgramTracer {
+class ClRetainProgramTracer {
   public:
-    clRetainProgramTracer() {}
+    ClRetainProgramTracer() {}
 
     void enter(cl_program *program) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6617,7 +6617,7 @@ class clRetainProgramTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainProgramTracer() {
+    ~ClRetainProgramTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6628,9 +6628,9 @@ class clRetainProgramTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clRetainSamplerTracer {
+class ClRetainSamplerTracer {
   public:
-    clRetainSamplerTracer() {}
+    ClRetainSamplerTracer() {}
 
     void enter(cl_sampler *sampler) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -6678,7 +6678,7 @@ class clRetainSamplerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clRetainSamplerTracer() {
+    ~ClRetainSamplerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6689,9 +6689,9 @@ class clRetainSamplerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSVMAllocTracer {
+class ClSvmAllocTracer {
   public:
-    clSVMAllocTracer() {}
+    ClSvmAllocTracer() {}
 
     void enter(cl_context *context,
                cl_svm_mem_flags *flags,
@@ -6745,7 +6745,7 @@ class clSVMAllocTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSVMAllocTracer() {
+    ~ClSvmAllocTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6756,9 +6756,9 @@ class clSVMAllocTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSVMFreeTracer {
+class ClSvmFreeTracer {
   public:
-    clSVMFreeTracer() {}
+    ClSvmFreeTracer() {}
 
     void enter(cl_context *context,
                void **svmPointer) {
@@ -6808,7 +6808,7 @@ class clSVMFreeTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSVMFreeTracer() {
+    ~ClSvmFreeTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6819,9 +6819,9 @@ class clSVMFreeTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetCommandQueuePropertyTracer {
+class ClSetCommandQueuePropertyTracer {
   public:
-    clSetCommandQueuePropertyTracer() {}
+    ClSetCommandQueuePropertyTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_command_queue_properties *properties,
@@ -6875,7 +6875,7 @@ class clSetCommandQueuePropertyTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetCommandQueuePropertyTracer() {
+    ~ClSetCommandQueuePropertyTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6886,9 +6886,9 @@ class clSetCommandQueuePropertyTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetDefaultDeviceCommandQueueTracer {
+class ClSetDefaultDeviceCommandQueueTracer {
   public:
-    clSetDefaultDeviceCommandQueueTracer() {}
+    ClSetDefaultDeviceCommandQueueTracer() {}
 
     void enter(cl_context *context,
                cl_device_id *device,
@@ -6940,7 +6940,7 @@ class clSetDefaultDeviceCommandQueueTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetDefaultDeviceCommandQueueTracer() {
+    ~ClSetDefaultDeviceCommandQueueTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -6951,9 +6951,9 @@ class clSetDefaultDeviceCommandQueueTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetEventCallbackTracer {
+class ClSetEventCallbackTracer {
   public:
-    clSetEventCallbackTracer() {}
+    ClSetEventCallbackTracer() {}
 
     void enter(cl_event *event,
                cl_int *commandExecCallbackType,
@@ -7007,7 +7007,7 @@ class clSetEventCallbackTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetEventCallbackTracer() {
+    ~ClSetEventCallbackTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7018,9 +7018,9 @@ class clSetEventCallbackTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelArgTracer {
+class ClSetKernelArgTracer {
   public:
-    clSetKernelArgTracer() {}
+    ClSetKernelArgTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndex,
@@ -7074,7 +7074,7 @@ class clSetKernelArgTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelArgTracer() {
+    ~ClSetKernelArgTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7085,9 +7085,9 @@ class clSetKernelArgTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelArgSVMPointerTracer {
+class ClSetKernelArgSvmPointerTracer {
   public:
-    clSetKernelArgSVMPointerTracer() {}
+    ClSetKernelArgSvmPointerTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_uint *argIndex,
@@ -7139,7 +7139,7 @@ class clSetKernelArgSVMPointerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelArgSVMPointerTracer() {
+    ~ClSetKernelArgSvmPointerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7150,9 +7150,9 @@ class clSetKernelArgSVMPointerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetKernelExecInfoTracer {
+class ClSetKernelExecInfoTracer {
   public:
-    clSetKernelExecInfoTracer() {}
+    ClSetKernelExecInfoTracer() {}
 
     void enter(cl_kernel *kernel,
                cl_kernel_exec_info *paramName,
@@ -7206,7 +7206,7 @@ class clSetKernelExecInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetKernelExecInfoTracer() {
+    ~ClSetKernelExecInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7217,9 +7217,9 @@ class clSetKernelExecInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetMemObjectDestructorCallbackTracer {
+class ClSetMemObjectDestructorCallbackTracer {
   public:
-    clSetMemObjectDestructorCallbackTracer() {}
+    ClSetMemObjectDestructorCallbackTracer() {}
 
     void enter(cl_mem *memobj,
                void(CL_CALLBACK **funcNotify)(cl_mem, void *),
@@ -7271,7 +7271,7 @@ class clSetMemObjectDestructorCallbackTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetMemObjectDestructorCallbackTracer() {
+    ~ClSetMemObjectDestructorCallbackTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7282,9 +7282,9 @@ class clSetMemObjectDestructorCallbackTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clSetUserEventStatusTracer {
+class ClSetUserEventStatusTracer {
   public:
-    clSetUserEventStatusTracer() {}
+    ClSetUserEventStatusTracer() {}
 
     void enter(cl_event *event,
                cl_int *executionStatus) {
@@ -7334,7 +7334,7 @@ class clSetUserEventStatusTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clSetUserEventStatusTracer() {
+    ~ClSetUserEventStatusTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7345,9 +7345,9 @@ class clSetUserEventStatusTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clUnloadCompilerTracer {
+class ClUnloadCompilerTracer {
   public:
-    clUnloadCompilerTracer() {}
+    ClUnloadCompilerTracer() {}
 
     void enter() {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -7393,7 +7393,7 @@ class clUnloadCompilerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clUnloadCompilerTracer() {
+    ~ClUnloadCompilerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7403,9 +7403,9 @@ class clUnloadCompilerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clUnloadPlatformCompilerTracer {
+class ClUnloadPlatformCompilerTracer {
   public:
-    clUnloadPlatformCompilerTracer() {}
+    ClUnloadPlatformCompilerTracer() {}
 
     void enter(cl_platform_id *platform) {
         DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
@@ -7453,7 +7453,7 @@ class clUnloadPlatformCompilerTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clUnloadPlatformCompilerTracer() {
+    ~ClUnloadPlatformCompilerTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7464,9 +7464,9 @@ class clUnloadPlatformCompilerTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clWaitForEventsTracer {
+class ClWaitForEventsTracer {
   public:
-    clWaitForEventsTracer() {}
+    ClWaitForEventsTracer() {}
 
     void enter(cl_uint *numEvents,
                const cl_event **eventList) {
@@ -7516,7 +7516,7 @@ class clWaitForEventsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clWaitForEventsTracer() {
+    ~ClWaitForEventsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7529,9 +7529,9 @@ class clWaitForEventsTracer {
 
 #ifdef _WIN32
 
-class clCreateFromGLBufferTracer {
+class ClCreateFromGlBufferTracer {
   public:
-    clCreateFromGLBufferTracer() {}
+    ClCreateFromGlBufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7585,7 +7585,7 @@ class clCreateFromGLBufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLBufferTracer() {
+    ~ClCreateFromGlBufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7596,9 +7596,9 @@ class clCreateFromGLBufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLRenderbufferTracer {
+class ClCreateFromGlRenderbufferTracer {
   public:
-    clCreateFromGLRenderbufferTracer() {}
+    ClCreateFromGlRenderbufferTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7652,7 +7652,7 @@ class clCreateFromGLRenderbufferTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLRenderbufferTracer() {
+    ~ClCreateFromGlRenderbufferTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7663,9 +7663,9 @@ class clCreateFromGLRenderbufferTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTextureTracer {
+class ClCreateFromGlTextureTracer {
   public:
-    clCreateFromGLTextureTracer() {}
+    ClCreateFromGlTextureTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7723,7 +7723,7 @@ class clCreateFromGLTextureTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTextureTracer() {
+    ~ClCreateFromGlTextureTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7734,9 +7734,9 @@ class clCreateFromGLTextureTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTexture2DTracer {
+class ClCreateFromGlTexture2DTracer {
   public:
-    clCreateFromGLTexture2DTracer() {}
+    ClCreateFromGlTexture2DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7794,7 +7794,7 @@ class clCreateFromGLTexture2DTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTexture2DTracer() {
+    ~ClCreateFromGlTexture2DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7805,9 +7805,9 @@ class clCreateFromGLTexture2DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clCreateFromGLTexture3DTracer {
+class ClCreateFromGlTexture3DTracer {
   public:
-    clCreateFromGLTexture3DTracer() {}
+    ClCreateFromGlTexture3DTracer() {}
 
     void enter(cl_context *context,
                cl_mem_flags *flags,
@@ -7865,7 +7865,7 @@ class clCreateFromGLTexture3DTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clCreateFromGLTexture3DTracer() {
+    ~ClCreateFromGlTexture3DTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7876,9 +7876,9 @@ class clCreateFromGLTexture3DTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueAcquireGLObjectsTracer {
+class ClEnqueueAcquireGlObjectsTracer {
   public:
-    clEnqueueAcquireGLObjectsTracer() {}
+    ClEnqueueAcquireGlObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numObjects,
@@ -7936,7 +7936,7 @@ class clEnqueueAcquireGLObjectsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueAcquireGLObjectsTracer() {
+    ~ClEnqueueAcquireGlObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -7947,9 +7947,9 @@ class clEnqueueAcquireGLObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clEnqueueReleaseGLObjectsTracer {
+class ClEnqueueReleaseGlObjectsTracer {
   public:
-    clEnqueueReleaseGLObjectsTracer() {}
+    ClEnqueueReleaseGlObjectsTracer() {}
 
     void enter(cl_command_queue *commandQueue,
                cl_uint *numObjects,
@@ -8007,7 +8007,7 @@ class clEnqueueReleaseGLObjectsTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clEnqueueReleaseGLObjectsTracer() {
+    ~ClEnqueueReleaseGlObjectsTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -8018,9 +8018,9 @@ class clEnqueueReleaseGLObjectsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetGLObjectInfoTracer {
+class ClGetGlObjectInfoTracer {
   public:
-    clGetGLObjectInfoTracer() {}
+    ClGetGlObjectInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_gl_object_type **glObjectType,
@@ -8072,7 +8072,7 @@ class clGetGLObjectInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetGLObjectInfoTracer() {
+    ~ClGetGlObjectInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 
@@ -8083,9 +8083,9 @@ class clGetGLObjectInfoTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class clGetGLTextureInfoTracer {
+class ClGetGlTextureInfoTracer {
   public:
-    clGetGLTextureInfoTracer() {}
+    ClGetGlTextureInfoTracer() {}
 
     void enter(cl_mem *memobj,
                cl_gl_texture_info *paramName,
@@ -8141,7 +8141,7 @@ class clGetGLTextureInfoTracer {
         state = TRACING_NOTIFY_STATE_EXIT_CALLED;
     }
 
-    ~clGetGLTextureInfoTracer() {
+    ~ClGetGlTextureInfoTracer() {
         DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
     }
 

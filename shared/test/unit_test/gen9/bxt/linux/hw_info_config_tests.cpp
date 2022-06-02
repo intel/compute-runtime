@@ -142,7 +142,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, GivenInvalidMinEuInPoolWhenConfiguringHwInfo
 template <typename T>
 class BxtHwInfoTests : public ::testing::Test {
 };
-typedef ::testing::Types<BXT_1x2x6, BXT_1x3x6> bxtTestTypes;
+typedef ::testing::Types<BxtHw1x2x6, BxtHw1x3x6> bxtTestTypes;
 TYPED_TEST_CASE(BxtHwInfoTests, bxtTestTypes);
 TYPED_TEST(BxtHwInfoTests, WhenConfiguringHwInfoThenConfigIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

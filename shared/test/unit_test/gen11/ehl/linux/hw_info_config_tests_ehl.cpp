@@ -49,7 +49,7 @@ TEST(EhlHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &hwInfo, &EHL_HW_CONFIG::setupHardwareInfo};
+    DeviceDescriptor device = {0, &hwInfo, &EhlHwConfig::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
 

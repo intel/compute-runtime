@@ -144,15 +144,15 @@ void LKF::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo LKF_1x8x8::hwInfo = {
+const HardwareInfo LkfHw1x8x8::hwInfo = {
     &LKF::platform,
     &LKF::featureTable,
     &LKF::workaroundTable,
-    &LKF_1x8x8::gtSystemInfo,
+    &LkfHw1x8x8::gtSystemInfo,
     LKF::capabilityTable,
 };
-GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
-void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO LkfHw1x8x8::gtSystemInfo = {0};
+void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     LKF::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -163,15 +163,15 @@ void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAn
     gtSysInfo->MaxFillRate = 16;
 };
 
-const HardwareInfo LKF::hwInfo = LKF_1x8x8::hwInfo;
+const HardwareInfo LKF::hwInfo = LkfHw1x8x8::hwInfo;
 const uint64_t LKF::defaultHardwareInfoConfig = 0x100080008;
 
 void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100080008) {
-        LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        LkfHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

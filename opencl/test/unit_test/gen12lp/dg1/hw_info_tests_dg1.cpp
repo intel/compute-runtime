@@ -15,7 +15,7 @@ using namespace NEO;
 
 template <typename T>
 class Dg1HwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<DG1_CONFIG> dg1TestTypes;
+typedef ::testing::Types<Dg1HwConfig> dg1TestTypes;
 TYPED_TEST_CASE(Dg1HwInfoTests, dg1TestTypes);
 
 TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfLocalMemoryFeature) {

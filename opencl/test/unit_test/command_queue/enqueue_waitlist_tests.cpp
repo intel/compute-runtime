@@ -9,23 +9,23 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 
-class clEventWrapper {
+class ClEventWrapper {
   public:
-    clEventWrapper() { mMem = NULL; }
-    clEventWrapper(cl_event mem) { mMem = mem; }
-    clEventWrapper(const clEventWrapper &rhs) : mMem(rhs.mMem) {
+    ClEventWrapper() { mMem = NULL; }
+    ClEventWrapper(cl_event mem) { mMem = mem; }
+    ClEventWrapper(const ClEventWrapper &rhs) : mMem(rhs.mMem) {
         if (mMem != NULL)
             clRetainEvent(mMem);
     }
-    ~clEventWrapper() {
+    ~ClEventWrapper() {
         if (mMem != NULL)
             clReleaseEvent(mMem);
     }
-    clEventWrapper &operator=(const cl_event &rhs) {
+    ClEventWrapper &operator=(const cl_event &rhs) {
         mMem = rhs;
         return *this;
     }
-    clEventWrapper &operator=(clEventWrapper rhs) {
+    ClEventWrapper &operator=(ClEventWrapper rhs) {
         std::swap(mMem, rhs.mMem);
         return *this;
     }
@@ -168,11 +168,11 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
 TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
     testError(error, "Unable to set up user gate event");
 
     // Set up the execution of the action with its actual event
-    clEventWrapper actualEvent;
+    ClEventWrapper actualEvent;
 
     // call the function to execute
     GetParam()(this, 1, &gateEvent, &actualEvent, false);
@@ -190,11 +190,11 @@ typedef EnqueueWaitlistTest EnqueueWaitlistTestTwoMapEnqueues;
 TEST_P(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenWaitingForOutputEventThenOutputEventIsCompleted) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
     testError(error, "Unable to set up user gate event");
 
     // Set up the execution of the action with its actual event
-    clEventWrapper actualEvent;
+    ClEventWrapper actualEvent;
 
     // call the function to execute
     GetParam()(this, 1, &gateEvent, &actualEvent, false);
@@ -210,7 +210,7 @@ TEST_P(EnqueueWaitlistTestTwoMapEnqueues, GivenCompletedUserEventOnWaitlistWhenW
 TEST_P(EnqueueWaitlistTest, GivenCompletedUserEventOnWaitlistWhenFinishingCommandQueueThenSuccessIsReturned) {
 
     // Set up a user event, which we use as a gate for the second event
-    clEventWrapper gateEvent = clCreateUserEvent(context, &error);
+    ClEventWrapper gateEvent = clCreateUserEvent(context, &error);
     testError(error, "Unable to set up user gate event");
 
     // call the function to execute

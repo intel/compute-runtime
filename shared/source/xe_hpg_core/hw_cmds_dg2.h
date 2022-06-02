@@ -43,7 +43,7 @@ struct DG2 : public XE_HPG_COREFamily {
     }
 };
 
-class DG2_CONFIG : public DG2 {
+class Dg2HwConfig : public DG2 {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

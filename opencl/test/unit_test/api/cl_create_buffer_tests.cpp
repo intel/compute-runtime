@@ -23,7 +23,7 @@ typedef api_tests clCreateBufferTests;
 
 namespace ClCreateBufferTests {
 
-class clCreateBufferTemplateTests : public ApiFixture<>,
+class ClCreateBufferTemplateTests : public ApiFixture<>,
                                     public testing::TestWithParam<uint64_t> {
     void SetUp() override {
         ApiFixture::SetUp();
@@ -34,7 +34,7 @@ class clCreateBufferTemplateTests : public ApiFixture<>,
     }
 };
 
-struct clCreateBufferValidFlagsTests : public clCreateBufferTemplateTests {
+struct clCreateBufferValidFlagsTests : public ClCreateBufferTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
@@ -72,7 +72,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferValidFlagsTests,
     testing::ValuesIn(validFlags));
 
-using clCreateBufferInvalidFlagsTests = clCreateBufferTemplateTests;
+using clCreateBufferInvalidFlagsTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_flags flags = GetParam();
@@ -108,7 +108,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferInvalidFlagsTests,
     testing::ValuesIn(invalidFlags));
 
-using clCreateBufferValidFlagsIntelTests = clCreateBufferTemplateTests;
+using clCreateBufferValidFlagsIntelTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBufferThenBufferIsCreated) {
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
@@ -130,7 +130,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferValidFlagsIntelTests,
     testing::ValuesIn(validFlagsIntel));
 
-using clCreateBufferInvalidFlagsIntelTests = clCreateBufferTemplateTests;
+using clCreateBufferInvalidFlagsIntelTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
@@ -149,7 +149,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferInvalidFlagsIntelTests,
     testing::ValuesIn(invalidFlagsIntel));
 
-using clCreateBufferInvalidProperties = clCreateBufferTemplateTests;
+using clCreateBufferInvalidProperties = ClCreateBufferTemplateTests;
 
 TEST_F(clCreateBufferInvalidProperties, GivenInvalidPropertyKeyWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_properties_intel properties[] = {(cl_mem_properties_intel(1) << 31), 0, 0};
@@ -534,7 +534,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-using clCreateBufferWithMultiDeviceContextTests = clCreateBufferTemplateTests;
+using clCreateBufferWithMultiDeviceContextTests = ClCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
     UltClDeviceFactory deviceFactory{2, 0};
@@ -584,7 +584,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferWithMultiDeviceContextTests,
     testing::ValuesIn(validFlagsForMultiDeviceContextBuffer));
 
-using clCreateBufferWithMultiDeviceContextFaillingAllocationTests = clCreateBufferTemplateTests;
+using clCreateBufferWithMultiDeviceContextFaillingAllocationTests = ClCreateBufferTemplateTests;
 
 TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContextdWithMultiDeviceFailingAllocationThenBufferAllocateFails) {
     UltClDeviceFactory deviceFactory{3, 0};

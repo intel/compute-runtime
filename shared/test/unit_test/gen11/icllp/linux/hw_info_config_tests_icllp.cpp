@@ -44,7 +44,7 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInf
 
 template <typename T>
 class IcllpHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8> icllpTestTypes;
+typedef ::testing::Types<IcllpHw1x8x8, IcllpHw1x4x8, IcllpHw1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
 TYPED_TEST(IcllpHwInfoTests, WhenGettingSystemInfoThenParamsAreValid) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

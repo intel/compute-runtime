@@ -11,7 +11,7 @@ using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenLkfSupportedDeviceIdThenHardwareInfoIsCorrect) {
     std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {0x9840, &LKF_1x8x8::hwInfo, &LKF_1x8x8::setupHardwareInfo},
+        {0x9840, &LkfHw1x8x8::hwInfo, &LkfHw1x8x8::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);

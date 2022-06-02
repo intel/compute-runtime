@@ -23,12 +23,12 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture_ : public ContextFixture, public ClDeviceFixture {
+class KernelArgSvmFixture : public ContextFixture, public ClDeviceFixture {
 
     using ContextFixture::SetUp;
 
   public:
-    KernelArgSvmFixture_() {
+    KernelArgSvmFixture() {
     }
 
   protected:
@@ -70,7 +70,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public ClDeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef Test<KernelArgSvmFixture_> KernelArgSvmTest;
+typedef Test<KernelArgSvmFixture> KernelArgSvmTest;
 
 TEST_F(KernelArgSvmTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect) {
     char *svmPtr = new char[256];

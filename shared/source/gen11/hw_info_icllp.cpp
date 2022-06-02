@@ -145,16 +145,16 @@ void ICLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAn
     }
 }
 
-const HardwareInfo ICLLP_1x8x8::hwInfo = {
+const HardwareInfo IcllpHw1x8x8::hwInfo = {
     &ICLLP::platform,
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
-    &ICLLP_1x8x8::gtSystemInfo,
+    &IcllpHw1x8x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO ICLLP_1x8x8::gtSystemInfo = {0};
-void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO IcllpHw1x8x8::gtSystemInfo = {0};
+void IcllpHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -167,16 +167,16 @@ void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
 };
 
-const HardwareInfo ICLLP_1x4x8::hwInfo = {
+const HardwareInfo IcllpHw1x4x8::hwInfo = {
     &ICLLP::platform,
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
-    &ICLLP_1x4x8::gtSystemInfo,
+    &IcllpHw1x4x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO ICLLP_1x4x8::gtSystemInfo = {0};
-void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO IcllpHw1x4x8::gtSystemInfo = {0};
+void IcllpHw1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -186,16 +186,16 @@ void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo ICLLP_1x6x8::hwInfo = {
+const HardwareInfo IcllpHw1x6x8::hwInfo = {
     &ICLLP::platform,
     &ICLLP::featureTable,
     &ICLLP::workaroundTable,
-    &ICLLP_1x6x8::gtSystemInfo,
+    &IcllpHw1x6x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
-GT_SYSTEM_INFO ICLLP_1x6x8::gtSystemInfo = {0};
-void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO IcllpHw1x6x8::gtSystemInfo = {0};
+void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
@@ -205,19 +205,19 @@ void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     gtSysInfo->MaxFillRate = 8;
 };
 
-const HardwareInfo ICLLP::hwInfo = ICLLP_1x8x8::hwInfo;
+const HardwareInfo ICLLP::hwInfo = IcllpHw1x8x8::hwInfo;
 const uint64_t ICLLP::defaultHardwareInfoConfig = 0x100080008;
 
 void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100080008) {
-        ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100040008) {
-        ICLLP_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x100060008) {
-        ICLLP_1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }

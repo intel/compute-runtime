@@ -25,7 +25,7 @@ struct XE_HP_SDV : public XeHpFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class XE_HP_SDV_CONFIG : public XE_HP_SDV {
+class XehpSdvHwConfig : public XE_HP_SDV {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

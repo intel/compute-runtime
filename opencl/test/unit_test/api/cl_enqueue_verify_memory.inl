@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,36 +26,36 @@ struct clEnqueueVerifyMemoryINTELSettings {
     void *gpuAddress = expected;
 };
 
-class clEnqueueVerifyMemoryINTELTests : public api_tests,
+class ClEnqueueVerifyMemoryIntelTests : public api_tests,
                                         public clEnqueueVerifyMemoryINTELSettings {
 };
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenSizeOfComparisonEqualZeroWhenCallingVerifyMemoryThenErrorIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenSizeOfComparisonEqualZeroWhenCallingVerifyMemoryThenErrorIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, nullptr, 0, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenNullExpectedDataWhenCallingVerifyMemoryThenErrorIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenNullExpectedDataWhenCallingVerifyMemoryThenErrorIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, nullptr, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenInvalidAllocationPointerWhenCallingVerifyMemoryThenErrorIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenInvalidAllocationPointerWhenCallingVerifyMemoryThenErrorIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenInvalidCommandQueueWhenCallingVerifyMemoryThenErrorIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenInvalidCommandQueueWhenCallingVerifyMemoryThenErrorIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenEqualMemoryWhenCallingVerifyMemoryThenSuccessIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenEqualMemoryWhenCallingVerifyMemoryThenSuccessIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(pCommandQueue, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_SUCCESS, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenNotEqualMemoryWhenCallingVerifyMemoryThenInvalidValueErrorIsReturned) {
+TEST_F(ClEnqueueVerifyMemoryIntelTests, givenNotEqualMemoryWhenCallingVerifyMemoryThenInvalidValueErrorIsReturned) {
     int differentMemory = expected[0] + 1;
     cl_int retval = clEnqueueVerifyMemoryINTEL(pCommandQueue, gpuAddress, &differentMemory, sizeof(differentMemory), comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);

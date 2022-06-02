@@ -62,7 +62,7 @@ using namespace NEO;
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
                                     cl_uint *numPlatforms) {
-    TRACING_ENTER(clGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
+    TRACING_ENTER(ClGetPlatformIDs, &numEntries, &platforms, &numPlatforms);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("numEntries", numEntries,
@@ -122,7 +122,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             *numPlatforms = numPlatformsToExpose;
         }
     } while (false);
-    TRACING_EXIT(clGetPlatformIDs, &retVal);
+    TRACING_EXIT(ClGetPlatformIDs, &retVal);
     return retVal;
 }
 
@@ -143,7 +143,7 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
                                      size_t paramValueSize,
                                      void *paramValue,
                                      size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetPlatformInfo, &platform, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetPlatformInfo, &platform, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_INVALID_PLATFORM;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
@@ -156,7 +156,7 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
         retVal = pPlatform->getInfo(paramName, paramValueSize,
                                     paramValue, paramValueSizeRet);
     }
-    TRACING_EXIT(clGetPlatformInfo, &retVal);
+    TRACING_EXIT(ClGetPlatformInfo, &retVal);
     return retVal;
 }
 
@@ -178,7 +178,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_uint numEntries,
                                   cl_device_id *devices,
                                   cl_uint *numDevices) {
-    TRACING_ENTER(clGetDeviceIDs, &platform, &deviceType, &numEntries, &devices, &numDevices);
+    TRACING_ENTER(ClGetDeviceIDs, &platform, &deviceType, &numEntries, &devices, &numDevices);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform,
@@ -284,7 +284,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         if (retNum == 0)
             retVal = CL_DEVICE_NOT_FOUND;
     } while (false);
-    TRACING_EXIT(clGetDeviceIDs, &retVal);
+    TRACING_EXIT(ClGetDeviceIDs, &retVal);
     return retVal;
 }
 
@@ -293,7 +293,7 @@ cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
                                    size_t paramValueSize,
                                    void *paramValue,
                                    size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetDeviceInfo, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetDeviceInfo, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clDevice", device, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", NEO::fileLoggerInstance().infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet", paramValueSizeRet);
@@ -303,7 +303,7 @@ cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
         retVal = pDevice->getDeviceInfo(paramName, paramValueSize,
                                         paramValue, paramValueSizeRet);
     }
-    TRACING_EXIT(clGetDeviceInfo, &retVal);
+    TRACING_EXIT(ClGetDeviceInfo, &retVal);
     return retVal;
 }
 
@@ -350,7 +350,7 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
 }
 
 cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
-    TRACING_ENTER(clRetainDevice, &device);
+    TRACING_ENTER(ClRetainDevice, &device);
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device);
@@ -360,12 +360,12 @@ cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
         retVal = CL_SUCCESS;
     }
 
-    TRACING_EXIT(clRetainDevice, &retVal);
+    TRACING_EXIT(ClRetainDevice, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
-    TRACING_ENTER(clReleaseDevice, &device);
+    TRACING_ENTER(ClReleaseDevice, &device);
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device);
@@ -375,7 +375,7 @@ cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
         retVal = CL_SUCCESS;
     }
 
-    TRACING_EXIT(clReleaseDevice, &retVal);
+    TRACING_EXIT(ClReleaseDevice, &retVal);
     return retVal;
 }
 
@@ -386,7 +386,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
                                                                      size_t, void *),
                                        void *userData,
                                        cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateContext, &properties, &numDevices, &devices, &funcNotify, &userData, &errcodeRet);
+    TRACING_ENTER(ClCreateContext, &properties, &numDevices, &devices, &funcNotify, &userData, &errcodeRet);
 
     cl_int retVal = CL_SUCCESS;
     cl_context context = nullptr;
@@ -433,7 +433,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    TRACING_EXIT(clCreateContext, &context);
+    TRACING_EXIT(ClCreateContext, &context);
     return context;
 }
 
@@ -443,7 +443,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
                                                                              size_t, void *),
                                                void *userData,
                                                cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateContextFromType, &properties, &deviceType, &funcNotify, &userData, &errcodeRet);
+    TRACING_ENTER(ClCreateContextFromType, &properties, &deviceType, &funcNotify, &userData, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("properties", properties, "deviceType", deviceType, "funcNotify", funcNotify, "userData", userData);
@@ -478,39 +478,39 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
-    TRACING_EXIT(clCreateContextFromType, (cl_context *)&pContext);
+    TRACING_EXIT(ClCreateContextFromType, (cl_context *)&pContext);
     return pContext;
 }
 
 cl_int CL_API_CALL clRetainContext(cl_context context) {
-    TRACING_ENTER(clRetainContext, &context);
+    TRACING_ENTER(ClRetainContext, &context);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context);
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->retain();
-        TRACING_EXIT(clRetainContext, &retVal);
+        TRACING_EXIT(ClRetainContext, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_CONTEXT;
-    TRACING_EXIT(clRetainContext, &retVal);
+    TRACING_EXIT(ClRetainContext, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseContext(cl_context context) {
-    TRACING_ENTER(clReleaseContext, &context);
+    TRACING_ENTER(ClReleaseContext, &context);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context);
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->release();
-        TRACING_EXIT(clReleaseContext, &retVal);
+        TRACING_EXIT(ClReleaseContext, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_CONTEXT;
-    TRACING_EXIT(clReleaseContext, &retVal);
+    TRACING_EXIT(ClReleaseContext, &retVal);
     return retVal;
 }
 
@@ -519,7 +519,7 @@ cl_int CL_API_CALL clGetContextInfo(cl_context context,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetContextInfo, &context, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetContextInfo, &context, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto retVal = CL_INVALID_CONTEXT;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -534,7 +534,7 @@ cl_int CL_API_CALL clGetContextInfo(cl_context context,
                                    paramValue, paramValueSizeRet);
     }
 
-    TRACING_EXIT(clGetContextInfo, &retVal);
+    TRACING_EXIT(ClGetContextInfo, &retVal);
     return retVal;
 }
 
@@ -542,7 +542,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
                                                   cl_device_id device,
                                                   const cl_command_queue_properties properties,
                                                   cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateCommandQueue, &context, &device, (cl_command_queue_properties *)&properties, &errcodeRet);
+    TRACING_ENTER(ClCreateCommandQueue, &context, &device, (cl_command_queue_properties *)&properties, &errcodeRet);
     cl_command_queue commandQueue = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     cl_int retVal = CL_SUCCESS;
@@ -596,38 +596,38 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
 
     err.set(retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
-    TRACING_EXIT(clCreateCommandQueue, &commandQueue);
+    TRACING_EXIT(ClCreateCommandQueue, &commandQueue);
     return commandQueue;
 }
 
 cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
-    TRACING_ENTER(clRetainCommandQueue, &commandQueue);
+    TRACING_ENTER(ClRetainCommandQueue, &commandQueue);
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
     retainQueue(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
-        TRACING_EXIT(clRetainCommandQueue, &retVal);
+        TRACING_EXIT(ClRetainCommandQueue, &retVal);
         return retVal;
     }
 
-    TRACING_EXIT(clRetainCommandQueue, &retVal);
+    TRACING_EXIT(ClRetainCommandQueue, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
-    TRACING_ENTER(clReleaseCommandQueue, &commandQueue);
+    TRACING_ENTER(ClReleaseCommandQueue, &commandQueue);
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
 
     releaseQueue(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
-        TRACING_EXIT(clReleaseCommandQueue, &retVal);
+        TRACING_EXIT(ClReleaseCommandQueue, &retVal);
         return retVal;
     }
 
-    TRACING_EXIT(clReleaseCommandQueue, &retVal);
+    TRACING_EXIT(ClReleaseCommandQueue, &retVal);
     return retVal;
 }
 
@@ -636,7 +636,7 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
                                          size_t paramValueSize,
                                          void *paramValue,
                                          size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetCommandQueueInfo, &commandQueue, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetCommandQueueInfo, &commandQueue, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
@@ -648,11 +648,11 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
     getQueueInfo(commandQueue, paramName, paramValueSize, paramValue, paramValueSizeRet, retVal);
     // if host queue not found - try to query device queue
     if (retVal == CL_SUCCESS) {
-        TRACING_EXIT(clGetCommandQueueInfo, &retVal);
+        TRACING_EXIT(ClGetCommandQueueInfo, &retVal);
         return retVal;
     }
 
-    TRACING_EXIT(clGetCommandQueueInfo, &retVal);
+    TRACING_EXIT(ClGetCommandQueueInfo, &retVal);
     return retVal;
 }
 
@@ -661,14 +661,14 @@ cl_int CL_API_CALL clSetCommandQueueProperty(cl_command_queue commandQueue,
                                              cl_command_queue_properties properties,
                                              cl_bool enable,
                                              cl_command_queue_properties *oldProperties) {
-    TRACING_ENTER(clSetCommandQueueProperty, &commandQueue, &properties, &enable, &oldProperties);
+    TRACING_ENTER(ClSetCommandQueueProperty, &commandQueue, &properties, &enable, &oldProperties);
     cl_int retVal = CL_INVALID_VALUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "properties", properties,
                    "enable", enable,
                    "oldProperties", oldProperties);
-    TRACING_EXIT(clSetCommandQueueProperty, &retVal);
+    TRACING_EXIT(ClSetCommandQueueProperty, &retVal);
     return retVal;
 }
 
@@ -681,7 +681,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
         size += (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedBufferSize.get());
     }
 
-    TRACING_ENTER(clCreateBuffer, &context, &flags, &size, &hostPtr, &errcodeRet);
+    TRACING_ENTER(ClCreateBuffer, &context, &flags, &size, &hostPtr, &errcodeRet);
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_flags", flags,
                    "size", size,
@@ -696,7 +696,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("buffer", buffer);
-    TRACING_EXIT(clCreateBuffer, &buffer);
+    TRACING_EXIT(ClCreateBuffer, &buffer);
     return buffer;
 }
 
@@ -759,7 +759,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
                                      cl_buffer_create_type bufferCreateType,
                                      const void *bufferCreateInfo,
                                      cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateSubBuffer, &buffer, &flags, &bufferCreateType, &bufferCreateInfo, &errcodeRet);
+    TRACING_ENTER(ClCreateSubBuffer, &buffer, &flags, &bufferCreateType, &bufferCreateInfo, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("buffer", buffer,
@@ -855,7 +855,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateSubBuffer, &subBuffer);
+    TRACING_EXIT(ClCreateSubBuffer, &subBuffer);
     return subBuffer;
 }
 
@@ -865,7 +865,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                                  const cl_image_desc *imageDesc,
                                  void *hostPtr,
                                  cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateImage, &context, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
+    TRACING_ENTER(ClCreateImage, &context, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
 
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_flags", flags,
@@ -893,7 +893,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image", image);
-    TRACING_EXIT(clCreateImage, &image);
+    TRACING_EXIT(ClCreateImage, &image);
     return image;
 }
 
@@ -974,7 +974,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                                    size_t imageRowPitch,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateImage2D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageRowPitch, &hostPtr, &errcodeRet);
+    TRACING_ENTER(ClCreateImage2D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageRowPitch, &hostPtr, &errcodeRet);
 
     DBG_LOG_INPUTS("context", context,
                    "flags", flags,
@@ -1007,7 +1007,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image 2D", image2D);
-    TRACING_EXIT(clCreateImage2D, &image2D);
+    TRACING_EXIT(ClCreateImage2D, &image2D);
     return image2D;
 }
 
@@ -1022,7 +1022,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
                                    size_t imageSlicePitch,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateImage3D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageDepth, &imageRowPitch, &imageSlicePitch, &hostPtr, &errcodeRet);
+    TRACING_ENTER(ClCreateImage3D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageDepth, &imageRowPitch, &imageSlicePitch, &hostPtr, &errcodeRet);
 
     DBG_LOG_INPUTS("context", context,
                    "flags", flags,
@@ -1059,12 +1059,12 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image 3D", image3D);
-    TRACING_EXIT(clCreateImage3D, &image3D);
+    TRACING_EXIT(ClCreateImage3D, &image3D);
     return image3D;
 }
 
 cl_int CL_API_CALL clRetainMemObject(cl_mem memobj) {
-    TRACING_ENTER(clRetainMemObject, &memobj);
+    TRACING_ENTER(ClRetainMemObject, &memobj);
     cl_int retVal = CL_INVALID_MEM_OBJECT;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("memobj", memobj);
@@ -1074,16 +1074,16 @@ cl_int CL_API_CALL clRetainMemObject(cl_mem memobj) {
     if (pMemObj) {
         pMemObj->retain();
         retVal = CL_SUCCESS;
-        TRACING_EXIT(clRetainMemObject, &retVal);
+        TRACING_EXIT(ClRetainMemObject, &retVal);
         return retVal;
     }
 
-    TRACING_EXIT(clRetainMemObject, &retVal);
+    TRACING_EXIT(ClRetainMemObject, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
-    TRACING_ENTER(clReleaseMemObject, &memobj);
+    TRACING_ENTER(ClReleaseMemObject, &memobj);
     cl_int retVal = CL_INVALID_MEM_OBJECT;
     API_ENTER(&retVal);
 
@@ -1093,11 +1093,11 @@ cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
     if (pMemObj) {
         pMemObj->release();
         retVal = CL_SUCCESS;
-        TRACING_EXIT(clReleaseMemObject, &retVal);
+        TRACING_EXIT(ClReleaseMemObject, &retVal);
         return retVal;
     }
 
-    TRACING_EXIT(clReleaseMemObject, &retVal);
+    TRACING_EXIT(ClReleaseMemObject, &retVal);
     return retVal;
 }
 
@@ -1107,7 +1107,7 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
                                               cl_uint numEntries,
                                               cl_image_format *imageFormats,
                                               cl_uint *numImageFormats) {
-    TRACING_ENTER(clGetSupportedImageFormats, &context, &flags, &imageType, &numEntries, &imageFormats, &numImageFormats);
+    TRACING_ENTER(ClGetSupportedImageFormats, &context, &flags, &imageType, &numEntries, &imageFormats, &numImageFormats);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1132,7 +1132,7 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
         retVal = CL_INVALID_CONTEXT;
     }
 
-    TRACING_EXIT(clGetSupportedImageFormats, &retVal);
+    TRACING_EXIT(ClGetSupportedImageFormats, &retVal);
     return retVal;
 }
 
@@ -1141,7 +1141,7 @@ cl_int CL_API_CALL clGetMemObjectInfo(cl_mem memobj,
                                       size_t paramValueSize,
                                       void *paramValue,
                                       size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetMemObjectInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetMemObjectInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("memobj", memobj,
@@ -1152,13 +1152,13 @@ cl_int CL_API_CALL clGetMemObjectInfo(cl_mem memobj,
     MemObj *pMemObj = nullptr;
     retVal = validateObjects(withCastToInternal(memobj, &pMemObj));
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clGetMemObjectInfo, &retVal);
+        TRACING_EXIT(ClGetMemObjectInfo, &retVal);
         return retVal;
     }
 
     retVal = pMemObj->getMemObjectInfo(paramName, paramValueSize,
                                        paramValue, paramValueSizeRet);
-    TRACING_EXIT(clGetMemObjectInfo, &retVal);
+    TRACING_EXIT(ClGetMemObjectInfo, &retVal);
     return retVal;
 }
 
@@ -1167,7 +1167,7 @@ cl_int CL_API_CALL clGetImageInfo(cl_mem image,
                                   size_t paramValueSize,
                                   void *paramValue,
                                   size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetImageInfo, &image, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetImageInfo, &image, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("image", image,
@@ -1177,19 +1177,19 @@ cl_int CL_API_CALL clGetImageInfo(cl_mem image,
                    "paramValueSizeRet", paramValueSizeRet);
     retVal = validateObjects(image);
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clGetImageInfo, &retVal);
+        TRACING_EXIT(ClGetImageInfo, &retVal);
         return retVal;
     }
 
     auto pImgObj = castToObject<Image>(image);
     if (pImgObj == nullptr) {
         retVal = CL_INVALID_MEM_OBJECT;
-        TRACING_EXIT(clGetImageInfo, &retVal);
+        TRACING_EXIT(ClGetImageInfo, &retVal);
         return retVal;
     }
 
     retVal = pImgObj->getImageInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(clGetImageInfo, &retVal);
+    TRACING_EXIT(ClGetImageInfo, &retVal);
     return retVal;
 }
 
@@ -1234,20 +1234,20 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
 cl_int CL_API_CALL clSetMemObjectDestructorCallback(cl_mem memobj,
                                                     void(CL_CALLBACK *funcNotify)(cl_mem, void *),
                                                     void *userData) {
-    TRACING_ENTER(clSetMemObjectDestructorCallback, &memobj, &funcNotify, &userData);
+    TRACING_ENTER(ClSetMemObjectDestructorCallback, &memobj, &funcNotify, &userData);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("memobj", memobj, "funcNotify", funcNotify, "userData", userData);
     retVal = validateObjects(memobj, (void *)funcNotify);
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clSetMemObjectDestructorCallback, &retVal);
+        TRACING_EXIT(ClSetMemObjectDestructorCallback, &retVal);
         return retVal;
     }
 
     auto pMemObj = castToObject<MemObj>(memobj);
     retVal = pMemObj->setDestructorCallback(funcNotify, userData);
-    TRACING_EXIT(clSetMemObjectDestructorCallback, &retVal);
+    TRACING_EXIT(ClSetMemObjectDestructorCallback, &retVal);
     return retVal;
 }
 
@@ -1256,7 +1256,7 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
                                        cl_addressing_mode addressingMode,
                                        cl_filter_mode filterMode,
                                        cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateSampler, &context, &normalizedCoords, &addressingMode, &filterMode, &errcodeRet);
+    TRACING_ENTER(ClCreateSampler, &context, &normalizedCoords, &addressingMode, &filterMode, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1283,39 +1283,39 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateSampler, &sampler);
+    TRACING_EXIT(ClCreateSampler, &sampler);
     return sampler;
 }
 
 cl_int CL_API_CALL clRetainSampler(cl_sampler sampler) {
-    TRACING_ENTER(clRetainSampler, &sampler);
+    TRACING_ENTER(ClRetainSampler, &sampler);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("sampler", sampler);
     auto pSampler = castToObject<Sampler>(sampler);
     if (pSampler) {
         pSampler->retain();
-        TRACING_EXIT(clRetainSampler, &retVal);
+        TRACING_EXIT(ClRetainSampler, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_SAMPLER;
-    TRACING_EXIT(clRetainSampler, &retVal);
+    TRACING_EXIT(ClRetainSampler, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseSampler(cl_sampler sampler) {
-    TRACING_ENTER(clReleaseSampler, &sampler);
+    TRACING_ENTER(ClReleaseSampler, &sampler);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("sampler", sampler);
     auto pSampler = castToObject<Sampler>(sampler);
     if (pSampler) {
         pSampler->release();
-        TRACING_EXIT(clReleaseSampler, &retVal);
+        TRACING_EXIT(ClReleaseSampler, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_SAMPLER;
-    TRACING_EXIT(clReleaseSampler, &retVal);
+    TRACING_EXIT(ClReleaseSampler, &retVal);
     return retVal;
 }
 
@@ -1324,7 +1324,7 @@ cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetSamplerInfo, &sampler, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetSamplerInfo, &sampler, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_INVALID_SAMPLER;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("sampler", sampler,
@@ -1340,7 +1340,7 @@ cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
                                    paramValue, paramValueSizeRet);
     }
 
-    TRACING_EXIT(clGetSamplerInfo, &retVal);
+    TRACING_EXIT(ClGetSamplerInfo, &retVal);
     return retVal;
 }
 
@@ -1349,7 +1349,7 @@ cl_program CL_API_CALL clCreateProgramWithSource(cl_context context,
                                                  const char **strings,
                                                  const size_t *lengths,
                                                  cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateProgramWithSource, &context, &count, &strings, &lengths, &errcodeRet);
+    TRACING_ENTER(ClCreateProgramWithSource, &context, &count, &strings, &lengths, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1373,7 +1373,7 @@ cl_program CL_API_CALL clCreateProgramWithSource(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateProgramWithSource, &program);
+    TRACING_EXIT(ClCreateProgramWithSource, &program);
     return program;
 }
 
@@ -1384,7 +1384,7 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
                                                  const unsigned char **binaries,
                                                  cl_int *binaryStatus,
                                                  cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateProgramWithBinary, &context, &numDevices, &deviceList, &lengths, &binaries, &binaryStatus, &errcodeRet);
+    TRACING_ENTER(ClCreateProgramWithBinary, &context, &numDevices, &deviceList, &lengths, &binaries, &binaryStatus, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1429,7 +1429,7 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateProgramWithBinary, &program);
+    TRACING_EXIT(ClCreateProgramWithBinary, &program);
     return program;
 }
 
@@ -1437,7 +1437,7 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
                                              const void *il,
                                              size_t length,
                                              cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateProgramWithIL, &context, &il, &length, &errcodeRet);
+    TRACING_ENTER(ClCreateProgramWithIl, &context, &il, &length, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1459,7 +1459,7 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateProgramWithIL, &program);
+    TRACING_EXIT(ClCreateProgramWithIl, &program);
     return program;
 }
 
@@ -1468,7 +1468,7 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
                                                          const cl_device_id *deviceList,
                                                          const char *kernelNames,
                                                          cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateProgramWithBuiltInKernels, &context, &numDevices, &deviceList, &kernelNames, &errcodeRet);
+    TRACING_ENTER(ClCreateProgramWithBuiltInKernels, &context, &numDevices, &deviceList, &kernelNames, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -1505,39 +1505,39 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateProgramWithBuiltInKernels, &program);
+    TRACING_EXIT(ClCreateProgramWithBuiltInKernels, &program);
     return program;
 }
 
 cl_int CL_API_CALL clRetainProgram(cl_program program) {
-    TRACING_ENTER(clRetainProgram, &program);
+    TRACING_ENTER(ClRetainProgram, &program);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("program", program);
     auto pProgram = castToObject<Program>(program);
     if (pProgram) {
         pProgram->retain();
-        TRACING_EXIT(clRetainProgram, &retVal);
+        TRACING_EXIT(ClRetainProgram, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_PROGRAM;
-    TRACING_EXIT(clRetainProgram, &retVal);
+    TRACING_EXIT(ClRetainProgram, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseProgram(cl_program program) {
-    TRACING_ENTER(clReleaseProgram, &program);
+    TRACING_ENTER(ClReleaseProgram, &program);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("program", program);
     auto pProgram = castToObject<Program>(program);
     if (pProgram) {
         pProgram->release();
-        TRACING_EXIT(clReleaseProgram, &retVal);
+        TRACING_EXIT(ClReleaseProgram, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_PROGRAM;
-    TRACING_EXIT(clReleaseProgram, &retVal);
+    TRACING_EXIT(ClReleaseProgram, &retVal);
     return retVal;
 }
 
@@ -1547,7 +1547,7 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
                                   const char *options,
                                   void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                   void *userData) {
-    TRACING_ENTER(clBuildProgram, &program, &numDevices, &deviceList, &options, &funcNotify, &userData);
+    TRACING_ENTER(ClBuildProgram, &program, &numDevices, &deviceList, &options, &funcNotify, &userData);
     cl_int retVal = CL_INVALID_PROGRAM;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "funcNotify", funcNotify, "userData", userData);
@@ -1572,7 +1572,7 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
         pProgram->invokeCallback(funcNotify, userData);
     }
 
-    TRACING_EXIT(clBuildProgram, &retVal);
+    TRACING_EXIT(ClBuildProgram, &retVal);
     return retVal;
 }
 
@@ -1585,7 +1585,7 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
                                     const char **headerIncludeNames,
                                     void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                     void *userData) {
-    TRACING_ENTER(clCompileProgram, &program, &numDevices, &deviceList, &options, &numInputHeaders, &inputHeaders, &headerIncludeNames, &funcNotify, &userData);
+    TRACING_ENTER(ClCompileProgram, &program, &numDevices, &deviceList, &options, &numInputHeaders, &inputHeaders, &headerIncludeNames, &funcNotify, &userData);
     cl_int retVal = CL_INVALID_PROGRAM;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "numInputHeaders", numInputHeaders);
@@ -1612,7 +1612,7 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
         pProgram->invokeCallback(funcNotify, userData);
     }
 
-    TRACING_EXIT(clCompileProgram, &retVal);
+    TRACING_EXIT(ClCompileProgram, &retVal);
     return retVal;
 }
 
@@ -1625,7 +1625,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
                                      void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                                      void *userData,
                                      cl_int *errcodeRet) {
-    TRACING_ENTER(clLinkProgram, &context, &numDevices, &deviceList, &options, &numInputPrograms, &inputPrograms, &funcNotify, &userData, &errcodeRet);
+    TRACING_ENTER(ClLinkProgram, &context, &numDevices, &deviceList, &options, &numInputPrograms, &inputPrograms, &funcNotify, &userData, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_context", context, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "numInputPrograms", numInputPrograms);
@@ -1652,19 +1652,19 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 
     err.set(retVal);
 
-    TRACING_EXIT(clLinkProgram, (cl_program *)&pProgram);
+    TRACING_EXIT(ClLinkProgram, (cl_program *)&pProgram);
     return pProgram;
 }
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {
-    TRACING_ENTER(clUnloadPlatformCompiler, &platform);
+    TRACING_ENTER(ClUnloadPlatformCompiler, &platform);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform);
 
     retVal = validateObject(platform);
 
-    TRACING_EXIT(clUnloadPlatformCompiler, &retVal);
+    TRACING_EXIT(ClUnloadPlatformCompiler, &retVal);
     return retVal;
 }
 
@@ -1673,7 +1673,7 @@ cl_int CL_API_CALL clGetProgramInfo(cl_program program,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetProgramInfo, &program, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetProgramInfo, &program, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "paramName", paramName,
@@ -1691,7 +1691,7 @@ cl_int CL_API_CALL clGetProgramInfo(cl_program program,
             paramValue,
             paramValueSizeRet);
     }
-    TRACING_EXIT(clGetProgramInfo, &retVal);
+    TRACING_EXIT(ClGetProgramInfo, &retVal);
     return retVal;
 }
 
@@ -1701,7 +1701,7 @@ cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
                                          size_t paramValueSize,
                                          void *paramValue,
                                          size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetProgramBuildInfo, &program, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetProgramBuildInfo, &program, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "cl_device_id", device,
@@ -1726,14 +1726,14 @@ cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
             paramValue,
             paramValueSizeRet);
     }
-    TRACING_EXIT(clGetProgramBuildInfo, &retVal);
+    TRACING_EXIT(ClGetProgramBuildInfo, &retVal);
     return retVal;
 }
 
 cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
                                      const char *kernelName,
                                      cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateKernel, &clProgram, &kernelName, &errcodeRet);
+    TRACING_ENTER(ClCreateKernel, &clProgram, &kernelName, &errcodeRet);
     API_ENTER(errcodeRet);
     Program *pProgram = nullptr;
     cl_kernel kernel = nullptr;
@@ -1787,7 +1787,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
         *errcodeRet = retVal;
     }
     gtpinNotifyKernelCreate(kernel);
-    TRACING_EXIT(clCreateKernel, &kernel);
+    TRACING_EXIT(ClCreateKernel, &kernel);
     return kernel;
 }
 
@@ -1795,7 +1795,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                                             cl_uint numKernels,
                                             cl_kernel *kernels,
                                             cl_uint *numKernelsRet) {
-    TRACING_ENTER(clCreateKernelsInProgram, &clProgram, &numKernels, &kernels, &numKernelsRet);
+    TRACING_ENTER(ClCreateKernelsInProgram, &clProgram, &numKernels, &kernels, &numKernelsRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", clProgram,
@@ -1809,7 +1809,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         if (kernels) {
             if (numKernels < numKernelsInProgram) {
                 retVal = CL_INVALID_VALUE;
-                TRACING_EXIT(clCreateKernelsInProgram, &retVal);
+                TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
                 return retVal;
             }
 
@@ -1833,43 +1833,43 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         if (numKernelsRet) {
             *numKernelsRet = static_cast<cl_uint>(numKernelsInProgram);
         }
-        TRACING_EXIT(clCreateKernelsInProgram, &retVal);
+        TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_PROGRAM;
-    TRACING_EXIT(clCreateKernelsInProgram, &retVal);
+    TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clRetainKernel(cl_kernel kernel) {
-    TRACING_ENTER(clRetainKernel, &kernel);
+    TRACING_ENTER(ClRetainKernel, &kernel);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("kernel", kernel);
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
     if (pMultiDeviceKernel) {
         pMultiDeviceKernel->retain();
-        TRACING_EXIT(clRetainKernel, &retVal);
+        TRACING_EXIT(ClRetainKernel, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_KERNEL;
-    TRACING_EXIT(clRetainKernel, &retVal);
+    TRACING_EXIT(ClRetainKernel, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseKernel(cl_kernel kernel) {
-    TRACING_ENTER(clReleaseKernel, &kernel);
+    TRACING_ENTER(ClReleaseKernel, &kernel);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("kernel", kernel);
     auto pMultiDeviceKernel = castToObject<MultiDeviceKernel>(kernel);
     if (pMultiDeviceKernel) {
         pMultiDeviceKernel->release();
-        TRACING_EXIT(clReleaseKernel, &retVal);
+        TRACING_EXIT(ClReleaseKernel, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_KERNEL;
-    TRACING_EXIT(clReleaseKernel, &retVal);
+    TRACING_EXIT(ClReleaseKernel, &retVal);
     return retVal;
 }
 
@@ -1877,7 +1877,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
                                   cl_uint argIndex,
                                   size_t argSize,
                                   const void *argValue) {
-    TRACING_ENTER(clSetKernelArg, &kernel, &argIndex, &argSize, &argValue);
+    TRACING_ENTER(ClSetKernelArg, &kernel, &argIndex, &argSize, &argValue);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
@@ -1904,7 +1904,7 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
         break;
 
     } while (false);
-    TRACING_EXIT(clSetKernelArg, &retVal);
+    TRACING_EXIT(ClSetKernelArg, &retVal);
     return retVal;
 }
 
@@ -1913,7 +1913,7 @@ cl_int CL_API_CALL clGetKernelInfo(cl_kernel kernel,
                                    size_t paramValueSize,
                                    void *paramValue,
                                    size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetKernelInfo, &kernel, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetKernelInfo, &kernel, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("kernel", kernel, "paramName", paramName,
@@ -1929,7 +1929,7 @@ cl_int CL_API_CALL clGetKernelInfo(cl_kernel kernel,
             paramValue,
             paramValueSizeRet);
     }
-    TRACING_EXIT(clGetKernelInfo, &retVal);
+    TRACING_EXIT(ClGetKernelInfo, &retVal);
     return retVal;
 }
 
@@ -1939,7 +1939,7 @@ cl_int CL_API_CALL clGetKernelArgInfo(cl_kernel kernel,
                                       size_t paramValueSize,
                                       void *paramValue,
                                       size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetKernelArgInfo, &kernel, &argIndx, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetKernelArgInfo, &kernel, &argIndx, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -1959,7 +1959,7 @@ cl_int CL_API_CALL clGetKernelArgInfo(cl_kernel kernel,
                        paramValue,
                        paramValueSizeRet)
                  : CL_INVALID_KERNEL;
-    TRACING_EXIT(clGetKernelArgInfo, &retVal);
+    TRACING_EXIT(ClGetKernelArgInfo, &retVal);
     return retVal;
 }
 
@@ -1969,7 +1969,7 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
                                             size_t paramValueSize,
                                             void *paramValue,
                                             size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetKernelWorkGroupInfo, &kernel, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetKernelWorkGroupInfo, &kernel, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -1999,13 +1999,13 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
             paramValue,
             paramValueSizeRet);
     }
-    TRACING_EXIT(clGetKernelWorkGroupInfo, &retVal);
+    TRACING_EXIT(ClGetKernelWorkGroupInfo, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clWaitForEvents(cl_uint numEvents,
                                    const cl_event *eventList) {
-    TRACING_ENTER(clWaitForEvents, &numEvents, &eventList);
+    TRACING_ENTER(ClWaitForEvents, &numEvents, &eventList);
 
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -2015,12 +2015,12 @@ cl_int CL_API_CALL clWaitForEvents(cl_uint numEvents,
         retVal = validateObjects(eventList[i]);
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clWaitForEvents, &retVal);
+        TRACING_EXIT(ClWaitForEvents, &retVal);
         return retVal;
     }
 
     retVal = Event::waitForEvents(numEvents, eventList);
-    TRACING_EXIT(clWaitForEvents, &retVal);
+    TRACING_EXIT(ClWaitForEvents, &retVal);
     return retVal;
 }
 
@@ -2029,7 +2029,7 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
                                   size_t paramValueSize,
                                   void *paramValue,
                                   size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetEventInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetEventInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2042,7 +2042,7 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     Event *neoEvent = castToObject<Event>(event);
     if (neoEvent == nullptr) {
         retVal = CL_INVALID_EVENT;
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     }
 
@@ -2052,7 +2052,7 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     switch (paramName) {
     default: {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     }
     // From OCL spec :
@@ -2061,20 +2061,20 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     case CL_EVENT_COMMAND_QUEUE: {
         if (neoEvent->isUserEvent()) {
             retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_queue>(nullptr));
-            TRACING_EXIT(clGetEventInfo, &retVal);
+            TRACING_EXIT(ClGetEventInfo, &retVal);
             return retVal;
         }
         retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_queue>(neoEvent->getCommandQueue()));
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     }
     case CL_EVENT_CONTEXT:
         retVal = changeGetInfoStatusToCLResultType(info.set<cl_context>(neoEvent->getContext()));
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_TYPE:
         retVal = changeGetInfoStatusToCLResultType(info.set<cl_command_type>(neoEvent->getCommandType()));
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
         if (DebugManager.flags.SkipFlushingEventsOnGetStatusCalls.get()) {
@@ -2094,23 +2094,23 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
                 executionStatus = CL_SUBMITTED;
             }
             retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(executionStatus));
-            TRACING_EXIT(clGetEventInfo, &retVal);
+            TRACING_EXIT(ClGetEventInfo, &retVal);
             return retVal;
         }
 
         retVal = changeGetInfoStatusToCLResultType(info.set<cl_int>(neoEvent->updateEventAndReturnCurrentStatus()));
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     case CL_EVENT_REFERENCE_COUNT:
         retVal = changeGetInfoStatusToCLResultType(info.set<cl_uint>(neoEvent->getReference()));
-        TRACING_EXIT(clGetEventInfo, &retVal);
+        TRACING_EXIT(ClGetEventInfo, &retVal);
         return retVal;
     }
 }
 
 cl_event CL_API_CALL clCreateUserEvent(cl_context context,
                                        cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateUserEvent, &context, &errcodeRet);
+    TRACING_ENTER(ClCreateUserEvent, &context, &errcodeRet);
     API_ENTER(errcodeRet);
 
     DBG_LOG_INPUTS("context", context);
@@ -2121,7 +2121,7 @@ cl_event CL_API_CALL clCreateUserEvent(cl_context context,
     if (ctx == nullptr) {
         err.set(CL_INVALID_CONTEXT);
         cl_event retVal = nullptr;
-        TRACING_EXIT(clCreateUserEvent, &retVal);
+        TRACING_EXIT(ClCreateUserEvent, &retVal);
         return retVal;
     }
 
@@ -2129,12 +2129,12 @@ cl_event CL_API_CALL clCreateUserEvent(cl_context context,
     cl_event userClEvent = userEvent;
     DBG_LOG_INPUTS("cl_event", userClEvent, "UserEvent", userEvent);
 
-    TRACING_EXIT(clCreateUserEvent, &userClEvent);
+    TRACING_EXIT(ClCreateUserEvent, &userClEvent);
     return userClEvent;
 }
 
 cl_int CL_API_CALL clRetainEvent(cl_event event) {
-    TRACING_ENTER(clRetainEvent, &event);
+    TRACING_ENTER(ClRetainEvent, &event);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2143,16 +2143,16 @@ cl_int CL_API_CALL clRetainEvent(cl_event event) {
 
     if (pEvent) {
         pEvent->retain();
-        TRACING_EXIT(clRetainEvent, &retVal);
+        TRACING_EXIT(ClRetainEvent, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_EVENT;
-    TRACING_EXIT(clRetainEvent, &retVal);
+    TRACING_EXIT(ClRetainEvent, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clReleaseEvent(cl_event event) {
-    TRACING_ENTER(clReleaseEvent, &event);
+    TRACING_ENTER(ClReleaseEvent, &event);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     auto pEvent = castToObject<Event>(event);
@@ -2160,17 +2160,17 @@ cl_int CL_API_CALL clReleaseEvent(cl_event event) {
 
     if (pEvent) {
         pEvent->release();
-        TRACING_EXIT(clReleaseEvent, &retVal);
+        TRACING_EXIT(ClReleaseEvent, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_EVENT;
-    TRACING_EXIT(clReleaseEvent, &retVal);
+    TRACING_EXIT(ClReleaseEvent, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
                                         cl_int executionStatus) {
-    TRACING_ENTER(clSetUserEventStatus, &event, &executionStatus);
+    TRACING_ENTER(ClSetUserEventStatus, &event, &executionStatus);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     auto userEvent = castToObject<UserEvent>(event);
@@ -2178,24 +2178,24 @@ cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
 
     if (userEvent == nullptr) {
         retVal = CL_INVALID_EVENT;
-        TRACING_EXIT(clSetUserEventStatus, &retVal);
+        TRACING_EXIT(ClSetUserEventStatus, &retVal);
         return retVal;
     }
 
     if (executionStatus > CL_COMPLETE) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clSetUserEventStatus, &retVal);
+        TRACING_EXIT(ClSetUserEventStatus, &retVal);
         return retVal;
     }
 
     if (!userEvent->isInitialEventStatus()) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clSetUserEventStatus, &retVal);
+        TRACING_EXIT(ClSetUserEventStatus, &retVal);
         return retVal;
     }
 
     userEvent->setStatus(executionStatus);
-    TRACING_EXIT(clSetUserEventStatus, &retVal);
+    TRACING_EXIT(ClSetUserEventStatus, &retVal);
     return retVal;
 }
 
@@ -2203,7 +2203,7 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
                                       cl_int commandExecCallbackType,
                                       void(CL_CALLBACK *funcNotify)(cl_event, cl_int, void *),
                                       void *userData) {
-    TRACING_ENTER(clSetEventCallback, &event, &commandExecCallbackType, &funcNotify, &userData);
+    TRACING_ENTER(ClSetEventCallback, &event, &commandExecCallbackType, &funcNotify, &userData);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     auto eventObject = castToObject<Event>(event);
@@ -2211,7 +2211,7 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
 
     if (eventObject == nullptr) {
         retVal = CL_INVALID_EVENT;
-        TRACING_EXIT(clSetEventCallback, &retVal);
+        TRACING_EXIT(ClSetEventCallback, &retVal);
         return retVal;
     }
     switch (commandExecCallbackType) {
@@ -2221,19 +2221,19 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
         break;
     default: {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clSetEventCallback, &retVal);
+        TRACING_EXIT(ClSetEventCallback, &retVal);
         return retVal;
     }
     }
     if (funcNotify == nullptr) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clSetEventCallback, &retVal);
+        TRACING_EXIT(ClSetEventCallback, &retVal);
         return retVal;
     }
 
     eventObject->tryFlushEvent();
     eventObject->addCallback(funcNotify, commandExecCallbackType, userData);
-    TRACING_EXIT(clSetEventCallback, &retVal);
+    TRACING_EXIT(ClSetEventCallback, &retVal);
     return retVal;
 }
 
@@ -2242,7 +2242,7 @@ cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
                                            size_t paramValueSize,
                                            void *paramValue,
                                            size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetEventProfilingInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetEventProfilingInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("event", event,
@@ -2254,7 +2254,7 @@ cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
 
     if (eventObject == nullptr) {
         retVal = CL_INVALID_EVENT;
-        TRACING_EXIT(clGetEventProfilingInfo, &retVal);
+        TRACING_EXIT(ClGetEventProfilingInfo, &retVal);
         return retVal;
     }
 
@@ -2262,12 +2262,12 @@ cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
                                                 paramValueSize,
                                                 paramValue,
                                                 paramValueSizeRet);
-    TRACING_EXIT(clGetEventProfilingInfo, &retVal);
+    TRACING_EXIT(ClGetEventProfilingInfo, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clFlush(cl_command_queue commandQueue) {
-    TRACING_ENTER(clFlush, &commandQueue);
+    TRACING_ENTER(ClFlush, &commandQueue);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
@@ -2276,12 +2276,12 @@ cl_int CL_API_CALL clFlush(cl_command_queue commandQueue) {
     retVal = pCommandQueue
                  ? pCommandQueue->flush()
                  : CL_INVALID_COMMAND_QUEUE;
-    TRACING_EXIT(clFlush, &retVal);
+    TRACING_EXIT(ClFlush, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clFinish(cl_command_queue commandQueue) {
-    TRACING_ENTER(clFinish, &commandQueue);
+    TRACING_ENTER(ClFinish, &commandQueue);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
@@ -2290,7 +2290,7 @@ cl_int CL_API_CALL clFinish(cl_command_queue commandQueue) {
     retVal = pCommandQueue
                  ? pCommandQueue->finish()
                  : CL_INVALID_COMMAND_QUEUE;
-    TRACING_EXIT(clFinish, &retVal);
+    TRACING_EXIT(ClFinish, &retVal);
     return retVal;
 }
 
@@ -2303,7 +2303,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
                                        cl_uint numEventsInWaitList,
                                        const cl_event *eventWaitList,
                                        cl_event *event) {
-    TRACING_ENTER(clEnqueueReadBuffer, &commandQueue, &buffer, &blockingRead, &offset, &cb, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueReadBuffer, &commandQueue, &buffer, &blockingRead, &offset, &cb, &ptr, &numEventsInWaitList, &eventWaitList, &event);
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pBuffer = nullptr;
 
@@ -2324,13 +2324,13 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
 
         if (pBuffer->readMemObjFlagsInvalid()) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueReadBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueReadBuffer, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueReadBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueReadBuffer, &retVal);
             return retVal;
         }
 
@@ -2347,7 +2347,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueReadBuffer, &retVal);
+    TRACING_EXIT(ClEnqueueReadBuffer, &retVal);
     return retVal;
 }
 
@@ -2365,7 +2365,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                            cl_uint numEventsInWaitList,
                                            const cl_event *eventWaitList,
                                            cl_event *event) {
-    TRACING_ENTER(clEnqueueReadBufferRect, &commandQueue, &buffer, &blockingRead, &bufferOrigin, &hostOrigin, &region, &bufferRowPitch, &bufferSlicePitch, &hostRowPitch, &hostSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueReadBufferRect, &commandQueue, &buffer, &blockingRead, &bufferOrigin, &hostOrigin, &region, &bufferRowPitch, &bufferSlicePitch, &hostRowPitch, &hostSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
@@ -2398,13 +2398,13 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         ptr);
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
         return retVal;
     }
 
     if (pBuffer->readMemObjFlagsInvalid()) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
         return retVal;
     }
 
@@ -2416,13 +2416,13 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                     hostSlicePitch,
                                     true) == false) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
         return retVal;
     }
 
@@ -2440,7 +2440,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         numEventsInWaitList,
         eventWaitList,
         event);
-    TRACING_EXIT(clEnqueueReadBufferRect, &retVal);
+    TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
     return retVal;
 }
 
@@ -2453,7 +2453,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
                                         cl_uint numEventsInWaitList,
                                         const cl_event *eventWaitList,
                                         cl_event *event) {
-    TRACING_ENTER(clEnqueueWriteBuffer, &commandQueue, &buffer, &blockingWrite, &offset, &cb, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueWriteBuffer, &commandQueue, &buffer, &blockingWrite, &offset, &cb, &ptr, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2475,13 +2475,13 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
 
         if (pBuffer->writeMemObjFlagsInvalid()) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueWriteBuffer, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueWriteBuffer, &retVal);
             return retVal;
         }
 
@@ -2498,7 +2498,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueWriteBuffer, &retVal);
+    TRACING_EXIT(ClEnqueueWriteBuffer, &retVal);
     return retVal;
 }
 
@@ -2516,7 +2516,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
                                             cl_uint numEventsInWaitList,
                                             const cl_event *eventWaitList,
                                             cl_event *event) {
-    TRACING_ENTER(clEnqueueWriteBufferRect, &commandQueue, &buffer, &blockingWrite, &bufferOrigin, &hostOrigin, &region, &bufferRowPitch, &bufferSlicePitch, &hostRowPitch, &hostSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueWriteBufferRect, &commandQueue, &buffer, &blockingWrite, &bufferOrigin, &hostOrigin, &region, &bufferRowPitch, &bufferSlicePitch, &hostRowPitch, &hostSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2539,13 +2539,13 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         ptr);
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
         return retVal;
     }
 
     if (pBuffer->writeMemObjFlagsInvalid()) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
         return retVal;
     }
 
@@ -2557,13 +2557,13 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
                                     hostSlicePitch,
                                     true) == false) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+        TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
         return retVal;
     }
 
@@ -2582,7 +2582,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         eventWaitList,
         event);
 
-    TRACING_EXIT(clEnqueueWriteBufferRect, &retVal);
+    TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
     return retVal;
 }
 
@@ -2595,7 +2595,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
                                        cl_uint numEventsInWaitList,
                                        const cl_event *eventWaitList,
                                        cl_event *event) {
-    TRACING_ENTER(clEnqueueFillBuffer, &commandQueue, &buffer, &pattern, &patternSize, &offset, &size, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueFillBuffer, &commandQueue, &buffer, &pattern, &patternSize, &offset, &size, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2619,7 +2619,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueFillBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueFillBuffer, &retVal);
             return retVal;
         }
 
@@ -2633,7 +2633,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
-    TRACING_EXIT(clEnqueueFillBuffer, &retVal);
+    TRACING_EXIT(ClEnqueueFillBuffer, &retVal);
     return retVal;
 }
 
@@ -2646,7 +2646,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
                                        cl_uint numEventsInWaitList,
                                        const cl_event *eventWaitList,
                                        cl_event *event) {
-    TRACING_ENTER(clEnqueueCopyBuffer, &commandQueue, &srcBuffer, &dstBuffer, &srcOffset, &dstOffset, &cb, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyBuffer, &commandQueue, &srcBuffer, &dstBuffer, &srcOffset, &dstOffset, &cb, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2670,13 +2670,13 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
         size_t dstSize = pDstBuffer->getSize();
         if (srcOffset + cb > srcSize || dstOffset + cb > dstSize) {
             retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBuffer, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBuffer, &retVal);
             return retVal;
         }
 
@@ -2691,7 +2691,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueCopyBuffer, &retVal);
+    TRACING_EXIT(ClEnqueueCopyBuffer, &retVal);
     return retVal;
 }
 
@@ -2708,7 +2708,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
                                            cl_uint numEventsInWaitList,
                                            const cl_event *eventWaitList,
                                            cl_event *event) {
-    TRACING_ENTER(clEnqueueCopyBufferRect, &commandQueue, &srcBuffer, &dstBuffer, &srcOrigin, &dstOrigin, &region, &srcRowPitch, &srcSlicePitch, &dstRowPitch, &dstSlicePitch, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyBufferRect, &commandQueue, &srcBuffer, &dstBuffer, &srcOrigin, &dstOrigin, &region, &srcRowPitch, &srcSlicePitch, &dstRowPitch, &dstSlicePitch, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -2748,12 +2748,12 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
                                             dstSlicePitch,
                                             false)) {
             retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBufferRect, &retVal);
             return retVal;
         }
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBufferRect, &retVal);
             return retVal;
         }
 
@@ -2772,7 +2772,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueCopyBufferRect, &retVal);
+    TRACING_EXIT(ClEnqueueCopyBufferRect, &retVal);
     return retVal;
 }
 
@@ -2787,7 +2787,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
                                       cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) {
-    TRACING_ENTER(clEnqueueReadImage, &commandQueue, &image, &blockingRead, &origin, &region, &rowPitch, &slicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueReadImage, &commandQueue, &image, &blockingRead, &origin, &region, &rowPitch, &slicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
     Image *pImage = nullptr;
@@ -2810,25 +2810,25 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
 
         if (pImage->readMemObjFlagsInvalid()) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueReadImage, &retVal);
+            TRACING_EXIT(ClEnqueueReadImage, &retVal);
             return retVal;
         }
         if (isPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueReadImage, &retVal);
+                TRACING_EXIT(ClEnqueueReadImage, &retVal);
                 return retVal;
             }
         }
         retVal = Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueReadImage, &retVal);
+            TRACING_EXIT(ClEnqueueReadImage, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueReadImage, &retVal);
+            TRACING_EXIT(ClEnqueueReadImage, &retVal);
             return retVal;
         }
 
@@ -2846,7 +2846,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueReadImage, &retVal);
+    TRACING_EXIT(ClEnqueueReadImage, &retVal);
     return retVal;
 }
 
@@ -2861,7 +2861,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
                                        cl_uint numEventsInWaitList,
                                        const cl_event *eventWaitList,
                                        cl_event *event) {
-    TRACING_ENTER(clEnqueueWriteImage, &commandQueue, &image, &blockingWrite, &origin, &region, &inputRowPitch, &inputSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueWriteImage, &commandQueue, &image, &blockingWrite, &origin, &region, &inputRowPitch, &inputSlicePitch, &ptr, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
     Image *pImage = nullptr;
@@ -2883,25 +2883,25 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
         if (pImage->writeMemObjFlagsInvalid()) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueWriteImage, &retVal);
+            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
         if (isPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueWriteImage, &retVal);
+                TRACING_EXIT(ClEnqueueWriteImage, &retVal);
                 return retVal;
             }
         }
         retVal = Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueWriteImage, &retVal);
+            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueWriteImage, &retVal);
+            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
 
@@ -2919,7 +2919,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueWriteImage, &retVal);
+    TRACING_EXIT(ClEnqueueWriteImage, &retVal);
     return retVal;
 }
 
@@ -2931,7 +2931,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
                                       cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) {
-    TRACING_ENTER(clEnqueueFillImage, &commandQueue, &image, &fillColor, &origin, &region, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueFillImage, &commandQueue, &image, &fillColor, &origin, &region, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
     Image *dstImage = nullptr;
@@ -2954,13 +2954,13 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
         retVal = Image::validateRegionAndOrigin(origin, region, dstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueFillImage, &retVal);
+            TRACING_EXIT(ClEnqueueFillImage, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueFillImage, &retVal);
+            TRACING_EXIT(ClEnqueueFillImage, &retVal);
             return retVal;
         }
 
@@ -2974,7 +2974,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueFillImage, &retVal);
+    TRACING_EXIT(ClEnqueueFillImage, &retVal);
     return retVal;
 }
 
@@ -2987,7 +2987,7 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
                                       cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) {
-    TRACING_ENTER(clEnqueueCopyImage, &commandQueue, &srcImage, &dstImage, &srcOrigin, &dstOrigin, &region, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyImage, &commandQueue, &srcImage, &dstImage, &srcOrigin, &dstOrigin, &region, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
     Image *pSrcImage = nullptr;
@@ -3010,13 +3010,13 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
     if (CL_SUCCESS == retVal) {
         if (memcmp(&pSrcImage->getImageFormat(), &pDstImage->getImageFormat(), sizeof(cl_image_format))) {
             retVal = CL_IMAGE_FORMAT_MISMATCH;
-            TRACING_EXIT(clEnqueueCopyImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImage, &retVal);
             return retVal;
         }
         if (isPackedYuvImage(&pSrcImage->getImageFormat())) {
             retVal = validateYuvOperation(srcOrigin, region);
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueCopyImage, &retVal);
+                TRACING_EXIT(ClEnqueueCopyImage, &retVal);
                 return retVal;
             }
         }
@@ -3024,29 +3024,29 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             retVal = validateYuvOperation(dstOrigin, region);
 
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueCopyImage, &retVal);
+                TRACING_EXIT(ClEnqueueCopyImage, &retVal);
                 return retVal;
             }
             if (pDstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D && dstOrigin[2] != 0) {
                 retVal = CL_INVALID_VALUE;
-                TRACING_EXIT(clEnqueueCopyImage, &retVal);
+                TRACING_EXIT(ClEnqueueCopyImage, &retVal);
                 return retVal;
             }
         }
         retVal = Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueCopyImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImage, &retVal);
             return retVal;
         }
         retVal = Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueCopyImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImage, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueCopyImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImage, &retVal);
             return retVal;
         }
 
@@ -3061,7 +3061,7 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             event);
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueCopyImage, &retVal);
+    TRACING_EXIT(ClEnqueueCopyImage, &retVal);
     return retVal;
 }
 
@@ -3074,7 +3074,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
                                               cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList,
                                               cl_event *event) {
-    TRACING_ENTER(clEnqueueCopyImageToBuffer, &commandQueue, &srcImage, &dstBuffer, &srcOrigin, &region, (size_t *)&dstOffset, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyImageToBuffer, &commandQueue, &srcImage, &dstBuffer, &srcOrigin, &region, (size_t *)&dstOffset, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -3099,19 +3099,19 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
         if (isPackedYuvImage(&pSrcImage->getImageFormat())) {
             retVal = validateYuvOperation(srcOrigin, region);
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
+                TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
                 return retVal;
             }
         }
         retVal = Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
+            TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
             return retVal;
         }
 
@@ -3127,7 +3127,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueCopyImageToBuffer, &retVal);
+    TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
     return retVal;
 }
 
@@ -3140,7 +3140,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
                                               cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList,
                                               cl_event *event) {
-    TRACING_ENTER(clEnqueueCopyBufferToImage, &commandQueue, &srcBuffer, &dstImage, &srcOffset, &dstOrigin, &region, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueCopyBufferToImage, &commandQueue, &srcBuffer, &dstImage, &srcOffset, &dstOrigin, &region, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -3164,19 +3164,19 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
         if (isPackedYuvImage(&pDstImage->getImageFormat())) {
             retVal = validateYuvOperation(dstOrigin, region);
             if (retVal != CL_SUCCESS) {
-                TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
+                TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
                 return retVal;
             }
         }
         retVal = Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc());
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
+            TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
             return retVal;
         }
 
@@ -3192,7 +3192,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueCopyBufferToImage, &retVal);
+    TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
     return retVal;
 }
 
@@ -3206,7 +3206,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
                                      const cl_event *eventWaitList,
                                      cl_event *event,
                                      cl_int *errcodeRet) {
-    TRACING_ENTER(clEnqueueMapBuffer, &commandQueue, &buffer, &blockingMap, &mapFlags, &offset, &cb, &numEventsInWaitList, &eventWaitList, &event, &errcodeRet);
+    TRACING_ENTER(ClEnqueueMapBuffer, &commandQueue, &buffer, &blockingMap, &mapFlags, &offset, &cb, &numEventsInWaitList, &eventWaitList, &event, &errcodeRet);
     void *retPtr = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     cl_int retVal;
@@ -3256,7 +3256,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
     err.set(retVal);
     DBG_LOG_INPUTS("retPtr", retPtr, "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
 
-    TRACING_EXIT(clEnqueueMapBuffer, &retPtr);
+    TRACING_EXIT(ClEnqueueMapBuffer, &retPtr);
     return retPtr;
 }
 
@@ -3272,7 +3272,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                                     const cl_event *eventWaitList,
                                     cl_event *event,
                                     cl_int *errcodeRet) {
-    TRACING_ENTER(clEnqueueMapImage, &commandQueue, &image, &blockingMap, &mapFlags, &origin, &region, &imageRowPitch, &imageSlicePitch, &numEventsInWaitList, &eventWaitList, &event, &errcodeRet);
+    TRACING_ENTER(ClEnqueueMapImage, &commandQueue, &image, &blockingMap, &mapFlags, &origin, &region, &imageRowPitch, &imageSlicePitch, &numEventsInWaitList, &eventWaitList, &event, &errcodeRet);
 
     void *retPtr = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
@@ -3341,7 +3341,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     err.set(retVal);
     DBG_LOG_INPUTS("retPtr", retPtr, "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
 
-    TRACING_EXIT(clEnqueueMapImage, &retPtr);
+    TRACING_EXIT(ClEnqueueMapImage, &retPtr);
     return retPtr;
 }
 
@@ -3351,7 +3351,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                                            cl_uint numEventsInWaitList,
                                            const cl_event *eventWaitList,
                                            cl_event *event) {
-    TRACING_ENTER(clEnqueueUnmapMemObject, &commandQueue, &memObj, &mappedPtr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueUnmapMemObject, &commandQueue, &memObj, &mappedPtr, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
     MemObj *pMemObj = nullptr;
@@ -3385,13 +3385,13 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             break;
         default:
             retVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
+            TRACING_EXIT(ClEnqueueUnmapMemObject, &retVal);
             return retVal;
         }
 
         if (!pCommandQueue->validateCapabilityForOperation(requiredCapability, numEventsInWaitList, eventWaitList, event)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
+            TRACING_EXIT(ClEnqueueUnmapMemObject, &retVal);
             return retVal;
         }
 
@@ -3399,7 +3399,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueUnmapMemObject, &retVal);
+    TRACING_EXIT(ClEnqueueUnmapMemObject, &retVal);
     return retVal;
 }
 
@@ -3410,7 +3410,7 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
                                               cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList,
                                               cl_event *event) {
-    TRACING_ENTER(clEnqueueMigrateMemObjects, &commandQueue, &numMemObjects, &memObjects, &flags, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueMigrateMemObjects, &commandQueue, &numMemObjects, &memObjects, &flags, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
@@ -3428,13 +3428,13 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+        TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
         return retVal;
     }
 
     if (numMemObjects == 0 || memObjects == nullptr) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+        TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
         return retVal;
     }
 
@@ -3442,7 +3442,7 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!memObject) {
             retVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+            TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
             return retVal;
         }
     }
@@ -3451,7 +3451,7 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
 
     if ((flags & (~allValidFlags)) != 0) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+        TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
         return retVal;
     }
 
@@ -3462,7 +3462,7 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
                                                      eventWaitList,
                                                      event);
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueMigrateMemObjects, &retVal);
+    TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
     return retVal;
 }
 
@@ -3475,7 +3475,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
                                           cl_uint numEventsInWaitList,
                                           const cl_event *eventWaitList,
                                           cl_event *event) {
-    TRACING_ENTER(clEnqueueNDRangeKernel, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &localWorkSize, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueNdRangeKernel, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &localWorkSize, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_kernel", kernel,
@@ -3497,7 +3497,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
     }
 
@@ -3505,13 +3505,13 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
         pKernel->usesSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;
-        TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_KERNEL_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
     }
 
@@ -3531,7 +3531,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         event);
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
-    TRACING_EXIT(clEnqueueNDRangeKernel, &retVal);
+    TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
     return retVal;
 }
 
@@ -3540,7 +3540,7 @@ cl_int CL_API_CALL clEnqueueTask(cl_command_queue commandQueue,
                                  cl_uint numEventsInWaitList,
                                  const cl_event *eventWaitList,
                                  cl_event *event) {
-    TRACING_ENTER(clEnqueueTask, &commandQueue, &kernel, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueTask, &commandQueue, &kernel, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "kernel", kernel,
@@ -3561,7 +3561,7 @@ cl_int CL_API_CALL clEnqueueTask(cl_command_queue commandQueue,
         numEventsInWaitList,
         eventWaitList,
         event));
-    TRACING_EXIT(clEnqueueTask, &retVal);
+    TRACING_EXIT(ClEnqueueTask, &retVal);
     return retVal;
 }
 
@@ -3575,7 +3575,7 @@ cl_int CL_API_CALL clEnqueueNativeKernel(cl_command_queue commandQueue,
                                          cl_uint numEventsInWaitList,
                                          const cl_event *eventWaitList,
                                          cl_event *event) {
-    TRACING_ENTER(clEnqueueNativeKernel, &commandQueue, &userFunc, &args, &cbArgs, &numMemObjects, &memList, &argsMemLoc, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueNativeKernel, &commandQueue, &userFunc, &args, &cbArgs, &numMemObjects, &memList, &argsMemLoc, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_OUT_OF_HOST_MEMORY;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "userFunc", userFunc, "args", args,
@@ -3584,14 +3584,14 @@ cl_int CL_API_CALL clEnqueueNativeKernel(cl_command_queue commandQueue,
                    "eventWaitList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
-    TRACING_EXIT(clEnqueueNativeKernel, &retVal);
+    TRACING_EXIT(ClEnqueueNativeKernel, &retVal);
     return retVal;
 }
 
 // deprecated OpenCL 1.1
 cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
                                    cl_event *event) {
-    TRACING_ENTER(clEnqueueMarker, &commandQueue, &event);
+    TRACING_ENTER(ClEnqueueMarker, &commandQueue, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "cl_event", event);
@@ -3600,7 +3600,7 @@ cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
     if (pCommandQueue) {
         if (!pCommandQueue->validateCapability(CL_QUEUE_CAPABILITY_MARKER_INTEL)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueMarker, &retVal);
+            TRACING_EXIT(ClEnqueueMarker, &retVal);
             return retVal;
         }
 
@@ -3608,11 +3608,11 @@ cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
             0,
             nullptr,
             event);
-        TRACING_EXIT(clEnqueueMarker, &retVal);
+        TRACING_EXIT(ClEnqueueMarker, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_COMMAND_QUEUE;
-    TRACING_EXIT(clEnqueueMarker, &retVal);
+    TRACING_EXIT(ClEnqueueMarker, &retVal);
     return retVal;
 }
 
@@ -3620,7 +3620,7 @@ cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
 cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
                                           cl_uint numEvents,
                                           const cl_event *eventList) {
-    TRACING_ENTER(clEnqueueWaitForEvents, &commandQueue, &numEvents, &eventList);
+    TRACING_ENTER(ClEnqueueWaitForEvents, &commandQueue, &numEvents, &eventList);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "eventList", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(eventList), numEvents));
@@ -3628,7 +3628,7 @@ cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
     auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
     if (!pCommandQueue) {
         retVal = CL_INVALID_COMMAND_QUEUE;
-        TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
+        TRACING_EXIT(ClEnqueueWaitForEvents, &retVal);
         return retVal;
     }
     for (unsigned int i = 0; i < numEvents && retVal == CL_SUCCESS; i++) {
@@ -3636,25 +3636,25 @@ cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
     }
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
+        TRACING_EXIT(ClEnqueueWaitForEvents, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilitiesForEventWaitList(numEvents, eventList)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
+        TRACING_EXIT(ClEnqueueWaitForEvents, &retVal);
         return retVal;
     }
 
     retVal = Event::waitForEvents(numEvents, eventList);
 
-    TRACING_EXIT(clEnqueueWaitForEvents, &retVal);
+    TRACING_EXIT(ClEnqueueWaitForEvents, &retVal);
     return retVal;
 }
 
 // deprecated OpenCL 1.1
 cl_int CL_API_CALL clEnqueueBarrier(cl_command_queue commandQueue) {
-    TRACING_ENTER(clEnqueueBarrier, &commandQueue);
+    TRACING_ENTER(ClEnqueueBarrier, &commandQueue);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
@@ -3662,7 +3662,7 @@ cl_int CL_API_CALL clEnqueueBarrier(cl_command_queue commandQueue) {
     if (pCommandQueue) {
         if (!pCommandQueue->validateCapability(CL_QUEUE_CAPABILITY_BARRIER_INTEL)) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clEnqueueBarrier, &retVal);
+            TRACING_EXIT(ClEnqueueBarrier, &retVal);
             return retVal;
         }
 
@@ -3670,11 +3670,11 @@ cl_int CL_API_CALL clEnqueueBarrier(cl_command_queue commandQueue) {
             0,
             nullptr,
             nullptr);
-        TRACING_EXIT(clEnqueueBarrier, &retVal);
+        TRACING_EXIT(ClEnqueueBarrier, &retVal);
         return retVal;
     }
     retVal = CL_INVALID_COMMAND_QUEUE;
-    TRACING_EXIT(clEnqueueBarrier, &retVal);
+    TRACING_EXIT(ClEnqueueBarrier, &retVal);
     return retVal;
 }
 
@@ -3682,7 +3682,7 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
                                                cl_uint numEventsInWaitList,
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
-    TRACING_ENTER(clEnqueueMarkerWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueMarkerWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_command_queue", commandQueue,
@@ -3696,13 +3696,13 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueMarkerWithWaitList, &retVal);
+        TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MARKER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueMarkerWithWaitList, &retVal);
+        TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);
         return retVal;
     }
 
@@ -3710,7 +3710,7 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
         numEventsInWaitList,
         eventWaitList,
         event);
-    TRACING_EXIT(clEnqueueMarkerWithWaitList, &retVal);
+    TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);
     return retVal;
 }
 
@@ -3718,7 +3718,7 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
                                                 cl_uint numEventsInWaitList,
                                                 const cl_event *eventWaitList,
                                                 cl_event *event) {
-    TRACING_ENTER(clEnqueueBarrierWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueBarrierWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_command_queue", commandQueue,
@@ -3733,13 +3733,13 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
+        TRACING_EXIT(ClEnqueueBarrierWithWaitList, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_BARRIER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
+        TRACING_EXIT(ClEnqueueBarrierWithWaitList, &retVal);
         return retVal;
     }
 
@@ -3747,7 +3747,7 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
         numEventsInWaitList,
         eventWaitList,
         event);
-    TRACING_EXIT(clEnqueueBarrierWithWaitList, &retVal);
+    TRACING_EXIT(ClEnqueueBarrierWithWaitList, &retVal);
     return retVal;
 }
 
@@ -4387,12 +4387,12 @@ cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSizeKHR(cl_command_queue command
     {                                                                   \
         if (!strcmp(funcName, #name)) {                                 \
             void *ret = ((void *)(name));                               \
-            TRACING_EXIT(clGetExtensionFunctionAddress, (void **)&ret); \
+            TRACING_EXIT(ClGetExtensionFunctionAddress, (void **)&ret); \
             return ret;                                                 \
         }                                                               \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
-    TRACING_ENTER(clGetExtensionFunctionAddress, &funcName);
+    TRACING_ENTER(ClGetExtensionFunctionAddress, &funcName);
 
     DBG_LOG_INPUTS("funcName", funcName);
     // Support an internal call by the ICD
@@ -4438,7 +4438,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
-        TRACING_EXIT(clGetExtensionFunctionAddress, &ret);
+        TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
         return ret;
     }
 
@@ -4451,25 +4451,25 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clGetKernelSuggestedLocalWorkSizeKHR);
 
     ret = getAdditionalExtensionFunctionAddress(funcName);
-    TRACING_EXIT(clGetExtensionFunctionAddress, &ret);
+    TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
     return ret;
 }
 
 // OpenCL 1.2
 void *CL_API_CALL clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
                                                            const char *funcName) {
-    TRACING_ENTER(clGetExtensionFunctionAddressForPlatform, &platform, &funcName);
+    TRACING_ENTER(ClGetExtensionFunctionAddressForPlatform, &platform, &funcName);
     DBG_LOG_INPUTS("platform", platform, "funcName", funcName);
     auto pPlatform = castToObject<Platform>(platform);
 
     if (pPlatform == nullptr) {
         void *ret = nullptr;
-        TRACING_EXIT(clGetExtensionFunctionAddressForPlatform, &ret);
+        TRACING_EXIT(ClGetExtensionFunctionAddressForPlatform, &ret);
         return ret;
     }
 
     void *ret = clGetExtensionFunctionAddress(funcName);
-    TRACING_EXIT(clGetExtensionFunctionAddressForPlatform, &ret);
+    TRACING_EXIT(ClGetExtensionFunctionAddressForPlatform, &ret);
     return ret;
 }
 
@@ -4477,7 +4477,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
                              cl_svm_mem_flags flags,
                              size_t size,
                              cl_uint alignment) {
-    TRACING_ENTER(clSVMAlloc, &context, &flags, &size, &alignment);
+    TRACING_ENTER(ClSvmAlloc, &context, &flags, &size, &alignment);
     DBG_LOG_INPUTS("context", context,
                    "flags", flags,
                    "size", size,
@@ -4486,7 +4486,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
     Context *pContext = nullptr;
 
     if (validateObjects(withCastToInternal(context, &pContext)) != CL_SUCCESS) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
+        TRACING_EXIT(ClSvmAlloc, &pAlloc);
         return pAlloc;
     }
 
@@ -4510,7 +4510,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
               (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER)) ||
               (tempFlags == (CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS)))) {
 
-            TRACING_EXIT(clSVMAlloc, &pAlloc);
+            TRACING_EXIT(ClSvmAlloc, &pAlloc);
             return pAlloc;
         }
     }
@@ -4520,18 +4520,18 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
 
     if ((size == 0) ||
         (!allowUnrestrictedSize && (size > pDevice->getSharedDeviceInfo().maxMemAllocSize))) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
+        TRACING_EXIT(ClSvmAlloc, &pAlloc);
         return pAlloc;
     }
 
     if ((alignment && (alignment & (alignment - 1))) || (alignment > sizeof(cl_ulong16))) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
+        TRACING_EXIT(ClSvmAlloc, &pAlloc);
         return pAlloc;
     }
 
     const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
     if (!hwInfo.capabilityTable.ftrSvm) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
+        TRACING_EXIT(ClSvmAlloc, &pAlloc);
         return pAlloc;
     }
 
@@ -4541,7 +4541,7 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
             supportsFineGrained = !!DebugManager.flags.ForceFineGrainedSVMSupport.get();
         }
         if (!supportsFineGrained) {
-            TRACING_EXIT(clSVMAlloc, &pAlloc);
+            TRACING_EXIT(ClSvmAlloc, &pAlloc);
             return pAlloc;
         }
     }
@@ -4551,13 +4551,13 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
     if (pContext->isProvidingPerformanceHints()) {
         pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS, pAlloc, size);
     }
-    TRACING_EXIT(clSVMAlloc, &pAlloc);
+    TRACING_EXIT(ClSvmAlloc, &pAlloc);
     return pAlloc;
 }
 
 void CL_API_CALL clSVMFree(cl_context context,
                            void *svmPointer) {
-    TRACING_ENTER(clSVMFree, &context, &svmPointer);
+    TRACING_ENTER(ClSvmFree, &context, &svmPointer);
     DBG_LOG_INPUTS("context", context,
                    "svmPointer", svmPointer);
 
@@ -4566,18 +4566,18 @@ void CL_API_CALL clSVMFree(cl_context context,
         withCastToInternal(context, &pContext));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clSVMFree, nullptr);
+        TRACING_EXIT(ClSvmFree, nullptr);
         return;
     }
 
     auto pClDevice = pContext->getDevice(0);
     if (!pClDevice->getHardwareInfo().capabilityTable.ftrSvm) {
-        TRACING_EXIT(clSVMFree, nullptr);
+        TRACING_EXIT(ClSvmFree, nullptr);
         return;
     }
 
     pContext->getSVMAllocsManager()->freeSVMAlloc(svmPointer);
-    TRACING_EXIT(clSVMFree, nullptr);
+    TRACING_EXIT(ClSvmFree, nullptr);
 }
 
 cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
@@ -4591,7 +4591,7 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                                     cl_uint numEventsInWaitList,
                                     const cl_event *eventWaitList,
                                     cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMFree, &commandQueue, &numSvmPointers, &svmPointers, &pfnFreeFunc, &userData, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmFree, &commandQueue, &numSvmPointers, &svmPointers, &pfnFreeFunc, &userData, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -4611,21 +4611,21 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clEnqueueSVMFree, &retVal);
+        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMFree, &retVal);
+        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
         return retVal;
     }
 
     if (((svmPointers != nullptr) && (numSvmPointers == 0)) ||
         ((svmPointers == nullptr) && (numSvmPointers != 0))) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMFree, &retVal);
+        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
         return retVal;
     }
 
@@ -4638,7 +4638,7 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         eventWaitList,
         event);
 
-    TRACING_EXIT(clEnqueueSVMFree, &retVal);
+    TRACING_EXIT(ClEnqueueSvmFree, &retVal);
     return retVal;
 }
 
@@ -4650,7 +4650,7 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                                       cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMMemcpy, &commandQueue, &blockingCopy, &dstPtr, &srcPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmMemcpy, &commandQueue, &blockingCopy, &dstPtr, &srcPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -4670,26 +4670,26 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
         return retVal;
     }
 
     if ((dstPtr == nullptr) || (srcPtr == nullptr)) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
         return retVal;
     }
 
@@ -4702,7 +4702,7 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
         eventWaitList,
         event);
 
-    TRACING_EXIT(clEnqueueSVMMemcpy, &retVal);
+    TRACING_EXIT(ClEnqueueSvmMemcpy, &retVal);
     return retVal;
 }
 
@@ -4714,7 +4714,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
                                        cl_uint numEventsInWaitList,
                                        const cl_event *eventWaitList,
                                        cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMMemFill, &commandQueue, &svmPtr, &pattern, &patternSize, &size, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmMemFill, &commandQueue, &svmPtr, &pattern, &patternSize, &size, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -4734,26 +4734,26 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
         return retVal;
     }
 
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_FILL_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
         return retVal;
     }
 
@@ -4766,7 +4766,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
         eventWaitList,
         event);
 
-    TRACING_EXIT(clEnqueueSVMMemFill, &retVal);
+    TRACING_EXIT(ClEnqueueSvmMemFill, &retVal);
     return retVal;
 }
 
@@ -4778,7 +4778,7 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
                                    cl_uint numEventsInWaitList,
                                    const cl_event *eventWaitList,
                                    cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMMap, &commandQueue, &blockingMap, &mapFlags, &svmPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmMap, &commandQueue, &blockingMap, &mapFlags, &svmPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -4796,26 +4796,26 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
         return retVal;
     }
 
     if ((svmPtr == nullptr) || (size == 0)) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
         return retVal;
     }
 
@@ -4829,7 +4829,7 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         event,
         true);
 
-    TRACING_EXIT(clEnqueueSVMMap, &retVal);
+    TRACING_EXIT(ClEnqueueSvmMap, &retVal);
     return retVal;
 }
 
@@ -4838,7 +4838,7 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
                                      cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList,
                                      cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMUnmap, &commandQueue, &svmPtr, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmUnmap, &commandQueue, &svmPtr, &numEventsInWaitList, &eventWaitList, &event);
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -4856,20 +4856,20 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
                    "event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
         return retVal;
     }
 
     if (!pCommandQueue->validateCapabilityForOperation(CL_QUEUE_CAPABILITY_MAP_BUFFER_INTEL, numEventsInWaitList, eventWaitList, event)) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
         return retVal;
     }
 
@@ -4880,14 +4880,14 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
         event,
         true);
 
-    TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
+    TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                                             cl_uint argIndex,
                                             const void *argValue) {
-    TRACING_ENTER(clSetKernelArgSVMPointer, &kernel, &argIndex, &argValue);
+    TRACING_ENTER(ClSetKernelArgSvmPointer, &kernel, &argIndex, &argValue);
 
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
 
@@ -4895,13 +4895,13 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     API_ENTER(&retVal);
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+        TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
         return retVal;
     }
 
     if (argIndex >= pMultiDeviceKernel->getKernelArgsNumber()) {
         retVal = CL_INVALID_ARG_INDEX;
-        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+        TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
         return retVal;
     }
 
@@ -4923,14 +4923,14 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                     }
                 }
                 if (reuseFromCache) {
-                    TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                    TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
                     return CL_SUCCESS;
                 }
             }
         }
     } else {
         if (pMultiDeviceKernel->getKernelArguments()[argIndex].isSetToNullptr) {
-            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
             return CL_SUCCESS;
         }
     }
@@ -4941,7 +4941,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
         if (!hwInfo.capabilityTable.ftrSvm) {
             retVal = CL_INVALID_OPERATION;
-            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
             return retVal;
         }
     }
@@ -4955,7 +4955,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
             (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
             retVal = CL_INVALID_ARG_VALUE;
-            TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+            TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
             return retVal;
         }
     }
@@ -4968,7 +4968,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
                 if (!pDevice->areSharedSystemAllocationsAllowed()) {
                     retVal = CL_INVALID_ARG_VALUE;
-                    TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+                    TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
                     return retVal;
                 }
             }
@@ -4979,7 +4979,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     }
 
     retVal = pMultiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAllocs, allocId);
-    TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
+    TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
     return retVal;
 }
 
@@ -4987,7 +4987,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                                        cl_kernel_exec_info paramName,
                                        size_t paramValueSize,
                                        const void *paramValue) {
-    TRACING_ENTER(clSetKernelExecInfo, &kernel, &paramName, &paramValueSize, &paramValue);
+    TRACING_ENTER(ClSetKernelExecInfo, &kernel, &paramName, &paramValueSize, &paramValue);
 
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
     auto retVal = validateObjects(withCastToInternal(kernel, &pMultiDeviceKernel));
@@ -4997,7 +4997,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                    "paramValueSize", paramValueSize, "paramValue", NEO::fileLoggerInstance().infoPointerToString(paramValue, paramValueSize));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
 
@@ -5008,7 +5008,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
             if (!hwInfo.capabilityTable.ftrSvm) {
                 retVal = CL_INVALID_OPERATION;
-                TRACING_EXIT(clSetKernelExecInfo, &retVal);
+                TRACING_EXIT(ClSetKernelExecInfo, &retVal);
                 return retVal;
             }
         }
@@ -5030,7 +5030,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             (paramValueSize % sizeof(void *)) ||
             (paramValue == nullptr)) {
             retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clSetKernelExecInfo, &retVal);
+            TRACING_EXIT(ClSetKernelExecInfo, &retVal);
             return retVal;
         }
         size_t numPointers = paramValueSize / sizeof(void *);
@@ -5046,7 +5046,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             auto svmData = pMultiDeviceKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
             if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
-                TRACING_EXIT(clSetKernelExecInfo, &retVal);
+                TRACING_EXIT(ClSetKernelExecInfo, &retVal);
                 return retVal;
             }
             auto &svmAllocs = svmData->gpuAllocations;
@@ -5066,29 +5066,29 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     }
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
     case CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL: {
         if (paramValueSize != sizeof(cl_execution_info_kernel_type_intel) ||
             paramValue == nullptr) {
             retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clSetKernelExecInfo, &retVal);
+            TRACING_EXIT(ClSetKernelExecInfo, &retVal);
             return retVal;
         }
         auto kernelType = *static_cast<const cl_execution_info_kernel_type_intel *>(paramValue);
         retVal = pMultiDeviceKernel->setKernelExecutionType(kernelType);
-        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
     default: {
         retVal = pMultiDeviceKernel->setAdditionalKernelExecInfoWithParam(paramName, paramValueSize, paramValue);
-        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
     }
 
-    TRACING_EXIT(clSetKernelExecInfo, &retVal);
+    TRACING_EXIT(ClSetKernelExecInfo, &retVal);
     return retVal;
 };
 
@@ -5098,7 +5098,7 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
                                 cl_uint pipeMaxPackets,
                                 const cl_pipe_properties *properties,
                                 cl_int *errcodeRet) {
-    TRACING_ENTER(clCreatePipe, &context, &flags, &pipePacketSize, &pipeMaxPackets, &properties, &errcodeRet);
+    TRACING_ENTER(ClCreatePipe, &context, &flags, &pipePacketSize, &pipeMaxPackets, &properties, &errcodeRet);
     cl_mem pipe = nullptr;
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -5156,7 +5156,7 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
         *errcodeRet = retVal;
     }
     DBG_LOG_INPUTS("pipe", pipe);
-    TRACING_EXIT(clCreatePipe, &pipe);
+    TRACING_EXIT(ClCreatePipe, &pipe);
     return pipe;
 }
 
@@ -5165,7 +5165,7 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
                                  size_t paramValueSize,
                                  void *paramValue,
                                  size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetPipeInfo, &pipe, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetPipeInfo, &pipe, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -5178,7 +5178,7 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
 
     retVal = validateObjects(pipe);
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clGetPipeInfo, &retVal);
+        TRACING_EXIT(ClGetPipeInfo, &retVal);
         return retVal;
     }
 
@@ -5186,12 +5186,12 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
 
     if (pPipeObj == nullptr) {
         retVal = CL_INVALID_MEM_OBJECT;
-        TRACING_EXIT(clGetPipeInfo, &retVal);
+        TRACING_EXIT(ClGetPipeInfo, &retVal);
         return retVal;
     }
 
     retVal = pPipeObj->getPipeInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(clGetPipeInfo, &retVal);
+    TRACING_EXIT(ClGetPipeInfo, &retVal);
     return retVal;
 }
 
@@ -5199,7 +5199,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
                                                                 cl_device_id device,
                                                                 const cl_queue_properties *properties,
                                                                 cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateCommandQueueWithProperties, &context, &device, &properties, &errcodeRet);
+    TRACING_ENTER(ClCreateCommandQueueWithProperties, &context, &device, &properties, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -5218,13 +5218,13 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     if (CL_SUCCESS != retVal) {
         err.set(retVal);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
     if (!pContext->isDeviceAssociated(*pDevice)) {
         err.set(CL_INVALID_DEVICE);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
@@ -5245,7 +5245,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             break;
         default:
             err.set(CL_INVALID_VALUE);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
 
@@ -5259,32 +5259,32 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))) {
             err.set(CL_INVALID_VALUE);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
         err.set(CL_INVALID_QUEUE_PROPERTIES);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
         if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE))) {
             err.set(CL_INVALID_VALUE);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
     }
 
     if (getCmdQueueProperties<cl_command_queue_properties>(properties, CL_QUEUE_SIZE) > maxOnDeviceQueueSize) {
         err.set(CL_INVALID_QUEUE_PROPERTIES);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR)) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
     }
@@ -5292,14 +5292,14 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (getCmdQueueProperties<cl_queue_throttle_khr>(properties, CL_QUEUE_THROTTLE_KHR)) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
     }
 
     if (getCmdQueueProperties<cl_command_queue_properties>(properties, CL_QUEUE_SLICE_COUNT_INTEL) > pDevice->getDeviceInfo().maxSliceCount) {
         err.set(CL_INVALID_QUEUE_PROPERTIES);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
@@ -5309,14 +5309,14 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     const auto queueIndex = getCmdQueueProperties<cl_uint>(properties, CL_QUEUE_INDEX_INTEL, &queueSelected);
     if (queueFamilySelected != queueSelected) {
         err.set(CL_INVALID_QUEUE_PROPERTIES);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
     if (queueFamilySelected &&
         (queueFamilyIndex >= pDevice->getDeviceInfo().queueFamilyProperties.size() ||
          queueIndex >= pDevice->getDeviceInfo().queueFamilyProperties[queueFamilyIndex].count)) {
         err.set(CL_INVALID_QUEUE_PROPERTIES);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
@@ -5327,7 +5327,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     if (mdapiConfigurationSet && mdapiConfiguration != 0) {
         err.set(CL_INVALID_OPERATION);
-        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }
 
@@ -5343,7 +5343,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
         if (!commandQueueObj->setPerfCountersEnabled()) {
             clReleaseCommandQueue(commandQueue);
-            TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+            TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
 
             err.set(CL_OUT_OF_RESOURCES);
             return nullptr;
@@ -5368,14 +5368,14 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     err.set(retVal);
 
-    TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+    TRACING_EXIT(ClCreateCommandQueueWithProperties, &commandQueue);
     return commandQueue;
 }
 
 cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                                                      const cl_sampler_properties *samplerProperties,
                                                      cl_int *errcodeRet) {
-    TRACING_ENTER(clCreateSamplerWithProperties, &context, &samplerProperties, &errcodeRet);
+    TRACING_ENTER(ClCreateSamplerWithProperties, &context, &samplerProperties, &errcodeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context,
@@ -5394,15 +5394,15 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
         *errcodeRet = retVal;
     }
 
-    TRACING_EXIT(clCreateSamplerWithProperties, &sampler);
+    TRACING_EXIT(ClCreateSamplerWithProperties, &sampler);
     return sampler;
 }
 
 cl_int CL_API_CALL clUnloadCompiler() {
-    TRACING_ENTER(clUnloadCompiler);
+    TRACING_ENTER(ClUnloadCompiler);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    TRACING_EXIT(clUnloadCompiler, &retVal);
+    TRACING_EXIT(ClUnloadCompiler, &retVal);
     return retVal;
 }
 
@@ -5460,7 +5460,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
 cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
                                            cl_ulong *deviceTimestamp,
                                            cl_ulong *hostTimestamp) {
-    TRACING_ENTER(clGetDeviceAndHostTimer, &device, &deviceTimestamp, &hostTimestamp);
+    TRACING_ENTER(ClGetDeviceAndHostTimer, &device, &deviceTimestamp, &hostTimestamp);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device,
@@ -5482,13 +5482,13 @@ cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
         }
     } while (false);
 
-    TRACING_EXIT(clGetDeviceAndHostTimer, &retVal);
+    TRACING_EXIT(ClGetDeviceAndHostTimer, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
                                   cl_ulong *hostTimestamp) {
-    TRACING_ENTER(clGetHostTimer, &device, &hostTimestamp);
+    TRACING_ENTER(ClGetHostTimer, &device, &hostTimestamp);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device,
@@ -5510,7 +5510,7 @@ cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
         }
     } while (false);
 
-    TRACING_EXIT(clGetHostTimer, &retVal);
+    TRACING_EXIT(ClGetHostTimer, &retVal);
     return retVal;
 }
 
@@ -5522,7 +5522,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                                            size_t paramValueSize,
                                            void *paramValue,
                                            size_t *paramValueSizeRet) {
-    TRACING_ENTER(clGetKernelSubGroupInfo, &kernel, &device, &paramName, &inputValueSize, &inputValue, &paramValueSize, &paramValue, &paramValueSizeRet);
+    TRACING_ENTER(ClGetKernelSubGroupInfo, &kernel, &device, &paramName, &inputValueSize, &inputValue, &paramValueSize, &paramValue, &paramValueSizeRet);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("kernel", kernel,
@@ -5547,7 +5547,7 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
     }
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clGetKernelSubGroupInfo, &retVal);
+        TRACING_EXIT(ClGetKernelSubGroupInfo, &retVal);
         return retVal;
     }
 
@@ -5556,14 +5556,14 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                                       inputValueSize, inputValue,
                                       paramValueSize, paramValue,
                                       paramValueSizeRet);
-    TRACING_EXIT(clGetKernelSubGroupInfo, &retVal);
+    TRACING_EXIT(ClGetKernelSubGroupInfo, &retVal);
     return retVal;
 }
 
 cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
                                                   cl_device_id device,
                                                   cl_command_queue commandQueue) {
-    TRACING_ENTER(clSetDefaultDeviceCommandQueue, &context, &device, &commandQueue);
+    TRACING_ENTER(ClSetDefaultDeviceCommandQueue, &context, &device, &commandQueue);
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -5578,12 +5578,12 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
                              withCastToInternal(device, &pClDevice));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
+        TRACING_EXIT(ClSetDefaultDeviceCommandQueue, &retVal);
         return retVal;
     }
 
     retVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
+    TRACING_EXIT(ClSetDefaultDeviceCommandQueue, &retVal);
     return retVal;
 }
 
@@ -5595,7 +5595,7 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
                                           cl_uint numEventsInWaitList,
                                           const cl_event *eventWaitList,
                                           cl_event *event) {
-    TRACING_ENTER(clEnqueueSVMMigrateMem, &commandQueue, &numSvmPointers, &svmPointers, &sizes, &flags, &numEventsInWaitList, &eventWaitList, &event);
+    TRACING_ENTER(ClEnqueueSvmMigrateMem, &commandQueue, &numSvmPointers, &svmPointers, &sizes, &flags, &numEventsInWaitList, &eventWaitList, &event);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
@@ -5613,20 +5613,20 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         EventWaitList(numEventsInWaitList, eventWaitList));
 
     if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
         return retVal;
     }
 
     auto &device = pCommandQueue->getDevice();
     if (!device.getHardwareInfo().capabilityTable.ftrSvm) {
         retVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
         return retVal;
     }
 
     if (numSvmPointers == 0 || svmPointers == nullptr) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
         return retVal;
     }
 
@@ -5635,7 +5635,7 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
 
     if ((flags & (~allValidFlags)) != 0) {
         retVal = CL_INVALID_VALUE;
-        TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
         return retVal;
     }
 
@@ -5646,14 +5646,14 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         auto svmData = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
         if (svmData == nullptr) {
             retVal = CL_INVALID_VALUE;
-            TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+            TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
             return retVal;
         }
         if (sizes != nullptr && sizes[i] != 0) {
             svmData = pSvmAllocMgr->getSVMAlloc(reinterpret_cast<void *>((size_t)svmPointers[i] + sizes[i] - 1));
             if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
-                TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+                TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
                 return retVal;
             }
         }
@@ -5663,7 +5663,7 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         auto pEvent = castToObject<Event>(eventWaitList[i]);
         if (pEvent->getContext() != &pCommandQueue->getContext()) {
             retVal = CL_INVALID_CONTEXT;
-            TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+            TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
             return retVal;
         }
     }
@@ -5674,13 +5674,13 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
                                                  numEventsInWaitList,
                                                  eventWaitList,
                                                  event);
-    TRACING_EXIT(clEnqueueSVMMigrateMem, &retVal);
+    TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
     return retVal;
 }
 
 cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
                                     cl_int *errcodeRet) {
-    TRACING_ENTER(clCloneKernel, &sourceKernel, &errcodeRet);
+    TRACING_ENTER(ClCloneKernel, &sourceKernel, &errcodeRet);
     MultiDeviceKernel *pSourceMultiDeviceKernel = nullptr;
     MultiDeviceKernel *pClonedMultiDeviceKernel = nullptr;
 
@@ -5704,7 +5704,7 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
         gtpinNotifyKernelCreate(pClonedMultiDeviceKernel);
     }
 
-    TRACING_EXIT(clCloneKernel, (cl_kernel *)&pClonedMultiDeviceKernel);
+    TRACING_EXIT(ClCloneKernel, (cl_kernel *)&pClonedMultiDeviceKernel);
     return pClonedMultiDeviceKernel;
 }
 

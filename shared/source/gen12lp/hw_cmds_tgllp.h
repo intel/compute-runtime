@@ -26,7 +26,7 @@ struct TGLLP : public TGLLPFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 };
 
-class TGLLP_1x6x16 : public TGLLP {
+class TgllpHw1x6x16 : public TGLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
@@ -35,7 +35,7 @@ class TGLLP_1x6x16 : public TGLLP {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
-class TGLLP_1x2x16 : public TGLLP {
+class TgllpHw1x2x16 : public TGLLP {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ TEST_F(clGetPlatformInfoTests, GivenClPlatformProfileWhenGettingPlatformInfoStri
     EXPECT_STREQ(paramValue, "FULL_PROFILE");
 }
 
-class clGetPlatformInfoParameterizedTests : public clGetPlatformInfoTests,
+class ClGetPlatformInfoParameterizedTests : public clGetPlatformInfoTests,
                                             public ::testing::WithParamInterface<uint32_t> {
     void SetUp() override {
         DebugManager.flags.ForceOCLVersion.set(GetParam());
@@ -60,7 +60,7 @@ class clGetPlatformInfoParameterizedTests : public clGetPlatformInfoTests,
     }
 };
 
-TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectOpenClVersionIsReturned) {
+TEST_P(ClGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectOpenClVersionIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VERSION);
 
     cl_version platformNumericVersion = 0;
@@ -92,7 +92,7 @@ TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
 }
 
 INSTANTIATE_TEST_CASE_P(OCLVersions,
-                        clGetPlatformInfoParameterizedTests,
+                        ClGetPlatformInfoParameterizedTests,
                         ::testing::Values(12, 21, 30));
 
 TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {

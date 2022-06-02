@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Fence.pfnCreate =
         [](ze_command_queue_handle_t hCommandQueue, const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) { return ZE_RESULT_SUCCESS; };
@@ -27,7 +27,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceCreateTracingWrapperWithOneSetO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Fence.pfnDestroy =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
@@ -42,7 +42,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceDestroyTracingWrapperWithOneSet
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize =
         [](ze_fence_handle_t hFence, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
@@ -56,7 +56,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceHostSynchronizeTracingWrapperWi
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Fence.pfnQueryStatus =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
@@ -70,7 +70,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceQueryStatusTracingWrapperWithOn
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingFenceResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Fence.pfnReset =
         [](ze_fence_handle_t hFence) { return ZE_RESULT_SUCCESS; };
@@ -96,7 +96,7 @@ struct {
     void *instanceData3;
 } fence_create_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -332,7 +332,7 @@ struct {
     void *instanceData3;
 } fence_destroy_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -463,7 +463,7 @@ struct {
     void *instanceData3;
 } fence_host_synchronize_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchronizeTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceHostSynchronizeTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -602,7 +602,7 @@ struct {
     void *instanceData3;
 } fence_query_status_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceQueryStatusTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -731,7 +731,7 @@ struct {
     void *instanceData3;
 } fence_reset_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingFenceResetTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set

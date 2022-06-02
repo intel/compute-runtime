@@ -165,7 +165,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, WhenConfiguringHwInfoThenEdramInformationIsC
 template <typename T>
 class SklHwInfoTests : public ::testing::Test {
 };
-typedef ::testing::Types<SKL_1x2x6, SKL_1x3x6, SKL_1x3x8, SKL_2x3x8, SKL_3x3x8> sklTestTypes;
+typedef ::testing::Types<SklHw1x2x6, SklHw1x3x6, SklHw1x3x8, SklHw2x3x8, SklHw3x3x8> sklTestTypes;
 TYPED_TEST_CASE(SklHwInfoTests, sklTestTypes);
 TYPED_TEST(SklHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

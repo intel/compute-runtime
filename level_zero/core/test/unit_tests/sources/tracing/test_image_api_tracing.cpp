@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Image.pfnGetProperties =
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) { return ZE_RESULT_SUCCESS; };
@@ -27,7 +27,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWith
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Image.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) { return ZE_RESULT_SUCCESS; };
@@ -44,7 +44,7 @@ TEST_F(zeAPITracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetO
     EXPECT_EQ(defaultUserData, 1);
 }
 
-TEST_F(zeAPITracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
     ze_result_t result;
     driver_ddiTable.core_ddiTable.Image.pfnDestroy =
         [](ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
@@ -71,7 +71,7 @@ struct {
     void *instanceData3;
 } ImageGetProperties_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -223,7 +223,7 @@ struct {
     void *instanceData3;
 } ImageCreate_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set
@@ -477,7 +477,7 @@ struct {
     void *instanceData3;
 } ImageDestroy_args;
 
-TEST_F(zeAPITracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
+TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
     ze_result_t result;
 
     // initialize initial argument set

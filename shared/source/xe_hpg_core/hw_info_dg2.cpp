@@ -152,15 +152,15 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     }
 }
 
-const HardwareInfo DG2_CONFIG::hwInfo = {
+const HardwareInfo Dg2HwConfig::hwInfo = {
     &DG2::platform,
     &DG2::featureTable,
     &DG2::workaroundTable,
-    &DG2_CONFIG::gtSystemInfo,
+    &Dg2HwConfig::gtSystemInfo,
     DG2::capabilityTable,
 };
-GT_SYSTEM_INFO DG2_CONFIG::gtSystemInfo = {0};
-void DG2_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+GT_SYSTEM_INFO Dg2HwConfig::gtSystemInfo = {0};
+void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;
