@@ -106,6 +106,32 @@ uint32_t IoctlHelper::createDrmContext(Drm &drm, const OsContext &osContext, uin
     return drmContextId;
 }
 
+std::vector<EngineCapabilities> IoctlHelper::translateToEngineCaps(const std::vector<uint8_t> &data) {
+    auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
+    std::vector<EngineCapabilities> engines;
+    engines.reserve(engineInfo->num_engines);
+    for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
+        EngineCapabilities engine{};
+        engine.capabilities = engineInfo->engines[i].capabilities;
+        engine.engine.engineClass = engineInfo->engines[i].engine.engine_class;
+        engine.engine.engineInstance = engineInfo->engines[i].engine.engine_instance;
+        engines.push_back(engine);
+    }
+    return engines;
+}
+
+std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
+    auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
+    auto memRegions = std::vector<MemoryRegion>(data->num_regions);
+    for (uint32_t i = 0; i < data->num_regions; i++) {
+        memRegions[i].probedSize = data->regions[i].probed_size;
+        memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
+        memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
+        memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
+    }
+    return memRegions;
+}
+
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::GemExecbuffer2:
@@ -170,6 +196,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
+    case DrmParam::QueryEngineInfo:
+        return DRM_I915_QUERY_ENGINE_INFO;
+    case DrmParam::QueryMemoryRegions:
+        return DRM_I915_QUERY_MEMORY_REGIONS;
     default:
         UNRECOVERABLE_IF(true);
         return 0;

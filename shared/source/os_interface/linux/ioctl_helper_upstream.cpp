@@ -58,18 +58,6 @@ uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, const MemRegionsVec &memCla
     return ret;
 }
 
-std::vector<MemoryRegion> IoctlHelperUpstream::translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) {
-    auto *data = reinterpret_cast<const drm_i915_query_memory_regions *>(regionInfo.data());
-    auto memRegions = std::vector<MemoryRegion>(data->num_regions);
-    for (uint32_t i = 0; i < data->num_regions; i++) {
-        memRegions[i].probedSize = data->regions[i].probed_size;
-        memRegions[i].unallocatedSize = data->regions[i].unallocated_size;
-        memRegions[i].region.memoryClass = data->regions[i].region.memory_class;
-        memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
-    }
-    return memRegions;
-}
-
 CacheRegion IoctlHelperUpstream::closAlloc(Drm *drm) {
     return CacheRegion::None;
 }
@@ -113,20 +101,6 @@ std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<
 
 uint64_t IoctlHelperUpstream::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
     return 0u;
-}
-
-std::vector<EngineCapabilities> IoctlHelperUpstream::translateToEngineCaps(const std::vector<uint8_t> &data) {
-    auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
-    std::vector<EngineCapabilities> engines;
-    engines.reserve(engineInfo->num_engines);
-    for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
-        EngineCapabilities engine{};
-        engine.capabilities = engineInfo->engines[i].capabilities;
-        engine.engine.engineClass = engineInfo->engines[i].engine.engine_class;
-        engine.engine.engineInstance = engineInfo->engines[i].engine.engine_instance;
-        engines.push_back(engine);
-    }
-    return engines;
 }
 
 uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
@@ -224,7 +198,7 @@ bool IoctlHelperUpstream::isDebugAttachAvailable() {
     return false;
 }
 
-unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) {
+unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::GemCreateExt:
         return DRM_IOCTL_I915_GEM_CREATE_EXT;
@@ -237,12 +211,8 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassCompute:
         return 4;
-    case DrmParam::QueryEngineInfo:
-        return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryHwconfigTable:
         return DRM_I915_QUERY_HWCONFIG_TABLE;
-    case DrmParam::QueryMemoryRegions:
-        return DRM_I915_QUERY_MEMORY_REGIONS;
     case DrmParam::QueryComputeSlices:
         return 0;
     default:

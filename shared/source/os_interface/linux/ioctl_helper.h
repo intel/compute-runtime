@@ -72,7 +72,6 @@ class IoctlHelper {
 
     virtual bool isVmBindAvailable(Drm *drm) = 0;
     virtual uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) = 0;
-    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) = 0;
     virtual CacheRegion closAlloc(Drm *drm) = 0;
     virtual uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(Drm *drm, CacheRegion closIndex) = 0;
@@ -85,7 +84,6 @@ class IoctlHelper {
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
-    virtual std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) = 0;
     virtual uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) = 0;
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
@@ -110,10 +108,13 @@ class IoctlHelper {
     virtual bool isContextDebugSupported(Drm *drm) = 0;
     virtual int setContextDebugFlag(Drm *drm, uint32_t drmContextId) = 0;
     virtual bool isDebugAttachAvailable() = 0;
-    virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) = 0;
+    virtual unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const = 0;
     virtual int getDrmParamValue(DrmParam drmParam) const = 0;
 
+    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
+
     uint32_t createDrmContext(Drm &drm, const OsContext &osContext, uint32_t drmVmId);
+    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
@@ -130,7 +131,6 @@ class IoctlHelperUpstream : public IoctlHelper {
 
     bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
-    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
@@ -143,7 +143,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
@@ -168,7 +167,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
 };
 
@@ -183,7 +182,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
 };
 
 class IoctlHelperPrelim20 : public IoctlHelper {
@@ -192,7 +191,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
 
     bool isVmBindAvailable(Drm *drm) override;
     uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override;
-    std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     CacheRegion closAlloc(Drm *drm) override;
     uint16_t closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(Drm *drm, CacheRegion closIndex) override;
@@ -205,7 +203,6 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
     uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
-    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data) override;
     uint32_t queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
@@ -230,7 +227,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool isContextDebugSupported(Drm *drm) override;
     int setContextDebugFlag(Drm *drm, uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
 };
 

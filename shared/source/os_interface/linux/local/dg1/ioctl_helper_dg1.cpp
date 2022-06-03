@@ -67,7 +67,7 @@ std::vector<MemoryRegion> IoctlHelperImpl<gfxProduct>::translateToMemoryRegions(
 }
 
 template <>
-unsigned int IoctlHelperImpl<gfxProduct>::getIoctlRequestValue(DrmIoctl ioctlRequest) {
+unsigned int IoctlHelperImpl<gfxProduct>::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::DG1GemCreateExt:
         return DRM_IOCTL_I915_GEM_CREATE_EXT;
