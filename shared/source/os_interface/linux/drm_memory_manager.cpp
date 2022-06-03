@@ -809,8 +809,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     lock.unlock();
 
+    auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                           handle, MemoryPool::SystemCpuInaccessible);
+                                           handle, MemoryPool::SystemCpuInaccessible, canonizedGpuAddress);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
@@ -1904,8 +1906,10 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         auto bo = new BufferObject(&drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
+        auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
         return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                 handle, MemoryPool::SystemCpuInaccessible);
+                                 handle, MemoryPool::SystemCpuInaccessible, canonizedGpuAddress);
     }
 
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
@@ -1913,8 +1917,10 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         auto bo = new BufferObject(&drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
+        auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
         return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                 handle, MemoryPool::SystemCpuInaccessible);
+                                 handle, MemoryPool::SystemCpuInaccessible, canonizedGpuAddress);
     }
 
     auto boHandle = openFd.handle;
@@ -1965,8 +1971,10 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         return drmAllocation;
     }
 
+    auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                             handle, MemoryPool::SystemCpuInaccessible);
+                             handle, MemoryPool::SystemCpuInaccessible, canonizedGpuAddress);
 }
 
 } // namespace NEO

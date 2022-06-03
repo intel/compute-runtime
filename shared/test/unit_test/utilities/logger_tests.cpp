@@ -443,7 +443,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::SW_TAG_BUFFER, "SW_TAG_BUFFER"}}};
 
     for (const auto &[type, str] : allocationTypeValues) {
-        GraphicsAllocation graphicsAllocation(0, type, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+        GraphicsAllocation graphicsAllocation(0, type, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
         auto result = getAllocationTypeString(&graphicsAllocation);
 
         EXPECT_STREQ(result, str);
@@ -455,7 +455,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation(0, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 
@@ -467,7 +467,7 @@ TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenS
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
@@ -485,7 +485,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     testing::internal::CaptureStdout();
     fileLogger.logAllocation(&graphicsAllocation);
@@ -503,7 +503,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount);
+    GraphicsAllocation graphicsAllocation(0, AllocationType::COMMAND_BUFFER, nullptr, 0, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
@@ -540,7 +540,7 @@ TEST(MemoryPoolLogging, givenGraphicsMemoryPoolWhenConvertingToStringThenCorrect
          {MemoryPool::SystemCpuInaccessible, "SystemCpuInaccessible"}}};
 
     for (const auto &[pool, str] : memoryPoolValues) {
-        GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, pool, MemoryManager::maxOsContextCount);
+        GraphicsAllocation graphicsAllocation(0, AllocationType::UNKNOWN, nullptr, 0, 0, pool, MemoryManager::maxOsContextCount, 0llu);
         auto result = getMemoryPoolString(&graphicsAllocation);
 
         EXPECT_STREQ(result, str);

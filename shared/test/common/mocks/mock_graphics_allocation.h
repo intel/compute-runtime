@@ -29,7 +29,7 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::usageInfos;
 
     MockGraphicsAllocation()
-        : MemoryAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
+        : MemoryAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
     MockGraphicsAllocation(void *buffer, size_t sizeIn)
         : MemoryAllocation(0, AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}

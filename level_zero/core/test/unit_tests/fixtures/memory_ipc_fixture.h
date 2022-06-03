@@ -429,7 +429,7 @@ class IpcImplicitScalingMockGraphicsAllocation : public NEO::MemoryAllocation {
     using MemoryAllocation::usageInfos;
 
     IpcImplicitScalingMockGraphicsAllocation()
-        : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
+        : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
     IpcImplicitScalingMockGraphicsAllocation(void *buffer, size_t sizeIn)
         : NEO::MemoryAllocation(0, AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount) {}
@@ -454,13 +454,17 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -469,13 +473,17 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -483,24 +491,32 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
     NEO::GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
-        auto alloc = new NEO::MockGraphicsAllocation(0u,
-                                                     NEO::AllocationType::BUFFER,
-                                                     reinterpret_cast<void *>(sharedHandleAddress++),
-                                                     0x1000,
-                                                     0u,
-                                                     MemoryPool::System4KBPages,
-                                                     MemoryManager::maxOsContextCount);
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                                  NEO::AllocationType::BUFFER,
+                                                                  ptr,
+                                                                  0x1000,
+                                                                  0u,
+                                                                  MemoryPool::System4KBPages,
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     };
@@ -606,25 +622,33 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
     void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override{};
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) override {
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0,
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0,
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -633,13 +657,17 @@ class MemoryManagerIpcImplicitScalingMock : public NEO::MemoryManager {
         if (failOnCreateGraphicsAllocationFromSharedHandle) {
             return nullptr;
         }
-        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0,
+        auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
+        auto gmmHelper = getGmmHelper(0);
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
+        auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
                                                                   NEO::AllocationType::BUFFER,
-                                                                  reinterpret_cast<void *>(sharedHandleAddress++),
+                                                                  ptr,
                                                                   0x1000,
                                                                   0u,
                                                                   MemoryPool::System4KBPages,
-                                                                  MemoryManager::maxOsContextCount);
+                                                                  MemoryManager::maxOsContextCount,
+                                                                  canonizedGpuAddress);
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }

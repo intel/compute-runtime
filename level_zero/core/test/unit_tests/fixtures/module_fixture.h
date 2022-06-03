@@ -61,13 +61,18 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
                 device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
                 isaGraphicsAllocation.release();
             }
+            auto ptr = reinterpret_cast<void *>(0x1234);
+            auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+            auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
             isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                         NEO::AllocationType::KERNEL_ISA,
-                                                                        reinterpret_cast<void *>(0x1234),
+                                                                        ptr,
                                                                         0x1000,
                                                                         0u,
                                                                         MemoryPool::System4KBPages,
-                                                                        MemoryManager::maxOsContextCount));
+                                                                        MemoryManager::maxOsContextCount,
+                                                                        canonizedGpuAddress));
+            kernelInfo->kernelAllocation = isaGraphicsAllocation.get();
         }
 
         void setDevice(L0::Device *inDevice) {
@@ -313,13 +318,17 @@ struct ModuleWithZebinFixture : public DeviceFixture {
             mockKernelDescriptor->kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram::kernelName;
             kernelDescriptor = mockKernelDescriptor;
             this->device = device;
+            auto ptr = reinterpret_cast<void *>(0x1234);
+            auto gmmHelper = device->getNEODevice()->getGmmHelper();
+            auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
             isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                                         NEO::AllocationType::KERNEL_ISA,
-                                                                        reinterpret_cast<void *>(0x1234),
+                                                                        ptr,
                                                                         0x1000,
                                                                         0u,
                                                                         MemoryPool::System4KBPages,
-                                                                        MemoryManager::maxOsContextCount));
+                                                                        MemoryManager::maxOsContextCount,
+                                                                        canonizedGpuAddress));
         }
 
         ~MockImmutableData() override {
@@ -337,20 +346,25 @@ struct ModuleWithZebinFixture : public DeviceFixture {
 
         void addSegments() {
             kernelImmDatas.push_back(std::make_unique<MockImmutableData>(device));
+            auto ptr = reinterpret_cast<void *>(0x1234);
+            auto gmmHelper = device->getNEODevice()->getGmmHelper();
+            auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
             translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
                                                                                NEO::AllocationType::GLOBAL_SURFACE,
-                                                                               reinterpret_cast<void *>(0x1234),
+                                                                               ptr,
                                                                                0x1000,
                                                                                0u,
                                                                                MemoryPool::System4KBPages,
-                                                                               MemoryManager::maxOsContextCount);
+                                                                               MemoryManager::maxOsContextCount,
+                                                                               canonizedGpuAddress);
             translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
                                                                                  NEO::AllocationType::GLOBAL_SURFACE,
-                                                                                 reinterpret_cast<void *>(0x1234),
+                                                                                 ptr,
                                                                                  0x1000,
                                                                                  0u,
                                                                                  MemoryPool::System4KBPages,
-                                                                                 MemoryManager::maxOsContextCount);
+                                                                                 MemoryManager::maxOsContextCount,
+                                                                                 canonizedGpuAddress);
 
             translationUnit->programInfo.globalStrings.initData = &strings;
             translationUnit->programInfo.globalStrings.size = sizeof(strings);

@@ -214,20 +214,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = (sizeof(uint32_t) * 4);
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
@@ -237,20 +242,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = (sizeof(uint32_t) * 4);
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
@@ -259,20 +269,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 2u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
@@ -282,20 +297,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledAndErrorOnMi
     MockCommandListHw<gfxCoreFamily> cmdList(true);
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
@@ -305,20 +325,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
@@ -327,20 +352,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
     MockCommandListHw<gfxCoreFamily> cmdList(true);
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 1u);
 }
@@ -349,20 +379,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = 0x100000000;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 1u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 1u);
@@ -372,20 +407,25 @@ HWTEST2_F(CommandListCreate, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = 0x100000001;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalledTimes, 2u);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 2u);
@@ -978,20 +1018,25 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     Vec3<size_t> srcSize = {0x1000, 0x100, 1};
     Vec3<size_t> dstSize = {0x100, 0x100, 1};
     auto size = 0x1000;
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
 
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
@@ -1021,20 +1066,25 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSize
     Vec3<size_t> srcSize = {0x1000, 0x100, 1};
     Vec3<size_t> dstSize = {0x100, 0x100, 1};
     auto size = 0x1000;
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, 0, 0, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr);
@@ -1062,20 +1112,25 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBli
     Vec3<size_t> srcSize = {2 * BlitterConstants::maxBlitWidth, 2 * BlitterConstants::maxBlitHeight, 1};
     Vec3<size_t> dstSize = srcSize;
     auto size = 0x1000;
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     size_t rowPitch = copySize.x;
     size_t slicePitch = copySize.x * copySize.y;
     commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, 0, 0, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr, 0, nullptr);
@@ -1177,21 +1232,26 @@ HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAnd
     useSize -= sizeof(MI_BATCH_BUFFER_END);
     commandList->commandContainer.getCommandStream()->getSpace(useSize);
 
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     NEO::MockGraphicsAllocation mockAllocationSrc(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     void *srcPtr = reinterpret_cast<void *>(mockAllocationSrc.getGpuAddress());
     NEO::MockGraphicsAllocation mockAllocationDst(0,
                                                   AllocationType::INTERNAL_HOST_MEMORY,
-                                                  reinterpret_cast<void *>(0x1234),
+                                                  ptr,
                                                   size,
                                                   0u,
                                                   MemoryPool::System4KBPages,
-                                                  MemoryManager::maxOsContextCount);
+                                                  MemoryManager::maxOsContextCount,
+                                                  canonizedGpuAddress);
     void *dstPtr = reinterpret_cast<void *>(mockAllocationDst.getGpuAddress());
 
     auto result = commandList->appendMemoryCopy(dstPtr,

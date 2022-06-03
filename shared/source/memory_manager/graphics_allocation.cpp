@@ -35,9 +35,9 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
-                                       osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount)
+                                       osHandle sharedHandleIn, MemoryPool pool, size_t maxOsContextCount, uint64_t canonizedGpuAddress)
     : rootDeviceIndex(rootDeviceIndex),
-      gpuAddress(GmmHelper::canonize(castToUint64(cpuPtrIn))),
+      gpuAddress(canonizedGpuAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),

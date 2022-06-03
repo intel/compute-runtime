@@ -33,13 +33,17 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
         uint32_t streamBuffer[100] = {};
         LinearStream stream(streamBuffer, sizeof(streamBuffer));
         auto size = 0x1000;
+        auto ptr = reinterpret_cast<void *>(0x1234);
+        auto gmmHelper = device->getGmmHelper();
+        auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         MockGraphicsAllocation mockAllocation(0,
                                               AllocationType::INTERNAL_HOST_MEMORY,
-                                              reinterpret_cast<void *>(0x1234),
+                                              ptr,
                                               size,
                                               0u,
                                               MemoryPool::System4KBPages,
-                                              MemoryManager::maxOsContextCount);
+                                              MemoryManager::maxOsContextCount,
+                                              canonizedGpuAddress);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
         BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), *device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);

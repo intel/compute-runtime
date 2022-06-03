@@ -361,8 +361,10 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
 
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0,
+                                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
     temporaryAllocation->updateTaskCount(0u, 0u);
     csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
 
@@ -1382,7 +1384,10 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0,
+                                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
     temporaryAllocation->updateTaskCount(0u, 0u);
     csr.getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(temporaryAllocation), TEMPORARY_ALLOCATION, 2u);
 
@@ -1489,8 +1494,10 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
 TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenReuseTemporaryAllocationWhenSizeAndAddressMatch) {
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
-                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0,
+                                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(0u, 0u);
     commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
@@ -1517,8 +1524,10 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
     mockCsr->osContext = &commandStreamReceiver->getOsContext();
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
-                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0,
+                                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(0u, 0u);
     mockCsr->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
@@ -1534,8 +1543,10 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAll
 TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenAllocTaskCountEqualZero) {
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
-                                                                  AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0,
+                                                                  MemoryPool::System4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(10u, 0u);
     commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
