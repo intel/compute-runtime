@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"

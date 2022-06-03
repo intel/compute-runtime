@@ -7,6 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
 using ::testing::_;

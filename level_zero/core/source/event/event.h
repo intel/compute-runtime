@@ -9,10 +9,6 @@
 
 #include "shared/source/helpers/timestamp_packet.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
 #include <bitset>
@@ -27,6 +23,10 @@ namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
 struct MetricStreamer;
+struct ContextImp;
+struct Context;
+struct DriverHandle;
+struct Device;
 
 namespace EventPacketsCount {
 constexpr uint32_t maxKernelSplit = 3;

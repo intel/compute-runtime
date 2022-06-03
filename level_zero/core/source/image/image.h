@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,19 @@
 
 #pragma once
 
-#include "shared/source/command_container/cmdcontainer.h"
-
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
 struct _ze_image_handle_t {};
 
 namespace NEO {
 struct ImageInfo;
+class GraphicsAllocation;
 struct ImageDescriptor;
 } // namespace NEO
 
 namespace L0 {
+struct Device;
+
 struct Image : _ze_image_handle_t {
     template <typename Type>
     struct Allocator {

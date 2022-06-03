@@ -11,8 +11,6 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
-#include "CL/cl.h"
-
 static_assert(NEO::HwInfoConfig::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
 struct _ze_device_handle_t {};

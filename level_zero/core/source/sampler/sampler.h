@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
 struct _ze_sampler_handle_t {};
 
 namespace L0 {
+struct Device;
 
 struct Sampler : _ze_sampler_handle_t {
     template <typename Type>

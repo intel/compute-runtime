@@ -9,7 +9,9 @@
 
 #include "shared/source/built_ins/built_ins.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/module/module.h"
 
 namespace NEO {
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {

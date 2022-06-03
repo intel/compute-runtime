@@ -8,8 +8,6 @@
 #pragma once
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/module/module.h"
 
 namespace NEO {
 namespace EBuiltInOps {
@@ -19,6 +17,10 @@ class BuiltIns;
 } // namespace NEO
 
 namespace L0 {
+struct Module;
+struct Kernel;
+struct Device;
+
 struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     struct BuiltinData;
     BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib)

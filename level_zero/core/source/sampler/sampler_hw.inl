@@ -7,9 +7,11 @@
 
 #pragma once
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/numeric.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 
 namespace L0 {

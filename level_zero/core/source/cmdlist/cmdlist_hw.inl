@@ -43,6 +43,8 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 
+#include "CL/cl.h"
+
 #include <algorithm>
 
 namespace L0 {

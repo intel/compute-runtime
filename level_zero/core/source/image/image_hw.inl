@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
