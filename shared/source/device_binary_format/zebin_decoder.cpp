@@ -376,6 +376,8 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = ArgTypeT::ArgTypeArgByvalue;
     } else if (tokenValue == PayloadArgument::ArgType::argBypointer) {
         out = ArgTypeT::ArgTypeArgBypointer;
+    } else if (tokenValue == PayloadArgument::ArgType::bufferAddress) {
+        out = ArgTypeT::ArgTypeBufferAddress;
     } else if (tokenValue == PayloadArgument::ArgType::bufferOffset) {
         out = ArgTypeT::ArgTypeBufferOffset;
     } else if (tokenValue == PayloadArgument::ArgType::printfBuffer) {
@@ -824,14 +826,14 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         }
 
         argTraits.argByValSize = sizeof(void *);
+        if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>().accessedUsingStatelessAddressingMode = false;
+        }
         switch (src.addrmode) {
         default:
             outErrReason.append("Invalid or missing memory addressing mode for arg idx : " + std::to_string(src.argIndex) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::InvalidBinary;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateful:
-            if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
-                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = false;
-            }
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeStateless:
             if (false == dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
@@ -840,6 +842,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             }
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).stateless = src.offset;
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).pointerSize = src.size;
+            dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).accessedUsingStatelessAddressingMode = true;
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeBindless:
             if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::ArgTPointer>()) {
@@ -914,6 +917,11 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::enqueuedLocalSize.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
             return DecodeError::InvalidBinary;
         }
+        break;
+    }
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeBufferAddress: {
+        dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).stateless = src.offset;
         break;
     }
 

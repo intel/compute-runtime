@@ -861,7 +861,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithPointerArgumentAndMetadataT
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset));
-        EXPECT_FALSE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful()));
+        EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful());
         EXPECT_FALSE(dst.kernelAttributes.flags.usesImages);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesSamplers);
     }
@@ -874,7 +874,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithPointerArgumentAndMetadataT
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_EQ(bufferOffset.Offset, dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset);
-        EXPECT_FALSE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful()));
+        EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful());
         kernelTokens.tokens.kernelArgs[0].metadata.buffer.bufferOffset = nullptr;
         EXPECT_FALSE(dst.kernelAttributes.flags.usesImages);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesSamplers);
@@ -886,7 +886,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithPointerArgumentAndMetadataT
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset));
-        EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful()));
+        EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful());
         kernelTokens.tokens.kernelArgs[0].metadata.buffer.pureStateful = nullptr;
         EXPECT_FALSE(dst.kernelAttributes.flags.usesImages);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesSamplers);
@@ -1029,7 +1029,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSlmArgumentAndMetadataThenK
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset));
-        EXPECT_FALSE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful()));
+        EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful());
         EXPECT_FALSE(dst.kernelAttributes.flags.usesImages);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesSamplers);
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindful));
@@ -1052,7 +1052,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenKernelWithSlmArgumentAndMetadataThenK
         NEO::populateKernelDescriptor(dst, kernelTokens, sizeof(void *));
         EXPECT_TRUE(dst.payloadMappings.explicitArgs[0].is<NEO::ArgDescriptor::ArgTPointer>());
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bufferOffset));
-        EXPECT_FALSE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful()));
+        EXPECT_FALSE(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().isPureStateful());
         EXPECT_FALSE(dst.kernelAttributes.flags.usesImages);
         EXPECT_FALSE(dst.kernelAttributes.flags.usesSamplers);
         EXPECT_TRUE(NEO::isUndefinedOffset(dst.payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>().bindful));
