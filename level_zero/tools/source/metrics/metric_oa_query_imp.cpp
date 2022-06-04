@@ -171,7 +171,6 @@ void MetricsLibrary::release() {
     api = {};
     callbacks = {};
     context = {};
-    isWorkloadPartitionEnabled = false;
     initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
