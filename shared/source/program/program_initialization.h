@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ struct LinkerInput;
 
 GraphicsAllocation *allocateGlobalsSurface(SVMAllocsManager *const svmAllocManager, Device &device,
                                            size_t size, bool constant,
-                                           LinkerInput *const linkerInput, const void *initData);
+                                           LinkerInput *const linkerInput,
+                                           const void *initData,
+                                           void *context);
 
 } // namespace NEO

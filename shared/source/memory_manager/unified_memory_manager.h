@@ -38,6 +38,7 @@ struct SvmAllocationData {
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         this->isImportedAllocation = svmAllocData.isImportedAllocation;
+        this->context = svmAllocData.context;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -53,6 +54,7 @@ struct SvmAllocationData {
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
+    void *context = nullptr;
     void setAllocId(uint32_t id) {
         allocId = id;
     }
@@ -153,15 +155,19 @@ class SVMAllocsManager {
                          const RootDeviceIndicesContainer &rootDeviceIndices,
                          const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields);
     MOCKABLE_VIRTUAL void *createHostUnifiedMemoryAllocation(size_t size,
-                                                             const UnifiedMemoryProperties &svmProperties);
+                                                             const UnifiedMemoryProperties &svmProperties,
+                                                             void *context);
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size,
-                                                         const UnifiedMemoryProperties &svmProperties);
+                                                         const UnifiedMemoryProperties &svmProperties,
+                                                         void *context);
     MOCKABLE_VIRTUAL void *createSharedUnifiedMemoryAllocation(size_t size,
                                                                const UnifiedMemoryProperties &svmProperties,
-                                                               void *cmdQ);
+                                                               void *cmdQ,
+                                                               void *context);
     void *createUnifiedKmdMigratedAllocation(size_t size,
                                              const SvmAllocationProperties &svmProperties,
-                                             const UnifiedMemoryProperties &unifiedMemoryProperties);
+                                             const UnifiedMemoryProperties &unifiedMemoryProperties,
+                                             void *context);
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
@@ -180,7 +186,7 @@ class SVMAllocsManager {
                                                                      ResidencyContainer &residencyContainer,
                                                                      uint32_t requestedTypesMask);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
-    void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
+    void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties, void *context);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;

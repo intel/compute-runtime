@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
 #include <memory>
@@ -19,6 +20,7 @@ namespace L0 {
 struct Device;
 struct ModuleBuildLog;
 struct KernelImmutableData;
+struct Context;
 
 enum class ModuleType {
     Builtin,
@@ -27,7 +29,7 @@ enum class ModuleType {
 
 struct Module : _ze_module_handle_t {
 
-    static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
+    static Module *create(Context *context, Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
 
     virtual ~Module() = default;
 
@@ -63,6 +65,16 @@ struct Module : _ze_module_handle_t {
     static Module *fromHandle(ze_module_handle_t handle) { return static_cast<Module *>(handle); }
 
     inline ze_module_handle_t toHandle() { return this; }
+
+    void setContext(Context *context) {
+        this->context = context;
+    }
+
+    Context *getContext() {
+        return this->context;
+    }
+
+    Context *context = nullptr;
 };
 
 } // namespace L0

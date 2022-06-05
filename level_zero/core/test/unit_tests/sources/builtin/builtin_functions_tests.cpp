@@ -39,7 +39,7 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
             moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
             moduleDesc.pInputModule = nullptr;
             moduleDesc.inputSize = 0u;
-            res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
+            res = device->createModule(nullptr, &moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
             UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
 
             module.reset(Module::fromHandle(moduleHandle));
@@ -211,7 +211,8 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenRebuildPrecompiledKernelsDebug
             builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
         }
 
-        ze_result_t createModule(const ze_module_desc_t *desc,
+        ze_result_t createModule(Context *context,
+                                 const ze_module_desc_t *desc,
                                  ze_module_handle_t *module,
                                  ze_module_build_log_handle_t *buildLog, ModuleType type) override {
             EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_IL_SPIRV);
@@ -245,7 +246,8 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenNotToRebuildPrecompiledKernels
             builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
         }
 
-        ze_result_t createModule(const ze_module_desc_t *desc,
+        ze_result_t createModule(Context *context,
+                                 const ze_module_desc_t *desc,
                                  ze_module_handle_t *module,
                                  ze_module_build_log_handle_t *buildLog, ModuleType type) override {
             EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_NATIVE);
@@ -253,7 +255,7 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, givenNotToRebuildPrecompiledKernels
             EXPECT_NE(desc->pInputModule, nullptr);
             createModuleCalled = true;
 
-            return DeviceImp::createModule(desc, module, buildLog, type);
+            return DeviceImp::createModule(context, desc, module, buildLog, type);
         }
 
         bool createModuleCalled = false;
@@ -278,14 +280,15 @@ HWTEST_F(TestBuiltinFunctionsLibImplDefault, GivenBuiltinsWhenInitializingFuncti
             builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
         }
 
-        ze_result_t createModule(const ze_module_desc_t *desc,
+        ze_result_t createModule(Context *context,
+                                 const ze_module_desc_t *desc,
                                  ze_module_handle_t *module,
                                  ze_module_build_log_handle_t *buildLog, ModuleType type) override {
 
             typeCreated = type;
             EXPECT_EQ(ModuleType::Builtin, type);
 
-            return DeviceImp::createModule(desc, module, buildLog, type);
+            return DeviceImp::createModule(context, desc, module, buildLog, type);
         }
 
         ModuleType typeCreated = ModuleType::User;

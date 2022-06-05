@@ -162,12 +162,13 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
         return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);
     } else {
         UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::NOT_SPECIFIED, rootDeviceIndices, subdeviceBitfields);
-        return createUnifiedAllocationWithDeviceStorage(size, svmProperties, unifiedMemoryProperties);
+        return createUnifiedAllocationWithDeviceStorage(size, svmProperties, unifiedMemoryProperties, nullptr);
     }
 }
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
-                                                          const UnifiedMemoryProperties &memoryProperties) {
+                                                          const UnifiedMemoryProperties &memoryProperties,
+                                                          void *context) {
     size_t pageSizeForAlignment = MemoryConstants::pageSize;
     size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
@@ -208,6 +209,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.device = nullptr;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(this->allocationsCounter++);
+    allocData.context = context;
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
@@ -216,7 +218,8 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
 }
 
 void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
-                                                      const UnifiedMemoryProperties &memoryProperties) {
+                                                      const UnifiedMemoryProperties &memoryProperties,
+                                                      void *context) {
     auto rootDeviceIndex = memoryProperties.device
                                ? memoryProperties.device->getRootDeviceIndex()
                                : *memoryProperties.rootDeviceIndices.begin();
@@ -285,6 +288,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = memoryProperties.device;
     allocData.setAllocId(this->allocationsCounter++);
+    allocData.context = context;
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
@@ -293,9 +297,10 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
 void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
                                                             const UnifiedMemoryProperties &memoryProperties,
-                                                            void *cmdQ) {
+                                                            void *cmdQ,
+                                                            void *context) {
     if (memoryProperties.rootDeviceIndices.size() > 1 && memoryProperties.device == nullptr) {
-        return createHostUnifiedMemoryAllocation(size, memoryProperties);
+        return createHostUnifiedMemoryAllocation(size, memoryProperties, context);
     }
 
     auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported(*memoryProperties.rootDeviceIndices.begin());
@@ -309,12 +314,12 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
         void *unifiedMemoryPointer = nullptr;
 
         if (useKmdMigration) {
-            unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(size, {}, memoryProperties);
+            unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(size, {}, memoryProperties, context);
             if (!unifiedMemoryPointer) {
                 return nullptr;
             }
         } else {
-            unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {}, memoryProperties);
+            unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {}, memoryProperties, context);
             if (!unifiedMemoryPointer) {
                 return nullptr;
             }
@@ -327,13 +332,14 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,
         auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
         unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
         unifiedMemoryAllocation->allocationFlagsProperty = memoryProperties.allocationFlags;
+        unifiedMemoryAllocation->context = context;
 
         return unifiedMemoryPointer;
     }
-    return createUnifiedMemoryAllocation(size, memoryProperties);
+    return createUnifiedMemoryAllocation(size, memoryProperties, context);
 }
 
-void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
+void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties, void *context) {
 
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
@@ -366,6 +372,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
+    allocData.context = context;
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
@@ -472,7 +479,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     return usmPtr;
 }
 
-void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
+void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties, void *context) {
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
@@ -534,6 +541,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.device = unifiedMemoryProperties.device;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.size = size;
+    allocData.context = context;
     allocData.setAllocId(this->allocationsCounter++);
 
     std::unique_lock<std::shared_mutex> lock(mtx);

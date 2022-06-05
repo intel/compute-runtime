@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -26,6 +27,7 @@ struct EventPool;
 struct Event;
 struct Kernel;
 struct CommandQueue;
+struct Context;
 
 struct CmdListKernelLaunchParams {
     bool isIndirect = false;
@@ -295,7 +297,7 @@ struct CommandList : _ze_command_list_handle_t {
         return this->isTbxMode && !this->isSyncModeQueue;
     }
 
-    ze_context_handle_t hContext = nullptr;
+    Context *context = nullptr;
     std::vector<Kernel *> printfKernelContainer;
     CommandQueue *cmdQImmediate = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

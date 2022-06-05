@@ -20,7 +20,7 @@
 namespace NEO {
 
 GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t size, bool constant,
-                                           LinkerInput *const linkerInput, const void *initData) {
+                                           LinkerInput *const linkerInput, const void *initData, void *context) {
     bool globalsAreExported = false;
     GraphicsAllocation *gpuAllocation = nullptr;
     auto rootDeviceIndex = device.getRootDeviceIndex();
@@ -37,7 +37,8 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
-        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+
+        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties, context);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;

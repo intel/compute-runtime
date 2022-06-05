@@ -47,7 +47,7 @@ ze_result_t Mock<DriverHandle>::allocDeviceMem(ze_device_handle_t hDevice, const
                                                size_t size, size_t alignment, void **ptr) {
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
 
-    auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
 
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;

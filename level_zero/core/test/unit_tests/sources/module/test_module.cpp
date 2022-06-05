@@ -2151,7 +2151,9 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     moduleDesc.inputSize = src.size();
 
     Module module(device, nullptr, ModuleType::User);
+    module.setContext(context);
     MockModuleTU *tu = new MockModuleTU(device);
+    tu->module = &module;
     module.translationUnit.reset(tu);
 
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -2298,9 +2300,19 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto module = std::unique_ptr<L0::Module>(Module::create(context, device, &moduleDesc, nullptr, ModuleType::User, &result));
+
     auto arData = encoder.encode();
     L0::ModuleTranslationUnit moduleTuValid(this->device);
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    moduleTuValid.module = module.get();
+    result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_NE(moduleTuValid.packedDeviceBinarySize, arData.size());
@@ -2702,7 +2714,7 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
     moduleDesc.inputSize = src.size();
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto module = std::unique_ptr<L0::Module>(Module::create(device, &moduleDesc, nullptr, ModuleType::User, &result));
+    auto module = std::unique_ptr<L0::Module>(Module::create(context, device, &moduleDesc, nullptr, ModuleType::User, &result));
 
     auto kernel = std::make_unique<Mock<Kernel>>();
     ASSERT_NE(nullptr, kernel);

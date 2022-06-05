@@ -110,9 +110,11 @@ void ModuleImmutableDataFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
-Module *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
+Module *ModuleFixture::ProxyModuleImp::create(L0::Context *context, L0::Device *device, const ze_module_desc_t *desc,
                                               ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
     auto module = new ProxyModuleImp(device, moduleBuildLog, type);
+
+    module->setContext(context);
 
     *result = module->initialize(desc, device->getNEODevice());
     if (*result != ZE_RESULT_SUCCESS) {
@@ -140,7 +142,7 @@ void ModuleFixture::createModuleFromMockBinary(ModuleType type) {
 
     ModuleBuildLog *moduleBuildLog = nullptr;
     ze_result_t result = ZE_RESULT_SUCCESS;
-    module.reset(ProxyModuleImp::create(device, &moduleDesc, moduleBuildLog, type, &result));
+    module.reset(ProxyModuleImp::create(context, device, &moduleDesc, moduleBuildLog, type, &result));
 }
 
 void ModuleFixture::createKernel() {
@@ -186,7 +188,8 @@ void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceInd
     ModuleBuildLog *moduleBuildLog = nullptr;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    modules[rootDeviceIndex].reset(Module::create(device,
+    modules[rootDeviceIndex].reset(Module::create(context,
+                                                  device,
                                                   &moduleDesc,
                                                   moduleBuildLog, ModuleType::User, &result));
 }

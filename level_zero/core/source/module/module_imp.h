@@ -25,6 +25,7 @@ struct Segments;
 }
 } // namespace NEO
 namespace L0 {
+struct Module;
 
 namespace BuildOptions {
 extern NEO::ConstStringRef optDisable;
@@ -56,6 +57,7 @@ struct ModuleTranslationUnit {
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();
     L0::Device *device = nullptr;
+    L0::Module *module = nullptr;
 
     NEO::GraphicsAllocation *globalConstBuffer = nullptr;
     NEO::GraphicsAllocation *globalVarBuffer = nullptr;

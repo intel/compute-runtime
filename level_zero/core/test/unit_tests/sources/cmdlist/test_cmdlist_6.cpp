@@ -616,6 +616,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAl
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->context = context;
 
     constexpr size_t allocSize = 4096;
     void *dstBuffer = nullptr;
@@ -636,6 +637,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocat
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAllocationThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    commandList->context = context;
 
     constexpr size_t size = 4096u;
     constexpr size_t alignment = 4096u;
@@ -646,6 +648,9 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
                                           &deviceDesc,
                                           size, alignment, &dstBuffer);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(dstBuffer);
+    EXPECT_NE(alloc, nullptr);
+    EXPECT_EQ(alloc->context, context);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
@@ -653,6 +658,62 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isKernelSplitOperation);
     EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAllocationWithDifferentContextThanCommandListThenInvalidArgumentIsReturned, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    std::unique_ptr<L0::ContextImp> context1 = std::make_unique<L0::ContextImp>(driverHandle.get());
+    commandList->context = context1.get();
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(dstBuffer);
+    EXPECT_NE(alloc, nullptr);
+    EXPECT_EQ(alloc->context, context);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_result_t res = commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    res = commandList->appendMemoryCopy(srcPtr, dstBuffer, 8, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocationWithDifferentContextThanCommandListThenInvalidArgumentIsReturned, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    std::unique_ptr<L0::ContextImp> context1 = std::make_unique<L0::ContextImp>(driverHandle.get());
+    commandList->context = context1.get();
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc,
+                                        size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_result_t res = commandList->appendMemoryCopy(dstBuffer, srcPtr, 8, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+
+    res = commandList->appendMemoryCopy(srcPtr, dstBuffer, 8, nullptr, 0, nullptr);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     context->freeMem(dstBuffer);
 }
