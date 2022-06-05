@@ -150,13 +150,13 @@ TEST_F(MultiDeviceContextTests,
 
 struct SVMAllocsManagerContextMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerContextMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
-    void *createHostUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
+    void *createHostUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties, void *context) override {
         EXPECT_EQ(expectedRootDeviceIndexes.size(), memoryProperties.rootDeviceIndices.size());
         EXPECT_NE(std::find(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end(), expectedRootDeviceIndexes[0]),
                   memoryProperties.rootDeviceIndices.end());
         EXPECT_NE(std::find(memoryProperties.rootDeviceIndices.begin(), memoryProperties.rootDeviceIndices.end(), expectedRootDeviceIndexes[1]),
                   memoryProperties.rootDeviceIndices.end());
-        return NEO::SVMAllocsManager::createHostUnifiedMemoryAllocation(size, memoryProperties);
+        return NEO::SVMAllocsManager::createHostUnifiedMemoryAllocation(size, memoryProperties, context);
     }
 
     std::vector<uint32_t> expectedRootDeviceIndexes;
@@ -746,7 +746,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
-    auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, device);
+    auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, device, nullptr);
     EXPECT_NE(nullptr, sharedPtr);
 
     auto allocation = svmManager->getSVMAlloc(sharedPtr);

@@ -1668,7 +1668,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
-    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
+    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
@@ -1692,7 +1692,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
-    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
+    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
@@ -1716,7 +1716,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
-    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
+    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
@@ -1764,7 +1764,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 
     EXPECT_EQ(0u, svmManager->getNumAllocs());
     auto unifiedMemoryPtr = svmManager->createHostUnifiedMemoryAllocation(allocationSize,
-                                                                          unifiedMemoryProperties);
+                                                                          unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(1u, svmManager->getNumAllocs());
 

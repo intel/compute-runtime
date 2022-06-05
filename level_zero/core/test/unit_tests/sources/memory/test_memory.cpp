@@ -809,13 +809,15 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48
 struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
-                                            const UnifiedMemoryProperties &memoryProperties) override {
+                                            const UnifiedMemoryProperties &memoryProperties,
+                                            void *context) override {
         hostUnifiedMemoryAllocationTimes++;
         return alignedMalloc(4096u, 4096u);
     }
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
-                                              void *cmdQ) override {
+                                              void *cmdQ,
+                                              void *context) override {
 
         sharedUnifiedMemoryAllocationTimes++;
         return alignedMalloc(4096u, 4096u);
@@ -1073,7 +1075,8 @@ TEST_F(FreeExtTests,
 struct SVMAllocsManagerOutOFMemoryMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerOutOFMemoryMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createUnifiedMemoryAllocation(size_t size,
-                                        const UnifiedMemoryProperties &svmProperties) override {
+                                        const UnifiedMemoryProperties &svmProperties,
+                                        void *context) override {
         return nullptr;
     }
 };
@@ -1129,19 +1132,23 @@ TEST_F(OutOfMemoryTests,
 
 struct SVMAllocsManagerRelaxedSizeMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerRelaxedSizeMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+
     void *createUnifiedMemoryAllocation(size_t size,
-                                        const UnifiedMemoryProperties &svmProperties) override {
+                                        const UnifiedMemoryProperties &svmProperties,
+                                        void *context) override {
         return alignedMalloc(4096u, 4096u);
     }
 
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
-                                              void *cmdQ) override {
+                                              void *cmdQ,
+                                              void *context) override {
         return alignedMalloc(4096u, 4096u);
     }
 
     void *createHostUnifiedMemoryAllocation(size_t size,
-                                            const UnifiedMemoryProperties &memoryProperties) override {
+                                            const UnifiedMemoryProperties &memoryProperties,
+                                            void *context) override {
         return alignedMalloc(4096u, 4096u);
     }
 };
@@ -3815,7 +3822,8 @@ struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerSharedAllocFailMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createSharedUnifiedMemoryAllocation(size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
-                                              void *cmdQ) override {
+                                              void *cmdQ,
+                                              void *context) override {
         return nullptr;
     }
 };
@@ -3868,7 +3876,8 @@ TEST_F(SharedAllocFailTests, whenAllocatinSharedMemoryAndAllocationFailsThenOutO
 struct SVMAllocsManagerSharedAllocMultiDeviceMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerSharedAllocMultiDeviceMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createHostUnifiedMemoryAllocation(size_t size,
-                                            const UnifiedMemoryProperties &memoryProperties) override {
+                                            const UnifiedMemoryProperties &memoryProperties,
+                                            void *context) override {
         createHostUnifiedMemoryAllocationTimes++;
         return alignedMalloc(4096u, 4096u);
     }
