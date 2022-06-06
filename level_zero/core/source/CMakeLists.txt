@@ -32,7 +32,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/debugger/debug_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager/debug_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device${BRANCH_DIR_SUFFIX}device_imp_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.cpp

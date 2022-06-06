@@ -10,8 +10,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include <level_zero/ze_api.h>
-
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
