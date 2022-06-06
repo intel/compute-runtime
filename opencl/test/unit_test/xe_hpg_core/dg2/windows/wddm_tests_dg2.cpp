@@ -23,8 +23,6 @@ using namespace NEO;
 
 #include "mock_gmm_memory.h"
 
-HWTEST_EXCLUDE_PRODUCT(PlatformWithFourDevicesTest, givenPlatformWithFourDevicesWhenCreateBufferThenAllocationIsColouredAndHasFourHandles, IGFX_DG2);
-
 struct PlatformWithFourDevicesTestDG2 : public ::testing::Test {
     PlatformWithFourDevicesTestDG2() {
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
