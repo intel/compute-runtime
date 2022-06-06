@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
@@ -64,14 +65,17 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenAddressChangedThenReturnDirty
 
     auto newBuffer = ptrOffset(buffer, MemoryConstants::pageSize + 1);
     auto graphicsAllocation = stream->getGraphicsAllocation();
-    graphicsAllocation->setCpuPtrAndGpuAddress(newBuffer, castToUint64(newBuffer));
+    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(newBuffer));
+
+    graphicsAllocation->setCpuPtrAndGpuAddress(newBuffer, canonizedGpuAddress);
 
     stream->replaceBuffer(newBuffer, bufferSize);
 
     EXPECT_TRUE(mockHeapDirtyState.updateAndCheck(stream.get()));
 
     EXPECT_EQ(1u, mockHeapDirtyState.sizeInPages);
-    EXPECT_EQ(castToUint64(newBuffer), mockHeapDirtyState.gpuBaseAddress);
+    EXPECT_EQ(canonizedGpuAddress, mockHeapDirtyState.gpuBaseAddress);
 }
 
 TEST_F(HeapDirtyStateTests, givenIndirectHeapWithoutGraphicsAllocationWhenUpdateAndCheckIsCalledThenSizeIsSetToZero) {
@@ -101,14 +105,17 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenSizeAndBufferChangedThenRetur
     auto newBuffer = ptrOffset(buffer, 1);
     auto newBufferSize = bufferSize + MemoryConstants::pageSize;
     auto graphicsAllocation = stream->getGraphicsAllocation();
+    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(newBuffer));
+
     graphicsAllocation->setSize(newBufferSize);
-    graphicsAllocation->setCpuPtrAndGpuAddress(newBuffer, castToUint64(newBuffer));
+    graphicsAllocation->setCpuPtrAndGpuAddress(newBuffer, canonizedGpuAddress);
     stream->replaceBuffer(stream->getCpuBase(), newBufferSize);
 
     EXPECT_TRUE(mockHeapDirtyState.updateAndCheck(stream.get()));
 
     EXPECT_EQ(getSizeInPages(newBufferSize), mockHeapDirtyState.sizeInPages);
-    EXPECT_EQ(castToUint64(newBuffer), mockHeapDirtyState.gpuBaseAddress);
+    EXPECT_EQ(canonizedGpuAddress, mockHeapDirtyState.gpuBaseAddress);
 }
 
 TEST(DirtyStateHelpers, givenDirtyStateHelperWhenTwoDifferentIndirectHeapsAreCheckedButWithTheSame4GBbaseThenStateIsNotDirty) {

@@ -41,11 +41,14 @@ TEST(LinearStreamSimpleTest, givenLinearStreamWithoutGraphicsAllocationWhenGetti
 
 TEST(LinearStreamSimpleTest, givenLinearStreamWithGraphicsAllocationWhenGettingGpuBaseThenGpuAddressFromGraphicsAllocationIsReturned) {
     MockGraphicsAllocation gfxAllocation;
-    gfxAllocation.setCpuPtrAndGpuAddress(nullptr, 0x5555000);
+    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto canonizedGpuAddress = gmmHelper->canonize(0x5555000);
+
+    gfxAllocation.setCpuPtrAndGpuAddress(nullptr, canonizedGpuAddress);
     uint32_t pCmdBuffer[1024]{};
     LinearStream linearStream(&gfxAllocation, pCmdBuffer, 1000);
 
-    EXPECT_EQ(0x5555000u, linearStream.getGpuBase());
+    EXPECT_EQ(canonizedGpuAddress, linearStream.getGpuBase());
 }
 
 TEST_F(LinearStreamTest, GivenSizeZeroWhenGettingSpaceUsedThenNonNullPointerIsReturned) {

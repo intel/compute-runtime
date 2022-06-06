@@ -85,9 +85,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *getDriverAllocatedCpuPtr() const { return driverAllocatedCpuPointer; }
     void setDriverAllocatedCpuPtr(void *allocatedCpuPtr) { driverAllocatedCpuPointer = allocatedCpuPtr; }
 
-    void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
+    void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t canonizedGpuAddress) {
         this->cpuPtr = cpuPtr;
-        this->gpuAddress = GmmHelper::canonize(gpuAddress);
+        this->gpuAddress = canonizedGpuAddress;
     }
     size_t getUnderlyingBufferSize() const { return size; }
     void setSize(size_t size) { this->size = size; }

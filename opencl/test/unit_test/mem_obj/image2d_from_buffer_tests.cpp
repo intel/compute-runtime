@@ -355,8 +355,10 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     uint64_t gpuAddress = 0x1234;
     auto cpuAddress = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer();
+    auto gmmHelper = context.getDevice(0)->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
 
-    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setCpuPtrAndGpuAddress(0, gpuAddress);
+    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setCpuPtrAndGpuAddress(0, canonizedGpuAddress);
 
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(1, buffer->getRefInternalCount());
@@ -378,7 +380,7 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
 
     EXPECT_EQ(bufferGraphicsAllocation, imageGraphicsAllocation);
 
-    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
+    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setCpuPtrAndGpuAddress(cpuAddress, canonizedGpuAddress);
 }
 
 TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImageIsCreatedThatDoesntFitInTheBufferThenPaddingIsApplied) {

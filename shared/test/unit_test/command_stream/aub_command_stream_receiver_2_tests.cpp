@@ -538,12 +538,18 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(imageAllocation->getGpuAddress());
+
         cpuPtr = imageAllocation->getUnderlyingBuffer();
-        imageAllocation->setCpuPtrAndGpuAddress(nullptr, imageAllocation->getGpuAddress());
+        imageAllocation->setCpuPtrAndGpuAddress(nullptr, canonizedGpuAddress);
         return imageAllocation;
     };
     void freeGraphicsMemoryImpl(GraphicsAllocation *imageAllocation) override {
-        imageAllocation->setCpuPtrAndGpuAddress(cpuPtr, imageAllocation->getGpuAddress());
+        auto gmmHelper = getGmmHelper(imageAllocation->getRootDeviceIndex());
+        auto canonizedGpuAddress = gmmHelper->canonize(imageAllocation->getGpuAddress());
+        imageAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
+
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(imageAllocation);
     };
     void *lockResourceImpl(GraphicsAllocation &imageAllocation) override {

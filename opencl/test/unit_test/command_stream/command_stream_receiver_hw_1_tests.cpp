@@ -541,7 +541,10 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
 
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
     auto scratchAllocation = scratchController->getScratchSpaceAllocation();
-    scratchAllocation->setCpuPtrAndGpuAddress(scratchAllocation->getUnderlyingBuffer(), expectedScratchAddress);
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(expectedScratchAddress);
+    scratchAllocation->setCpuPtrAndGpuAddress(scratchAllocation->getUnderlyingBuffer(), canonizedGpuAddress);
+
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((scratchAllocation->getGpuAddress() - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
 }
 

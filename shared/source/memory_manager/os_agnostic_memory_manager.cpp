@@ -98,7 +98,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
             }
             memoryAllocation->setReservedAddressRange(gpuPtr, reserveSize);
             gpuPtr = alignUp(gpuPtr, alignment);
-            memoryAllocation->setCpuPtrAndGpuAddress(ptr, reinterpret_cast<uint64_t>(gpuPtr));
+
+            auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+            auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(gpuPtr));
+            memoryAllocation->setCpuPtrAndGpuAddress(ptr, canonizedGpuAddress);
         }
 
         if (allocationData.type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
@@ -144,7 +147,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) {
     auto memoryAllocation = static_cast<MemoryAllocation *>(allocateGraphicsMemoryWithAlignment(allocationData));
-    memoryAllocation->setCpuPtrAndGpuAddress(memoryAllocation->getUnderlyingBuffer(), allocationData.gpuAddress);
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedGpuAddress = gmmHelper->canonize(allocationData.gpuAddress);
+
+    memoryAllocation->setCpuPtrAndGpuAddress(memoryAllocation->getUnderlyingBuffer(), canonizedGpuAddress);
     return memoryAllocation;
 }
 

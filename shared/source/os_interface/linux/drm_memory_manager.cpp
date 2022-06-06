@@ -1514,8 +1514,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         }
         auto alignedCpuAddress = alignDown(cpuAddress, 2 * MemoryConstants::megaByte);
         auto offset = ptrDiff(cpuAddress, alignedCpuAddress);
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(alignedCpuAddress));
+
         allocation->setAllocationOffset(offset);
-        allocation->setCpuPtrAndGpuAddress(cpuAddress, reinterpret_cast<uint64_t>(alignedCpuAddress));
+        allocation->setCpuPtrAndGpuAddress(cpuAddress, canonizedGpuAddress);
         DEBUG_BREAK_IF(allocation->storageInfo.multiStorage);
         allocation->getBO()->setAddress(reinterpret_cast<uint64_t>(cpuAddress));
     }
@@ -1526,7 +1529,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
             status = AllocationStatus::Error;
             return nullptr;
         }
-        allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
+        auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
+        allocation->setCpuPtrAndGpuAddress(cpuAddress, canonizedGpuAddress);
     }
     if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));

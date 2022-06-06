@@ -147,8 +147,11 @@ TEST(GraphicsAllocationTest, WhenGettingAddressesThenAddressesAreCorrect) {
 
     cpuPtr = (void *)65535;
     gpuAddr = 1ULL;
-    gfxAllocation.setCpuPtrAndGpuAddress(cpuPtr, gpuAddr);
-    EXPECT_EQ(gpuAddr, gfxAllocation.getGpuAddress());
+    auto gmmHelper = std::make_unique<GmmHelper>(nullptr, defaultHwInfo.get());
+    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddr);
+
+    gfxAllocation.setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
+    EXPECT_EQ(canonizedGpuAddress, gfxAllocation.getGpuAddress());
     EXPECT_EQ(cpuPtr, gfxAllocation.getUnderlyingBuffer());
 }
 

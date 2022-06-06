@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,9 @@ TEST_F(PipeTest, givenPipeWithDifferentCpuAndGpuAddressesWhenSetArgPipeThenUseGp
     EXPECT_EQ(21u, *reinterpret_cast<unsigned int *>(pipe->getCpuAddress()));
     uint64_t gpuAddress = 0x12345;
     auto pipeAllocation = pipe->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    pipeAllocation->setCpuPtrAndGpuAddress(pipeAllocation->getUnderlyingBuffer(), gpuAddress);
+    auto gmmHelper = context.getDevice(0)->getGmmHelper();
+    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
+    pipeAllocation->setCpuPtrAndGpuAddress(pipeAllocation->getUnderlyingBuffer(), canonizedGpuAddress);
     EXPECT_NE(reinterpret_cast<uint64_t>(pipeAllocation->getUnderlyingBuffer()), pipeAllocation->getGpuAddress());
     uint64_t valueToPatch;
     pipe->setPipeArg(&valueToPatch, sizeof(valueToPatch), context.getDevice(0)->getRootDeviceIndex());
