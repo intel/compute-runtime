@@ -118,6 +118,7 @@ ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) 
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
+
     if (*pResult == ZES_DIAG_RESULT_REBOOT_FOR_REPAIR) {
         result = pLinuxSysmanImp->osColdReset();
         if (result != ZE_RESULT_SUCCESS) {

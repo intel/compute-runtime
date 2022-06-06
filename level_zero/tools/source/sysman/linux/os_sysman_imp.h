@@ -24,6 +24,19 @@ namespace L0 {
 
 class PmuInterface;
 
+class ExecutionEnvironmentRefCountRestore {
+  public:
+    ExecutionEnvironmentRefCountRestore() = delete;
+    ExecutionEnvironmentRefCountRestore(NEO::ExecutionEnvironment *executionEnvironmentRecevied) {
+        executionEnvironment = executionEnvironmentRecevied;
+        executionEnvironment->incRefInternal();
+    }
+    ~ExecutionEnvironmentRefCountRestore() {
+        executionEnvironment->decRefInternal();
+    }
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+};
+
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
     LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
@@ -66,6 +79,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     uint32_t rootDeviceIndex = 0u;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     bool diagnosticsReset = false;
+    std::unique_ptr<ExecutionEnvironmentRefCountRestore> restorer;
 
   protected:
     FsAccess *pFsAccess = nullptr;

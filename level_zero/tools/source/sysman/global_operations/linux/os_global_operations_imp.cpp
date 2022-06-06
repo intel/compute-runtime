@@ -118,7 +118,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        executionEnvironment->decRefInternal();
+
         return result;
     }
     for (auto &&pid : processes) {
@@ -134,7 +134,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
             } else {
                 // Device is in use by another process.
                 // Don't reset while in use.
-                executionEnvironment->decRefInternal();
+
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
         }
@@ -146,14 +146,14 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
         result = pSysfsAccess->unbindDevice(resetName);
         if (ZE_RESULT_SUCCESS != result) {
-            executionEnvironment->decRefInternal();
+
             return result;
         }
         result = pLinuxSysmanImp->osWarmReset();
         if (ZE_RESULT_SUCCESS == result) {
             return pLinuxSysmanImp->initDevice();
         }
-        executionEnvironment->decRefInternal();
+
         return result;
     }
 
@@ -172,7 +172,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Unbind the device from the kernel driver.
     result = pSysfsAccess->unbindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
-        executionEnvironment->decRefInternal();
+
         return result;
     }
 
@@ -180,7 +180,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // after we check, kill them here.
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
-        executionEnvironment->decRefInternal();
+
         return result;
     }
     std::vector<::pid_t> deviceUsingPids;
@@ -204,7 +204,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     for (auto &&pid : deviceUsingPids) {
         while (pProcfsAccess->isAlive(pid)) {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() > resetTimeout) {
-                executionEnvironment->decRefInternal();
+
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
 
@@ -217,14 +217,14 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     // Reset the device.
     result = pFsAccess->write(resetPath, "1");
     if (ZE_RESULT_SUCCESS != result) {
-        executionEnvironment->decRefInternal();
+
         return result;
     }
 
     // Rebind the device to the kernel driver.
     result = pSysfsAccess->bindDevice(resetName);
     if (ZE_RESULT_SUCCESS != result) {
-        executionEnvironment->decRefInternal();
+
         return result;
     }
 
@@ -409,7 +409,6 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     auto device = static_cast<DeviceImp *>(pDevice);
     devicePciBdf = device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
-    executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
     rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 }
 

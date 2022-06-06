@@ -273,7 +273,7 @@ void LinuxSysmanImp::releaseDeviceResources() {
     devicePciBdf = devicePtr->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
     rootDeviceIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
 
-    executionEnvironment->incRefInternal();
+    restorer = std::make_unique<ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     releaseSysmanDeviceResources();
     auto device = static_cast<DeviceImp *>(getDeviceHandle());
     executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
@@ -302,15 +302,12 @@ ze_result_t LinuxSysmanImp::initDevice() {
 
     auto neoDevice = NEO::DeviceFactory::createDevice(*executionEnvironment, devicePciBdf, rootDeviceIndex);
     if (neoDevice == nullptr) {
-        executionEnvironment->decRefInternal();
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
     static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
     static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->enableRootDeviceDebugger(neoDevice);
     Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
     reInitSysmanDeviceResources();
-
-    executionEnvironment->decRefInternal();
 
     return ZE_RESULT_SUCCESS;
 }
