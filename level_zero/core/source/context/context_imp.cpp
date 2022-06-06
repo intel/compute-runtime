@@ -691,7 +691,8 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
 ze_result_t ContextImp::queryVirtualMemPageSize(ze_device_handle_t hDevice,
                                                 size_t size,
                                                 size_t *pagesize) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    *pagesize = std::max(Math::prevPowerOfTwo(size), MemoryConstants::pageSize64k);
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ContextImp::createPhysicalMem(ze_device_handle_t hDevice,
