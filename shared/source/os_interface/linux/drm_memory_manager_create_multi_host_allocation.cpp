@@ -56,7 +56,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
         }
 
         auto boHostPtr = static_cast<uint8_t *>(cpuBasePointer) + tile * sizePerTile;
-        auto bo = allocUserptr(reinterpret_cast<uintptr_t>(boHostPtr), sizePerTile, 0, allocationData.rootDeviceIndex);
+        auto bo = allocUserptr(reinterpret_cast<uintptr_t>(boHostPtr), sizePerTile, allocationData.rootDeviceIndex);
         if (!bo) {
             freeGraphicsMemoryImpl(allocation);
             return nullptr;
