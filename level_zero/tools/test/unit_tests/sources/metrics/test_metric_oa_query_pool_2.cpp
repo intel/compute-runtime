@@ -5,16 +5,13 @@
  *
  */
 
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
-#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -24,25 +21,6 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
-
-class MetricQueryPoolTest : public MetricContextFixture,
-                            public ::testing::Test {
-  public:
-    void SetUp() override {
-        ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        MetricContextFixture::SetUp();
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
-        driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
-    }
-
-    void TearDown() override {
-        MetricContextFixture::TearDown();
-        driverHandle.reset();
-        GlobalDriver = nullptr;
-    }
-    std::unique_ptr<L0::DriverHandle> driverHandle;
-};
-
 TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPoolIsNotAvailable) {
 
     zet_device_handle_t metricDevice = device->toHandle();

@@ -20,6 +20,123 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
+using MetricEnumerationTest = Test<MetricContextFixture>;
+
+TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenOpenIoStreamReturnsErrorThenTheMetricGroupOpenIoStreamReturnsErrorUnknown) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, OpenIoStream(_, _, _, _))
+        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+
+    uint32_t timerPeriodNs = 1;
+    uint32_t oaBufferSize = 100;
+
+    EXPECT_EQ(metricGroup.openIoStream(timerPeriodNs, oaBufferSize), ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsOkTheMetricGroupReadIoStreamReturnsSuccess) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, ReadIoStream(_, _, _))
+        .WillOnce(Return(MetricsDiscovery::CC_OK));
+
+    uint32_t reportCount = 1;
+    uint8_t reportData = 0;
+
+    EXPECT_EQ(metricGroup.readIoStream(reportCount, reportData), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsPendingTheMetricGroupReadIoStreamReturnsSuccess) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, ReadIoStream(_, _, _))
+        .WillOnce(Return(MetricsDiscovery::CC_READ_PENDING));
+
+    uint32_t reportCount = 1;
+    uint8_t reportData = 0;
+
+    EXPECT_EQ(metricGroup.readIoStream(reportCount, reportData), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsErrorThenMetrigGroupReadIoStreamReturnsError) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, ReadIoStream(_, _, _))
+        .WillOnce(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+
+    uint32_t reportCount = 1;
+    uint8_t reportData = 0;
+
+    EXPECT_EQ(metricGroup.readIoStream(reportCount, reportData), ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenCloseIoStreamIsCalledCloseAndFailThenIoStreamReturnsErrorUnknown) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MetricGroupImpTest metricGroup;
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    EXPECT_CALL(concurrentGroup, CloseIoStream())
+        .WillRepeatedly(Return(MetricsDiscovery::CC_ERROR_GENERAL));
+
+    EXPECT_EQ(metricGroup.closeIoStream(), ZE_RESULT_ERROR_UNKNOWN);
+}
+
+TEST_F(MetricEnumerationTest, givenTTypedValueWhenCopyValueIsCalledReturnsFilledZetTypedValue) {
+
+    MetricsDiscovery::TTypedValue_1_0 source = {};
+    zet_typed_value_t destination = {};
+    MetricGroupImpTest metricGroup = {};
+
+    for (int vType = MetricsDiscovery::VALUE_TYPE_UINT32;
+         vType < MetricsDiscovery::VALUE_TYPE_LAST; vType++) {
+        source.ValueType = static_cast<MetricsDiscovery::TValueType>(vType);
+        if (vType != MetricsDiscovery::VALUE_TYPE_BOOL)
+            source.ValueUInt64 = 0xFF;
+        else
+            source.ValueBool = true;
+
+        metricGroup.copyValue(const_cast<MetricsDiscovery::TTypedValue_1_0 &>(source), destination);
+        switch (vType) {
+        case MetricsDiscovery::VALUE_TYPE_UINT32:
+            EXPECT_EQ(destination.type, ZET_VALUE_TYPE_UINT32);
+            EXPECT_EQ(destination.value.ui32, source.ValueUInt32);
+            break;
+
+        case MetricsDiscovery::VALUE_TYPE_UINT64:
+            EXPECT_EQ(destination.type, ZET_VALUE_TYPE_UINT64);
+            EXPECT_EQ(destination.value.ui64, source.ValueUInt64);
+            break;
+
+        case MetricsDiscovery::VALUE_TYPE_FLOAT:
+            EXPECT_EQ(destination.type, ZET_VALUE_TYPE_FLOAT32);
+            EXPECT_EQ(destination.value.fp32, source.ValueFloat);
+            break;
+
+        case MetricsDiscovery::VALUE_TYPE_BOOL:
+            EXPECT_EQ(destination.type, ZET_VALUE_TYPE_BOOL8);
+            EXPECT_EQ(destination.value.b8, source.ValueBool);
+            break;
+
+        default:
+            EXPECT_EQ(destination.type, ZET_VALUE_TYPE_UINT64);
+            EXPECT_EQ(destination.value.ui64, static_cast<uint64_t>(0));
+            break;
+        }
+    }
+}
 
 using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;
 
