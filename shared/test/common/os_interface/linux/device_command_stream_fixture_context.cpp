@@ -13,16 +13,6 @@
 
 int DrmMockCustomPrelimContext::ioctlExtra(DrmIoctl request, void *arg) {
     switch (request) {
-    case DrmIoctl::GemCreateExt: {
-        auto createExtParams = reinterpret_cast<prelim_drm_i915_gem_create_ext *>(arg);
-        createExtSize = createExtParams->size;
-        createExtHandle = createExtParams->handle;
-        createExtExtensions = createExtParams->extensions;
-    } break;
-    case DrmIoctl::GemVmBind: {
-    } break;
-    case DrmIoctl::GemVmUnbind: {
-    } break;
     case DrmIoctl::GemWaitUserFence: {
         const auto wait = reinterpret_cast<prelim_drm_i915_gem_wait_user_fence *>(arg);
         receivedGemWaitUserFence = WaitUserFence{

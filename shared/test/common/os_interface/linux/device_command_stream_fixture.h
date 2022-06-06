@@ -38,6 +38,7 @@ class Ioctls {
     std::atomic<int32_t> execbuffer2;
     std::atomic<int32_t> gemUserptr;
     std::atomic<int32_t> gemCreate;
+    std::atomic<int32_t> gemCreateExt;
     std::atomic<int32_t> gemSetTiling;
     std::atomic<int32_t> gemGetTiling;
     std::atomic<int32_t> gemVmCreate;
@@ -213,6 +214,11 @@ class DrmMockCustom : public Drm {
     uint64_t mmapOffsetFlags = 0;
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
+
+    //DRM_IOCTL_I915_GEM_CREATE_EXT
+    uint64_t createExtSize = 0;
+    uint32_t createExtHandle = 0;
+    uint64_t createExtExtensions = 0;
 
     int errnoValue = 0;
 

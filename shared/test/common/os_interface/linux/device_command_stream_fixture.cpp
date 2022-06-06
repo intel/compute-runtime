@@ -16,6 +16,7 @@ void Ioctls::reset() {
     execbuffer2 = 0;
     gemUserptr = 0;
     gemCreate = 0;
+    gemCreateExt = 0;
     gemSetTiling = 0;
     gemGetTiling = 0;
     gemVmCreate = 0;
@@ -46,6 +47,7 @@ void DrmMockCustom::testIoctls() {
     NEO_IOCTL_EXPECT_EQ(execbuffer2);
     NEO_IOCTL_EXPECT_EQ(gemUserptr);
     NEO_IOCTL_EXPECT_EQ(gemCreate);
+    NEO_IOCTL_EXPECT_EQ(gemCreateExt);
     NEO_IOCTL_EXPECT_EQ(gemSetTiling);
     NEO_IOCTL_EXPECT_EQ(gemGetTiling);
     NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
@@ -186,6 +188,17 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         if (failOnMmapOffset == true) {
             return -1;
         }
+    } break;
+    case DrmIoctl::GemCreateExt: {
+        auto createExtParams = reinterpret_cast<drm_i915_gem_create_ext *>(arg);
+        createExtSize = createExtParams->size;
+        createExtHandle = createExtParams->handle;
+        createExtExtensions = createExtParams->extensions;
+        ioctl_cnt.gemCreateExt++;
+    } break;
+    case DrmIoctl::GemVmBind: {
+    } break;
+    case DrmIoctl::GemVmUnbind: {
     } break;
     default:
         int res = ioctlExtra(request, arg);

@@ -59,14 +59,14 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
 
 class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
   public:
-    DrmMockCustomImpl *mock;
+    DrmMockCustom *mock;
 
     void SetUp() override {
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockCustomImpl(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 
@@ -776,7 +776,7 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
 using DrmMemoryManagerTestImpl = Test<DrmMemoryManagerFixtureImpl>;
 
 HWTEST2_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryThenCallIoctlGemMapOffsetAndReturnLockedPtr, NonDefaultIoctlsSupported) {
-    mockExp->ioctlImpl_expected.gemCreateExt = 1;
+    mockExp->ioctl_expected.gemCreateExt = 1;
     mockExp->ioctl_expected.gemWait = 1;
     mockExp->ioctl_expected.gemClose = 1;
     mockExp->ioctl_expected.gemMmapOffset = 1;
