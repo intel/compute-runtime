@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -1086,7 +1087,7 @@ TEST_F(DeviceTest, whenCheckingIfStatelessCompressionIsSupportedThenReturnFalse)
     EXPECT_FALSE(hwInfoConfig.allowStatelessCompression(*defaultHwInfo));
 }
 
-TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenDescOrdinalIsNotModified) {
+TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
     DebugManagerStateRestore restore;
     auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
@@ -1109,7 +1110,50 @@ TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenD
     EXPECT_EQ(desc.ordinal, expectedOrdinal);
 }
 
-TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {
+HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalAndDescIndexProperlySet) {
+    DebugManagerStateRestore restore;
+    struct MockHwHelper : NEO::HwHelperHw<FamilyType> {
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            return EngineGroupType::Compute;
+        }
+    };
+    auto hwInfo = *defaultHwInfo.get();
+    MockHwHelper hwHelper{};
+    VariableBackup<HwHelper *> hwHelperFactoryBackup{&NEO::hwHelperFactory[static_cast<size_t>(hwInfo.platform.eRenderCoreFamily)]};
+    hwHelperFactoryBackup = &hwHelper;
+
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS1, hwInfo);
+    DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
+
+    auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
+    ze_command_queue_desc_t desc = {};
+    EXPECT_EQ(desc.ordinal, 0u);
+
+    auto &engineGroups = deviceImp->getActiveDevice()->getRegularEngineGroups();
+    engineGroups.clear();
+    NEO::Device::EngineGroupT engineGroupCompute{};
+    engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
+    engineGroupCompute.engines.resize(2);
+    auto osContext1 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext1->engineType = aub_stream::EngineType::ENGINE_CCS;
+    engineGroupCompute.engines[0].osContext = osContext1.get();
+    auto osContext2 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext2->engineType = aub_stream::EngineType::ENGINE_CCS1;
+    engineGroupCompute.engines[1].osContext = osContext2.get();
+    NEO::Device::EngineGroupT engineGroupRender{};
+    engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
+    engineGroups.push_back(engineGroupRender);
+    engineGroups.push_back(engineGroupCompute);
+
+    uint32_t expectedOrdinal = 1u;
+    uint32_t expectedIndex = 1u;
+    deviceImp->adjustCommandQueueDesc(desc);
+    EXPECT_EQ(desc.ordinal, expectedOrdinal);
+    EXPECT_EQ(desc.index, expectedIndex);
+}
+
+TEST_F(DeviceTest, givenNodeOrdinalFlagNotSetWhenCallAdjustCommandQueueDescThenDescOrdinalIsNotModified) {
     DebugManagerStateRestore restore;
     int nodeOrdinal = -1;
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
