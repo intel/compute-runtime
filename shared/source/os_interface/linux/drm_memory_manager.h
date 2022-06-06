@@ -117,9 +117,8 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createSharedUnifiedMemoryAllocation(const AllocationData &allocationData);
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
-    void *lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation);
-    MOCKABLE_VIRTUAL void *lockResourceInLocalMemoryImpl(BufferObject *bo);
-    MOCKABLE_VIRTUAL void unlockResourceInLocalMemoryImpl(BufferObject *bo);
+    MOCKABLE_VIRTUAL void *lockBufferObject(BufferObject *bo);
+    MOCKABLE_VIRTUAL void unlockBufferObject(BufferObject *bo);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     void cleanupBeforeReturn(const AllocationData &allocationData, GfxPartition *gfxPartition, DrmAllocation *drmAllocation, GraphicsAllocation *graphicsAllocation, uint64_t &gpuAddress, size_t &sizeAllocated);

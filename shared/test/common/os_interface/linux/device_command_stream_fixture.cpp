@@ -179,7 +179,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemMmapOffset: {
         auto mmapOffsetParams = reinterpret_cast<NEO::GemMmapOffset *>(arg);
-        mmapOffsetParams->handle = mmapOffsetHandle;
+        mmapOffsetHandle = mmapOffsetParams->handle;
         mmapOffsetParams->offset = mmapOffsetExpected;
         mmapOffsetFlags = mmapOffsetParams->flags;
         ioctl_cnt.gemMmapOffset++;

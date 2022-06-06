@@ -1090,10 +1090,6 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
-    if (MemoryPool::LocalMemory == graphicsAllocation.getMemoryPool()) {
-        return lockResourceInLocalMemoryImpl(graphicsAllocation);
-    }
-
     auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
         [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
@@ -1102,41 +1098,23 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     }
 
     auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
-    if (bo == nullptr)
-        return nullptr;
 
-    GemMmap mmapArg = {};
-    mmapArg.handle = bo->peekHandle();
-    mmapArg.size = bo->peekSize();
-    if (getDrm(graphicsAllocation.getRootDeviceIndex()).ioctl(DrmIoctl::GemMmap, &mmapArg) != 0) {
-        return nullptr;
+    if (graphicsAllocation.getAllocationType() == AllocationType::WRITE_COMBINED) {
+        auto addr = lockBufferObject(bo);
+        auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
+        auto notUsedSize = ptrDiff(alignedAddr, addr);
+        // call unmap to free the unaligned pages preceding the BO allocation and
+        // adjust the pointer in the CPU mapping to the beginning of the BO allocation
+        munmapFunction(addr, notUsedSize);
+        bo->setLockedAddress(alignedAddr);
+        return bo->peekLockedAddress();
     }
 
-    bo->setLockedAddress(reinterpret_cast<void *>(mmapArg.addrPtr));
-
-    [[maybe_unused]] auto success = setDomainCpu(graphicsAllocation, false);
-    DEBUG_BREAK_IF(!success);
-
-    return bo->peekLockedAddress();
+    return lockBufferObject(bo);
 }
 
 void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
-    if (MemoryPool::LocalMemory == graphicsAllocation.getMemoryPool()) {
-        return unlockResourceInLocalMemoryImpl(static_cast<DrmAllocation &>(graphicsAllocation).getBO());
-    }
-
-    auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
-    if (cpuPtr != nullptr) {
-        return;
-    }
-
-    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
-    if (bo == nullptr)
-        return;
-
-    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize(), graphicsAllocation.getRootDeviceIndex());
-
-    bo->setLockedAddress(nullptr);
+    return unlockBufferObject(static_cast<DrmAllocation &>(graphicsAllocation).getBO());
 }
 
 int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex) {
@@ -1277,23 +1255,6 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
 
     return size;
 }
-void *DrmMemoryManager::lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation) {
-    if (!isLocalMemorySupported(graphicsAllocation.getRootDeviceIndex())) {
-        return nullptr;
-    }
-    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
-    if (graphicsAllocation.getAllocationType() == AllocationType::WRITE_COMBINED) {
-        auto addr = lockResourceInLocalMemoryImpl(bo);
-        auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
-        auto notUsedSize = ptrDiff(alignedAddr, addr);
-        // call unmap to free the unaligned pages preceding the BO allocation and
-        // adjust the pointer in the CPU mapping to the beginning of the BO allocation
-        munmapFunction(addr, notUsedSize);
-        bo->setLockedAddress(alignedAddr);
-        return bo->peekLockedAddress();
-    }
-    return lockResourceInLocalMemoryImpl(bo);
-}
 
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
     if (graphicsAllocation->getUnderlyingBuffer() || !isLocalMemorySupported(graphicsAllocation->getRootDeviceIndex())) {
@@ -1310,17 +1271,17 @@ bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsA
         if (!handleMask.test(handleId)) {
             continue;
         }
-        auto ptr = lockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
+        auto ptr = lockBufferObject(drmAllocation->getBOs()[handleId]);
         if (!ptr) {
             return false;
         }
         memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
-        this->unlockResourceInLocalMemoryImpl(drmAllocation->getBOs()[handleId]);
+        this->unlockBufferObject(drmAllocation->getBOs()[handleId]);
     }
     return true;
 }
 
-void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
+void DrmMemoryManager::unlockBufferObject(BufferObject *bo) {
     if (bo == nullptr)
         return;
 
@@ -1765,7 +1726,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 }
 
-void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
+void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
     if (bo == nullptr) {
         return nullptr;
     }

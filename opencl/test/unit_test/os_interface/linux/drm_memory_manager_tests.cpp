@@ -2626,8 +2626,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutCpuPtrThenReturnLockedPtrAndSetCpuDomain) {
     mock->ioctl_expected.gemCreate = 1;
-    mock->ioctl_expected.gemMmap = 1;
-    mock->ioctl_expected.gemSetDomain = 1;
+    mock->ioctl_expected.gemMmapOffset = 1;
+    mock->ioctl_expected.gemMmap = 0;
+    mock->ioctl_expected.gemSetDomain = 0;
     mock->ioctl_expected.gemSetTiling = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -2656,16 +2657,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     EXPECT_NE(nullptr, drmAllocation->getBO()->peekLockedAddress());
 
     // check DRM_IOCTL_I915_GEM_MMAP input params
-    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->mmapHandle);
+    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->mmapOffsetHandle);
     EXPECT_EQ(0u, mock->mmapPad);
     EXPECT_EQ(0u, mock->mmapOffset);
-    EXPECT_EQ(drmAllocation->getBO()->peekSize(), mock->mmapSize);
+    EXPECT_EQ(0u, mock->mmapSize);
     EXPECT_EQ(0u, mock->mmapFlags);
-
-    // check DRM_IOCTL_I915_GEM_SET_DOMAIN input params
-    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->setDomainHandle);
-    EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainReadDomains);
-    EXPECT_EQ(0u, mock->setDomainWriteDomain);
 
     memoryManager->unlockResource(allocation);
     EXPECT_EQ(nullptr, drmAllocation->getBO()->peekLockedAddress());
@@ -2693,15 +2689,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFailsOnIoctlMmapThenReturnNullPtr) {
-    mock->ioctl_expected.gemMmap = 1;
+    mock->ioctl_expected.gemMmapOffset = 1;
     this->ioctlResExt = {mock->ioctl_cnt.total, -1};
     mock->ioctl_res_ext = &ioctlResExt;
 
-    DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    struct BufferObjectMock : public BufferObject {
-        BufferObjectMock(Drm *drm) : BufferObject(drm, 3, 1, 0, 1) {}
-    };
-    BufferObjectMock bo(&drmMock);
+    BufferObject bo(mock, 3, 1, 0, 1);
     DrmAllocation drmAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::MemoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -2718,7 +2710,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
         DrmMemoryManagerToTestUnlockResource(ExecutionEnvironment &executionEnvironment, bool localMemoryEnabled, size_t lockableLocalMemorySize)
             : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         }
-        void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+        void unlockBufferObject(BufferObject *bo) override {
             unlockResourceInLocalMemoryImplParam.bo = bo;
             unlockResourceInLocalMemoryImplParam.called = true;
         }
@@ -4727,11 +4719,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalM
 }
 
 struct DrmMemoryManagerToTestLockInLocalMemory : public TestedDrmMemoryManager {
-    using TestedDrmMemoryManager::lockResourceInLocalMemoryImpl;
+    using TestedDrmMemoryManager::lockResourceImpl;
     DrmMemoryManagerToTestLockInLocalMemory(ExecutionEnvironment &executionEnvironment)
         : TestedDrmMemoryManager(true, false, false, executionEnvironment) {}
 
-    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void *lockBufferObject(BufferObject *bo) override {
         lockedLocalMemory.reset(new uint8_t[bo->peekSize()]);
         return lockedLocalMemory.get();
     }
@@ -4745,26 +4737,12 @@ TEST_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenLockResourceIsCal
     DrmAllocation drmAllocation(0, AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
-    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
+    auto ptr = memoryManager.lockResourceImpl(drmAllocation);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(ptr, bo.peekLockedAddress());
     EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(ptr));
 
-    memoryManager.unlockResourceInLocalMemoryImpl(&bo);
-    EXPECT_EQ(nullptr, bo.peekLockedAddress());
-}
-
-TEST_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenLockResourceIsCalledOnWriteCombinedAllocationThenReturnNullptr) {
-    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
-    BufferObject bo(mock, 3, 1, 1024, 0);
-
-    DrmAllocation drmAllocation(0, AllocationType::WRITE_COMBINED, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
-    EXPECT_EQ(&bo, drmAllocation.getBO());
-
-    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation);
-    EXPECT_EQ(nullptr, ptr);
-
-    memoryManager.unlockResourceInLocalMemoryImpl(&bo);
+    memoryManager.unlockBufferObject(&bo);
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
@@ -4844,10 +4822,10 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenLockResourceIsCalledOn
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, nullptr, nullptr, 0u, 0u, MemoryPool::LocalMemory);
 
-    auto ptr = memoryManager.lockResourceInLocalMemoryImpl(drmAllocation.getBO());
+    auto ptr = memoryManager.lockBufferObject(drmAllocation.getBO());
     EXPECT_EQ(nullptr, ptr);
 
-    memoryManager.unlockResourceInLocalMemoryImpl(drmAllocation.getBO());
+    memoryManager.unlockBufferObject(drmAllocation.getBO());
 }
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenFreeGraphicsMemoryIsCalledOnAllocationWithNullBufferObjectThenEarlyReturn) {
@@ -5677,7 +5655,7 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocationBanks : public DrmMemoryManag
         : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         lockedLocalMemorySize = lockableLocalMemorySize;
     }
-    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void *lockBufferObject(BufferObject *bo) override {
         if (lockedLocalMemorySize > 0) {
             if (static_cast<uint32_t>(bo->peekHandle()) < lockedLocalMemory.size()) {
                 lockedLocalMemory[bo->peekHandle()].reset(new uint8_t[lockedLocalMemorySize]);
@@ -5686,7 +5664,7 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocationBanks : public DrmMemoryManag
         }
         return nullptr;
     }
-    void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void unlockBufferObject(BufferObject *bo) override {
     }
     std::array<std::unique_ptr<uint8_t[]>, 4> lockedLocalMemory;
     size_t lockedLocalMemorySize = 0;

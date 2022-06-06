@@ -605,10 +605,10 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDev
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnNullBufferObjectThenReturnNullPtr) {
-    auto ptr = memoryManager->lockResourceInLocalMemoryImpl(nullptr);
+    auto ptr = memoryManager->lockBufferObject(nullptr);
     EXPECT_EQ(nullptr, ptr);
 
-    memoryManager->unlockResourceInLocalMemoryImpl(nullptr);
+    memoryManager->unlockBufferObject(nullptr);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
@@ -617,11 +617,11 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithL
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
-    auto ptr = memoryManager->lockResourceInLocalMemoryImpl(&bo);
+    auto ptr = memoryManager->lockBufferObject(&bo);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(ptr, bo.peekLockedAddress());
 
-    memoryManager->unlockResourceInLocalMemoryImpl(&bo);
+    memoryManager->unlockBufferObject(&bo);
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
@@ -691,14 +691,14 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
         }
         return nullptr;
     }
-    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void *lockBufferObject(BufferObject *bo) override {
         if (lockedLocalMemorySize > 0) {
             lockedLocalMemory.reset(new uint8_t[lockedLocalMemorySize]);
             return lockedLocalMemory.get();
         }
         return nullptr;
     }
-    void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void unlockBufferObject(BufferObject *bo) override {
     }
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
     }

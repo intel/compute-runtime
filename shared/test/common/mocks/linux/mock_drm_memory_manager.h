@@ -83,7 +83,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getUserptrAlignment;
     using DrmMemoryManager::gfxPartitions;
     using DrmMemoryManager::handleFenceCompletion;
-    using DrmMemoryManager::lockResourceInLocalMemoryImpl;
+    using DrmMemoryManager::lockBufferObject;
+    using DrmMemoryManager::lockResourceImpl;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
@@ -96,7 +97,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
-    using DrmMemoryManager::unlockResourceInLocalMemoryImpl;
+    using DrmMemoryManager::unlockBufferObject;
     using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::heapAssigner;

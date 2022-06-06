@@ -31,11 +31,11 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenDrmMemoryManage
     DrmAllocation drmAllocation(0, AllocationType::UNKNOWN, &bo, nullptr, 0u, 0u, MemoryPool::LocalMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
-    auto ptr = memoryManager->lockResourceInLocalMemoryImpl(&bo);
+    auto ptr = memoryManager->lockBufferObject(&bo);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(ptr, bo.peekLockedAddress());
 
-    memoryManager->unlockResourceInLocalMemoryImpl(&bo);
+    memoryManager->unlockBufferObject(&bo);
     EXPECT_EQ(nullptr, bo.peekLockedAddress());
 }
 
@@ -1223,10 +1223,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSupportedTypeWhenAllocatingIn
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnNullBufferObjectThenReturnNullPtr) {
-    auto ptr = memoryManager->lockResourceInLocalMemoryImpl(nullptr);
+    auto ptr = memoryManager->lockBufferObject(nullptr);
     EXPECT_EQ(nullptr, ptr);
 
-    memoryManager->unlockResourceInLocalMemoryImpl(nullptr);
+    memoryManager->unlockBufferObject(nullptr);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFlagSetWhileCreatingBufferObjectInMemoryRegionThenDebugInformationIsPrinted) {
@@ -1455,7 +1455,7 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
         }
         return nullptr;
     }
-    void *lockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void *lockBufferObject(BufferObject *bo) override {
         if (lockedLocalMemorySize > 0) {
             deviceIndex = (deviceIndex < 3) ? deviceIndex + 1u : 0u;
             lockedLocalMemory[deviceIndex].reset(new uint8_t[lockedLocalMemorySize]);
@@ -1463,7 +1463,7 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
         }
         return nullptr;
     }
-    void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+    void unlockBufferObject(BufferObject *bo) override {
     }
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {
     }
