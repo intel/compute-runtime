@@ -122,7 +122,7 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindA
     return false;
 }
 
-std::optional<int> IoctlHelperUpstream::getHasPageFaultParamId() {
+std::optional<DrmParam> IoctlHelperUpstream::getHasPageFaultParamId() {
     return std::nullopt;
 };
 

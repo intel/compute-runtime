@@ -181,4 +181,16 @@ unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelpe
         return ioctlHelper->getIoctlRequestValue(ioctlRequest);
     }
 }
+
+int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper) {
+    switch (drmParam) {
+    case DrmParam::ParamChipsetId:
+        return I915_PARAM_CHIPSET_ID;
+    case DrmParam::ParamRevision:
+        return I915_PARAM_REVISION;
+    default:
+        UNRECOVERABLE_IF(!ioctlHelper);
+        return ioctlHelper->getDrmParamValue(drmParam);
+    }
+}
 } // namespace NEO

@@ -27,7 +27,6 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/pci_path.h"
@@ -43,111 +42,6 @@
 #include <map>
 
 namespace NEO {
-
-namespace IoctlToStringHelper {
-std::string getIoctlParamString(int param) {
-    switch (param) {
-    case I915_PARAM_CHIPSET_ID:
-        return "I915_PARAM_CHIPSET_ID";
-    case I915_PARAM_REVISION:
-        return "I915_PARAM_REVISION";
-    case I915_PARAM_HAS_EXEC_SOFTPIN:
-        return "I915_PARAM_HAS_EXEC_SOFTPIN";
-    case I915_PARAM_HAS_POOLED_EU:
-        return "I915_PARAM_HAS_POOLED_EU";
-    case I915_PARAM_HAS_SCHEDULER:
-        return "I915_PARAM_HAS_SCHEDULER";
-    case I915_PARAM_EU_TOTAL:
-        return "I915_PARAM_EU_TOTAL";
-    case I915_PARAM_SUBSLICE_TOTAL:
-        return "I915_PARAM_SUBSLICE_TOTAL";
-    case I915_PARAM_MIN_EU_IN_POOL:
-        return "I915_PARAM_MIN_EU_IN_POOL";
-    case I915_PARAM_CS_TIMESTAMP_FREQUENCY:
-        return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
-    default:
-        return getIoctlParamStringRemaining(param);
-    }
-}
-
-std::string getIoctlString(DrmIoctl ioctlRequest) {
-    switch (ioctlRequest) {
-    case DrmIoctl::GemExecbuffer2:
-        return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
-    case DrmIoctl::GemWait:
-        return "DRM_IOCTL_I915_GEM_WAIT";
-    case DrmIoctl::GemClose:
-        return "DRM_IOCTL_GEM_CLOSE";
-    case DrmIoctl::GemUserptr:
-        return "DRM_IOCTL_I915_GEM_USERPTR";
-    case DrmIoctl::Getparam:
-        return "DRM_IOCTL_I915_GETPARAM";
-    case DrmIoctl::GemCreate:
-        return "DRM_IOCTL_I915_GEM_CREATE";
-    case DrmIoctl::GemSetDomain:
-        return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
-    case DrmIoctl::GemSetTiling:
-        return "DRM_IOCTL_I915_GEM_SET_TILING";
-    case DrmIoctl::GemGetTiling:
-        return "DRM_IOCTL_I915_GEM_GET_TILING";
-    case DrmIoctl::GemContextCreateExt:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
-    case DrmIoctl::GemContextDestroy:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
-    case DrmIoctl::RegRead:
-        return "DRM_IOCTL_I915_REG_READ";
-    case DrmIoctl::GetResetStats:
-        return "DRM_IOCTL_I915_GET_RESET_STATS";
-    case DrmIoctl::GemContextGetparam:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
-    case DrmIoctl::GemContextSetparam:
-        return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
-    case DrmIoctl::Query:
-        return "DRM_IOCTL_I915_QUERY";
-    case DrmIoctl::GemMmap:
-        return "DRM_IOCTL_I915_GEM_MMAP";
-    case DrmIoctl::PrimeFdToHandle:
-        return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
-    case DrmIoctl::PrimeHandleToFd:
-        return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
-    case DrmIoctl::GemVmBind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
-    case DrmIoctl::GemVmUnbind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
-    case DrmIoctl::GemWaitUserFence:
-        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
-    case DrmIoctl::GemCreateExt:
-        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::DG1GemCreateExt:
-        return "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::GemVmAdvise:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
-    case DrmIoctl::GemVmPrefetch:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
-    case DrmIoctl::UuidRegister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
-    case DrmIoctl::UuidUnregister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
-    case DrmIoctl::DebuggerOpen:
-        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
-    case DrmIoctl::GemClosReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
-    case DrmIoctl::GemClosFree:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
-    case DrmIoctl::GemCacheReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
-    case DrmIoctl::GemMmapOffset:
-        return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
-    case DrmIoctl::GemVmCreate:
-        return "DRM_IOCTL_I915_GEM_VM_CREATE";
-    case DrmIoctl::GemVmDestroy:
-        return "DRM_IOCTL_I915_GEM_VM_DESTROY";
-    }
-    UNRECOVERABLE_IF(true);
-    return "";
-}
-
-} // namespace IoctlToStringHelper
 
 Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
     : DriverModel(DriverModelType::DRM),
@@ -175,7 +69,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         auto printIoctl = DebugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", IoctlToStringHelper::getIoctlString(request).c_str());
+            printf("IOCTL %s called\n", getIoctlString(request).c_str());
         }
 
         if (measureTime) {
@@ -206,10 +100,10 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         if (printIoctl) {
             if (ret == 0) {
                 printf("IOCTL %s returns %d\n",
-                       IoctlToStringHelper::getIoctlString(request).c_str(), ret);
+                       getIoctlString(request).c_str(), ret);
             } else {
                 printf("IOCTL %s returns %d, errno %d(%s)\n",
-                       IoctlToStringHelper::getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                       getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -218,15 +112,15 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
     return ret;
 }
 
-int Drm::getParamIoctl(int param, int *dstValue) {
+int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     GetParam getParam{};
-    getParam.param = param;
+    getParam.param = getDrmParamValue(param, ioctlHelper.get());
     getParam.value = dstValue;
 
     int retVal = ioctl(DrmIoctl::Getparam, &getParam);
     if (DebugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               IoctlToStringHelper::getIoctlParamString(param).c_str(),
+               getDrmParamString(param).c_str(),
                *getParam.value,
                retVal);
     }
@@ -234,15 +128,15 @@ int Drm::getParamIoctl(int param, int *dstValue) {
 }
 
 int Drm::getDeviceID(int &devId) {
-    return getParamIoctl(I915_PARAM_CHIPSET_ID, &devId);
+    return getParamIoctl(DrmParam::ParamChipsetId, &devId);
 }
 
 int Drm::getDeviceRevID(int &revId) {
-    return getParamIoctl(I915_PARAM_REVISION, &revId);
+    return getParamIoctl(DrmParam::ParamRevision, &revId);
 }
 
 int Drm::getExecSoftPin(int &execSoftPin) {
-    return getParamIoctl(I915_PARAM_HAS_EXEC_SOFTPIN, &execSoftPin);
+    return getParamIoctl(DrmParam::ParamHasExecSoftpin, &execSoftPin);
 }
 
 int Drm::enableTurboBoost() {
@@ -254,7 +148,7 @@ int Drm::enableTurboBoost() {
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
-    return getParamIoctl(I915_PARAM_HAS_POOLED_EU, &enabled);
+    return getParamIoctl(DrmParam::ParamHasPooledEu, &enabled);
 }
 
 std::string Drm::getSysFsPciPath() {
@@ -303,7 +197,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
 
 void Drm::checkPreemptionSupport() {
     int value = 0;
-    auto ret = getParamIoctl(I915_PARAM_HAS_SCHEDULER, &value);
+    auto ret = getParamIoctl(DrmParam::ParamHasScheduler, &value);
     preemptionSupported = ((0 == ret) && (value & I915_SCHEDULER_CAP_PREEMPTION));
 }
 
@@ -449,15 +343,15 @@ std::unique_lock<std::mutex> Drm::lockBindFenceMutex() {
 }
 
 int Drm::getEuTotal(int &euTotal) {
-    return getParamIoctl(I915_PARAM_EU_TOTAL, &euTotal);
+    return getParamIoctl(DrmParam::ParamEuTotal, &euTotal);
 }
 
 int Drm::getSubsliceTotal(int &subsliceTotal) {
-    return getParamIoctl(I915_PARAM_SUBSLICE_TOTAL, &subsliceTotal);
+    return getParamIoctl(DrmParam::ParamSubsliceTotal, &subsliceTotal);
 }
 
 int Drm::getMinEuInPool(int &minEUinPool) {
-    return getParamIoctl(I915_PARAM_MIN_EU_IN_POOL, &minEUinPool);
+    return getParamIoctl(DrmParam::ParamMinEuInPool, &minEUinPool);
 }
 
 int Drm::getErrno() {
@@ -657,7 +551,7 @@ void Drm::printIoctlStatistics() {
     printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
         printf("%41s %15llu %10lu %20f %20lld %20lld\n",
-               IoctlToStringHelper::getIoctlString(ioctlData.first).c_str(),
+               getIoctlString(ioctlData.first).c_str(),
                ioctlData.second.totalTime,
                static_cast<unsigned long>(ioctlData.second.count),
                ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),
@@ -840,7 +734,7 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
 
 int Drm::getTimestampFrequency(int &frequency) {
     frequency = 0;
-    return getParamIoctl(I915_PARAM_CS_TIMESTAMP_FREQUENCY, &frequency);
+    return getParamIoctl(DrmParam::ParamCsTimestampFrequency, &frequency);
 }
 
 bool Drm::queryEngineInfo() {

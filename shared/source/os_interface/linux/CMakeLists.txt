@@ -53,8 +53,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ioctl_helper_getter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_strings.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_strings_prelim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h
@@ -119,11 +117,9 @@ if("${BRANCH_TYPE}" STREQUAL "")
   if(NOT NEO_ENABLE_i915_PRELIM_DETECTION)
     list(APPEND NEO_CORE_OS_INTERFACE_LINUX
          ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter_upstream.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_strings_upstream.cpp
     )
     list(REMOVE_ITEM NEO_CORE_OS_INTERFACE_LINUX
          ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_strings_prelim.cpp
     )
   endif()
 endif()

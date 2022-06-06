@@ -88,7 +88,7 @@ class IoctlHelper {
     virtual uint16_t getWaitUserFenceSoftFlag() = 0;
     virtual int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
-    virtual std::optional<int> getHasPageFaultParamId() = 0;
+    virtual std::optional<DrmParam> getHasPageFaultParamId() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
     virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) = 0;
     virtual uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) = 0;
@@ -147,7 +147,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
-    std::optional<int> getHasPageFaultParamId() override;
+    std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) override;
@@ -207,7 +207,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
-    std::optional<int> getHasPageFaultParamId() override;
+    std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) override;

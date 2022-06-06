@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 class DrmMockCustomImpl : public DrmMockCustom {

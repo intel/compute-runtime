@@ -296,8 +296,8 @@ uint32_t IoctlHelperPrelim20::queryDistances(Drm *drm, std::vector<QueryItem> &q
     return ret;
 }
 
-std::optional<int> IoctlHelperPrelim20::getHasPageFaultParamId() {
-    return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
+std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
+    return DrmParam::ParamHasPageFault;
 };
 
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 10u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance) {
@@ -551,6 +551,10 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::EngineClassCompute:
         return PRELIM_I915_ENGINE_CLASS_COMPUTE;
+    case DrmParam::ParamHasVmBind:
+        return PRELIM_I915_PARAM_HAS_VM_BIND;
+    case DrmParam::ParamHasPageFault:
+        return PRELIM_I915_PARAM_HAS_PAGE_FAULT;
     case DrmParam::QueryHwconfigTable:
         return PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE;
     case DrmParam::QueryComputeSlices:

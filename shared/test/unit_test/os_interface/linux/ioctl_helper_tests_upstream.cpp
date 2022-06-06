@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -14,19 +13,12 @@
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
 using namespace NEO;
-extern std::map<int, const char *> ioctlParamCodeStringMap;
 
 TEST(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned) {
     IoctlHelperUpstream ioctlHelper{};
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_FALSE(ioctlHelper.isVmBindAvailable(drm.get()));
-}
-
-TEST(IoctlHelperUpstreamTest, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
-    for (auto ioctlParamCodeString : ioctlParamCodeStringMap) {
-        EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
-    }
 }
 
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
@@ -61,6 +53,13 @@ TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestValueThenPropertValueIsRetu
 TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned) {
     IoctlHelperUpstream ioctlHelper{};
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), 4);
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasPooledEu), static_cast<int>(I915_PARAM_HAS_POOLED_EU));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasScheduler), static_cast<int>(I915_PARAM_HAS_SCHEDULER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamEuTotal), static_cast<int>(I915_PARAM_EU_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamSubsliceTotal), static_cast<int>(I915_PARAM_SUBSLICE_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamMinEuInPool), static_cast<int>(I915_PARAM_MIN_EU_IN_POOL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamCsTimestampFrequency), static_cast<int>(I915_PARAM_CS_TIMESTAMP_FREQUENCY));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryEngineInfo), static_cast<int>(DRM_I915_QUERY_ENGINE_INFO));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryHwconfigTable), static_cast<int>(DRM_I915_QUERY_HWCONFIG_TABLE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));

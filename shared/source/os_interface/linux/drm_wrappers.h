@@ -8,6 +8,8 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <string>
+
 namespace NEO {
 class IoctlHelper;
 
@@ -244,6 +246,17 @@ enum class DrmParam {
     EngineClassVideoEnhance,
     EngineClassInvalid,
     EngineClassInvalidNone,
+    ParamChipsetId,
+    ParamRevision,
+    ParamHasExecSoftpin,
+    ParamHasPooledEu,
+    ParamHasScheduler,
+    ParamEuTotal,
+    ParamSubsliceTotal,
+    ParamMinEuInPool,
+    ParamCsTimestampFrequency,
+    ParamHasVmBind,
+    ParamHasPageFault,
     QueryEngineInfo,
     QueryHwconfigTable,
     QueryComputeSlices,
@@ -251,4 +264,8 @@ enum class DrmParam {
 };
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
+int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper);
+
+std::string getDrmParamString(DrmParam param);
+std::string getIoctlString(DrmIoctl ioctlRequest);
 } // namespace NEO

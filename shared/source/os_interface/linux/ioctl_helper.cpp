@@ -196,6 +196,20 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
+    case DrmParam::ParamHasExecSoftpin:
+        return I915_PARAM_HAS_EXEC_SOFTPIN;
+    case DrmParam::ParamHasPooledEu:
+        return I915_PARAM_HAS_POOLED_EU;
+    case DrmParam::ParamHasScheduler:
+        return I915_PARAM_HAS_SCHEDULER;
+    case DrmParam::ParamEuTotal:
+        return I915_PARAM_EU_TOTAL;
+    case DrmParam::ParamSubsliceTotal:
+        return I915_PARAM_SUBSLICE_TOTAL;
+    case DrmParam::ParamMinEuInPool:
+        return I915_PARAM_MIN_EU_IN_POOL;
+    case DrmParam::ParamCsTimestampFrequency:
+        return I915_PARAM_CS_TIMESTAMP_FREQUENCY;
     case DrmParam::QueryEngineInfo:
         return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryMemoryRegions:
@@ -205,4 +219,112 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return 0;
     }
 }
+
+std::string getDrmParamString(DrmParam drmParam) {
+    switch (drmParam) {
+    case DrmParam::ParamChipsetId:
+        return "I915_PARAM_CHIPSET_ID";
+    case DrmParam::ParamRevision:
+        return "I915_PARAM_REVISION";
+    case DrmParam::ParamHasExecSoftpin:
+        return "I915_PARAM_HAS_EXEC_SOFTPIN";
+    case DrmParam::ParamHasPooledEu:
+        return "I915_PARAM_HAS_POOLED_EU";
+    case DrmParam::ParamHasScheduler:
+        return "I915_PARAM_HAS_SCHEDULER";
+    case DrmParam::ParamEuTotal:
+        return "I915_PARAM_EU_TOTAL";
+    case DrmParam::ParamSubsliceTotal:
+        return "I915_PARAM_SUBSLICE_TOTAL";
+    case DrmParam::ParamMinEuInPool:
+        return "I915_PARAM_MIN_EU_IN_POOL";
+    case DrmParam::ParamCsTimestampFrequency:
+        return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
+    case DrmParam::ParamHasVmBind:
+        return "PRELIM_I915_PARAM_HAS_VM_BIND";
+    case DrmParam::ParamHasPageFault:
+        return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
+    default:
+        UNRECOVERABLE_IF(true);
+        return "";
+    }
+}
+
+std::string getIoctlString(DrmIoctl ioctlRequest) {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemExecbuffer2:
+        return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
+    case DrmIoctl::GemWait:
+        return "DRM_IOCTL_I915_GEM_WAIT";
+    case DrmIoctl::GemClose:
+        return "DRM_IOCTL_GEM_CLOSE";
+    case DrmIoctl::GemUserptr:
+        return "DRM_IOCTL_I915_GEM_USERPTR";
+    case DrmIoctl::Getparam:
+        return "DRM_IOCTL_I915_GETPARAM";
+    case DrmIoctl::GemCreate:
+        return "DRM_IOCTL_I915_GEM_CREATE";
+    case DrmIoctl::GemSetDomain:
+        return "DRM_IOCTL_I915_GEM_SET_DOMAIN";
+    case DrmIoctl::GemSetTiling:
+        return "DRM_IOCTL_I915_GEM_SET_TILING";
+    case DrmIoctl::GemGetTiling:
+        return "DRM_IOCTL_I915_GEM_GET_TILING";
+    case DrmIoctl::GemContextCreateExt:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT";
+    case DrmIoctl::GemContextDestroy:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY";
+    case DrmIoctl::RegRead:
+        return "DRM_IOCTL_I915_REG_READ";
+    case DrmIoctl::GetResetStats:
+        return "DRM_IOCTL_I915_GET_RESET_STATS";
+    case DrmIoctl::GemContextGetparam:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM";
+    case DrmIoctl::GemContextSetparam:
+        return "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM";
+    case DrmIoctl::Query:
+        return "DRM_IOCTL_I915_QUERY";
+    case DrmIoctl::GemMmap:
+        return "DRM_IOCTL_I915_GEM_MMAP";
+    case DrmIoctl::PrimeFdToHandle:
+        return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
+    case DrmIoctl::PrimeHandleToFd:
+        return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
+    case DrmIoctl::GemVmBind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
+    case DrmIoctl::GemVmUnbind:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
+    case DrmIoctl::GemWaitUserFence:
+        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
+    case DrmIoctl::GemCreateExt:
+        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
+    case DrmIoctl::DG1GemCreateExt:
+        return "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT";
+    case DrmIoctl::GemVmAdvise:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
+    case DrmIoctl::GemVmPrefetch:
+        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
+    case DrmIoctl::UuidRegister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
+    case DrmIoctl::UuidUnregister:
+        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
+    case DrmIoctl::DebuggerOpen:
+        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
+    case DrmIoctl::GemClosReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
+    case DrmIoctl::GemClosFree:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
+    case DrmIoctl::GemCacheReserve:
+        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
+    case DrmIoctl::GemMmapOffset:
+        return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
+    case DrmIoctl::GemVmCreate:
+        return "DRM_IOCTL_I915_GEM_VM_CREATE";
+    case DrmIoctl::GemVmDestroy:
+        return "DRM_IOCTL_I915_GEM_VM_DESTROY";
+    }
+    UNRECOVERABLE_IF(true);
+    return "";
+}
+
 } // namespace NEO

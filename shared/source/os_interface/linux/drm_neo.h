@@ -342,6 +342,6 @@ class Drm : public DriverModel {
     bool vmBindPatIndexProgrammingSupported = false;
 
   private:
-    int getParamIoctl(int param, int *dstValue);
+    int getParamIoctl(DrmParam param, int *dstValue);
 };
 } // namespace NEO

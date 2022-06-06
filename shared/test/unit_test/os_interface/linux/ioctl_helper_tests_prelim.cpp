@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/ioctl_strings.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -15,7 +14,6 @@
 
 using namespace NEO;
 
-extern std::map<int, const char *> ioctlParamCodeStringMap;
 extern std::vector<uint8_t> getRegionInfo(const std::vector<MemoryRegion> &inputRegions);
 extern std::vector<uint8_t> getEngineInfo(const std::vector<EngineCapabilities> &inputEngines);
 
@@ -64,17 +62,19 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
 
 TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturned) {
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassCompute), static_cast<int>(PRELIM_I915_ENGINE_CLASS_COMPUTE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasPooledEu), static_cast<int>(I915_PARAM_HAS_POOLED_EU));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasScheduler), static_cast<int>(I915_PARAM_HAS_SCHEDULER));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamEuTotal), static_cast<int>(I915_PARAM_EU_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamSubsliceTotal), static_cast<int>(I915_PARAM_SUBSLICE_TOTAL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamMinEuInPool), static_cast<int>(I915_PARAM_MIN_EU_IN_POOL));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamCsTimestampFrequency), static_cast<int>(I915_PARAM_CS_TIMESTAMP_FREQUENCY));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasVmBind), static_cast<int>(PRELIM_I915_PARAM_HAS_VM_BIND));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasPageFault), static_cast<int>(PRELIM_I915_PARAM_HAS_PAGE_FAULT));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryEngineInfo), static_cast<int>(DRM_I915_QUERY_ENGINE_INFO));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryHwconfigTable), static_cast<int>(PRELIM_DRM_I915_QUERY_HWCONFIG_TABLE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::QueryComputeSlices), static_cast<int>(PRELIM_DRM_I915_QUERY_COMPUTE_SLICES));
-}
-
-TEST_F(IoctlPrelimHelperTests, givenIoctlParamWhenParseToStringThenProperStringIsReturned) {
-    for (auto &ioctlParamCodeString : ioctlParamCodeStringMap) {
-        EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(ioctlParamCodeString.first).c_str(), ioctlParamCodeString.second);
-    }
-    EXPECT_STREQ(IoctlToStringHelper::getIoctlParamString(PRELIM_I915_PARAM_HAS_VM_BIND).c_str(), "PRELIM_I915_PARAM_HAS_VM_BIND");
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenReturnSameData) {
