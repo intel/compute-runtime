@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
-
-#include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
+#include "shared/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;
 

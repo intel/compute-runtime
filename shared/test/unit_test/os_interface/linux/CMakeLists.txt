@@ -29,6 +29,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux_tests.cpp

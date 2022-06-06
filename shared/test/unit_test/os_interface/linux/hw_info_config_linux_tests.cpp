@@ -14,8 +14,6 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
-#include "opencl/extensions/public/cl_ext_private.h"
-
 #include <cstring>
 
 struct DummyHwConfig : NEO::HwInfoConfigHw<IGFX_UNKNOWN> {

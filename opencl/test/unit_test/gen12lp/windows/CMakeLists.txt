@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,6 @@
 set(IGDRCL_SRCS_tests_gen12lp_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks_tests_gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests_gen12lp.cpp
 )
 if(WIN32)

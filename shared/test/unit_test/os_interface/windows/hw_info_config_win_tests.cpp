@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
+#include "shared/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -23,8 +23,7 @@ HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
 }
 
-HwInfoConfigTestWindows::~HwInfoConfigTestWindows() {
-}
+HwInfoConfigTestWindows::~HwInfoConfigTestWindows() = default;
 
 void HwInfoConfigTestWindows::SetUp() {
     HwInfoConfigTest::SetUp();

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,8 +11,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_win_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kmdaf_listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_win.cpp
