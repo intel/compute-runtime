@@ -38,5 +38,11 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
             allocationData.storageInfo.isLockable = false;
         }
     }
+
+    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->isStorageInfoAdjustmentRequired()) {
+        if (properties.allocationType == AllocationType::BUFFER && !properties.flags.preferCompressed && !properties.flags.shareable) {
+            allocationData.storageInfo.isLockable = true;
+        }
+    }
 }
 } // namespace NEO
