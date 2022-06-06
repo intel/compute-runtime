@@ -812,6 +812,11 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                 std::unique_lock<std::mutex> memLock(asyncThreadMutex);
                 isaMap[vmBind->va_start] = std::move(isa);
+
+                // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately
+                if ((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) == 0) {
+                    connection->isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                }
                 memLock.unlock();
 
                 if (perKernelModules) {
