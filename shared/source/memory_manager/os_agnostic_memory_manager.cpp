@@ -295,18 +295,19 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     auto sizeToFree = memoryAllocation->sizeToFree;
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
 
-    if (sizeToFree) {
-        auto gpuAddressToFree = GmmHelper::decanonize(memoryAllocation->getGpuAddress()) & ~MemoryConstants::pageMask;
-        auto gfxPartition = getGfxPartition(memoryAllocation->getRootDeviceIndex());
-        gfxPartition->freeGpuAddressRange(gpuAddressToFree, sizeToFree);
-    }
-
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
     if (gfxAllocation->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     }
 
     if (executionEnvironment.rootDeviceEnvironments.size() > rootDeviceIndex) {
+        if (sizeToFree) {
+            auto gmmHelper = getGmmHelper(memoryAllocation->getRootDeviceIndex());
+            auto gpuAddressToFree = gmmHelper->decanonize(memoryAllocation->getGpuAddress()) & ~MemoryConstants::pageMask;
+            auto gfxPartition = getGfxPartition(memoryAllocation->getRootDeviceIndex());
+            gfxPartition->freeGpuAddressRange(gpuAddressToFree, sizeToFree);
+        }
+
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
         if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
             aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
