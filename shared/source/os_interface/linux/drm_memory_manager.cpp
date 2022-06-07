@@ -69,7 +69,6 @@ void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
         localMemAllocs.emplace_back();
         disableGemCloseWorker &= getDrm(rootDeviceIndex).isVmBindAvailable();
     }
-    MemoryManager::virtualPaddingAvailable = true;
 
     if (disableGemCloseWorker) {
         mode = gemCloseWorkerMode::gemCloseWorkerInactive;

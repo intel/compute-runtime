@@ -3102,7 +3102,7 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests,
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
-    EXPECT_TRUE(memoryManager->peekVirtualPaddingSupport());
+    EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
