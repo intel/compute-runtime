@@ -114,8 +114,6 @@ class MemoryManager {
     }
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
-    GraphicsAllocation *createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
-    virtual GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
 
     MOCKABLE_VIRTUAL void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr);
     MOCKABLE_VIRTUAL void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
@@ -149,9 +147,6 @@ class MemoryManager {
     bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue) { force32bitAllocations = newValue; }
-
-    bool peekVirtualPaddingSupport() const { return virtualPaddingAvailable; }
-    void setVirtualPaddingSupport(bool virtualPaddingSupport) { virtualPaddingAvailable = virtualPaddingSupport; }
 
     DeferredDeleter *getDeferredDeleter() const {
         return deferredDeleter.get();
@@ -302,7 +297,6 @@ class MemoryManager {
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
     bool force32bitAllocations = false;
-    bool virtualPaddingAvailable = false;
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     std::vector<bool> enable64kbpages;

@@ -129,10 +129,6 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     resourceParams.ArraySize = imageCount;
     resourceParams.Flags.Wa.__ForceOtherHVALIGN4 = hwHelper.hvAlign4Required();
     resourceParams.MaxLod = imgInfo.baseMipLevel + imgInfo.mipCount;
-    if (imgInfo.imgDesc.imageRowPitch && imgInfo.imgDesc.fromParent) {
-        resourceParams.OverridePitch = (uint32_t)imgInfo.imgDesc.imageRowPitch;
-        resourceParams.Flags.Info.AllowVirtualPadding = true;
-    }
 
     applyAuxFlagsForImage(imgInfo, preferCompressed);
 }

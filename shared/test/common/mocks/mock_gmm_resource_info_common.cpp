@@ -74,12 +74,8 @@ GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
 }
 
 void MockGmmResourceInfo::computeRowPitch() {
-    if (mockResourceCreateParams.OverridePitch) {
-        rowPitch = mockResourceCreateParams.OverridePitch;
-    } else {
-        rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth64 * (surfaceFormatInfo->ImageElementSizeInBytes));
-        rowPitch = alignUp(rowPitch, 64);
-    }
+    rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth64 * (surfaceFormatInfo->ImageElementSizeInBytes));
+    rowPitch = alignUp(rowPitch, 64);
 }
 
 uint32_t MockGmmResourceInfo::getBitsPerPixel() {

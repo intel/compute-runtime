@@ -262,27 +262,6 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItH
     EXPECT_EQ(imgDesc.imageRowPitch, queryGmm->gmmResourceInfo->getRenderPitch());
 }
 
-TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitchIsOverridenThenItHasDesiredPitchAndSize) {
-    ImageDescriptor imgDesc = {};
-    imgDesc.imageType = ImageType::Image2D;
-    imgDesc.imageWidth = 329;
-    imgDesc.imageHeight = 349;
-    imgDesc.imageDepth = 1;
-    imgDesc.imageRowPitch = 5376;
-    imgDesc.fromParent = true;
-
-    SurfaceFormatInfo surfaceFormat = {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16};
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.imageRowPitch);
-    auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
-    auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
-
-    size_t expectedSize = imgDesc.imageRowPitch * imgDesc.imageHeight;
-    EXPECT_GE(renderSize, expectedSize);
-    EXPECT_EQ(imgDesc.imageRowPitch, queryGmm->gmmResourceInfo->getRenderPitch());
-}
-
 TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried) {
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::Image2D;

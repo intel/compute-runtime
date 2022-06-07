@@ -2855,41 +2855,6 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsRequiredThenNewGraphicsAllocationIsCreated) {
-    mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.gemClose = 2;
-    // first let's create normal buffer
-    auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, bufferSize});
-
-    // buffer should have size 16
-    EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
-
-    auto bufferWithPaddingSize = 8192u;
-    auto paddedAllocation = memoryManager->createGraphicsAllocationWithPadding(buffer, 8192u);
-    EXPECT_NE(nullptr, paddedAllocation);
-
-    EXPECT_NE(0u, paddedAllocation->getGpuAddress());
-    EXPECT_NE(0u, paddedAllocation->getGpuAddressToPatch());
-    EXPECT_NE(buffer->getGpuAddress(), paddedAllocation->getGpuAddress());
-    EXPECT_NE(buffer->getGpuAddressToPatch(), paddedAllocation->getGpuAddressToPatch());
-    EXPECT_EQ(buffer->getUnderlyingBuffer(), paddedAllocation->getUnderlyingBuffer());
-
-    EXPECT_EQ(bufferWithPaddingSize, paddedAllocation->getUnderlyingBufferSize());
-    EXPECT_FALSE(paddedAllocation->isCoherent());
-    EXPECT_EQ(0u, paddedAllocation->fragmentsStorage.fragmentCount);
-
-    auto bufferbo = static_cast<DrmAllocation *>(buffer)->getBO();
-    auto bo = static_cast<DrmAllocation *>(paddedAllocation)->getBO();
-    EXPECT_NE(nullptr, bo);
-
-    EXPECT_NE(bufferbo->peekHandle(), bo->peekHandle());
-
-    memoryManager->freeGraphicsMemory(paddedAllocation);
-    memoryManager->freeGraphicsMemory(buffer);
-}
-
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWithNoPointerThenAllocationFromInternalHeapIsReturned) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
@@ -3008,28 +2973,6 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAllocUserptrFailsThenReturnsNullptr) {
-    mock->ioctl_expected.gemUserptr = 2;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-    this->ioctlResExt = {mock->ioctl_cnt.total + 1, -1};
-    mock->ioctl_res_ext = &ioctlResExt;
-
-    // first let's create normal buffer
-    auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, bufferSize});
-
-    // buffer should have size 16
-    EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
-
-    auto bufferWithPaddingSize = 8192u;
-    auto paddedAllocation = memoryManager->createGraphicsAllocationWithPadding(buffer, bufferWithPaddingSize);
-    EXPECT_EQ(nullptr, paddedAllocation);
-
-    memoryManager->freeGraphicsMemory(buffer);
-    mock->ioctl_res_ext = &mock->NONE;
-}
-
 using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
 
 TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToAllocateGraphicsMemoryWithAlignmentWithIsHostUsmAllocationSetToFalseThenNewHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
@@ -3099,10 +3042,6 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests,
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
     alignedFree(hostPtr);
-}
-
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
-    EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
@@ -5773,51 +5712,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCall
         EXPECT_FALSE(ret);
         EXPECT_EQ(flags, mock->mmapOffsetFlags);
     }
-}
-
-TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithoutMmapPtrThenOnlyUserptrCalled) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemClose = 1;
-
-    void *cpuPtr = (void *)0x30000;
-    size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, nullptr, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
-    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
-    ASSERT_NE(nullptr, gfxPaddedAllocation);
-    memoryManager->freeGraphicsMemoryImpl(gfxPaddedAllocation);
-}
-
-TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrThenMmapCalled) {
-    mock->ioctl_expected.gemMmap = 1;
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemClose = 1;
-    BufferObject bo(mock, 3, 1, 1024, 0);
-
-    void *cpuPtr = (void *)0x30000;
-    size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
-    gfxAllocation.setMmapPtr(cpuPtr);
-    gfxAllocation.setMmapSize(size);
-    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
-    ASSERT_NE(nullptr, gfxPaddedAllocation);
-    EXPECT_TRUE(gfxAllocation.isLocked());
-    memoryManager->freeGraphicsMemoryImpl(gfxPaddedAllocation);
-}
-
-TEST_F(DrmMemoryManagerTest, whenCallPaddedAllocationWithMmapPtrAndFailedMmapCalledThenReturnNullptr) {
-    mock->ioctl_expected.gemMmap = 1;
-    mock->ioctl_res = -1;
-
-    BufferObject bo(mock, 3, 1, 1024, 0);
-
-    void *cpuPtr = (void *)0x30000;
-    size_t size = 0x1000;
-    DrmAllocation gfxAllocation(rootDeviceIndex, AllocationType::UNKNOWN, &bo, cpuPtr, size, (osHandle)1u, MemoryPool::MemoryNull);
-    gfxAllocation.setMmapPtr(cpuPtr);
-    gfxAllocation.setMmapSize(size);
-    auto gfxPaddedAllocation = memoryManager->createPaddedAllocation(&gfxAllocation, size);
-    ASSERT_EQ(nullptr, gfxPaddedAllocation);
-    mock->ioctl_res = 0;
 }
 
 TEST_F(DrmMemoryManagerTest, GivenEligbleAllocationTypeWhenCheckingAllocationEligbleForCompletionFenceThenReturnTrue) {

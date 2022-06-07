@@ -268,16 +268,6 @@ Image *Image::create(Context *context,
 
                 UNRECOVERABLE_IF(imgInfo.offset != 0);
                 imgInfo.offset = parentBuffer->getOffset();
-
-                if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (allocationInfo[rootDeviceIndex].memory->getUnderlyingBuffer() != 0)) {
-                    // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
-                    auto queryGmmImgInfo(imgInfo);
-                    auto gmm = std::make_unique<Gmm>(gmmHelper, queryGmmImgInfo, StorageInfo{}, preferCompression);
-                    auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
-                    if (gmmAllocationSize > allocationInfo[rootDeviceIndex].memory->getUnderlyingBufferSize()) {
-                        allocationInfo[rootDeviceIndex].memory = memoryManager->createGraphicsAllocationWithPadding(allocationInfo[rootDeviceIndex].memory, gmmAllocationSize);
-                    }
-                }
             } else if (parentImage != nullptr) {
                 allocationInfo[rootDeviceIndex].memory = parentImage->getGraphicsAllocation(rootDeviceIndex);
                 allocationInfo[rootDeviceIndex].memory->getDefaultGmm()->queryImageParams(imgInfo);

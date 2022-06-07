@@ -848,48 +848,6 @@ void DrmMemoryManager::closeSharedHandle(GraphicsAllocation *gfxAllocation) {
     }
 }
 
-GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    uint64_t gpuRange = 0llu;
-
-    auto rootDeviceIndex = inputGraphicsAllocation->getRootDeviceIndex();
-    gpuRange = acquireGpuRange(sizeWithPadding, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
-
-    void *srcPtr = nullptr;
-    auto drmInputAllocation = static_cast<DrmAllocation *>(inputGraphicsAllocation);
-    if (drmInputAllocation->getMmapPtr()) {
-        auto bo = drmInputAllocation->getBO();
-        GemMmap mmapArg = {};
-        mmapArg.handle = bo->peekHandle();
-        mmapArg.size = bo->peekSize();
-        if (getDrm(rootDeviceIndex).ioctl(DrmIoctl::GemMmap, &mmapArg) != 0) {
-            return nullptr;
-        }
-        srcPtr = addrToPtr(mmapArg.addrPtr);
-        inputGraphicsAllocation->lock(srcPtr);
-    } else {
-        srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
-    }
-    auto srcSize = inputGraphicsAllocation->getUnderlyingBufferSize();
-    auto alignedSrcSize = alignUp(srcSize, MemoryConstants::pageSize);
-    auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(srcPtr, MemoryConstants::pageSize));
-    auto offset = ptrDiff(srcPtr, alignedPtr);
-
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(alignedPtr, alignedSrcSize, rootDeviceIndex));
-    if (!bo) {
-        return nullptr;
-    }
-    bo->setAddress(gpuRange);
-    auto gmmHelper = getGmmHelper(rootDeviceIndex);
-    auto canonizedGpuAddress = gmmHelper->canonize(ptrOffset(gpuRange, offset));
-    auto allocation = new DrmAllocation(rootDeviceIndex, inputGraphicsAllocation->getAllocationType(), bo.get(), srcPtr,
-                                        canonizedGpuAddress, sizeWithPadding,
-                                        inputGraphicsAllocation->getMemoryPool());
-
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), sizeWithPadding);
-    bo.release();
-    return allocation;
-}
-
 void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *drmMemory = static_cast<DrmAllocation *>(gfxAllocation);
 

@@ -99,11 +99,6 @@ MemObj::~MemObj() {
             if (mcsAllocation) {
                 destroyGraphicsAllocation(mcsAllocation, false);
             }
-            if (graphicsAllocation && associatedMemObject) {
-                if (associatedMemObject->getGraphicsAllocation(graphicsAllocation->getRootDeviceIndex()) != graphicsAllocation) {
-                    destroyGraphicsAllocation(graphicsAllocation, false);
-                }
-            }
         }
         if (associatedMemObject) {
             associatedMemObject->decRefInternal();

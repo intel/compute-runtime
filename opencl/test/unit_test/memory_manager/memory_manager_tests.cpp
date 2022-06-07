@@ -1241,20 +1241,6 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationCon
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationIsPaddedThenNewGraphicsAllocationIsCreated) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
-
-    auto sizeWithPadding = 8192;
-    auto paddedGraphicsAllocation = memoryManager.createGraphicsAllocationWithPadding(graphicsAllocation, sizeWithPadding);
-    ASSERT_NE(nullptr, paddedGraphicsAllocation);
-    EXPECT_NE(paddedGraphicsAllocation, graphicsAllocation);
-
-    memoryManager.freeGraphicsMemory(paddedGraphicsAllocation);
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
 TEST(OsAgnosticMemoryManager, WhenPointerIsCreatedThenLeakIsDetected) {
     void *ptr = new int[10];
     EXPECT_NE(nullptr, ptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
