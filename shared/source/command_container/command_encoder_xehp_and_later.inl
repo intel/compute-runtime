@@ -446,8 +446,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
 
         walkerCmd.setGenerateLocalId(1);
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
-        adjustWalkOrder(walkerCmd, requiredWorkGroupOrder);
     }
+    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder);
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
