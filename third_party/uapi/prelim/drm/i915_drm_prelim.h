@@ -72,7 +72,7 @@ struct prelim_drm_i915_gem_context_create_ext_clone {
  *         the pile that is changing this number.
  */
 #define PRELIM_UAPI_MAJOR	2
-#define PRELIM_UAPI_MINOR	0
+#define PRELIM_UAPI_MINOR	1
 
 /*
  * Top 8 bits of every non-engine counter are GT id.
@@ -380,6 +380,15 @@ enum prelim_drm_i915_eu_stall_property_id {
 	PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS,
 
 	PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE,
+
+	/**
+	 * This field specifies the minimum number of
+	 * EU stall data rows to be present in the kernel
+	 * buffer for poll() to set POLLIN (data present).
+	 * A default value of 1 is used by the driver if this
+	 * field is not specified.
+	 */
+	PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT,
 
 	PRELIM_DRM_I915_EU_STALL_PROP_MAX
 };
