@@ -79,6 +79,7 @@ class WddmMemoryManager : public MemoryManager {
     bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
+    void registerAllocationInOs(GraphicsAllocation *allocation) override;
 
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

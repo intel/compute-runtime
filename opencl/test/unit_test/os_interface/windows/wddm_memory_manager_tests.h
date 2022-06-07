@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_wddm_residency_allocations_container.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/test.h"
@@ -184,6 +185,28 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
 
     HardwareInfo *hwInfo = nullptr;
     WddmMock *wddm = nullptr;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
+};
+
+class MockWddmMemoryManagerWithEuDebugInterfaceTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
+        executionEnvironment->incRefInternal();
+        wddm = new WddmEuDebugInterfaceMock(*executionEnvironment->rootDeviceEnvironments[1].get());
+        wddm->callBaseDestroyAllocations = false;
+        wddm->callBaseMapGpuVa = false;
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+    }
+
+    void TearDown() override {
+        executionEnvironment->decRefInternal();
+    }
+
+    HardwareInfo *hwInfo = nullptr;
+    WddmEuDebugInterfaceMock *wddm = nullptr;
     ExecutionEnvironment *executionEnvironment = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 };

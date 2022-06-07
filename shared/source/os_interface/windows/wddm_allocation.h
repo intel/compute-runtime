@@ -24,6 +24,11 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
+    struct RegistrationData {
+        uint64_t gpuVirtualAddress = 0;
+        uint64_t size = 0;
+    };
+
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn, void *reservedAddr, MemoryPool pool, uint32_t shareable, size_t maxOsContextCount)
         : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, canonizedAddress, sizeIn, reservedAddr, pool, shareable, maxOsContextCount) {}
 

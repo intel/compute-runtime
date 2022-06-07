@@ -121,6 +121,11 @@ if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper_drm_or_wddm.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_register_allocation.cpp
+  )
+else()
+  list(APPEND NEO_CORE_OS_INTERFACE_WDDM
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_register_allocation_win.cpp
   )
 endif()
 
