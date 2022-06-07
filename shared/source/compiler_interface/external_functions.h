@@ -5,12 +5,14 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/utilities/arrayref.h"
 
 #include <string>
 #include <unordered_map>
 #include <vector>
-#pragma once
+
 namespace NEO {
 struct KernelDescriptor;
 

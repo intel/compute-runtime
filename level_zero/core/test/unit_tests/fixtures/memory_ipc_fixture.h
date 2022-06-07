@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_operations_status.h"

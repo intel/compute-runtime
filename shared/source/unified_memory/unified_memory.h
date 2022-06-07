@@ -5,8 +5,9 @@
  *
  */
 
-#include <stdint.h>
 #pragma once
+
+#include <stdint.h>
 
 enum InternalMemoryType : uint32_t {
     NOT_SPECIFIED = 0b0,

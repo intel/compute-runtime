@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include <level_zero/ze_api.h>
 
 #include <cstring>

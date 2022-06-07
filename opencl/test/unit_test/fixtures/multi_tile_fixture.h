@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

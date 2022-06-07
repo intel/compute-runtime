@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"

@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+
 #include <string>
 #include <vector>
-
-#pragma once
 
 namespace NEO {
 std::vector<std::string> getBuiltInFileNames(bool imagesSupport);

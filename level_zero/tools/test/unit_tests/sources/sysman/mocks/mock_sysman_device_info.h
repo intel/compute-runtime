@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 

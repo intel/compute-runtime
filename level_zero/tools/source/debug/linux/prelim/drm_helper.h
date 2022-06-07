@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/helpers/topology_map.h"
 
 namespace NEO {

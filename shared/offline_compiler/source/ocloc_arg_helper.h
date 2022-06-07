@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -18,8 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-#pragma once
 
 static constexpr auto *oclocStdoutLogName = "stdout.log";
 

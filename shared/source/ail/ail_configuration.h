@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+
 #include "shared/source/helpers/hw_info.h"
 
 #include <string>
-
-#pragma once
 
 /*
  * AIL (Application Intelligence Layer) is a set of per-application controls that influence driver behavior.
@@ -17,12 +17,12 @@
  *
  * AIL provides application detection mechanism based on running processes in the system.
  * Mechanism works on Windows and Linux, is flexible and easily extendable to new applications.
- * 
- * E.g. AIL can detect running Blender application and enable fp64 emulation on hardware 
+ *
+ * E.g. AIL can detect running Blender application and enable fp64 emulation on hardware
  * that does not support native fp64.
- * 
+ *
  * Disclaimer: we should never use this for benchmarking or conformance purposes - this would be cheating.
- * 
+ *
  */
 
 namespace NEO {

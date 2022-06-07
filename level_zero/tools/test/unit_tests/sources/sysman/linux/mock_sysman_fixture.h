@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"

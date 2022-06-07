@@ -5,13 +5,13 @@
  *
  */
 
+#pragma once
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include <level_zero/ze_api.h>
-
-#pragma once
 
 namespace L0 {
 ze_result_t zeModuleCreate(

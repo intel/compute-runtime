@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/os_interface/os_library.h"
 
 #include "GL/gl.h"

@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"

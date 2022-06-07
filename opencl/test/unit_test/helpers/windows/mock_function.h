@@ -5,4 +5,6 @@
  *
  */
 
+#pragma once
+
 const char *realFunction();

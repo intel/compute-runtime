@@ -5,11 +5,11 @@
  *
  */
 
+#pragma once
+
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
 #include <iostream>
-
-#pragma once
 
 #define MAX_DEVICES_IN_MACHINE (64u)
 #define LOG(level) (((level) <= (ZelloMetricsUtility::TestSettings::get())->verboseLevel) \

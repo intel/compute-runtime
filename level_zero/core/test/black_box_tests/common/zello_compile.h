@@ -1,13 +1,20 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#pragma once
+
 #include "shared/offline_compiler/source/ocloc_api.h"
 
 #include <level_zero/ze_api.h>
+
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
 
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
@@ -40,11 +47,11 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     for (unsigned int i = 0; i < numOutputs; ++i) {
         std::string spvExtension = ".spv";
         std::string logFileName = "stdout.log";
-        auto nameLen = strlen(outputNames[i]);
-        if ((nameLen > spvExtension.size()) && (strstr(&outputNames[i][nameLen - spvExtension.size()], spvExtension.c_str()) != nullptr)) {
+        auto nameLen = std::strlen(outputNames[i]);
+        if ((nameLen > spvExtension.size()) && (std::strstr(&outputNames[i][nameLen - spvExtension.size()], spvExtension.c_str()) != nullptr)) {
             spirV = outputs[i];
             spirVlen = ouputLengths[i];
-        } else if ((nameLen >= logFileName.size()) && (strstr(outputNames[i], logFileName.c_str()) != nullptr)) {
+        } else if ((nameLen >= logFileName.size()) && (std::strstr(outputNames[i], logFileName.c_str()) != nullptr)) {
             log = reinterpret_cast<const char *>(outputs[i]);
             logLen = ouputLengths[i];
             break;

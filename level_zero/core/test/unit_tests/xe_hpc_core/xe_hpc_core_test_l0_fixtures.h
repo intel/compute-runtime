@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

@@ -5,13 +5,13 @@
  *
  */
 
+#pragma once
+
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 #include <iostream>
 #include <vector>
-
-#pragma once
 
 #define VALIDATECALL(myZeCall)                  \
     do {                                        \

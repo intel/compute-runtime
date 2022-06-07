@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "shared/source/built_ins/built_ins.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"

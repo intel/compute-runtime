@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
