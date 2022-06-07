@@ -450,12 +450,3 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedTh
         EXPECT_EQ(productConfig, DG2_G11);
     }
 }
-
-DG2TEST_F(HwInfoConfigTestDg2, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    if constexpr (is32bit) {
-        EXPECT_TRUE(hwInfoConfig->isStorageInfoAdjustmentRequired());
-    } else {
-        EXPECT_FALSE(hwInfoConfig->isStorageInfoAdjustmentRequired());
-    }
-}

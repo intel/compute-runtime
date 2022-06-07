@@ -68,9 +68,7 @@ TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
     MockBuffer buffer(allocation);
     UltDeviceFactory factory{1, 0};
     auto &device = *factory.rootDevices[0];
-    auto gmm = std::make_unique<MockGmm>(device.getGmmHelper());
-    allocation.setGmm(gmm.get(), 0);
-    allocation.getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
+
     allocation.memoryPool = MemoryPool::LocalMemory;
     EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));
 

@@ -9,7 +9,6 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
@@ -332,10 +331,7 @@ TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThen
     cl_int retVal = 0;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
-    auto gmm = std::make_unique<MockGmm>(device->getGmmHelper());
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->setGmm(gmm.release(), 0);
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::LocalMemory);
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->getDefaultGmm()->resourceParams.Flags.Info.NotLockable = 1;
 
     EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));

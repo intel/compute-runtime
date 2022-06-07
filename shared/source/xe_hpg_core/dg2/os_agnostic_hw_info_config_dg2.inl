@@ -185,11 +185,3 @@ template <>
 bool HwInfoConfigHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
     return true;
 }
-template <>
-bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
-    if constexpr (is32bit) {
-        return true;
-    } else {
-        return false;
-    }
-}
