@@ -40,8 +40,6 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-        drm->storedDeviceID = pInHwInfo.platform.usDeviceID;
-        drm->storedDeviceRevID = 0;
         drm->storedEUVal = pInHwInfo.gtSystemInfo.EUCount;
         drm->storedSSVal = pInHwInfo.gtSystemInfo.SubSliceCount;
 

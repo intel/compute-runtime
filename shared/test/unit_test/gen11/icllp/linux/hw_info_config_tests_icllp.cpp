@@ -13,8 +13,6 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxIcllp : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-
-        drm->storedDeviceID = IICL_LP_GT1_MOB_DEVICE_F0_ID;
     }
 };
 
@@ -22,8 +20,6 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
@@ -35,19 +31,9 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenIcllpThenHwInfoIsCorrect) {
 ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    drm->storedRetValForDeviceID = -1;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceID = 0;
-    drm->storedRetValForDeviceRevID = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceRevID = 0;
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
@@ -61,15 +47,15 @@ class IcllpHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
 TYPED_TEST(IcllpHwInfoTests, WhenGettingSystemInfoThenParamsAreValid) {
-    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
+
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

@@ -19,8 +19,6 @@ struct HwInfoConfigTestLinuxAdlp : HwInfoConfigTestLinux {
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-
-        drm->storedDeviceID = IGFX_ALDERLAKE_P;
     }
 };
 
@@ -28,8 +26,6 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(static_cast<unsigned short>(drm->storedDeviceID), outHwInfo.platform.usDeviceID);
-    EXPECT_EQ(static_cast<unsigned short>(drm->storedDeviceRevID), outHwInfo.platform.usRevId);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
@@ -40,19 +36,9 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
 ADLPTEST_F(HwInfoConfigTestLinuxAdlp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    drm->storedRetValForDeviceID = -1;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceID = 0;
-    drm->storedRetValForDeviceRevID = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceRevID = 0;
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
@@ -77,79 +63,84 @@ using AdlpConfigHwInfoTests = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<ADLP_CONFIG>;
 TYPED_TEST_CASE(AdlpConfigHwInfoTests, adlpConfigTestTypes);
 TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
-    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    auto &featureTable = hwInfo.featureTable;
-    auto &workaroundTable = hwInfo.workaroundTable;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
+    {
+        const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+        const auto &featureTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->featureTable;
+        const auto &workaroundTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->workaroundTable;
 
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+        EXPECT_EQ(ret, 0);
+        EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+        EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
+        EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 
-    EXPECT_FALSE(featureTable.flags.ftrL3IACoherency);
-    EXPECT_FALSE(featureTable.flags.ftrPPGTT);
-    EXPECT_FALSE(featureTable.flags.ftrSVM);
-    EXPECT_FALSE(featureTable.flags.ftrIA32eGfxPTEs);
-    EXPECT_FALSE(featureTable.flags.ftrStandardMipTailFormat);
-    EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
-    EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
-    EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
-    EXPECT_FALSE(featureTable.flags.ftrEnableGuC);
-    EXPECT_FALSE(featureTable.flags.ftrFbc);
-    EXPECT_FALSE(featureTable.flags.ftrFbc2AddressTranslation);
-    EXPECT_FALSE(featureTable.flags.ftrFbcBlitterTracking);
-    EXPECT_FALSE(featureTable.flags.ftrFbcCpuTracking);
-    EXPECT_FALSE(featureTable.flags.ftrTileY);
-    EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
-    EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
-    EXPECT_FALSE(featureTable.flags.ftr3dMidBatchPreempt);
-    EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
-    EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_FALSE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
+        EXPECT_FALSE(featureTable.flags.ftrL3IACoherency);
+        EXPECT_FALSE(featureTable.flags.ftrPPGTT);
+        EXPECT_FALSE(featureTable.flags.ftrSVM);
+        EXPECT_FALSE(featureTable.flags.ftrIA32eGfxPTEs);
+        EXPECT_FALSE(featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
+        EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
+        EXPECT_FALSE(featureTable.flags.ftrEnableGuC);
+        EXPECT_FALSE(featureTable.flags.ftrFbc);
+        EXPECT_FALSE(featureTable.flags.ftrFbc2AddressTranslation);
+        EXPECT_FALSE(featureTable.flags.ftrFbcBlitterTracking);
+        EXPECT_FALSE(featureTable.flags.ftrFbcCpuTracking);
+        EXPECT_FALSE(featureTable.flags.ftrTileY);
+        EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
+        EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
+        EXPECT_FALSE(featureTable.flags.ftr3dMidBatchPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_FALSE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
-    EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-    EXPECT_FALSE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
-    EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
-
+        EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
+        EXPECT_FALSE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
+        EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
+    }
     ret = drm.setupHardwareInfo(&device, true);
+    {
+        const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+        const auto &featureTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->featureTable;
+        const auto &workaroundTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->workaroundTable;
 
-    EXPECT_EQ(ret, 0);
-    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
-    EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+        EXPECT_EQ(ret, 0);
+        EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+        EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
+        EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 
-    EXPECT_TRUE(featureTable.flags.ftrL3IACoherency);
-    EXPECT_TRUE(featureTable.flags.ftrPPGTT);
-    EXPECT_TRUE(featureTable.flags.ftrSVM);
-    EXPECT_TRUE(featureTable.flags.ftrIA32eGfxPTEs);
-    EXPECT_TRUE(featureTable.flags.ftrStandardMipTailFormat);
-    EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
-    EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
-    EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
-    EXPECT_TRUE(featureTable.flags.ftrEnableGuC);
-    EXPECT_TRUE(featureTable.flags.ftrFbc);
-    EXPECT_TRUE(featureTable.flags.ftrFbc2AddressTranslation);
-    EXPECT_TRUE(featureTable.flags.ftrFbcBlitterTracking);
-    EXPECT_TRUE(featureTable.flags.ftrFbcCpuTracking);
-    EXPECT_FALSE(featureTable.flags.ftrTileY);
-    EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
-    EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-    EXPECT_TRUE(featureTable.flags.ftr3dMidBatchPreempt);
-    EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
-    EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_TRUE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
+        EXPECT_TRUE(featureTable.flags.ftrL3IACoherency);
+        EXPECT_TRUE(featureTable.flags.ftrPPGTT);
+        EXPECT_TRUE(featureTable.flags.ftrSVM);
+        EXPECT_TRUE(featureTable.flags.ftrIA32eGfxPTEs);
+        EXPECT_TRUE(featureTable.flags.ftrStandardMipTailFormat);
+        EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
+        EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
+        EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
+        EXPECT_TRUE(featureTable.flags.ftrEnableGuC);
+        EXPECT_TRUE(featureTable.flags.ftrFbc);
+        EXPECT_TRUE(featureTable.flags.ftrFbc2AddressTranslation);
+        EXPECT_TRUE(featureTable.flags.ftrFbcBlitterTracking);
+        EXPECT_TRUE(featureTable.flags.ftrFbcCpuTracking);
+        EXPECT_FALSE(featureTable.flags.ftrTileY);
+        EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
+        EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
+        EXPECT_TRUE(featureTable.flags.ftr3dMidBatchPreempt);
+        EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
+        EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_TRUE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
-    EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-    EXPECT_TRUE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
-    EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
+        EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
+        EXPECT_TRUE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
+        EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
+    }
 }
 
 TYPED_TEST(AdlpConfigHwInfoTests, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {

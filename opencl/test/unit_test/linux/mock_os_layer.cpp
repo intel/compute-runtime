@@ -22,6 +22,7 @@ int (*openFull)(const char *pathname, int flags, ...) = nullptr;
 int fakeFd = 1023;
 int haveDri = 0;                                       // index of dri to serve, -1 - none
 int deviceId = NEO::deviceDescriptorTable[0].deviceId; // default supported DeviceID
+int revisionId = 17;
 int haveSoftPin = 1;
 int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |
@@ -150,7 +151,7 @@ int drmGetParam(NEO::GetParam *param) {
         ret = failOnSubsliceTotal;
         break;
     case I915_PARAM_REVISION:
-        *param->value = 0x0;
+        *param->value = revisionId;
         ret = failOnRevisionId;
         break;
     case I915_PARAM_HAS_EXEC_SOFTPIN:

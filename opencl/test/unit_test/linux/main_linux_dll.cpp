@@ -544,16 +544,30 @@ TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     DebugManager.flags.PrintDebugMessages.set(true);
 
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
+    VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
 
     deviceId = -1;
+    revisionId = -1;
 
     ::testing::internal::CaptureStderr();
     ::testing::internal::CaptureStdout();
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     std::string errStr = ::testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: 0000")));
+    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: ffff")));
     ::testing::internal::GetCapturedStdout();
+}
+
+TEST_F(DrmTests, GivenKnownDeviceWhenCreatingDrmThenHwInfoIsProperlySet) {
+    VariableBackup<decltype(revisionId)> backupRevisionId(&revisionId);
+
+    revisionId = 123;
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+
+    EXPECT_EQ(revisionId, rootDeviceEnvironment->getHardwareInfo()->platform.usRevId);
+    EXPECT_EQ(deviceId, rootDeviceEnvironment->getHardwareInfo()->platform.usDeviceID);
 }
 
 TEST_F(DrmTests, GivenNoSoftPinWhenCreatingDrmThenNullIsReturned) {

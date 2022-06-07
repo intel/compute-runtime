@@ -27,6 +27,7 @@ extern int drmOtherRequests(unsigned long int request, ...);
 extern int fakeFd;
 extern int haveDri;  // index of dri to serve, -1 - none
 extern int deviceId; // known DeviceID
+extern int revisionId;
 extern int haveSoftPin;
 extern int vmId;
 extern int failOnDeviceId;

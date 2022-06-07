@@ -49,16 +49,6 @@ TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironm
     EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 12);
 }
 
-TEST_F(DeviceFactoryLinuxTest, GivenInvalidHwInfoWhenPreparingDeviceEnvironmentsThenFailIsReturned) {
-
-    pDrm->storedRetValForDeviceID = -1;
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    EXPECT_FALSE(success);
-
-    pDrm->storedRetValForDeviceID = 0;
-}
-
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_TRUE(success);

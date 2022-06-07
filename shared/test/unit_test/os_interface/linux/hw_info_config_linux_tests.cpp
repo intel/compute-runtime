@@ -17,30 +17,33 @@
 #include <cstring>
 
 struct DummyHwConfig : NEO::HwInfoConfigHw<IGFX_UNKNOWN> {
-    const uint32_t hwConfigTestMidThreadBit = 1 << 8;
-    const uint32_t hwConfigTestThreadGroupBit = 1 << 9;
-    const uint32_t hwConfigTestMidBatchBit = 1 << 10;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override {
         FeatureTable *featureTable = &hwInfo->featureTable;
         featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
         featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
         featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
 
-        if (hwInfo->platform.usDeviceID == 30) {
+        if (use128MbEdram) {
             GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
             gtSystemInfo->EdramSizeInKb = 128 * 1000;
         }
-        if (hwInfo->platform.usDeviceID & hwConfigTestMidThreadBit) {
+        if (enableMidThreadPreemption) {
             featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
         }
-        if (hwInfo->platform.usDeviceID & hwConfigTestThreadGroupBit) {
+        if (enableThreadGroupPreemption) {
             featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;
         }
-        if (hwInfo->platform.usDeviceID & hwConfigTestMidBatchBit) {
+        if (enableMidBatchPreemption) {
             featureTable->flags.ftrGpGpuMidBatchPreempt = 1;
         }
-        return (hwInfo->platform.usDeviceID == 10) ? -1 : 0;
+        return (failOnConfigureHardwareCustom) ? -1 : 0;
     }
+
+    bool use128MbEdram = false;
+    bool enableMidThreadPreemption = false;
+    bool enableThreadGroupPreemption = false;
+    bool enableMidBatchPreemption = false;
+    bool failOnConfigureHardwareCustom = false;
 };
 
 using namespace NEO;
@@ -48,8 +51,6 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-
-        drm->storedDeviceID = 1;
 
         testPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
         hwInfoConfigFactoryBackup = &hwConfig;
@@ -80,45 +81,22 @@ HWTEST2_F(HwInfoConfigCommonLinuxTest, givenDebugFlagSetWhenEnablingBlitterOpera
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenDummyConfigThenEdramIsDetected) {
-    drm->storedDeviceID = 30;
+    hwConfig.use128MbEdram = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {
-    drm->storedDeviceID = 21;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
-    drm->storedDeviceID = 20;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenUnknownDevIdWhenConfiguringHwInfoThenFails) {
-    drm->storedDeviceID = 0;
-
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenFailGetDevIdWhenConfiguringHwInfoThenFails) {
-    drm->storedRetValForDeviceID = -2;
-
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-2, ret);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenFailGetDevRevIdWhenConfiguringHwInfoThenFails) {
-    drm->storedRetValForDeviceRevID = -3;
-
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-3, ret);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenFailGetEuCountWhenConfiguringHwInfoThenFails) {
@@ -181,16 +159,8 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenRe
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, GivenFailingCustomConfigWhenConfiguringHwInfoThenFails) {
-    drm->storedDeviceID = 10;
+    hwConfig.failOnConfigureHardwareCustom = true;
 
-    int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-}
-
-TEST_F(HwInfoConfigTestLinuxDummy, GivenUnknownDeviceIdWhenConfiguringHwInfoThenFails) {
-    drm->storedDeviceID = 0;
-
-    auto hwConfig = DummyHwConfig{};
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 }
@@ -214,7 +184,8 @@ HWTEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledMidThreadOnWhenCon
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit;
+
+    hwConfig.enableMidThreadPreemption = true;
 
     UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo, true);
 
@@ -230,7 +201,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledThreadGroupOnWhenCon
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestThreadGroupBit;
+    hwConfig.enableThreadGroupPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -245,10 +216,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPri
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    std::array<std::string, 6> expectedStrings = {{"DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
-                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_REVISION, output value: 0, retCode: 0",
-                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
-                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: 7, retCode: 0"
+    std::array<std::string, 1> expectedStrings = {{"DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: 7, retCode: 0"
 
     }};
 
@@ -267,7 +235,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledMidBatchOnWhenConfig
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidBatchBit;
+    hwConfig.enableMidBatchPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -280,7 +248,6 @@ TEST_F(HwInfoConfigTestLinuxDummy, WhenConfiguringHwInfoThenPreemptionIsSupporte
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = 1;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -290,8 +257,11 @@ TEST_F(HwInfoConfigTestLinuxDummy, WhenConfiguringHwInfoThenPreemptionIsSupporte
 TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmDisabledAllPreemptionWhenConfiguringHwInfoThenPreemptionIsNotSupported) {
     pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->storedPreemptionSupport = 0;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
+    hwConfig.enableMidThreadPreemption = true;
+    hwConfig.enableMidBatchPreemption = true;
+    hwConfig.enableThreadGroupPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    hwConfig.enableMidThreadPreemption = true;
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
     EXPECT_FALSE(drm->isPreemptionSupported());
@@ -303,7 +273,9 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledAllPreemptionDriverT
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
+    hwConfig.enableMidBatchPreemption = true;
+    hwConfig.enableThreadGroupPreemption = true;
+    hwConfig.enableMidThreadPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -316,7 +288,9 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenPreemptionDrmEnabledAllPreemptionDriverM
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
+    hwConfig.enableMidBatchPreemption = true;
+    hwConfig.enableThreadGroupPreemption = true;
+    hwConfig.enableMidThreadPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
@@ -329,7 +303,9 @@ TEST_F(HwInfoConfigTestLinuxDummy, GivenConfigPreemptionDrmEnabledAllPreemptionD
         I915_SCHEDULER_CAP_ENABLED |
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
-    drm->storedDeviceID = hwConfig.hwConfigTestMidThreadBit | hwConfig.hwConfigTestThreadGroupBit | hwConfig.hwConfigTestMidBatchBit;
+    hwConfig.enableMidBatchPreemption = true;
+    hwConfig.enableThreadGroupPreemption = true;
+    hwConfig.enableMidThreadPreemption = true;
     int ret = hwConfig.configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);

@@ -66,11 +66,10 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         }
     }
     if (device) {
-        ret = drmObject->setupHardwareInfo(const_cast<DeviceDescriptor *>(device), true);
+        ret = drmObject->setupHardwareInfo(device, true);
         if (ret != 0) {
             return nullptr;
         }
-        rootDeviceEnvironment.setHwInfo(device->pHwInfo);
         rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.deviceName = devName;
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,

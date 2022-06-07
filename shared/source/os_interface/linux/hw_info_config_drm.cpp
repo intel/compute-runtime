@@ -74,20 +74,6 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     auto gtSystemInfo = &outHwInfo->gtSystemInfo;
     auto featureTable = &outHwInfo->featureTable;
 
-    int val = 0;
-    ret = drm->getDeviceID(val);
-    if (ret != 0 || val == 0) {
-        *outHwInfo = {};
-        return (ret == 0) ? -1 : ret;
-    }
-    platform->usDeviceID = static_cast<unsigned short>(val);
-    ret = drm->getDeviceRevID(val);
-    if (ret != 0) {
-        *outHwInfo = {};
-        return ret;
-    }
-    platform->usRevId = static_cast<unsigned short>(val);
-
     Drm::QueryTopologyData topologyData = {};
 
     bool status = drm->queryTopology(*outHwInfo, topologyData);

@@ -21,8 +21,6 @@ struct HwInfoConfigTestLinuxTgllp : HwInfoConfigTestLinux {
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-
-        drm->storedDeviceID = 0xFF20;
     }
 };
 
@@ -41,8 +39,6 @@ TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, configureHwInfo) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
@@ -53,19 +49,9 @@ TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, configureHwInfo) {
 TGLLPTEST_F(HwInfoConfigTestLinuxTgllp, negative) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    drm->storedRetValForDeviceID = -1;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceID = 0;
-    drm->storedRetValForDeviceRevID = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceRevID = 0;
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
@@ -79,15 +65,15 @@ class TgllpHwInfoTests : public ::testing::Test {};
 typedef ::testing::Types<TGLLP_1x6x16> tgllpTestTypes;
 TYPED_TEST_CASE(TgllpHwInfoTests, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoTests, gtSetupIsCorrect) {
-    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
+
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

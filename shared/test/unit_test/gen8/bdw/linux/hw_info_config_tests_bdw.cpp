@@ -13,7 +13,6 @@ using namespace NEO;
 struct HwInfoConfigTestLinuxBdw : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
-        drm->storedDeviceID = 0x1616;
     }
 };
 
@@ -22,55 +21,28 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenInformationIsCorrec
     drm->storedSSVal = 3;
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    drm->storedDeviceID = 0x1602;
+    pInHwInfo.platform.usDeviceID = 0x1602;
 
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    drm->storedDeviceID = 0x1626;
+    pInHwInfo.platform.usDeviceID = 0x1626;
 
     drm->storedSSVal = 6;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-}
-
-BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenUnknownDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->storedDeviceID = 0;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-}
-
-BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlDevIdWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->storedRetValForDeviceID = -2;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-2, ret);
-}
-
-BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlDevRevIdWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->storedRetValForDeviceRevID = -3;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-3, ret);
 }
 
 BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
@@ -89,14 +61,6 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenFailedIoctlSsCountWhenConfiguringHwInfo
     EXPECT_EQ(-5, ret);
 }
 
-BDWTEST_F(HwInfoConfigTestLinuxBdw, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-
-    drm->storedDeviceRevID = 0;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(0, ret);
-}
-
 BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
@@ -105,14 +69,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, WhenConfiguringHwInfoThenEdramInformationIsC
     EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
 
-    drm->storedDeviceID = 0x1622;
+    pInHwInfo.platform.usDeviceID = 0x1622;
 
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
 
-    drm->storedDeviceID = 0x162A;
+    pInHwInfo.platform.usDeviceID = 0x162A;
     ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
@@ -125,15 +89,15 @@ class BdwHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<BDW_1x2x6, BDW_1x3x6, BDW_1x3x8, BDW_2x3x8> bdwTestTypes;
 TYPED_TEST_CASE(BdwHwInfoTests, bdwTestTypes);
 TYPED_TEST(BdwHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
-    HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
+    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
+
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

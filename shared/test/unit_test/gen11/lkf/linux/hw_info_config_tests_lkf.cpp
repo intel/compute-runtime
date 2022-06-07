@@ -14,8 +14,6 @@ struct HwInfoConfigTestLinuxLkf : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
-        drm->storedDeviceID = ILKF_1x8x8_DESK_DEVICE_F0_ID;
-
         drm->storedSSVal = 8;
     }
 };
@@ -24,8 +22,6 @@ LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
     int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->storedDeviceID, outHwInfo.platform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->storedDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
@@ -36,19 +32,9 @@ LKFTEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
 LKFTEST_F(HwInfoConfigTestLinuxLkf, negative) {
     auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
 
-    drm->storedRetValForDeviceID = -1;
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceID = 0;
-    drm->storedRetValForDeviceRevID = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForDeviceRevID = 0;
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
@@ -67,10 +53,11 @@ TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
+
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_EQ(ret, 0);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

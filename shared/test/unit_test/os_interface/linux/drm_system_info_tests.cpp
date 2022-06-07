@@ -152,12 +152,12 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto setupHardwareInfo = [](HardwareInfo *, bool) {};
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
 
     int ret = drm.setupHardwareInfo(&device, false);
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_GT(gtSystemInfo.TotalVsThreads, 0u);
     EXPECT_GT(gtSystemInfo.TotalHsThreads, 0u);

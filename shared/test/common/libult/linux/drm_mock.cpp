@@ -243,7 +243,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->itemsPtr);
         storedQueryItem = *queryItemArg;
 
-        auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
+        auto realEuCount = std::max(rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount, static_cast<uint32_t>(this->storedEUVal));
         auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
 
         if (queryItemArg->length == 0) {

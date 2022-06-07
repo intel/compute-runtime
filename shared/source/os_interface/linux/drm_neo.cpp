@@ -358,9 +358,13 @@ int Drm::getErrno() {
     return errno;
 }
 
-int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
-    HardwareInfo *hwInfo = const_cast<HardwareInfo *>(device->pHwInfo);
+int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
+    rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+    HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     int ret;
+
+    hwInfo->platform.usDeviceID = this->deviceId;
+    hwInfo->platform.usRevId = this->revisionId;
 
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
@@ -389,7 +393,6 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
-    rootDeviceEnvironment.setHwInfo(hwInfo);
 
     status = querySystemInfo();
     if (status) {

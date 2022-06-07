@@ -19,8 +19,6 @@ struct HwInfoConfigTestLinuxDg2 : HwInfoConfigTestLinux {
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-
-        drm->storedDeviceID = 0x1234;
     }
 };
 
