@@ -100,8 +100,14 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     void setAuxQPitch(uint32_t value);
     void setMipTailStartLod(uint32_t newMipTailStartLod) { mipTailStartLod = newMipTailStartLod; }
 
+    void refreshHandle() override {
+        refreshHandleCalled++;
+        GmmResourceInfo::refreshHandle();
+    };
+
     using GmmResourceInfo::clientContext;
     using GmmResourceInfo::createResourceInfo;
+    using GmmResourceInfo::decodeResourceInfo;
 
     uint64_t driverProtectionBits = 0;
     uint32_t getOffsetCalled = 0u;
@@ -113,6 +119,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint8_t cpuBltResult = 1u;
     static constexpr uint32_t getHAlignSurfaceStateResult = 2u;
     static constexpr uint32_t yMajorTileModeValue = 3u;
+    uint32_t refreshHandleCalled = 0u;
 
   protected:
     MockGmmResourceInfo();

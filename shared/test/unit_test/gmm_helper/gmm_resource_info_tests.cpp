@@ -69,7 +69,7 @@ TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreating
     EXPECT_NE(destroyed.end(), std::find(destroyed.begin(), destroyed.end(), handle));
 }
 
-TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenCreatingResourceInfoThenExistingHandleIsOpened) {
+TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenDecodingResourceInfoThenExistingHandleIsOpened) {
     NEO::HardwareInfo hwInfo;
     hwInfo.platform.eProductFamily = productFamily;
     NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
@@ -94,7 +94,7 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenC
     ASSERT_NE(nullptr, resInfo2);
     resInfo2->clientContext = &gmmClientCtx;
     auto resourceInfoPtr = resInfo2->clientContext->copyResInfoObject(static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
-    resInfo2->createResourceInfo(resourceInfoPtr, static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
+    resInfo2->decodeResourceInfo(resourceInfoPtr, static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
 
     EXPECT_EQ(1U, created.size());
     EXPECT_EQ(1U, opened.size());
@@ -110,11 +110,20 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenC
     auto handle2 = resInfo2->GmmResourceInfo::peekHandle();
     EXPECT_NE(nullptr, handle2);
 
+    EXPECT_EQ(0u, resInfo2->refreshHandleCalled);
+
+    resInfo2->refreshHandle();
+
+    EXPECT_EQ(1U, created.size());
+    EXPECT_EQ(2U, opened.size());
+    EXPECT_EQ(0U, destroyed.size());
+    EXPECT_EQ(1u, resInfo2->refreshHandleCalled);
+
     delete resInfo;
     delete resInfo2;
 
     EXPECT_EQ(1U, created.size());
-    EXPECT_EQ(1U, opened.size());
+    EXPECT_EQ(2U, opened.size());
     EXPECT_EQ(2U, destroyed.size());
     EXPECT_NE(destroyed.end(), std::find(destroyed.begin(), destroyed.end(), handle));
 }

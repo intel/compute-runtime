@@ -521,6 +521,8 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
         return status;
     }
 
+    gmm->gmmResourceInfo->refreshHandle();
+
     outHandle = allocationInfo.hAllocation;
     outResourceHandle = createAllocation.hResource;
     if (outSharedHandle) {

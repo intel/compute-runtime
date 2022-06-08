@@ -21,13 +21,13 @@ GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_I
 GmmResourceInfo::GmmResourceInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo, bool openingHandle) : clientContext(clientContext) {
     auto resourceInfoPtr = clientContext->copyResInfoObject(inputGmmResourceInfo);
     if (openingHandle) {
-        createResourceInfo(resourceInfoPtr, inputGmmResourceInfo);
+        decodeResourceInfo(resourceInfoPtr, inputGmmResourceInfo);
     } else {
         createResourceInfo(resourceInfoPtr);
     }
 }
 
-void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
+void GmmResourceInfo::decodeResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr, GMM_RESOURCE_INFO *inputGmmResourceInfo) {
     auto customDeleter = [this](GMM_RESOURCE_INFO *gmmResourceInfo) {
         this->clientContext->destroyResInfoObject(gmmResourceInfo);
     };
@@ -53,6 +53,12 @@ void GmmResourceInfo::createResourceInfo(GMM_RESOURCE_INFO *resourceInfoPtr) {
     } else {
         this->handle = this->resourceInfo.get();
         this->handleSize = sizeof(GMM_RESOURCE_INFO);
+    }
+}
+
+void GmmResourceInfo::refreshHandle() {
+    if (this->clientContext) {
+        this->decodeResourceInfo(this->resourceInfo.release(), static_cast<GMM_RESOURCE_INFO *>(this->handle));
     }
 }
 
