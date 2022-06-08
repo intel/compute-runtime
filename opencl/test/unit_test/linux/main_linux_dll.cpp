@@ -254,16 +254,12 @@ TEST_F(DrmFailedIoctlTests, givenPrintIoctlEntriesWhenCallFailedIoctlThenExpecte
 }
 
 TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathered) {
-    struct DrmMock : public Drm {
-        using Drm::ioctlStatistics;
-    };
-
     constexpr long long initialMin = std::numeric_limits<long long>::max();
     constexpr long long initialMax = std::numeric_limits<long long>::min();
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = static_cast<DrmMock *>(DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release());
+    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release();
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlTimes.set(true);

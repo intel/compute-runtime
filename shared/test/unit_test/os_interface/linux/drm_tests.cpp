@@ -34,20 +34,6 @@ std::string getLinuxDevicesPath(const char *file) {
     return resultString;
 }
 
-TEST(DrmTest, WhenGettingDeviceIdThenCorrectIdReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    EXPECT_NE(nullptr, pDrm);
-
-    pDrm->storedDeviceID = 0x1234;
-    int deviceID = 0;
-    int ret = pDrm->getDeviceID(deviceID);
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(pDrm->storedDeviceID, deviceID);
-    delete pDrm;
-}
-
 TEST(DrmTest, GivenValidPciPathWhenGettingAdapterBdfThenCorrectValuesAreReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -124,15 +110,13 @@ TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
 
     pDrm->storedDeviceID = 0x1234;
     pDrm->storedDeviceRevID = 0xB;
-    int deviceID = 0;
-    int ret = pDrm->getDeviceID(deviceID);
-    EXPECT_EQ(0, ret);
-    int revID = 0;
-    ret = pDrm->getDeviceRevID(revID);
-    EXPECT_EQ(0, ret);
+    pDrm->deviceId = 0;
+    pDrm->revisionId = 0;
 
-    EXPECT_EQ(pDrm->storedDeviceID, deviceID);
-    EXPECT_EQ(pDrm->storedDeviceRevID, revID);
+    EXPECT_TRUE(pDrm->queryDeviceIdAndRevision());
+
+    EXPECT_EQ(pDrm->storedDeviceID, pDrm->deviceId);
+    EXPECT_EQ(pDrm->storedDeviceRevID, pDrm->revisionId);
 
     delete pDrm;
 }

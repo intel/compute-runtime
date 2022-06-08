@@ -13,4 +13,8 @@ bool Drm::isDrmSupported(int fileDescriptor) {
     return "i915" == drmVersion;
 }
 
+bool Drm::queryDeviceIdAndRevision() {
+    return queryI915DeviceIdAndRevision();
+}
+
 } // namespace NEO

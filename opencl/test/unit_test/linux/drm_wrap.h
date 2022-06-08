@@ -14,13 +14,18 @@
 
 class DrmWrap : public NEO::Drm {
   public:
+    using Drm::deviceId;
+    using Drm::ioctlStatistics;
+    using Drm::queryDeviceIdAndRevision;
+    using Drm::revisionId;
     using Drm::virtualMemoryIds;
-
-    static std::unique_ptr<NEO::Drm> createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
+    static std::unique_ptr<DrmWrap> createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
         auto hwDeviceIds = OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);
         if (!hwDeviceIds.empty()) {
-            return std::unique_ptr<Drm>{NEO::Drm::create(std::unique_ptr<HwDeviceIdDrm>(hwDeviceIds[0].release()->as<HwDeviceIdDrm>()), rootDeviceEnvironment)};
+            return std::unique_ptr<DrmWrap>{static_cast<DrmWrap *>(NEO::Drm::create(std::unique_ptr<HwDeviceIdDrm>(hwDeviceIds[0].release()->as<HwDeviceIdDrm>()), rootDeviceEnvironment))};
         }
         return nullptr;
     }
 };
+
+static_assert(sizeof(DrmWrap) == sizeof(NEO::Drm));

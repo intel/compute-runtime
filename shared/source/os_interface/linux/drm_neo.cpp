@@ -127,16 +127,22 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     return retVal;
 }
 
-int Drm::getDeviceID(int &devId) {
-    return getParamIoctl(DrmParam::ParamChipsetId, &devId);
-}
-
-int Drm::getDeviceRevID(int &revId) {
-    return getParamIoctl(DrmParam::ParamRevision, &revId);
-}
-
 int Drm::getExecSoftPin(int &execSoftPin) {
     return getParamIoctl(DrmParam::ParamHasExecSoftpin, &execSoftPin);
+}
+
+bool Drm::queryI915DeviceIdAndRevision() {
+    auto ret = getParamIoctl(DrmParam::ParamChipsetId, &this->deviceId);
+    if (ret != 0) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
+        return false;
+    }
+    ret = getParamIoctl(DrmParam::ParamRevision, &this->revisionId);
+    if (ret != 0) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
+        return false;
+    }
+    return true;
 }
 
 int Drm::enableTurboBoost() {

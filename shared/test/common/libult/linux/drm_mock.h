@@ -25,7 +25,6 @@
 
 using namespace NEO;
 
-// Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
     using Drm::bindAvailable;
@@ -34,6 +33,7 @@ class DrmMock : public Drm {
     using Drm::classHandles;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
+    using Drm::deviceId;
     using Drm::engineInfo;
     using Drm::fenceVal;
     using Drm::generateElfUUID;
@@ -47,7 +47,9 @@ class DrmMock : public Drm {
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::queryAndSetVmBindPatIndexProgrammingSupport;
+    using Drm::queryDeviceIdAndRevision;
     using Drm::requirePerContextVM;
+    using Drm::revisionId;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
@@ -110,8 +112,6 @@ class DrmMock : public Drm {
         hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);
     }
 
-    void setDeviceID(int deviceId) { this->deviceId = deviceId; }
-    void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
     void setBindAvailable() {
         this->bindAvailable = true;
     }

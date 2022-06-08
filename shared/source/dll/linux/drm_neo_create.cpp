@@ -39,20 +39,11 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         drmObject.reset(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
     }
 
-    // Get HW version (I915_drm.h)
-    int ret = drmObject->getDeviceID(drmObject->deviceId);
-    if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
-        return nullptr;
-    }
-    if (!DeviceFactory::isAllowedDeviceId(drmObject->deviceId, DebugManager.flags.FilterDeviceId.get())) {
+    if (!drmObject->queryDeviceIdAndRevision()) {
         return nullptr;
     }
 
-    // Get HW Revision (I915_drm.h)
-    ret = drmObject->getDeviceRevID(drmObject->revisionId);
-    if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
+    if (!DeviceFactory::isAllowedDeviceId(drmObject->deviceId, DebugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 
@@ -65,6 +56,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
             break;
         }
     }
+    int ret = 0;
     if (device) {
         ret = drmObject->setupHardwareInfo(device, true);
         if (ret != 0) {

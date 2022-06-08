@@ -38,7 +38,7 @@ class DrmNullDeviceTestsFixture {
     void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
-    std::unique_ptr<Drm> drmNullDevice;
+    std::unique_ptr<DrmWrap> drmNullDevice;
     ExecutionEnvironment executionEnvironment;
 
   protected:
@@ -48,10 +48,10 @@ class DrmNullDeviceTestsFixture {
 typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProperDeviceId) {
-    int deviceIdQueried = 0;
-    int ret = drmNullDevice->getDeviceID(deviceIdQueried);
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(deviceId, deviceIdQueried);
+    int ret = drmNullDevice->queryDeviceIdAndRevision();
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(deviceId, drmNullDevice->deviceId);
+    EXPECT_EQ(revisionId, drmNullDevice->revisionId);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {

@@ -82,12 +82,10 @@ class Drm : public DriverModel {
 
     virtual int ioctl(DrmIoctl request, void *arg);
 
-    int getDeviceID(int &devId);
     unsigned int getDeviceHandle() const override {
         return 0;
     }
     PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
-    int getDeviceRevID(int &revId);
     int getExecSoftPin(int &execSoftPin);
     int enableTurboBoost();
     int getEuTotal(int &euTotal);
@@ -266,6 +264,8 @@ class Drm : public DriverModel {
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
     static std::string getDrmVersion(int fileDescriptor);
+    bool queryDeviceIdAndRevision();
+    bool queryI915DeviceIdAndRevision();
 
 #pragma pack(1)
     struct PCIConfig {
