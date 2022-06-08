@@ -20,6 +20,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoT
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
@@ -36,6 +37,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
@@ -66,6 +68,7 @@ TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThe
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
@@ -87,7 +90,6 @@ struct DrmVmTestFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
         testHwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-
         testHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
         testHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
         testHwInfo->gtSystemInfo.MultiTileArchInfo.Tile0 =
@@ -95,6 +97,7 @@ struct DrmVmTestFixture {
                 testHwInfo->gtSystemInfo.MultiTileArchInfo.Tile2 =
                     testHwInfo->gtSystemInfo.MultiTileArchInfo.Tile3 = 1;
         testHwInfo->gtSystemInfo.MultiTileArchInfo.TileMask = 0b1111;
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0], testHwInfo);
         ASSERT_NE(nullptr, drm);
@@ -182,6 +185,8 @@ struct MultiTileMemoryInfoFixture : public ::testing::Test {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
         pHwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     }
 

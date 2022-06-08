@@ -100,6 +100,7 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
     ultHwConfig.useHwCsr = true;
     constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
     platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&localHwInfo);
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     initPlatform();
 
     rootDevice = platform()->getClDevice(0);

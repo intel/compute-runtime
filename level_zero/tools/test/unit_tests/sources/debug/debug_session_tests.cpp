@@ -2112,8 +2112,9 @@ TEST(DebugSessionTest, givenInvalidAddressWhenCheckingValidAddressThenFalseIsRet
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-
-    uint64_t address = maxNBitValue(NEO::MockGmmHelper::addressWidth) << 1 | 0x4000;
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto addressWidth = gmmHelper->getAddressWidth();
+    uint64_t address = maxNBitValue(addressWidth) << 1 | 0x4000;
 
     EXPECT_FALSE(sessionMock->isValidGpuAddress(address));
 }

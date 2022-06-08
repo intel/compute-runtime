@@ -27,13 +27,11 @@ class GmmHelper {
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);
 
-    static uint64_t canonize(uint64_t address) {
-        return static_cast<int64_t>(address << (64 - GmmHelper::addressWidth)) >> (64 - GmmHelper::addressWidth);
-    }
+    uint64_t canonize(uint64_t address);
+    uint64_t decanonize(uint64_t address);
 
-    static uint64_t decanonize(uint64_t address) {
-        return (address & maxNBitValue(GmmHelper::addressWidth));
-    }
+    uint32_t getAddressWidth() { return addressWidth; };
+    void setAddressWidth(uint32_t width) { addressWidth = width; };
 
     bool isValidCanonicalGpuAddress(uint64_t address);
 
@@ -42,7 +40,7 @@ class GmmHelper {
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *);
 
   protected:
-    static uint32_t addressWidth;
+    uint32_t addressWidth;
     const HardwareInfo *hwInfo = nullptr;
     std::unique_ptr<GmmClientContext> gmmClientContext;
     bool allResourcesUncached = false;

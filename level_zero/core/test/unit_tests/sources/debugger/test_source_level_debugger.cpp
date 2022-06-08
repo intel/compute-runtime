@@ -293,6 +293,7 @@ TEST(Debugger, GivenLegacyDebuggerAndProgramDebuggingEnabledWhenInitializingDriv
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockSourceLevelDebugger());
     auto hwInfo = *NEO::defaultHwInfo.get();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
     executionEnvironment->setDebuggingEnabled();

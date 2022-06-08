@@ -36,6 +36,7 @@ struct CommandListCreateNegativeTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         memoryManager = new MemoryManagerCommandListCreateNegativeTest(*executionEnvironment);

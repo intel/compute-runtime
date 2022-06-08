@@ -535,7 +535,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesSingleContextTest, givenTwoTilesAndSingleCo
 }
 
 // 1 Tile
-
 using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::All>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
@@ -576,7 +575,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleAllocationWhe
     expectMemory<FamilyType>(ptrOffset(gpuPtr, halfBufferSize), writePattern2, halfBufferSize, 0, 1);
 }
 
-// 1 |Tile
+// 1 Tile
 using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::Dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();

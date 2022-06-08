@@ -26,6 +26,7 @@ struct MultipleDeviceUuidTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);

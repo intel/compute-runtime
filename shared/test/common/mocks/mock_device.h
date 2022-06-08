@@ -136,6 +136,7 @@ class MockDevice : public RootDevice {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         executionEnvironment->calculateMaxOsContextCount();
         return executionEnvironment;

@@ -396,6 +396,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
         hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 0b11;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         constexpr int mockFd = 33;
         drm = new DrmMock(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);

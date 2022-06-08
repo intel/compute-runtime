@@ -354,6 +354,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
@@ -380,6 +381,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
@@ -422,6 +424,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
@@ -474,6 +477,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     executionEnvironment->setDebuggingEnabled();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
@@ -564,9 +568,9 @@ TEST_F(DrmBufferObjectTest, givenAsyncDebugFlagWhenFillingExecObjectThenFlagIsSe
 }
 
 TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
-    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
-
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper()->setAddressWidth(48);
+
     DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
 
     uint64_t address = maxNBitValue(47) - maxNBitValue(5);
@@ -576,11 +580,12 @@ TEST_F(DrmBufferObjectTest, given47bitAddressWhenSetThenIsAddressNotCanonized) {
     auto boAddress = bo.peekAddress();
     EXPECT_EQ(boAddress, address);
 }
+
 TEST_F(DrmBufferObjectTest, given48bitAddressWhenSetThenAddressIsCanonized) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+    executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper()->setAddressWidth(48);
 
-    VariableBackup<uint32_t> backup(&MockGmmHelper::addressWidth, 48);
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
 
     uint64_t address = maxNBitValue(48) - maxNBitValue(5);
     uint64_t expectedAddress = std::numeric_limits<uint64_t>::max() - maxNBitValue(5);

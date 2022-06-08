@@ -29,6 +29,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
 

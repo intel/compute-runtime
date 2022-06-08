@@ -52,6 +52,7 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     if (debuggingEnabled) {
         executionEnvironment->setDebuggingEnabled();

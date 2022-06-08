@@ -1907,6 +1907,7 @@ struct MultipleDevicePeerAllocationFailTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, 0, *executionEnvironment);
@@ -2000,6 +2001,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
@@ -3071,6 +3073,7 @@ struct MemoryBitfieldTest : testing::Test {
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         neoDevice = NEO::Device::create<RootDevice>(executionEnvironment, 0u);
@@ -3129,6 +3132,7 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (size_t i = 0; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     auto memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
@@ -3190,6 +3194,7 @@ struct AllocHostMemoryTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

@@ -61,6 +61,7 @@ struct DrmMemoryOperationsHandlerBindFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0u; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         executionEnvironment->calculateMaxOsContextCount();
         for (uint32_t i = 0u; i < numRootDevices; i++) {

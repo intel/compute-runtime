@@ -28,6 +28,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
     if (returnValue) {
         auto i = 0u;
         while (i < executionEnvironment.rootDeviceEnvironments.size()) {
+            executionEnvironment.rootDeviceEnvironments[i]->initGmm();
             bool unsupportedDeviceDetected = false;
 
             auto &featureTable = executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->featureTable;

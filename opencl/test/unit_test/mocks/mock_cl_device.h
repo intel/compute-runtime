@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,6 +75,7 @@ class MockClDevice : public ClDevice {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         executionEnvironment->calculateMaxOsContextCount();
         return executionEnvironment;

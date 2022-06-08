@@ -20,8 +20,6 @@
 
 namespace NEO {
 
-uint32_t GmmHelper::addressWidth = 48;
-
 GmmClientContext *GmmHelper::getClientContext() const {
     return gmmClientContext.get();
 }
@@ -42,10 +40,18 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
 
 GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
-    GmmHelper::addressWidth = std::max(hwInfoAddressWidth, static_cast<uint32_t>(48));
+    addressWidth = std::max(hwInfoAddressWidth, 48u);
 
     gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo));
     UNRECOVERABLE_IF(!gmmClientContext);
+}
+
+uint64_t GmmHelper::canonize(uint64_t address) {
+    return static_cast<int64_t>(address << (64 - addressWidth)) >> (64 - addressWidth);
+}
+
+uint64_t GmmHelper::decanonize(uint64_t address) {
+    return (address & maxNBitValue(addressWidth));
 }
 
 bool GmmHelper::isValidCanonicalGpuAddress(uint64_t address) {

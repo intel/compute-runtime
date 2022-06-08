@@ -442,7 +442,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
 
     NTSTATUS status = getGdi()->mapGpuVirtualAddress(&mapGPUVA);
 
-    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    auto gmmHelper = gmm->getGmmHelper();
     gpuPtr = gmmHelper->canonize(mapGPUVA.VirtualAddress);
 
     if (status == STATUS_PENDING) {

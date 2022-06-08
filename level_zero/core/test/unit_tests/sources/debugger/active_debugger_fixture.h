@@ -38,6 +38,7 @@ struct ActiveDebuggerFixture {
 
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         auto isHexadecimalArrayPrefered = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipKernelAsHexadecimalArrayPreferred();
         if (isHexadecimalArrayPrefered) {

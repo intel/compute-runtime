@@ -486,6 +486,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegi
     executionEnvironment->prepareRootDeviceEnvironments(2u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     const uint32_t rootDeviceIndex = 1;
     DeviceBitfield deviceBitfield(2);
@@ -522,6 +523,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     executionEnvironment->prepareRootDeviceEnvironments(2u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     DeviceBitfield deviceBitfield(2);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(*executionEnvironment, rootDeviceIndex, deviceBitfield));
@@ -1891,6 +1893,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
     executionEnvironment->prepareRootDeviceEnvironments(3u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
@@ -1915,6 +1918,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
     executionEnvironment->prepareRootDeviceEnvironments(3u);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->initializeMemoryManager();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

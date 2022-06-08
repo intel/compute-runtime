@@ -458,6 +458,7 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
     executionEnvironment->prepareRootDeviceEnvironments(maxRootDeviceIndex + 1);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
     auto testMemoryManager = new MockMemoryManager(false, false, *executionEnvironment);
@@ -487,6 +488,7 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
     executionEnvironment->prepareRootDeviceEnvironments(maxRootDeviceIndex + 1);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
     auto testMemoryManager = new MockMemoryManager(false, false, *executionEnvironment);

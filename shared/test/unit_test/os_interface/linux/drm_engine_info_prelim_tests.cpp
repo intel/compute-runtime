@@ -25,6 +25,8 @@ TEST(DrmTest, givenEngineQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsIni
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
     ASSERT_NE(nullptr, drm);
@@ -68,6 +70,8 @@ TEST(DrmTest, givenEngineQueryNotSupportedWhenQueryingEngineInfoThenFailGraceful
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->i915QuerySuccessCount = 0;
@@ -80,6 +84,8 @@ TEST(DrmTest, givenMemRegionQueryNotSupportedWhenQueryingMemRegionInfoThenFailGr
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->i915QuerySuccessCount = 1;
@@ -92,6 +98,8 @@ TEST(DrmTest, givenDistanceQueryNotSupportedWhenQueryingDistanceInfoThenFailGrac
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->i915QuerySuccessCount = 2;
@@ -111,6 +119,8 @@ TEST(DrmTest, givenDistanceQueryFailsWhenQueryingDistanceInfoThenFailGracefully)
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->context.failDistanceInfoQuery = true;
@@ -156,6 +166,8 @@ TEST(DrmTest, givenRcsEngineWhenBindingDrmContextThenContextParamEngineIsSet) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
 
@@ -194,6 +206,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenBcsEngineWhenBindingDrmCo
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(drm, aub_stream::ENGINE_BCS, I915_ENGINE_CLASS_COPY);
     auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
@@ -456,6 +470,8 @@ TEST(DrmTest, givenOneCcsEngineWhenBindingDrmContextThenContextParamEngineIsSet)
         auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
         auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(drm, aub_stream::ENGINE_CCS, DrmPrelimHelper::getComputeEngineClass());
     }
@@ -465,6 +481,8 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ccsInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo;
     ccsInfo.IsValid = true;
@@ -507,6 +525,8 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ccsInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo;
     ccsInfo.IsValid = true;
@@ -546,6 +566,8 @@ TEST(DrmTest, givenDisabledCcsSupportWhenQueryingThenResetHwInfoParams) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     drm->context.disableCcsSupport = true;
@@ -573,6 +595,8 @@ TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBa
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ccsInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo;
     ccsInfo.IsValid = true;
@@ -604,6 +628,8 @@ TEST(DrmTest, givenEngineInstancedDeviceWhenCreatingContextThenDontUseVirtualEng
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ccsInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo;
     ccsInfo.IsValid = true;
@@ -635,6 +661,8 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNotEnoughCcsEnginesWhenCreatingContex
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ccsInfo = drm->rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo;
     ccsInfo.IsValid = true;
@@ -663,6 +691,8 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNonCcsEnginesWhenCreatingContextThenD
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.ftrBcsInfo = 1;
 
@@ -688,6 +718,8 @@ TEST(DrmTest, givenInvalidTileWhenBindingDrmContextThenErrorIsReturned) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
@@ -707,6 +739,8 @@ TEST(DrmTest, givenInvalidEngineTypeWhenBindingDrmContextThenExceptionIsThrown) 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
@@ -725,6 +759,8 @@ TEST(DrmTest, givenSetParamEnginesFailsWhenBindingDrmContextThenCallUnrecoverabl
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
@@ -746,6 +782,8 @@ TEST(DrmTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
@@ -764,6 +802,8 @@ TEST(DrmTest, givenNewMemoryInfoQuerySupportedWhenQueryingEngineInfoThenEngineIn
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 

@@ -80,6 +80,7 @@ struct ComputeModeRequirements : public ::testing::Test {
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) { // NOLINT(readability-identifier-naming)
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo));
         device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hardwareInfo);
+        device->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         csr = new myCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
 
         device->resetCommandStreamReceiver(csr);

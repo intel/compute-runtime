@@ -197,6 +197,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     executionEnvironment->prepareRootDeviceEnvironments(1);
     uint32_t rootDeviceIndex = 0u;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
 
     executionEnvironment->initializeMemoryManager();

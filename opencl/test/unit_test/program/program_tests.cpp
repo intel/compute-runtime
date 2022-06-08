@@ -2908,6 +2908,8 @@ TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWh
     auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0] = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     MockClDevice mockDevice(new MockDevice{executionEnvironment, 0});
     SpecializationConstantProgramMock mockProgram(toClDeviceVector(mockDevice));
 

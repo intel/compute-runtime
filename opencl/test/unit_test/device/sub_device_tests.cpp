@@ -239,6 +239,7 @@ TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDevic
 
     auto executionEnvironment = new MockExecutionEnvironment;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockDevice device(executionEnvironment, 0);
     EXPECT_EQ(0u, device.allEngines.size());
     device.createEngines();
@@ -309,6 +310,7 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
     auto executionEnvironment = new ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     DeviceFactory::createMemoryManagerFunc(*executionEnvironment);
 
     auto rootDevice = std::unique_ptr<MyRootDevice>(Device::create<MyRootDevice>(executionEnvironment, 0));
@@ -326,8 +328,9 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
         auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);

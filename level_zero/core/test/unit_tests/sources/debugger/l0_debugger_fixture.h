@@ -40,6 +40,7 @@ struct L0DebuggerFixture {
         }
 
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->initializeMemoryManager();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);

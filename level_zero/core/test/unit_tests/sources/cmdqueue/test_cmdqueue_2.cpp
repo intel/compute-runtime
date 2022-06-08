@@ -567,6 +567,7 @@ struct CommandQueueCreateNegativeTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         memoryManager = new MemoryManagerCommandQueueCreateNegativeTest(*executionEnvironment);
@@ -631,6 +632,7 @@ struct CommandQueueInitTests : public ::testing::Test {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         memoryManager = new MyMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

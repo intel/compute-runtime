@@ -82,10 +82,10 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
         auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
-        executionEnvironment.rootDeviceEnvironments[0]->initGmm();
     }
 
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);

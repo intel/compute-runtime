@@ -324,6 +324,7 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         hwInfo[i] = *NEO::defaultHwInfo.get();
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo[i]);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;

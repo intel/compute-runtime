@@ -1792,6 +1792,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledWhenAllocatin
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
     executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    executionEnvironment->rootDeviceEnvironments[0u]->initGmm();
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
     char bufferData[4096]{};
@@ -1814,6 +1815,7 @@ TEST(MemoryManager, givenBufferHostMemoryAndHostPtrTrackingDisabledAndForce32bit
     HardwareInfo hwInfoLocal = *defaultHwInfo;
     hwInfoLocal.capabilityTable.hostPtrTrackingEnabled = false;
     executionEnvironment->rootDeviceEnvironments[0u]->setHwInfo(&hwInfoLocal);
+    executionEnvironment->rootDeviceEnvironments[0u]->initGmm();
 
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
     memoryManager.setForce32BitAllocations(true);

@@ -1304,7 +1304,7 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation, const
 }
 
 uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner &heapAssigner, const HardwareInfo &hwInfo, AllocationType allocType, GfxPartition *gfxPartition,
-                       size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow, const GmmHelper &gmmHelper) {
+                       size_t &sizeAllocated, const void *hostPtr, bool resource48Bit, bool useFrontWindow, GmmHelper &gmmHelper) {
     uint64_t gpuAddress = 0;
     switch (allocType) {
     case AllocationType::SVM_GPU:

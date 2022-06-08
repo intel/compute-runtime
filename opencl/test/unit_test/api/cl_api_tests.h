@@ -33,6 +33,9 @@ struct ApiFixture {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        }
         auto rootDevice = MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex);
         if (rootDeviceIndex != 0u) {
             rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);

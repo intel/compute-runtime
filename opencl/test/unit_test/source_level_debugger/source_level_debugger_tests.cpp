@@ -665,6 +665,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
@@ -688,6 +689,7 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenCreatedThenUseDedicatedSou
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getDebugger();

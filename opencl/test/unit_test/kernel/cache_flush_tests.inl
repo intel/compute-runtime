@@ -98,6 +98,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenKernelArgIsSetA
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
         hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 
         CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
         auto &commandStream = cmdQ.getCS(1024);
@@ -220,6 +221,7 @@ class GivenCacheFlushAfterWalkerEnabledAndProperSteppingIsSetWhenAllocationRequi
         auto stepping = (isA0Stepping ? REVISION_A0 : REVISION_A1);
         hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
         pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->setHwInfo(&hardwareInfo);
+        pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->initGmm();
 
         MockKernelWithInternals mockKernel(*pClDevice, context, true);
         mockKernel.mockKernel->svmAllocationsRequireCacheFlush = false;

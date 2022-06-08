@@ -132,6 +132,7 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
 
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
     memoryManager = new NEO::OsAgnosticMemoryManager(*executionEnvironment);

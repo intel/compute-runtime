@@ -49,6 +49,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         context = new MockContext(device.get());

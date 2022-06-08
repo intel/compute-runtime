@@ -120,6 +120,7 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
     executionEnvironment->prepareRootDeviceEnvironments(1);
 
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->parseAffinityMask();
     auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numSubDevices, *executionEnvironment.release());
     auto rootDevice = deviceFactory->rootDevices[0];
@@ -173,6 +174,7 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
 
     auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
@@ -713,6 +715,7 @@ struct DeviceHostPointerTest : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, rootDeviceIndex);
@@ -1201,6 +1204,7 @@ TEST_F(DeviceHwInfoTest, givenDeviceWithNoPageFaultSupportThenFlagIsNotSet) {
     NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
     hardwareInfo.capabilityTable.supportsOnDemandPageFaults = false;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     setDriverAndDevice();
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -1212,6 +1216,7 @@ TEST_F(DeviceHwInfoTest, givenDeviceWithPageFaultSupportThenFlagIsSet) {
     NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
     hardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     setDriverAndDevice();
 
     ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -1748,6 +1753,7 @@ struct MultipleDevicesFixture : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         memoryManager = new MockMemoryManagerMultiDevice(*executionEnvironment);
@@ -1986,10 +1992,12 @@ struct MultipleDevicesP2PFixture : public ::testing::Test {
         hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice0;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice0;
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         hardwareInfo.capabilityTable.p2pAccessSupported = p2pAccessDevice1;
         hardwareInfo.capabilityTable.p2pAtomicAccessSupported = p2pAtomicAccessDevice1;
         executionEnvironment->rootDeviceEnvironments[1]->setHwInfo(&hardwareInfo);
+        executionEnvironment->rootDeviceEnvironments[1]->initGmm();
 
         memoryManager = new MockMemoryManagerMultiDevice(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

@@ -88,6 +88,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
@@ -137,6 +138,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         std::vector<MemoryRegion> regionInfo(2);
@@ -176,6 +178,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmen
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     std::vector<MemoryRegion> regionInfo(2);
@@ -210,6 +213,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         mock->memoryInfo.reset(nullptr);
@@ -2032,6 +2036,8 @@ TEST(AllocationInfoLogging, givenDrmGraphicsAllocationWithMultipleBOsWhenGetting
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     BufferObject bo0(&drm, 3, 0, 0, 1), bo1(&drm, 3, 1, 0, 1),
         bo2(&drm, 3, 2, 0, 1), bo3(&drm, 3, 3, 0, 1);

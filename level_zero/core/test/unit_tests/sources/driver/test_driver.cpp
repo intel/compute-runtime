@@ -463,6 +463,7 @@ struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
 
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

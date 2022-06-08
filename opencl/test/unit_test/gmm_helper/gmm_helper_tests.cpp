@@ -1135,6 +1135,7 @@ struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixtureTest::SetUp();
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         localPlatformDevice = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
         localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
@@ -1415,6 +1416,7 @@ struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmm
     void SetUp() override {
         MockExecutionEnvironmentGmmFixture::SetUp();
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&localPlatformDevice);
+        executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     }
 
     HardwareInfo localPlatformDevice{};
