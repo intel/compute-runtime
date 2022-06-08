@@ -1992,9 +1992,9 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
     auto scratchAllocationBase = 0ULL;
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
-        hwHelper.setRenderSurfaceStateForBuffer(neoDevice->getRootDeviceEnvironment(),
-                                                &session->readMemoryBuffer[1 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase, 0,
-                                                ptss, nullptr, false, 6, false, true);
+        hwHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
+                                                         &session->readMemoryBuffer[1 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase, 0,
+                                                         ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
     } else {
@@ -2011,9 +2011,9 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
-        hwHelper.setRenderSurfaceStateForBuffer(neoDevice->getRootDeviceEnvironment(),
-                                                &session->readMemoryBuffer[1 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase, 0,
-                                                ptss, nullptr, false, 6, false, true);
+        hwHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
+                                                         &session->readMemoryBuffer[1 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase, 0,
+                                                         ptss, nullptr, false, 6, false, true);
 
         r0Thread0[5] = 1 << 10; // first surface state
 
@@ -2040,9 +2040,9 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 128;
-        hwHelper.setRenderSurfaceStateForBuffer(neoDevice->getRootDeviceEnvironment(),
-                                                &session->readMemoryBuffer[2 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase2Canonized, 0,
-                                                ptss, nullptr, false, 6, false, true);
+        hwHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
+                                                         &session->readMemoryBuffer[2 * (hwHelper.getRenderSurfaceStateSize() / sizeof(std::decay<decltype(MockDebugSession::readMemoryBuffer[0])>::type))], 1, scratchAllocationBase2Canonized, 0,
+                                                         ptss, nullptr, false, 6, false, true);
 
         r0Thread1[5] = 2 << 10; // second surface state
 
@@ -2069,9 +2069,9 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
     if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
         const uint32_t ptss = 0;
-        hwHelper.setRenderSurfaceStateForBuffer(neoDevice->getRootDeviceEnvironment(),
-                                                &session->readMemoryBuffer[0], 1, 0xdeadbeef, 0,
-                                                ptss, nullptr, false, 6, false, true);
+        hwHelper.setRenderSurfaceStateForScratchResource(neoDevice->getRootDeviceEnvironment(),
+                                                         &session->readMemoryBuffer[0], 1, 0xdeadbeef, 0,
+                                                         ptss, nullptr, false, 6, false, true);
 
         r0Thread1[5] = 0; // Surface state at index 0
     } else {

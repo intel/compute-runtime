@@ -85,9 +85,9 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
     if (scratchAllocation) {
         scratchAllocationAddress = scratchAllocation->getGpuAddress();
     }
-    hwHelper.setRenderSurfaceStateForBuffer(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                            surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
-                                            perThreadScratchSize, nullptr, false, scratchType, false, true);
+    hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                     surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
+                                                     perThreadScratchSize, nullptr, false, scratchType, false, true);
 
     if (privateScratchSpaceSupported) {
         void *surfaceStateForPrivateScratchAllocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
@@ -96,10 +96,10 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
         if (privateScratchAllocation) {
             privateScratchAllocationAddress = privateScratchAllocation->getGpuAddress();
         }
-        hwHelper.setRenderSurfaceStateForBuffer(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
-                                                privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
-                                                scratchType, false, true);
+        hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                         surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
+                                                         privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
+                                                         scratchType, false, true);
     }
 }
 

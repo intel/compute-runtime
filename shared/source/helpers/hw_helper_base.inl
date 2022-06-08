@@ -106,17 +106,17 @@ inline bool HwHelperHw<GfxFamily>::checkResourceCompatibility(GraphicsAllocation
 }
 
 template <typename Family>
-void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                        void *surfaceStateBuffer,
-                                                        size_t bufferSize,
-                                                        uint64_t gpuVa,
-                                                        size_t offset,
-                                                        uint32_t pitch,
-                                                        GraphicsAllocation *gfxAlloc,
-                                                        bool isReadOnly,
-                                                        uint32_t surfaceType,
-                                                        bool forceNonAuxMode,
-                                                        bool useL1Cache) {
+void HwHelperHw<Family>::setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                                 void *surfaceStateBuffer,
+                                                                 size_t bufferSize,
+                                                                 uint64_t gpuVa,
+                                                                 size_t offset,
+                                                                 uint32_t pitch,
+                                                                 GraphicsAllocation *gfxAlloc,
+                                                                 bool isReadOnly,
+                                                                 uint32_t surfaceType,
+                                                                 bool forceNonAuxMode,
+                                                                 bool useL1Cache) {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;

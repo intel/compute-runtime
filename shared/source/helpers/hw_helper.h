@@ -67,17 +67,17 @@ class HwHelper {
     virtual bool isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
-    virtual void setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                void *surfaceStateBuffer,
-                                                size_t bufferSize,
-                                                uint64_t gpuVa,
-                                                size_t offset,
-                                                uint32_t pitch,
-                                                GraphicsAllocation *gfxAlloc,
-                                                bool isReadOnly,
-                                                uint32_t surfaceType,
-                                                bool forceNonAuxMode,
-                                                bool useL1Cache) = 0;
+    virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                         void *surfaceStateBuffer,
+                                                         size_t bufferSize,
+                                                         uint64_t gpuVa,
+                                                         size_t offset,
+                                                         uint32_t pitch,
+                                                         GraphicsAllocation *gfxAlloc,
+                                                         bool isReadOnly,
+                                                         uint32_t surfaceType,
+                                                         bool forceNonAuxMode,
+                                                         bool useL1Cache) = 0;
     virtual const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const = 0;
     virtual EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
@@ -257,17 +257,17 @@ class HwHelperHw : public HwHelper {
 
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
 
-    void setRenderSurfaceStateForBuffer(const RootDeviceEnvironment &rootDeviceEnvironment,
-                                        void *surfaceStateBuffer,
-                                        size_t bufferSize,
-                                        uint64_t gpuVa,
-                                        size_t offset,
-                                        uint32_t pitch,
-                                        GraphicsAllocation *gfxAlloc,
-                                        bool isReadOnly,
-                                        uint32_t surfaceType,
-                                        bool forceNonAuxMode,
-                                        bool useL1Cache) override;
+    void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
+                                                 void *surfaceStateBuffer,
+                                                 size_t bufferSize,
+                                                 uint64_t gpuVa,
+                                                 size_t offset,
+                                                 uint32_t pitch,
+                                                 GraphicsAllocation *gfxAlloc,
+                                                 bool isReadOnly,
+                                                 uint32_t surfaceType,
+                                                 bool forceNonAuxMode,
+                                                 bool useL1Cache) override;
 
     MOCKABLE_VIRTUAL void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
 
