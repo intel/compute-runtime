@@ -46,7 +46,7 @@ class IoctlHelperPrelimFixture : public ::testing::Test {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-        drm->setupIoctlHelper(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+        drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>();
     }
 
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;

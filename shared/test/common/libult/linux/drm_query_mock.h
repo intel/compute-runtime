@@ -27,15 +27,11 @@ class DrmQueryMock : public DrmMock {
         context.hwInfo = rootDeviceEnvironment.getHardwareInfo();
         callBaseIsVmBindAvailable = true;
 
-        setupIoctlHelper(IGFX_UNKNOWN);
+        this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>();
 
         EXPECT_TRUE(queryMemoryInfo());
         EXPECT_EQ(2u + virtualMemoryIds.size(), ioctlCallsCount);
         ioctlCallsCount = 0;
-    }
-
-    void getPrelimVersion(std::string &prelimVersion) override {
-        prelimVersion = "2.0";
     }
 
     DrmMockPrelimContext context{

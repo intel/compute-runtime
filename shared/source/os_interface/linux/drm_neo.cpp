@@ -983,10 +983,12 @@ bool Drm::completionFenceSupport() {
 }
 
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
-    std::string prelimVersion = "";
-    getPrelimVersion(prelimVersion);
-    auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
-    this->ioctlHelper.reset(IoctlHelper::get(productFamily, prelimVersion, drmVersion));
+    if (!this->ioctlHelper) {
+        std::string prelimVersion = "";
+        getPrelimVersion(prelimVersion);
+        auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
+        this->ioctlHelper.reset(IoctlHelper::get(productFamily, prelimVersion, drmVersion));
+    }
 }
 
 bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyData) {

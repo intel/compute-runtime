@@ -1148,7 +1148,7 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     EXPECT_TRUE(isGpuHangDetected);
 }
 
-TEST(DrmTest, givenSetupIoctlHelperThenIoctlHelperNotNull) {
+TEST(DrmTest, givenSetupIoctlHelperWhenCalledTwiceThenIoctlHelperIsSetOnlyOnce) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1159,6 +1159,9 @@ TEST(DrmTest, givenSetupIoctlHelperThenIoctlHelperNotNull) {
     drm.setupIoctlHelper(productFamily);
 
     EXPECT_NE(nullptr, drm.ioctlHelper.get());
+    auto ioctlHelper = drm.ioctlHelper.get();
+    drm.setupIoctlHelper(productFamily);
+    EXPECT_EQ(ioctlHelper, drm.ioctlHelper.get());
 }
 
 TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded) {

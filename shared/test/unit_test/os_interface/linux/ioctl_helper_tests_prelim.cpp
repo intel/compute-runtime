@@ -106,6 +106,11 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToMemoryRegionsThenRetur
     }
 }
 
+TEST_F(IoctlPrelimHelperTests, whenCloneIsCalledThenValidPtrIsReturned) {
+    std::unique_ptr<IoctlHelper> cloned(ioctlHelper.clone());
+    EXPECT_NE(nullptr, cloned);
+}
+
 TEST_F(IoctlPrelimHelperTests, givenEmptyRegionInstanceClassWhenCreatingVmControlRegionExtThenNullptrIsReturned) {
     std::optional<MemoryClassInstance> regionInstanceClass{};
 

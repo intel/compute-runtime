@@ -17,11 +17,7 @@ class DrmMockCustomPrelim : public DrmMockCustom {
     using Drm::memoryInfo;
 
     DrmMockCustomPrelim(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
-        setupIoctlHelper(IGFX_UNKNOWN);
-    }
-
-    void getPrelimVersion(std::string &prelimVersion) override {
-        prelimVersion = "2.0";
+        this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>();
     }
 
     int ioctlExtra(DrmIoctl request, void *arg) override {
