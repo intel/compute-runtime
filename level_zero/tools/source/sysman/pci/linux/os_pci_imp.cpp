@@ -21,8 +21,6 @@ namespace L0 {
 
 const std::string LinuxPciImp::deviceDir("device");
 const std::string LinuxPciImp::resourceFile("device/resource");
-const std::string LinuxPciImp::maxLinkSpeedFile("device/max_link_speed");
-const std::string LinuxPciImp::maxLinkWidthFile("device/max_link_width");
 
 ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *properties) {
     properties->haveBandwidthCounters = false;
@@ -48,71 +46,23 @@ ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxPciImp::getMaxLinkSpeed(double &maxLinkSpeed) {
-    ze_result_t result;
-    if (isLmemSupported) {
-        std::string rootPortPath;
-        std::string realRootPath;
-        result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
-        if (ZE_RESULT_SUCCESS != result) {
-            maxLinkSpeed = 0;
-            return result;
-        }
-
-        // we need to get actual values of speed and width at the Discrete card's root port.
-        rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(realRootPath);
-
-        result = pfsAccess->read(rootPortPath + '/' + "max_link_speed", maxLinkSpeed);
-        if (ZE_RESULT_SUCCESS != result) {
-            maxLinkSpeed = 0;
-            return result;
-        }
-    } else {
-        result = pSysfsAccess->read(maxLinkSpeedFile, maxLinkSpeed);
-        if (ZE_RESULT_SUCCESS != result) {
-            maxLinkSpeed = 0;
-            return result;
-        }
+void LinuxPciImp::getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) {
+    uint16_t linkCaps = 0;
+    auto linkCapPos = getLinkCapabilityPos();
+    if (!linkCapPos) {
+        maxLinkSpeed = 0;
+        maxLinkWidth = -1;
+        return;
     }
-    return ZE_RESULT_SUCCESS;
-}
 
-ze_result_t LinuxPciImp::getMaxLinkWidth(int32_t &maxLinkwidth) {
-    ze_result_t result;
-    if (isLmemSupported) {
-        std::string rootPortPath;
-        std::string realRootPath;
-        result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
-        if (ZE_RESULT_SUCCESS != result) {
-            maxLinkwidth = -1;
-            return result;
-        }
+    linkCaps = getWordFromConfig(linkCapPos, isLmemSupported ? uspConfigMemory.get() : configMemory.get());
+    maxLinkSpeed = convertPciGenToLinkSpeed(BITS(linkCaps, 0, 4));
+    maxLinkWidth = BITS(linkCaps, 4, 6);
 
-        // we need to get actual values of speed and width at the Discrete card's root port.
-        rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(realRootPath);
-
-        result = pfsAccess->read(rootPortPath + '/' + "max_link_width", maxLinkwidth);
-        if (ZE_RESULT_SUCCESS != result) {
-            maxLinkwidth = -1;
-            return result;
-        }
-        if (maxLinkwidth == static_cast<int32_t>(unknownPcieLinkWidth)) {
-            maxLinkwidth = -1;
-        }
-    } else {
-        result = pSysfsAccess->read(maxLinkWidthFile, maxLinkwidth);
-        if (ZE_RESULT_SUCCESS != result) {
-            return result;
-        }
-        if (maxLinkwidth == static_cast<int32_t>(unknownPcieLinkWidth)) {
-            maxLinkwidth = -1;
-        }
-    }
-    return ZE_RESULT_SUCCESS;
+    return;
 }
 
 void getBarBaseAndSize(std::string readBytes, uint64_t &baseAddr, uint64_t &barSize, uint64_t &barFlags) {
-
     unsigned long long start, end, flags;
     std::stringstream sStreamReadBytes;
     sStreamReadBytes << readBytes;
@@ -188,6 +138,46 @@ uint32_t LinuxPciImp::getRebarCapabilityPos() {
             return 0;
         }
         header = getDwordFromConfig(pos);
+    }
+    return 0;
+}
+
+uint16_t LinuxPciImp::getLinkCapabilityPos() {
+    uint16_t pos = PCI_CAPABILITY_LIST;
+    uint8_t id, type = 0;
+    uint16_t capRegister = 0;
+    uint8_t *configMem = isLmemSupported ? uspConfigMemory.get() : configMemory.get();
+
+    if ((!configMem) || (!(getByteFromConfig(PCI_STATUS, configMem) & PCI_STATUS_CAP_LIST))) {
+        return 0;
+    }
+
+    // Minimum 8 bytes per capability. Hence maximum capabilities that
+    // could be present in PCI configuration space are
+    // represented by loopCount.
+    auto loopCount = (PCI_CFG_SPACE_SIZE) / 8;
+
+    /* Bottom two bits of capability pointer register are reserved and
+     * software should mask these bits to get pointer to capability list.
+     */
+    pos = getByteFromConfig(pos, configMem) & 0xfc;
+    while (loopCount-- > 0) {
+        id = getByteFromConfig(pos + PCI_CAP_LIST_ID, configMem);
+        if (id == PCI_CAP_ID_EXP) {
+            capRegister = getWordFromConfig(pos + PCI_CAP_FLAGS, configMem);
+            type = BITS(capRegister, 4, 4);
+            /* Root Complex Integrated end point and
+             * Root Complex Event collector will not implement link capabilities
+             */
+            if ((type != PCI_EXP_TYPE_RC_END) && (type != PCI_EXP_TYPE_RC_EC)) {
+                return pos + PCI_EXP_LNKCAP;
+            }
+        }
+
+        pos = getByteFromConfig(pos + PCI_CAP_LIST_NEXT, configMem) & 0xfc;
+        if (!pos) {
+            break;
+        }
     }
     return 0;
 }
@@ -268,6 +258,7 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
 void LinuxPciImp::pciExtendedConfigRead() {
     std::string pciConfigNode;
     pSysfsAccess->getRealPath("device/config", pciConfigNode);
+
     int fdConfig = -1;
     fdConfig = this->openFunction(pciConfigNode.c_str(), O_RDONLY);
     if (fdConfig < 0) {
@@ -279,14 +270,31 @@ void LinuxPciImp::pciExtendedConfigRead() {
     this->closeFunction(fdConfig);
 }
 
+void LinuxPciImp::pciCardBusConfigRead() {
+    std::string pciConfigNode;
+    std::string rootPortPath;
+    pSysfsAccess->getRealPath(deviceDir, pciConfigNode);
+    rootPortPath = pLinuxSysmanImp->getPciRootPortDirectoryPath(pciConfigNode);
+    pciConfigNode = rootPortPath + "/config";
+    int fdConfig = -1;
+    fdConfig = this->openFunction(pciConfigNode.c_str(), O_RDONLY);
+    if (fdConfig < 0) {
+        return;
+    }
+    uspConfigMemory = std::make_unique<uint8_t[]>(PCI_CFG_SPACE_SIZE);
+    memset(uspConfigMemory.get(), 0, PCI_CFG_SPACE_SIZE);
+    this->preadFunction(fdConfig, uspConfigMemory.get(), PCI_CFG_SPACE_SIZE, 0);
+    this->closeFunction(fdConfig);
+}
+
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    pfsAccess = &pLinuxSysmanImp->getFsAccess();
     Device *pDevice = pLinuxSysmanImp->getDeviceHandle();
     isLmemSupported = pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
     if (pSysfsAccess->isRootUser()) {
         pciExtendedConfigRead();
+        pciCardBusConfigRead();
     }
 }
 

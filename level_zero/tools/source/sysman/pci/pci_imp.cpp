@@ -129,8 +129,7 @@ void PciImp::pciGetStaticFields() {
     int32_t maxLinkWidth = -1;
     int64_t maxBandWidth = -1;
     double maxLinkSpeed = 0;
-    pOsPci->getMaxLinkSpeed(maxLinkSpeed);
-    pOsPci->getMaxLinkWidth(maxLinkWidth);
+    pOsPci->getMaxLinkCaps(maxLinkSpeed, maxLinkWidth);
     maxBandWidth = maxLinkWidth * convertPcieSpeedFromGTsToBs(maxLinkSpeed);
     if (maxBandWidth == 0) {
         pciProperties.maxSpeed.maxBandwidth = -1;

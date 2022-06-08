@@ -20,8 +20,7 @@ class FsAccess;
 class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
-    ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;
-    ze_result_t getMaxLinkWidth(int32_t &maxLinkwidth) override;
+    void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     bool resizableBarSupported() override;
@@ -33,10 +32,11 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
-    FsAccess *pfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     std::unique_ptr<uint8_t[]> configMemory;
+    std::unique_ptr<uint8_t[]> uspConfigMemory;
     void pciExtendedConfigRead();
+    void pciCardBusConfigRead();
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
@@ -51,7 +51,14 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
         return configMemory[pos] | (configMemory[pos + 1] << 8) |
                (configMemory[pos + 2] << 16) | (configMemory[pos + 3] << 24);
     }
+    uint16_t getWordFromConfig(uint32_t pos, uint8_t *configMem) {
+        return configMem[pos] | (configMem[pos + 1] << 8);
+    }
+    uint8_t getByteFromConfig(uint32_t pos, uint8_t *configMem) {
+        return configMem[pos];
+    }
     uint32_t getRebarCapabilityPos();
+    uint16_t getLinkCapabilityPos();
 };
 
 } // namespace L0

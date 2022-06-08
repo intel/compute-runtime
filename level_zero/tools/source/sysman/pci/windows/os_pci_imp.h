@@ -16,8 +16,7 @@ class KmdSysManager;
 class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
-    ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;
-    ze_result_t getMaxLinkWidth(int32_t &maxLinkwidth) override;
+    void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     bool resizableBarSupported() override;
