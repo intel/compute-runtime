@@ -173,24 +173,30 @@ static_assert(offsetof(DrmVersion, descLen) == offsetof(drm_version, desc_len));
 static_assert(offsetof(DrmVersion, desc) == offsetof(drm_version, desc));
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper) {
+    if (ioctlHelper) {
+        return ioctlHelper->getIoctlRequestValue(ioctlRequest);
+    }
     switch (ioctlRequest) {
     case DrmIoctl::Getparam:
         return DRM_IOCTL_I915_GETPARAM;
     default:
-        UNRECOVERABLE_IF(!ioctlHelper);
-        return ioctlHelper->getIoctlRequestValue(ioctlRequest);
+        UNRECOVERABLE_IF(true);
+        return 0;
     }
 }
 
 int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper) {
+    if (ioctlHelper) {
+        return ioctlHelper->getDrmParamValue(drmParam);
+    }
     switch (drmParam) {
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:
         return I915_PARAM_REVISION;
     default:
-        UNRECOVERABLE_IF(!ioctlHelper);
-        return ioctlHelper->getDrmParamValue(drmParam);
+        UNRECOVERABLE_IF(true);
+        return 0;
     }
 }
 } // namespace NEO

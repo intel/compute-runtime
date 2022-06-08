@@ -134,6 +134,8 @@ std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vecto
 
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
+    case DrmIoctl::Getparam:
+        return DRM_IOCTL_I915_GETPARAM;
     case DrmIoctl::GemExecbuffer2:
         return DRM_IOCTL_I915_GEM_EXECBUFFER2;
     case DrmIoctl::GemWait:
@@ -196,6 +198,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
+    case DrmParam::ParamChipsetId:
+        return I915_PARAM_CHIPSET_ID;
+    case DrmParam::ParamRevision:
+        return I915_PARAM_REVISION;
     case DrmParam::ParamHasExecSoftpin:
         return I915_PARAM_HAS_EXEC_SOFTPIN;
     case DrmParam::ParamHasPooledEu:

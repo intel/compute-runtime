@@ -100,6 +100,7 @@ DG1TEST_F(IoctlHelperTestsDg1, whenGettingIoctlRequestValueThenPropertValueIsRet
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ioctlHelper = *drm->getIoctlHelper();
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::Getparam), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemExecbuffer2), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_EXECBUFFER2));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemWait), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_WAIT));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemClose), static_cast<unsigned int>(DRM_IOCTL_GEM_CLOSE));
@@ -124,6 +125,4 @@ DG1TEST_F(IoctlHelperTestsDg1, whenGettingIoctlRequestValueThenPropertValueIsRet
 
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::DG1GemCreateExt), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CREATE_EXT));
     EXPECT_NE(ioctlHelper.getIoctlRequestValue(DrmIoctl::GemCreateExt), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CREATE_EXT));
-
-    EXPECT_THROW(ioctlHelper.getIoctlRequestValue(DrmIoctl::Getparam), std::runtime_error);
 }

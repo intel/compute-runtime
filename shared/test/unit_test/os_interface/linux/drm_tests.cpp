@@ -1174,6 +1174,29 @@ TEST(DrmWrapperTest, WhenGettingRevisionParamValueThenIoctlHelperIsNotNeeded) {
     EXPECT_EQ(getDrmParamValue(DrmParam::ParamRevision, nullptr), static_cast<int>(I915_PARAM_REVISION));
 }
 
+class MockIoctlHelper : public IoctlHelperPrelim20 {
+  public:
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override {
+        return ioctlRequestValue;
+    };
+
+    int getDrmParamValue(DrmParam drmParam) const override {
+        return drmParamValue;
+    }
+
+    unsigned int ioctlRequestValue = 1234u;
+    int drmParamValue = 1234;
+};
+
+TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhenAvailable) {
+    MockIoctlHelper ioctlHelper{};
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
+    EXPECT_NE(getIoctlRequestValue(DrmIoctl::Getparam, nullptr), getIoctlRequestValue(DrmIoctl::Getparam, &ioctlHelper));
+
+    EXPECT_EQ(getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper), ioctlHelper.drmParamValue);
+    EXPECT_NE(getDrmParamValue(DrmParam::ParamChipsetId, nullptr), getDrmParamValue(DrmParam::ParamChipsetId, &ioctlHelper));
+}
+
 TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
     std::map<DrmIoctl, const char *> ioctlCodeStringMap = {
         {DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE"},
