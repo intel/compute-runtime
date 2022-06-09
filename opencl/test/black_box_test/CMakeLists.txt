@@ -34,3 +34,5 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_link_libraries(${TEST_NAME} PUBLIC ${NEO_DYNAMIC_LIB_NAME})
   endif()
 endif()
+
+add_subdirectories()
