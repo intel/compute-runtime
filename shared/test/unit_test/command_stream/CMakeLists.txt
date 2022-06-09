@@ -6,6 +6,7 @@
 
 set(NEO_SHARED_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}stream_properties_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_3_tests.cpp
@@ -15,7 +16,6 @@ set(NEO_SHARED_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}stream_properties_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stream_properties_tests_common.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp

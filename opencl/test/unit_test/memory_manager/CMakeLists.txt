@@ -7,9 +7,6 @@
 set(IGDRCL_SRCS_tests_memory_manager
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_memory_sync_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_multi_device_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_preferred_pool_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/migraton_controller_tests.cpp

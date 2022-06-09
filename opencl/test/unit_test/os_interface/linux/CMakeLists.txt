@@ -11,12 +11,10 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_create_command_queue_with_properties_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
 
 if("${BRANCH_TYPE}" STREQUAL "")

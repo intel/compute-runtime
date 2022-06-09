@@ -7,6 +7,7 @@
 if(TESTS_PVC)
   set(NEO_SHARED_TESTS_PVC
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_pvc.cpp
@@ -14,7 +15,6 @@ if(TESTS_PVC)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_pvc.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sample_pvc.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_pvc.cpp
   )
 
   target_sources(${TARGET_NAME} PRIVATE ${NEO_SHARED_TESTS_PVC})

@@ -7,7 +7,6 @@
 if(TESTS_GEN11)
   set(IGDRCL_SRCS_tests_gen11
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_gen11.cpp

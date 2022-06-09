@@ -22,8 +22,8 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_debug_binary_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_tests.h
 )
 

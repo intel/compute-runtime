@@ -14,10 +14,10 @@ if(UNIX)
 
   if(NEO_ENABLE_i915_PRELIM_DETECTION)
     target_sources(neo_libult_common PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.h
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_mock.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_prelim_context.cpp
     )
   endif()
 

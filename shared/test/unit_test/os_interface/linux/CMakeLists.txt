@@ -28,12 +28,14 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_linux_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)
@@ -42,14 +44,14 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_cache_info_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_prelim_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_residency_handler_prelim_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_with_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_vm_bind_prelim_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_with_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
   )
@@ -74,8 +76,8 @@ endif()
 if("${BRANCH_TYPE}" STREQUAL "")
   list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_debug_tests.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_upstream.cpp
   )
 endif()

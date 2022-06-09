@@ -9,8 +9,8 @@ target_sources(igdrcl_aub_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_fixture.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/aub_mi_atomic_tests.cpp
 )
 

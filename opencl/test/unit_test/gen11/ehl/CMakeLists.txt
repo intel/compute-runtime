@@ -13,7 +13,6 @@ if(TESTS_EHL)
       ${IGDRCL_SRCS_tests_gen11_ehl_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_ehl.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_ehl.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen11_ehl})
   add_subdirectories()
