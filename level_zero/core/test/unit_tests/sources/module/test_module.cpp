@@ -2311,6 +2311,62 @@ TEST(BuildOptions, givenSrcOptLevelWithoutLevelIntegerInSrcNamesWhenMovingBuildO
     EXPECT_FALSE(result);
 }
 
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableProgramSymbolTableGenerationIsEnabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableProgramSymbolTableGenerationIsDisabledThenEnableLibraryCompileIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_FALSE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableLibraryCompileWhenEnableProgramSymbolTableGenerationIsDisabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableLibraryCompile.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableLibraryCompileWhenEnableProgramSymbolTableGenerationIsEnabledThenEnableLibraryCompileIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableProgramSymbolTableGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableLibraryCompile.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
+}
+
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
