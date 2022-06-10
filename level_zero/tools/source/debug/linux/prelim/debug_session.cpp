@@ -769,8 +769,6 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 auto &isaMap = connection->isaMap;
                 auto &elfMap = connection->elfMap;
 
-                auto loadAddress = vmBind->va_start;
-
                 auto isa = std::make_unique<IsaAllocation>();
                 isa->bindInfo = {vmBind->va_start, vmBind->va_length};
                 isa->vmHandle = vmHandle;
@@ -803,6 +801,9 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                     PRINT_DEBUGGER_ERROR_LOG("No ELF provided by application\n", "");
                 }
 
+                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                auto loadAddress = gmmHelper->canonize(vmBind->va_start);
+
                 zet_debug_event_t debugEvent = {};
                 debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
                 debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
@@ -812,6 +813,9 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                 std::unique_lock<std::mutex> memLock(asyncThreadMutex);
                 isaMap[vmBind->va_start] = std::move(isa);
+
+                // Expect non canonical va_start
+                DEBUG_BREAK_IF(gmmHelper->decanonize(vmBind->va_start) != vmBind->va_start);
 
                 // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately
                 if ((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) == 0) {
@@ -844,9 +848,12 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                     zet_debug_event_t debugEvent = {};
 
+                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                    auto loadAddress = gmmHelper->canonize(isa->bindInfo.gpuVa);
+
                     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
                     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                    debugEvent.info.module.load = isa->bindInfo.gpuVa;
+                    debugEvent.info.module.load = loadAddress;
                     debugEvent.info.module.moduleBegin = isa->moduleBegin;
                     debugEvent.info.module.moduleEnd = isa->moduleEnd;
 
@@ -873,7 +880,8 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                     module.loadAddresses.insert(vmBind->va_start);
 
                     if (canTriggerEvent && module.loadAddresses.size() == module.segmentCount) {
-                        loadAddress = *std::min_element(module.loadAddresses.begin(), module.loadAddresses.end());
+                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
                         PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
 
                         zet_debug_event_t debugEvent = {};
@@ -894,7 +902,8 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
                         zet_debug_event_t debugEvent = {};
 
-                        auto loadAddress = *std::min_element(module.loadAddresses.begin(), module.loadAddresses.end());
+                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
                         debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
                         debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
                         debugEvent.info.module.load = loadAddress;
@@ -1379,7 +1388,10 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
             bool perKernelIsaAcked = false;
             if (event->type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
                 auto connection = clientHandleToConnection[clientHandle].get();
-                auto isa = connection->isaMap.find(event->info.module.load);
+
+                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                auto isaVaStart = gmmHelper->decanonize(event->info.module.load);
+                auto isa = connection->isaMap.find(isaVaStart);
 
                 if (isa != connection->isaMap.end()) {
                     for (auto &event : isa->second->ackEvents) {

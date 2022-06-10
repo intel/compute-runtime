@@ -4069,7 +4069,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindDestroyEventForIsaWhenHandlingEventTh
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModuleLoadEventIsReturned) {
-    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaGpuVa = device->getHwInfo().capabilityTable.gpuAddressSpace - 0x3000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
@@ -4090,7 +4090,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    EXPECT_EQ(0u, isaMap.size());
+
     session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_EQ(isaGpuVa, isaMap[isaGpuVa]->bindInfo.gpuVa);
 
     // No event to ACK if vmBind doesn't have ACK flag
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
@@ -4100,8 +4106,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
     EXPECT_EQ(0u, event.flags);
-    EXPECT_EQ(isaGpuVa, event.info.module.load);
 
+    auto gmmHelper = neoDevice->getGmmHelper();
+    EXPECT_EQ(gmmHelper->canonize(isaGpuVa), event.info.module.load);
+
+    if (Math::log2(device->getHwInfo().capabilityTable.gpuAddressSpace + 1) >= 48) {
+        EXPECT_NE(isaGpuVa, event.info.module.load);
+    }
     auto elf = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr;
     auto elfSize = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].dataSize;
     EXPECT_EQ(elf, event.info.module.moduleBegin);
@@ -4109,7 +4120,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindCreateAndDestroyEventsForIsaWhenReadingEventsThenModuleLoadAndUnloadEventsReturned) {
-    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaGpuVa = device->getHwInfo().capabilityTable.gpuAddressSpace - 0x3000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
@@ -4129,26 +4140,34 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindCreateAndDestroyEventsForIsaWhenReadi
     uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    EXPECT_EQ(0u, isaMap.size());
+
     session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_EQ(isaGpuVa, isaMap[isaGpuVa]->bindInfo.gpuVa);
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
     EXPECT_EQ(0u, isaMap.size());
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
-    EXPECT_EQ(isaGpuVa, event.info.module.load);
+
+    auto gmmHelper = neoDevice->getGmmHelper();
+    EXPECT_EQ(gmmHelper->canonize(isaGpuVa), event.info.module.load);
 
     memset(&event, 0, sizeof(zet_debug_event_t));
     result = zetDebugReadEvent(session->toHandle(), 0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
 
-    EXPECT_EQ(isaGpuVa, event.info.module.load);
+    EXPECT_EQ(gmmHelper->canonize(isaGpuVa), event.info.module.load);
 
     auto elf = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr;
     auto elfSize = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].dataSize;
