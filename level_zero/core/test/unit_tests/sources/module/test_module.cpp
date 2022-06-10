@@ -2477,6 +2477,62 @@ TEST_F(ModuleTest, givenBuildOptionsWithEnableLibraryCompileWhenEnableProgramSym
     EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableLibraryCompile));
 }
 
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableGlobalSymbolGenerationIsEnabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWhenEnableGlobalSymbolGenerationIsDisabledThenEnableGlobalVariableSymbolsIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions("", buildOptions, internalBuildOptions);
+
+    EXPECT_FALSE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableGlobalVariableSymbolsWhenEnableGlobalSymbolGenerationIsDisabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(0);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
+TEST_F(ModuleTest, givenBuildOptionsWithEnableGlobalVariableSymbolsWhenEnableGlobalSymbolGenerationIsEnabledThenEnableGlobalVariableSymbolsIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGlobalSymbolGeneration.set(1);
+    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::User);
+    ASSERT_NE(nullptr, module);
+
+    std::string buildOptions;
+    std::string internalBuildOptions;
+
+    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
+}
+
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
