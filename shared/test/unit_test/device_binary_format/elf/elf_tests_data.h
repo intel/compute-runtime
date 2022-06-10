@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 
 #include "patch_list.h"
 
@@ -25,7 +26,10 @@ template <enabledIrFormat irFormat = enabledIrFormat::NONE>
 struct MockElfBinaryPatchtokens {
     MockElfBinaryPatchtokens(const HardwareInfo &hwInfo) : MockElfBinaryPatchtokens(std::string{}, hwInfo){};
     MockElfBinaryPatchtokens(const std::string &buildOptions, const HardwareInfo &hwInfo) {
-        mockDevBinaryHeader.Device = hwInfo.platform.eRenderCoreFamily;
+        auto copyHwInfo = hwInfo;
+        CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
+        mockDevBinaryHeader.Device = copyHwInfo.platform.eRenderCoreFamily;
         mockDevBinaryHeader.GPUPointerSizeInBytes = sizeof(void *);
         mockDevBinaryHeader.Version = iOpenCL::CURRENT_ICBE_VERSION;
         constexpr size_t mockDevBinaryDataSize = sizeof(mockDevBinaryHeader) + mockDataSize;

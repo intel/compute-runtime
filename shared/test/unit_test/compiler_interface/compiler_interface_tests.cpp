@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -880,8 +881,12 @@ HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenReques
     IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
-    EXPECT_EQ(device->getHardwareInfo().platform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(device->getHardwareInfo().platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+
+    HardwareInfo copyHwInfo = device->getHardwareInfo();
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
+    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.EUCount, igcSysInfo->GetEUCount());
@@ -892,7 +897,6 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
     DebugManagerStateRestore dbgRestore;
     auto dbgProdFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
     std::string dbgPlatformString(hardwarePrefix[dbgProdFamily]);
-    const PLATFORM dbgPlatform = hardwareInfoTable[dbgProdFamily]->platform;
     const GT_SYSTEM_INFO dbgSystemInfo = hardwareInfoTable[dbgProdFamily]->gtSystemInfo;
     DebugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
 
@@ -903,8 +907,11 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
-    EXPECT_EQ(dbgPlatform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(dbgPlatform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    HardwareInfo copyHwInfo = *hardwareInfoTable[dbgProdFamily];
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
+    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(dbgSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(dbgSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(dbgSystemInfo.DualSubSliceCount, igcSysInfo->GetSubSliceCount());

@@ -27,6 +27,7 @@ class CompilerHwInfoConfig {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
+    virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -41,6 +42,7 @@ class CompilerHwInfoConfigHw : public CompilerHwInfoConfig {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isForceToStatelessRequired() const override;
+    void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
 
   protected:
     CompilerHwInfoConfigHw() = default;

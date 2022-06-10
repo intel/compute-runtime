@@ -7,6 +7,8 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
@@ -125,6 +127,9 @@ TEST(ProgramDumper, GivenProgramWithPatchtokensThenProperlyCreatesDump) {
     unknownToken1.Token = NUM_PATCH_TOKENS;
     progWithConst.unhandledTokens.push_back(&unknownToken1);
 
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     std::string generated = NEO::PatchTokenBinary::asString(progWithConst);
     std::stringstream expected;
     expected << R"===(Program of size : )===" << progWithConst.blobs.programInfo.size() << R"===( decoded successfully
@@ -134,7 +139,7 @@ struct SProgramBinaryHeader {
              << CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << progWithConst.header->GPUPointerSizeInBytes << R"===(
 
@@ -265,6 +270,10 @@ TEST(ProgramDumper, GivenProgramWithKernelThenProperlyCreatesDump) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm program;
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
+
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
@@ -272,7 +281,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 
@@ -347,6 +356,10 @@ TEST(ProgramDumper, GivenProgramWithMultipleKerneslThenProperlyCreatesDump) {
     program.kernels[2].name = ArrayRef<const char>();
     std::string generated = NEO::PatchTokenBinary::asString(program);
     std::stringstream expected;
+
+    NEO::HardwareInfo copyHwInfo = *NEO::defaultHwInfo;
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     expected << R"===(Program of size : )===" << program.blobs.programInfo.size() << R"===( decoded successfully
 struct SProgramBinaryHeader {
     uint32_t   Magic; // = 1229870147
@@ -354,7 +367,7 @@ struct SProgramBinaryHeader {
              << iOpenCL::CURRENT_ICBE_VERSION << R"===(
 
     uint32_t   Device; // = )==="
-             << renderCoreFamily << R"===(
+             << copyHwInfo.platform.eRenderCoreFamily << R"===(
     uint32_t   GPUPointerSizeInBytes; // = )==="
              << program.header->GPUPointerSizeInBytes << R"===(
 

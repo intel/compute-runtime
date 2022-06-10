@@ -1665,7 +1665,10 @@ TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGetti
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(testBinary.get()), size);
     auto productAbbreviation = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
 
-    TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(pDevice->getHardwareInfo());
+    HardwareInfo copyHwInfo = pDevice->getHardwareInfo();
+    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
+    TargetDevice targetDevice = NEO::targetDeviceFromHwInfo(copyHwInfo);
 
     std::string decodeErrors;
     std::string decodeWarnings;
@@ -2076,8 +2079,11 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions
         GTEST_SKIP();
     }
 
+    auto copyHwInfo = *defaultHwInfo;
+    CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.elfHeader->machine = defaultHwInfo->platform.eProductFamily;
+    zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, mockRootDeviceIndex));
     auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
