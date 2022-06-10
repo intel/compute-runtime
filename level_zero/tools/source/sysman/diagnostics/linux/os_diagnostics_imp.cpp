@@ -105,6 +105,10 @@ ze_result_t LinuxDiagnosticsImp::waitForQuiescentCompletion() {
 
 ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) {
     pLinuxSysmanImp->diagnosticsReset = true;
+    auto pDevice = pLinuxSysmanImp->getDeviceHandle();
+    auto devicePtr = static_cast<DeviceImp *>(pDevice);
+    NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
+    auto restorer = std::make_unique<L0::ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     pLinuxSysmanImp->releaseDeviceResources();
     ze_result_t result = gpuProcessCleanup();
     if (ZE_RESULT_SUCCESS != result) {

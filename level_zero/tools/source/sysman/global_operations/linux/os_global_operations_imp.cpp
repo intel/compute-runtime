@@ -107,6 +107,9 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     }
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     pDevice->getProperties(&deviceProperties);
+    auto devicePtr = static_cast<DeviceImp *>(pDevice);
+    NEO::ExecutionEnvironment *executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
+    auto restorer = std::make_unique<L0::ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     pLinuxSysmanImp->releaseDeviceResources();
     std::string resetPath;
     std::string resetName;

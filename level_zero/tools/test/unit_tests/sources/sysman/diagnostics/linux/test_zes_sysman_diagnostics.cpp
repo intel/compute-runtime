@@ -226,6 +226,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
@@ -249,6 +251,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_FORCE_UINT32);
     pMockDiagFwInterface->mockFwRunDiagTestsResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -276,6 +280,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThe
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockDiagProcfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
@@ -301,6 +307,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsTh
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
@@ -328,6 +336,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
@@ -353,6 +363,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenC
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
@@ -381,6 +393,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenC
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
@@ -407,6 +421,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAn
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockDiagLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
@@ -432,6 +448,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAn
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
@@ -460,6 +478,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSu
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockDiagProcfsAccess->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDevicePid = getpid();
     pMockDiagLinuxSysmanImp->ourDeviceFd = ::open("/dev/null", 0);
@@ -476,6 +496,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupFa
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
 
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
     pMockDiagProcfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pPublicLinuxDiagnosticsImp->waitForQuiescentCompletion());
@@ -490,6 +512,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentFailsConti
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
+
     pPublicLinuxDiagnosticsImp->pSleepFunctionSecs = mockSleepFunctionSecs;
 
     pMockSysfsAccess->setErrorAfterCount(12, ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
@@ -505,6 +529,8 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+
+    pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockSysfsAccess->setErrorAfterCount(1, ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pPublicLinuxDiagnosticsImp->waitForQuiescentCompletion());

@@ -409,6 +409,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDevice
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
     pGlobalOperationsImp->init();
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

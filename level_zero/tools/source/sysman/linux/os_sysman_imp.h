@@ -79,13 +79,12 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     uint32_t rootDeviceIndex = 0u;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     bool diagnosticsReset = false;
-    std::unique_ptr<ExecutionEnvironmentRefCountRestore> restorer;
+    Device *pDevice = nullptr;
 
   protected:
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    Device *pDevice = nullptr;
     NEO::Drm *pDrm = nullptr;
     PmuInterface *pPmuInterface = nullptr;
     FirmwareUtil *pFwUtilInterface = nullptr;

@@ -273,7 +273,6 @@ void LinuxSysmanImp::releaseDeviceResources() {
     devicePciBdf = devicePtr->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>()->getPciPath();
     rootDeviceIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
 
-    restorer = std::make_unique<ExecutionEnvironmentRefCountRestore>(executionEnvironment);
     releaseSysmanDeviceResources();
     auto device = static_cast<DeviceImp *>(getDeviceHandle());
     executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
