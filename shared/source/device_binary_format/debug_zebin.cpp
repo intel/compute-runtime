@@ -33,6 +33,19 @@ Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAlloc
     }
 }
 
+std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Segments &gpuSegments) {
+    std::string errors, warnings;
+    auto zebin = decodeElf(zebinBin, errors, warnings);
+    if (false == errors.empty()) {
+        return {};
+    }
+
+    auto dzc = DebugZebinCreator(zebin, gpuSegments);
+    dzc.createDebugZebin();
+    dzc.applyRelocations();
+    return dzc.getDebugZebin();
+}
+
 void DebugZebinCreator::createDebugZebin() {
     ElfEncoder<EI_CLASS_64> elfEncoder(false, false, 4);
     auto &header = elfEncoder.getElfFileHeader();
@@ -46,7 +59,12 @@ void DebugZebinCreator::createDebugZebin() {
         const auto &section = zebin.sectionHeaders[i];
         auto sectionName = zebin.getSectionName(i);
 
-        auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, section.data);
+        ArrayRef<const uint8_t> sectionData = section.data;
+        if (section.header->type == SHT_SYMTAB) {
+            symTabShndx = i;
+        }
+
+        auto &sectionHeader = elfEncoder.appendSection(section.header->type, sectionName, sectionData);
         sectionHeader.link = section.header->link;
         sectionHeader.info = section.header->info;
         sectionHeader.name = section.header->name;
@@ -75,55 +93,49 @@ void DebugZebinCreator::applyRelocation(uint64_t addr, uint64_t value, RELOC_TYP
     }
 }
 
-bool DebugZebinCreator::isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type) {
-    return type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
-           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
-           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
-}
-
 void DebugZebinCreator::applyRelocations() {
+    if (symTabShndx == std::numeric_limits<uint32_t>::max()) {
+        return;
+    }
+
+    using ElfSymbolT = ElfSymbolEntry<EI_CLASS_64>;
     std::string errors, warnings;
     auto elf = decodeElf(debugZebin, errors, warnings);
 
+    auto symTabSecHdr = elf.sectionHeaders[symTabShndx].header;
+    size_t symbolsCount = static_cast<size_t>(symTabSecHdr->size) / static_cast<size_t>(symTabSecHdr->entsize);
+    ArrayRef<ElfSymbolT> symbols = {reinterpret_cast<ElfSymbolT *>(debugZebin.data() + symTabSecHdr->offset), symbolsCount};
+    for (auto &symbol : symbols) {
+        auto symbolSectionName = elf.getSectionName(symbol.shndx);
+        auto symbolName = elf.getSymbolName(symbol.name);
+
+        auto segment = getSegmentByName(symbolSectionName);
+        if (segment != nullptr) {
+            symbol.value += segment->address;
+        } else if (ConstStringRef(symbolSectionName).startsWith(SectionsNamesZebin::debugPrefix.data()) &&
+                   ConstStringRef(symbolName).startsWith(SectionsNamesZebin::textPrefix.data())) {
+            symbol.value += getTextSegmentByName(symbolName)->address;
+        }
+    }
+
     for (const auto &relocations : {elf.getDebugInfoRelocations(), elf.getRelocations()}) {
         for (const auto &reloc : relocations) {
-
             auto relocType = static_cast<RELOC_TYPE_ZEBIN>(reloc.relocType);
             if (isRelocTypeSupported(relocType) == false) {
                 continue;
             }
 
-            uint64_t symbolOffset = 0U;
-            auto symbolSectionName = elf.getSectionName(reloc.symbolSectionIndex);
-            if (auto segment = getSegmentByName(symbolSectionName)) {
-                symbolOffset = segment->address;
-            } else if (ConstStringRef(symbolSectionName).startsWith(SectionsNamesZebin::debugPrefix.data())) {
-                if (ConstStringRef(reloc.symbolName).startsWith(SectionsNamesZebin::textPrefix.data())) {
-                    symbolOffset = getTextSegmentByName(reloc.symbolName)->address;
-                }
-            } else {
-                DEBUG_BREAK_IF(true);
-                continue;
-            }
-
-            uint64_t relocVal = symbolOffset + elf.getSymbolValue(reloc.symbolTableIndex) + reloc.addend;
-            auto relocAddr = reinterpret_cast<uint64_t>(debugZebin.data()) + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset;
+            auto relocAddr = reinterpret_cast<uint64_t>(debugZebin.data() + elf.getSectionOffset(reloc.targetSectionIndex) + reloc.offset);
+            uint64_t relocVal = symbols[reloc.symbolTableIndex].value + reloc.addend;
             applyRelocation(relocAddr, relocVal, relocType);
         }
     }
 }
 
-std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Segments &gpuSegments) {
-    std::string errors, warnings;
-    auto zebin = decodeElf(zebinBin, errors, warnings);
-    if (false == errors.empty()) {
-        return {};
-    }
-
-    auto dzc = DebugZebinCreator(zebin, gpuSegments);
-    dzc.createDebugZebin();
-    dzc.applyRelocations();
-    return dzc.getDebugZebin();
+bool DebugZebinCreator::isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type) {
+    return type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
+           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
+           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
 }
 
 const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sectionName) {
