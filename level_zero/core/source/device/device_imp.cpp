@@ -218,11 +218,13 @@ void DeviceImp::adjustCommandQueueDesc(ze_command_queue_desc_t &desc) {
             }
             currentEngineIndex++;
         }
+        currentEngineIndex = 0u;
         for (const auto &engine : engineGroups[desc.ordinal].engines) {
             if (engine.getEngineType() == static_cast<aub_stream::EngineType>(nodeOrdinal)) {
                 desc.index = currentEngineIndex;
                 break;
             }
+            currentEngineIndex++;
         }
     }
 }

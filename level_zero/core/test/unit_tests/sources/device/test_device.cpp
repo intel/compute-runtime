@@ -1123,7 +1123,7 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     hwHelperFactoryBackup = &hwHelper;
 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS1, hwInfo);
+    auto nodeOrdinal = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS2, hwInfo);
     DebugManager.flags.NodeOrdinal.set(nodeOrdinal);
 
     auto deviceImp = static_cast<Mock<L0::DeviceImp> *>(device);
@@ -1134,20 +1134,23 @@ HWTEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescO
     engineGroups.clear();
     NEO::Device::EngineGroupT engineGroupCompute{};
     engineGroupCompute.engineGroupType = NEO::EngineGroupType::Compute;
-    engineGroupCompute.engines.resize(2);
+    engineGroupCompute.engines.resize(3);
     auto osContext1 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext1->engineType = aub_stream::EngineType::ENGINE_CCS;
     engineGroupCompute.engines[0].osContext = osContext1.get();
     auto osContext2 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext2->engineType = aub_stream::EngineType::ENGINE_CCS1;
     engineGroupCompute.engines[1].osContext = osContext2.get();
+    auto osContext3 = std::make_unique<MockOsContext>(0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext3->engineType = aub_stream::EngineType::ENGINE_CCS2;
+    engineGroupCompute.engines[2].osContext = osContext3.get();
     NEO::Device::EngineGroupT engineGroupRender{};
     engineGroupRender.engineGroupType = NEO::EngineGroupType::RenderCompute;
     engineGroups.push_back(engineGroupRender);
     engineGroups.push_back(engineGroupCompute);
 
     uint32_t expectedOrdinal = 1u;
-    uint32_t expectedIndex = 1u;
+    uint32_t expectedIndex = 2u;
     deviceImp->adjustCommandQueueDesc(desc);
     EXPECT_EQ(desc.ordinal, expectedOrdinal);
     EXPECT_EQ(desc.index, expectedIndex);
