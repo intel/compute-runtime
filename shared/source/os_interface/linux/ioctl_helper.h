@@ -67,7 +67,7 @@ class IoctlHelper {
   public:
     virtual ~IoctlHelper() {}
     static IoctlHelper *get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion);
-    static uint32_t ioctl(Drm *drm, DrmIoctl request, void *arg);
+    uint32_t ioctl(Drm *drm, DrmIoctl request, void *arg);
     virtual IoctlHelper *clone() = 0;
 
     virtual bool isVmBindAvailable(Drm *drm) = 0;

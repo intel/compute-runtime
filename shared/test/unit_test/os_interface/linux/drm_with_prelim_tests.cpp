@@ -137,7 +137,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
-    auto ret = IoctlHelper::ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
+    auto ret = drm->ioctlHelper->ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
     EXPECT_EQ(0u, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }

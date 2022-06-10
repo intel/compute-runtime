@@ -353,17 +353,17 @@ uint32_t IoctlHelperPrelim20::getFlagsForVmCreate(bool disableScratch, bool enab
     return flags;
 }
 
-uint32_t gemCreateContextExt(Drm *drm, GemContextCreateExt &gcc, GemContextCreateExtSetParam &extSetparam) {
+uint32_t gemCreateContextExt(IoctlHelper &ioctlHelper, Drm *drm, GemContextCreateExt &gcc, GemContextCreateExtSetParam &extSetparam) {
     gcc.flags |= I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
     extSetparam.base.nextExtension = gcc.extensions;
     gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
 
-    auto ioctlResult = IoctlHelper::ioctl(drm, DrmIoctl::GemContextCreateExt, &gcc);
+    auto ioctlResult = ioctlHelper.ioctl(drm, DrmIoctl::GemContextCreateExt, &gcc);
     UNRECOVERABLE_IF(ioctlResult != 0);
     return gcc.contextId;
 }
 
-uint32_t gemCreateContextAcc(Drm *drm, GemContextCreateExt &gcc, uint16_t trigger, uint8_t granularity) {
+uint32_t gemCreateContextAcc(IoctlHelper &ioctlHelper, Drm *drm, GemContextCreateExt &gcc, uint16_t trigger, uint8_t granularity) {
     prelim_drm_i915_gem_context_param_acc paramAcc = {};
     paramAcc.trigger = trigger;
     paramAcc.notify = 1;
@@ -382,7 +382,7 @@ uint32_t gemCreateContextAcc(Drm *drm, GemContextCreateExt &gcc, uint16_t trigge
     extSetparam.base = userExt;
     extSetparam.param = ctxParam;
 
-    return gemCreateContextExt(drm, gcc, extSetparam);
+    return gemCreateContextExt(ioctlHelper, drm, gcc, extSetparam);
 }
 uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) {
     uint16_t trigger = 0;
@@ -393,14 +393,14 @@ uint32_t IoctlHelperPrelim20::createContextWithAccessCounters(Drm *drm, GemConte
     if (DebugManager.flags.AccessCountersGranularity.get() != -1) {
         granularity = static_cast<uint8_t>(DebugManager.flags.AccessCountersGranularity.get());
     }
-    return gemCreateContextAcc(drm, gcc, trigger, granularity);
+    return gemCreateContextAcc(*this, drm, gcc, trigger, granularity);
 }
 
 uint32_t IoctlHelperPrelim20::createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) {
     GemContextCreateExtSetParam extSetparam{};
     extSetparam.base.name = I915_CONTEXT_CREATE_EXT_SETPARAM;
     extSetparam.param.param = PRELIM_I915_CONTEXT_PARAM_RUNALONE;
-    return gemCreateContextExt(drm, gcc, extSetparam);
+    return gemCreateContextExt(*this, drm, gcc, extSetparam);
 }
 
 static_assert(sizeof(VmBindExtSetPatT) == sizeof(prelim_drm_i915_vm_bind_ext_set_pat), "Invalid size for VmBindExtSetPat");
