@@ -12,6 +12,7 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_1_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_2_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_3_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_mt_tests.cpp
