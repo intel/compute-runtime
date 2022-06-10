@@ -413,7 +413,7 @@ HWTEST2_F(HwHelperTestGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIp
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities());
+    EXPECT_EQ(expectedCapabilities, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(hardwareInfo));
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenLocalMemoryFeatureDisabledWhenIsLocalMemoryEnabledIsCalledThenTrueIsReturned) {

@@ -1126,7 +1126,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
             auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
             auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            EXPECT_EQ(clHwHelper.getSupportedDeviceFeatureCapabilities(), *pCapabilities);
+            EXPECT_EQ(clHwHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
             EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
             break;
         }

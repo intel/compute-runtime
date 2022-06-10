@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ cl_ulong ClHwHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo &kern
 }
 
 template <typename GfxFamily>
-cl_device_feature_capabilities_intel ClHwHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities() const {
-    return ClDeviceHelper::getExtraCapabilities();
+cl_device_feature_capabilities_intel ClHwHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
+    return ClDeviceHelper::getExtraCapabilities(hwInfo);
 }
 
 template <typename GfxFamily>

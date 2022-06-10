@@ -281,8 +281,9 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
-        auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
-        param.bitfield = clHwHelper.getSupportedDeviceFeatureCapabilities();
+        auto &hwInfo = getHardwareInfo();
+        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        param.bitfield = clHwHelper.getSupportedDeviceFeatureCapabilities(hwInfo);
         src = &param.bitfield;
         retSize = srcSize = sizeof(cl_device_feature_capabilities_intel);
         break;

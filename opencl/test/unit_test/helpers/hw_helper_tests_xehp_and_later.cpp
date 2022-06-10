@@ -494,3 +494,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HwInfoConfigTestXeHpAndLater, givenCLImageFormatsWh
         EXPECT_EQ(false, clHwHelper.isFormatRedescribable(format));
     }
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, HwHelperTestXeHPAndLater, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnTrue) {
+    EXPECT_TRUE(HwInfoConfig::get(productFamily)->isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
+}

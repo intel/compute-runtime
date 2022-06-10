@@ -343,6 +343,11 @@ bool HwInfoConfigHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareI
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool HwInfoConfigHw<IGFX_UNKNOWN>::useChannelRedForUnusedShaderChannels() const {
     return false;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ GEN9TEST_F(HwHelperTestGen9, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVe
 }
 
 GEN9TEST_F(HwHelperTestGen9, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
-    EXPECT_EQ(0u, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities());
+    EXPECT_EQ(0u, ClHwHelper::get(renderCoreFamily).getSupportedDeviceFeatureCapabilities(*defaultHwInfo));
 }
 
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;

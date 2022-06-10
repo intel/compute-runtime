@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ void populateFactoryTable<ClHwHelperHw<Family>>() {
 }
 
 template <>
-cl_device_feature_capabilities_intel ClHwHelperHw<Family>::getSupportedDeviceFeatureCapabilities() const {
+cl_device_feature_capabilities_intel ClHwHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
 }
 
