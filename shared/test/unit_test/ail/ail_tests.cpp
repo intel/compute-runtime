@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 
 namespace NEO {
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
+using IsDG2 = IsProduct<IGFX_DG2>;
 
 using AILTests = ::testing::Test;
 template <PRODUCT_FAMILY productFamily>
@@ -43,4 +44,23 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
 
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
+
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithWondershareFilmora11IsCalledThenBlitterSupportIsDisabled, IsDG2) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "Wondershare Filmora 11";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.blitterOperationsSupported = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_EQ(rtTable.blitterOperationsSupported, false);
+}
+
 } // namespace NEO

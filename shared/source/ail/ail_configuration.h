@@ -28,6 +28,7 @@
 namespace NEO {
 
 enum class AILEnumeration : uint32_t {
+    DISABLE_BLITTER,
     DISABLE_COMPRESSION,
     ENABLE_FP64,
     AIL_MAX_OPTIONS_COUNT
