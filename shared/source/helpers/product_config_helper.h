@@ -6,38 +6,36 @@
  */
 
 #pragma once
-#include "shared/source/utilities/const_stringref.h"
-
 #include "platforms.h"
 
 #include <sstream>
 #include <string>
 
-struct AheadOfTimeConfig {
-    union {
-        uint32_t ProductConfig;
-        struct
-        {
-            uint32_t Revision : 6;
-            uint32_t Reserved : 8;
-            uint32_t Minor : 8;
-            uint32_t Major : 10;
-        } ProductConfigID;
-    };
-};
-
+namespace NEO {
 struct ProductConfigHelper {
-    static std::string parseMajorMinorValue(AheadOfTimeConfig config);
-    static std::string parseMajorMinorRevisionValue(AheadOfTimeConfig config);
-    inline static std::string parseMajorMinorRevisionValue(AOT::PRODUCT_CONFIG config) {
-        std::stringstream stringConfig;
-        AheadOfTimeConfig aotConfig = {0};
-        aotConfig.ProductConfig = config;
-        return parseMajorMinorRevisionValue(aotConfig);
+    static uint32_t getMajor(PRODUCT_CONFIG config) {
+        return (static_cast<uint32_t>(config) & 0xff0000) >> 16;
     }
 
-    static AOT::PRODUCT_CONFIG returnProductConfigForAcronym(const std::string &device);
-    static AOT::RELEASE returnReleaseForAcronym(const std::string &device);
-    static AOT::FAMILY returnFamilyForAcronym(const std::string &device);
-    static NEO::ConstStringRef getAcronymForAFamily(AOT::FAMILY family);
+    static uint32_t getMinor(PRODUCT_CONFIG config) {
+        return (static_cast<uint32_t>(config) & 0x00ff00) >> 8;
+    }
+
+    static uint32_t getRevision(PRODUCT_CONFIG config) {
+        return static_cast<uint32_t>(config) & 0x0000ff;
+    }
+
+    static std::string parseMajorMinorRevisionValue(PRODUCT_CONFIG config) {
+        std::stringstream stringConfig;
+        stringConfig << getMajor(config) << "." << getMinor(config) << "." << getRevision(config);
+        return stringConfig.str();
+    }
+
+    static std::string parseMajorMinorValue(PRODUCT_CONFIG config) {
+        std::stringstream stringConfig;
+        stringConfig << getMajor(config) << "." << getMinor(config);
+        return stringConfig.str();
+    }
 };
+
+} // namespace NEO

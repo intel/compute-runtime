@@ -336,7 +336,7 @@ Examples:
   Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str());
+                      NEO::getDevicesTypes().c_str());
 }
 
 int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {

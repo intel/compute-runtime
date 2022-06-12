@@ -24,12 +24,8 @@ PVCTEST_F(PvcUnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithPvcProductCo
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    AheadOfTimeConfig aotConfig0{}, aotConfig1{};
-    aotConfig0.ProductConfig = AOT::PVC_XL_A0;
-    aotConfig1.ProductConfig = AOT::PVC_XL_A0P;
-
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
-    std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(PVC_XL_A0);
+    std::string anotherProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(PVC_XL_A0P);
 
     programTokensWrongTokenVersion.headerMutable->Version -= 1;
     NEO::Ar::ArEncoder encoder;
@@ -45,7 +41,7 @@ PVCTEST_F(PvcUnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithPvcProductCo
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig = aotConfig0;
+    target.productConfig = PVC_XL_A0;
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 

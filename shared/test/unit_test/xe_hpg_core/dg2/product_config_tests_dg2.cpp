@@ -15,10 +15,10 @@
 
 using namespace NEO;
 
-DG2TEST_F(ProductConfigTests, givenDefaultDeviceAndRevisionIdWhenGetProductConfigThenDg2G11A0ConfigIsReturned) {
+DG2TEST_F(ProductConfigTests, givenDefaultDeviceAndRevisionIdWhenGetProductConfigThenLastKnownDg2ConfigIsReturned) {
     hwInfo.platform.usRevId = 0x0;
     hwInfo.platform.usDeviceID = 0x0;
 
     productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-    EXPECT_EQ(productConfig, AOT::DG2_G11_A0);
+    EXPECT_EQ(productConfig, DG2_G11);
 }

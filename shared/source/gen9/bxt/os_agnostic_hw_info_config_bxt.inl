@@ -6,6 +6,6 @@
  */
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::APL;
+PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return PRODUCT_CONFIG::BXT;
 }

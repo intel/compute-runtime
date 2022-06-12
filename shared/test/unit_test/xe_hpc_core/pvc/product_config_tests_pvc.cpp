@@ -21,15 +21,15 @@ PVCTEST_F(ProductConfigTests, givenPvcXlDeviceIdWhenDifferentRevisionIsPassedThe
 
         hwInfo.platform.usRevId = 0x0;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XL_A0);
+        EXPECT_EQ(productConfig, PVC_XL_A0);
 
         hwInfo.platform.usRevId = 0x1;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+        EXPECT_EQ(productConfig, PVC_XL_A0P);
 
         hwInfo.platform.usRevId = 0x6;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+        EXPECT_EQ(productConfig, PVC_XL_A0P);
     }
 }
 
@@ -39,19 +39,19 @@ PVCTEST_F(ProductConfigTests, givenPvcXtDeviceIdWhenDifferentRevisionIsPassedThe
 
         hwInfo.platform.usRevId = 0x3;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XT_A0);
+        EXPECT_EQ(productConfig, PVC_XT_A0);
 
         hwInfo.platform.usRevId = 0x5;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XT_B0);
+        EXPECT_EQ(productConfig, PVC_XT_B0);
 
         hwInfo.platform.usRevId = 0x6;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XT_B1);
+        EXPECT_EQ(productConfig, PVC_XT_B1);
 
         hwInfo.platform.usRevId = 0x7;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+        EXPECT_EQ(productConfig, PVC_XT_C0);
     }
 }
 
@@ -60,15 +60,15 @@ PVCTEST_F(ProductConfigTests, givenDefaultDeviceAndRevisionIdWhenGetProductConfi
     hwInfo.platform.usDeviceID = 0x0;
 
     productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-    EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+    EXPECT_EQ(productConfig, PVC_XT_C0);
 }
 
 PVCTEST_F(ProductConfigTests, givenInvalidRevisionIdWhenGetProductConfigThenUnknownIsaIsReturned) {
     hwInfo.platform.usRevId = 0x2;
     productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, UNKNOWN_ISA);
 
     hwInfo.platform.usRevId = 0x4;
     productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, UNKNOWN_ISA);
 }

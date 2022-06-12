@@ -21,8 +21,8 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
 }
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::XEHP_SDV;
+PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return PRODUCT_CONFIG::XEHP_SDV;
 }
 
 template <>

@@ -7,7 +7,6 @@
 
 #include "ocloc_arg_helper.h"
 
-#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -64,11 +63,13 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
 #undef NAMEDDEVICE
                                      {0u, std::string("")}}),
       deviceMap({
-#define DEVICE_CONFIG_IDS(product, productConfig, deviceIds, family, release) {&NEO::productConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release, {AOT::product}},
-#define DEVICE_CONFIG(product, productConfig, family, release) {&NEO::productConfig::hwInfo, nullptr, AOT::family, AOT::release, {AOT::product}},
+#define DEVICE_CONFIG_IDS_AND_REVISION(product, productConfig, deviceIds, revision_id) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, revision_id},
+#define DEVICE_CONFIG_IDS(product, productConfig, deviceIds) {product, &NEO::productConfig::hwInfo, &NEO::deviceIds, NEO::productConfig::hwInfo.platform.usRevId},
+#define DEVICE_CONFIG(product, productConfig) {product, &NEO::productConfig::hwInfo, nullptr, NEO::productConfig::hwInfo.platform.usRevId},
 #include "product_config.inl"
 #undef DEVICE_CONFIG
 #undef DEVICE_CONFIG_IDS
+#undef DEVICE_CONFIG_IDS_AND_REVISION
       }) {
     for (uint32_t i = 0; i < numSources; ++i) {
         inputs.push_back(Source(dataSources[i], static_cast<size_t>(lenSources[i]), nameSources[i]));
@@ -76,15 +77,15 @@ OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSo
     for (uint32_t i = 0; i < numInputHeaders; ++i) {
         headers.push_back(Source(dataInputHeaders[i], static_cast<size_t>(lenInputHeaders[i]), nameInputHeaders[i]));
     }
+    for (unsigned int family = 0; family < IGFX_MAX_CORE; ++family) {
+        if (NEO::familyName[family] == nullptr) {
+            continue;
+        }
+        insertGenNames(static_cast<GFXCORE_FAMILY>(family));
+    }
 
     std::sort(deviceMap.begin(), deviceMap.end(), compareConfigs);
-    for (auto &device : deviceMap) {
-        for (const auto &[acronym, value] : AOT::productConfigAcronyms) {
-            if (value == device.aotConfig.ProductConfig) {
-                device.acronyms.push_back(NEO::ConstStringRef(acronym));
-            }
-        }
-    }
+    deviceMap.erase(std::unique(deviceMap.begin(), deviceMap.end(), isDuplicateConfig), deviceMap.end());
 }
 
 OclocArgHelper::OclocArgHelper() : OclocArgHelper(0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) {}
@@ -168,19 +169,31 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
+void OclocArgHelper::setDeviceInfoForFatbinaryTarget(const DeviceMapping &device) {
+    deviceForFatbinary.hwInfo = device.hwInfo;
+    deviceForFatbinary.revId = device.revId;
+    deviceForFatbinary.deviceIds = device.deviceIds;
+}
+
+void OclocArgHelper::setHwInfoForFatbinaryTarget(NEO::HardwareInfo &hwInfo) {
+    hwInfo = *deviceForFatbinary.hwInfo;
+    NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
+    hwInfo.platform.usRevId = deviceForFatbinary.revId;
+    if (deviceForFatbinary.deviceIds) {
+        hwInfo.platform.usDeviceID = deviceForFatbinary.deviceIds->front();
+    }
+}
+
 bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo) {
     bool retVal = false;
-    if (config == AOT::UNKNOWN_ISA) {
+    if (config == UNKNOWN_ISA) {
         return retVal;
     }
-
     for (auto &deviceConfig : deviceMap) {
-        if (deviceConfig.aotConfig.ProductConfig == config) {
+        if (deviceConfig.config == config) {
             hwInfo = *deviceConfig.hwInfo;
-            const auto &compilerHwInfoConfig = *NEO::CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-            compilerHwInfoConfig.setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
             NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
-
+            hwInfo.platform.usRevId = deviceConfig.revId;
             if (deviceConfig.deviceIds) {
                 hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
             }
@@ -189,6 +202,14 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t config, NEO::HardwareInf
         }
     }
     return retVal;
+}
+
+void OclocArgHelper::getProductConfigsForGfxCoreFamily(GFXCORE_FAMILY core, std::vector<DeviceMapping> &out) {
+    for (auto &deviceConfig : deviceMap) {
+        if (deviceConfig.hwInfo->platform.eRenderCoreFamily == core) {
+            out.push_back(deviceConfig);
+        }
+    }
 }
 
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {
@@ -210,60 +231,6 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
     }
 }
 
-std::string OclocArgHelper::getAllSupportedAcronyms() {
-    std::ostringstream os;
-    for (const auto &device : deviceMap) {
-        for (const auto &acronym : device.acronyms) {
-            if (os.tellp())
-                os << ", ";
-            os << acronym.str();
-        }
-    }
-    return os.str();
-}
-
-std::vector<NEO::ConstStringRef> OclocArgHelper::getEnabledProductAcronyms() {
-    std::vector<NEO::ConstStringRef> enabledAcronyms{};
-    for (const auto &device : deviceMap) {
-        if (!device.acronyms.empty()) {
-            enabledAcronyms.push_back(device.acronyms.front());
-        }
-    }
-    return enabledAcronyms;
-}
-
-std::vector<NEO::ConstStringRef> OclocArgHelper::getEnabledReleasesAcronyms() {
-    std::vector<NEO::ConstStringRef> ret;
-    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
-        if (std::any_of(deviceMap.begin(), deviceMap.end(), findRelease(value))) {
-            ret.push_back(NEO::ConstStringRef(acronym));
-        }
-    }
-    return ret;
-}
-
-std::vector<NEO::ConstStringRef> OclocArgHelper::getEnabledFamiliesAcronyms() {
-    std::vector<NEO::ConstStringRef> enabledAcronyms;
-    for (const auto &[acronym, value] : AOT::familyAcronyms) {
-        if (std::any_of(deviceMap.begin(), deviceMap.end(), findFamily(value))) {
-            enabledAcronyms.push_back(NEO::ConstStringRef(acronym));
-        }
-    }
-    return enabledAcronyms;
-}
-
-bool OclocArgHelper::setAcronymForDeviceId(std::string &device) {
-    auto product = returnProductNameForDevice(std::stoi(device, 0, 16));
-    if (!product.empty()) {
-        printf("Auto-detected target based on %s device id: %s\n", device.c_str(), product.c_str());
-    } else {
-        printf("Could not determine target based on device id: %s\n", device.c_str());
-        return false;
-    }
-    device = std::move(product);
-    return true;
-}
-
 std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) {
     std::string res = "";
     for (int i = 0; deviceProductTable[i].deviceId != 0; i++) {
@@ -276,6 +243,15 @@ std::string OclocArgHelper::returnProductNameForDevice(unsigned short deviceId) 
 
 std::vector<DeviceMapping> &OclocArgHelper::getAllSupportedDeviceConfigs() {
     return deviceMap;
+}
+
+std::vector<PRODUCT_CONFIG> OclocArgHelper::getAllSupportedProductConfigs() {
+    std::vector<PRODUCT_CONFIG> allConfigs;
+    for (auto &deviceConfig : deviceMap) {
+        allConfigs.push_back(deviceConfig.config);
+    }
+    std::sort(allConfigs.begin(), allConfigs.end());
+    return allConfigs;
 }
 
 int OclocArgHelper::parseProductConfigFromString(const std::string &device, size_t begin, size_t end) {
@@ -295,55 +271,119 @@ int OclocArgHelper::parseProductConfigFromString(const std::string &device, size
     }
 }
 
-AheadOfTimeConfig OclocArgHelper::getMajorMinorRevision(const std::string &device) {
-    AheadOfTimeConfig product = {AOT::UNKNOWN_ISA};
+std::vector<uint32_t> OclocArgHelper::getMajorMinorRevision(const std::string &device) {
+    std::vector<uint32_t> numeration;
     auto majorPos = device.find(".");
     auto major = parseProductConfigFromString(device, 0, majorPos);
-    if (major == CONFIG_STATUS::MISMATCHED_VALUE || majorPos == std::string::npos) {
-        return product;
+    if (major == CONFIG_STATUS::MISMATCHED_VALUE) {
+        return {};
+    }
+    numeration.push_back(major);
+    if (majorPos == std::string::npos) {
+        return numeration;
     }
 
     auto minorPos = device.find(".", ++majorPos);
     auto minor = parseProductConfigFromString(device, majorPos, minorPos);
 
-    if (minor == CONFIG_STATUS::MISMATCHED_VALUE || minorPos == std::string::npos) {
-        return product;
+    if (minor == CONFIG_STATUS::MISMATCHED_VALUE) {
+        return {};
     }
-
+    numeration.push_back(minor);
+    if (minorPos == std::string::npos) {
+        return numeration;
+    }
     auto revision = parseProductConfigFromString(device, minorPos + 1, device.size());
     if (revision == CONFIG_STATUS::MISMATCHED_VALUE) {
-        return product;
+        return {};
     }
-    product.ProductConfigID.Major = major;
-    product.ProductConfigID.Minor = minor;
-    product.ProductConfigID.Revision = revision;
-    return product;
+    numeration.push_back(revision);
+    return numeration;
 }
 
-bool OclocArgHelper::isRelease(const std::string &device) {
-    auto release = ProductConfigHelper::returnReleaseForAcronym(device);
-    if (release == AOT::UNKNOWN_RELEASE) {
-        return false;
+uint32_t OclocArgHelper::getProductConfig(std::vector<uint32_t> &numeration) {
+    uint32_t config = 0x0;
+
+    config = numeration.at(0) << 16;
+    if (numeration.size() > 1) {
+        config |= (numeration.at(1) << 8);
     }
-    return std::any_of(deviceMap.begin(), deviceMap.end(), findRelease(release));
+    if (numeration.size() > 2) {
+        config |= numeration.at(2);
+    }
+
+    return config;
 }
 
-bool OclocArgHelper::isFamily(const std::string &device) {
-    auto family = ProductConfigHelper::returnFamilyForAcronym(device);
-    if (family == AOT::UNKNOWN_FAMILY) {
-        return false;
+uint32_t OclocArgHelper::getMaskForConfig(std::vector<uint32_t> &numeration) {
+    uint32_t mask = 0xffffff;
+    if (numeration.size() == 1) {
+        mask = 0xff0000;
+    } else if (numeration.size() == 2) {
+        mask = 0xffff00;
     }
-    return std::any_of(deviceMap.begin(), deviceMap.end(), findFamily(family));
+    return mask;
 }
 
-bool OclocArgHelper::isProductConfig(const std::string &device) {
-    auto config = ProductConfigHelper::returnProductConfigForAcronym(device);
-    if (config == AOT::UNKNOWN_ISA) {
-        return false;
-    }
-    return std::any_of(deviceMap.begin(), deviceMap.end(), findProductConfig(config));
+bool OclocArgHelper::isGen(const std::string &device) {
+    std::string buf(device);
+    std::transform(buf.begin(), buf.end(), buf.begin(), ::tolower);
+    auto it = genIGFXMap.find(buf);
+    return it == genIGFXMap.end() ? false : true;
+}
+
+unsigned int OclocArgHelper::returnIGFXforGen(const std::string &device) {
+    std::string buf(device);
+    std::transform(buf.begin(), buf.end(), buf.begin(), ::tolower);
+    auto it = genIGFXMap.find(buf);
+    if (it == genIGFXMap.end())
+        return 0;
+    return it->second;
 }
 
 bool OclocArgHelper::areQuotesRequired(const std::string_view &argName) {
     return argName == "-options" || argName == "-internal_options";
+}
+
+PRODUCT_CONFIG OclocArgHelper::findConfigMatch(const std::string &device, bool firstAppearance) {
+    auto numeration = getMajorMinorRevision(device);
+    if (numeration.empty()) {
+        return PRODUCT_CONFIG::UNKNOWN_ISA;
+    }
+
+    std::vector<PRODUCT_CONFIG> allMatchedConfigs;
+    std::vector<PRODUCT_CONFIG> allConfigs = getAllSupportedProductConfigs();
+    auto configValue = getProductConfig(numeration);
+    uint32_t mask = getMaskForConfig(numeration);
+
+    if (!firstAppearance) {
+        // find last appearance
+        std::reverse(allConfigs.begin(), allConfigs.end());
+    }
+
+    for (auto &productConfig : allConfigs) {
+        uint32_t value = static_cast<uint32_t>(productConfig) & mask;
+        if (value == configValue) {
+            return productConfig;
+        }
+    }
+    return PRODUCT_CONFIG::UNKNOWN_ISA;
+}
+
+void OclocArgHelper::insertGenNames(GFXCORE_FAMILY family) {
+    std::string genName = NEO::familyName[family];
+    std::transform(genName.begin(), genName.end(), genName.begin(), ::tolower);
+    genIGFXMap.insert({genName, family});
+
+    auto findCore = genName.find("_core");
+    if (findCore != std::string::npos) {
+        genName = genName.substr(0, findCore);
+        genIGFXMap.insert({genName, family});
+    }
+
+    auto findUnderline = genName.find("_");
+    if (findUnderline != std::string::npos) {
+        genName.erase(std::remove(genName.begin(), genName.end(), '_'), genName.end());
+        genIGFXMap.insert({genName, family});
+    }
 }

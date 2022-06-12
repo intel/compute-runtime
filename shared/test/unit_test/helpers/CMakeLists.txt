@@ -23,7 +23,6 @@ set(IGDRCL_SRCS_tests_helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/raii_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/static_size3.h

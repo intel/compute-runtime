@@ -23,7 +23,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
     using OfflineCompiler::buildIrBinary;
-    using OfflineCompiler::deviceConfig;
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::excludeIr;
@@ -37,7 +36,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::hwInfo;
     using OfflineCompiler::igcFacade;
     using OfflineCompiler::initHardwareInfo;
-    using OfflineCompiler::initHardwareInfoForProductConfig;
     using OfflineCompiler::inputFile;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
@@ -51,7 +49,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
     using OfflineCompiler::parseDebugSettings;
-    using OfflineCompiler::revisionId;
     using OfflineCompiler::setStatelessToStatefullBufferOffsetFlag;
     using OfflineCompiler::sourceCode;
     using OfflineCompiler::storeBinary;

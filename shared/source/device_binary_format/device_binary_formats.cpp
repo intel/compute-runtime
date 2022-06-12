@@ -25,7 +25,7 @@ TargetDevice targetDeviceFromHwInfo(const HardwareInfo &hwInfo) {
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;
-    targetDevice.aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    targetDevice.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;

@@ -9,8 +9,6 @@
 
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/utilities/const_stringref.h"
 
 #include "device_ids_configs.h"
 #include "hw_cmds.h"
@@ -50,15 +48,13 @@ struct DeviceProduct {
 };
 
 struct DeviceMapping {
+    PRODUCT_CONFIG config = UNKNOWN_ISA;
     const NEO::HardwareInfo *hwInfo = nullptr;
     const std::vector<unsigned short> *deviceIds = nullptr;
-    AOT::FAMILY family = AOT::UNKNOWN_FAMILY;
-    AOT::RELEASE release = AOT::UNKNOWN_RELEASE;
-    AheadOfTimeConfig aotConfig = {0};
-    std::vector<NEO::ConstStringRef> acronyms{};
+    unsigned int revId = 0U;
 
     bool operator==(const DeviceMapping &rhs) {
-        return aotConfig.ProductConfig == rhs.aotConfig.ProductConfig && family == rhs.family && release == rhs.release;
+        return config == rhs.config && hwInfo == rhs.hwInfo && revId == rhs.revId;
     }
 };
 
@@ -74,6 +70,9 @@ class OclocArgHelper {
     MessagePrinter messagePrinter;
     const std::vector<DeviceProduct> deviceProductTable;
     std::vector<DeviceMapping> deviceMap;
+    DeviceMapping deviceForFatbinary;
+    std::map<std::string, unsigned int> genIGFXMap;
+    bool fatBinary = false;
     void moveOutputs();
     Source *findSourceFile(const std::string &filename);
     bool sourceFileExists(const std::string &filename) const;
@@ -83,22 +82,11 @@ class OclocArgHelper {
     }
 
     static bool compareConfigs(DeviceMapping deviceMap0, DeviceMapping deviceMap1) {
-        return deviceMap0.aotConfig.ProductConfig < deviceMap1.aotConfig.ProductConfig;
+        return deviceMap0.config < deviceMap1.config;
     }
 
-    template <typename EqComparableT>
-    auto findFamily(const EqComparableT &lhs) {
-        return [&lhs](const auto &rhs) { return lhs == rhs.family; };
-    }
-
-    template <typename EqComparableT>
-    auto findRelease(const EqComparableT &lhs) {
-        return [&lhs](const auto &rhs) { return lhs == rhs.release; };
-    }
-
-    template <typename EqComparableT>
-    auto findProductConfig(const EqComparableT &lhs) {
-        return [&lhs](const auto &rhs) { return lhs == rhs.aotConfig.ProductConfig; };
+    static bool isDuplicateConfig(DeviceMapping deviceMap0, DeviceMapping deviceMap1) {
+        return deviceMap0.config == deviceMap1.config;
     }
 
   public:
@@ -117,13 +105,16 @@ class OclocArgHelper {
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
     int parseProductConfigFromString(const std::string &device, size_t begin, size_t end);
     bool getHwInfoForProductConfig(uint32_t config, NEO::HardwareInfo &hwInfo);
+    void getProductConfigsForGfxCoreFamily(GFXCORE_FAMILY core, std::vector<DeviceMapping> &out);
+    void setDeviceInfoForFatbinaryTarget(const DeviceMapping &device);
+    void setHwInfoForFatbinaryTarget(NEO::HardwareInfo &hwInfo);
+    std::vector<PRODUCT_CONFIG> getAllSupportedProductConfigs();
     std::vector<DeviceMapping> &getAllSupportedDeviceConfigs();
-    std::vector<NEO::ConstStringRef> getEnabledProductAcronyms();
-    std::vector<NEO::ConstStringRef> getEnabledReleasesAcronyms();
-    std::vector<NEO::ConstStringRef> getEnabledFamiliesAcronyms();
-    std::string getAllSupportedAcronyms();
-    AheadOfTimeConfig getMajorMinorRevision(const std::string &device);
-    bool setAcronymForDeviceId(std::string &device);
+    std::vector<uint32_t> getMajorMinorRevision(const std::string &device);
+    uint32_t getProductConfig(std::vector<uint32_t> &numeration);
+    uint32_t getMaskForConfig(std::vector<uint32_t> &numeration);
+    PRODUCT_CONFIG findConfigMatch(const std::string &device, bool firstAppearance);
+    void insertGenNames(GFXCORE_FAMILY family);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);
     MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &filename);
@@ -139,6 +130,13 @@ class OclocArgHelper {
         return headers;
     }
 
+    void setFatbinary(bool isFatBinary) {
+        this->fatBinary = isFatBinary;
+    }
+
+    bool isFatbinary() {
+        return fatBinary;
+    }
     MOCKABLE_VIRTUAL void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
     void saveOutput(const std::string &filename, const std::ostream &stream);
 
@@ -151,10 +149,8 @@ class OclocArgHelper {
         messagePrinter.printf(format, std::forward<Args>(args)...);
     }
 
-    bool isRelease(const std::string &device);
-    bool isFamily(const std::string &device);
-    bool isProductConfig(const std::string &device);
-    bool areQuotesRequired(const std::string_view &argName);
-
     std::string returnProductNameForDevice(unsigned short deviceId);
+    bool isGen(const std::string &device);
+    unsigned int returnIGFXforGen(const std::string &device);
+    bool areQuotesRequired(const std::string_view &argName);
 };

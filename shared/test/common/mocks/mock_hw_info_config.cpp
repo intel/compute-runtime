@@ -107,8 +107,8 @@ uint32_t HwInfoConfigHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping,
 }
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<IGFX_UNKNOWN>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::UNKNOWN_ISA;
+PRODUCT_CONFIG HwInfoConfigHw<IGFX_UNKNOWN>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return UNKNOWN_ISA;
 }
 
 template <>

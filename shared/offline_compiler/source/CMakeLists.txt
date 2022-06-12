@@ -12,8 +12,6 @@ set(OCLOC_FOLDER_NAME "offline_compiler")
 set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
-    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.cpp
-    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
@@ -30,11 +28,11 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/product_config.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/product_config_base.inl
+    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}platforms.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.h
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_base.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_aot_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
@@ -43,9 +41,9 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
     ${NEO_SHARED_DIRECTORY}/helpers${BRANCH_DIR_SUFFIX}hw_info_extended.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.cpp
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
     ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
@@ -83,7 +81,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/device_binary_format_zebin.cpp
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/zebin_decoder.cpp
     ${NEO_SOURCE_DIR}/shared/source/device_binary_format/yaml/yaml_parser.cpp
-    ${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}aot_config_headers/platforms.h
 )
 
 if(${IGA_HEADERS_AVAILABLE})

@@ -361,11 +361,6 @@ if(NOT DEFINED KHRONOS_GL_HEADERS_DIR)
 endif()
 message(STATUS "Khronos OpenGL headers dir: ${KHRONOS_GL_HEADERS_DIR}")
 
-if(NOT DEFINED AOT_CONFIG_HEADERS_DIR)
-  get_filename_component(AOT_CONFIG_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}aot_config_headers" ABSOLUTE)
-  message(STATUS "AOT config headers dir: ${AOT_CONFIG_HEADERS_DIR}")
-endif()
-
 if(NOT THIRD_PARTY_DIR)
   get_filename_component(THIRD_PARTY_DIR "../third_party/" ABSOLUTE)
 endif()
@@ -727,7 +722,6 @@ endif()
 
 # Project-wide include paths
 # Please keep alphabetical order
-include_directories(${AOT_CONFIG_HEADERS_DIR})
 include_directories(${NEO_BUILD_DIR})
 include_directories(${NEO_SOURCE_DIR})
 include_directories(${NEO_SHARED_DIRECTORY}/aub_mem_dump/definitions${BRANCH_DIR_SUFFIX})

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -14,7 +13,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"
 
 using namespace NEO;
 
@@ -411,10 +409,10 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdsWhenConfigIsCheckedThenCorrect
 
 DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenUnknownIsaIsReturned) {
     hwInfo.platform.usDeviceID = 0;
-    hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
+    hwInfo.platform.usRevId = 0xffff;
 
     productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-    EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfig, UNKNOWN_ISA);
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
@@ -423,30 +421,19 @@ DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedTh
 
         hwInfo.platform.usRevId = 0x0;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
+        EXPECT_EQ(productConfig, DG2_G10_A0);
 
         hwInfo.platform.usRevId = 0x1;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G10_A1);
+        EXPECT_EQ(productConfig, DG2_G10_A0);
 
         hwInfo.platform.usRevId = 0x4;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G10_B0);
+        EXPECT_EQ(productConfig, DG2_G10_B0);
 
         hwInfo.platform.usRevId = 0x8;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
-    }
-}
-
-DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenCorrectProductConfigIsReturned) {
-    for (const auto &dg2 : {DG2_G10_IDS, DG2_G11_IDS}) {
-        for (const auto &deviceId : dg2) {
-            hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
-            productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-            EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
-        }
+        EXPECT_EQ(productConfig, DG2_G10_B0);
     }
 }
 
@@ -456,23 +443,10 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedTh
 
         hwInfo.platform.usRevId = 0x0;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G11_A0);
+        EXPECT_EQ(productConfig, DG2_G11);
 
         hwInfo.platform.usRevId = 0x4;
         productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G11_B0);
-
-        hwInfo.platform.usRevId = 0x5;
-        productConfig = hwInfoConfig->getProductConfigFromHwInfo(hwInfo);
-        EXPECT_EQ(productConfig, AOT::DG2_G11_B1);
-    }
-}
-
-DG2TEST_F(ProductConfigTests, givenAotConfigWhenSetHwInfoRevisionIdForDg2ThenCorrectValueIsSet) {
-    for (const auto &config : AOT_DG2::productConfigs) {
-        AheadOfTimeConfig aotConfig = {0};
-        aotConfig.ProductConfig = config;
-        CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
-        EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+        EXPECT_EQ(productConfig, DG2_G11);
     }
 }

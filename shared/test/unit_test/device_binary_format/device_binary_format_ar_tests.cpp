@@ -59,12 +59,11 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
     PatchTokensTestData::ValidEmptyProgram programTokens;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
     std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
 
@@ -75,7 +74,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig = aotConfig;
+    target.productConfig = productConfig;
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -100,12 +99,11 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
     PatchTokensTestData::ValidEmptyProgram programTokens;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
     std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
 
@@ -116,7 +114,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig = aotConfig;
+    target.productConfig = productConfig;
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -131,14 +129,13 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
     PatchTokensTestData::ValidEmptyProgram programTokens;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
     std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
 
     ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize, programTokens.storage));
     ASSERT_TRUE(encoder.appendFileEntry(requiredPointerSize + "." + requiredProduct, programTokens.storage));
@@ -147,7 +144,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -240,10 +237,9 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
 
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
 
     programTokensWrongTokenVersion.headerMutable->Version -= 1;
     NEO::Ar::ArEncoder encoder;
@@ -258,7 +254,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -348,10 +344,9 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfi
     PatchTokensTestData::ValidEmptyProgram programTokens;
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
     std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
@@ -368,7 +363,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfi
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    target.productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
     auto arData = encoder.encode();
     std::string unpackErrors;
@@ -572,10 +567,9 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
 
     const auto &hwInfoConfig = *NEO::HwInfoConfig::get(productFamily);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
-    AheadOfTimeConfig aotConfig = {0};
-    aotConfig.ProductConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
+    auto productConfig = hwInfoConfig.getProductConfigFromHwInfo(hwInfo);
 
-    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
+    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(programTokens.header->SteppingId);
     std::string requiredPointerSize = (programTokens.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
@@ -591,7 +585,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig = aotConfig;
+    target.productConfig = productConfig;
 
     auto arData = encoder.encode();
     std::string unpackErrors;

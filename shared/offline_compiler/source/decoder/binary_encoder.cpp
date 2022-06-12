@@ -133,7 +133,7 @@ Examples:
   Assemble to Intel Compute GPU device binary
     ocloc asm -out reassembled.bin
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str());
+                      NEO::getDevicesTypes().c_str());
 }
 
 int BinaryEncoder::encode() {
