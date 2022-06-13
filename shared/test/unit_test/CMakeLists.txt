@@ -37,6 +37,8 @@ if(NOT NEO_SKIP_UNIT_TESTS)
                  $<TARGET_OBJECTS:neo_shared_mocks>
   )
 
+  add_dependencies(${TARGET_NAME} test_dynamic_lib)
+
   set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
   set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 

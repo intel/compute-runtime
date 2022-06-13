@@ -139,7 +139,6 @@ endfunction()
 
 add_dependencies(unit_tests
                  igdrcl_tests
-                 test_dynamic_lib
                  prepare_test_kernels_for_ocl
                  prepare_test_kernels_for_shared
 )

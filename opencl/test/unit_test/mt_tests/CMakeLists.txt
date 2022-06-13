@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -42,7 +42,6 @@ if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)
 endif()
 
-add_dependencies(igdrcl_mt_tests test_dynamic_lib)
 add_dependencies(igdrcl_mt_tests
                  prepare_test_kernels_for_shared
                  prepare_test_kernels_for_ocl
@@ -57,4 +56,3 @@ if(NOT WIN32)
 endif()
 
 set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
-
