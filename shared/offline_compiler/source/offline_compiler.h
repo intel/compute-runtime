@@ -29,7 +29,6 @@ class OsLibrary;
 std::string convertToPascalCase(const std::string &inString);
 
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
-std::string getDevicesTypes();
 
 class OfflineCompiler {
   public:
@@ -39,7 +38,8 @@ class OfflineCompiler {
     MOCKABLE_VIRTUAL int build();
     std::string &getBuildLog();
     void printUsage();
-    std::string getDevicesConfigs();
+    std::string getDevicesReleasesAndFamilies();
+    std::string getDeprecatedDevicesTypes();
 
     static constexpr ConstStringRef queryHelp =
         "Depending on <query_option> will generate file\n"
@@ -91,6 +91,9 @@ class OfflineCompiler {
 
     void setFamilyType();
     int initHardwareInfo(std::string deviceName);
+    int initHardwareInfoForProductConfig(std::string deviceName);
+    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
+
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
@@ -120,7 +123,7 @@ class OfflineCompiler {
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo;
 
-    PRODUCT_CONFIG deviceConfig = UNKNOWN_ISA;
+    AOT::PRODUCT_CONFIG deviceConfig = AOT::UNKNOWN_ISA;
     std::string deviceName;
     std::string familyNameWithType;
     std::string inputFile;

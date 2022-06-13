@@ -16,16 +16,16 @@ TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThen
     auto allSupportedDeviceConfigs = mockOfflineCompiler->argHelper->getAllSupportedDeviceConfigs();
 
     for (const auto &deviceConfig : allSupportedDeviceConfigs) {
-        if (productConfig == deviceConfig.config) {
+        if (aotConfig.ProductConfig == deviceConfig.aotConfig.ProductConfig) {
             if (deviceConfig.deviceIds) {
                 deviceId = deviceConfig.deviceIds->front();
             }
-            revId = deviceConfig.revId;
+            revId = deviceConfig.aotConfig.ProductConfigID.Revision;
             break;
         }
     }
 
-    mockOfflineCompiler->deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
+    mockOfflineCompiler->deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
     mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
 
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.eProductFamily, productFamily);

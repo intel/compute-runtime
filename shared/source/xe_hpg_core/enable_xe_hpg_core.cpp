@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_aot_config_bdw_and_later.inl"
 #include "shared/source/helpers/compiler_hw_info_config_base.inl"
 #include "shared/source/helpers/compiler_hw_info_config_bdw_and_later.inl"
 #include "shared/source/helpers/enable_product.inl"

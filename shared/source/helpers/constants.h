@@ -89,6 +89,7 @@ namespace CommonConstants {
 constexpr uint64_t unsupportedPatIndex = std::numeric_limits<uint64_t>::max();
 constexpr uint32_t unspecifiedDeviceIndex = std::numeric_limits<uint32_t>::max();
 constexpr uint32_t invalidStepping = std::numeric_limits<uint32_t>::max();
+constexpr uint32_t invalidRevisionID = std::numeric_limits<uint16_t>::max();
 constexpr uint32_t maximalSimdSize = 32;
 constexpr uint32_t maximalSizeOfAtomicType = 8;
 constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups);

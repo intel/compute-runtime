@@ -178,12 +178,29 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
 
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string clFileName(clFiles + "copybuffer.cl");
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    auto allSupportedDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    if (allSupportedDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    std::string family("");
+    for (const auto &config : allSupportedDeviceConfigs) {
+        if (config.hwInfo->platform.eProductFamily == NEO::DEFAULT_PLATFORM::hwInfo.platform.eProductFamily) {
+            family = ProductConfigHelper::getAcronymForAFamily(config.family).str();
+            break;
+        }
+    }
+    if (family.empty()) {
+        GTEST_SKIP();
+    }
+
     const char *argv[] = {
         "ocloc",
         "-file",
         clFileName.c_str(),
         "-device",
-        NEO::familyName[NEO::DEFAULT_PLATFORM::hwInfo.platform.eRenderCoreFamily]};
+        family.c_str()};
     unsigned int argc = sizeof(argv) / sizeof(const char *);
 
     testing::internal::CaptureStdout();
@@ -194,7 +211,7 @@ TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
-    EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device "s + argv[4]));
+    EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file " + clFileName + " -device " + family));
 }
 
 TEST(OclocApiTests, WhenArgsWithMissingFileAreGivenThenErrorMessageIsProduced) {

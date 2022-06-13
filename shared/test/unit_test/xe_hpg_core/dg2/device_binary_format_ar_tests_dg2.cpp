@@ -24,8 +24,12 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    std::string requiredProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(DG2_G10_A0);
-    std::string anotherProductConfig = NEO::ProductConfigHelper::parseMajorMinorRevisionValue(DG2_G10_B0);
+    AheadOfTimeConfig aotConfig0{}, aotConfig1{};
+    aotConfig0.ProductConfig = AOT::DG2_G10_A0;
+    aotConfig1.ProductConfig = AOT::DG2_G10_B0;
+
+    std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
+    std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);
 
     programTokensWrongTokenVersion.headerMutable->Version -= 1;
     NEO::Ar::ArEncoder encoder;
@@ -41,7 +45,7 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.productConfig = DG2_G10_A0;
+    target.aotConfig = aotConfig0;
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 

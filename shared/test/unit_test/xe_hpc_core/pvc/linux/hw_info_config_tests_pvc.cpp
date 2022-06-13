@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/product_config_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 #include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
@@ -61,4 +64,13 @@ HWTEST_EXCLUDE_PRODUCT(HwInfoConfigTest, givenHwInfoConfigWhenAskedIfPatIndexPro
 PVCTEST_F(HwInfoConfigTestLinuxPvc, givenHwInfoConfigWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
     const auto &hwInfoConfig = *HwInfoConfig::get(pInHwInfo.platform.eProductFamily);
     EXPECT_TRUE(hwInfoConfig.isVmBindPatIndexProgrammingSupported());
+}
+
+PVCTEST_F(ProductConfigTests, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
+    for (const auto &config : AOT_PVC::productConfigs) {
+        AheadOfTimeConfig aotConfig = {0};
+        aotConfig.ProductConfig = config;
+        CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
+        EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.ProductConfigID.Revision);
+    }
 }
