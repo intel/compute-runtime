@@ -213,6 +213,7 @@ class MemoryManager {
     static uint32_t maxOsContextCount;
     virtual void commonCleanup(){};
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
+    virtual bool isWCMemory(const void *ptr) { return false; }
 
     virtual void registerSysMemAlloc(GraphicsAllocation *allocation){};
     virtual void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex){};

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/memory_manager/memory_manager.h"
+
 template <>
 void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
     using SAMPLER_STATE = typename XE_HPG_COREFamily::SAMPLER_STATE;
@@ -179,4 +181,25 @@ bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
 template <>
 bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
+}
+
+template <>
+bool HwInfoConfigHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
+    if (memoryManager) {
+        if constexpr (is32bit) {
+            return memoryManager->isWCMemory(ptr);
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+template <>
+bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+    if constexpr (is32bit) {
+        return true;
+    } else {
+        return false;
+    }
 }

@@ -23,6 +23,7 @@ struct PipelineSelectArgs;
 class OSInterface;
 class HwInfoConfig;
 class GraphicsAllocation;
+class MemoryManager;
 enum class DriverModelType;
 
 extern HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT];
@@ -113,6 +114,7 @@ class HwInfoConfig {
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
 
     MOCKABLE_VIRTUAL ~HwInfoConfig() = default;
 
@@ -208,6 +210,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
     bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;
+    bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
 
   protected:
     HwInfoConfigHw() = default;

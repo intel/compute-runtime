@@ -886,7 +886,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     }
 
     // dummy read
-    //cacheable = *localVariablePointer;
+    // cacheable = *localVariablePointer;
 
     _mm_lfence();
     timestamp0 = __rdtsc();
@@ -904,7 +904,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
         fastestLocalRead = localVariableReadDelta;
     }
     // dummy read
-    //cacheable = *volatileInputPtr;
+    // cacheable = *volatileInputPtr;
 
     _mm_lfence();
     timestamp0 = __rdtsc();

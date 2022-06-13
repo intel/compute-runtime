@@ -71,6 +71,7 @@ class WddmMemoryManager : public MemoryManager {
     void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) override;
     bool isCpuCopyRequired(const void *ptr) override;
+    bool isWCMemory(const void *ptr) override;
 
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override { return AddressRange{0, 0}; };
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};

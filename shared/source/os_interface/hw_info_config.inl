@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -413,4 +414,8 @@ bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool HwInfoConfigHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
+    return false;
+}
 } // namespace NEO
