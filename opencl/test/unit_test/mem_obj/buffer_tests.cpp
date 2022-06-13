@@ -28,6 +28,7 @@
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
 
@@ -2072,4 +2073,21 @@ TEST_F(MultiRootDeviceBufferTest, givenNullptrGraphicsAllocationForRootDeviceInd
 
     address = buffer->getBufferAddress(0);
     EXPECT_EQ(reinterpret_cast<uint64_t>(buffer->getHostPtr()), address);
+}
+
+TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    ultHwConfig.forceOsAgnosticMemoryManager = false;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MakeAllBuffersResident.set(true);
+
+    initPlatform();
+    auto device = platform()->getClDevice(0u);
+
+    MockContext context(device, false);
+    auto retValue = CL_SUCCESS;
+    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    ASSERT_EQ(retValue, CL_SUCCESS);
+    clReleaseMemObject(clBuffer);
 }

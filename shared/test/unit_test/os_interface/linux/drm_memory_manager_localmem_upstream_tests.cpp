@@ -13,20 +13,40 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/os_interface/linux/drm_memory_manager_tests.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 
-#include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/linux/drm_memory_manager_tests_impl.h"
-
 #include "gtest/gtest.h"
 
 namespace NEO {
+
+class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
+  public:
+    DrmMockCustom *mockExp;
+
+    void SetUp() override {
+        backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+        ultHwConfig.csrBaseCallCreatePreemption = false;
+
+        MemoryManagementFixture::SetUp();
+        executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+        mockExp = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
+        DrmMemoryManagerFixture::SetUp(mockExp, true);
+    }
+
+    void TearDown() override {
+        mockExp->testIoctls();
+        DrmMemoryManagerFixture::TearDown();
+    }
+    std::unique_ptr<VariableBackup<UltHwConfig>> backup;
+};
 
 BufferObject *createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
 
@@ -1040,22 +1060,4 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithUnifiedMemoryAllocati
     EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
     memoryManager->freeGraphicsMemory(allocation);
 }
-
-TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    ultHwConfig.forceOsAgnosticMemoryManager = false;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeAllBuffersResident.set(true);
-
-    initPlatform();
-    auto device = platform()->getClDevice(0u);
-
-    MockContext context(device, false);
-    auto retValue = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
-    ASSERT_EQ(retValue, CL_SUCCESS);
-    clReleaseMemObject(clBuffer);
-}
-
 } // namespace NEO
