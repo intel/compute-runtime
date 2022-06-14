@@ -1160,3 +1160,33 @@ HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitFo
     EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
     EXPECT_EQ(CL_SUCCESS, finishResult);
 }
+
+HWTEST2_F(CommandQueueHwTest, givenCommandSvmMapAndDirectSubmissionEnabledAndUpdateTagFromWaitEnabledWhenCheckIsCacheFlushCommandThenReturnTrue, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
+    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+
+    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
+    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+
+    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
+    ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+
+    mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
+    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
+    DebugManager.flags.UpdateTaskCountFromWait.set(3);
+    ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
+    EXPECT_TRUE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_SVM_MAP));
+    EXPECT_FALSE(mockCmdQueueHw.isCacheFlushCommand(CL_COMMAND_NDRANGE_KERNEL));
+}
