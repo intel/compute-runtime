@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,10 +50,6 @@ namespace NEO {
     {{CL_RG,              CL_UNSIGNED_INT32}, {GMM_FORMAT_R32G32_UINT_TYPE,         GFX3DSTATE_SURFACEFORMAT_R32G32_UINT             , 0, 2, 4, 8}}, \
     {{CL_RG,              CL_HALF_FLOAT},     {GMM_FORMAT_R16G16_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R16G16_FLOAT            , 0, 2, 2, 4}}, \
     {{CL_RG,              CL_FLOAT},          {GMM_FORMAT_R32G32_FLOAT_TYPE,        GFX3DSTATE_SURFACEFORMAT_R32G32_FLOAT            , 0, 2, 4, 8}}, \
-    {{CL_LUMINANCE,       CL_UNORM_INT8},     {GMM_FORMAT_GENERIC_8BIT,             GFX3DSTATE_SURFACEFORMAT_R8_UNORM                , 0, 1, 1, 1}}, \
-    {{CL_LUMINANCE,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}}, \
-    {{CL_LUMINANCE,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_R16_FLOAT               , 0, 1, 2, 2}}, \
-    {{CL_LUMINANCE,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_R32_FLOAT               , 0, 1, 4, 4}}, \
     {{CL_R,               CL_SNORM_INT8},     {GMM_FORMAT_R8_SNORM_TYPE,            GFX3DSTATE_SURFACEFORMAT_R8_SNORM                , 0, 1, 1, 1}}, \
     {{CL_R,               CL_SNORM_INT16},    {GMM_FORMAT_R16_SNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_SNORM               , 0, 1, 2, 2}}, \
     {{CL_RG,              CL_SNORM_INT8},     {GMM_FORMAT_R8G8_SNORM_TYPE,          GFX3DSTATE_SURFACEFORMAT_R8G8_SNORM              , 0, 2, 1, 2}}, \
@@ -66,6 +62,10 @@ namespace NEO {
     {{CL_INTENSITY,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_I16_UNORM               , 0, 1, 2, 2}}, \
     {{CL_INTENSITY,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_I16_FLOAT               , 0, 1, 2, 2}}, \
     {{CL_INTENSITY,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_I32_FLOAT               , 0, 1, 4, 4}}, \
+    {{CL_LUMINANCE,       CL_UNORM_INT8},     {GMM_FORMAT_GENERIC_8BIT,             GFX3DSTATE_SURFACEFORMAT_L8_UNORM                , 0, 1, 1, 1}}, \
+    {{CL_LUMINANCE,       CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_L16_UNORM               , 0, 1, 2, 2}}, \
+    {{CL_LUMINANCE,       CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_L16_FLOAT               , 0, 1, 2, 2}}, \
+    {{CL_LUMINANCE,       CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_L32_FLOAT               , 0, 1, 4, 4}}, \
     {{CL_A,               CL_UNORM_INT16},    {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_A16_UNORM               , 0, 1, 2, 2}}, \
     {{CL_A,               CL_HALF_FLOAT},     {GMM_FORMAT_GENERIC_16BIT,            GFX3DSTATE_SURFACEFORMAT_A16_FLOAT               , 0, 1, 2, 2}}, \
     {{CL_A,               CL_FLOAT},          {GMM_FORMAT_GENERIC_32BIT,            GFX3DSTATE_SURFACEFORMAT_A32_FLOAT               , 0, 1, 4, 4}}

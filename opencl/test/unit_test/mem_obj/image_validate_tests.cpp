@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -679,13 +679,15 @@ TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIs
 
 TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateImageIsCalledThenReturnsNotSupportedFormatError) {
     MockContext context;
-    cl_image_format imageFormat = {CL_INTENSITY, CL_UNORM_INT8};
-    cl_int retVal = CL_SUCCESS;
-    cl_mem image;
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    image = Image::validateAndCreateImage(&context, nullptr, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
-    EXPECT_EQ(nullptr, image);
-    EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
+    for (cl_channel_order channelOrder : {CL_INTENSITY, CL_LUMINANCE}) {
+        cl_image_format imageFormat = {channelOrder, CL_UNORM_INT8};
+        cl_int retVal = CL_SUCCESS;
+        cl_mem image;
+        cl_mem_flags flags = CL_MEM_READ_WRITE;
+        image = Image::validateAndCreateImage(&context, nullptr, flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+        EXPECT_EQ(nullptr, image);
+        EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
+    }
 }
 
 TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCalledThenReturnsSuccess) {

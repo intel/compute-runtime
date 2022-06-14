@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,6 @@ struct Image1dArrayDefaults : public Image2dDefaults {
     static const cl_image_desc imageDesc;
 };
 
-struct LuminanceImage : public Image2dDefaults {
-    static const cl_image_format imageFormat;
-};
-
 struct ImageWithoutHostPtr : public Image1dDefaults {
     enum { flags = 0 };
     static void *hostPtr;
@@ -73,6 +69,10 @@ struct ImageReadOnly : public BaseClass {
 template <typename BaseClass>
 struct ImageWriteOnly : public BaseClass {
     enum { flags = BaseClass::flags | CL_MEM_WRITE_ONLY };
+};
+
+struct LuminanceImage : public ImageReadOnly<Image2dDefaults> {
+    static const cl_image_format imageFormat;
 };
 
 template <typename Traits>
