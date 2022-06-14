@@ -94,7 +94,8 @@ struct EncodeDispatchKernel {
                                  bool localIdsGenerationByRuntime,
                                  bool inlineDataProgrammingRequired,
                                  bool isIndirect,
-                                 uint32_t requiredWorkGroupOrder);
+                                 uint32_t requiredWorkGroupOrder,
+                                 const HardwareInfo &hwInfo);
 
     static void programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
@@ -106,7 +107,7 @@ struct EncodeDispatchKernel {
 
     static void setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder);
+    static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo);
 
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
 };

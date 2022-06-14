@@ -234,7 +234,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                    localIdsGenerationByRuntime,
                                                    inlineDataProgramming,
                                                    args.isIndirect,
-                                                   requiredWorkgroupOrder);
+                                                   requiredWorkgroupOrder,
+                                                   hwInfo);
 
     using POSTSYNC_DATA = typename Family::POSTSYNC_DATA;
     auto &postSync = walkerCmd.getPostSync();
@@ -394,7 +395,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
                                                     bool localIdsGenerationByRuntime,
                                                     bool inlineDataProgrammingRequired,
                                                     bool isIndirect,
-                                                    uint32_t requiredWorkGroupOrder) {
+                                                    uint32_t requiredWorkGroupOrder,
+                                                    const HardwareInfo &hwInfo) {
 
     if (isIndirect) {
         walkerCmd.setIndirectParameterEnable(true);
@@ -444,7 +446,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
         walkerCmd.setGenerateLocalId(1);
         walkerCmd.setWalkOrder(requiredWorkGroupOrder);
     }
-    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder);
+    adjustWalkOrder(walkerCmd, requiredWorkGroupOrder, hwInfo);
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
@@ -744,6 +746,6 @@ inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeReg
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder) {}
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 } // namespace NEO

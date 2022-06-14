@@ -98,3 +98,8 @@ HWTEST2_F(HwInfoConfigTest, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValu
     CompilerHwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->setProductConfigForHwInfo(*defaultHwInfo, aotConfig);
     EXPECT_EQ(defaultHwInfo->platform.usRevId, aotConfig.ProductConfigID.Revision);
 }
+
+HWTEST_F(HwInfoConfigTest, givenHwInfoConfigWhenIsAdjustWalkOrderAvailableCallThenFalseReturn) {
+    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+    EXPECT_FALSE(hwInfoConfig.isAdjustWalkOrderAvailable(*defaultHwInfo));
+}

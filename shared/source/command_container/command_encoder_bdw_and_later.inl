@@ -213,7 +213,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
                                                    true,
                                                    false,
                                                    args.isIndirect,
-                                                   args.dispatchInterface->getRequiredWorkgroupOrder());
+                                                   args.dispatchInterface->getRequiredWorkgroupOrder(),
+                                                   hwInfo);
 
     cmd.setPredicateEnable(args.isPredicate);
 
@@ -283,7 +284,8 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
                                                     bool localIdsGenerationByRuntime,
                                                     bool inlineDataProgrammingRequired,
                                                     bool isIndirect,
-                                                    uint32_t requiredWorkGroupOrder) {
+                                                    uint32_t requiredWorkGroupOrder,
+                                                    const HardwareInfo &hwInfo) {
 
     if (isIndirect) {
         walkerCmd.setIndirectParameterEnable(true);
@@ -505,6 +507,6 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder) {}
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
 
 } // namespace NEO

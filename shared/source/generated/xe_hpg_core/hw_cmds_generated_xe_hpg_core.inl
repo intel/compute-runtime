@@ -5207,7 +5207,7 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t ComputeCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1 of COMPUTE WALKER = DWORD 0 of COMPUTE_WALKER_BODY
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_40 : BITFIELD_RANGE(8, 31);
             // DWORD 2
@@ -5219,7 +5219,9 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
             uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
             // DWORD 4
-            uint32_t Reserved_128 : BITFIELD_RANGE(0, 16);
+            uint32_t Reserved_128 : BITFIELD_RANGE(0, 4);
+            uint32_t DispatchWalkOrder : BITFIELD_RANGE(5, 6);
+            uint32_t Reserved_135 : BITFIELD_RANGE(7, 16);
             uint32_t MessageSimd : BITFIELD_RANGE(17, 18);
             uint32_t TileLayout : BITFIELD_RANGE(19, 21);
             uint32_t WalkOrder : BITFIELD_RANGE(22, 24);
@@ -5298,6 +5300,10 @@ typedef struct tagCOMPUTE_WALKER {
         PARTITION_ID_SUPPORTED_MIN = 0x0,
         PARTITION_ID_SUPPORTED_MAX = 0xf,
     } PARTITION_ID;
+    typedef enum tagDISPATCH_WALK_ORDER { // patched
+        LINERAR_WALKER = 0x0,
+        Y_ORDER_WALKER = 0x1,
+    } DISPATCH_WALK_ORDER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_FIXED_SIZE;
@@ -5404,6 +5410,12 @@ typedef struct tagCOMPUTE_WALKER {
     }
     inline PARTITION_TYPE getPartitionType() const {
         return static_cast<PARTITION_TYPE>(TheStructure.Common.PartitionType);
+    }
+    inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) { // patched
+        TheStructure.Common.DispatchWalkOrder = value;
+    }
+    inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const { // patched
+        return static_cast<DISPATCH_WALK_ORDER>(TheStructure.Common.DispatchWalkOrder);
     }
     typedef enum tagINDIRECTDATASTARTADDRESS {
         INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,

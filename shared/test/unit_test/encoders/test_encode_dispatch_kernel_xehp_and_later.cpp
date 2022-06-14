@@ -17,6 +17,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
@@ -612,7 +613,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
     startWorkGroup[2] = 3u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, true, false, false, requiredWorkGroupOrder);
+                                                       0, 0, true, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -646,7 +647,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroup
     startWorkGroup[2] = 3u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, true, false, true, requiredWorkGroupOrder);
+                                                       0, 0, true, false, true, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_TRUE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdYDimension());
@@ -682,7 +683,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenW
     simd = 1;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, true, false, false, requiredWorkGroupOrder);
+                                                       0, 0, true, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -717,7 +718,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
     workGroupSizes[0] = 30u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, true, false, false, requiredWorkGroupOrder);
+                                                       0, 0, true, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -750,7 +751,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     localIdDimensions = 0u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, false, false, false, requiredWorkGroupOrder);
+                                                       0, 0, false, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -784,7 +785,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
     workGroupSizes[1] = workGroupSizes[2] = 2u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, false, false, false, requiredWorkGroupOrder);
+                                                       0, 0, false, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -822,7 +823,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToO
     workGroupSizes[1] = workGroupSizes[2] = 2u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, false, false, false, requiredWorkGroupOrder);
+                                                       0, 0, false, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_EQ(1u, walkerCmd.getMessageSimd());
 }
 
@@ -834,7 +835,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueT
     startWorkGroup[2] = 3u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, 0, true, true, false, requiredWorkGroupOrder);
+                                                       0, 0, true, true, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -867,7 +868,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZ
 
     uint32_t expectedExecutionMask = 0xFFFFu;
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       0, expectedExecutionMask, true, false, false, requiredWorkGroupOrder);
+                                                       0, expectedExecutionMask, true, false, false, requiredWorkGroupOrder, *defaultHwInfo);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
