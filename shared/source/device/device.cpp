@@ -206,8 +206,6 @@ bool Device::createDeviceImpl() {
     auto &hwInfo = getHardwareInfo();
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initGmm();
-
     if (!getDebugger()) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
