@@ -921,7 +921,9 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     }
 
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeBufferAddress: {
-        dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true).stateless = src.offset;
+        auto &argAsPtr = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
+        argAsPtr.stateless = src.offset;
+        argAsPtr.pointerSize = src.size;
         break;
     }
 

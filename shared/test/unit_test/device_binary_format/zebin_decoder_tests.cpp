@@ -5023,6 +5023,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, givenPureStatefulArgWithBufferAddr
                   access_type: readwrite
                 - arg_type: buffer_address
                   offset: 32
+                  size: 8
                   arg_index: 0
               binding_table_indices:
                 - bti_value: 0
@@ -5052,6 +5053,7 @@ TEST(PopulateArgDescriptorCrossthreadPayload, givenPureStatefulArgWithBufferAddr
 
     const auto &arg = programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>();
     EXPECT_EQ(32, arg.stateless);
+    EXPECT_EQ(8, arg.pointerSize);
     EXPECT_FALSE(arg.accessedUsingStatelessAddressingMode);
     EXPECT_TRUE(arg.isPureStateful());
 }
