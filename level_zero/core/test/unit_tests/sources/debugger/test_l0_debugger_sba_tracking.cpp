@@ -60,7 +60,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
     }
     std::vector<NEO::GraphicsAllocation *> allocations;
 
-    auto &allEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
+    auto &allEngines = neoDevice->getMemoryManager()->getRegisteredEngines();
 
     for (auto &engine : allEngines) {
         auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());
@@ -86,7 +86,7 @@ HWTEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainVali
         auto sbaAllocation = sbaBuffer.second;
         ASSERT_NE(nullptr, sbaAllocation);
 
-        auto sbaHeader = reinterpret_cast<SbaTrackedAddresses *>(sbaAllocation->getUnderlyingBuffer());
+        auto sbaHeader = reinterpret_cast<NEO::SbaTrackedAddresses *>(sbaAllocation->getUnderlyingBuffer());
 
         EXPECT_STREQ("sbaarea", sbaHeader->magic);
         EXPECT_EQ(0u, sbaHeader->BindlessSamplerStateBaseAddress);
@@ -146,8 +146,8 @@ HWTEST_F(L0DebuggerMultiSubDeviceTest, givenMultiSubDevicesWhenSbaTrackingBuffer
         EXPECT_TRUE(storageInfo.tileInstanced);
 
         for (uint32_t i = 0; i < numSubDevices; i++) {
-            auto sbaHeader = reinterpret_cast<SbaTrackedAddresses *>(ptrOffset(debugger->perContextSbaAllocations[contextId]->getUnderlyingBuffer(),
-                                                                               debugger->perContextSbaAllocations[contextId]->getUnderlyingBufferSize() * i));
+            auto sbaHeader = reinterpret_cast<NEO::SbaTrackedAddresses *>(ptrOffset(debugger->perContextSbaAllocations[contextId]->getUnderlyingBuffer(),
+                                                                                    debugger->perContextSbaAllocations[contextId]->getUnderlyingBufferSize() * i));
 
             EXPECT_STREQ("sbaarea", sbaHeader->magic);
             EXPECT_EQ(0u, sbaHeader->BindlessSamplerStateBaseAddress);
@@ -245,7 +245,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
     EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa >> 32), cmdSdi->getDataDword1());
 
-    auto expectedGpuVa = gmmHelper->decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
+    auto expectedGpuVa = gmmHelper->decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(NEO::SbaTrackedAddresses, GeneralStateBaseAddress);
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
 
     for (auto i = 0u; i < numCommandLists; i++) {
@@ -415,7 +415,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
     debugger->singleAddressSpaceSbaTracking = 0;
     debugger->sbaTrackingGpuVa.address = 0x45670000;
-    auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
+    auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, GeneralStateBaseAddress);
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -452,7 +452,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, SurfaceStateBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -461,7 +461,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, DynamicStateBaseAddress);
 
     EXPECT_EQ(static_cast<uint32_t>(dsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(dsba >> 32), cmdSdi->getDataDword1());
@@ -471,7 +471,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, IndirectObjectBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(ioba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ioba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -480,7 +480,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, InstructionBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, InstructionBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(iba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(iba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -489,7 +489,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenNonZeroGpuVasWhenProgrammingSbaTrac
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, BindlessSurfaceStateBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -501,7 +501,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
     debugger->sbaTrackingGpuVa.address = 0x45670000;
-    auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
+    auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, GeneralStateBaseAddress);
 
     StackVec<char, 4096> buffer(4096);
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -538,7 +538,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, SurfaceStateBaseAddress);
 
     EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
@@ -548,7 +548,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, DynamicStateBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(dsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(dsba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -557,7 +557,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, IndirectObjectBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, IndirectObjectBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(ioba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ioba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -566,7 +566,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, InstructionBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, InstructionBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(iba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(iba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
@@ -575,7 +575,7 @@ HWTEST_F(PerContextAddressSpaceFixture, givenCanonizedGpuVasWhenProgrammingSbaTr
     sdiItor++;
     cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress);
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(NEO::SbaTrackedAddresses, BindlessSurfaceStateBaseAddress);
     EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
     EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());

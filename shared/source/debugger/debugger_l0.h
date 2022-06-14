@@ -19,9 +19,7 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 class OSInterface;
-} // namespace NEO
 
-namespace L0 {
 #pragma pack(1)
 struct SbaTrackedAddresses {
     char magic[8] = "sbaarea";
@@ -156,4 +154,4 @@ struct DebuggerL0PopulateFactory {
     }
 };
 
-} // namespace L0
+} // namespace NEO

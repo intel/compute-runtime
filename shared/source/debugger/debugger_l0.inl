@@ -8,13 +8,12 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-
-#include "level_zero/core/source/debugger/debugger_l0.h"
 
 #include "hw_cmds.h"
 
-namespace L0 {
+namespace NEO {
 
 template <typename GfxFamily>
 void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) {
@@ -135,4 +134,4 @@ void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream
                                        true);
 }
 
-} // namespace L0
+} // namespace NEO

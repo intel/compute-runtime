@@ -18,6 +18,7 @@ set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
     command_stream_receiver_hw
     command_stream_receiver_simulated_common_hw
     create_device_command_stream_receiver
+    debugger
     direct_submission
     experimental_command_buffer
     implicit_scaling

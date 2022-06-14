@@ -44,7 +44,7 @@ struct DebugSessionWindows : DebugSessionImp {
     bool isVAElf(const zet_debug_memory_space_desc_t *desc, size_t size);
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer);
 
-    ze_result_t readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) override;
+    ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
 
     MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
     ze_result_t handleModuleCreateEvent(DBGUMD_READ_EVENT_MODULE_CREATE_EVENT_PARAMS &moduleCreateParams);

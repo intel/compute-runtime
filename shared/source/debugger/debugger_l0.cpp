@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/debugger/debugger_l0.h"
+#include "shared/source/debugger/debugger_l0.h"
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -18,7 +18,7 @@
 
 #include <cstring>
 
-namespace L0 {
+namespace NEO {
 
 DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
 
@@ -132,4 +132,4 @@ void DebuggerL0::notifyModuleLoadAllocations(const StackVec<NEO::GraphicsAllocat
         }
     }
 }
-} // namespace L0
+} // namespace NEO

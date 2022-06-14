@@ -5,13 +5,16 @@
  *
  */
 
-#include "level_zero/core/source/debugger/debugger_l0.h"
+#include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/os_interface.h"
 
-namespace L0 {
+namespace NEO {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
     auto &hwInfo = device->getHardwareInfo();
     if (!hwInfo.capabilityTable.l0DebuggerSupported) {
-        return std::unique_ptr<DebuggerL0>(nullptr);
+        return nullptr;
     }
     auto success = initDebuggingInOs(device->getRootDeviceEnvironment().osInterface.get());
     if (success) {
@@ -20,4 +23,5 @@ std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
     }
     return std::unique_ptr<DebuggerL0>(nullptr);
 }
-} // namespace L0
+
+} // namespace NEO

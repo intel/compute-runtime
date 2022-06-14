@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -15,7 +16,6 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/context/context_imp.h"
-#include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
@@ -181,7 +181,7 @@ void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neo
         rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = false;
         rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = false;
 
-        rootDeviceEnvironment->debugger = DebuggerL0::create(neoDevice.get());
+        rootDeviceEnvironment->debugger = NEO::DebuggerL0::create(neoDevice.get());
     }
 }
 

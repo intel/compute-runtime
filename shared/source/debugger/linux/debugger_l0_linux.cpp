@@ -5,15 +5,14 @@
  *
  */
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "level_zero/core/source/debugger/debugger_l0.h"
-namespace L0 {
+namespace NEO {
 bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
     if (osInterface != nullptr) {
         auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
@@ -81,4 +80,4 @@ void DebuggerL0::notifyCommandQueueDestroyed() {
     }
 }
 
-} // namespace L0
+} // namespace NEO

@@ -133,16 +133,16 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     auto dynamicStateBaseAddress = commandList->commandContainer.getIndirectHeap(HeapType::DYNAMIC_STATE)->getGraphicsAllocation()->getGpuAddress();
     auto surfaceStateBaseAddress = commandList->commandContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getGraphicsAllocation()->getGpuAddress();
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress)),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, SurfaceStateBaseAddress)),
                              &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(SbaTrackedAddresses, DynamicStateBaseAddress)),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, DynamicStateBaseAddress)),
                              &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(SbaTrackedAddresses, InstructionBaseAddress)),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, InstructionBaseAddress)),
                              &instructionHeapBaseAddress, sizeof(instructionHeapBaseAddress));
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(SbaTrackedAddresses, BindlessSurfaceStateBaseAddress)),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, BindlessSurfaceStateBaseAddress)),
                              &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));

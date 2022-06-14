@@ -8,7 +8,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_l0_debugger.h"
 
 namespace NEO {
-
 struct SKLFamily;
 using GfxFamily = SKLFamily;
 } // namespace NEO

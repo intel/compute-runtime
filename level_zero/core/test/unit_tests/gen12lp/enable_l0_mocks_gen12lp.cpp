@@ -11,6 +11,7 @@ namespace NEO {
 
 struct TGLLPFamily;
 using GfxFamily = TGLLPFamily;
+
 } // namespace NEO
 
 namespace L0 {

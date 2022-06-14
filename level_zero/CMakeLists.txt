@@ -237,6 +237,7 @@ if(BUILD_WITH_L0)
   if(WIN32)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
+                   ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
@@ -262,6 +263,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices_additional.inl
                    ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
+                   ${NEO_SHARED_DIRECTORY}/dll/linux/debugger_l0_dll_linux.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
@@ -374,7 +376,6 @@ if(BUILD_WITH_L0)
                                    L0_SOURCES_WINDOWS
                                    L0_SRCS_CACHE_RESERVATION
                                    L0_SRCS_COMPILER_INTERFACE
-                                   L0_SRCS_DEBUGGER
                                    L0_SRCS_DRIVER
                                    L0_SRCS_OCLOC_SHARED
     )
