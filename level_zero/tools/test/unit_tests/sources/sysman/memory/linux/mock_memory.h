@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
+#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 using namespace NEO;

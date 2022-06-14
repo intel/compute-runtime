@@ -36,6 +36,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
 
+#include "drm/i915_drm.h"
+
 #include <cstdio>
 #include <cstring>
 #include <linux/limits.h>
@@ -225,7 +227,7 @@ int Drm::getQueueSliceCount(GemContextParamSseu *sseu) {
     GemContextParam contextParam = {};
     contextParam.param = I915_CONTEXT_PARAM_SSEU;
     sseu->engine.engineClass = ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender);
-    sseu->engine.engineInstance = I915_EXEC_DEFAULT;
+    sseu->engine.engineInstance = ioctlHelper->getDrmParamValue(DrmParam::ExecDefault);
     contextParam.value = reinterpret_cast<uint64_t>(sseu);
     contextParam.size = sizeof(struct GemContextParamSseu);
 
@@ -1082,12 +1084,15 @@ bool Drm::hasPageFaultSupport() const {
 
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     auto engineInfo = this->engineInfo.get();
+
+    auto retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmEngineMapper::engineNodeMap(engineType)));
+
     if (!engineInfo) {
-        return DrmEngineMapper::engineNodeMap(engineType);
+        return retVal;
     }
     auto engine = engineInfo->getEngineInstance(deviceIndex, engineType);
     if (!engine) {
-        return DrmEngineMapper::engineNodeMap(engineType);
+        return retVal;
     }
 
     bool useVirtualEnginesForCcs = !engineInstancedDevice;
@@ -1173,10 +1178,11 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     param.param = I915_CONTEXT_PARAM_ENGINES;
     param.value = castToUint64(&contextEngines);
 
-    auto retVal = ioctl(DrmIoctl::GemContextSetparam, &param);
-    UNRECOVERABLE_IF(retVal != 0);
+    auto ioctlValue = ioctl(DrmIoctl::GemContextSetparam, &param);
+    UNRECOVERABLE_IF(ioctlValue != 0);
 
-    return I915_EXEC_DEFAULT;
+    retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmParam::ExecDefault));
+    return retVal;
 }
 
 void Drm::waitForBind(uint32_t vmHandleId) {

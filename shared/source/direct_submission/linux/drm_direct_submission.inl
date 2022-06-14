@@ -81,7 +81,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     auto bb = static_cast<DrmAllocation *>(this->ringCommandStream.getGraphicsAllocation())->getBO();
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto execFlags = osContextLinux->getEngineFlag() | I915_EXEC_NO_RELOC;
+    auto &drm = osContextLinux->getDrm();
+    auto execFlags = osContextLinux->getEngineFlag() | drm.getIoctlHelper()->getDrmParamValue(DrmParam::ExecNoReloc);
     auto &drmContextIds = osContextLinux->getDrmContextIds();
 
     ExecObject execObject{};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,18 +9,19 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 #include "drm/i915_drm.h"
 
 namespace NEO {
 
-unsigned int DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
+DrmParam DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
     if (EngineHelpers::isCcs(engineType)) {
-        return I915_EXEC_DEFAULT;
+        return DrmParam::ExecDefault;
     } else if (aub_stream::ENGINE_BCS == engineType || EngineHelpers::isLinkBcs(engineType)) {
-        return I915_EXEC_BLT;
+        return DrmParam::ExecBlt;
     }
     UNRECOVERABLE_IF(engineType != aub_stream::ENGINE_RCS && engineType != aub_stream::ENGINE_CCCS);
-    return I915_EXEC_RENDER;
+    return DrmParam::ExecRender;
 }
 } // namespace NEO

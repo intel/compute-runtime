@@ -58,6 +58,10 @@ TEST(IoctlHelperUpstreamTest, whenGettingDrmParamValueThenPropertValueIsReturned
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassVideoEnhance), static_cast<int>(I915_ENGINE_CLASS_VIDEO_ENHANCE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalid), static_cast<int>(I915_ENGINE_CLASS_INVALID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::EngineClassInvalidNone), static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecBlt), static_cast<int>(I915_EXEC_BLT));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecDefault), static_cast<int>(I915_EXEC_DEFAULT));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecNoReloc), static_cast<int>(I915_EXEC_NO_RELOC));
+    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ExecRender), static_cast<int>(I915_EXEC_RENDER));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamRevision), static_cast<int>(I915_PARAM_REVISION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::ParamHasExecSoftpin), static_cast<int>(I915_PARAM_HAS_EXEC_SOFTPIN));

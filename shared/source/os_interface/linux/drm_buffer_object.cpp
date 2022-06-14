@@ -19,6 +19,8 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "drm/i915_drm.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <map>

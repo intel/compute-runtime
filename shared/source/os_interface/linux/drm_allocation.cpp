@@ -14,6 +14,8 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include "drm/i915_drm.h"
+
 #include <sstream>
 
 namespace NEO {

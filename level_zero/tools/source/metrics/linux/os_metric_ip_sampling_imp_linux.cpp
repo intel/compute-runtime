@@ -17,6 +17,8 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 
+#include "drm/i915_drm.h"
+
 #include <algorithm>
 
 namespace L0 {

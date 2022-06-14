@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
+#include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "gtest/gtest.h"
 

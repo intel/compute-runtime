@@ -12,6 +12,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
+#include "drm/i915_drm.h"
 #include "drm/intel_hwconfig_types.h"
 #include "igfxfmid.h"
 #include "sysman/linux/os_sysman_imp.h"

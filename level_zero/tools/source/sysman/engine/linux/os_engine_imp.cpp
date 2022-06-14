@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/linux/engine_info.h"
 
+#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {

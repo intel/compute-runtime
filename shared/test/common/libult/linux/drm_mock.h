@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
+#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <cstdio>

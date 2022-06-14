@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,10 @@
 
 namespace NEO {
 
+enum class DrmParam;
 class DrmEngineMapper {
   public:
-    static unsigned int engineNodeMap(aub_stream::EngineType engineType);
+    static DrmParam engineNodeMap(aub_stream::EngineType engineType);
 };
 
 } // namespace NEO

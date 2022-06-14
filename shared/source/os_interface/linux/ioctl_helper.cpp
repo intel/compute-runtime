@@ -196,6 +196,14 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
+    case DrmParam::ExecBlt:
+        return I915_EXEC_BLT;
+    case DrmParam::ExecDefault:
+        return I915_EXEC_DEFAULT;
+    case DrmParam::ExecNoReloc:
+        return I915_EXEC_NO_RELOC;
+    case DrmParam::ExecRender:
+        return I915_EXEC_RENDER;
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:

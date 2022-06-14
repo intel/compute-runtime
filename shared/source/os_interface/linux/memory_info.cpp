@@ -15,6 +15,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include "drm/i915_drm.h"
+
 #include <iostream>
 
 namespace NEO {

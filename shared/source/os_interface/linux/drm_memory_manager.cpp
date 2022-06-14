@@ -31,6 +31,8 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "drm/i915_drm.h"
+
 #include <cstring>
 #include <iostream>
 #include <memory>
