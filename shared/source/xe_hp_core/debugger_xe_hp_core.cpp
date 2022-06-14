@@ -5,9 +5,9 @@
  *
  */
 
-#include "level_zero/core/source/debugger/debugger_l0.inl"
-#include "level_zero/core/source/debugger/debugger_l0_tgllp_and_later.inl"
-namespace L0 {
+#include "shared/source/debugger/debugger_l0.inl"
+#include "shared/source/debugger/debugger_l0_tgllp_and_later.inl"
+namespace NEO {
 
 using Family = NEO::XeHpFamily;
 
@@ -15,4 +15,4 @@ DebuggerL0PopulateFactory<IGFX_XE_HP_CORE, Family> debuggerXE_HP_CORE;
 
 template class DebuggerL0Hw<Family>;
 
-} // namespace L0
+} // namespace NEO

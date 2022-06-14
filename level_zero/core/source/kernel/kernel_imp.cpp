@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -26,7 +27,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"

@@ -219,7 +219,7 @@ struct DebugSessionLinux : DebugSessionImp {
     uint64_t extractVaFromUuidString(std::string &uuid);
 
     bool readModuleDebugArea() override;
-    ze_result_t readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) override;
+    ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
     void readStateSaveAreaHeader() override;
 
     void applyResumeWa(std::vector<ze_device_thread_t> threads, uint8_t *bitmask, size_t bitmaskSize);

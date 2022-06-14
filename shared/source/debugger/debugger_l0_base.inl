@@ -5,7 +5,7 @@
  *
  */
 
-namespace L0 {
+namespace NEO {
 template <typename GfxFamily>
 size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddressCount) {
     if (singleAddressSpaceSbaTracking) {
@@ -19,4 +19,4 @@ template <typename GfxFamily>
 void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba) {
     UNRECOVERABLE_IF(true);
 }
-} // namespace L0
+} // namespace NEO

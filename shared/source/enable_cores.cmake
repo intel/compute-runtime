@@ -18,6 +18,7 @@ set(CORE_RUNTIME_SRCS_COREX_CPP_BASE
     command_stream_receiver_hw
     command_stream_receiver_simulated_common_hw
     create_device_command_stream_receiver
+    debugger
     direct_submission
     experimental_command_buffer
     implicit_scaling
@@ -126,6 +127,11 @@ macro(macro_for_each_platform)
       endif()
 
       set(SRC_FILE ${PATH_TO_CORE}hw_info_${PLATFORM_IT_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
+      endif()
+
+      set(SRC_FILE ${PATH_TO_CORE}debugger_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
       endif()

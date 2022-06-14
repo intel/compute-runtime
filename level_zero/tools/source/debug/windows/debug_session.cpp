@@ -280,7 +280,7 @@ bool DebugSessionWindows::readModuleDebugArea() {
     return false;
 }
 
-ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) {
+ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

@@ -152,6 +152,7 @@ if(WIN32)
                                  NEO_CORE_OS_INTERFACE_WDDM
                                  NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
                                  NEO_CORE_SKU_INFO_WINDOWS
+                                 NEO_CORE_SRCS_DEBUGGER_WINDOWS
                                  NEO_CORE_SRCS_HELPERS_WINDOWS
                                  NEO_CORE_UTILITIES_WINDOWS
                                  NEO_CORE_EXECUTION_ENVIRONMENT_WDDM
@@ -162,6 +163,7 @@ else()
                                  NEO_CORE_DIRECT_SUBMISSION_LINUX
                                  NEO_CORE_OS_INTERFACE_LINUX
                                  NEO_CORE_PAGE_FAULT_MANAGER_LINUX
+                                 NEO_CORE_SRCS_DEBUGGER_LINUX
                                  NEO_CORE_UTILITIES_LINUX
                                  NEO_CORE_EXECUTION_ENVIRONMENT_DRM
                                  NEO_CORE_AIL_LINUX

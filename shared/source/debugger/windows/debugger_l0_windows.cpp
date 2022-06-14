@@ -5,14 +5,13 @@
  *
  */
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/core/source/debugger/debugger_l0.h"
-
-namespace L0 {
+namespace NEO {
 bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 
     if (osInterface == nullptr) {
@@ -46,4 +45,4 @@ void DebuggerL0::notifyCommandQueueCreated() {
 void DebuggerL0::notifyCommandQueueDestroyed() {
 }
 
-} // namespace L0
+} // namespace NEO

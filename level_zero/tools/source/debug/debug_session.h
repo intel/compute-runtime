@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/os_thread.h"
 
-#include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
@@ -104,7 +104,7 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     virtual bool isBindlessSystemRoutine();
     virtual bool readModuleDebugArea() = 0;
-    virtual ze_result_t readSbaBuffer(EuThread::ThreadId threadId, SbaTrackedAddresses &sbaBuffer) = 0;
+    virtual ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) = 0;
 
     void fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices);
 
@@ -112,7 +112,7 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     size_t getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId threadId);
 
-    DebugAreaHeader debugArea;
+    NEO::DebugAreaHeader debugArea;
 
     Device *connectedDevice = nullptr;
     std::map<uint64_t, std::unique_ptr<EuThread>> allThreads;

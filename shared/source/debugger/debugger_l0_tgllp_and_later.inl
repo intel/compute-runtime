@@ -5,7 +5,7 @@
  *
  */
 
-namespace L0 {
+namespace NEO {
 template <typename GfxFamily>
 size_t DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(size_t trackedAddressCount) {
     if (singleAddressSpaceSbaTracking) {
@@ -64,7 +64,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
 
         // Jump to SDI command that is modified
         auto newBuffer = cmdStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-        const auto nextCommand = ptrOffset(cmdStreamGpuBase, ptrDiff(reinterpret_cast<uint64_t>(cmdStream.getSpace(0)), cmdStreamCpuBase));
+        const auto nextCommand = ptrOffset(cmdStreamGpuBase, ptrDiff(cmdStream.getSpace(0), cmdStreamCpuBase));
 
         MI_BATCH_BUFFER_START bbCmd = GfxFamily::cmdInitBatchBufferStart;
         bbCmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
@@ -95,7 +95,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
 
         // Jump to SDI command that is modified
         auto newBuffer = cmdStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-        const auto addressOfSDI = ptrOffset(cmdStreamGpuBase, ptrDiff(reinterpret_cast<uint64_t>(cmdStream.getSpace(0)), cmdStreamCpuBase));
+        const auto addressOfSDI = ptrOffset(cmdStreamGpuBase, ptrDiff(cmdStream.getSpace(0), cmdStreamCpuBase));
 
         // Cmd to store value ( SBA address )
         auto miStoreSbaField = cmdStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
@@ -141,7 +141,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     if (fieldOffsetAndValue.size()) {
 
         auto previousBuffer = cmdStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-        const auto addressOfPreviousBuffer = ptrOffset(cmdStreamGpuBase, ptrDiff(reinterpret_cast<uint64_t>(cmdStream.getSpace(0)), cmdStreamCpuBase));
+        const auto addressOfPreviousBuffer = ptrOffset(cmdStreamGpuBase, ptrDiff(cmdStream.getSpace(0), cmdStreamCpuBase));
 
         MI_BATCH_BUFFER_START bbCmd = GfxFamily::cmdInitBatchBufferStart;
         bbCmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
@@ -156,4 +156,4 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
     }
 }
 
-} // namespace L0
+} // namespace NEO
