@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
@@ -62,5 +62,11 @@ struct Mock<Context> : public Context {
     ADDMETHOD_NOBASE(createImage, ze_result_t, ZE_RESULT_SUCCESS, (ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage));
 };
 
+struct ContextShareableMock : public L0::ContextImp {
+    ContextShareableMock(L0::DriverHandle *driverHandle) : L0::ContextImp(driverHandle) {}
+    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
+        return true;
+    }
+};
 } // namespace ult
 } // namespace L0

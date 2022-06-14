@@ -30,13 +30,6 @@ struct ContextImp;
 namespace ult {
 class MockBuiltins;
 
-struct ContextShareableMock : public L0::ContextImp {
-    ContextShareableMock(L0::DriverHandleImp *driverHandle) : L0::ContextImp(driverHandle) {}
-    bool isShareableMemory(const void *pNext, bool exportableMemory, NEO::Device *neoDevice) override {
-        return true;
-    }
-};
-
 struct DeviceFixture {
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
     void SetUp();    // NOLINT(readability-identifier-naming)
@@ -149,8 +142,9 @@ struct MultipleDevicesWithCustomHwInfo {
     const uint32_t numSubDevices = 2u;
 };
 
-template <uint32_t copyEngineCount, uint32_t implicitScaling>
-struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public MultiDeviceFixture {
+struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDeviceFixture {
+
+    SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(uint32_t copyEngineCount, uint32_t implicitScaling) : implicitScaling(implicitScaling), expectedCopyEngineCount(copyEngineCount){};
     NEO::MockCompilerEnableGuard compilerMock = NEO::MockCompilerEnableGuard(true);
 
     DebugManagerStateRestore restorer;
@@ -164,77 +158,20 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public MultiDeviceFi
     NEO::Device *neoDevice = nullptr;
     L0::DeviceImp *deviceImp = nullptr;
 
-    NEO::HardwareInfo hwInfo;
-    uint32_t expectedCopyEngineCount = copyEngineCount;
+    NEO::HardwareInfo hwInfo{};
+    const uint32_t implicitScaling;
+    const uint32_t expectedCopyEngineCount;
     uint32_t expectedComputeEngineCount = 0;
 
     uint32_t numEngineGroups = 0;
     uint32_t subDeviceNumEngineGroups = 0;
 
-    void SetUp() {
-        DebugManagerStateRestore restorer;
-        DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
-        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.featureTable.flags.ftrRcsNode = false;
-        hwInfo.featureTable.flags.ftrCCSNode = true;
-        // hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-        if (expectedCopyEngineCount != 0) {
-            hwInfo.capabilityTable.blitterOperationsSupported = true;
-            hwInfo.featureTable.ftrBcsInfo = maxNBitValue(expectedCopyEngineCount);
-        } else {
-            hwInfo.capabilityTable.blitterOperationsSupported = false;
-        }
-
-        if (implicitScaling) {
-            expectedComputeEngineCount = 1u;
-        } else {
-            expectedComputeEngineCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-        }
-
-        MockDevice *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
-
-        NEO::DeviceVector devices;
-        devices.push_back(std::unique_ptr<NEO::Device>(mockDevice));
-
-        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        ze_result_t res = driverHandle->initialize(std::move(devices));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-        ze_context_handle_t hContext;
-        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-        res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-
-        device = driverHandle->devices[0];
-        neoDevice = device->getNEODevice();
-        deviceImp = static_cast<L0::DeviceImp *>(device);
-
-        NEO::Device *activeDevice = deviceImp->getActiveDevice();
-        auto &engineGroups = activeDevice->getRegularEngineGroups();
-        numEngineGroups = static_cast<uint32_t>(engineGroups.size());
-
-        if (activeDevice->getSubDevices().size() > 0) {
-            NEO::Device *activeSubDevice = activeDevice->getSubDevice(0u);
-            (void)activeSubDevice;
-            auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
-            (void)subDeviceEngineGroups;
-
-            for (uint32_t i = 0; i < subDeviceEngineGroups.size(); i++) {
-                if (subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::Copy ||
-                    subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
-                    subDeviceNumEngineGroups += 1;
-                }
-            }
-        }
-    }
-
-    void TearDown() {
-        context->destroy();
-    }
+    void SetUp();
+    void TearDown();
+};
+template <uint32_t copyEngineCount, uint32_t implicitScalingArg>
+struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl {
+    SingleRootMultiSubDeviceFixtureWithImplicitScaling() : SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(copyEngineCount, implicitScalingArg){};
 };
 
 } // namespace ult

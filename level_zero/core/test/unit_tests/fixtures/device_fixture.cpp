@@ -154,6 +154,70 @@ void SingleRootMultiSubDeviceFixture::SetUp() {
     device = driverHandle->devices[0];
     neoDevice = device->getNEODevice();
 }
+void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::SetUp() {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
+    DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+
+    if (expectedCopyEngineCount != 0) {
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+        hwInfo.featureTable.ftrBcsInfo = maxNBitValue(expectedCopyEngineCount);
+    } else {
+        hwInfo.capabilityTable.blitterOperationsSupported = false;
+    }
+
+    if (implicitScaling) {
+        expectedComputeEngineCount = 1u;
+    } else {
+        expectedComputeEngineCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    }
+
+    MockDevice *mockDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(mockDevice));
+
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    device = driverHandle->devices[0];
+    neoDevice = device->getNEODevice();
+    deviceImp = static_cast<L0::DeviceImp *>(device);
+
+    NEO::Device *activeDevice = deviceImp->getActiveDevice();
+    auto &engineGroups = activeDevice->getRegularEngineGroups();
+    numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+    if (activeDevice->getSubDevices().size() > 0) {
+        NEO::Device *activeSubDevice = activeDevice->getSubDevice(0u);
+        (void)activeSubDevice;
+        auto &subDeviceEngineGroups = activeSubDevice->getRegularEngineGroups();
+        (void)subDeviceEngineGroups;
+
+        for (uint32_t i = 0; i < subDeviceEngineGroups.size(); i++) {
+            if (subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::Copy ||
+                subDeviceEngineGroups[i].engineGroupType == NEO::EngineGroupType::LinkedCopy) {
+                subDeviceNumEngineGroups += 1;
+            }
+        }
+    }
+}
+
+void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::TearDown() {
+    context->destroy();
+}
 
 void GetMemHandlePtrTestFixture::SetUp() {
     NEO::MockCompilerEnableGuard mock(true);
