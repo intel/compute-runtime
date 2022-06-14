@@ -180,7 +180,6 @@ struct SvmDeviceAllocationCacheTestDataType {
                                          std::map<uint32_t, DeviceBitfield> &subdeviceBitFields,
                                          Device *device,
                                          std::string name) : allocationSize(allocationSize),
-                                                             allocation(nullptr),
                                                              unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY,
                                                                                      rootDeviceIndicesArg,
                                                                                      subdeviceBitFields),
@@ -188,7 +187,7 @@ struct SvmDeviceAllocationCacheTestDataType {
         unifiedMemoryProperties.device = device;
     };
     size_t allocationSize;
-    void *allocation;
+    void *allocation{nullptr};
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     std::string name;
 };
