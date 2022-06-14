@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/os_interface/windows/os_interface_win_tests.h"
+#include "shared/test/unit_test/os_interface/windows/os_interface_win_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/windows/os_context_win.h"

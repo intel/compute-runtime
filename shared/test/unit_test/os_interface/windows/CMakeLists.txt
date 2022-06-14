@@ -9,11 +9,14 @@ set(NEO_CORE_OS_INTERFACE_TESTS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_tests_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_win_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/um_km_data_translator_tests.cpp

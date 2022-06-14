@@ -44,8 +44,6 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-
 #include "hw_cmds.h"
 
 using namespace NEO;
@@ -680,17 +678,17 @@ TEST_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsList
 
 TEST_F(WddmCommandStreamTest, WhenMakingResidentAndNonResidentThenAllocationIsMovedCorrectly) {
     GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    Buffer *buffer = new AlignedBuffer(gfxAllocation);
 
-    csr->makeResident(*buffer->getGraphicsAllocation(csr->getRootDeviceIndex()));
+    ASSERT_NE(gfxAllocation, nullptr);
+
+    csr->makeResident(*gfxAllocation);
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(gfxAllocation, csr->getResidencyAllocations()[0]);
 
-    csr->makeNonResident(*buffer->getGraphicsAllocation(csr->getRootDeviceIndex()));
+    csr->makeNonResident(*gfxAllocation);
     EXPECT_EQ(gfxAllocation, csr->getEvictionAllocations()[0]);
 
-    delete buffer;
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 

@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 namespace NEO {
@@ -124,4 +125,10 @@ class OSInterface : public NonCopyableClass {
   protected:
     std::unique_ptr<DriverModel> driverModel = nullptr;
 };
+
+static_assert(!std::is_move_constructible_v<NEO::OSInterface>);
+static_assert(!std::is_copy_constructible_v<NEO::OSInterface>);
+static_assert(!std::is_move_assignable_v<NEO::OSInterface>);
+static_assert(!std::is_copy_assignable_v<NEO::OSInterface>);
+
 } // namespace NEO
