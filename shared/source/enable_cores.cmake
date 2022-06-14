@@ -56,6 +56,11 @@ macro(macro_for_each_platform)
       list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
     endif()
 
+    set(SRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}/additional_files_${CORE_TYPE_LOWER}.cmake)
+    if(EXISTS ${SRC_FILE})
+      include(${SRC_FILE})
+    endif()
+
     foreach(BRANCH ${BRANCH_DIR_LIST})
       set(PATH_TO_CORE ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH})
 
