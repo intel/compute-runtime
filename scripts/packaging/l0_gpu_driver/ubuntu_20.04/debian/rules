@@ -35,3 +35,6 @@ override_dh_install:
 	rm -rf debian/intel-level-zero-gpu/usr/lib/${DEB_TARGET_MULTIARCH}/libocloc.so
 	rm -rvf debian/intel-level-zero-gpu/usr/lib/debug
 	dh_install
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz
