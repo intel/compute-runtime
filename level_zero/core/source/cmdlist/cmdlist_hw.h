@@ -78,7 +78,7 @@ struct CommandListCoreFamily : CommandListImp {
                                 ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
-                                   const ze_group_count_t *pThreadGroupDimensions,
+                                   const ze_group_count_t *threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
                                    const CmdListKernelLaunchParams &launchParams) override;
@@ -165,7 +165,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
                                                               uint64_t srcOffset, uint64_t size,
                                                               uint64_t elementSize, Builtin builtin,
-                                                              ze_event_handle_t hSignalEvent,
+                                                              Event *signalEvent,
                                                               bool isStateless);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
@@ -183,7 +183,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                             ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent,
+                                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
+                                                            Event *signalEvent,
                                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -203,7 +204,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                                 size_t patternSize, size_t size,
-                                                ze_event_handle_t hSignalEvent,
+                                                Event *signalEvent,
                                                 uint32_t numWaitEvents,
                                                 ze_event_handle_t *phWaitEvents);
 
@@ -213,15 +214,18 @@ struct CommandListCoreFamily : CommandListImp {
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch,
                                                      size_t bytesPerPixel, const Vec3<size_t> &copySize,
-                                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize, ze_event_handle_t hSignalEvent);
+                                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
+                                                     Event *signalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
-                                                              const ze_group_count_t *pThreadGroupDimensions,
-                                                              ze_event_handle_t hEvent,
+                                                              const ze_group_count_t *threadGroupDimensions,
+                                                              Event *event,
                                                               const CmdListKernelLaunchParams &launchParams);
-    ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions, ze_event_handle_t hEvent,
+    ze_result_t appendLaunchKernelSplit(ze_kernel_handle_t hKernel,
+                                        const ze_group_count_t *threadGroupDimensions,
+                                        Event *event,
                                         const CmdListKernelLaunchParams &launchParams);
-    ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
+    ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isMultiOsContextCapable, bool isCooperative);
     void clearCommandsToPatch();
 
@@ -229,13 +233,13 @@ struct CommandListCoreFamily : CommandListImp {
                                   const void **pRanges);
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]);
-    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *pThreadGroupDimensions);
-    void appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker, bool maskLsb, bool workloadPartition);
+    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t *threadGroupDimensions);
+    void appendWriteKernelTimestamp(Event *event, bool beforeWalker, bool maskLsb, bool workloadPartition);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
-    void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker, bool workloadPartition);
-    void appendEventForProfilingAllWalkers(ze_event_handle_t hEvent, bool beforeWalker);
-    void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
-    void appendSignalEventPostWalker(ze_event_handle_t hEvent, bool workloadPartition);
+    void appendEventForProfiling(Event *event, bool beforeWalker, bool workloadPartition);
+    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker);
+    void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
+    void appendSignalEventPostWalker(Event *event, bool workloadPartition);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();
@@ -245,7 +249,7 @@ struct CommandListCoreFamily : CommandListImp {
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
-    void addFlushRequiredCommand(bool flushOperationRequired, ze_event_handle_t signalEvent);
+    void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
 
     size_t cmdListCurrentStartOffset = 0;
     bool containsAnyKernel = false;

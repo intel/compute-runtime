@@ -185,12 +185,11 @@ void CommandList::handleIndirectAllocationResidency() {
     }
 }
 
-bool CommandList::setupTimestampEventForMultiTile(ze_event_handle_t signalEvent) {
+bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
     if (this->partitionCount > 1 &&
         signalEvent) {
-        auto event = Event::fromHandle(signalEvent);
-        if (event->isEventTimestampFlagSet()) {
-            event->setPacketsInUse(this->partitionCount);
+        if (signalEvent->isEventTimestampFlagSet()) {
+            signalEvent->setPacketsInUse(this->partitionCount);
             return true;
         }
     }

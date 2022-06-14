@@ -1874,7 +1874,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     auto globalOffset = event->getGlobalStartOffset();
     EXPECT_EQ(baseAddr, event->getPacketAddress(device));
 
-    commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
+    commandList->appendEventForProfilingCopyCommand(event.get(), true);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
@@ -1907,7 +1907,7 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
-    commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
+    commandList->appendEventForProfilingCopyCommand(event.get(), false);
 
     auto contextOffset = event->getContextEndOffset();
     auto globalOffset = event->getGlobalEndOffset();

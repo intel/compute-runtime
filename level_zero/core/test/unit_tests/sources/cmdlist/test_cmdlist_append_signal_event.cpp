@@ -318,7 +318,7 @@ HWTEST2_F(CommandListAppendSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
-    commandList->appendSignalEventPostWalker(event->toHandle(), false);
+    commandList->appendSignalEventPostWalker(event.get(), false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
     auto gpuAddress = event->getGpuAddress(device);

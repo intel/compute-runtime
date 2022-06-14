@@ -35,13 +35,13 @@ class CommandEncodeStatesFixture : public DeviceFixture {
 
     EncodeDispatchKernelArgs createDefaultDispatchKernelArgs(Device *device,
                                                              DispatchKernelEncoderI *dispatchInterface,
-                                                             const void *pThreadGroupDimensions,
+                                                             const void *threadGroupDimensions,
                                                              bool requiresUncachedMocs) {
         EncodeDispatchKernelArgs args{
             0,                        // eventAddress
             device,                   // device
             dispatchInterface,        // dispatchInterface
-            pThreadGroupDimensions,   // pThreadGroupDimensions
+            threadGroupDimensions,    // threadGroupDimensions
             PreemptionMode::Disabled, // preemptionMode
             1,                        // partitionCount
             false,                    // isIndirect

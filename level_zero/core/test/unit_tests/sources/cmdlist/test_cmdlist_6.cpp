@@ -111,175 +111,6 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_FALSE(commandListImmediate.containsAnyKernel);
 }
 
-using CommandListCreate = Test<DeviceFixture>;
-
-HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResetingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    ASSERT_NE(nullptr, commandList);
-    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
-
-    commandList->indirectAllocationsAllowed = true;
-    commandList->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
-    commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
-    commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-
-    returnValue = commandList->reset();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    EXPECT_FALSE(commandList->indirectAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectSharedAllocationsAllowed);
-    EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
-}
-
-HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
-    for (auto testValue : ::testing::Bool()) {
-        MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
-        commandList.initialize(device, NEO::EngineGroupType::Compute, 0u);
-        commandList.containsCooperativeKernelsFlag = testValue;
-        EXPECT_EQ(testValue, commandList.containsCooperativeKernels());
-        commandList.reset();
-        EXPECT_FALSE(commandList.containsCooperativeKernels());
-    }
-}
-
-HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenPartitionCountIsReversedToOne) {
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
-                                                                     device,
-                                                                     NEO::EngineGroupType::Compute,
-                                                                     0u,
-                                                                     returnValue));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, commandList->partitionCount);
-
-    returnValue = commandList->reset();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, commandList->partitionCount);
-}
-
-HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    ASSERT_NE(nullptr, commandList);
-    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
-    auto commandStream = commandList->commandContainer.getCommandStream();
-
-    auto usedSpaceBefore = commandStream->getUsed();
-
-    using MI_NOOP = typename FamilyType::MI_NOOP;
-    MI_NOOP cmd = FamilyType::cmdInitNoop;
-    uint32_t uniqueIDforTest = 0x12345u;
-    cmd.setIdentificationNumber(uniqueIDforTest);
-
-    size_t sizeToReserveForCommand = sizeof(cmd);
-    void *ptrToReservedMemory = nullptr;
-    returnValue = commandList->reserveSpace(sizeToReserveForCommand, &ptrToReservedMemory);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-    if (ptrToReservedMemory != nullptr) {
-        *reinterpret_cast<MI_NOOP *>(ptrToReservedMemory) = cmd;
-    }
-
-    auto usedSpaceAfter = commandStream->getUsed();
-    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, commandStream->getCpuBase(), usedSpaceAfter));
-
-    auto itor = cmdList.begin();
-    while (itor != cmdList.end()) {
-        using MI_NOOP = typename FamilyType::MI_NOOP;
-        itor = find<MI_NOOP *>(itor, cmdList.end());
-        if (itor == cmdList.end())
-            break;
-
-        auto cmd = genCmdCast<MI_NOOP *>(*itor);
-        if (uniqueIDforTest == cmd->getIdentificationNumber()) {
-            break;
-        }
-
-        itor++;
-    }
-    ASSERT_NE(itor, cmdList.end());
-}
-
-TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingCommandListThenInvalidArgumentErrorIsReturned) {
-    auto numAvailableEngineGroups = static_cast<uint32_t>(neoDevice->getRegularEngineGroups().size());
-    ze_command_list_handle_t commandList = nullptr;
-    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    desc.commandQueueGroupOrdinal = numAvailableEngineGroups;
-    auto returnValue = device->createCommandList(&desc, &commandList);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-    EXPECT_EQ(nullptr, commandList);
-
-    ze_command_queue_desc_t desc2 = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    desc2.ordinal = numAvailableEngineGroups;
-    desc2.index = 0;
-    returnValue = device->createCommandListImmediate(&desc2, &commandList);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-    EXPECT_EQ(nullptr, commandList);
-
-    desc2.ordinal = 0;
-    desc2.index = 0x1000;
-    returnValue = device->createCommandListImmediate(&desc2, &commandList);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-    EXPECT_EQ(nullptr, commandList);
-}
-
-TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingCommandListThenValidateQueueOrdinalUsingSubDeviceEngines) {
-    NEO::UltDeviceFactory deviceFactory{1, 2};
-    auto &rootDevice = *deviceFactory.rootDevices[0];
-    auto &subDevice0 = *deviceFactory.subDevices[0];
-    rootDevice.regularEngineGroups.resize(1);
-    subDevice0.getRegularEngineGroups().push_back(NEO::Device::EngineGroupT{});
-    subDevice0.getRegularEngineGroups().back().engineGroupType = EngineGroupType::Compute;
-    subDevice0.getRegularEngineGroups().back().engines.resize(1);
-    subDevice0.getRegularEngineGroups().back().engines[0].commandStreamReceiver = &rootDevice.getGpgpuCommandStreamReceiver();
-    auto ordinal = static_cast<uint32_t>(subDevice0.getRegularEngineGroups().size() - 1);
-    Mock<L0::DeviceImp> l0RootDevice(&rootDevice, rootDevice.getExecutionEnvironment());
-
-    ze_command_list_handle_t commandList = nullptr;
-    ze_command_list_desc_t cmdDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    cmdDesc.commandQueueGroupOrdinal = ordinal;
-    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    queueDesc.ordinal = ordinal;
-    queueDesc.index = 0;
-
-    l0RootDevice.driverHandle = driverHandle.get();
-
-    l0RootDevice.implicitScalingCapable = true;
-    auto returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-    EXPECT_EQ(nullptr, commandList);
-
-    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-    EXPECT_EQ(nullptr, commandList);
-
-    l0RootDevice.implicitScalingCapable = false;
-    returnValue = l0RootDevice.createCommandList(&cmdDesc, &commandList);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_NE(nullptr, commandList);
-    L0::CommandList::fromHandle(commandList)->destroy();
-    commandList = nullptr;
-
-    returnValue = l0RootDevice.createCommandListImmediate(&queueDesc, &commandList);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_NE(nullptr, commandList);
-    L0::CommandList::fromHandle(commandList)->destroy();
-}
-
 using CommandListTest = Test<DeviceFixture>;
 using IsDcFlushSupportedPlatform = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HP_CORE>;
 
@@ -356,7 +187,6 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndN
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    ze_event_handle_t eventHandle = event->toHandle();
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
@@ -365,7 +195,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndN
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, eventHandle);
+    commandList->addFlushRequiredCommand(true, event.get());
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
 
@@ -395,7 +225,6 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    ze_event_handle_t eventHandle = event->toHandle();
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
@@ -404,7 +233,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, eventHandle);
+    commandList->addFlushRequiredCommand(true, event.get());
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }

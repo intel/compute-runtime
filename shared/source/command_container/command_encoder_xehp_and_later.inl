@@ -58,7 +58,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
 
-    auto threadDims = static_cast<const uint32_t *>(args.pThreadGroupDimensions);
+    auto threadDims = static_cast<const uint32_t *>(args.threadGroupDimensions);
     const Vec3<size_t> threadStartVec{0, 0, 0};
     Vec3<size_t> threadDimsVec{0, 0, 0};
     if (!args.isIndirect) {

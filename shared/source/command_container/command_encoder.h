@@ -36,7 +36,7 @@ struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0ull;
     Device *device = nullptr;
     DispatchKernelEncoderI *dispatchInterface = nullptr;
-    const void *pThreadGroupDimensions = nullptr;
+    const void *threadGroupDimensions = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     uint32_t partitionCount = 0u;
     bool isIndirect = false;
