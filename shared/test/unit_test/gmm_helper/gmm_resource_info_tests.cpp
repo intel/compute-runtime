@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
@@ -142,4 +144,26 @@ TEST(GmmResourceInfo, GivenEmptyHandleWhenUsingBaseHandleAllocatorThenOpenHandle
     auto isNewHandleOpen = defaultAllocator.openHandle(handle, nullptr, defaultAllocator.getHandleSize());
     EXPECT_TRUE(isNewHandleOpen);
     defaultAllocator.destroyHandle(handle);
+}
+
+TEST(GmmHelperTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
+    auto hwInfo = *NEO::defaultHwInfo;
+
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
+    auto gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
+
+    auto addressWidth = gmmHelper->getAddressWidth();
+    EXPECT_EQ(48u, addressWidth);
+
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
+    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
+
+    addressWidth = gmmHelper->getAddressWidth();
+    EXPECT_EQ(48u, addressWidth);
+
+    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
+    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
+
+    addressWidth = gmmHelper->getAddressWidth();
+    EXPECT_EQ(57u, addressWidth);
 }
