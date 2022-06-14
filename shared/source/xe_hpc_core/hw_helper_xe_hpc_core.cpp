@@ -17,6 +17,7 @@ using Family = NEO::XE_HPC_COREFamily;
 #include "shared/source/helpers/hw_helper_dg2_and_later.inl"
 #include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/hw_helper_xehp_and_later.inl"
+#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 
@@ -458,4 +459,6 @@ template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
+
+template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
 } // namespace NEO

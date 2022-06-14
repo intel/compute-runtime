@@ -24,6 +24,7 @@ namespace NEO {
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
 struct PipeControlArgs;
+class LogicalStateHelper;
 
 template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
@@ -189,6 +190,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     std::unique_ptr<DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>> directSubmission;
     std::unique_ptr<DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>> blitterDirectSubmission;
+    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 
     size_t cmdStreamStart = 0;
 };

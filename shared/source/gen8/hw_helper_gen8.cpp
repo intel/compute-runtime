@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_and_later.inl"
 #include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
+#include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
 typedef BDWFamily Family;
@@ -80,4 +81,6 @@ template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
+
+template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
 } // namespace NEO

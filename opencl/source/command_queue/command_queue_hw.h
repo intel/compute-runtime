@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -36,6 +37,8 @@ class CommandQueueHw : public CommandQueue {
                    ClDevice *device,
                    const cl_queue_properties *properties,
                    bool internalUsage) : BaseClass(context, device, properties, internalUsage) {
+
+        logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>(true));
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 
@@ -502,5 +505,7 @@ class CommandQueueHw : public CommandQueue {
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
+
+    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 };
 } // namespace NEO

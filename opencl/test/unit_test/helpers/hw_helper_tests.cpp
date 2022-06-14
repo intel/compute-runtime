@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -1466,4 +1467,11 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenPassingLinkedCopyEngineTypeThenItsCopyOn
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenPassingComputeEngineTypeThenItsNotCopyOnly) {
     EXPECT_FALSE(EngineHelper::isCopyOnlyEngineType(EngineGroupType::Compute));
+}
+
+using LogicalStateHelperTest = ::testing::Test;
+
+HWTEST_F(LogicalStateHelperTest, whenCreatingLogicalStateHelperThenReturnNullptr) {
+    EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>(true));
+    EXPECT_EQ(nullptr, LogicalStateHelper::create<FamilyType>(false));
 }

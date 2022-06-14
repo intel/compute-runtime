@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -487,6 +488,11 @@ HWTEST_F(UltCommandStreamReceiverTest, givenMultiplePartitionsWhenCallingWaitKmd
 
     commandStreamReceiver.waitForTaskCountWithKmdNotifyFallback(0, 0, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(2u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, whenCreatingThenDontCreateLogicalStateHelper) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(nullptr, commandStreamReceiver.logicalStateHelper.get());
 }
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;

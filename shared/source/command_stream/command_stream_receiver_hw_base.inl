@@ -26,6 +26,7 @@
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -73,6 +74,9 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
+
+    logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>(false));
+
     createScratchSpaceController();
     configurePostSyncWriteOffset();
 }
