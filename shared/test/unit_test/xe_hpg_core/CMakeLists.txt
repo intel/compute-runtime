@@ -11,6 +11,7 @@ if(TESTS_XE_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hpg_core_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hpg_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xe_hpg_core.cpp
   )
 

@@ -568,6 +568,28 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHa
     EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxSubSlicesSupported, 0u);
 }
 
+TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwInfoThenValuesAreSetAndSuccessIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto deprecatedAcronyms = mockOfflineCompiler.getDeprecatedDevicesTypes();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+    auto acronyms = CompilerOptions::tokenize(deprecatedAcronyms, ',');
+
+    for (const auto &deprecatedAcronym : acronyms) {
+        if (deprecatedAcronym.contains(" ")) {
+            auto name = deprecatedAcronym.str();
+            auto space = name.find(" ");
+            mockOfflineCompiler.deviceName = name.substr(++space, name.size());
+        } else {
+            mockOfflineCompiler.deviceName = deprecatedAcronym.str();
+        }
+        mockOfflineCompiler.revisionId = 0x3;
+        EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
+        EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
+    }
+}
+
 HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMaxDualSubSlicesSupportedIsSet, IsAtLeastGen12lp) {
     MockOfflineCompiler mockOfflineCompiler;
     auto allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->getAllSupportedDeviceConfigs();

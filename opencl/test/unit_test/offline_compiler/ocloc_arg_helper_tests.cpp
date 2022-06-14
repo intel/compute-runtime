@@ -135,3 +135,63 @@ TEST_F(OclocArgHelperTests, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThe
     NEO::HardwareInfo hwInfo;
     EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo));
 }
+
+TEST_F(OclocArgHelperTests, givenEnabledFamilyAcronymsWhenCheckIfIsFamilyThenTrueIsReturned) {
+    auto enabledFamiliesAcronyms = argHelper->getEnabledFamiliesAcronyms();
+    for (const auto &acronym : enabledFamiliesAcronyms) {
+        EXPECT_TRUE(argHelper->isFamily(acronym.str()));
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledReleaseAcronymsWhenCheckIfIsReleaseThenTrueIsReturned) {
+    auto enabledReleasesAcronyms = argHelper->getEnabledReleasesAcronyms();
+    for (const auto &acronym : enabledReleasesAcronyms) {
+        EXPECT_TRUE(argHelper->isRelease(acronym.str()));
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenDisabledFamilyOrReleaseNameThenReturnsEmptyList) {
+    EXPECT_FALSE(argHelper->isFamily(NEO::ConstStringRef("gen0").str()));
+    EXPECT_FALSE(argHelper->isFamily(NEO::ConstStringRef("genX").str()));
+    EXPECT_FALSE(argHelper->isRelease(NEO::ConstStringRef("gen0").str()));
+    EXPECT_FALSE(argHelper->isRelease(NEO::ConstStringRef("genX").str()));
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledFamilyAcronymsWithoutDashesWhenCheckIfIsFamilyThenTrueIsReturned) {
+    auto enabledFamiliesAcronyms = argHelper->getEnabledFamiliesAcronyms();
+    for (const auto &acronym : enabledFamiliesAcronyms) {
+        std::string acronymCopy = acronym.str();
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+        EXPECT_TRUE(argHelper->isFamily(acronymCopy));
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledReleaseAcronymsWithoutDashesWhenCheckIfIsReleaseThenTrueIsReturned) {
+    auto enabledReleasesAcronyms = argHelper->getEnabledReleasesAcronyms();
+    for (const auto &acronym : enabledReleasesAcronyms) {
+        std::string acronymCopy = acronym.str();
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+        EXPECT_TRUE(argHelper->isRelease(acronymCopy));
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledProductAcronymsWithoutDashesWhenCheckIfIsReleaseThenTrueIsReturned) {
+    auto enabledProductsAcronyms = argHelper->getEnabledProductAcronyms();
+    for (const auto &acronym : enabledProductsAcronyms) {
+        std::string acronymCopy = acronym.str();
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+        EXPECT_TRUE(argHelper->isProductConfig(acronymCopy));
+    }
+}

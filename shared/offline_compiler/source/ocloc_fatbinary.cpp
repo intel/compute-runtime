@@ -29,11 +29,14 @@ bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *he
         const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             ConstStringRef deviceArg(args[argIndex + 1]);
+            auto deviceName = deviceArg.str();
+            ProductConfigHelper::adjustDeviceName(deviceName);
+
             auto retVal = deviceArg.contains("*");
             retVal |= deviceArg.contains(":");
             retVal |= deviceArg.contains(",");
-            retVal |= helper->isFamily(deviceArg.str());
-            retVal |= helper->isRelease(deviceArg.str());
+            retVal |= helper->isFamily(deviceName);
+            retVal |= helper->isRelease(deviceName);
 
             return retVal;
         }
@@ -93,8 +96,11 @@ void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::
 
 std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, ConstStringRef rangeTo, OclocArgHelper *argHelper) {
     std::vector<ConstStringRef> requestedProducts = {};
-    auto rangeFromStr = rangeFrom.str();
     auto rangeToStr = rangeTo.str();
+    auto rangeFromStr = rangeFrom.str();
+
+    ProductConfigHelper::adjustDeviceName(rangeToStr);
+    ProductConfigHelper::adjustDeviceName(rangeFromStr);
 
     if (argHelper->isFamily(rangeFromStr) && argHelper->isFamily(rangeToStr)) {
         auto familyFrom = ProductConfigHelper::returnFamilyForAcronym(rangeFromStr);
@@ -125,6 +131,7 @@ std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, C
 std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, OclocArgHelper *argHelper, bool rangeTo) {
     std::vector<ConstStringRef> requestedProducts = {};
     auto openRangeStr = openRange.str();
+    ProductConfigHelper::adjustDeviceName(openRangeStr);
 
     if (argHelper->isFamily(openRangeStr)) {
         auto family = ProductConfigHelper::returnFamilyForAcronym(openRangeStr);
@@ -167,6 +174,8 @@ std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::Tokeniz
     std::vector<ConstStringRef> requestedConfigs;
     for (const auto &target : targets) {
         auto targetStr = target.str();
+        ProductConfigHelper::adjustDeviceName(targetStr);
+
         if (argHelper->isFamily(targetStr)) {
             auto family = ProductConfigHelper::returnFamilyForAcronym(targetStr);
             getProductsAcronymsForTarget(requestedConfigs, family, argHelper);
@@ -176,7 +185,7 @@ std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::Tokeniz
         } else if (argHelper->isProductConfig(targetStr)) {
             requestedConfigs.push_back(target);
         } else {
-            argHelper->printf("Failed to parse target : %s - invalid device:\n", targetStr.c_str());
+            argHelper->printf("Failed to parse target : %s - invalid device:\n", target.str().c_str());
             return {};
         }
     }

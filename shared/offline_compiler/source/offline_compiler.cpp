@@ -141,7 +141,7 @@ int OfflineCompiler::buildIrBinary() {
     pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
                                                          : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
 
-    //sourceCode.size() returns the number of characters without null terminated char
+    // sourceCode.size() returns the number of characters without null terminated char
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> fclSrc = nullptr;
     pBuildInfo->fclOptions = fclFacade->createConstBuffer(options.c_str(), options.size());
     pBuildInfo->fclInternalOptions = fclFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
@@ -350,6 +350,8 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
 
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     AheadOfTimeConfig aotConfig{AOT::UNKNOWN_ISA};
+    ProductConfigHelper::adjustDeviceName(deviceName);
+
     if (deviceName.find(".") != std::string::npos) {
         aotConfig = argHelper->getMajorMinorRevision(deviceName);
         if (aotConfig.ProductConfig == AOT::UNKNOWN_ISA) {
@@ -380,7 +382,7 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     }
 
     overridePlatformName(deviceName);
-    std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
+
     const char hexPrefix = 2;
     int deviceId = -1;
 
@@ -561,7 +563,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         const auto &currArg = argv[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < numArgs);
         if ("compile" == currArg) {
-            //skip it
+            // skip it
         } else if (("-file" == currArg) && hasMoreArgs) {
             inputFile = argv[argIndex + 1];
             argIndex++;
@@ -777,7 +779,7 @@ std::string OfflineCompiler::getDeprecatedDevicesTypes() {
 
     std::ostringstream os;
     for (const auto &prefix : prefixes) {
-        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findDuplicate(prefix)))
+        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(prefix)))
             continue;
         if (os.tellp())
             os << ", ";

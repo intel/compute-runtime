@@ -14,6 +14,7 @@ if(TESTS_XE_HPC_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe_hpc_core_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xe_hpc_core_tests.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_xe_hpc_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xe_hpc_core.cpp

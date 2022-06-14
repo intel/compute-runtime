@@ -168,6 +168,22 @@ class ConstStringRef {
         return ('\0' == *rhs);
     }
 
+    constexpr bool isEqualWithoutSeparator(const char separator, const char *subString) const noexcept {
+        const char *end = ptr + len;
+        const char *lhs = ptr;
+        const char *rhs = subString;
+
+        for (auto i = lhs; i != end; i++) {
+            if (*i == separator) {
+                continue;
+            }
+            if (*i != *rhs)
+                return false;
+            ++rhs;
+        }
+        return ('\0' == *rhs);
+    }
+
   protected:
     ConstStringRef(std::nullptr_t) = delete;
 

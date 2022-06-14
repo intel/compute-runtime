@@ -27,6 +27,21 @@ struct AheadOfTimeConfig {
 };
 
 struct ProductConfigHelper {
+    template <typename EqComparableT>
+    static auto findAcronymWithoutDash(const EqComparableT &lhs) {
+        return [&lhs](const auto &rhs) {
+            return lhs == rhs || rhs.isEqualWithoutSeparator('-', lhs.c_str());
+        };
+    }
+
+    template <typename EqComparableT>
+    static auto findMapAcronymWithoutDash(const EqComparableT &lhs) {
+        return [&lhs](const auto &rhs) {
+            NEO::ConstStringRef ptrStr(rhs.first);
+            return lhs == ptrStr || ptrStr.isEqualWithoutSeparator('-', lhs.c_str());
+        };
+    }
+    static void adjustDeviceName(std::string &device);
     static std::string parseMajorMinorValue(AheadOfTimeConfig config);
     static std::string parseMajorMinorRevisionValue(AheadOfTimeConfig config);
     inline static std::string parseMajorMinorRevisionValue(AOT::PRODUCT_CONFIG config) {
