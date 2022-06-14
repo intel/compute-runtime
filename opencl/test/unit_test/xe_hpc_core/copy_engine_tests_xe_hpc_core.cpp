@@ -130,6 +130,36 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     EXPECT_EQ(mocsL3enabled, bltCmd->getSourceMOCS());
 }
 
+XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsProgrammedThenL3IsDisabled) {
+    using MEM_COPY = typename FamilyType::MEM_COPY;
+
+    auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::Regular);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
+    MockContext context(clDevice.get());
+    MockGraphicsAllocation clearColorAlloc;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    size_t transferSize = static_cast<size_t>(clDevice->getHardwareInfo().gtSystemInfo.L3CacheSizeInKb * KB / 2 + 1);
+
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     buffer->getGraphicsAllocation(clDevice->getRootDeviceIndex()),
+                                                                     0, 0, {transferSize, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);
+
+    flushBcsTask(csr, blitProperties, true, clDevice->getDevice());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+    auto itorBltCmd = find<MEM_COPY *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
+    MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
+
+    auto mocsL3disabled = 0x0u;
+    EXPECT_EQ(mocsL3disabled, bltCmd->getDestinationMOCS());
+    EXPECT_EQ(mocsL3disabled, bltCmd->getSourceMOCS());
+}
+
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.OverrideBlitterMocs.set(0u);
