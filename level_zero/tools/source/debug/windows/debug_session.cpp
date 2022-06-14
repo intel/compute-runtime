@@ -11,6 +11,10 @@ namespace L0 {
 
 DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
 
+DebugSessionWindows::~DebugSessionWindows() {
+    closeAsyncThread();
+}
+
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
     if (!device->getOsInterface().isDebugAttachAvailable()) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -23,6 +27,8 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
         debugSession->closeConnection();
         delete debugSession;
         debugSession = nullptr;
+    } else {
+        debugSession->startAsyncThread();
     }
 
     return debugSession;
@@ -63,6 +69,8 @@ bool DebugSessionWindows::closeConnection() {
         return false;
     }
 
+    closeAsyncThread();
+
     KM_ESCAPE_INFO escapeInfo = {0};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_DETACH_DEBUGGER;
     escapeInfo.KmEuDbgL0EscapeInfo.DetachDebuggerParams.ProcessID = processId;
@@ -75,6 +83,28 @@ bool DebugSessionWindows::closeConnection() {
 
     PRINT_DEBUGGER_INFO_LOG("DBGUMD_ACTION_DETACH_DEBUGGER: SUCCESS\n");
     return true;
+}
+
+void DebugSessionWindows::startAsyncThread() {
+    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
+}
+
+void DebugSessionWindows::closeAsyncThread() {
+    asyncThread.close();
+}
+
+void *DebugSessionWindows::asyncThreadFunction(void *arg) {
+    DebugSessionWindows *self = reinterpret_cast<DebugSessionWindows *>(arg);
+    PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
+
+    while (self->asyncThread.threadActive) {
+        self->readAndHandleEvent(100);
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
+
+    self->asyncThread.threadFinished.store(true);
+    return nullptr;
 }
 
 NTSTATUS DebugSessionWindows::runEscape(KM_ESCAPE_INFO &escapeInfo) {
@@ -156,7 +186,19 @@ ze_result_t DebugSessionWindows::handleAllocationDataEvent(DBGUMD_READ_EVENT_REA
 }
 
 ze_result_t DebugSessionWindows::handleContextCreateDestroyEvent(DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS &contextCreateDestroyParams) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY_EVENT_PARAMS: hContextHandle: 0x%ullx IsCreated: %d SIPInstalled: %d\n", contextCreateDestroyParams.hContextHandle, contextCreateDestroyParams.IsCreated, contextCreateDestroyParams.IsSIPInstalled);
+    if (!contextCreateDestroyParams.IsSIPInstalled) {
+        return ZE_RESULT_SUCCESS;
+    }
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        if (contextCreateDestroyParams.IsCreated) {
+            allContexts.insert(contextCreateDestroyParams.hContextHandle);
+        } else {
+            allContexts.erase(contextCreateDestroyParams.hContextHandle);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::handleDeviceCreateDestroyEvent(DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY_EVENT_PARAMS &deviceCreateDestroyParams) {
@@ -164,7 +206,16 @@ ze_result_t DebugSessionWindows::handleDeviceCreateDestroyEvent(DBGUMD_READ_EVEN
 }
 
 ze_result_t DebugSessionWindows::handleCreateDebugDataEvent(DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS &createDebugDataParams) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    PRINT_DEBUGGER_INFO_LOG("DBGUMD_READ_EVENT_CREATE_DEBUG_DATA_PARAMS:. Type: %d BufferPtr: 0x%ullx DataSize: 0x%ullx\n", createDebugDataParams.DebugDataType, createDebugDataParams.DataBufferPtr, createDebugDataParams.DataSize);
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    if (createDebugDataParams.DebugDataType == ELF_BINARY) {
+        ElfRange elf;
+        elf.startVA = createDebugDataParams.DataBufferPtr;
+        elf.endVA = elf.startVA + createDebugDataParams.DataSize;
+        allElfs.push_back(elf);
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionWindows::translateEscapeReturnStatusToZeResult(uint32_t escapeReturnStatus) {
@@ -227,9 +278,6 @@ bool DebugSessionWindows::readSystemRoutineIdent(EuThread *thread, uint64_t vmHa
 
 bool DebugSessionWindows::readModuleDebugArea() {
     return false;
-}
-
-void DebugSessionWindows::startAsyncThread() {
 }
 
 ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId, SbaTrackedAddresses &sbaBuffer) {

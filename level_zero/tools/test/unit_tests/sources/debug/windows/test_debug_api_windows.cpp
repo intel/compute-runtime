@@ -15,11 +15,16 @@ namespace L0 {
 namespace ult {
 
 struct MockDebugSessionWindows : DebugSessionWindows {
+    using DebugSessionWindows::allContexts;
+    using DebugSessionWindows::allElfs;
+    using DebugSessionWindows::asyncThread;
+    using DebugSessionWindows::closeAsyncThread;
     using DebugSessionWindows::debugHandle;
     using DebugSessionWindows::initialize;
     using DebugSessionWindows::moduleDebugAreaCaptured;
     using DebugSessionWindows::processId;
     using DebugSessionWindows::readAndHandleEvent;
+    using DebugSessionWindows::startAsyncThread;
     using DebugSessionWindows::wddm;
 
     MockDebugSessionWindows(const zet_debug_config_t &config, L0::Device *device) : DebugSessionWindows(config, device) {}
@@ -40,6 +45,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
 
     ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
     ze_result_t resultReadAndHandleEvent = ZE_RESULT_FORCE_UINT32;
+    static constexpr uint64_t mockDebugHandle = 1;
 };
 
 struct DebugApiWindowsFixture : public DeviceFixture {
@@ -181,9 +187,7 @@ TEST_F(DebugApiWindowsTest, givenUnsupportedEventTypeWhenReadAndHandleEventCalle
 
     for (auto unsupportedEventType : {DBGUMD_READ_EVENT_MODULE_CREATE_NOTIFICATION,
                                       DBGUMD_READ_EVENT_EU_ATTN_BIT_SET,
-                                      DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY,
-                                      DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY,
-                                      DBGUMD_READ_EVENT_CREATE_DEBUG_DATA}) {
+                                      DBGUMD_READ_EVENT_DEVICE_CREATE_DESTROY}) {
         mockWddm->readEventOutParams.readEventType = unsupportedEventType;
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readAndHandleEvent(100));
     }
@@ -199,6 +203,48 @@ TEST_F(DebugApiWindowsTest, givenUnknownEventTypeWhenReadAndHandleEventCalledThe
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readAndHandleEvent(100));
 }
 
+TEST_F(DebugApiWindowsTest, givenDebugDataEventTypeWhenReadAndHandleEventCalledThenResultDebugDataIsSaved) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->readEventOutParams.readEventType = DBGUMD_READ_EVENT_CREATE_DEBUG_DATA;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadCreateDebugDataParams.DebugDataType = ELF_BINARY;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadCreateDebugDataParams.DataBufferPtr = 0xa000;
+    mockWddm->readEventOutParams.eventParamsBuffer.ReadCreateDebugDataParams.DataSize = 8;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(1, session->allElfs.size());
+    auto elf = session->allElfs[0];
+    EXPECT_EQ(elf.startVA, 0xa000);
+    EXPECT_EQ(elf.endVA, 0xa008);
+}
+
+TEST_F(DebugApiWindowsTest, givenContextCreateEventTypeWhenReadAndHandleEventCalledThenAllContextsIsSetCorrectly) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionWindows>(config, device);
+    session->wddm = mockWddm;
+
+    mockWddm->readEventOutParams.readEventType = DBGUMD_READ_EVENT_CONTEXT_CREATE_DESTROY;
+    mockWddm->readEventOutParams.eventParamsBuffer.ContextCreateDestroyEventParams.hContextHandle = 0xa000;
+    mockWddm->readEventOutParams.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 1;
+    mockWddm->readEventOutParams.eventParamsBuffer.ContextCreateDestroyEventParams.IsSIPInstalled = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(0, session->allContexts.size());
+
+    mockWddm->readEventOutParams.eventParamsBuffer.ContextCreateDestroyEventParams.IsSIPInstalled = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(1, session->allContexts.size());
+    EXPECT_EQ(1, session->allContexts.count(0xa000));
+
+    mockWddm->readEventOutParams.eventParamsBuffer.ContextCreateDestroyEventParams.IsCreated = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readAndHandleEvent(100));
+    EXPECT_EQ(0, session->allContexts.size());
+}
+
 TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeResultReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_ESCAPE_SUCCESS));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_DEBUGGER_ATTACH_DEVICE_BUSY));
@@ -208,6 +254,40 @@ TEST(DebugSessionWindowsTest, whenTranslateEscapeErrorStatusCalledThenCorrectZeR
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_PERMISSION_DENIED));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_EU_DEBUG_NOT_SUPPORTED));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, DebugSessionWindows::translateEscapeReturnStatusToZeResult(DBGUMD_RETURN_TYPE_MAX));
+}
+
+using DebugApiWindowsAsyncThreadTest = Test<DebugApiWindowsFixture>;
+
+TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyncThreadThenThreadIsStartedAndFinishes) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->startAsyncThread();
+
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThread.threadFinished);
+
+    session->closeAsyncThread();
+
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThread.threadFinished);
+}
+
+TEST_F(DebugApiWindowsAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
+    auto session = std::make_unique<MockDebugSessionWindows>(zet_debug_config_t{0x1234}, device);
+    ASSERT_NE(nullptr, session);
+    session->wddm = mockWddm;
+    session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    session->startAsyncThread();
+
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThread.threadFinished);
+
+    session->closeConnection();
+
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThread.threadFinished);
 }
 
 } // namespace ult

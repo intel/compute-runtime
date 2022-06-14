@@ -15,10 +15,13 @@
 
 #include "KmEscape.h"
 
+#include <unordered_set>
+
 namespace L0 {
 
 struct DebugSessionWindows : DebugSessionImp {
     DebugSessionWindows(const zet_debug_config_t &config, Device *device) : DebugSessionImp(config, device), processId(config.pid) {}
+    ~DebugSessionWindows();
 
     ze_result_t initialize() override;
     bool closeConnection() override;
@@ -51,6 +54,11 @@ struct DebugSessionWindows : DebugSessionImp {
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override;
     bool readModuleDebugArea() override;
     void startAsyncThread() override;
+    void closeAsyncThread();
+    static void *asyncThreadFunction(void *arg);
+
+    ThreadHelper asyncThread;
+    std::mutex asyncThreadMutex;
 
     NTSTATUS runEscape(KM_ESCAPE_INFO &escapeInfo);
 
@@ -58,6 +66,14 @@ struct DebugSessionWindows : DebugSessionImp {
     uint32_t processId = 0;
     uint64_t debugHandle = 0;
     NEO::Wddm *wddm = nullptr;
+
+    struct ElfRange {
+        uint64_t startVA;
+        uint64_t endVA;
+    };
+
+    std::unordered_set<uint64_t> allContexts;
+    std::vector<ElfRange> allElfs;
 };
 
 } // namespace L0
