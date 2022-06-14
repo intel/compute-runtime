@@ -33,6 +33,7 @@
 
 #include "common/StateSaveAreaHeader.h"
 
+#include "gmock/gmock.h"
 #include <atomic>
 #include <fstream>
 #include <queue>

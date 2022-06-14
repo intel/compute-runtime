@@ -411,4 +411,13 @@ class MockMemoryManagerWithCapacity : public MockMemoryManager {
     size_t capacity = 0u;
 };
 
+class MemoryManagerMemHandleMock : public MockMemoryManager {
+  public:
+    bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override {
+        return NTHandle;
+    };
+
+    bool NTHandle = false;
+};
+
 } // namespace NEO

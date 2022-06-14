@@ -14,6 +14,8 @@
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
+#include "gmock/gmock.h"
+
 namespace L0 {
 namespace ult {
 

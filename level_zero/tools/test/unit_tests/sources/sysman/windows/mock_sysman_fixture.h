@@ -16,6 +16,7 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/mocks/mock_sysman_env_vars.h"
 
+#include "gmock/gmock.h"
 #include "sysman/windows/os_sysman_imp.h"
 
 extern bool sysmanUltsEnable;

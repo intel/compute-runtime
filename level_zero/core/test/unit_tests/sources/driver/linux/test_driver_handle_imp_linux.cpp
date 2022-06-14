@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -437,7 +438,7 @@ class DriverWDDMLinuxFixture : public ::testing::Test {
         }
         for (auto i = 0u; i < devices.size(); i++) {
             devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.reset(new NEO::OSInterface());
-            devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<MockDriverModelWDDM>(512));
+            devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
         }
     }
     void TearDown() override {}

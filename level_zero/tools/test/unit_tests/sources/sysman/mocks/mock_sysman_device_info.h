@@ -16,7 +16,6 @@
 #include "mock_sysman_env_vars.h"
 
 using namespace NEO;
-using ::testing::_;
 
 namespace L0 {
 namespace ult {

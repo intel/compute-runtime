@@ -16,6 +16,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
+#include "gmock/gmock.h"
 namespace L0 {
 namespace ult {
 

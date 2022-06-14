@@ -9,6 +9,7 @@
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
+#include "gmock/gmock.h"
 #include "mock_global_operations.h"
 
 extern bool sysmanUltsEnable;
