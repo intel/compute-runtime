@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
-
-#include "opencl/test/unit_test/sku_info/sku_info_base_reference.h"
+#include "shared/test/unit_test/sku_info/sku_info_base_reference.h"
 
 #include "gtest/gtest.h"
 
