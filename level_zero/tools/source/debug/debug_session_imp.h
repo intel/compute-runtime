@@ -79,6 +79,8 @@ struct DebugSessionImp : DebugSession {
                                       uint32_t start, uint32_t count, void *pRegisterValues, bool write);
 
     const SIP::regset_desc *typeToRegsetDesc(uint32_t type);
+    uint32_t getRegisterSize(uint32_t type);
+
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
 

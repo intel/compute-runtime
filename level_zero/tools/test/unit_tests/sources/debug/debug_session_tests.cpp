@@ -36,6 +36,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsAndResumeStoppedThreads;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
+    using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention;
     using L0::DebugSessionImp::newAttentionRaised;
@@ -1715,6 +1716,17 @@ TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRe
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeader.mme);
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeader.sp);
     EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenValidRegisterWhenGettingSizeThenCorrectSizeIsReturned) {
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    EXPECT_EQ(pStateSaveAreaHeader->regHeader.grf.bytes, session->getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU));
+}
+
+TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegisterWhenGettingSizeThenZeroSizeIsReturned) {
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    EXPECT_EQ(0u, session->getRegisterSize(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {

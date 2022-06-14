@@ -343,14 +343,18 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
                 dword = 4;
             }
 
+            const auto regSize = std::max(getRegisterSize(registerType), hwInfo.capabilityTable.grfSize);
+            auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+
             for (auto &threadID : threadIds) {
-                uint32_t reg[8] = {};
                 auto apiThread = convertToApi(threadID);
-                if (readRegistersImp(apiThread, registerType, 0, 1, reg) != ZE_RESULT_SUCCESS) {
+                memset(reg.get(), 0, regSize);
+
+                if (readRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                     success = false;
                 } else {
                     reg[dword] |= sipResumeValue;
-                    if (writeRegistersImp(apiThread, registerType, 0, 1, reg) != ZE_RESULT_SUCCESS) {
+                    if (writeRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                         success = false;
                     }
                 }
@@ -626,14 +630,16 @@ bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uin
 
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport) {
 
+    const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
+    auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+
     for (auto &newlyStopped : newlyStoppedThreads) {
         if (allThreads[newlyStopped]->isStopped()) {
-            uint32_t reg[8] = {};
-
+            memset(reg.get(), 0, regSize);
             ze_device_thread_t apiThread = convertToApi(newlyStopped);
-            readRegistersImp(apiThread, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg);
+            readRegistersImp(apiThread, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
-            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg)) {
+            if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
                 PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
                 resumeThreads.push_back(newlyStopped);
             } else {
@@ -727,7 +733,10 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc() {
 const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
     auto pStateSaveAreaHeader = getStateSaveAreaHeader();
 
-    UNRECOVERABLE_IF(pStateSaveAreaHeader == nullptr);
+    DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
+    if (pStateSaveAreaHeader == nullptr) {
+        return nullptr;
+    }
 
     switch (type) {
     case ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU:
@@ -755,6 +764,14 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
     default:
         return nullptr;
     }
+}
+
+uint32_t DebugSessionImp::getRegisterSize(uint32_t type) {
+    auto regset = typeToRegsetDesc(type);
+    if (regset) {
+        return regset->bytes;
+    }
+    return 0;
 }
 
 uint32_t DebugSessionImp::typeToRegsetFlags(uint32_t type) {
@@ -806,8 +823,11 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
         return ret;
     }
 
-    uint32_t r0[8];
-    ret = readRegistersImp(thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0);
+    const auto &hwInfo = connectedDevice->getHwInfo();
+    const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), hwInfo.capabilityTable.grfSize);
+    auto r0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
+
+    ret = readRegistersImp(thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
